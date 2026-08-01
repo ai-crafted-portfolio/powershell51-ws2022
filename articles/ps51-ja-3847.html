@@ -1,0 +1,598 @@
+<!doctype html><meta charset="utf-8"><section class="jp-official"><h1>セット-AuthenticodeSignatureのサインです.</h1>
+<h2>SYNOPSIS PowerShell スクリプトまたは他のファイルにAuthenticode署名を追加します.</h2>
+<h2>SYNTAXは,のシンタックスです.</h2>
+<h3>ByPath (デフォルト)</h3>
+<pre><code>Set-AuthenticodeSignature [-Certificate] &lt;X509Certificate2&gt; [-IncludeChain &lt;String&gt;]
+ [-TimestampServer &lt;String&gt;] [-HashAlgorithm &lt;String&gt;] [-Force] [-FilePath] &lt;String[]&gt;
+ [-WhatIf] [-Confirm] [&lt;CommonParameters&gt;]
+</code></pre>
+<h3>ByLiteralPath について</h3>
+<pre><code>Set-AuthenticodeSignature [-Certificate] &lt;X509Certificate2&gt; [-IncludeChain &lt;String&gt;]
+ [-TimestampServer &lt;String&gt;] [-HashAlgorithm &lt;String&gt;] [-Force] -LiteralPath &lt;String[]&gt;
+ [-WhatIf] [-Confirm] [&lt;CommonParameters&gt;]
+</code></pre>
+<h3>ByContent</h3>
+<pre><code>Set-AuthenticodeSignature [-Certificate] &lt;X509Certificate2&gt; [-IncludeChain &lt;String&gt;]
+ [-TimestampServer &lt;String&gt;] [-HashAlgorithm &lt;String&gt;] [-Force] -SourcePathOrExtension
+ &lt;String[]&gt; -Content &lt;Byte[]&gt; [-WhatIf] [-Confirm] [&lt;CommonParameters&gt;]
+</code></pre>
+<h2>記述は,</h2>
+<p><code>Set-AuthenticodeSignature</code>cmdlet は,Subject Interface Package (SIP) をサポートするファイルにAuthenticode署名を追加します.</p>
+<p>PowerShell スクリプトファイルでは,署名はテキストブロックの形をとり,脚本で実行される指示の終了を表示します.このcmdletが実行されるときにファイルに署名がある場合は,その署名が削除されます.</p>
+<h2>例えは</h2>
+<h3>例1 - 地域の証明書店から証明書を使用してスクリプトにサインします</h3>
+<p>これらのコマンドは,PowerShell証明書プロバイダーからコード署名証明書を取得し,PowerShellスクリプトに署名するために使用します.</p>
+<pre><code class="language-powershell">$cert=Get-ChildItem -Path Cert:\CurrentUser\My -CodeSigningCert
+$signingParameters = @{
+    FilePath      = 'PsTestInternet2.ps1'
+    Certificate   = $cert
+    HashAlgorithm = 'SHA256'
+}
+Set-AuthenticodeSignature @signingParameters
+</code></pre>
+<p>最初のコマンドは,を用います.<code>Get-ChildItem</code>cmdlet と PowerShell 証明書プロバイダで証明書を取得する<code>Cert:\CurrentUser\My</code>証明書ストアのサブディレクトリです.<code>Cert:</code>証明書提供者が公開したドライブです. 証明書提供者がサポートしている <strong>CodeSigningCert</strong>  параметрは,取得した証明書をコード署名権限を有する者に制限します. コマンドは結果を  に保存します.<code>$cert</code>変数です.</p>
+<p>第二のコマンドは,  を定義します.<code>$signingParameters</code>変数として <strong>HashTable</strong> と,  のパラメータを表示する.<code>Set-AuthenticodeSignature</code>cmdlet を署名する<code>PSTestInternet2.ps1</code>スクリプトの名前を指定するには,FilePath**パラメータを使用し,証明書の保存を指定するには,証明書の名前を指定します.<code>$cert</code>ハッシュアルゴリズムを SHA256 に設定するためのハッシュアルゴリズムパラメータとHashAlgorithmの変数です.</p>
+<p>第三のコマンドは,文字を書き込み, で定義されたパラメータをスプラットすることでサインします.<code>$signingParameters</code> .</p>
+<p>&gt; [!NOTE] &gt; とコードシグニングCert**パラメータを使用する<code>Get-ChildItem</code>署名権限が"&gt;コード署名権限"があり,プライベートキーが含まれている証明書のみを返します.プライベートキーがない場合は,証明書"&gt;が署名に使用できません.</p>
+<h3>例2 - PFXファイルから証明書を使用してスクリプトにサインする</h3>
+<p>これらのコマンドは,  を使っています.<code>Get-PfxCertificate</code>cmdlet でコードサイン証明書をロードする.その後,それを PowerShell スクリプトにサインするために使用します.</p>
+<pre><code class="language-powershell">$cert = Get-PfxCertificate -FilePath C:\Test\Mysign.pfx
+$signingParameters = @{
+    FilePath      = 'ServerProps.ps1'
+    Certificate   = $cert
+    HashAlgorithm = 'SHA256'
+}
+Set-AuthenticodeSignature @signingParameters
+</code></pre>
+<p>最初のコマンドは,を用います.<code>Get-PfxCertificate</code>C:\Test\MySign.pfx証明書を,cmdletに読み込むために,<code>$cert</code>変数です.</p>
+<p>第二のコマンドは,  を定義します.<code>$signingParameters</code>変数として <strong>HashTable</strong> と,  のパラメータを表示する.<code>Set-AuthenticodeSignature</code>cmdlet を署名する<code>ServerProps.ps1</code>スクリプトの名前を指定するには,FilePath**パラメータを使用し,証明書の保存を指定するには,証明書の名前を指定します.<code>$cert</code>ハッシュアルゴリズムを SHA256 に設定するためのハッシュアルゴリズムパラメータとHashAlgorithmの変数です.</p>
+<p>第三のコマンドは,文字を書き込み, で定義されたパラメータをスプラットすることでサインします.<code>$signingParameters</code> .</p>
+<p>証明書ファイルがパスワードで保護されている場合,PowerShellはパスワードを提示します.</p>
+<h3>例3 - ルーツ権限を含む署名を追加する</h3>
+<p>このコマンドは,信頼チェーン内のルーツ権限を含むデジタル署名を追加し,第三者のタイムスタンプサーバーによって署名されます.</p>
+<pre><code class="language-powershell">$signingParameters = @{
+    FilePath      = 'C:\scripts\Remodel.ps1'
+    Certificate   = $cert
+    HashAlgorithm = 'SHA256'
+    IncludeChain  = 'All'
+    TimestampServer = 'http://timestamp.fabrikam.com/scripts/timstamper.dll'
+}
+Set-AuthenticodeSignature @signingParameters
+</code></pre>
+<p>コマンドは,署名されているスクリプトを指定するために <strong>FilePath</strong>パラメータを使用し, に保存されている証明書を指定するために <strong>Certificate</strong>パラメータを使用します.<code>$cert</code>ルーツ権限を含む信頼チェーン内のすべての署名を含む<strong>IncludeChain</strong>パラメータを使用します. また,署名にタイムスタンプを追加するために<strong>TimeStampServer</strong>パラメータを使用します. これにより,証明書の期限が終了するとスクリプトが失敗するのを防ぐことができます.</p>
+<p>第二のコマンドは,文字を書き込み, で定義されたパラメータをスプラットすることでサインします.<code>$signingParameters</code> .</p>
+<h2>パラメータは</h2>
+<h3>-証明書</h3>
+<p>脚本またはファイルに署名するために使用される証明書を指定します.証明書を代表するオブジェクトまたは証明書を取得する表現を保存する変数を入力します.</p>
+<p>証明書を見つけるには,使用する<code>Get-PfxCertificate</code> を使ったりしない.<code>Get-ChildItem</code>証明書に cmdlet を入れました.<code>Cert:</code>証明書が有効でないか,またはドライブがない場合.<code>code-signing</code>権威は命令に失敗する.</p>
+<pre><code class="language-yaml">Type: System.Security.Cryptography.X509Certificates.X509Certificate2
+Parameter Sets: (All)
+Aliases:
+
+Required: True
+Position: 1
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-コンテンツ</h3>
+<p>このパラメータは,基クラスで定義されているため,構文リストに表示されます.<code>Set-AuthenticodeSignature</code>しかし,このパラメータのサポートは,  で実装されていません.<code>Set-AuthenticodeSignature</code> .</p>
+<pre><code class="language-yaml">Type: System.Byte[]
+Parameter Sets: ByContent
+Aliases:
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+</code></pre>
+<h3>-FilePath</h3>
+<p>署名されているファイルへのパス指定します.</p>
+<pre><code class="language-yaml">Type: System.String[]
+Parameter Sets: ByPath
+Aliases:
+
+Required: True
+Position: 1
+Default value: None
+Accept pipeline input: True (ByPropertyName, ByValue)
+Accept wildcard characters: False
+</code></pre>
+<h3>-フォース</h3>
+<p>cmdletが読み込みのみのファイルに署名を追加することを許可します.Force**パラメータを使用しても,cmdletはセキュリティ制限を覆すことはできません.</p>
+<pre><code class="language-yaml">Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h1>セット-AuthenticodeSignatureのサインです.</h1>
+<h3>-ハッシュアルゴリズム</h3>
+<p>Windows がファイルに数字署名を計算するために使用するハッシュアルゴリズムを指定します.</p>
+<p>既定はSHA1です.異なるハッシュアルゴリズムで署名されたファイルは他のシステムでは認識されない可能性があります.どのアルゴリズムがサポートされているかは,オペレーティングシステムのバージョンによって異なります.</p>
+<p>可能な値の一覧については, [HashAlgorithmName] (xref:System.Security.Cryptography.HashAlgorithmName#properties) 構造を参照してください.</p>
+<pre><code class="language-yaml">Type: System.String
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: Null
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-IncludeChain を含む</h3>
+<p>証明書信頼チェーン内のどの証明書がデジタル署名に含まれているかを決定します. <strong>NotRoot</strong>はデフォルトです.</p>
+<p>有効な値は:</p>
+<ul>
+<li>-<code>Signer</code>: 署名者の証明書のみが含まれています. - <code>NotRoot</code>: ルーツオーガティを除く,証明書チェーン内のすべての証明書を含む. - <code>All</code>: 証明書連鎖のすべての証明書が含まれています.</li>
+</ul>
+<pre><code class="language-yaml">Type: System.String
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: NotRoot
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-リテラルパース</h3>
+<p>署名されているファイルへのパス指定します. <strong>FilePath</strong>とは異なり,LiteralPath**パラメータの値は入力されたまま使用されます.文字はワイルドカードとして解釈されません.パスにエスケープ文字が含まれている場合は,単一の引用符で囲みましょう.単一の引用符はPowerShellに文字をエスケープシーケンスのように解釈しないように言います.</p>
+<pre><code class="language-yaml">Type: System.String[]
+Parameter Sets: ByLiteralPath
+Aliases: PSPath
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+</code></pre>
+<h3>-SourcePathOrExtension について</h3>
+<p>このパラメータは,基クラスで定義されているため,構文リストに表示されます.<code>Set-AuthenticodeSignature</code>しかし,このパラメータのサポートは,  で実装されていません.<code>Set-AuthenticodeSignature</code> .</p>
+<pre><code class="language-yaml">Type: System.String[]
+Parameter Sets: ByContent
+Aliases:
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName, ByValue)
+Accept wildcard characters: False
+</code></pre>
+<h3>-タイムスタンプサーバー</h3>
+<p>指定されたタイムスタンプサーバーを使用して署名にタイムスタンプを追加します. タイムスタンプサーバーのURLを文字列として入力します. URL は  で始まる必要があります.<code>http://</code> .</p>
+<p>タイムスタンプは,証明書のファイルに追加された正確な時間を表しています. タイムスタンプは,証明書の期限が切れた場合,脚本が失敗するのを防ぐため,ユーザーやプログラムは署名時に証明書の有効性を確認できます.</p>
+<pre><code class="language-yaml">Type: System.String
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-確認</h3>
+<p>cmdletを実行する前に確認を提示します.</p>
+<pre><code class="language-yaml">Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases: cf
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-WhatIf</h3>
+<p>実行されないcmdletが実行されればどうなるかを示しています.</p>
+<pre><code class="language-yaml">Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases: wi
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>共通パラメーター</h3>
+<p>このcmdletは,共通パラメータをサポートしています: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable.詳細については, <a href="を参照してください.https://go.microsoft.com/fwlink/?LinkID=113216">about_CommonParameters</a> でした.</p>
+<h2>輸入は</h2>
+<h3>System.String でした.</h3>
+<p>このcmdletへのファイルパスを含む文字列をパイプすることができます.</p>
+<h2>輸出は</h2>
+<h3>システム管理 自動化 署名</h3>
+<p>このcmdletは,設定した値を表す <strong>Signature</strong>オブジェクトを返します.</p>
+<h2>NOTES  記事ができました.</h2>
+<h2>関連リンク</h2>
+<p><a href="/windows-hardware/drivers/install/authenticode">Authenticode</a> </p>
+<p><a href="Get-AuthenticodeSignature.md">Get-AuthenticodeSignature</a> について</p>
+<p><a href="Get-ExecutionPolicy.md">Get-ExecutionPolicy</a> について</p>
+<p>[PfxCertificate] (PfxCertificate.md) を取得する</p>
+<p><a href="Set-ExecutionPolicy.md">Set-ExecutionPolicy</a> </p>
+<p><a href="../Microsoft.PowerShell.Core/About/about_Execution_Policies.md">about_Execution_Policies</a> について</p>
+<p><a href="../Microsoft.PowerShell.Core/About/about_Signing.md">about_Signing</a> について</p></section><section class="en-original"><pre class="source-original"># Set-AuthenticodeSignature
+
+## SYNOPSIS
+Adds an Authenticode signature to a PowerShell script or other file.
+
+## SYNTAX
+
+### ByPath (Default)
+
+```
+Set-AuthenticodeSignature [-Certificate] &lt;X509Certificate2&gt; [-IncludeChain &lt;String&gt;]
+ [-TimestampServer &lt;String&gt;] [-HashAlgorithm &lt;String&gt;] [-Force] [-FilePath] &lt;String[]&gt;
+ [-WhatIf] [-Confirm] [&lt;CommonParameters&gt;]
+```
+
+### ByLiteralPath
+
+```
+Set-AuthenticodeSignature [-Certificate] &lt;X509Certificate2&gt; [-IncludeChain &lt;String&gt;]
+ [-TimestampServer &lt;String&gt;] [-HashAlgorithm &lt;String&gt;] [-Force] -LiteralPath &lt;String[]&gt;
+ [-WhatIf] [-Confirm] [&lt;CommonParameters&gt;]
+```
+
+### ByContent
+
+```
+Set-AuthenticodeSignature [-Certificate] &lt;X509Certificate2&gt; [-IncludeChain &lt;String&gt;]
+ [-TimestampServer &lt;String&gt;] [-HashAlgorithm &lt;String&gt;] [-Force] -SourcePathOrExtension
+ &lt;String[]&gt; -Content &lt;Byte[]&gt; [-WhatIf] [-Confirm] [&lt;CommonParameters&gt;]
+```
+
+## DESCRIPTION
+
+The `Set-AuthenticodeSignature` cmdlet adds an Authenticode signature to any file that supports
+Subject Interface Package (SIP).
+
+In a PowerShell script file, the signature takes the form of a block of text that indicates the end
+of the instructions that are executed in the script. If there is a signature in the file when this
+cmdlet runs, that signature is removed.
+
+## EXAMPLES
+
+### Example 1 - Sign a script using a certificate from the local certificate store
+
+These commands retrieve a code-signing certificate from the PowerShell Certificate provider and use
+it to sign a PowerShell script.
+
+```powershell
+$cert=Get-ChildItem -Path Cert:\CurrentUser\My -CodeSigningCert
+$signingParameters = @{
+    FilePath      = &#x27;PsTestInternet2.ps1&#x27;
+    Certificate   = $cert
+    HashAlgorithm = &#x27;SHA256&#x27;
+}
+Set-AuthenticodeSignature @signingParameters
+```
+
+The first command uses the `Get-ChildItem` cmdlet and the PowerShell Certificate provider to get the
+certificates in the `Cert:\CurrentUser\My` subdirectory of the certificate store. The `Cert:` drive
+is the drive exposed by the Certificate provider. The **CodeSigningCert** parameter, which is
+supported only by the Certificate provider, limits the certificates retrieved to those with
+code-signing authority. The command stores the result in the `$cert` variable.
+
+The second command defines the `$signingParameters` variable as a **HashTable** with the parameters
+for the `Set-AuthenticodeSignature` cmdlet to sign the `PSTestInternet2.ps1` script. It uses the
+**FilePath** parameter to specify the name of the script, the **Certificate** parameter to specify
+that the certificate is stored in the `$cert` variable, and the **HashAlgorithm** parameter to set
+the hashing algorithm to SHA256.
+
+The third command signs the script by splatting the parameters defined in `$signingParameters`.
+
+&gt; [!NOTE]
+&gt; Using the **CodeSigningCert** parameter with `Get-ChildItem` only returns certificates that have
+&gt; code-signing authority and contain a private key. If there is no private key, the certificates
+&gt; can&#x27;t be used for signing.
+
+### Example 2 - Sign a script using a certificate from a PFX file
+
+These commands use the `Get-PfxCertificate` cmdlet to load a code signing certificate. Then, use it
+to sign a PowerShell script.
+
+```powershell
+$cert = Get-PfxCertificate -FilePath C:\Test\Mysign.pfx
+$signingParameters = @{
+    FilePath      = &#x27;ServerProps.ps1&#x27;
+    Certificate   = $cert
+    HashAlgorithm = &#x27;SHA256&#x27;
+}
+Set-AuthenticodeSignature @signingParameters
+```
+
+The first command uses the `Get-PfxCertificate` cmdlet to load the C:\Test\MySign.pfx certificate
+into the `$cert` variable.
+
+The second command defines the `$signingParameters` variable as a **HashTable** with the parameters
+for the `Set-AuthenticodeSignature` cmdlet to sign the `ServerProps.ps1` script. It uses the
+**FilePath** parameter to specify the name of the script, the **Certificate** parameter to specify
+that the certificate is stored in the `$cert` variable, and the **HashAlgorithm** parameter to set
+the hashing algorithm to SHA256.
+
+The third command signs the script by splatting the parameters defined in `$signingParameters`.
+
+If the certificate file is password protected, PowerShell prompts you for the password.
+
+### Example 3 - Add a signature that includes the root authority
+
+This command adds a digital signature that includes the root authority in the trust chain, and it&#x27;s
+signed by a third-party timestamp server.
+
+```powershell
+$signingParameters = @{
+    FilePath      = &#x27;C:\scripts\Remodel.ps1&#x27;
+    Certificate   = $cert
+    HashAlgorithm = &#x27;SHA256&#x27;
+    IncludeChain  = &#x27;All&#x27;
+    TimestampServer = &#x27;http://timestamp.fabrikam.com/scripts/timstamper.dll&#x27;
+}
+Set-AuthenticodeSignature @signingParameters
+```
+
+The command uses the **FilePath** parameter to specify the script being signed and the
+**Certificate** parameter to specify the certificate that&#x27;s saved in the `$cert` variable. It uses
+the **IncludeChain** parameter to include all of the signatures in the trust chain, including the
+root authority. It also uses the **TimeStampServer** parameter to add a timestamp to the signature.
+This prevents the script from failing when the certificate expires.
+
+The second command signs the script by splatting the parameters defined in `$signingParameters`.
+
+## PARAMETERS
+
+### -Certificate
+
+Specifies the certificate that will be used to sign the script or file. Enter a variable that stores
+an object representing the certificate or an expression that gets the certificate.
+
+To find a certificate, use `Get-PfxCertificate` or use the `Get-ChildItem` cmdlet in the Certificate
+`Cert:` drive. If the certificate isn&#x27;t valid or doesn&#x27;t have `code-signing` authority, the command
+fails.
+
+```yaml
+Type: System.Security.Cryptography.X509Certificates.X509Certificate2
+Parameter Sets: (All)
+Aliases:
+
+Required: True
+Position: 1
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Content
+
+This parameter appears in the syntax listing because it&#x27;s defined in the base class that
+`Set-AuthenticodeSignature` is derived from. However, support for this parameter isn&#x27;t implemented
+in `Set-AuthenticodeSignature`.
+
+```yaml
+Type: System.Byte[]
+Parameter Sets: ByContent
+Aliases:
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -FilePath
+
+Specifies the path to a file that&#x27;s being signed.
+
+```yaml
+Type: System.String[]
+Parameter Sets: ByPath
+Aliases:
+
+Required: True
+Position: 1
+Default value: None
+Accept pipeline input: True (ByPropertyName, ByValue)
+Accept wildcard characters: False
+```
+
+### -Force
+
+Allows the cmdlet to append a signature to a read-only file. Even using the **Force** parameter, the
+cmdlet can&#x27;t override security restrictions.
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+# Set-AuthenticodeSignature
+
+### -HashAlgorithm
+
+Specifies the hashing algorithm that Windows uses to compute the digital signature for the file.
+
+The default is SHA1. Files that are signed with a different hashing algorithm might not be
+recognized on other systems. Which algorithms are supported depends on the version of the operating
+system.
+
+For a list of possible values, see
+[HashAlgorithmName](xref:System.Security.Cryptography.HashAlgorithmName#properties) struct.
+
+```yaml
+Type: System.String
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: Null
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -IncludeChain
+
+Determines which certificates in the certificate trust chain are included in the digital signature.
+**NotRoot** is the default.
+
+Valid values are:
+
+- `Signer`: Includes only the signer&#x27;s certificate.
+- `NotRoot`: Includes all of the certificates in the certificate chain, except for the root
+  authority.
+- `All`: Includes all the certificates in the certificate chain.
+
+```yaml
+Type: System.String
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: NotRoot
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -LiteralPath
+
+Specifies the path to a file that&#x27;s being signed. Unlike **FilePath**, the value of the
+**LiteralPath** parameter is used exactly as it&#x27;s typed. No characters are interpreted as
+wildcards. If the path includes escape characters, enclose it in single quotation marks. Single
+quotation marks tell PowerShell not to interpret any characters as escape sequences.
+
+```yaml
+Type: System.String[]
+Parameter Sets: ByLiteralPath
+Aliases: PSPath
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -SourcePathOrExtension
+
+This parameter appears in the syntax listing because it&#x27;s defined in the base class that
+`Set-AuthenticodeSignature` is derived from. However, support for this parameter isn&#x27;t implemented
+in `Set-AuthenticodeSignature`.
+
+```yaml
+Type: System.String[]
+Parameter Sets: ByContent
+Aliases:
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName, ByValue)
+Accept wildcard characters: False
+```
+
+### -TimestampServer
+
+Uses the specified time stamp server to add a time stamp to the signature. Type the URL of the time
+stamp server as a string. The URL must start with `http://`.
+
+The time stamp represents the exact time that the certificate was added to the file. A time stamp
+prevents the script from failing if the certificate expires because users and programs can verify
+that the certificate was valid at the time of signing.
+
+```yaml
+Type: System.String
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Confirm
+
+Prompts you for confirmation before running the cmdlet.
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases: cf
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -WhatIf
+
+Shows what would happen if the cmdlet runs. The cmdlet isn&#x27;t run.
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases: wi
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### CommonParameters
+
+This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable,
+-InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose,
+-WarningAction, and -WarningVariable. For more information, see
+[about_CommonParameters](https://go.microsoft.com/fwlink/?LinkID=113216).
+
+## INPUTS
+
+### System.String
+
+You can pipe a string that contains the file path to this cmdlet.
+
+## OUTPUTS
+
+### System.Management.Automation.Signature
+
+This cmdlet returns a **Signature** object representing the value it set.
+
+## NOTES
+
+## RELATED LINKS
+
+[Authenticode](/windows-hardware/drivers/install/authenticode)
+
+[Get-AuthenticodeSignature](Get-AuthenticodeSignature.md)
+
+[Get-ExecutionPolicy](Get-ExecutionPolicy.md)
+
+[Get-PfxCertificate](Get-PfxCertificate.md)
+
+[Set-ExecutionPolicy](Set-ExecutionPolicy.md)
+
+[about_Execution_Policies](../Microsoft.PowerShell.Core/About/about_Execution_Policies.md)
+
+[about_Signing](../Microsoft.PowerShell.Core/About/about_Signing.md)</pre></section>

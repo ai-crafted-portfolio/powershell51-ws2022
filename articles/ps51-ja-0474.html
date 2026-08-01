@@ -1,0 +1,762 @@
+<!doctype html><meta charset="utf-8"><section class="jp-official"><h1>Add-BitLockerKeyProtector 追加する</h1>
+<h2>SYNOPSISは,BitLockerのボリュームのキー保護器を追加します.</h2>
+<h2>SYNTAXは,のシンタックスです.</h2>
+<h3>パスワード保護者 ```</h3>
+<p>Add-BitLockerKeyProtector [-MountPoint] <String[]> [-PasswordProtector] [[-Password] <SecureString>] [-WhatIf]
+ [-Confirm] [<CommonParameters>]</p>
+<pre><code>
+### RecoveryPasswordProtector  について```
+Add-BitLockerKeyProtector [-MountPoint] &lt;String[]&gt; [-RecoveryPasswordProtector] [[-RecoveryPassword] &lt;String&gt;]
+ [-WhatIf] [-Confirm] [&lt;CommonParameters&gt;]
+</code></pre>
+<h3>StartupKeyProtector は,スタートアップキーパーテクトです.```</h3>
+<p>Add-BitLockerKeyProtector [-MountPoint] <String[]> [-StartupKeyProtector] [-StartupKeyPath] <String> [-WhatIf]
+ [-Confirm] [<CommonParameters>]</p>
+<pre><code>
+### TpmAndStartupKeyProtector ```
+Add-BitLockerKeyProtector [-MountPoint] &lt;String[]&gt; [-StartupKeyPath] &lt;String&gt; [-TpmAndStartupKeyProtector]
+ [-WhatIf] [-Confirm] [&lt;CommonParameters&gt;]
+</code></pre>
+<h3>TpmAndPinAndStartupKeyProtector ```</h3>
+<p>Add-BitLockerKeyProtector [-MountPoint] <String[]> [-StartupKeyPath] <String>
+ [-TpmAndPinAndStartupKeyProtector] [[-Pin] <SecureString>] [-WhatIf] [-Confirm] [<CommonParameters>]</p>
+<pre><code>
+### SidProtector  でした.```
+Add-BitLockerKeyProtector [-MountPoint] &lt;String[]&gt; [-ADAccountOrGroupProtector] [-ADAccountOrGroup] &lt;String&gt;
+ [-Service] [-WhatIf] [-Confirm] [&lt;CommonParameters&gt;]
+</code></pre>
+<h3>TpmAndPinProtector ```</h3>
+<p>Add-BitLockerKeyProtector [-MountPoint] <String[]> [[-Pin] <SecureString>] [-TpmAndPinProtector] [-WhatIf]
+ [-Confirm] [<CommonParameters>]</p>
+<pre><code>
+### TpmProtector ```
+Add-BitLockerKeyProtector [-MountPoint] &lt;String[]&gt; [-TpmProtector] [-WhatIf] [-Confirm] [&lt;CommonParameters&gt;]
+</code></pre>
+<h3>RecoveryKeyProtector  キー保護者```</h3>
+<p>Add-BitLockerKeyProtector [-MountPoint] <String[]> [-RecoveryKeyProtector] [-RecoveryKeyPath] <String>
+ [-WhatIf] [-Confirm] [<CommonParameters>]</p>
+<pre><code>
+## 記述 追加BitLockerKeyProtectorが追加した cmdlet は,BitLocker Drive Encryption で保護されている音量キーの音量キーに保護符を追加します.
+
+BitLockerが保護されているドライブにアクセスする際に,例えばコンピュータを起動する際に,BitLockerは関連するキー保護者を要求します.例えば,ユーザーは PINを入力したり,鍵を含むUSBドライブを提供したりできます.BitLockerは暗号鍵を回収し,ドライブからのデータを読み出すために使用します.
+
+キー保護器の方法の組み合わせは以下の方法または方法の一つを使用できます.
+
+- 信頼されたプラットフォームモジュール (TPM).BitLockerはコンピュータのTPMを使用して暗号化キーを保護します.この保護体を指定すると,ユーザーは暗号化されたドライブにアクセスできますが,このドライブはTPMをホストするシステムボードに接続され,システム起動の整体性が未損である限りです.一般的に,TPMベースの保護はオペレーティングシステムボリュームのみに関連付けられます. -TPMと個人識別番号 (PIN) - BitLockerはTPMとユーザー提供された PINの組み合わせを使用します.PINは4から20桁または,強化された PINを許可した場合,4から20文字,シンボル,スペース,または番号を入力します. -TPM,入力,および起動キー.BitLockerはTPM,ユーザー提供された PINの組み合わせを使用します.外部鍵を含むメモリデバイス. - TPMと起動鍵. BitLocker は,USBメモリデバイスの TPMと入力の組み合わせを使用します. - Startup キー. - Password. BitLocker は,外部鍵を含むUSBメモリデバイスの入力を使用します. - Recovery キー. - BitLocker は,USBメモリデバイスの指定ファイルとして保存された復元鍵を使用します. - Password. BitLocker Recovery は,ドメイン復元パスワードを使用します. - Active Directory Domain Services (AD DS) アカウント. BitLocker は,認証を使用してデータボリュームを解除します.オペレーティングシステムボリュームは,このタイプの鍵保護を使用できません.
+
+複数の方法または組み合わせを同時に追加できますが,このcmdletをボリュームで1回以上実行できます.
+
+キー保護者を追加することは,単一の操作である;例えば,TPMとPINの組み合わせをキー保護者として使用するボリュームに起動キー保護者を追加すると,TPM,PIN,および起動キーを使用する単一のキー保護者がなく,二つのキー保護者が生じる.代わりに,TPM,PIN,および起動キーを使用する保護者を追加し,Remove-BitLockerKeyProtector** cmdlet を使用してTPMとPIN保護者を削除します.
+
+パスワードまたはPINキー保護者の場合は,安全な文字列を指定してください.安全な文字列を作成するために,ConvertTo-SecureString* cmdlet を使用できます.スクリプトで安全な文字列を使用し,パスワードの機密性を維持できます.
+
+このcmdlet はBitLocker のボリュームオブジェクトを返します.あなたがキー保護者として復元パスワードを選択しますが,48桁の復元パスワードを指定していない場合は,このcmdlet はランダムな48桁の復元パスワードを作成します.このcmdlet は,ボリュームオブジェクトの **KeyProtector**属性の **RecoveryPassword**フィールドとしてパスワードを保存します.
+
+キー保護者の一部として起動キーまたは復元キーを使用している場合は,キーを保存するためのパスを提供してください.このcmdletはBitLockerボリュームオブジェクトのKeyProtectorの **KeyFileName**フィールドにキーを含むファイルの名前を保存します.
+
+BitLockerの概要については, [BitLocker Drive Encryption Overview] を参照してください.https://technet.microsoft.com/en-us/library/cc732774.aspx) をTechNetで公開しました.
+
+## 例えは
+
+### 例1: キー保護器を追加する```
+PS C:\&gt;$SecureString = ConvertTo-SecureString &quot;1234&quot; -AsPlainText -Force
+PS C:\&gt;Add-BitLockerKeyProtector -MountPoint &quot;C:&quot; -Pin $SecureString -TPMandPinProtector
+</code></pre>
+<p>この例では,TPMとPINの組み合わせを,C文字で識別されたBitLockerボリュームのキー保護者として追加します.</p>
+<p>最初のコマンドは,Cmdletを使って,PINを含む安全な文字列を作成し,その文字列を$SecureString変数に保存します.<code>Get-Help ConvertTo-SecureString</code> .</p>
+<p>第二コマンドは,ドライブ文字C:.というコードを持つBitLockerボリュームに保護符を追加します.このコマンドは,このボリュームが TPMとPINの組み合わせを使用してキー保護符として使用することを指定し,$SecureString変数で保存されたPINを提供します.</p>
+<h3>例2:すべてのBitLockerボリュームに復元キーを追加する```</h3>
+<p>PS C:&gt;Get-BitLockerVolume | Add-BitLockerKeyProtector -RecoveryKeyPath "E:\Recovery\" -RecoveryKeyProtector</p>
+<pre><code>
+このコマンドは,現在のコンピュータのすべてのBitLockerボリュームを入手し,パイプ操作符を使用して,それらを **Add-BitLockerKeyProtector** cmdlet に転送します.この cmdlet は,ランダムに生成された復元キーが保存されるフォルダへの経路を指定し,これらのボリュームが復元キーを使用すると表示します.
+
+### 例3: 鍵保護者として認証を追加する```
+PS C:\&gt;Add-BitLockerKeyProtector -MountPoint &quot;C:&quot; -AdAccountOrGroup &quot;Western\SarahJones&quot; -AdAccountOrGroupProtector
+</code></pre>
+<p>このコマンドは, <em>MountPoint</em> パラメータで指定された BitLocker 容量に AD DS アカウントキー保護者を追加します.このコマンドは,アカウントを指定し,BitLocker がキー保護者としてユーザー認証を使用することを指定します.この容量にアクセスすると,BitLocker は Western\SarahJones ユーザーアカウントの認証を提示します.</p>
+<h2>パラメータは</h2>
+<h3>-ADAccountOrGroup ファイルは,Domain\User 形式を使用してアカウントを指定します.このcmdlet では,あなたが指定したアカウントが,ボリューム暗号化キーのキー保護キーとして追加されます.</h3>
+<pre><code class="language-yaml">Type: String
+Parameter Sets: SidProtector
+Aliases: sid
+
+Required: True
+Position: 1
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h1>Add-BitLockerKeyProtector 追加する</h1>
+<h3>-ADAccountOrGroupProtectorは,BitLockerがAD DSアカウントを,ボリューム暗号化キーを守るための保護者として使用していることを示す.</h3>
+<pre><code class="language-yaml">Type: SwitchParameter
+Parameter Sets: SidProtector
+Aliases: sidp
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>- 確認は,cmdletを実行する前に確認を提示します.</h3>
+<pre><code class="language-yaml">Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: cf
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-MountPoint はドライブ文字やBitLocker 音量オブジェクトの配列を指定します.このcmdlet は指定された音量にキー保護符を追加します.BitLocker 音量オブジェクトを取得するには, <strong>Get-BitLockerVolume</strong> cmdlet を使用します.</h3>
+<pre><code class="language-yaml">Type: String[]
+Parameter Sets: (All)
+Aliases: 
+
+Required: True
+Position: 0
+Default value: None
+Accept pipeline input: True (ByPropertyName, ByValue)
+Accept wildcard characters: False
+</code></pre>
+<h3>-Password はパスワードを含む安全な文字列オブジェクトを指定します.cmdlet は,ボリューム暗号化キーに保護者として指定されたパスワードを追加します.</h3>
+<pre><code class="language-yaml">Type: SecureString
+Parameter Sets: PasswordProtector
+Aliases: pw
+
+Required: False
+Position: 1
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-PasswordProtector バイトローカーがボリューム暗号化キーにパスワードを保護として使用することを表示します.</h3>
+<pre><code class="language-yaml">Type: SwitchParameter
+Parameter Sets: PasswordProtector
+Aliases: pwp
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-Pin は PIN を含む安全な文字列オブジェクトを指定します.cmdlet は,他のデータとともに指定された PIN をボリューム暗号化キーに保護として追加します.</h3>
+<pre><code class="language-yaml">Type: SecureString
+Parameter Sets: TpmAndPinAndStartupKeyProtector, TpmAndPinProtector
+Aliases: p
+
+Required: False
+Position: 1
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-RecoveryKeyPath フォルダへのパス指定します.このcmdletは,ボリューム暗号化キーに保護としてランダムに生成された復元キーを追加し,指定されたパスで保存します.</h3>
+<pre><code class="language-yaml">Type: String
+Parameter Sets: RecoveryKeyProtector
+Aliases: rk
+
+Required: True
+Position: 1
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-RecoveryKeyProtector 復元キー 保護鍵としてリクエストキーを使用していることを表示します.</h3>
+<pre><code class="language-yaml">Type: SwitchParameter
+Parameter Sets: RecoveryKeyProtector
+Aliases: rkp
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-RecoveryPassword は復旧パスワードを指定します.このパラメータを指定しない場合は,cmdlet はランダムなパスワードを作成します.48桁のパスワードを入力できます.cmdlet は,ボリューム暗号化キーに保護者として指定または作成されたパスワードを追加します.</h3>
+<pre><code class="language-yaml">Type: String
+Parameter Sets: RecoveryPasswordProtector
+Aliases: rp
+
+Required: False
+Position: 1
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-RecoveryPasswordProtector 復元パスワードは,BitLockerが復元パスワードをボリューム暗号化キーを守るための保護者として使用していることを示します.</h3>
+<pre><code class="language-yaml">Type: SwitchParameter
+Parameter Sets: RecoveryPasswordProtector
+Aliases: rpp
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-サービス このコンピュータのシステムアカウントが暗号化されたボリュームを解除することを表示します.</h3>
+<pre><code class="language-yaml">Type: SwitchParameter
+Parameter Sets: SidProtector
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-StartupKeyPath スタートアップキーへのパス指定.cmdletは,指定されたパスに保存されているキーをボリューム暗号化キーに保護者として追加します.</h3>
+<pre><code class="language-yaml">Type: String
+Parameter Sets: StartupKeyProtector, TpmAndStartupKeyProtector, TpmAndPinAndStartupKeyProtector
+Aliases: sk
+
+Required: True
+Position: 1
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-StartupKeyProtector スタートアップキー プロテクターは,BitLockerが起動キーを使ってボリューム暗号化キーを保護することを示しています.</h3>
+<pre><code class="language-yaml">Type: SwitchParameter
+Parameter Sets: StartupKeyProtector
+Aliases: skp
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-TpmAndPinAndStartupKeyProtectorは,BitLockerがTPM,PIN,スタートアップキーを組み合わせてボリューム暗号化キーを保護することを示しています.</h3>
+<pre><code class="language-yaml">Type: SwitchParameter
+Parameter Sets: TpmAndPinAndStartupKeyProtector
+Aliases: tpskp
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-TpmAndPinProtector ビットロックがTPMとPINの組み合わせを使って音量暗号化キーを守るという.</h3>
+<pre><code class="language-yaml">Type: SwitchParameter
+Parameter Sets: TpmAndPinProtector
+Aliases: tpp
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-TpmAndStartupKeyProtector  BitLocker は,TPMとスタートアップキーを組み合わせて,ボリューム暗号化キーを保護する機能として使用していることを示します.</h3>
+<pre><code class="language-yaml">Type: SwitchParameter
+Parameter Sets: TpmAndStartupKeyProtector
+Aliases: tskp
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-TpmProtector BitLockerが TPM をボリューム暗号化キーの保護者として使用することを表示します.</h3>
+<pre><code class="language-yaml">Type: SwitchParameter
+Parameter Sets: TpmProtector
+Aliases: tpmp
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-WhatIf が実行されればどうなるか示します.</h3>
+<pre><code class="language-yaml">Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: wi
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>共通パラメータ このcmdletは共通パラメータをサポートしています: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable.詳細については, <a href="を参照してください.https://go.microsoft.com/fwlink/?LinkID=113216">about_CommonParameters</a> でした.</h3>
+<h2>輸入は</h2>
+<h3>BitLockerVolume[],ストリング[]</h3>
+<h2>輸出は</h2>
+<h3>BitLockerVolume[]</h3>
+<h2>NOTES  記事ができました.</h2>
+<h2>関連リンク</h2>
+<p><a href="./Backup-BitLockerKeyProtector.md">Backup-BitLockerKeyProtector</a> </p>
+<p><a href="./Enable-BitLocker.md">Enable-BitLocker</a> でした.</p>
+<p><a href="./Get-BitLockerVolume.md">Get-BitLockerVolume</a> について</p>
+<p><a href="./Remove-BitLockerKeyProtector.md">Remove-BitLockerKeyProtector</a> </p></section><section class="en-original"><pre class="source-original"># Add-BitLockerKeyProtector
+
+## SYNOPSIS
+Adds a key protector for a BitLocker volume.
+
+## SYNTAX
+
+### PasswordProtector
+```
+Add-BitLockerKeyProtector [-MountPoint] &lt;String[]&gt; [-PasswordProtector] [[-Password] &lt;SecureString&gt;] [-WhatIf]
+ [-Confirm] [&lt;CommonParameters&gt;]
+```
+
+### RecoveryPasswordProtector
+```
+Add-BitLockerKeyProtector [-MountPoint] &lt;String[]&gt; [-RecoveryPasswordProtector] [[-RecoveryPassword] &lt;String&gt;]
+ [-WhatIf] [-Confirm] [&lt;CommonParameters&gt;]
+```
+
+### StartupKeyProtector
+```
+Add-BitLockerKeyProtector [-MountPoint] &lt;String[]&gt; [-StartupKeyProtector] [-StartupKeyPath] &lt;String&gt; [-WhatIf]
+ [-Confirm] [&lt;CommonParameters&gt;]
+```
+
+### TpmAndStartupKeyProtector
+```
+Add-BitLockerKeyProtector [-MountPoint] &lt;String[]&gt; [-StartupKeyPath] &lt;String&gt; [-TpmAndStartupKeyProtector]
+ [-WhatIf] [-Confirm] [&lt;CommonParameters&gt;]
+```
+
+### TpmAndPinAndStartupKeyProtector
+```
+Add-BitLockerKeyProtector [-MountPoint] &lt;String[]&gt; [-StartupKeyPath] &lt;String&gt;
+ [-TpmAndPinAndStartupKeyProtector] [[-Pin] &lt;SecureString&gt;] [-WhatIf] [-Confirm] [&lt;CommonParameters&gt;]
+```
+
+### SidProtector
+```
+Add-BitLockerKeyProtector [-MountPoint] &lt;String[]&gt; [-ADAccountOrGroupProtector] [-ADAccountOrGroup] &lt;String&gt;
+ [-Service] [-WhatIf] [-Confirm] [&lt;CommonParameters&gt;]
+```
+
+### TpmAndPinProtector
+```
+Add-BitLockerKeyProtector [-MountPoint] &lt;String[]&gt; [[-Pin] &lt;SecureString&gt;] [-TpmAndPinProtector] [-WhatIf]
+ [-Confirm] [&lt;CommonParameters&gt;]
+```
+
+### TpmProtector
+```
+Add-BitLockerKeyProtector [-MountPoint] &lt;String[]&gt; [-TpmProtector] [-WhatIf] [-Confirm] [&lt;CommonParameters&gt;]
+```
+
+### RecoveryKeyProtector
+```
+Add-BitLockerKeyProtector [-MountPoint] &lt;String[]&gt; [-RecoveryKeyProtector] [-RecoveryKeyPath] &lt;String&gt;
+ [-WhatIf] [-Confirm] [&lt;CommonParameters&gt;]
+```
+
+## DESCRIPTION
+The **Add-BitLockerKeyProtector** cmdlet adds a protector for the volume key of the volume protected with BitLocker Drive Encryption.
+
+When a user accesses a drive protected by BitLocker, such as when starting a computer, BitLocker requests the relevant key protector.
+For example, the user can enter a PIN or provide a USB drive that contains a key.
+BitLocker retrieves the encryption key and uses it to read data from the drive.
+
+You can use one of the following methods or combinations of methods for a key protector: 
+
+- Trusted Platform Module (TPM).
+BitLocker uses the computer&#x27;s TPM to protect the encryption key.
+If you specify this protector, users can access the encrypted drive as long as it is connected to the system board that hosts the TPM and the system boot integrity is intact.
+In general, TPM-based protectors can only be associated to an operating system volume.
+- TPM and Personal Identification Number (PIN).
+BitLocker uses a combination of the TPM and a user-supplied PIN.
+A PIN is four to twenty digits or, if you allow enhanced PINs, four to twenty letters, symbols, spaces, or numbers. 
+- TPM, PIN, and startup key.
+BitLocker uses a combination of the TPM, a user-supplied PIN, and input from of a USB memory device that contains an external key. 
+- TPM and startup key.
+BitLocker uses a combination of the TPM and input from of a USB memory device. 
+- Startup key.
+BitLocker uses input from of a USB memory device that contains the external key. 
+- Password.
+BitLocker uses a password. 
+- Recovery key.
+BitLocker uses a recovery key stored as a specified file in a USB memory device. 
+- Recovery password.
+BitLocker uses a recovery password. 
+- Active Directory Domain Services (AD DS) account.
+BitLocker uses domain authentication to unlock data volumes.
+Operating system volumes cannot use this type of key protector.
+
+You can add only one of these methods or combinations at a time, but you can run this cmdlet more than once on a volume.
+
+Adding a key protector is a single operation; for example, adding a startup key protector to a volume that uses the TPM and PIN combination as a key protector results in two key protectors, not a single key protector that uses TPM, PIN, and startup key.
+Instead, add a protector that uses TPM, PIN, and startup key and then remove the TPM and PIN protector by using the **Remove-BitLockerKeyProtector** cmdlet.
+
+For a password or PIN key protector, specify a secure string.
+You can use the **ConvertTo-SecureString** cmdlet to create a secure string.
+You can use secure strings in a script and still maintain confidentiality of passwords.
+
+This cmdlet returns a BitLocker volume object.
+If you choose recovery password as your key protector but do not specify a 48-digit recovery password, this cmdlet creates a random 48-digit recovery password.
+The cmdlet stores the password as the **RecoveryPassword** field of the **KeyProtector** attribute of the BitLocker volume object.
+
+If you use startup key or recovery key as part of your key protector, provide a path to store the key.
+This cmdlet stores the name of the file that contains the key in the **KeyFileName** field of the **KeyProtector** field in the BitLocker volume object.
+
+For an overview of BitLocker, see [BitLocker Drive Encryption Overview](https://technet.microsoft.com/en-us/library/cc732774.aspx) on TechNet.
+
+## EXAMPLES
+
+### Example 1: Add key protector
+```
+PS C:\&gt;$SecureString = ConvertTo-SecureString &quot;1234&quot; -AsPlainText -Force
+PS C:\&gt;Add-BitLockerKeyProtector -MountPoint &quot;C:&quot; -Pin $SecureString -TPMandPinProtector
+```
+
+This example adds a combination of the TPM and a PIN as key protector for the BitLocker volume identified with the drive letter C:.
+
+The first command uses the **ConvertTo-SecureString** cmdlet to create a secure string that contains a PIN and saves that string in the $SecureString variable.
+For more information about the **ConvertTo-SecureString** cmdlet, type `Get-Help ConvertTo-SecureString`.
+
+The second command adds a protector to the BitLocker volume that has the drive letter C:.
+The command specifies that this volume uses a combination of the TPM and the PIN as key protector and provides the PIN saved in the $SecureString variable.
+
+### Example 2: Add a recovery key for all BitLocker volumes
+```
+PS C:\&gt;Get-BitLockerVolume | Add-BitLockerKeyProtector -RecoveryKeyPath &quot;E:\Recovery\&quot; -RecoveryKeyProtector
+```
+
+This command gets all the BitLocker volumes for the current computer and passes them to the **Add-BitLockerKeyProtector** cmdlet by using the pipe operator.
+This cmdlet specifies a path to a folder where the randomly generated recovery key will be stored and indicates that these volumes use a recovery key as a key protector.
+
+### Example 3: Add credentials as a key protector
+```
+PS C:\&gt;Add-BitLockerKeyProtector -MountPoint &quot;C:&quot; -AdAccountOrGroup &quot;Western\SarahJones&quot; -AdAccountOrGroupProtector
+```
+
+This command adds an AD DS account key protector to the BitLocker volume specified by the *MountPoint* parameter.
+The command specifies an account and specifies that BitLocker uses user credentials as a key protector.
+When a user accesses this volume, BitLocker prompts for credentials for the user account Western\SarahJones.
+
+## PARAMETERS
+
+### -ADAccountOrGroup
+Specifies an account using the format Domain\User.
+This cmdlet adds the account you specify as a key protector for the volume encryption key.
+
+```yaml
+Type: String
+Parameter Sets: SidProtector
+Aliases: sid
+
+Required: True
+Position: 1
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+# Add-BitLockerKeyProtector
+
+### -ADAccountOrGroupProtector
+Indicates that BitLocker uses an AD DS account as a protector for the volume encryption key.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: SidProtector
+Aliases: sidp
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Confirm
+Prompts you for confirmation before running the cmdlet.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: cf
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -MountPoint
+Specifies an array of drive letters or BitLocker volume objects.
+This cmdlet adds a key protector to the volumes specified.
+To obtain a BitLocker volume object, use the **Get-BitLockerVolume** cmdlet.
+
+```yaml
+Type: String[]
+Parameter Sets: (All)
+Aliases: 
+
+Required: True
+Position: 0
+Default value: None
+Accept pipeline input: True (ByPropertyName, ByValue)
+Accept wildcard characters: False
+```
+
+### -Password
+Specifies a secure string object that contains a password.
+The cmdlet adds the password specified as a protector for the volume encryption key.
+
+```yaml
+Type: SecureString
+Parameter Sets: PasswordProtector
+Aliases: pw
+
+Required: False
+Position: 1
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -PasswordProtector
+Indicates that BitLocker uses a password as a protector for the volume encryption key.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: PasswordProtector
+Aliases: pwp
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Pin
+Specifies a secure string object that contains a PIN.
+The cmdlet adds the PIN specified, with other data, as a protector for the volume encryption key.
+
+```yaml
+Type: SecureString
+Parameter Sets: TpmAndPinAndStartupKeyProtector, TpmAndPinProtector
+Aliases: p
+
+Required: False
+Position: 1
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -RecoveryKeyPath
+Specifies a path to a folder.
+This cmdlet adds a randomly generated recovery key as a protector for the volume encryption key and stores it in the specified path.
+
+```yaml
+Type: String
+Parameter Sets: RecoveryKeyProtector
+Aliases: rk
+
+Required: True
+Position: 1
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -RecoveryKeyProtector
+Indicates that BitLocker uses a recovery key as a protector for the volume encryption key.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: RecoveryKeyProtector
+Aliases: rkp
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -RecoveryPassword
+Specifies a recovery password.
+If you do not specify this parameter, the cmdlet creates a random password.
+You can enter a 48 digit password.
+The cmdlet adds the password specified or created as a protector for the volume encryption key.
+
+```yaml
+Type: String
+Parameter Sets: RecoveryPasswordProtector
+Aliases: rp
+
+Required: False
+Position: 1
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -RecoveryPasswordProtector
+Indicates that BitLocker uses a recovery password as a protector for the volume encryption key.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: RecoveryPasswordProtector
+Aliases: rpp
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Service
+Indicates that the system account for this computer unlocks the encrypted volume.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: SidProtector
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -StartupKeyPath
+Specifies a path to a startup key.
+The cmdlet adds the key stored in the specified path as a protector for the volume encryption key.
+
+```yaml
+Type: String
+Parameter Sets: StartupKeyProtector, TpmAndStartupKeyProtector, TpmAndPinAndStartupKeyProtector
+Aliases: sk
+
+Required: True
+Position: 1
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -StartupKeyProtector
+Indicates that BitLocker uses a startup key as a protector for the volume encryption key.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: StartupKeyProtector
+Aliases: skp
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -TpmAndPinAndStartupKeyProtector
+Indicates that BitLocker uses a combination of TPM, a PIN, and a startup key as a protector for the volume encryption key.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: TpmAndPinAndStartupKeyProtector
+Aliases: tpskp
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -TpmAndPinProtector
+Indicates that BitLocker uses a combination of TPM and a PIN as a protector for the volume encryption key.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: TpmAndPinProtector
+Aliases: tpp
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -TpmAndStartupKeyProtector
+Indicates that BitLocker uses a combination of TPM and a startup key as a protector for the volume encryption key.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: TpmAndStartupKeyProtector
+Aliases: tskp
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -TpmProtector
+Indicates that BitLocker uses TPM as a protector for the volume encryption key.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: TpmProtector
+Aliases: tpmp
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -WhatIf
+Shows what would happen if the cmdlet runs.
+The cmdlet is not run.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: wi
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### CommonParameters
+This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable. For more information, see [about_CommonParameters](https://go.microsoft.com/fwlink/?LinkID=113216).
+
+## INPUTS
+
+### BitLockerVolume[], string[]
+
+## OUTPUTS
+
+### BitLockerVolume[]
+
+## NOTES
+
+## RELATED LINKS
+
+[Backup-BitLockerKeyProtector](./Backup-BitLockerKeyProtector.md)
+
+[Enable-BitLocker](./Enable-BitLocker.md)
+
+[Get-BitLockerVolume](./Get-BitLockerVolume.md)
+
+[Remove-BitLockerKeyProtector](./Remove-BitLockerKeyProtector.md)</pre></section>

@@ -1,0 +1,380 @@
+<!doctype html><meta charset="utf-8"><section class="jp-official"><h1>about_PSReadLineについて</h1>
+<h2>短編説明</h2>
+<p>PSReadLineはPowerShellコンソールでコマンドライン編集の体験を向上させています.</p>
+<h2>長い説明</h2>
+<p>Windows PowerShell 5.1でリリースされたバージョン以来,PSReadLineに多くの更新がされています.</p>
+<ul>
+<li>v2.4.5 は PowerShell 7.6.0-rc.1 で初めて発送されました - v2.3.6 は PowerShell 7.4.7 と 7.5.0 で初めて発送されました - v2.3.5 は PowerShell 7.4.2 と 7.5.0-preview.3 で初めて発送されました - v2.3.4 は PowerShell 7.4.0-rc.1 で初めて発送されました - v2.2.6 は PowerShell 7.3.0 で初めて発送されました - v2.2.1.0 は PowerShell 7.2.5 で初めて発送されました - v2.0.4 は PowerShell 7.0.11 で初めて発送されました - v2.0.0 は Windows PowerShell 5.1  で初めて発送されました</li>
+</ul>
+<p>バージョンの違いについての詳細については, [about_PSReadLine_Release_Notes] (PSReadLine_Release_Notes.md) を参照してください.</p>
+<p>PSReadLineの現在のバージョンは,Windows PowerShell 5.1 以降でインストール・利用できます.一部の機能には,PowerShell 7.2 以降を動かす必要があります.</p>
+<p>PSReadLineはPowerShellコンソールで強力なコマンドライン編集体験を提供します.</p>
+<ul>
+<li>コマンドラインの構文色 - 構文エラーの視覚表示 - より良い多行式体験 (編集と履歴の両方) - 定番鍵結合 - Cmdと Emacs モード - 多くの構成オプション - バッシュスタイル完成 (Cmdモードでオプション, Emacsモードでデフォルト) - Emacs yank/kill-ring - PowerShell トークンベースの"word"移動と削除 - 予測インテリセンスは - 動的なコンソールでヘルプのダイナミック表示を制御するコマンドラインの位置を失うことなく</li>
+</ul>
+<p>PSReadLineは PowerShell 5.1 またはそれ以降を必要とする.PSReadLineはデフォルトの Windows コンソールホスト,Windows Terminal,およびVisual Studio Code を使用する.Windows PowerShell ISEでは動作しません.</p>
+<p>PSReadLineはPowerShellギャラリーからインストールできます.サポートされているバージョンのPowerShellでPSReadLineをインストールするには,次のコマンドを実行します.</p>
+<pre><code class="language-powershell">Install-Module -Name PSReadLine -AllowClobber -Force
+</code></pre>
+<h2>予測インテリセンスの知識</h2>
+<p>Predictive IntelliSenseはタブ完成という概念の追加で,コマンドを成功に完了させるのにユーザを助けます.ユーザの履歴と追加のドメイン特定プラグインから予測を一致させる上で,完全なコマンドを発見し,編集し,実行することができます.</p>
+<h3>予測インテリセンスを有効にします.</h3>
+<p>Predictive IntelliSense はデフォルトで無効になっています.予測を有効にするには,次のコマンドを実行します:</p>
+<pre><code class="language-powershell">Set-PSReadLineOption -PredictionSource History
+</code></pre>
+<p><strong>PredictionSource</strong> パラメータは,ドメイン特定およびカスタム要件のためのプラグインも受け入れることができます.</p>
+<p>予測インテリセンスを無効にするには,ただ実行してください:</p>
+<pre><code class="language-powershell">Set-PSReadLineOption -PredictionSource None
+</code></pre>
+<h2>定番鍵の結合は</h2>
+<p>PSReadLine は,  を使ってカスタムキーバインドをサポートしています.<code>Set-PSReadLineKeyHandler</code>cmdlet.ほとんどのカスタムキーバインドは,例えばという[bindable functions][02]のいずれかを呼び出す.</p>
+<pre><code class="language-powershell">Set-PSReadLineKeyHandler -Key UpArrow -Function HistorySearchBackward
+</code></pre>
+<p>脚本ブロックをキーに結びつけることができます.脚本ブロックは,たいていあなたが望むものを作ることができます.いくつかの有用な例はを含む.</p>
+<p>-コマンドラインを編集する - 新しいウィンドウを開く (例えば,Help) -コマンドラインを変更せずにディレクトリを変更する</p>
+<p>The ScriptBlock は2つの議論を受けます:</p>
+<ul>
+<li>
+<p>-<code>$key</code><strong>[ConsoleKeyInfo]</strong> オーケストラ結合を誘発した鍵である** オブジェクト.同じスクリプトブロックを複数の鍵に結合し,鍵に応じて異なるアクションを実行する必要がある場合は,チェックをします.<code>$key</code>多くのカスタムバインドは,この議論を無視します.</p>
+</li>
+<li>
+<p>-<code>$arg</code>任意の議論.ほとんどの場合,これはユーザがDigitArgumentのキー結合から切り離した整数論点である.あなたの結合が議論を受け入れない場合,この議論を無視することは合理的です. -</p>
+</li>
+</ul>
+<p>実行せずに履歴にコマンドラインを追加する例を見てみましょう.これは何かを忘れましたが,すでに入力したコマンドラインを再び入力したくないことを認識すると便利です.</p>
+<pre><code class="language-powershell">$parameters = @{
+    Key = 'Alt+w'
+    BriefDescription = 'SaveInHistory'
+    LongDescription = 'Save current line in history but do not execute'
+    ScriptBlock = {
+      param($key, $arg)   # The arguments are ignored in this example
+
+      # GetBufferState gives us the command line (with the cursor position)
+      $line = $null
+      $cursor = $null
+      [Microsoft.PowerShell.PSConsoleReadLine]::GetBufferState([ref]$line,
+        [ref]$cursor)
+
+      # AddToHistory saves the line in history, but does not execute it.
+      [Microsoft.PowerShell.PSConsoleReadLine]::AddToHistory($line)
+
+      # RevertLine is like pressing Escape.
+      [Microsoft.PowerShell.PSConsoleReadLine]::RevertLine()
+  }
+}
+Set-PSReadLineKeyHandler @parameters
+</code></pre>
+<p>ファイルで多くの例をご覧いただけます.<code>SamplePSReadLineProfile.ps1</code>インストールされているPSReadLine モジュールフォルダです.</p>
+<p>ほとんどのキーバインドはコマンドラインの編集にいくつかのヘルパー機能を使用しています.これらのAPIは[about_PSReadLine_Functions][02]で文書化されています.</p>
+<h2>筆記</h2>
+<h1>about_PSReadLineについて</h1>
+<h3>司令部の歴史</h3>
+<p>PSReadLineは,コマンドラインから入力したすべてのコマンドとデータを含む履歴ファイルを維持しています.<code>$($Host.Name)_history.txt</code>例えば,Visual Studio Code で PowerShell Extension コンソール の履歴ファイルは  です.<code>Visual Studio Code Host_history.txt</code>履歴ファイルは,  に保存されています.<code>$Env:APPDATA\Microsoft\Windows\PowerShell\PSReadLine</code> .</p>
+<p>履歴はパスワードを含む敏感データを含み得る.PSReadLineは,敏感情報をフィルタアウトしようとします.以下のコマンド文字列が履歴ファイルに書き込まれていません.</p>
+<ul>
+<li>-<code>password</code> - -<code>asplaintext</code> - -<code>token</code> - -<code>apikey</code> - -<code>secret</code></li>
+</ul>
+<h4>PSReadLine 2.2.0は,敏感データフィルタリングを向上させる.</h4>
+<ul>
+<li>解析されたコマンドラインのPowerShell Abstract Syntax Tree (AST) を利用して,敏感なデータを検索します. - <strong>SecretManagement</strong> モジュールから安全なcmdletsの許可リストを使用して,それらのコマンドを歴史に追加することができます. 許可リストには: - <code>Get-Secret</code> - -<code>Get-SecretInfo</code> - -<code>Get-SecretVault</code> - -<code>Register-SecretVault</code> - -<code>Remove-Secret</code> - -<code>Set-SecretInfo</code> - -<code>Set-SecretVaultDefault</code> - -<code>Test-SecretVault</code> - -<code>Unlock-SecretVault</code> - -<code>Unregister-SecretVault</code></li>
+</ul>
+<p>例えば,履歴ファイルに以下のコマンドが書き込まれることが許されています.</p>
+<pre><code class="language-powershell">Get-Secret PSGalleryApiKey -AsPlainText # Get-Secret is in the allowlist
+$token = Get-Secret -Name github-token -Vault MySecret
+[MyType]::CallRestAPI($token, $url, $args)
+$template -f $token
+</code></pre>
+<p>次のコマンドは,履歴ファイルに書き込まれておらず,</p>
+<pre><code class="language-powershell">$token = 'abcd' # Assign expr-value to sensitive variable name.
+Set-Secret abc $mySecret # Set-Secret is not in the allowlist.
+ConvertTo-SecureString stringValue -AsPlainText # '-AsPlainText' is an alert.
+Invoke-WebRequest -Token xxx # Expr-value as argument to '-Token'.
+Get-ResultFromTwo -Secret1 (Get-Secret -Name blah -AsPlainText) -Secret2 sdv87ysdfayf798hfasd8f7ha # '-Secret2' has expr-value argument.
+</code></pre>
+<p>履歴ファイルに書き込まない他のコマンドがある場合は,  の <strong>AddToHistoryHandler</strong> パラメータを使用できます.<code>Set-PSReadLineOption</code>cmdlet. <strong>AddToHistoryHandler</strong> をどのように使うのかの一例については, [Set-PSReadLineOption][01] の例7を参照してください.</p>
+<h4>PSReadLine 2.3.4は,敏感データフィルタリングを向上させる.</h4>
+<p>既定に敏感な履歴スクラブを改良して,履歴に安全なプロパティアクセスが含まれるようにしました.</p>
+<p>敏感な文字列がプロパティアクセスの一部である場合:</p>
+<ul>
+<li>このメンバーアクセス操作が割り当ての一部でない場合,我々はそれを安全とみなす - そうでなければ,右側のパイプラインまたは変数であれば,我々はそれを安全とみなす</li>
+</ul>
+<p>例えば,以下の使用例は安全と考えられ,履歴に保存することができます.</p>
+<pre><code class="language-powershell">$a.Secret = Get-Secret -Name github-token -Vault MySecret
+$a.Secret = $secret
+$a.Password.Secret | Set-Value
+$token = (Get-AzAccessToken -ResourceUrl 'https://app.contoso.com').Token
+</code></pre>
+<p>このリリースでは,敏感な履歴スクラブも改善され,Tokenを利用してトークンを回収できるようにしました.<code>az</code>     <code>gcloud</code>そして,そして,<code>kubectl</code>コマンドラインツールです.</p>
+<p>例えば,以下の使用例は安全と考えられ,履歴に保存することができます.</p>
+<pre><code class="language-powershell">kubectl get secrets
+kubectl get secret db-user-pass -o jsonpath='{.data.password}' | base64 --decode
+kubectl describe secret db-user-pass
+az account get-access-token --resource=https://app.contoso.com --query accessToken --output tsv
+$Env:PGPASS = gcloud auth print-access-token
+</code></pre>
+<h3>フィードバック&amp;PSReadLineへの貢献</h3>
+<p>[GitHubのPSReadLine] [03]</p>
+<p>引き寄せ要請を提出したり,GitHubページでフィードバックを提出したりできます.</p>
+<h2>また, を参照してください.</h2>
+<ul>
+<li>PSReadLineはGNU [readline][04]ライブラリによって大きく影響されています.</li>
+</ul>
+<p>&lt;!--リンク参照 --&gt; [01]: xref:PSReadLine.Set-PSReadLineOption#example-7-use-historyhandler-to-filter-commands-added-to-history [02]: about_PSReadLine_Functions.md [03]: https://github.com/PowerShell/PSReadLine[04]: https://tiswww.case.edu/php/chet/readline/rltop.html</p></section><section class="en-original"><pre class="source-original"># about_PSReadLine
+
+## Short description
+
+PSReadLine provides an improved command-line editing experience in the
+PowerShell console.
+
+## Long description
+
+There have been many updates to PSReadLine since the version that ships in
+Windows PowerShell 5.1.
+
+- v2.4.5 first shipped in PowerShell 7.6.0-rc.1
+- v2.3.6 first shipped in PowerShell 7.4.7 and 7.5.0
+- v2.3.5 first shipped in PowerShell 7.4.2 and 7.5.0-preview.3
+- v2.3.4 first shipped in PowerShell 7.4.0-rc.1
+- v2.2.6 first shipped in PowerShell 7.3.0
+- v2.1.0 first shipped in PowerShell 7.2.5
+- v2.0.4 first shipped in PowerShell 7.0.11
+- v2.0.0 ships in Windows PowerShell 5.1
+
+For more information about version differences, see
+[about_PSReadLine_Release_Notes](about_PSReadLine_Release_Notes.md).
+
+The current version of PSReadLine can be installed and used on Windows
+PowerShell 5.1 and newer. For some features, you need to be running PowerShell
+7.2 or higher.
+
+PSReadLine provides a powerful command-line editing experience for the
+PowerShell console. It provides:
+
+- Syntax coloring of the command line
+- A visual indication of syntax errors
+- A better multi-line experience (both editing and history)
+- Customizable key bindings
+- Cmd and Emacs modes
+- Many configuration options
+- Bash style completion (optional in Cmd mode, default in Emacs mode)
+- Emacs yank/kill-ring
+- PowerShell token based &quot;word&quot; movement and deletion
+- Predictive IntelliSense
+- Dynamic display of Help in the console without losing your place on the
+  command line
+
+PSReadLine requires PowerShell 5.1, or newer. PSReadLine works with the default
+Windows console host, Windows Terminal, and Visual Studio Code. It doesn&#x27;t work
+in the Windows PowerShell ISE.
+
+PSReadLine can be installed from the PowerShell Gallery. To install PSReadLine
+in a supported version of PowerShell run the following command.
+
+```powershell
+Install-Module -Name PSReadLine -AllowClobber -Force
+```
+
+## Predictive IntelliSense
+
+Predictive IntelliSense is an addition to the concept of tab completion that
+assists the user in successfully completing commands. It enables users to
+discover, edit, and execute full commands based on matching predictions from
+the user&#x27;s history and additional domain specific plugins.
+
+### Enable Predictive IntelliSense
+
+Predictive IntelliSense is disabled by default. To enable predictions, just run
+the following command:
+
+```powershell
+Set-PSReadLineOption -PredictionSource History
+```
+
+The **PredictionSource** parameter can also accept plugins for domain specific
+and custom requirements.
+
+To disable Predictive IntelliSense, just run:
+
+```powershell
+Set-PSReadLineOption -PredictionSource None
+```
+
+## Custom key bindings
+
+PSReadLine supports custom key bindings using the `Set-PSReadLineKeyHandler`
+cmdlet. Most custom key bindings call one of the [bindable functions][02], for
+example
+
+```powershell
+Set-PSReadLineKeyHandler -Key UpArrow -Function HistorySearchBackward
+```
+
+You can bind a ScriptBlock to a key. The ScriptBlock can do pretty much
+anything you want. Some useful examples include
+
+- edit the command line
+- opening a new window (for example, help)
+- change directories without changing the command line
+
+The ScriptBlock receives two arguments:
+
+- `$key` - A **[ConsoleKeyInfo]** object that is the key that triggered the
+  custom binding. If you bind the same ScriptBlock to multiple keys and need to
+  perform different actions depending on the key, you can check `$key`. Many
+  custom bindings ignore this argument.
+
+- `$arg` - An arbitrary argument. Most often, this would be an integer
+  argument that the user passes from the key bindings DigitArgument. If your
+  binding doesn&#x27;t accept arguments, it&#x27;s reasonable to ignore this argument.
+
+Let&#x27;s take a look at an example that adds a command line to history without
+executing it. This is useful when you realize you forgot to do something, but
+don&#x27;t want to re-enter the command line you&#x27;ve already entered.
+
+```powershell
+$parameters = @{
+    Key = &#x27;Alt+w&#x27;
+    BriefDescription = &#x27;SaveInHistory&#x27;
+    LongDescription = &#x27;Save current line in history but do not execute&#x27;
+    ScriptBlock = {
+      param($key, $arg)   # The arguments are ignored in this example
+
+      # GetBufferState gives us the command line (with the cursor position)
+      $line = $null
+      $cursor = $null
+      [Microsoft.PowerShell.PSConsoleReadLine]::GetBufferState([ref]$line,
+        [ref]$cursor)
+
+      # AddToHistory saves the line in history, but does not execute it.
+      [Microsoft.PowerShell.PSConsoleReadLine]::AddToHistory($line)
+
+      # RevertLine is like pressing Escape.
+      [Microsoft.PowerShell.PSConsoleReadLine]::RevertLine()
+  }
+}
+Set-PSReadLineKeyHandler @parameters
+```
+
+You can see many more examples in the file `SamplePSReadLineProfile.ps1`, which
+is installed in the **PSReadLine** module folder.
+
+Most key bindings use some helper functions for editing the command line. Those
+APIs are documented in [about_PSReadLine_Functions][02].
+
+## Notes
+
+# about_PSReadLine
+
+### Command History
+
+PSReadLine maintains a history file containing all the commands and data you&#x27;ve
+entered from the command line. The history file is a file named
+`$($Host.Name)_history.txt`, which results in a unique file for each host. For
+example, the history file for the PowerShell Extension console in Visual Studio
+Code is `Visual Studio Code Host_history.txt`.
+The history file is stored at
+`$Env:APPDATA\Microsoft\Windows\PowerShell\PSReadLine`.
+
+The history can contain sensitive data including passwords. PSReadLine attempts
+to filter out sensitive information. Any command lines containing the following
+strings aren&#x27;t written to the history file.
+
+- `password`
+- `asplaintext`
+- `token`
+- `apikey`
+- `secret`
+
+#### PSReadLine 2.2.0 improves the filtering of sensitive data
+
+- Uses the PowerShell Abstract Syntax Tree (AST) of the parsed command line to
+  look for sensitive data.
+- Uses an allowlist of safe cmdlets from the **SecretManagement** module to
+  allow those commands to be added to the history. The allowlist contains:
+  - `Get-Secret`
+  - `Get-SecretInfo`
+  - `Get-SecretVault`
+  - `Register-SecretVault`
+  - `Remove-Secret`
+  - `Set-SecretInfo`
+  - `Set-SecretVaultDefault`
+  - `Test-SecretVault`
+  - `Unlock-SecretVault`
+  - `Unregister-SecretVault`
+
+For example, the following commands are allowed to be written to the history
+file:
+
+```powershell
+Get-Secret PSGalleryApiKey -AsPlainText # Get-Secret is in the allowlist
+$token = Get-Secret -Name github-token -Vault MySecret
+[MyType]::CallRestAPI($token, $url, $args)
+$template -f $token
+```
+
+The following commands aren&#x27;t being written to the history file:
+
+```powershell
+$token = &#x27;abcd&#x27; # Assign expr-value to sensitive variable name.
+Set-Secret abc $mySecret # Set-Secret is not in the allowlist.
+ConvertTo-SecureString stringValue -AsPlainText # &#x27;-AsPlainText&#x27; is an alert.
+Invoke-WebRequest -Token xxx # Expr-value as argument to &#x27;-Token&#x27;.
+Get-ResultFromTwo -Secret1 (Get-Secret -Name blah -AsPlainText) -Secret2 sdv87ysdfayf798hfasd8f7ha # &#x27;-Secret2&#x27; has expr-value argument.
+```
+
+If there are other commands you don&#x27;t want written to the history files, you
+can use the **AddToHistoryHandler** parameter of the `Set-PSReadLineOption`
+cmdlet. For an example of how to use **AddToHistoryHandler**, see Example 7 of
+[Set-PSReadLineOption][01].
+
+#### PSReadLine 2.3.4 improves the filtering of sensitive data
+
+Improved the default sensitive history scrubbing to allow the history to
+contain safe property access.
+
+When the sensitive string is part of a property access:
+
+- If this member access operation isn&#x27;t part of an assignment, then we
+  consider it safe
+- Otherwise, if the right-hand side is a pipeline or a variable, we also
+  consider it safe
+
+For example, the following use cases are considered safe and can be saved to
+the history.
+
+```powershell
+$a.Secret = Get-Secret -Name github-token -Vault MySecret
+$a.Secret = $secret
+$a.Password.Secret | Set-Value
+$token = (Get-AzAccessToken -ResourceUrl &#x27;https://app.contoso.com&#x27;).Token
+```
+
+The release also improved the sensitive history scrubbing to allow retrieving
+token using the `az`, `gcloud`, and `kubectl` command-line tools.
+
+For example, the following use cases are considered safe and can be saved to
+the history.
+
+```powershell
+kubectl get secrets
+kubectl get secret db-user-pass -o jsonpath=&#x27;{.data.password}&#x27; | base64 --decode
+kubectl describe secret db-user-pass
+az account get-access-token --resource=https://app.contoso.com --query accessToken --output tsv
+$Env:PGPASS = gcloud auth print-access-token
+```
+
+### Feedback &amp; contributing to PSReadLine
+
+[PSReadLine on GitHub][03]
+
+Feel free to submit a pull request or submit feedback on the GitHub page.
+
+## See also
+
+- PSReadLine is heavily influenced by the GNU [readline][04] library.
+
+&lt;!-- link references --&gt;
+[01]: xref:PSReadLine.Set-PSReadLineOption#example-7-use-historyhandler-to-filter-commands-added-to-history
+[02]: about_PSReadLine_Functions.md
+[03]: https://github.com/PowerShell/PSReadLine
+[04]: https://tiswww.case.edu/php/chet/readline/rltop.html</pre></section>

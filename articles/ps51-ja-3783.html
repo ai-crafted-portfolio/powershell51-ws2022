@@ -1,0 +1,833 @@
+<!doctype html><meta charset="utf-8"><section class="jp-official"><h1>新型PSDriveです.</h1>
+<h2>SYNOPSISは,アイテムデータストア内の場所と関連付けられている一時的なおよび永続的なドライブを作成します.</h2>
+<h2>SYNTAXは,のシンタックスです.</h2>
+<h3></h3>
+<pre><code>New-PSDrive [-Name] &lt;String&gt; [-PSProvider] &lt;String&gt; [-Root] &lt;String&gt; [-Description &lt;String&gt;]
+ [-Scope &lt;String&gt;] [-Persist] [-Credential &lt;PSCredential&gt;] [-WhatIf] [-Confirm] [-UseTransaction]
+ [&lt;CommonParameters&gt;]
+</code></pre>
+<h2>記述は,</h2>
+<p><code>New-PSDrive</code>cmdlet は,ネットワークドライブ,ローカルコンピュータのディレクトリ,またはレジストリキーなどのデータストア内の場所にマッピングされたまたは関連付けられた一時的なおよび持続的なドライブを作成し,リモートコンピュータのファイルシステム位置に関連付けられた Windows マッピングされた持続的なネットワークドライブを作成します.</p>
+<p>臨時ドライブは,現在のPowerShellセッションと,現在のセッションで作成するセッションにのみ存在する.それらはPowerShellで有効な任意の名前を持ち,任意のローカルまたはリモートリソースにマッピングすることができます.関連するデータストア内のデータにアクセスするために,任意のマッピングされたネットワークドライブと同じように,一時的なPowerShellドライブを使用することができます.  を使って,ドライブ内の位置を変更できます.<code>Set-Location</code>ドライブの内容にアクセスするには,  を使います.<code>Get-Item</code>    <code>Get-ChildItem</code> .</p>
+<p>一時的なドライブがPowerShellにのみ知られているため,ファイル エクスプローラー,Windows Management Instrumentation (WMI),Component Object Model (COM),Microsoft .NET Framework,または などのツールを使用してアクセスすることはできません.<code>net use</code> .</p>
+<p>に以下の機能が追加されました.<code>New-PSDrive</code>PowerShell 3.0 で:</p>
+<p>ネットワークドライブを地図化した. の<strong>Persist</strong>パラメータを使用できます.<code>New-PSDrive</code>Windows のマッピングネットワークドライブを作成する.一時的なPowerShell ドライブとは異なり,Windows のマッピングネットワークドライブはセッション特異性ではありません.Windows で保存され,標準的な Windows ツール,例えば File Explorer と <strong>net usage</strong> を使用して管理できます.マッピングネットワークドライブにはドライブ文字の名前があり,リモートファイルシステム位置に接続する必要があります.あなたのコマンドがローカルで scoped され,ドットソースはありませんが, <strong>Persist</strong> パラメータは,コマンドが実行されている範囲を超えた <strong>PSDrive</strong> の作成を持続しません.実行している場合は <code>New-PSDrive</code>スクリプトを入力して,そのドライブが無期限に持続したい場合は,スクリプトをドットソースにする必要があります.最高の結果のために,新しいドライブを無期限に持続させるためには,コマンドに <strong>Scope</strong> パラメータを追加し,その値を <strong>Global</strong> に設定します.ドットソースに関する詳細については, [about_Scripts] を参照してください. /Microsoft.PowerShell.Core/About/about_Scripts.md#script-scope-and-dot-sourcing). - エクステンナルのドライブ.外部ドライブがコンピュータに接続されたとき,PowerShellは自動的に新しいドライブを表すファイルシステムに <strong>PSDrive</strong> を追加します.あなたはPowerShell を再起動する必要はありません.同様に,外部ドライブがコンピュータから接続が切れたとき,PowerShell は自動的に del を再起動します.削除されたドライブを表す <strong>PSDrive</strong> となります. - Universal Naming Convention (UNC) のパスのための認証.</p>
+<p><strong>Root</strong>パラメータの値は UNC パートであるとき,例えば <code>\\Server\Share</code><strong>PS</strong>Driveを作成するために, <strong>Credential</strong>パラメータの値で指定された認証が使用されます.そうでなければ,新しいファイルシステムドライブを作成するときに <strong>Credential</strong>は有効ではありません.</p>
+<p>代码サンプルの中には,線長の縮小と読める能力を向上させるためにスプラッティングを使用している.詳細については, [about_Splatting] (Microsoft.PowerShell.Core/About/about_Splatting.md) を参照してください.</p>
+<p>&gt; [!NOTE] &gt; <strong>Scope</strong>パラメータを使用しない限り,PSDrivesは,その範囲で作成されます.<code>New-PSDrive</code>コマンドが実行されました.</p>
+<h2>例えは</h2>
+<h3>例1:ネットワークシェアにマッピングされた一時ドライブを作成します.</h3>
+<p>この例では,ネットワークシェアにマッピングされた一時的なPowerShellドライブを作成します.</p>
+<pre><code class="language-powershell">New-PSDrive -Name &quot;Public&quot; -PSProvider &quot;FileSystem&quot; -Root &quot;\\Server01\Public&quot;
+</code></pre>
+<pre><code class="language-Output">Name       Provider      Root
+----       --------      ----
+Public     FileSystem    \\Server01\Public
+</code></pre>
+<p><code>New-PSDrive</code>名前というPowerShellドライブを指定するには <strong>Name</strong>パラメータを使用します.<code>Public</code><strong>PSProvider</strong>のパラメータと PowerShell を指定するパラメータです.<code>FileSystem</code><strong>Root</strong>パラメータは,ネットワークシェアの UNC パースを指定します.</p>
+<p>PowerShellセッションのコンテンツを表示するには: <code>Get-ChildItem -Path Public:</code></p>
+<h3>例2: 地元のディレクトリにマッピングされた一時ドライブを作成します.</h3>
+<p>この例では,ローカルコンピュータのディレクトリにアクセスできる一時的なPowerShellドライブを作成します.</p>
+<pre><code class="language-powershell">$parameters = @{
+    Name = &quot;MyDocs&quot;
+    PSProvider = &quot;FileSystem&quot;
+    Root = &quot;C:\Users\User01\Documents&quot;
+    Description = &quot;Maps to my My Documents folder.&quot;
+}
+New-PSDrive @parameters
+</code></pre>
+<pre><code class="language-Output">Name        Provider      Root
+----        --------      ----
+MyDocs      FileSystem    C:\Users\User01\Documents
+</code></pre>
+<p>スプラッティングはパラメータキーと値を作成します. <strong>Name</strong>パラメータはドライブ名, <strong>MyDocs</strong>を指定します. <strong>PSProvider</strong>パラメータはPowerShell を指定します.<code>FileSystem</code><strong>Root</strong>は,ローカルコンピュータのディレクトリを指定する. <strong>Description</strong>パラメータは,ドライブの目的を記述する. <code>New-PSDrive</code> を作成するために,スプレーされたパラメータを使用します.<code>MyDocs</code>ドライブです.</p>
+<p>PowerShellセッションのコンテンツを表示するには: <code>Get-ChildItem -Path MyDocs:</code></p>
+<h3>例3:レジストリキーに一時的なドライブを作成します.</h3>
+<p>この例では,レジストリキーへのアクセスを提供する一時的なPowerShellドライブを作成します.MyCompanyというドライブを作成し,そのドライブが にマッピングされます.<code>HKLM:\Software\MyCompany</code>登録鍵です.</p>
+<pre><code class="language-powershell">New-PSDrive -Name &quot;MyCompany&quot; -PSProvider &quot;Registry&quot; -Root &quot;HKLM:\Software\MyCompany&quot;
+</code></pre>
+<pre><code class="language-Output">Name           Provider      Root
+----           --------      ----
+MyCompany      Registry      HKLM:\Software\MyCompany
+</code></pre>
+<p><code>New-PSDrive</code>名前というPowerShellドライブを指定するには <strong>Name</strong>パラメータを使用します.<code>MyCompany</code><strong>PSProvider</strong>のパラメータと,PowerShellを指定するパラメータを入力します.<code>Registry</code><strong>Root</strong>パラメータは,レジストリプロバイダの位置を指定します.</p>
+<p>PowerShellセッションのコンテンツを表示するには: <code>Get-ChildItem -Path MyCompany:</code></p>
+<h1>新型PSDriveです.</h1>
+<h3>例4: 認証を活用して,持続的にマッピングされたネットワークドライブを作成します.</h3>
+<p>この例では,ドメインサービスアカウントの認証で認証されたネットワークドライブをマップします.認証を保存するPSCredential**オブジェクトやパスワードがSecureStringとしてどのように保存されるかについての詳細については,クレジット・パラメータの説明を参照してください.</p>
+<pre><code class="language-powershell">$cred = Get-Credential -Credential Contoso\ServiceAccount
+New-PSDrive -Name &quot;S&quot; -Root &quot;\\Server01\Scripts&quot; -Persist -PSProvider &quot;FileSystem&quot; -Credential $cred
+Net Use
+</code></pre>
+<pre><code class="language-Output">Status       Local     Remote                    Network
+---------------------------------------------------------
+OK           S:        \\Server01\Scripts        Microsoft Windows Network
+</code></pre>
+<p>&gt; [!NOTE] &gt; 覚えておいて,スクリプトで上記のスニペットを使用している場合は, <strong>Scope</strong>パラメータ値を&gt;"Global"に設定して,ドライブが現在の範囲の外に持続することを確認してください.</p>
+<p><code>$cred</code>サービスアカウントの認証情報を含むPSCredential**オブジェクトを保存する変数です.<code>Get-Credential</code>セキュリティストリングに保存されているパスワードを入力するよう促します.</p>
+<p><code>New-PSDrive</code>数つのパラメータを使用してマッピングされたネットワークドライブを作成します. <strong>Name</strong>は,  を指定します.<code>S</code>Windowsが受け入れているドライブ文字が定義されます.そして <strong>Root</strong> は<code>\\Server01\Scripts</code>リモートコンピュータの位置として設定されます. <strong>Persist</strong>はWindowsのネットワークドライブを作成し,ローカルコンピュータに保存されます. <strong>PSProvider</strong>は を指定します.<code>FileSystem</code><strong>Credential</strong>は, プロバイダを使用しています.<code>$cred</code>認証のためのサービスアカウントの認証を取得する変数です.</p>
+<p>マッピングされたドライブは,PowerShellセッション,ファイル エクスプローラー,および <strong>net usage</strong>などのツールでローカルコンピュータで見ることができます.PowerShellセッションからコンテンツを表示するには: <code>Get-ChildItem -Path S:</code></p>
+<h3>例5: 持続的および一時的なドライブを作成します.</h3>
+<p>この例では,持続的なマッピングネットワークドライブと,同じネットワークシェアにマッピングされた一時的なPowerShellドライブの違いを示しています.</p>
+<p>PowerShellセッションを閉じて新しいセッションを開くと,一時的な  が表示されます.<code>PSDrive:</code>isn't available,but the persistently  は利用できないが,持続可能である<code>X:</code>ドライブが利用可能である.ネットワークドライブをマッピングする方法を決める際,ドライブを使用する方法について考えてください.例えば,ドライブが持続可能かどうか,ドライブが他のWindows機能に可視であるかどうか.</p>
+<pre><code class="language-powershell">
+# Create a temporary PowerShell drive called PSDrive:
+
+# that's mapped to the \\Server01\Public network share.
+New-PSDrive -Name &quot;PSDrive&quot; -PSProvider &quot;FileSystem&quot; -Root &quot;\\Server01\Public&quot;
+
+# Use the Persist parameter of New-PSDrive to create the X: mapped network drive,
+
+# which is also mapped to the \\Server01\Public network share.
+New-PSDrive -Persist -Name &quot;X&quot; -PSProvider &quot;FileSystem&quot; -Root &quot;\\Server01\Public&quot;
+
+# Now, you can use the Get-PSDrive drive cmdlet to examine the two drives.
+
+# The drives appear to be the same, although the network share name appears only
+
+# in the root of the PSDrive: drive.
+Get-PSDrive -Name &quot;PSDrive&quot;, &quot;X&quot;
+</code></pre>
+<pre><code class="language-Output">Name       Provider      Root
+----       --------      ----
+
+PSDrive    FileSystem    \\Server01\public
+X          FileSystem    X:\
+</code></pre>
+<pre><code class="language-powershell">
+# Get-Member cmdlet shows that the drives have the same object type,
+
+# System.Management.Automation.PSDriveInfo.
+Get-PSDrive &quot;PSDrive&quot;, &quot;x&quot; | Get-Member
+</code></pre>
+<pre><code class="language-Output">TypeName: System.Management.Automation.PSDriveInfo
+
+Name                MemberType   Definition
+----                ----------   ----------
+CompareTo           Method       System.Int32 CompareTo(PSDriveInfo drive),
+Equals              Method       System.Boolean Equals(Object obj),
+GetHashCode         Method       System.Int32 GetHashCode()
+...
+</code></pre>
+<pre><code class="language-powershell">
+# Net Use and Get-CimInstance for the Win32_LogicalDisk class,
+
+# and Win32_NetworkConnection class find only the persistent X: drive.
+
+# PowerShell temporary drives are known only to PowerShell.
+Net Use
+Get-CimInstance Win32_LogicalDisk | Format-Table -Property DeviceID
+Get-CimInstance Win32_NetworkConnection
+</code></pre>
+<pre><code class="language-Output">Status       Local     Remote                    Network
+--------------------------------------------------------
+OK           X:        \\contoso-pc\data         Microsoft Windows Network
+
+deviceid
+--------
+C:
+D:
+X:
+
+LocalName    RemoteName              ConnectionState          Status
+---------    ----------              ---------------          ------
+X:           \\products\public       Disconnected             Unavailable
+</code></pre>
+<h3>例6: スクリプトでパーセンテントドライブを作成します.</h3>
+<p>PSDrivesは,その範囲で作成され,<code>New-PSDrive</code>脚本の中でコマンドを実行すると,ドライブマッピングが脚本に本格的に表示されます.脚本が終了すると,ドライブはもはや利用できません.</p>
+<pre><code class="language-powershell">New-PSDrive -Persist -Name &quot;X&quot; -PSProvider &quot;FileSystem&quot; -Root &quot;\\Server01\Public&quot; -Scope Global
+</code></pre>
+<p>スクリプトの外でドライブが利用可能であることを確認するには, <strong>Scope</strong> パラメータを使用して <strong>Global</strong> スコープでドライブを作成する必要があります.</p>
+<h2>パラメータは</h2>
+<h3>- 信用証</h3>
+<p>このアクションを行う許可があるユーザーアカウントを指定します.デフォルトは現在のユーザーです.</p>
+<p>PowerShell 3.0 で,Root のパラメータの値は UNC パスであるので,ファイルシステムドライブを作成するために認証を使用できます.</p>
+<p><strong>User01</strong>や <strong>Domain01\User01</strong>のようなユーザー名を入力するか,PSCredential**オブジェクトを入力してください.<code>Get-Credential</code>cmdlet.ユーザー名を入力すると,パスワードを入力するよう求められます.</p>
+<p>認証は [PSCredential] (/dotnet/api/system.management.automation.pscredential) オブジェクトに保存され,パスワードは [SecureString] ((/dotnet/api/system.security.securestring) として保存されます.</p>
+<p>[!注] &gt;SecureStringのデータ保護に関する詳細については, [How secure is SecureString?] を参照してください.</p>
+<pre><code class="language-yaml">Type: System.Management.Automation.PSCredential
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: Current user
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+</code></pre>
+<h3>-Description について説明します.</h3>
+<p>ドライブの短文説明を指定します.任意の文字列を入力します.</p>
+<p>セッションのドライブの説明を見るには, <code>Get-PSDrive | Format-Table Name, Description</code> .</p>
+<p>特定のドライブの説明を見るには,  を入力してください.<code>(Get-PSDrive &lt;DriveName&gt;).Description</code> .</p>
+<pre><code class="language-yaml">Type: System.String
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+</code></pre>
+<h3>-名字は</h3>
+<p>新しいドライブに名前指定します. 持続的なマッピングネットワークドライブでは,ドライブ文字を使用します. 臨時PowerShellドライブでは,ドライブ文字に限定されず,有効な文字列を使用します.</p>
+<pre><code class="language-yaml">Type: System.String
+Parameter Sets: (All)
+Aliases:
+
+Required: True
+Position: 0
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+</code></pre>
+<h1>新型PSDriveです.</h1>
+<h3>- 持続する</h3>
+<p>このcmdletがWindowsのネットワークドライブを作成することを示します. <strong>Persist</strong>パラメータはWindowsでのみ使用できます.</p>
+<p>マッピングされたネットワークドライブは,Windowsでローカルコンピュータに保存されます.それらは持続的で,セッション特有のものではありません.ファイル エクスプローラーやその他のツールで閲覧し管理することができます.</p>
+<p>ポイントソースなしで本地でコマンドを拡張すると, <strong>Persist</strong> パラメータは,コマンドを実行する範囲を超えて <strong>PSDrive</strong>を作成することを持続しない.<code>New-PSDrive</code>スクリプトの中に新しいドライブが無期限に持続したいとすれば,スクリプトをドットソースで作成する必要があります.最高の結果のために,新しいドライブを持続するように強制するには, <strong>Global</strong> を <strong>Scope</strong> パラメータの値として指定し, <strong>Persist</strong> をコマンドに追加してください.</p>
+<p>ドライブ名は文字でなければならない.<code>D</code>     <code>E</code><strong>Root</strong>パラメータの値は,別のコンピュータのUNCパスである必要があります. <strong>PSProvider</strong>パラメータの値は,<code>FileSystem</code> .</p>
+<p>Windows マッピングネットワークドライブを断つには,  を使います.<code>Remove-PSDrive</code>cmdlet. Windows マッピングネットワークドライブを断つとき,マッピングは,現在のセッションから削除されるだけでなく,コンピュータから永久に削除されます.</p>
+<p>マッピングされたネットワークドライブは,ユーザーアカウントに特有のものです.別のユーザーの認証を活用した高度なセッションまたはセッションで作成されたマッピングされたドライブは,異なる認証を使用して開始されたセッションでは表示されません.</p>
+<pre><code class="language-yaml">Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+</code></pre>
+<h3>-PSProvider でした</h3>
+<p>このタイプのドライブをサポートするPowerShellプロバイダを指定します.</p>
+<p>例えば,ドライブがネットワークシェアまたはファイルシステムディレクトリに関連付けられている場合,PowerShellプロバイダは<code>FileSystem</code>.ドライブがレジストリキーに関連付けられている場合,プロバイダは です.<code>Registry</code> .</p>
+<p>仮設PowerShellドライブは,任意のPowerShellプロバイダーに関連付けられる.地図化されたネットワークドライブは,単に""と関連付けられる.<code>FileSystem</code>提供者.</p>
+<p>PowerShellセッションのプロバイダのリストを見るには,  を使ってください.<code>Get-PSProvider</code>cmdletです.</p>
+<pre><code class="language-yaml">Type: System.String
+Parameter Sets: (All)
+Aliases:
+
+Required: True
+Position: 1
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+</code></pre>
+<h3>-Root</h3>
+<p>PowerShellドライブがマッピングされているデータストレージの位置を指定します.</p>
+<p>例えば,ネットワークシェアを指定する.<code>\\Server01\Public</code>などのローカルディレクトリを<code>C:\Program Files</code>などのレジストリキー.<code>HKLM:\Software\Microsoft</code> .</p>
+<p>仮設PowerShellドライブは,サポートされているすべてのプロバイダードライブにローカルまたはリモート位置に関連付けられる.マッピングされたネットワークドライブは,リモートコンピュータのファイルシステム位置にのみ関連付けることができる.</p>
+<pre><code class="language-yaml">Type: System.String
+Parameter Sets: (All)
+Aliases:
+
+Required: True
+Position: 2
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+</code></pre>
+<h3>-Scope</h3>
+<p>ドライブの範囲を指定します.このパラメータの受け入れ可能な値は: <strong>Global</strong>, <strong>Local</strong>, <strong>Script</strong>,または現在の範囲に相対する数です. スコップはスコップ数を通して0を数えます.現在の範囲番号は0であり,その親番号は1です.詳細については, [about_Scopes]をご覧ください.</p>
+<pre><code class="language-yaml">Type: System.String
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: Local
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+</code></pre>
+<h3>-UseTransaction 取引を活用する</h3>
+<p>アクティブトランザクションのコマンドが含まれています.このパラメータは,トランザクションが進行中の場合にのみ有効です.詳細については, [about_Transactions.md]を参照してください.</p>
+<pre><code class="language-yaml">Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases: usetx
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-確認</h3>
+<p>cmdletを実行する前に確認を提示します.</p>
+<pre><code class="language-yaml">Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases: cf
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-WhatIf</h3>
+<p>実行されないcmdletが実行されればどうなるかを示しています.</p>
+<pre><code class="language-yaml">Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases: wi
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>共通パラメーター</h3>
+<p>このcmdletは,共通のパラメータをサポートしています: <code>-Debug</code>     <code>-ErrorAction</code>     <code>-ErrorVariable</code>     <code>-InformationAction</code>     <code>-InformationVariable</code>     <code>-OutVariable</code>     <code>-OutBuffer</code>     <code>-PipelineVariable</code>     <code>-Verbose</code>     <code>-WarningAction</code>そして,そして,<code>-WarningVariable</code>.詳細については, <a href="を参照してください.https://go.microsoft.com/fwlink/?LinkID=113216">about_CommonParameters</a> でした.</p>
+<h2>輸入は</h2>
+<h3>どれもない</h3>
+<p>このcmdletにオブジェクトをパイプすることはできません</p>
+<h2>輸出は</h2>
+<h3>システム管理自動化PSDriveInfo</h3>
+<p>このcmdletは,作成されたドライブを表す <strong>PSDriveInfo</strong>オブジェクトを返します.</p>
+<h2>NOTES  記事ができました.</h2>
+<p>Windows PowerShell では,次のアライスがあります.<code>New-PSDrive</code>:</p>
+<ul>
+<li>-<code>mount</code> - -<code>ndr</code></li>
+</ul>
+<p><code>New-PSDrive</code>サービス提供者が暴露したデータで作業するように設計されています.セッションで利用可能なプロバイダをリストにするために,  を使用してください.<code>Get-PSProvider</code>プロバイダーに関する詳細については, [about_Providers] (../Microsoft.PowerShell.Core/About/about_Providers.md) を参照してください.</p>
+<p>マッピングされたネットワークドライブは,ユーザーアカウントに特有のものです.別のユーザーの認証を活用した高度なセッションまたはセッションで作成されたマッピングされたドライブは,異なる認証を使用して開始されたセッションでは表示されません.</p>
+<h2>関連リンク</h2>
+<p><a href="../Microsoft.PowerShell.Core/About/about_Providers.md">about_Providers</a> について</p>
+<p><a href="../Microsoft.PowerShell.Security/Get-Credential.md">Get-Credential</a> について</p>
+<p><a href="Get-PSDrive.md">Get-PSDrive</a> について</p>
+<p><a href="PSDriveを削除.md">PSDriveを削除</a> </p></section><section class="en-original"><pre class="source-original"># New-PSDrive
+
+## SYNOPSIS
+Creates temporary and persistent drives that are associated with a location in an item data store.
+
+## SYNTAX
+
+### All
+
+```
+New-PSDrive [-Name] &lt;String&gt; [-PSProvider] &lt;String&gt; [-Root] &lt;String&gt; [-Description &lt;String&gt;]
+ [-Scope &lt;String&gt;] [-Persist] [-Credential &lt;PSCredential&gt;] [-WhatIf] [-Confirm] [-UseTransaction]
+ [&lt;CommonParameters&gt;]
+```
+
+## DESCRIPTION
+
+The `New-PSDrive` cmdlet creates temporary and persistent drives that are mapped to or associated
+with a location in a data store, such as a network drive, a directory on the local computer, or a
+registry key, and persistent Windows mapped network drives that are associated with a file system
+location on a remote computer.
+
+Temporary drives exist only in the current PowerShell session and in sessions that you create in the
+current session. They can have any name that is valid in PowerShell and can be mapped to any local
+or remote resource. You can use temporary PowerShell drives to access data in the associated data
+store, just as you would do with any mapped network drive. You can change locations into the drive,
+by using `Set-Location`, and access the contents of the drive by using `Get-Item` or
+`Get-ChildItem`.
+
+Because temporary drives are known only to PowerShell, you can&#x27;t access them by using File Explorer,
+Windows Management Instrumentation (WMI), Component Object Model (COM), Microsoft .NET Framework, or
+with tools such as `net use`.
+
+The following features were added to `New-PSDrive` in PowerShell 3.0:
+
+- Mapped network drives. You can use the **Persist** parameter of `New-PSDrive` to create Windows
+  mapped network drives. Unlike temporary PowerShell drives, Windows mapped network drives aren&#x27;t
+  session-specific. They&#x27;re saved in Windows and they can be managed by using standard Windows
+  tools, such as File Explorer and **net use**. Mapped network drives must have a drive-letter name
+  and be connected to a remote file system location. When your command is scoped locally, no
+  dot-sourcing, the **Persist** parameter doesn&#x27;t persist the creation of a **PSDrive** beyond the
+  scope in which the command is running. If you&#x27;re running `New-PSDrive` inside a script, and you
+  want the drive to persist indefinitely, you must dot-source the script. For best results, to force
+  a new drive to persist indefinitely, add the **Scope** parameter to your command, and set its
+  value to **Global**. For more information about dot-sourcing, see
+  [about_Scripts](../Microsoft.PowerShell.Core/About/about_Scripts.md#script-scope-and-dot-sourcing).
+- External drives. When an external drive is connected to the computer, PowerShell automatically
+  adds a **PSDrive** to the file system that represents the new drive. You don&#x27;t have to restart
+  PowerShell. Similarly, when an external drive is disconnected from the computer, PowerShell
+  automatically deletes the **PSDrive** that represents the removed drive.
+- Credentials for Universal Naming Convention (UNC) paths.
+
+When the value of the **Root** parameter is a UNC path, such as `\\Server\Share`, the credential
+specified in the value of the **Credential** parameter is used to create the **PSDrive**. Otherwise,
+**Credential** isn&#x27;t effective when you&#x27;re creating new file system drives.
+
+Some code samples use splatting to reduce the line length and improve readability. For more
+information, see [about_Splatting](../Microsoft.PowerShell.Core/About/about_Splatting.md).
+
+&gt; [!NOTE]
+&gt; Unless you use the **Scope** parameter, PSDrives are created in the scope in which the
+&gt; `New-PSDrive` command is run.
+
+## EXAMPLES
+
+### Example 1: Create a temporary drive mapped to a network share
+
+This example creates a temporary PowerShell drive that&#x27;s mapped to a network share.
+
+```powershell
+New-PSDrive -Name &quot;Public&quot; -PSProvider &quot;FileSystem&quot; -Root &quot;\\Server01\Public&quot;
+```
+
+```Output
+Name       Provider      Root
+----       --------      ----
+Public     FileSystem    \\Server01\Public
+```
+
+`New-PSDrive` uses the **Name** parameter to specify PowerShell drive named `Public` and the
+**PSProvider** parameter to specify the PowerShell `FileSystem` provider. The **Root** parameter
+specifies the network share&#x27;s UNC path.
+
+To view the contents from a PowerShell session: `Get-ChildItem -Path Public:`
+
+### Example 2: Create a temporary drive mapped to a local directory
+
+This example creates a temporary PowerShell drive that provides access to a directory on the local
+computer.
+
+```powershell
+$parameters = @{
+    Name = &quot;MyDocs&quot;
+    PSProvider = &quot;FileSystem&quot;
+    Root = &quot;C:\Users\User01\Documents&quot;
+    Description = &quot;Maps to my My Documents folder.&quot;
+}
+New-PSDrive @parameters
+```
+
+```Output
+Name        Provider      Root
+----        --------      ----
+MyDocs      FileSystem    C:\Users\User01\Documents
+```
+
+Splatting creates the parameter keys and values. The **Name** parameter specifies the drive name,
+**MyDocs**. The **PSProvider** parameter specifies the PowerShell `FileSystem` provider. **Root**
+specifies the local computer&#x27;s directory. The **Description** parameter describes the drive&#x27;s
+purpose. `New-PSDrive` uses the splatted parameters to create the `MyDocs` drive.
+
+To view the contents from a PowerShell session: `Get-ChildItem -Path MyDocs:`
+
+### Example 3: Create a temporary drive for a registry key
+
+This example creates a temporary PowerShell drive that provides access to a registry key. It creates
+a drive named MyCompany that is mapped to the `HKLM:\Software\MyCompany` registry key.
+
+```powershell
+New-PSDrive -Name &quot;MyCompany&quot; -PSProvider &quot;Registry&quot; -Root &quot;HKLM:\Software\MyCompany&quot;
+```
+
+```Output
+Name           Provider      Root
+----           --------      ----
+MyCompany      Registry      HKLM:\Software\MyCompany
+```
+
+`New-PSDrive` uses the **Name** parameter to specify PowerShell drive named `MyCompany` and the
+**PSProvider** parameter to specify the PowerShell `Registry` provider. The **Root** parameter
+specifies the registry location.
+
+To view the contents from a PowerShell session: `Get-ChildItem -Path MyCompany:`
+
+# New-PSDrive
+
+### Example 4: Create a persistent mapped network drive using credentials
+
+This example maps a network drive that&#x27;s authenticated with a domain service account&#x27;s credentials.
+For more information about the **PSCredential** object that stores credentials and how passwords are
+stored as a **SecureString**, see the **Credential** parameter&#x27;s description.
+
+```powershell
+$cred = Get-Credential -Credential Contoso\ServiceAccount
+New-PSDrive -Name &quot;S&quot; -Root &quot;\\Server01\Scripts&quot; -Persist -PSProvider &quot;FileSystem&quot; -Credential $cred
+Net Use
+```
+
+```Output
+Status       Local     Remote                    Network
+---------------------------------------------------------
+OK           S:        \\Server01\Scripts        Microsoft Windows Network
+```
+
+&gt; [!NOTE]
+&gt; Remember, if you use the above snippet in a script, set the **Scope** parameter value to
+&gt; &quot;Global&quot; to ensure the drive persists outside the current scope.
+
+The `$cred` variable stores a **PSCredential** object that contains the service account&#x27;s
+credentials. `Get-Credential` prompts you to enter the password that&#x27;s stored in a **SecureString**.
+
+`New-PSDrive` creates the mapped network drive by using several parameters. **Name** specifies the
+`S` drive letter that Windows accepts. and **Root** defines `\\Server01\Scripts` as the location on
+a remote computer. **Persist** creates a Windows mapped network drive that&#x27;s saved on the local
+computer. **PSProvider** specifies the `FileSystem` provider. **Credential** uses the `$cred`
+variable to get the service account credentials for authentication.
+
+The mapped drive can be viewed on the local computer in PowerShell sessions, File Explorer, and with
+tools such as **net use**. To view the contents from a PowerShell session: `Get-ChildItem -Path S:`
+
+### Example 5: Create persistent and temporary drives
+
+This example shows the difference between a persistent mapped network drive and a temporary
+PowerShell drive that is mapped to the same network share.
+
+If you close the PowerShell session and then open a new session, the temporary `PSDrive:` isn&#x27;t
+available, but the persistent `X:` drive is available. When deciding which method to use to map
+network drives, consider how you&#x27;ll use the drive. For example, whether it has to be persistent, and
+whether the drive has to be visible to other Windows features.
+
+```powershell
+
+# Create a temporary PowerShell drive called PSDrive:
+
+# that&#x27;s mapped to the \\Server01\Public network share.
+New-PSDrive -Name &quot;PSDrive&quot; -PSProvider &quot;FileSystem&quot; -Root &quot;\\Server01\Public&quot;
+
+# Use the Persist parameter of New-PSDrive to create the X: mapped network drive,
+
+# which is also mapped to the \\Server01\Public network share.
+New-PSDrive -Persist -Name &quot;X&quot; -PSProvider &quot;FileSystem&quot; -Root &quot;\\Server01\Public&quot;
+
+# Now, you can use the Get-PSDrive drive cmdlet to examine the two drives.
+
+# The drives appear to be the same, although the network share name appears only
+
+# in the root of the PSDrive: drive.
+Get-PSDrive -Name &quot;PSDrive&quot;, &quot;X&quot;
+```
+
+```Output
+Name       Provider      Root
+----       --------      ----
+
+PSDrive    FileSystem    \\Server01\public
+X          FileSystem    X:\
+```
+
+```powershell
+
+# Get-Member cmdlet shows that the drives have the same object type,
+
+# System.Management.Automation.PSDriveInfo.
+Get-PSDrive &quot;PSDrive&quot;, &quot;x&quot; | Get-Member
+```
+
+```Output
+TypeName: System.Management.Automation.PSDriveInfo
+
+Name                MemberType   Definition
+----                ----------   ----------
+CompareTo           Method       System.Int32 CompareTo(PSDriveInfo drive),
+Equals              Method       System.Boolean Equals(Object obj),
+GetHashCode         Method       System.Int32 GetHashCode()
+...
+```
+
+```powershell
+
+# Net Use and Get-CimInstance for the Win32_LogicalDisk class,
+
+# and Win32_NetworkConnection class find only the persistent X: drive.
+
+# PowerShell temporary drives are known only to PowerShell.
+Net Use
+Get-CimInstance Win32_LogicalDisk | Format-Table -Property DeviceID
+Get-CimInstance Win32_NetworkConnection
+```
+
+```Output
+Status       Local     Remote                    Network
+--------------------------------------------------------
+OK           X:        \\contoso-pc\data         Microsoft Windows Network
+
+deviceid
+--------
+C:
+D:
+X:
+
+LocalName    RemoteName              ConnectionState          Status
+---------    ----------              ---------------          ------
+X:           \\products\public       Disconnected             Unavailable
+```
+
+### Example 6: Create persistent drive in a script
+
+PSDrives are created in the scope in which the `New-PSDrive` command is run. When the command is run
+within a script, the drive mapping is local to the script. When the script exits, the drive is no
+longer available.
+
+```powershell
+New-PSDrive -Persist -Name &quot;X&quot; -PSProvider &quot;FileSystem&quot; -Root &quot;\\Server01\Public&quot; -Scope Global
+```
+
+To ensure that the drive is available outside of the script you must use the **Scope** parameter to
+create the drive in the **Global** scope.
+
+## PARAMETERS
+
+### -Credential
+
+Specifies a user account that has permission to do this action. The default is the current user.
+
+Since PowerShell 3.0, when the value of the **Root** parameter is a UNC path, you can use
+credentials to create file system drives.
+
+Type a user name, such as **User01** or **Domain01\User01**, or enter a **PSCredential** object
+generated by the `Get-Credential` cmdlet. If you type a user name, you&#x27;re prompted to enter the
+password.
+
+Credentials are stored in a [PSCredential](/dotnet/api/system.management.automation.pscredential)
+object and the password is stored as a [SecureString](/dotnet/api/system.security.securestring).
+
+&gt; [!NOTE]
+&gt; For more information about **SecureString** data protection, see
+&gt; [How secure is SecureString?](/dotnet/fundamentals/runtime-libraries/system-security-securestring#how-secure-is-securestring).
+
+```yaml
+Type: System.Management.Automation.PSCredential
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: Current user
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -Description
+
+Specifies a brief text description of the drive. Type any string.
+
+To see the descriptions of all the session&#x27;s drives, `Get-PSDrive | Format-Table Name, Description`.
+
+To see the description of a particular drive, type `(Get-PSDrive &lt;DriveName&gt;).Description`.
+
+```yaml
+Type: System.String
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -Name
+
+Specifies a name for the new drive. For persistent mapped network drives, use a drive letter. For
+temporary PowerShell drives, you aren&#x27;t limited to drive letters, use any valid string.
+
+```yaml
+Type: System.String
+Parameter Sets: (All)
+Aliases:
+
+Required: True
+Position: 0
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+# New-PSDrive
+
+### -Persist
+
+Indicates that this cmdlet creates a Windows mapped network drive. The **Persist** parameter is only
+available on Windows.
+
+Mapped network drives are saved in Windows on the local computer. They&#x27;re persistent, not
+session-specific, and can be viewed and managed in File Explorer and other tools.
+
+When you scope the command locally, without dot-sourcing, the **Persist** parameter doesn&#x27;t persist
+the creation of a **PSDrive** beyond the scope in which you run the command. If you run
+`New-PSDrive` inside a script, and you want the new drive to persist indefinitely, you must
+dot-source the script. For best results, to force a new drive to persist, specify **Global** as the
+value of the **Scope** parameter and include **Persist** in your command.
+
+The name of the drive must be a letter, such as `D` or `E`. The value of **Root** parameter must be
+a UNC path of a different computer. The **PSProvider** parameter&#x27;s value must be `FileSystem`.
+
+To disconnect a Windows mapped network drive, use the `Remove-PSDrive` cmdlet. When you disconnect a
+Windows mapped network drive, the mapping is permanently deleted from the computer, not just deleted
+from the current session.
+
+Mapped network drives are specific to a user account. Mapped drives created in elevated sessions or
+sessions using the credential of another user aren&#x27;t visible in sessions started using different
+credentials.
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -PSProvider
+
+Specifies the PowerShell provider that supports drives of this kind.
+
+For example, if the drive is associated with a network share or file system directory, the
+PowerShell provider is `FileSystem`. If the drive is associated with a registry key, the provider is
+`Registry`.
+
+Temporary PowerShell drives can be associated with any PowerShell provider. Mapped network drives
+can be associated only with the `FileSystem` provider.
+
+To see a list of the providers in your PowerShell session, use the `Get-PSProvider` cmdlet.
+
+```yaml
+Type: System.String
+Parameter Sets: (All)
+Aliases:
+
+Required: True
+Position: 1
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -Root
+
+Specifies the data store location to which a PowerShell drive is mapped.
+
+For example, specify a network share, such as `\\Server01\Public`, a local directory, such as
+`C:\Program Files`, or a registry key, such as `HKLM:\Software\Microsoft`.
+
+Temporary PowerShell drives can be associated with a local or remote location on any supported
+provider drive. Mapped network drives can be associated only with a file system location on a remote
+computer.
+
+```yaml
+Type: System.String
+Parameter Sets: (All)
+Aliases:
+
+Required: True
+Position: 2
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -Scope
+
+Specifies a scope for the drive. The acceptable values for this parameter are: **Global**,
+**Local**, and **Script**, or a number relative to the current scope. Scopes number 0 through the
+number of scopes. The current scope number is 0 and its parent is 1. For more information, see
+[about_Scopes](../Microsoft.PowerShell.Core/About/about_Scopes.md).
+
+```yaml
+Type: System.String
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: Local
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -UseTransaction
+
+Includes the command in the active transaction. This parameter is valid only when a transaction is
+in progress. For more information, see
+[about_Transactions](../Microsoft.PowerShell.Core/About/about_Transactions.md).
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases: usetx
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Confirm
+
+Prompts you for confirmation before running the cmdlet.
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases: cf
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -WhatIf
+
+Shows what would happen if the cmdlet runs. The cmdlet isn&#x27;t run.
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases: wi
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### CommonParameters
+
+This cmdlet supports the common parameters: `-Debug`, `-ErrorAction`, `-ErrorVariable`,
+`-InformationAction`, `-InformationVariable`, `-OutVariable`, `-OutBuffer`, `-PipelineVariable`,
+`-Verbose`, `-WarningAction`, and `-WarningVariable`. For more information, see
+[about_CommonParameters](https://go.microsoft.com/fwlink/?LinkID=113216).
+
+## INPUTS
+
+### None
+
+You can&#x27;t pipe objects to this cmdlet
+
+## OUTPUTS
+
+### System.Management.Automation.PSDriveInfo
+
+This cmdlet returns a **PSDriveInfo** object representing the created drive.
+
+## NOTES
+
+Windows PowerShell includes the following aliases for `New-PSDrive`:
+
+- `mount`
+- `ndr`
+
+`New-PSDrive` is designed to work with the data exposed by any provider. To list the providers
+available in your session, use `Get-PSProvider`. For more information about providers, see
+[about_Providers](../Microsoft.PowerShell.Core/About/about_Providers.md).
+
+Mapped network drives are specific to a user account. Mapped drives created in elevated sessions or
+sessions using the credential of another user aren&#x27;t visible in sessions started using different
+credentials.
+
+## RELATED LINKS
+
+[about_Providers](../Microsoft.PowerShell.Core/About/about_Providers.md)
+
+[Get-Credential](../Microsoft.PowerShell.Security/Get-Credential.md)
+
+[Get-PSDrive](Get-PSDrive.md)
+
+[Remove-PSDrive](Remove-PSDrive.md)</pre></section>

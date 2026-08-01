@@ -1,0 +1,945 @@
+<!doctype html><meta charset="utf-8"><section class="jp-official"><h1>スタート・ジョブ</h1>
+<h2>SYNOPSISはPowerShellのバックグラウンド作業を開始します.</h2>
+<h2>SYNTAXは,のシンタックスです.</h2>
+<h3>コンピュータ名 (デフォルト)</h3>
+<pre><code>Start-Job [-Name &lt;String&gt;] [-ScriptBlock] &lt;ScriptBlock&gt; [-Credential &lt;PSCredential&gt;]
+ [-Authentication &lt;AuthenticationMechanism&gt;] [[-InitializationScript] &lt;ScriptBlock&gt;] [-RunAs32]
+ [-PSVersion &lt;Version&gt;] [-InputObject &lt;PSObject&gt;] [-ArgumentList &lt;Object[]&gt;] [&lt;CommonParameters&gt;]
+</code></pre>
+<h3>定義名</h3>
+<pre><code>Start-Job [-DefinitionName] &lt;String&gt; [[-DefinitionPath] &lt;String&gt;] [[-Type] &lt;String&gt;]
+ [&lt;CommonParameters&gt;]
+</code></pre>
+<h3>ファイルPathComputerName</h3>
+<pre><code>Start-Job [-Name &lt;String&gt;] [-Credential &lt;PSCredential&gt;] [-FilePath] &lt;String&gt;
+ [-Authentication &lt;AuthenticationMechanism&gt;] [[-InitializationScript] &lt;ScriptBlock&gt;] [-RunAs32]
+ [-PSVersion &lt;Version&gt;] [-InputObject &lt;PSObject&gt;] [-ArgumentList &lt;Object[]&gt;] [&lt;CommonParameters&gt;]
+</code></pre>
+<h3>文字ファイル パスコンピュータName</h3>
+<pre><code>Start-Job [-Name &lt;String&gt;] [-Credential &lt;PSCredential&gt;] -LiteralPath &lt;String&gt;
+ [-Authentication &lt;AuthenticationMechanism&gt;] [[-InitializationScript] &lt;ScriptBlock&gt;] [-RunAs32]
+ [-PSVersion &lt;Version&gt;] [-InputObject &lt;PSObject&gt;] [-ArgumentList &lt;Object[]&gt;] [&lt;CommonParameters&gt;]
+</code></pre>
+<h2>記述は,</h2>
+<p><code>Start-Job</code>cmdlet は,ローカルコンピュータでPowerShellのバックグラウンド作業を開始します.</p>
+<p>PowerShell のバックグラウンドワークは,現在のセッションと相互作用せずにコマンドを実行します.バックグラウンドワークを起動すると,作業が完了するのに時間がかかる場合でも,すぐに仕事オブジェクトが返ってくる.作業が実行される間,セッションで断片なしに作業を続けることができます.</p>
+<p>作業対象には,作業に関する有用な情報が含まれていますが,作業の結果は含まれていません.作業が完了すると,  を使用してください.<code>Receive-Job</code>背景の仕事についての詳細については, [about_Jobs] (/About/about_Jobs.md) を参照してください.</p>
+<p>リモートコンピュータで背景作業を実行するには,多くのcmdletで利用可能な <strong>AsJob</strong>パラメータを使用するか,または を使用してください.<code>Invoke-Command</code>cmdlet を実行するには,<code>Start-Job</code>詳細については, [about_Remote_Jobs] ([[約_約_約_遠隔_Jobs.md) を参照してください.</p>
+<p>PowerShell 3.0で起動すると,<code>Start-Job</code>予定された仕事など,カスタム・ジョブタイプのインスタンスを起動できます.<code>Start-Job</code>定番タイプで作業を開始するには,作業タイプ機能のサポートドキュメントを参照してください.</p>
+<p>バイトのデフォルトワークディレクトリはハードコード化されている.Windowsのデフォルトは<code>$HOME\Documents</code>LinuxやMacOSではデフォルトは<code>$HOME</code>. 背景作業で実行されているスクリプトコードは,必要なように作業ディレクトリを管理する必要があります.</p>
+<h2>例えは</h2>
+<h3>例1:背景の仕事を開始する</h3>
+<p>この例では,ローカルコンピュータで実行される背景作業が開始されます.</p>
+<pre><code class="language-powershell">Start-Job -ScriptBlock { Get-Process -Name powershell }
+</code></pre>
+<pre><code class="language-Output">Id  Name   PSJobTypeName   State     HasMoreData   Location    Command
+--  ----   -------------   -----     -----------   --------    -------
+1   Job1   BackgroundJob   Running   True          localhost   Get-Process -Name powershell
+</code></pre>
+<p><code>Start-Job</code>実行するには,ScriptBlockのパラメータを使用します.<code>Get-Process</code><strong>Name</strong>パラメータでは,PowerShellのプロセスを探すように指定します.<code>powershell</code>職情報が表示されます. PowerShell は,作業が背景で実行される間にプロンプトに戻ります.</p>
+<p>プロジェクトの出力を表示するには,  を使ってください.<code>Receive-Job</code>cmdlet.例えば, <code>Receive-Job -Id 1</code> .</p>
+<h3>例2:Invoke-Commandを使って仕事を開始する</h3>
+<p>この例では複数のコンピュータで作業を実行します.作業は変数に保存され,PowerShellコマンドラインの変数名を使用して実行されます.</p>
+<pre><code class="language-powershell">$jobWRM = Invoke-Command -ComputerName (Get-Content -Path C:\Servers.txt) -ScriptBlock {
+   Get-Service -Name WinRM } -JobName WinRM -ThrottleLimit 16 -AsJob
+</code></pre>
+<p>を使った仕事<code>Invoke-Command</code>作成して保存されるのは です.<code>$jobWRM</code> 変数<code>Invoke-Command</code>コンピュータ名というパラメータを使用して,その作業が実行されるコンピュータを指定します.<code>Get-Content</code>からサーバー名を取得する.<code>C:\Servers.txt</code>ファイル.</p>
+<p><strong>ScriptBlock</strong> パラメータは,命令を指定し,<code>Get-Service</code><strong>WinRM</strong>サービスを獲得する. <strong>JobName</strong>パラメータは,仕事のための友好的な名前, <strong>WinRM</strong>を指定する. <strong>ThrottleLimit</strong>パラメータは,同時コマンドを16に制限する. <strong>AsJob</strong>パラメータは,サーバーでコマンドを実行するバックグラウンド作業を開始します.</p>
+<h3>例3: 求人情報を取得する</h3>
+<p>この例では,仕事に関する情報を入手し,現地コンピュータで実行された完成した仕事の結果を表示します.</p>
+<pre><code class="language-powershell">$j = Start-Job -ScriptBlock { Get-WinEvent -Log System } -Credential Domain01\User01
+$j | Select-Object -Property *
+</code></pre>
+<pre><code class="language-Output">State         : Completed
+HasMoreData   : True
+StatusMessage :
+Location      : localhost
+Command       : Get-WinEvent -Log System
+JobStateInfo  : Completed
+Finished      : System.Threading.ManualResetEvent
+InstanceId    : 27ce3fd9-40ed-488a-99e5-679cd91b9dd3
+Id            : 18
+Name          : Job18
+ChildJobs     : {Job19}
+PSBeginTime   : 8/8/2019 14:41:57
+PSEndTime     : 8/8/2019 14:42:07
+PSJobTypeName : BackgroundJob
+Output        : {}
+Error         : {}
+Progress      : {}
+Verbose       : {}
+Debug         : {}
+Warning       : {}
+Information   : {}
+</code></pre>
+<p><code>Start-Job</code>指定するコマンドを実行するには,ScriptBlock パラメータを使用します.<code>Get-WinEvent</code><strong>システム</strong>ログを取得する. <strong>クレジット式</strong>パラメータは,コンピュータ上で作業を実行する許可のあるドメインユーザーアカウントを指定します.作業オブジェクトは, に保存されます.<code>$j</code>変数です.</p>
+<p>のオブジェクトです.<code>$j</code>パイプラインをダウンして変数は  に送信されます.<code>Select-Object</code><strong>プロパティ</strong>パラメータは,星座を指定する ()<code>*</code>) で,作業オブジェクトのすべての性質を表示します.</p>
+<h3>例4: 脚本を背景作業として実行する</h3>
+<p>この例では,ローカルコンピュータのスクリプトが背景作業として実行されます.</p>
+<pre><code class="language-powershell">Start-Job -FilePath C:\Scripts\Sample.ps1
+</code></pre>
+<p><code>Start-Job</code><strong>FilePath</strong>パラメータを使用して,ローカルコンピュータに保存されているスクリプトファイルを指定します.</p>
+<h3>例5:背景の仕事を使ってプロセスを取得する</h3>
+<p>この例では,背景の作業を使用して,指定されたプロセスを名によって取得します.</p>
+<pre><code class="language-powershell">Start-Job -Name PShellJob -ScriptBlock { Get-Process -Name powershell }
+</code></pre>
+<p><code>Start-Job</code><strong>Name</strong>パラメータを使用して,友好的な職名, <strong>PShellJob</strong>を指定します. <strong>ScriptBlock</strong>パラメータは,<code>Get-Process</code>という名前でプロセスを取得するには,<code>powershell</code> .</p>
+<h3>例6:背景作業を使ってデータを収集し保存する</h3>
+<p>この例では,大量の地図データを収集し,それを保存する作業を開始します.<code>.tif</code>ファイル.</p>
+<pre><code class="language-powershell">Start-Job -Name GetMappingFiles -InitializationScript {Import-Module -Name MapFunctions} -ScriptBlock {
+   Get-Map -Name * | Set-Content -Path D:\Maps.tif } -RunAs32
+</code></pre>
+<p><code>Start-Job</code><strong>MappingFiles</strong>という友好的な職名を指定するために <strong>Name</strong>パラメータを使用します. <strong>InitializationScript</strong>パラメータは <strong>MapFunctions</strong> モジュールを輸入するスクリプトブロックを実行します. <strong>ScriptBlock</strong>パラメータは を実行します.<code>Get-Map</code>そして,<code>Set-Content</code><strong>Path</strong>パラメータで指定された場所にデータを保存します. <strong>RunAs32</strong>パラメータは,64ビットオペレーティングシステムでも32ビットでプロセスを実行します.</p>
+<h1>スタート・ジョブ</h1>
+<h3>例7: 背景の仕事への入力をパスします.</h3>
+<p>この例では,という文字を使用しています.<code>$input</code>入力オブジェクトを処理する自動変数です.<code>Receive-Job</code>仕事を表示する結果を見る.</p>
+<pre><code class="language-powershell">Start-Job -ScriptBlock { Get-Content -Path $input } -InputObject &quot;C:\Servers.txt&quot;
+Receive-Job -Name Job45 -Keep
+</code></pre>
+<pre><code class="language-Output">Server01
+Server02
+Server03
+Server04
+</code></pre>
+<p><code>Start-Job</code>実行するには,ScriptBlockのパラメータを使用します.<code>Get-Content</code>と一緒の<code>$input</code>自動変数である.<code>$input</code>変数は <strong>InputObject</strong> パラメータからオブジェクトを取得します.<code>Receive-Job</code><strong>Keep</strong> パラメータは,PowerShellセッション中に再び表示できるように,作業出力を保存します.</p>
+<h3>例8: 配列を指定するには,ArgumentListパラメータを使用します.</h3>
+<p>この例では,数列の参数を指定するために,ArgumentList**パラメータを使用しています.数列は,行程名前の逗号別列です.</p>
+<pre><code class="language-powershell">Start-Job -ScriptBlock { Get-Process -Name $args } -ArgumentList powershell, pwsh, notepad
+</code></pre>
+<pre><code class="language-Output">Id     Name      PSJobTypeName   State       HasMoreData     Location     Command
+--     ----      -------------   -----       -----------     --------     -------
+1      Job1      BackgroundJob   Running     True            localhost    Get-Process -Name $args
+</code></pre>
+<p><code>Start-Job</code>cmdlet はコマンドを実行するために<strong>ScriptBlock</strong> パラメータを使用します. <code>Get-Process</code>自動変数指定には<strong>Name</strong>パラメータを使用します.<code>$args</code><strong>ArgumentList</strong>パラメータは,プロセス名列を  に渡す.<code>$args</code>. Powershell, pwsh, notepadというプロセス名は,ローカルコンピュータで実行されているプロセスです.</p>
+<p>プロジェクトの出力を表示するには,  を使ってください.<code>Receive-Job</code>cmdlet.例えば, <code>Receive-Job -Id 1</code> .</p>
+<h2>パラメータは</h2>
+<h3>-ArgumentList</h3>
+<p><strong>FilePath</strong>パラメータまたは<strong>ScriptBlock</strong>パラメータで指定されたコマンドによって指定されたスクリプトのための参数数数またはパラメータ値の配列を指定します.</p>
+<p>参数は,単次元数列参数として <strong>ArgumentList</strong> に転送する必要があります.例えば,逗号別列です. <strong>ArgumentList</strong> の行動についての詳細については, [about_Splatting] (about/about_Splatting.md#splatting-with-arrays) を参照してください.</p>
+<pre><code class="language-yaml">Type: System.Object[]
+Parameter Sets: ComputerName, LiteralFilePathComputerName, FilePathComputerName
+Aliases: Args
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-認証</h3>
+<p>ユーザー認証を認証するために使用するメカニズムを指定します.</p>
+<p>このパラメータの受け入れられる値は以下の通りです.</p>
+<ul>
+<li>-<code>Default</code> - -<code>Basic</code> - -<code>Credssp</code> - -<code>Digest</code> - -<code>Kerberos</code> - -<code>Negotiate</code> - -<code>NegotiateWithImplicitCredential</code></li>
+</ul>
+<p>デフォルト値は です.<code>Default</code> .</p>
+<p>CredSSP認証はWindows Vista,Windows Server 2008およびWindowsオペレーティングシステムの後代バージョンのみで利用できます.</p>
+<p>このパラメータの値についての詳細については, [認証メカニズム] (/dotnet/api/system.management.automation.runspaces.authenticationmechanism) を参照してください.</p>
+<p>[!CAUTION] &gt; クレジット・セキュリティ・サポート・プロバイダー (CredSSP) 認証,ユーザー・クレジット・カードが認証されるリモートコンピュータに転送される場合,このメカニズムは,リモートネットワークシェアにアクセスなどの複数のリソースで認証を必要とするコマンドに設計されています.このメカニズムはリモート操作のセキュリティリスクを増加します.リモートコンピュータが侵害された場合,そのリモートコンピュータに転送された&gt;クレジット・カードはネットワークセッションを制御するために使用できます.</p>
+<pre><code class="language-yaml">Type: System.Management.Automation.Runspaces.AuthenticationMechanism
+Parameter Sets: ComputerName, LiteralFilePathComputerName, FilePathComputerName
+Aliases:
+Accepted values: Default, Basic, Negotiate, NegotiateWithImplicitCredential, Credssp, Digest, Kerberos
+
+Required: False
+Position: Named
+Default value: Default
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>- 信用証</h3>
+<p>この操作を行う許可を有するユーザーアカウントを指定します.<strong>Credential</strong>パラメータが指定されていない場合は,コマンドは現在のユーザーの認証情報を使用します.</p>
+<p><strong>User01</strong>や <strong>Domain01\User01</strong>のようなユーザー名を入力するか,PSCredential**オブジェクトを入力してください.<code>Get-Credential</code>cmdlet.ユーザー名を入力すると,パスワードを入力するよう求められます.</p>
+<p>認証は [PSCredential] (/dotnet/api/system.management.automation.pscredential) オブジェクトに保存され,パスワードは [SecureString] ((/dotnet/api/system.security.securestring) として保存されます.</p>
+<p>[!注] &gt;SecureStringのデータ保護に関する詳細については, [How secure is SecureString?] を参照してください.</p>
+<pre><code class="language-yaml">Type: System.Management.Automation.PSCredential
+Parameter Sets: ComputerName, LiteralFilePathComputerName, FilePathComputerName
+Aliases:
+
+Required: False
+Position: Named
+Default value: Current user
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-DefinitionName</h3>
+<p>このcmdletが起動する仕事の定義名を指定します.このパラメータを使用して,スケジュールされた仕事などの定義名を持つカスタム・ジョブタイプを起動します.</p>
+<p>を使用するときに<code>Start-Job</code>予定の仕事の一例を起動するには,その仕事は,仕事誘発または仕事オプションに関係なく,すぐに開始されます.結果となる仕事の一例は予定の仕事ですが,実行された予定の仕事のようにディスクに保存されません. の <strong>ArgumentList</strong>パラメータを使用することはできません.<code>Start-Job</code>予定された仕事で実行されるスクリプトのパラメータの値を表示する.詳細については, [about_Scheduled_Jobs] (PSScheduledJob/About/about_Scheduled_Jobs.md) を参照してください.</p>
+<p>このパラメータはPowerShell 3.0で導入されました.</p>
+<pre><code class="language-yaml">Type: System.String
+Parameter Sets: DefinitionName
+Aliases:
+
+Required: True
+Position: 0
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-DefinitionPath</h3>
+<p>このcmdletが起動する仕事に対する定義の経路を指定します.定義経路を入力します.DefinitionPath<strong>とDefinitionName</strong>のパラメータの値の連鎖は,仕事定義の完全合格な経路です.このパラメータを使用して,スケジュールされた仕事などの定義経路を持つカスタム・仕事タイプを起動します.</p>
+<p>予定された仕事では,DefinitionPathのパラメータの値は です.<code>$HOME\AppData\Local\Windows\PowerShell\ScheduledJob</code> .</p>
+<p>このパラメータはPowerShell 3.0で導入されました.</p>
+<pre><code class="language-yaml">Type: System.String
+Parameter Sets: DefinitionName
+Aliases:
+
+Required: False
+Position: 1
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-FilePath</h3>
+<p>ローカルスクリプトを指定する.<code>Start-Job</code>脚本のパスとファイル名を入力するか,パイプラインを使用して脚本パスを  に送る.<code>Start-Job</code>スクリプトは,ローカルコンピュータまたはローカルコンピュータがアクセスできるフォルダに載せなければならない.</p>
+<p>このパラメータを使用すると,PowerShellは指定されたスクリプトファイルの内容をスクリプトブロックに変換し,スクリプトブロックをバックグラウンドとして実行します.</p>
+<pre><code class="language-yaml">Type: System.String
+Parameter Sets: FilePathComputerName
+Aliases:
+
+Required: True
+Position: 0
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h1>スタート・ジョブ</h1>
+<h3>-InitializationScript</h3>
+<p>作業開始前に実行されるコマンドを指定します.スクリプトブロックを作成するには,コマンドをカーリブブブレーズで閉じます ().<code>{}</code>) でした.</p>
+<p>このパラメータを使用して,作業が実行されるセッションを準備します.例えば,セッションに機能,スナップイン,モジュールを追加するために使用できます.</p>
+<pre><code class="language-yaml">Type: System.Management.Automation.ScriptBlock
+Parameter Sets: ComputerName, LiteralFilePathComputerName, FilePathComputerName
+Aliases:
+
+Required: False
+Position: 1
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-InputObject</h3>
+<p>コマンドの入力を指定します.オブジェクトを含む変数を入力するか,オブジェクトを生成するコマンドまたは表情を入力します.</p>
+<p><strong>ScriptBlock</strong>パラメータの値では,  を使ってください.<code>$input</code>輸入オブジェクトを表す自動変数です.</p>
+<pre><code class="language-yaml">Type: System.Management.Automation.PSObject
+Parameter Sets: ComputerName, LiteralFilePathComputerName, FilePathComputerName
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByValue)
+Accept wildcard characters: False
+</code></pre>
+<h3>-リテラルパース</h3>
+<p>このcmdletが背景作業として実行するローカルスクリプトを指定します.ローカルコンピュータのスクリプトの経路を入力します.</p>
+<p><code>Start-Job</code><strong>LiteralPath</strong>パラメータの値は,入力されたとおりです.文字はワイルドカード文字として解釈されません.パスにエスケープ文字が含まれている場合は,単一の引用符で囲んでください.単一の引用符は PowerShell にエスケープ文字として解釈しないように言います.</p>
+<pre><code class="language-yaml">Type: System.String
+Parameter Sets: LiteralFilePathComputerName
+Aliases: PSPath
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-名字は</h3>
+<p>新しい仕事のための友好的な名前を指定します.その名前を他の仕事用CMdlet,例えば のような仕事用を識別するために使用できます.<code>Stop-Job</code>cmdletです.</p>
+<p>デフォルトの友好な名前は です.<code>Job#</code>どこに, <code>#</code>順序数で,各作業に増やされます.</p>
+<pre><code class="language-yaml">Type: System.String
+Parameter Sets: ComputerName, LiteralFilePathComputerName, FilePathComputerName
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+</code></pre>
+<h3>-PSVersion でした.</h3>
+<p>バージョンを指定します. <code>Start-Job</code>PowerShellのバージョンで実行されている.このパラメータの受け入れ可能な値は: <code>2.0</code>そして,<code>3.0</code> .</p>
+<p>このパラメータはPowerShell 3.0で導入されました.</p>
+<pre><code class="language-yaml">Type: System.Version
+Parameter Sets: ComputerName, LiteralFilePathComputerName, FilePathComputerName
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-RunAs32</h3>
+<p>を示しています.<code>Start-Job</code>ランAs32は,作業を64ビットオペレーティングシステムでも32ビットプロセスで実行するように強制します.</p>
+<p>Windows 7とWindows Server 2008 R2の64ビットバージョンでは,<code>Start-Job</code>コマンドには<strong>RunAs32</strong>パラメータが含まれていますが,他のユーザーの認証を指定するには<strong>Credential</strong>パラメータを使用することはできません.</p>
+<pre><code class="language-yaml">Type: System.Management.Automation.SwitchParameter
+Parameter Sets: ComputerName, LiteralFilePathComputerName, FilePathComputerName
+Aliases:
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-ScriptBlock</h3>
+<p>背景の作業で実行するコマンドを指定します.スクリプトブロックを作成するには,コマンドをカーリブブレスに囲んで ()<code>{}</code> を使って).<code>$input</code><strong>InputObject</strong>パラメータの値にアクセスするには自動変数です.このパラメータは必須です.</p>
+<pre><code class="language-yaml">Type: System.Management.Automation.ScriptBlock
+Parameter Sets: ComputerName
+Aliases: Command
+
+Required: True
+Position: 0
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-Type</h3>
+<p>によって開始された仕事のためのカスタムタイプを指定します.<code>Start-Job</code>定番の職種名,例えばPSScheduledJobのスケジュールされた職種,またはPSWorkflowJobのワークフローの職種など入力してください.このパラメータは標準的な背景職種には有効ではありません.</p>
+<p>このパラメータはPowerShell 3.0で導入されました.</p>
+<pre><code class="language-yaml">Type: System.String
+Parameter Sets: DefinitionName
+Aliases:
+
+Required: False
+Position: 2
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>共通パラメーター</h3>
+<p>このcmdletは,共通パラメータをサポートしています: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable.詳細については, <a href="を参照してください.https://go.microsoft.com/fwlink/?LinkID=113216">about_CommonParameters</a> でした.</p>
+<h2>輸入は</h2>
+<h3>System.String でした.</h3>
+<p>このcmdletに付いた <strong>Name</strong>のパラメータに <strong>Name</strong>のプロパティを持つオブジェクトをパイプすることができます.例えば,ファイル情報**のオブジェクトを からパイプすることができます.<code>Get-ChildItem</code> .</p>
+<h2>輸出は</h2>
+<h3>システム管理自動化PSRemotingJob</h3>
+<p>このcmdletは,開始した仕事を代表する <strong>PSRemotingJob</strong>オブジェクトを返します.</p>
+<h2>NOTES  記事ができました.</h2>
+<p>Windows PowerShell では,次のアライスがあります.<code>Start-Job</code>:</p>
+<ul>
+<li>-<code>sajb</code></li>
+</ul>
+<p>背景に走るには,<code>Start-Job</code>現在のセッションでは,そのセッションで実行されます.<code>Invoke-Command</code>cmdlet を実行するには,<code>Start-Job</code>リモートコンピュータのセッションでのコマンド,<code>Start-Job</code>遠隔セッションでセッションで実行されます.</p>
+<h2>関連リンク</h2>
+<p><a href="./about/about_arrays.md">about_arrays</a> について</p>
+<p><a href="./about/about_automatic_variables.md">about_Automatic_Variables</a> について</p>
+<p><a href="./About/about_Jobs.md">about_Jobs</a> について</p>
+<p><a href="./About/about_Job_Details.md">about_Job_Details</a> について</p>
+<p><a href="./About/about_Remote_Jobs.md">about_Remote_Jobs</a> について</p>
+<p><a href="Get-Job.md">Get-Job</a> を取得する</p>
+<p><a href="Invoke-Command.md">Invoke-Command</a> </p>
+<p><a href="Receive-Job.md">Receive-Job</a> でした.</p>
+<p><a href="Remove-Job.md">Remove-Job</a> </p>
+<p><a href="Resume-Job.md">Resume-Job</a> </p>
+<p><a href="Stop-Job.md">Stop-Job</a> </p>
+<p><a href="Suspend-Job.md">Suspend-Job</a> </p>
+<p><a href="Wait-Job.md">Wait-Job</a> </p></section><section class="en-original"><pre class="source-original"># Start-Job
+
+## SYNOPSIS
+Starts a PowerShell background job.
+
+## SYNTAX
+
+### ComputerName (Default)
+
+```
+Start-Job [-Name &lt;String&gt;] [-ScriptBlock] &lt;ScriptBlock&gt; [-Credential &lt;PSCredential&gt;]
+ [-Authentication &lt;AuthenticationMechanism&gt;] [[-InitializationScript] &lt;ScriptBlock&gt;] [-RunAs32]
+ [-PSVersion &lt;Version&gt;] [-InputObject &lt;PSObject&gt;] [-ArgumentList &lt;Object[]&gt;] [&lt;CommonParameters&gt;]
+```
+
+### DefinitionName
+
+```
+Start-Job [-DefinitionName] &lt;String&gt; [[-DefinitionPath] &lt;String&gt;] [[-Type] &lt;String&gt;]
+ [&lt;CommonParameters&gt;]
+```
+
+### FilePathComputerName
+
+```
+Start-Job [-Name &lt;String&gt;] [-Credential &lt;PSCredential&gt;] [-FilePath] &lt;String&gt;
+ [-Authentication &lt;AuthenticationMechanism&gt;] [[-InitializationScript] &lt;ScriptBlock&gt;] [-RunAs32]
+ [-PSVersion &lt;Version&gt;] [-InputObject &lt;PSObject&gt;] [-ArgumentList &lt;Object[]&gt;] [&lt;CommonParameters&gt;]
+```
+
+### LiteralFilePathComputerName
+
+```
+Start-Job [-Name &lt;String&gt;] [-Credential &lt;PSCredential&gt;] -LiteralPath &lt;String&gt;
+ [-Authentication &lt;AuthenticationMechanism&gt;] [[-InitializationScript] &lt;ScriptBlock&gt;] [-RunAs32]
+ [-PSVersion &lt;Version&gt;] [-InputObject &lt;PSObject&gt;] [-ArgumentList &lt;Object[]&gt;] [&lt;CommonParameters&gt;]
+```
+
+## DESCRIPTION
+
+The `Start-Job` cmdlet starts a PowerShell background job on the local computer.
+
+A PowerShell background job runs a command without interacting with the current session. When you
+start a background job, a job object returns immediately, even if the job takes an extended time to
+finish. You can continue to work in the session without interruption while the job runs.
+
+The job object contains useful information about the job, but it doesn&#x27;t contain the job results.
+When the job finishes, use the `Receive-Job` cmdlet to get the results of the job. For more
+information about background jobs, see [about_Jobs](./About/about_Jobs.md).
+
+To run a background job on a remote computer, use the **AsJob** parameter that is available on many
+cmdlets, or use the `Invoke-Command` cmdlet to run a `Start-Job` command on the remote computer. For
+more information, see [about_Remote_Jobs](./About/about_Remote_Jobs.md).
+
+Starting in PowerShell 3.0, `Start-Job` can start instances of custom job types, such as scheduled
+jobs. For information about how to use `Start-Job` to start jobs with custom types, see the help
+documents for the job type feature.
+
+The default working directory for jobs is hardcoded. The Windows default is `$HOME\Documents` and on
+Linux or macOS the default is `$HOME`. The script code running in the background job needs to manage
+the working directory as needed.
+
+## EXAMPLES
+
+### Example 1: Start a background job
+
+This example starts a background job that runs on the local computer.
+
+```powershell
+Start-Job -ScriptBlock { Get-Process -Name powershell }
+```
+
+```Output
+Id  Name   PSJobTypeName   State     HasMoreData   Location    Command
+--  ----   -------------   -----     -----------   --------    -------
+1   Job1   BackgroundJob   Running   True          localhost   Get-Process -Name powershell
+```
+
+`Start-Job` uses the **ScriptBlock** parameter to run `Get-Process` as a background job. The
+**Name** parameter specifies to find PowerShell processes, `powershell`. The job information is
+displayed and PowerShell returns to a prompt while the job runs in the background.
+
+To view the job&#x27;s output, use the `Receive-Job` cmdlet. For example, `Receive-Job -Id 1`.
+
+### Example 2: Start a job using Invoke-Command
+
+This example runs a job on multiple computers. The job is stored in a variable and is executed by
+using the variable name on the PowerShell command line.
+
+```powershell
+$jobWRM = Invoke-Command -ComputerName (Get-Content -Path C:\Servers.txt) -ScriptBlock {
+   Get-Service -Name WinRM } -JobName WinRM -ThrottleLimit 16 -AsJob
+```
+
+A job that uses `Invoke-Command` is created and stored in the `$jobWRM` variable. `Invoke-Command`
+uses the **ComputerName** parameter to specify the computers where the job runs. `Get-Content` gets
+the server names from the `C:\Servers.txt` file.
+
+The **ScriptBlock** parameter specifies a command that `Get-Service` gets the **WinRM** service. The
+**JobName** parameter specifies a friendly name for the job, **WinRM**. The **ThrottleLimit**
+parameter limits the number of concurrent commands to 16. The **AsJob** parameter starts a
+background job that runs the command on the servers.
+
+### Example 3: Get job information
+
+This example gets information about a job and displays the results of a completed job that was run
+on the local computer.
+
+```powershell
+$j = Start-Job -ScriptBlock { Get-WinEvent -Log System } -Credential Domain01\User01
+$j | Select-Object -Property *
+```
+
+```Output
+State         : Completed
+HasMoreData   : True
+StatusMessage :
+Location      : localhost
+Command       : Get-WinEvent -Log System
+JobStateInfo  : Completed
+Finished      : System.Threading.ManualResetEvent
+InstanceId    : 27ce3fd9-40ed-488a-99e5-679cd91b9dd3
+Id            : 18
+Name          : Job18
+ChildJobs     : {Job19}
+PSBeginTime   : 8/8/2019 14:41:57
+PSEndTime     : 8/8/2019 14:42:07
+PSJobTypeName : BackgroundJob
+Output        : {}
+Error         : {}
+Progress      : {}
+Verbose       : {}
+Debug         : {}
+Warning       : {}
+Information   : {}
+```
+
+`Start-Job` uses the **ScriptBlock** parameter to run a command that specifies `Get-WinEvent` to get
+the **System** log. The **Credential** parameter specifies a domain user account with permission to
+run the job on the computer. The job object is stored in the `$j` variable.
+
+The object in the `$j` variable is sent down the pipeline to `Select-Object`. The **Property**
+parameter specifies an asterisk (`*`) to display all the job object&#x27;s properties.
+
+### Example 4: Run a script as a background job
+
+In this example, a script on the local computer is run as a background job.
+
+```powershell
+Start-Job -FilePath C:\Scripts\Sample.ps1
+```
+
+`Start-Job` uses the **FilePath** parameter to specify a script file that&#x27;s stored on the local
+computer.
+
+### Example 5: Get a process using a background job
+
+This example uses a background job to get a specified process by name.
+
+```powershell
+Start-Job -Name PShellJob -ScriptBlock { Get-Process -Name powershell }
+```
+
+`Start-Job` uses the **Name** parameter to specify a friendly job name, **PShellJob**. The
+**ScriptBlock** parameter specifies `Get-Process` to get processes with the name `powershell`.
+
+### Example 6: Collect and save data by using a background job
+
+This example starts a job that collects a large amount of map data and then saves it in a `.tif`
+file.
+
+```powershell
+Start-Job -Name GetMappingFiles -InitializationScript {Import-Module -Name MapFunctions} -ScriptBlock {
+   Get-Map -Name * | Set-Content -Path D:\Maps.tif } -RunAs32
+```
+
+`Start-Job` uses the **Name** parameter to specify a friendly job name, **GetMappingFiles**. The
+**InitializationScript** parameter runs a scriptblock that imports the **MapFunctions** module. The
+**ScriptBlock** parameter runs `Get-Map` and `Set-Content` saves the data in the location specified
+by the **Path** parameter. The **RunAs32** parameter runs the process as 32-bit, even on a 64-bit
+operating system.
+
+# Start-Job
+
+### Example 7: Pass input to a background job
+
+This example uses the `$input` automatic variable to process an input object. Use `Receive-Job` to
+view the job&#x27;s output.
+
+```powershell
+Start-Job -ScriptBlock { Get-Content -Path $input } -InputObject &quot;C:\Servers.txt&quot;
+Receive-Job -Name Job45 -Keep
+```
+
+```Output
+Server01
+Server02
+Server03
+Server04
+```
+
+`Start-Job` uses the **ScriptBlock** parameter to run `Get-Content` with the `$input` automatic
+variable. The `$input` variable gets objects from the **InputObject** parameter. `Receive-Job` uses
+the **Name** parameter to specify the job and outputs the results. The **Keep** parameter saves the
+job output so it can be viewed again during the PowerShell session.
+
+### Example 8: Use the ArgumentList parameter to specify an array
+
+This example uses the **ArgumentList** parameter to specify an array of arguments. The array is a
+comma-separated list of process names.
+
+```powershell
+Start-Job -ScriptBlock { Get-Process -Name $args } -ArgumentList powershell, pwsh, notepad
+```
+
+```Output
+Id     Name      PSJobTypeName   State       HasMoreData     Location     Command
+--     ----      -------------   -----       -----------     --------     -------
+1      Job1      BackgroundJob   Running     True            localhost    Get-Process -Name $args
+```
+
+The `Start-Job` cmdlet uses the **ScriptBlock** parameter to run a command. `Get-Process` uses the
+**Name** parameter to specify the automatic variable `$args`. The **ArgumentList** parameter passes
+the array of process names to `$args`. The process names powershell, pwsh, and notepad are processes
+running on the local computer.
+
+To view the job&#x27;s output, use the `Receive-Job` cmdlet. For example, `Receive-Job -Id 1`.
+
+## PARAMETERS
+
+### -ArgumentList
+
+Specifies an array of arguments, or parameter values, for the script that is specified by the
+**FilePath** parameter or a command specified with the **ScriptBlock** parameter.
+
+Arguments must be passed to **ArgumentList** as single-dimension array argument. For example, a
+comma-separated list. For more information about the behavior of **ArgumentList**, see
+[about_Splatting](about/about_Splatting.md#splatting-with-arrays).
+
+```yaml
+Type: System.Object[]
+Parameter Sets: ComputerName, LiteralFilePathComputerName, FilePathComputerName
+Aliases: Args
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Authentication
+
+Specifies the mechanism that is used to authenticate user credentials.
+
+The acceptable values for this parameter are as follows:
+
+- `Default`
+- `Basic`
+- `Credssp`
+- `Digest`
+- `Kerberos`
+- `Negotiate`
+- `NegotiateWithImplicitCredential`
+
+The default value is `Default`.
+
+CredSSP authentication is available only in Windows Vista, Windows Server 2008, and later versions
+of the Windows operating system.
+
+For more information about the values of this parameter, see
+[AuthenticationMechanism](/dotnet/api/system.management.automation.runspaces.authenticationmechanism).
+
+&gt; [!CAUTION]
+&gt; Credential Security Support Provider (CredSSP) authentication, in which the user&#x27;s credentials are
+&gt; passed to a remote computer to be authenticated, is designed for commands that require
+&gt; authentication on more than one resource, such as accessing a remote network share. This mechanism
+&gt; increases the security risk of the remote operation. If the remote computer is compromised, the
+&gt; credentials that are passed to it can be used to control the network session.
+
+```yaml
+Type: System.Management.Automation.Runspaces.AuthenticationMechanism
+Parameter Sets: ComputerName, LiteralFilePathComputerName, FilePathComputerName
+Aliases:
+Accepted values: Default, Basic, Negotiate, NegotiateWithImplicitCredential, Credssp, Digest, Kerberos
+
+Required: False
+Position: Named
+Default value: Default
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Credential
+
+Specifies a user account that has permission to perform this action. If the **Credential** parameter
+isn&#x27;t specified, the command uses the current user&#x27;s credentials.
+
+Type a user name, such as **User01** or **Domain01\User01**, or enter a **PSCredential** object
+generated by the `Get-Credential` cmdlet. If you type a user name, you&#x27;re prompted to enter the
+password.
+
+Credentials are stored in a [PSCredential](/dotnet/api/system.management.automation.pscredential)
+object and the password is stored as a [SecureString](/dotnet/api/system.security.securestring).
+
+&gt; [!NOTE]
+&gt; For more information about **SecureString** data protection, see
+&gt; [How secure is SecureString?](/dotnet/fundamentals/runtime-libraries/system-security-securestring#how-secure-is-securestring).
+
+```yaml
+Type: System.Management.Automation.PSCredential
+Parameter Sets: ComputerName, LiteralFilePathComputerName, FilePathComputerName
+Aliases:
+
+Required: False
+Position: Named
+Default value: Current user
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -DefinitionName
+
+Specifies the definition name of the job that this cmdlet starts. Use this parameter to start custom
+job types that have a definition name, such as scheduled jobs.
+
+When you use `Start-Job` to start an instance of a scheduled job, the job starts immediately,
+regardless of job triggers or job options. The resulting job instance is a scheduled job, but it
+isn&#x27;t saved to disk like triggered scheduled jobs. You can&#x27;t use the **ArgumentList** parameter of
+`Start-Job` to provide values for parameters of scripts that run in a scheduled job. For more
+information, see [about_Scheduled_Jobs](../PSScheduledJob/About/about_Scheduled_Jobs.md).
+
+This parameter was introduced in PowerShell 3.0.
+
+```yaml
+Type: System.String
+Parameter Sets: DefinitionName
+Aliases:
+
+Required: True
+Position: 0
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -DefinitionPath
+
+Specifies path of the definition for the job that this cmdlet starts. Enter the definition path. The
+concatenation of the values of the **DefinitionPath** and **DefinitionName** parameters is the fully
+qualified path of the job definition. Use this parameter to start custom job types that have a
+definition path, such as scheduled jobs.
+
+For scheduled jobs, the value of the **DefinitionPath** parameter is
+`$HOME\AppData\Local\Windows\PowerShell\ScheduledJob`.
+
+This parameter was introduced in PowerShell 3.0.
+
+```yaml
+Type: System.String
+Parameter Sets: DefinitionName
+Aliases:
+
+Required: False
+Position: 1
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -FilePath
+
+Specifies a local script that `Start-Job` runs as a background job. Enter the path and file name of
+the script or use the pipeline to send a script path to `Start-Job`. The script must be on the local
+computer or in a folder that the local computer can access.
+
+When you use this parameter, PowerShell converts the contents of the specified script file to a
+scriptblock and runs the scriptblock as a background job.
+
+```yaml
+Type: System.String
+Parameter Sets: FilePathComputerName
+Aliases:
+
+Required: True
+Position: 0
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+# Start-Job
+
+### -InitializationScript
+
+Specifies commands that run before the job starts. To create a scriptblock, enclose the commands in
+curly braces (`{}`).
+
+Use this parameter to prepare the session in which the job runs. For example, you can use it to add
+functions, snap-ins, and modules to the session.
+
+```yaml
+Type: System.Management.Automation.ScriptBlock
+Parameter Sets: ComputerName, LiteralFilePathComputerName, FilePathComputerName
+Aliases:
+
+Required: False
+Position: 1
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -InputObject
+
+Specifies input to the command. Enter a variable that contains the objects, or type a command or
+expression that generates the objects.
+
+In the value of the **ScriptBlock** parameter, use the `$input` automatic variable to represent the
+input objects.
+
+```yaml
+Type: System.Management.Automation.PSObject
+Parameter Sets: ComputerName, LiteralFilePathComputerName, FilePathComputerName
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByValue)
+Accept wildcard characters: False
+```
+
+### -LiteralPath
+
+Specifies a local script that this cmdlet runs as a background job. Enter the path of a script on
+the local computer.
+
+`Start-Job` uses the value of the **LiteralPath** parameter exactly as it&#x27;s typed. No characters are
+interpreted as wildcard characters. If the path includes escape characters, enclose it in single
+quotation marks. Single quotation marks tell PowerShell not to interpret any characters as escape
+sequences.
+
+```yaml
+Type: System.String
+Parameter Sets: LiteralFilePathComputerName
+Aliases: PSPath
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Name
+
+Specifies a friendly name for the new job. You can use the name to identify the job to other job
+cmdlets, such as the `Stop-Job` cmdlet.
+
+The default friendly name is `Job#`, where `#` is an ordinal number that is incremented for each
+job.
+
+```yaml
+Type: System.String
+Parameter Sets: ComputerName, LiteralFilePathComputerName, FilePathComputerName
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -PSVersion
+
+Specifies a version. `Start-Job` runs the job with the version of PowerShell. The acceptable values
+for this parameter are: `2.0` and `3.0`.
+
+This parameter was introduced in PowerShell 3.0.
+
+```yaml
+Type: System.Version
+Parameter Sets: ComputerName, LiteralFilePathComputerName, FilePathComputerName
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -RunAs32
+
+Indicates that `Start-Job` runs the job in a 32-bit process. **RunAs32** forces the job to run in a
+32-bit process, even on a 64-bit operating system.
+
+On 64-bit versions of Windows 7 and Windows Server 2008 R2, when the `Start-Job` command includes
+the **RunAs32** parameter, you can&#x27;t use the **Credential** parameter to specify the credentials of
+another user.
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: ComputerName, LiteralFilePathComputerName, FilePathComputerName
+Aliases:
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -ScriptBlock
+
+Specifies the commands to run in the background job. To create a scriptblock, enclose the commands
+in curly braces (`{}`). Use the `$input` automatic variable to access the value of the
+**InputObject** parameter. This parameter is required.
+
+```yaml
+Type: System.Management.Automation.ScriptBlock
+Parameter Sets: ComputerName
+Aliases: Command
+
+Required: True
+Position: 0
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Type
+
+Specifies the custom type for jobs started by `Start-Job`. Enter a custom job type name, such as
+PSScheduledJob for scheduled jobs or PSWorkflowJob for workflows jobs. This parameter isn&#x27;t valid
+for standard background jobs.
+
+This parameter was introduced in PowerShell 3.0.
+
+```yaml
+Type: System.String
+Parameter Sets: DefinitionName
+Aliases:
+
+Required: False
+Position: 2
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### CommonParameters
+
+This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable,
+-InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose,
+-WarningAction, and -WarningVariable. For more information, see [about_CommonParameters](https://go.microsoft.com/fwlink/?LinkID=113216).
+
+## INPUTS
+
+### System.String
+
+You can pipe an object with the **Name** property to the **Name** parameter to this cmdlet. For
+example, you can pipe a **FileInfo** object from `Get-ChildItem`.
+
+## OUTPUTS
+
+### System.Management.Automation.PSRemotingJob
+
+This cmdlet returns a **PSRemotingJob** object representing the job that it started.
+
+## NOTES
+
+Windows PowerShell includes the following aliases for `Start-Job`:
+
+- `sajb`
+
+To run in the background, `Start-Job` runs in its own session in the current session. When you use
+the `Invoke-Command` cmdlet to run a `Start-Job` command in a session on a remote computer,
+`Start-Job` runs in a session in the remote session.
+
+## RELATED LINKS
+
+[about_Arrays](./about/about_arrays.md)
+
+[about_Automatic_Variables](./about/about_automatic_variables.md)
+
+[about_Jobs](./About/about_Jobs.md)
+
+[about_Job_Details](./About/about_Job_Details.md)
+
+[about_Remote_Jobs](./About/about_Remote_Jobs.md)
+
+[Get-Job](Get-Job.md)
+
+[Invoke-Command](Invoke-Command.md)
+
+[Receive-Job](Receive-Job.md)
+
+[Remove-Job](Remove-Job.md)
+
+[Resume-Job](Resume-Job.md)
+
+[Stop-Job](Stop-Job.md)
+
+[Suspend-Job](Suspend-Job.md)
+
+[Wait-Job](Wait-Job.md)</pre></section>

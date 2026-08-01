@@ -1,0 +1,613 @@
+<!doctype html><meta charset="utf-8"><section class="jp-official"><h1>Register-ObjectEvent について</h1>
+<h2>SYNOPSIS は,Microsoft .NET Framework オブジェクトによって生成されるイベントに登録します.</h2>
+<h2>SYNTAXは,のシンタックスです.</h2>
+<pre><code>Register-ObjectEvent [-InputObject] &lt;PSObject&gt; [-EventName] &lt;String&gt;
+ [[-SourceIdentifier] &lt;String&gt;] [[-Action] &lt;ScriptBlock&gt;] [-MessageData &lt;PSObject&gt;]
+ [-SupportEvent] [-Forward] [-MaxTriggerCount &lt;Int32&gt;] [&lt;CommonParameters&gt;]
+</code></pre>
+<h2>記述は,</h2>
+<p><code>Register-ObjectEvent</code>cmdlet は,ローカルコンピュータまたはリモートコンピュータ上の .NET オブジェクトによって生成されるイベントを登録します.</p>
+<p>登録されたイベントが挙がると,セッションのイベントキューに追加されます.イベントキューにイベントを入手するには,  を使います.<code>Get-Event</code>cmdletです.</p>
+<p>のパラメータを使用できます.<code>Register-ObjectEvent</code>また,登録されたイベントが挙がるときに実行すべき行動を指定するために <strong>Action</strong> パラメータを使用し,ローカルセッションでイベントのキューに遠隔イベントを送信するための <strong>Forward</strong> パラメータを使用することもできます.</p>
+<p>イベントのサブスクリプションを登録すると,イベントサブスクリプションがセッションに追加されます.<code>Get-EventSubscriber</code>cmdlet. サブスクリプションをキャンセルするには,  を使ってください.<code>Unregister-Event</code>cmdletで,イベントのサブスクリプションをセッションから削除します.</p>
+<h2>例えは</h2>
+<h3>例1:新しいプロセスが開始されるときにイベントにサインアップする</h3>
+<p>この例は,新しいプロセスが開始されるときに生成されるイベントを登録します.</p>
+<p>コマンドは <strong>ManagementEventWatcher</strong>オブジェクトを使用して <strong>EventArrived</strong>イベントを取得します.クエリオブジェクトは,イベントが <strong>Win32_Process</strong>クラスのためのインスタンスの作成イベントであることを指定します.</p>
+<pre><code class="language-powershell">$queryParameters = '__InstanceCreationEvent', (New-Object TimeSpan 0,0,1),
+    &quot;TargetInstance isa 'Win32_Process'&quot;
+$Query = New-Object System.Management.WqlEventQuery -ArgumentList $queryParameters
+$ProcessWatcher = New-Object System.Management.ManagementEventWatcher $Query
+Register-ObjectEvent -InputObject $ProcessWatcher -EventName &quot;EventArrived&quot;
+</code></pre>
+<h3>例2:イベントに反応するアクションを指定する</h3>
+<p>行動を指定すると,発生したイベントはイベントのキューに追加されない.代わりに,そのアクションがイベントに反応する.この例では,新しいプロセスが開始されていることを示すインスタンスの作成イベントが発生すると,新しい <strong>ProcessCreated</strong>イベントが発生します.</p>
+<pre><code class="language-powershell">$queryParameters = '__InstanceCreationEvent', (New-Object TimeSpan 0,0,1),
+    &quot;TargetInstance isa 'Win32_Process'&quot;
+$Query = New-Object System.Management.WqlEventQuery -ArgumentList $queryParameters
+$ProcessWatcher = New-Object System.Management.ManagementEventWatcher $query
+$newEventArgs = @{
+    SourceIdentifier = 'PowerShell.ProcessCreated'
+    Sender = $Sender
+    EventArguments = $EventArgs.NewEvent.TargetInstance
+}
+$Action = { New-Event @newEventArgs }
+Register-ObjectEvent -InputObject $ProcessWatcher -EventName &quot;EventArrived&quot; -Action $Action
+</code></pre>
+<pre><code class="language-Output">Id   Name               PSJobTypeName   State       HasMoreData   Location   Command
+--   ----               -------------   -----       -----------   --------   -------
+ 5   3db2d67a-efff-...                 NotStarted   False                    New-Event @newEventArgs
+</code></pre>
+<p>アクションは""を用いています.<code>$Sender</code>そして,<code>$EventArgs</code>自動変数はイベントアクションのみに埋め込まれています.</p>
+<p><code>Register-ObjectEvent</code>命令は,アクションを表す作業オブジェクトを返します.この命令は,背景作業として実行されます. などのJob cmdletsを使用できます.<code>Get-Job</code>そして,<code>Receive-Job</code>詳細については, [about_Jobs] (.../Microsoft.PowerShell.Core/About/about_Jobs.md) を参照してください.</p>
+<h3>例3: リモートコンピュータでオブジェクトイベントをサブスクリプションする</h3>
+<p>この例では,リモートコンピュータでオブジェクトイベントを購読する方法を示しています.この例では,  を使います.<code>Enable-ProcessCreationEvent</code>で定義された関数です.<code>ProcessCreationEvent.ps1</code>このスクリプトは,例のすべてのコンピュータに利用できます.</p>
+<pre><code class="language-powershell">
+# ProcessCreationEvent.ps1
+function  Enable-ProcessCreationEvent {
+    $queryParameters = &quot;__InstanceCreationEvent&quot;, (New-Object TimeSpan 0,0,1),
+        &quot;TargetInstance isa 'Win32_Process'&quot;
+    $Query = New-Object System.Management.WqlEventQuery -ArgumentList $queryParameters
+
+    $objectEventArgs = @{
+        Input = New-Object System.Management.ManagementEventWatcher $Query
+        EventName = 'EventArrived'
+        SourceIdentifier = 'WMI.ProcessCreated'
+        MessageData = 'Test'
+        Forward = $true
+    }
+    Register-ObjectEvent @objectEventArgs
+}
+
+$S = New-PSSession -ComputerName &quot;Server01, Server02&quot;
+Invoke-Command -Session $S -FilePath ProcessCreationEvent.ps1
+Invoke-Command -Session $S { Enable-ProcessCreationEvent }
+</code></pre>
+<p>最初の2台のリモートコンピュータでPSSessionsを作成し,それをPSSESSONに保存します.<code>$S</code>次に,変数  を参照します.<code>Invoke-Command</code>cmdlet は  を実行します.<code>ProcessCreationEvent.ps1</code>のPSSセッションの各スクリプトに書かれている.<code>$S</code>このアクションによって,  が生成されます.<code>Enable-ProcessCreationEvent</code>遠隔セッションの関数です.最後に,私たちは  を実行します.<code>Enable-ProcessCreationEvent</code>リモートセッションでは機能します.</p>
+<p>関数は, a を含む.<code>Register-ObjectEvent</code><strong>ManagementEventWatcher</strong>オブジェクトとその <strong>EventArrived</strong>イベントを通じて <strong>Win32_Process</strong>オブジェクトのインスタンスの作成イベントを登録するコマンドです.</p>
+<h3>例4:PSEventJobオブジェクトでダイナミックモジュールを使用します</h3>
+<p>この例では,イベント登録に <strong>アクション</strong> を入れると作成される <strong>PSEventJob</strong> オブジェクトのダイナミックモジュールを使用する方法を示しています.まずは,タイムログオブジェクトを作成し,有効にします.その後,タイムログの間隔を500 (ミリ秒) に設定します.<code>Register-ObjectEvent</code>cmdlet は,タイマーオブジェクトの <strong>Elapsed</strong> イベントを記録します. <strong>PSEventJob</strong> オブジェクトは,  に保存されます.<code>$Job</code>また,イベントサブスクリプションの <strong>Action</strong> 属性にも利用できます.詳細については, [Get-EventSubscriber] (Get-EventSubscriber.md) をご覧ください.</p>
+<p>タイムリング間隔が過ぎると,イベントが起こされ,アクションが実行されます.<code>Get-Random</code>cmdlet は,0 から 100 の間のランダムな数を生成し,それを  に保存します.<code>$Random</code>変数です.</p>
+<pre><code class="language-powershell">$Timer = New-Object Timers.Timer
+$Timer.Interval = 500
+$Timer.Enabled = $true
+$objectEventArgs = @{
+    InputObject = $Timer
+    EventName = 'Elapsed'
+    SourceIdentifier = 'Timer.Random'
+    Action = {$Random = Get-Random -Min 0 -Max 100}
+}
+$Job = Register-ObjectEvent @objectEventArgs
+$Job | Format-List -Property *
+&amp; $Job.Module {$Random}
+&amp; $Job.Module {$Random}
+</code></pre>
+<pre><code class="language-Output">State         : Running
+Module        : __DynamicModule_53113769-31f2-42dc-830b-8749325e28d6
+StatusMessage :
+HasMoreData   : True
+Location      :
+Command       : $Random = Get-Random -Min 0 -Max 100
+JobStateInfo  : Running
+Finished      : System.Threading.ManualResetEvent
+InstanceId    : 47b5ec9f-bfe3-4605-860a-4674e5d44ca8
+Id            : 7
+Name          : Timer.Random
+ChildJobs     : {}
+PSBeginTime   : 6/27/2019 10:19:06 AM
+PSEndTime     :
+PSJobTypeName :
+Output        : {}
+Error         : {}
+Progress      : {}
+Verbose       : {}
+Debug         : {}
+Warning       : {}
+Information   : {}
+60
+47
+</code></pre>
+<p><strong>PSEventJob</strong> には,動的なスクリプトモジュールを含む <strong>Module</strong> 属性があります.このアクションを実行します.コールオペレータ () を使って ()<code>&amp;</code>), の値を表示するためにモジュール内のコマンドを呼び出す.<code>$Random</code>変数です.</p>
+<p>モジュールに関する詳細については, [about_Modules] (../Microsoft.PowerShell.Core/About/about_Modules.md) を参照してください.</p>
+<h2>パラメータは</h2>
+<h1>Register-ObjectEvent について</h1>
+<h3>-アクション</h3>
+<p>イベントを処理するコマンドを指定します. <strong>アクション</strong>のコマンドは,イベントのキューにイベントを送る代わりに,イベントが挙げるときに実行されます.コマンドを括弧に収め ()<code>{}</code>) を脚本ブロックを作成する.</p>
+<p><strong>Action</strong>パラメータの値は,  を含むことができます.<code>$Event</code>     <code>$EventSubscriber</code>     <code>$Sender</code>     <code>$EventArgs</code>そして,そして,<code>$args</code>これらの変数は,イベントに関する情報を <strong>Action</strong> 脚本ブロックに提供します.詳細については, [about_Automatic_Variables] を参照してください.</p>
+<p>行動を指定すると,<code>Register-ObjectEvent</code>そのアクションを表現するイベント作業オブジェクトを表示します.イベント作業を管理するためにJob cmdlets を使用できます.</p>
+<pre><code class="language-yaml">Type: System.Management.Automation.ScriptBlock
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: 101
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-イベント名</h3>
+<p>あなたが登録しているイベントを指定します.</p>
+<p>このパラメータの値は,NETオブジェクトが暴露するイベントの名前である必要があります.例えば, <strong>ManagementEventWatcher</strong> クラスには <strong>EventArrived</strong> と <strong>Stopped</strong> というイベントがあります.イベントのイベント名を検索するには,  を使ってください.<code>Get-Member</code>cmdletです.</p>
+<pre><code class="language-yaml">Type: System.String
+Parameter Sets: (All)
+Aliases:
+
+Required: True
+Position: 1
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-前へ</h3>
+<p>このサブスクリプションのイベントを遠隔セッションに送信するCMdletが表示されている.このパラメータを遠隔コンピュータまたは遠隔セッションでイベントを登録するときに使用してください.</p>
+<pre><code class="language-yaml">Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-InputObject</h3>
+<p>イベントを生成する .NET オブジェクトを指定します.オブジェクトを含む変数を入力するか,オブジェクトを得るコマンドまたは表情を入力します.</p>
+<pre><code class="language-yaml">Type: System.Management.Automation.PSObject
+Parameter Sets: (All)
+Aliases:
+
+Required: True
+Position: 0
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>- マックストリガーカウンタ</h3>
+<p>事件が引き起こす最大限の数を指定します.</p>
+<pre><code class="language-yaml">Type: System.Int32
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-MessageData</h3>
+<p>このイベントのサブスクリプションに関連した追加データを指定します.このパラメータの値は,このサブスクリプションに関連したすべてのイベントのMessageData属性に表示されます.</p>
+<pre><code class="language-yaml">Type: System.Management.Automation.PSObject
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-SourceIdentifier について</h3>
+<p>サブスクリプションに指定した名前を指定します.選択した名前は,現在のセッションでユニークでなければなりません.デフォルト値はPowerShellによって割り当てられる GUIDです.</p>
+<p>このパラメータの値は,サブスクリプションオブジェクトとこのサブスクリプションに関連したすべてのイベントオブジェクトの <strong>SourceIdentifier</strong>属性の値に表示されます.</p>
+<pre><code class="language-yaml">Type: System.String
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: 100
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-SupportEvent サポートイベント</h3>
+<p>cmdlet はイベントのサブスクリプションを隠していることを示します.現在のサブスクリプションがより複雑なイベント登録メカニズムの一部であり,独立して発見されるべきでない場合,このパラメータを使用します.</p>
+<p><strong>SupportEvent</strong>パラメータで作成されたサブスクリプションを表示またはキャンセルするには, の <strong>Force</strong>パラメータを使用します.<code>Get-EventSubscriber</code>そして,<code>Unregister-Event</code>cmdlets.</p>
+<pre><code class="language-yaml">Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>共通パラメーター</h3>
+<p>このcmdletは,共通パラメータをサポートしています: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable.詳細については, <a href="を参照してください.https://go.microsoft.com/fwlink/?LinkID=113216">about_CommonParameters</a> でした.</p>
+<h2>輸入は</h2>
+<h3>どれもない</h3>
+<p>このcmdletに物体をパイプすることはできません.</p>
+<h2>輸出は</h2>
+<h3>どれもない</h3>
+<p>デフォルトでは,このcmdletは出力返さない.</p>
+<h3>システム管理自動化PSEventJob</h3>
+<p><strong>Action</strong>パラメータを使用すると,このcmdletは <strong>PSEventJob</strong>オブジェクトを返します.</p>
+<h2>NOTES  記事ができました.</h2>
+<p>イベント,イベントサブスクリプション,イベントキューは,現在のセッションでのみ存在します.現在のセッションを閉じる場合は,イベントキューは廃棄され,イベントサブスクリプションはキャンセルされます.</p>
+<h2>関連リンク</h2>
+<p><a href="Get-Event.md">Get-Event</a> </p>
+<p><a href="New-Event.md">New-Event</a> </p>
+<p><a href="Register-EngineEvent.md">Register-EngineEvent</a> 登録する</p>
+<p><a href="Remove-Event.md">Remove-Event</a> </p>
+<p><a href="Unregister-Event.md">Unregister-Event</a> </p>
+<p><a href="Wait-Event.md">Wait-Event</a> </p></section><section class="en-original"><pre class="source-original"># Register-ObjectEvent
+
+## SYNOPSIS
+Subscribes to the events that are generated by a Microsoft .NET Framework object.
+
+## SYNTAX
+
+```
+Register-ObjectEvent [-InputObject] &lt;PSObject&gt; [-EventName] &lt;String&gt;
+ [[-SourceIdentifier] &lt;String&gt;] [[-Action] &lt;ScriptBlock&gt;] [-MessageData &lt;PSObject&gt;]
+ [-SupportEvent] [-Forward] [-MaxTriggerCount &lt;Int32&gt;] [&lt;CommonParameters&gt;]
+```
+
+## DESCRIPTION
+
+The `Register-ObjectEvent` cmdlet subscribes to events that are generated by .NET objects on the
+local computer or on a remote computer.
+
+When the subscribed event is raised, it is added to the event queue in your session. To get events
+in the event queue, use the `Get-Event` cmdlet.
+
+You can use the parameters of `Register-ObjectEvent` to specify property values of the events that
+can help you to identify the event in the queue. You can also use the **Action** parameter to
+specify actions to take when a subscribed event is raised and the **Forward** parameter to send
+remote events to the event queue in the local session.
+
+When you subscribe to an event, an event subscriber is added to your session. To get the event
+subscribers in the session, use the `Get-EventSubscriber` cmdlet. To cancel the subscription, use
+the `Unregister-Event` cmdlet, which deletes the event subscriber from the session.
+
+## EXAMPLES
+
+### Example 1: Subscribe to events when a new process starts
+
+This example subscribes to events generated when a new process starts.
+
+The command uses the **ManagementEventWatcher** object to get **EventArrived** events. A query
+object specifies that the events are instance creation events for the **Win32_Process** class.
+
+```powershell
+$queryParameters = &#x27;__InstanceCreationEvent&#x27;, (New-Object TimeSpan 0,0,1),
+    &quot;TargetInstance isa &#x27;Win32_Process&#x27;&quot;
+$Query = New-Object System.Management.WqlEventQuery -ArgumentList $queryParameters
+$ProcessWatcher = New-Object System.Management.ManagementEventWatcher $Query
+Register-ObjectEvent -InputObject $ProcessWatcher -EventName &quot;EventArrived&quot;
+```
+
+### Example 2: Specify an action to respond to an event
+
+When you specify an action, events that are raised are not added to the event queue. Instead, the
+action responds to the event. In this example, when an instance creation event is raised indicating
+that a new process is started, a new **ProcessCreated** event is raised.
+
+```powershell
+$queryParameters = &#x27;__InstanceCreationEvent&#x27;, (New-Object TimeSpan 0,0,1),
+    &quot;TargetInstance isa &#x27;Win32_Process&#x27;&quot;
+$Query = New-Object System.Management.WqlEventQuery -ArgumentList $queryParameters
+$ProcessWatcher = New-Object System.Management.ManagementEventWatcher $query
+$newEventArgs = @{
+    SourceIdentifier = &#x27;PowerShell.ProcessCreated&#x27;
+    Sender = $Sender
+    EventArguments = $EventArgs.NewEvent.TargetInstance
+}
+$Action = { New-Event @newEventArgs }
+Register-ObjectEvent -InputObject $ProcessWatcher -EventName &quot;EventArrived&quot; -Action $Action
+```
+
+```Output
+Id   Name               PSJobTypeName   State       HasMoreData   Location   Command
+--   ----               -------------   -----       -----------   --------   -------
+ 5   3db2d67a-efff-...                 NotStarted   False                    New-Event @newEventArgs
+```
+
+The action uses the `$Sender` and `$EventArgs` automatic variables which are populated only for
+event actions.
+
+The `Register-ObjectEvent` command returns a job object that represents the action, which runs as
+a background job. You can use the Job cmdlets, such as `Get-Job` and `Receive-Job`, to manage the
+background job. For more information, see
+[about_Jobs](../Microsoft.PowerShell.Core/About/about_Jobs.md).
+
+### Example 3: Subscribe to object events on remote computers
+
+This example shows how to subscribe to object events on remote computers. This example uses the
+`Enable-ProcessCreationEvent` function that is defined in the `ProcessCreationEvent.ps1` script
+file. This script is available to all computers in the example.
+
+```powershell
+
+# ProcessCreationEvent.ps1
+function  Enable-ProcessCreationEvent {
+    $queryParameters = &quot;__InstanceCreationEvent&quot;, (New-Object TimeSpan 0,0,1),
+        &quot;TargetInstance isa &#x27;Win32_Process&#x27;&quot;
+    $Query = New-Object System.Management.WqlEventQuery -ArgumentList $queryParameters
+
+    $objectEventArgs = @{
+        Input = New-Object System.Management.ManagementEventWatcher $Query
+        EventName = &#x27;EventArrived&#x27;
+        SourceIdentifier = &#x27;WMI.ProcessCreated&#x27;
+        MessageData = &#x27;Test&#x27;
+        Forward = $true
+    }
+    Register-ObjectEvent @objectEventArgs
+}
+
+$S = New-PSSession -ComputerName &quot;Server01, Server02&quot;
+Invoke-Command -Session $S -FilePath ProcessCreationEvent.ps1
+Invoke-Command -Session $S { Enable-ProcessCreationEvent }
+```
+
+The first we create **PSSessions** on two remote computers and save them in the `$S` variable. Next,
+the `Invoke-Command` cmdlet run the `ProcessCreationEvent.ps1` script in the each of the PSSessions
+in `$S`. This action creates the `Enable-ProcessCreationEvent` function in the remote sessions.
+Finally, we run the `Enable-ProcessCreationEvent` function in the remote sessions.
+
+ The function includes a `Register-ObjectEvent` command that subscribes to instance creation events
+ on the **Win32_Process** object through the **ManagementEventWatcher** object and its
+ **EventArrived** event.
+
+### Example 4: Use the dynamic module in the PSEventJob object
+
+This example shows how to use the dynamic module in the **PSEventJob** object that is created when
+you include an **Action** in an event registration. First we createand and enable a timer object,
+then set the interval of the timer to 500 (milliseconds). The `Register-ObjectEvent` cmdlet
+registers the **Elapsed** event of the timer object. The **PSEventJob** object is saved in the
+`$Job` variable and is also available in the **Action** property of the event subscriber. For more
+information, see [Get-EventSubscriber](Get-EventSubscriber.md).
+
+Whenever the timer interval elapses, an event is raised and the action is executed. In this case,
+the `Get-Random` cmdlet generates a random number between 0 and 100 and saves it in the `$Random`
+variable.
+
+```powershell
+$Timer = New-Object Timers.Timer
+$Timer.Interval = 500
+$Timer.Enabled = $true
+$objectEventArgs = @{
+    InputObject = $Timer
+    EventName = &#x27;Elapsed&#x27;
+    SourceIdentifier = &#x27;Timer.Random&#x27;
+    Action = {$Random = Get-Random -Min 0 -Max 100}
+}
+$Job = Register-ObjectEvent @objectEventArgs
+$Job | Format-List -Property *
+&amp; $Job.Module {$Random}
+&amp; $Job.Module {$Random}
+```
+
+```Output
+State         : Running
+Module        : __DynamicModule_53113769-31f2-42dc-830b-8749325e28d6
+StatusMessage :
+HasMoreData   : True
+Location      :
+Command       : $Random = Get-Random -Min 0 -Max 100
+JobStateInfo  : Running
+Finished      : System.Threading.ManualResetEvent
+InstanceId    : 47b5ec9f-bfe3-4605-860a-4674e5d44ca8
+Id            : 7
+Name          : Timer.Random
+ChildJobs     : {}
+PSBeginTime   : 6/27/2019 10:19:06 AM
+PSEndTime     :
+PSJobTypeName :
+Output        : {}
+Error         : {}
+Progress      : {}
+Verbose       : {}
+Debug         : {}
+Warning       : {}
+Information   : {}
+60
+47
+```
+
+The **PSEventJob** has a **Module** property that contains a dynamic script module that implements
+the action. Using the call operator (`&amp;`),  we invoke the command in the module to display the
+value of the `$Random` variable.
+
+For more information about modules, see
+[about_Modules](../Microsoft.PowerShell.Core/About/about_Modules.md).
+
+## PARAMETERS
+
+# Register-ObjectEvent
+
+### -Action
+
+Specifies the commands to handle the event. The commands in the **Action** run when an event is
+raised, instead of sending the event to the event queue. Enclose the commands in braces (`{}`) to
+create a scriptblock.
+
+The value of the **Action** parameter can include the `$Event`, `$EventSubscriber`, `$Sender`,
+`$EventArgs`, and `$args` automatic variables. These variables provide information about the event
+to the **Action** scriptblock. For more information, see
+[about_Automatic_Variables](../Microsoft.PowerShell.Core/About/about_Automatic_Variables.md).
+
+When you specify an action, `Register-ObjectEvent` returns an event job object that represents
+that action. You can use the Job cmdlets to manage the event job.
+
+```yaml
+Type: System.Management.Automation.ScriptBlock
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: 101
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -EventName
+
+Specifies the event to which you are subscribing.
+
+The value of this parameter must be the name of the event that the .NET object exposes. For example,
+the **ManagementEventWatcher** class has events named **EventArrived** and **Stopped**. To find the
+event name of an event, use the `Get-Member` cmdlet.
+
+```yaml
+Type: System.String
+Parameter Sets: (All)
+Aliases:
+
+Required: True
+Position: 1
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Forward
+
+Indicates that the cmdlet sends events for this subscription to a remote session. Use this parameter
+when you are registering for events on a remote computer or in a remote session.
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -InputObject
+
+Specifies the .NET object that generates the events. Enter a variable that contains the object, or
+type a command or expression that gets the object.
+
+```yaml
+Type: System.Management.Automation.PSObject
+Parameter Sets: (All)
+Aliases:
+
+Required: True
+Position: 0
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -MaxTriggerCount
+
+Specifies the maximum number of times an event can be triggered.
+
+```yaml
+Type: System.Int32
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -MessageData
+
+Specifies any additional data to be associated with this event subscription. The value of this
+parameter appears in the MessageData property of all events associated with this subscription.
+
+```yaml
+Type: System.Management.Automation.PSObject
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -SourceIdentifier
+
+Specifies a name that you select for the subscription. The name that you select must be unique in
+the current session. The default value is the GUID that PowerShell assigns.
+
+The value of this parameter appears in the value of the **SourceIdentifier** property of the
+subscriber object and all event objects associated with this subscription.
+
+```yaml
+Type: System.String
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: 100
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -SupportEvent
+
+Indicates that the cmdlet hides the event subscription. Use this parameter when the current
+subscription is part of a more complex event registration mechanism and should not be discovered
+independently.
+
+To view or cancel a subscription that was created with the **SupportEvent** parameter, use the
+**Force** parameter of the `Get-EventSubscriber` and `Unregister-Event` cmdlets.
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### CommonParameters
+
+This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable,
+-InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose,
+-WarningAction, and -WarningVariable. For more information, see
+[about_CommonParameters](https://go.microsoft.com/fwlink/?LinkID=113216).
+
+## INPUTS
+
+### None
+
+You can&#x27;t pipe objects to this cmdlet.
+
+## OUTPUTS
+
+### None
+
+By default, this cmdlet returns no output.
+
+### System.Management.Automation.PSEventJob
+
+When you use the **Action** parameter, this cmdlet returns a **PSEventJob** object.
+
+## NOTES
+
+Events, event subscriptions, and the event queue exist only in the current session. If you close the
+current session, the event queue is discarded and the event subscription is canceled.
+
+## RELATED LINKS
+
+[Get-Event](Get-Event.md)
+
+[New-Event](New-Event.md)
+
+[Register-EngineEvent](Register-EngineEvent.md)
+
+[Remove-Event](Remove-Event.md)
+
+[Unregister-Event](Unregister-Event.md)
+
+[Wait-Event](Wait-Event.md)</pre></section>

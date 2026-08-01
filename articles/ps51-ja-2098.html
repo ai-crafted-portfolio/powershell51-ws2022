@@ -1,0 +1,387 @@
+<!doctype html><meta charset="utf-8"><section class="jp-official"><h1>DA政策変更を入手する</h1>
+<h2>SYNOPSISは,既存のルールにおけるIPアドレスと入力パラメータから得られたIPアドレスとの違いを基にIPsecルールに追加・削除する必要があるIPアドレスの一覧を取得し,適切なポリシーストアでIPsecルールを更新するWindows PowerShell®スクリプト (.ps1) を作成します.</h2>
+<h2>SYNTAXは,のシンタックスです.</h2>
+<pre><code>Get-DAPolicyChange [[-Servers] &lt;String[]&gt;] [[-Domains] &lt;String[]&gt;] [-DisplayName] &lt;String&gt;
+ [[-PolicyStore] &lt;String&gt;] [-PSLocation] &lt;String&gt; [-EndpointType] &lt;String&gt; [[-DnsServers] &lt;String[]&gt;]
+ [&lt;CommonParameters&gt;]
+</code></pre>
+<h2>記述 <strong>Get-DAPolicyChange</strong> cmdlet は既存のIPsecルールにおけるIPアドレス (リモート・ローカルアドレス) と,入力パラメータによって導かれるIPアドレスとの間に検出された違いを返します.この cmdlet は Windows PowerShell® スクリプト () も作成します.<code>.ps1</code>作成されたスクリプトには,IPsecルールへのIPアドレスを追加または削除するUpdate-NetIPsecRule cmdletのインスタンスを含む.</h2>
+<p>このcmdletは,ダブルトンネルモデルでDirectAccess (DA) のデプロイメントでクライアントとサーバーのIPsecポリシーを更新するために使用されます.DAファーストトンネルポリシーは,ドメイン名とサーバーから派生されたIPアドレスによって定義されます. <em>ドメイン</em>または <em>サーバー</em>パラメータから派生された値に基づいてIPアドレスリストが取得されます.このcmdletは,以下の <em>DeltaCollection</em>オブジェクトを出します:検出されたアドレス変更の実際のリスト,IPアドレス変更を追加するか削除するか,および解決しなかった完全資格ドメイン名 (FQDN) のリスト.同じ名前に対応する複数のルールがある場合は,このcmdletはエラーで失敗します.</p>
+<p>このcmdletの出力スクリプトを実行すると (PSLocation に位置する) DA の最初のトンネルの IP アドレスを解決し,グループポリシーオブジェクト (GPO) を適切に更新します. <em>DnsServers</em> パラメータで指定された DNS サーバはドメイン名とサーバー名前の解決に使用されます.</p>
+<p>このcmdletは,Windows PowerShellスクリプトを生成することで,管理者がポリシー同期化に対するより大きなコントロールを可能にします.Sync-NetIPsecRule cmdletは,IPアドレス変更も検出しますが,偏差と  を返却する代わりに,すぐに規則を更新します.<code>.ps1</code>脚本です.</p>
+<h2>例えは</h2>
+<h3>例1 ```</h3>
+<p>PS C:&gt;Get-DAPolicyChange -DisplayName "TunnelPolicy1" -EndpointType Endpoint1 -PSLocation "C:\Update.ps1" -Servers "server1.corp.contoso.com", "server2.corp.contoso.com", "server3.corp.contoso.com"
+IPsec Rule name  : TunnelPolicy1 
+Action           : Add 
+IPv6addresses    : 2001:4829:3243::100:1 
+                 : 2001:4829:3243::100:1 
+GPO              : contoso\DAClientPolicy </p>
+<p>IPsec Rule name  : TunnelPolicy1 
+Action           : Delete 
+IPv6addresses    : 2001:4829:3243::100:3 
+                 : 2001:4829:3243::100:4 
+GPO              : contoso\DAClientPolicy </p>
+<p>FQDN's that did not resolve into IP address: 
+server1.corp.contoso.com 
+server3.corp.contoso.com</p>
+<pre><code>
+この例では,既存のルールIPアドレスと入力パラメータから得られたIPアドレスとの違いを基にIPsecルールに追加して削除する必要がある IPアドレスの一覧を取得し,ルールローカルエンドポイントを更新する .ps1ファイルを送信します.
+
+### 例2 ```
+PS C:\&gt;$serverPolicyStore = domain.contoso.com/server_GPO
+
+
+
+PS C:\&gt;$serverRuleDisplayName = &quot;Any-Traffic-Win8DA-Rule&quot;
+
+
+
+PS C:\&gt;$domains = &quot;corp.contoso.com&quot;, &quot;corp.contoso2.com&quot;
+
+
+
+PS C:\&gt;$servers = &quot;server2.corp.contoso.com&quot;
+
+
+
+PS C:\&gt;$primaryDns64 = 1.2.2.1
+
+
+
+PS C:\&gt;Get-DAPolicyChange -PolicyStore $serverPolicyStore -DisplayName $serverRuleDisplayName -EndpointType Endpoint1 -Domains $domains -Servers $servers -DNSServers $primaryDns64 -AddressType IPv6 -PSLocation C:\Users\Administrator\Documents\PSscripts\dapolicychange.ps1
+</code></pre>
+<p>この例では,既存のルールIPアドレスと入力パラメータから得られたIPアドレスとの違いを基にIPsecルールに追加・削除する必要があるIPアドレスの一覧が表示されます.そして,エンドポイントを更新する .ps1ファイルが返されます.</p>
+<h2>パラメータは</h2>
+<h3>-DisplayName 画面名を指定して,IPsecルールによるIPアドレスの違いに対応します.</h3>
+<pre><code class="language-yaml">Type: String
+Parameter Sets: (All)
+Aliases: 
+
+Required: True
+Position: 2
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-DnsServers は,IPアドレス差を決定するために使用される名前解像度に使用される DNSサーバ IP アドレスのリストを指定します.このパラメータは,一または複数の DNSサーバ IP アドレスを受け入れます.このパラメータが指定されていない場合,このcmdletはデフォルト DNSサーバを使用します.</h3>
+<pre><code class="language-yaml">Type: String[]
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: 6
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-ドメインは,IPアドレスにおけるデルタが由来するドメインを指定する.リストは,完全資格ドメイン名 (FQDN) の配列によって指定される.</h3>
+<pre><code class="language-yaml">Type: String[]
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: 1
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-EndpointType は,IPアドレス差を追加または削除することによって,ローカルまたはリモートエンドポイントを変更する必要があることを指定します.このパラメータの受け入れ可能な値は:Endpoint1またはEndpoint2です.Endpoint1はローカルアドレスとEndpoint2は,IPsecルールに対してリモートアドレスに対応します.</h3>
+<pre><code class="language-yaml">Type: String
+Parameter Sets: (All)
+Aliases: 
+
+Required: True
+Position: 5
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-PSLocation 新しく作成されたWindows PowerShellスクリプトのパス指定 ()<code>.ps1</code>) ファイル.このパラメータは標準的なWindows PowerShell パート・シンタックスをサポートします.このパラメータには, などのルーテッド パートが含まれなければなりません.<code>C:\users\User1\WPS_Script.ps1</code> .</h3>
+<pre><code class="language-yaml">Type: String
+Parameter Sets: (All)
+Aliases: 
+
+Required: True
+Position: 4
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h1>DA政策変更を入手する</h1>
+<h3>-PoliciesStore 取るべきルールを取り出すためのポリシーストアを指定します.ポリシーストアはファイアウォールとIPsecポリシーのためのコンテナです.このパラメータの受け入れ可能な値は:です.</h3>
+<ul>
+<li>持続性ストア: 時には静態ルールと呼ばれるこのストアには,ローカルコンピュータの持続性ポリシーが含まれています.このポリシーはGPOsからではなく,コンピュータ上で手動またはプログラム的に作成されました (アプリケーションインストール中に).このストアに作成された規則は,アクティブストアに付着し,すぐにコンピュータ上でアクティブ化されます. - アクティブストア:このストアには,現在有効なポリシーが含まれています.これはコンピュータに適用されるすべてのポリシーストアの合計です.これはローカルコンピュータ (コンピュータに適用されるすべてのGPOsの合計) とローカルストア (PersistentStore,静態Windowsサービス硬化 (WSH),および設定の結果となるポリシーセット (RSOP) です.WSH). ---- GPOsもポリシーストアです.コンピュータ GPOsは以下の通り指定できます. ------ <code>-PolicyStore hostname</code>.-- アクティブ・ディレクトリGPOsは以下のとおりで指定できます. ------ <code>-PolicyStore domain.fqdn.com\GPO_Friendly_Namedomain.fqdn.comGPO_Friendly_Name</code>.---- 以下のようなもの. -------- <code>-PolicyStore localhost</code>------   〜<code>-PolicyStore corp.contoso.com\FirewallPolicy</code>-- アクティブディレクトリ GPOs は <strong>New-GPO</strong> cmdlet や Group Policy Management Console を使用して作成できます. - RSOP: この読み込みのみのストアでは,ローカルコンピュータに適用されるすべての GPOs の合計が含まれています. - SystemDefaults: この読み込みのみのストアでは,Windows Server 2012 に搭載されるファイアウォールルールがデフォルト状態に設定されています. - StaticServiceStore: この読み込みのみのストアでは,Windows に搭載されるすべてのサービス制限が含まれています. オプションおよび製品依存の機能は,WFAS の目的のために Windows Server 2012 の一部と考えられています. - ConfigurableServiceStore: この読み書きのみのストアでは,第三者向けに追加されるすべてのサービス制限が含まれています.さらに,ネットワークサービス隔離 Windows Store アプリケーションコンテナに作成されたルールはこのポリシーストアに表示されます.デフォルト値はPersistentStoreです.Set-NetIPsecRule cmdletはポリシーストアにオブジェクトを追加するために使用できません.作成時に,Objectをコピー-NetIPsecRule cmdletまたはNew-NetIPsecRule cmdletでのみポリシーストアに追加できます.</li>
+</ul>
+<pre><code class="language-yaml">Type: String
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: 3
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-Servers は,IPアドレス差を導き出すために使用されるサーバーIPアドレスの一覧を指定します.</h3>
+<pre><code class="language-yaml">Type: String[]
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: 0
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>共通パラメータ このcmdletは共通パラメータをサポートしています: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable.詳細については, <a href="を参照してください.https://go.microsoft.com/fwlink/?LinkID=113216">about_CommonParameters</a> でした.</h3>
+<h2>輸入は</h2>
+<h3>どれもない</h3>
+<h2>輸出は</h2>
+<h3>Microsoft.Management.Infrastructure.CimInstance#root\StandardCimv2\DeltaCollection[] ザ <code>Microsoft.Management.Infrastructure.CimInstance</code>Windows Management Instrumentation (WMI) のオブジェクトを表示する包装クラスです.ポンドサインの後に行進するパス () は,<code>#</code>) は,元々のWMIオブジェクトの名前空間とクラス名を提供します.</h3>
+<h2>NOTES  記事ができました.</h2>
+<h2>関連リンク</h2>
+<p><a href="./Sync-NetIPsecRule.md">Sync-NetIPsecRule</a> </p>
+<p><a href="./Update-NetIPsecRule.md">Update-NetIPsecRule</a> について</p></section><section class="en-original"><pre class="source-original"># Get-DAPolicyChange
+
+## SYNOPSIS
+Gets a list of IP addresses that need to be added and deleted to an IPsec rule based on the differences detected between the IP addresses for the existing rule and the IP addresses derived from the input parameters, and creates a Windows PowerShell® script (.ps1) that updates the IPsec rule in the appropriate policy stores.
+
+## SYNTAX
+
+```
+Get-DAPolicyChange [[-Servers] &lt;String[]&gt;] [[-Domains] &lt;String[]&gt;] [-DisplayName] &lt;String&gt;
+ [[-PolicyStore] &lt;String&gt;] [-PSLocation] &lt;String&gt; [-EndpointType] &lt;String&gt; [[-DnsServers] &lt;String[]&gt;]
+ [&lt;CommonParameters&gt;]
+```
+
+## DESCRIPTION
+The **Get-DAPolicyChange** cmdlet returns the detected differences between the IP addresses (remote and local addresses) of an existing IPsec rule, and the IP addresses derived by the input parameters.
+This cmdlet also creates a Windows PowerShell® script (`.ps1`) that updates the IPsec rule end points with the retrieved IP addresses.
+The created script contains instances of the Update-NetIPsecRule cmdlet, that adds or deletes IP addresses to or from IPsec rules.
+
+This cmdlet is used to keep the IPsec policies for client and server refreshed in DirectAccess (DA) deployments in a double tunnel model.
+The DA first tunnel policy is defined by IP addresses that are derived from domain names and servers.
+A list of IP addresses is retrieved based on the derived values from the *Domains* or *Servers* parameter.
+This cmdlet outputs *DeltaCollection* objects that contain the following: the actual list of address changes detected, whether to add or delete the change in IP addresses, and a list of fully qualified domain names (FQDNs) that did not resolve.
+If there are multiple rules that match the same name, then this cmdlet fails with an error.
+
+Running the output script for this cmdlet (located at PSLocation) resolves the IP addresses for the DA first tunnel and updates the Group Policy Objects (GPOs) appropriately.
+The DNS server specified in the *DnsServers* parameter will be used to resolve the domain name and server names.
+
+By generating a Windows PowerShell script, this cmdlet allows administrators to have greater control over policy synchronization.
+The Sync-NetIPsecRule cmdlet also detects the IP address changes, but immediately updates the rules instead of returning the deviations and a `.ps1` script.
+
+## EXAMPLES
+
+### EXAMPLE 1
+```
+PS C:\&gt;Get-DAPolicyChange -DisplayName &quot;TunnelPolicy1&quot; -EndpointType Endpoint1 -PSLocation &quot;C:\Update.ps1&quot; -Servers &quot;server1.corp.contoso.com&quot;, &quot;server2.corp.contoso.com&quot;, &quot;server3.corp.contoso.com&quot;
+IPsec Rule name  : TunnelPolicy1 
+Action           : Add 
+IPv6addresses    : 2001:4829:3243::100:1 
+                 : 2001:4829:3243::100:1 
+GPO              : contoso\DAClientPolicy 
+ 
+IPsec Rule name  : TunnelPolicy1 
+Action           : Delete 
+IPv6addresses    : 2001:4829:3243::100:3 
+                 : 2001:4829:3243::100:4 
+GPO              : contoso\DAClientPolicy 
+ 
+FQDN&#x27;s that did not resolve into IP address: 
+server1.corp.contoso.com 
+server3.corp.contoso.com
+```
+
+This example gets the list of IP addresses that need to be added and deleted to an IPsec rule based on the differences detected between the existing rule IP addresses and the IP addresses derived from the input parameters and returns a .ps1 file that updates the local end point for the rule.
+
+### EXAMPLE 2
+```
+PS C:\&gt;$serverPolicyStore = domain.contoso.com/server_GPO
+
+
+
+PS C:\&gt;$serverRuleDisplayName = &quot;Any-Traffic-Win8DA-Rule&quot;
+
+
+
+PS C:\&gt;$domains = &quot;corp.contoso.com&quot;, &quot;corp.contoso2.com&quot;
+
+
+
+PS C:\&gt;$servers = &quot;server2.corp.contoso.com&quot;
+
+
+
+PS C:\&gt;$primaryDns64 = 1.2.2.1
+
+
+
+PS C:\&gt;Get-DAPolicyChange -PolicyStore $serverPolicyStore -DisplayName $serverRuleDisplayName -EndpointType Endpoint1 -Domains $domains -Servers $servers -DNSServers $primaryDns64 -AddressType IPv6 -PSLocation C:\Users\Administrator\Documents\PSscripts\dapolicychange.ps1
+```
+
+This example gets the list of IP addresses that need to be added and deleted to an IPsec rule based on the differences detected between the existing rule IP addresses and the IP addresses derived from the input parameters and returns a .ps1 file that updates the end points.
+
+## PARAMETERS
+
+### -DisplayName
+Specifies the display name to match the differences in IP addresses of the IPsec rule.
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases: 
+
+Required: True
+Position: 2
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -DnsServers
+Specifies a list of DNS server IP addresses that will be used for name resolution used to determine IP address differences.
+This parameter accepts one or more DNS server IP addresses.
+If this parameter is not specified, then this cmdlet uses the default DNS servers.
+
+```yaml
+Type: String[]
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: 6
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Domains
+Specifies the domains from which the deltas in IP addresses are derived.
+The list is specified by an array of fully qualified domain names (FQDN).
+
+```yaml
+Type: String[]
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: 1
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -EndpointType
+Specifies that the local or remote endpoint should be modified by adding or removing the IP address differences.
+The acceptable values for this parameter are: Endpoint1 or Endpoint2.
+Endpoint1 corresponds to the local address and Endpoint2 corresponds to the remote address for any IPsec rule.
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases: 
+
+Required: True
+Position: 5
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -PSLocation
+Specifies the path for the newly created Windows PowerShell script (`.ps1`) file.
+This parameter supports standard Windows PowerShell path syntax.
+This parameter must contain a rooted path, such as `C:\users\User1\WPS_Script.ps1`.
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases: 
+
+Required: True
+Position: 4
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+# Get-DAPolicyChange
+
+### -PolicyStore
+Specifies the policy store from which to retrieve the rules to be retrieved. 
+A policy store is a container for firewall and IPsec policy. 
+The acceptable values for this parameter are:
+
+- PersistentStore: Sometimes called static rules, this store contains the persistent policy for the local computer.
+This policy is not from GPOs, and has been created manually or programmatically (during application installation) on the computer.
+Rules created in this store are attached to the ActiveStore and activated on the computer immediately. 
+- ActiveStore: This store contains the currently active policy, which is the sum of all policy stores that apply to the computer.
+This is the resultant set of policy (RSOP) for the local computer (the sum of all GPOs that apply to the computer), and the local stores (the PersistentStore, the static Windows service hardening (WSH), and the configurable WSH). 
+---- GPOs are also policy stores.
+Computer GPOs can be specified as follows. 
+------ `-PolicyStore hostname`. 
+---- Active Directory GPOs can be specified as follows. 
+------ `-PolicyStore domain.fqdn.com\GPO_Friendly_Namedomain.fqdn.comGPO_Friendly_Name`. 
+------ Such as the following. 
+-------- `-PolicyStore localhost`
+-------- `-PolicyStore corp.contoso.com\FirewallPolicy`
+---- Active Directory GPOs can be created using the **New-GPO** cmdlet or the Group Policy Management Console. 
+- RSOP: This read-only store contains the sum of all GPOs applied to the local computer. 
+- SystemDefaults: This read-only store contains the default state of firewall rules that ship with Windows Server® 2012. 
+- StaticServiceStore: This read-only store contains all the service restrictions that ship with Windows.
+Optional and product-dependent features are considered part of Windows Server 2012 for the purposes of WFAS. 
+- ConfigurableServiceStore: This read-write store contains all the service restrictions that are added for third-party services.
+In addition, network isolation rules that are created for Windows Store application containers will appear in this policy store. 
+The default value is PersistentStore. 
+The Set-NetIPsecRule cmdlet cannot be used to add an object to a policy store.
+An object can only be added to a policy store at creation time with the Copy-NetIPsecRule cmdlet or with the New-NetIPsecRule cmdlet.
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: 3
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Servers
+Specifies a list of server IP addresses that will be used to derive IP address differences.
+
+```yaml
+Type: String[]
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: 0
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### CommonParameters
+This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable. For more information, see [about_CommonParameters](https://go.microsoft.com/fwlink/?LinkID=113216).
+
+## INPUTS
+
+### None
+
+## OUTPUTS
+
+### Microsoft.Management.Infrastructure.CimInstance#root\StandardCimv2\DeltaCollection[]
+The `Microsoft.Management.Infrastructure.CimInstance` object is a wrapper class that displays Windows Management Instrumentation (WMI) objects.
+The path after the pound sign (`#`) provides the namespace and class name for the underlying WMI object.
+
+## NOTES
+
+## RELATED LINKS
+
+[Sync-NetIPsecRule](./Sync-NetIPsecRule.md)
+
+[Update-NetIPsecRule](./Update-NetIPsecRule.md)</pre></section>

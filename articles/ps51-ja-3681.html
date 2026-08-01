@@ -1,0 +1,677 @@
+<!doctype html><meta charset="utf-8"><section class="jp-official"><h1>新モジュール</h1>
+<h2>SYNOPSISは,メモリの中でしか存在しない新しいダイナミックモジュールを作成します.</h2>
+<h2>SYNTAXは,のシンタックスです.</h2>
+<h3>ScriptBlock (デフォルト) について</h3>
+<pre><code>New-Module [-ScriptBlock] &lt;ScriptBlock&gt; [-Function &lt;String[]&gt;] [-Cmdlet &lt;String[]&gt;] [-ReturnResult]
+ [-AsCustomObject] [-ArgumentList &lt;Object[]&gt;] [&lt;CommonParameters&gt;]
+</code></pre>
+<h3>名前</h3>
+<pre><code>New-Module [-Name] &lt;String&gt; [-ScriptBlock] &lt;ScriptBlock&gt; [-Function &lt;String[]&gt;] [-Cmdlet &lt;String[]&gt;]
+ [-ReturnResult] [-AsCustomObject] [-ArgumentList &lt;Object[]&gt;] [&lt;CommonParameters&gt;]
+</code></pre>
+<h2>記述は,</h2>
+<p><code>New-Module</code>cmdlet はスクリプトブロックから動態モジュールを作成します.関数や変数などの動態モジュールのメンバーは,セッション中に即座に利用可能であり,セッションを終了するまで利用可能になります.</p>
+<p>静態モジュールと同様に,デフォルトでは,ダイナミックモジュール内のcmdletと関数は輸出され,変数とニックネームは輸出されない.しかし,あなたはExport-ModuleMember cmdletと のパラメータを使用することができます.<code>New-Module</code>障害を覆すために.</p>
+<p>また,カスタムオブジェクトのパラメータを使用することもできます.<code>New-Module</code>機能などのモジュールメンバーは,セッションに輸入される代わりに,カスタムオブジェクトのスクリプト方法として実装されます.</p>
+<p>ダイナミックモジュールは,ディスクに載っていないメモリでしか存在しません.すべてのモジュールのように,ダイナミックモジュールのメンバーは,グローバル・スコープの子孫であるプライベートモジュールの範囲で実行されます.Get-Moduleはダイナミックモジュールを入手できませんが,Get-Commandは輸出されたメンバーを入手できます.</p>
+<p>ダイナミックなモジュールを利用できるようにするために<code>Get-Module</code>パイプは,a <code>New-Module</code>輸入モジュールへのコマンド,またはそのモジュールオブジェクトをパイプして,<code>New-Module</code>に返ってくる.<code>Import-Module</code>このアクションにより,動力モジュールが  に追加されます.<code>Get-Module</code>リストは,モジュールをディスクに保存したり,持続可能にするわけではありません.</p>
+<h2>例えは</h2>
+<h3>例1: ダイナミックなモジュールを作成する</h3>
+<p>この例では,動的モジュールが新しいモジュールとなり,関数""と呼ばれる機能が作られます.<code>Hello</code>.コマンドは新しいダイナミックモジュールを表すモジュールオブジェクトを返します.</p>
+<pre><code class="language-powershell">New-Module -ScriptBlock {function Hello {&quot;Hello!&quot;}}
+</code></pre>
+<pre><code class="language-Output">Name              : __DynamicModule_2ceb1d0a-990f-45e4-9fe4-89f0f6ead0e5
+Path              : 2ceb1d0a-990f-45e4-9fe4-89f0f6ead0e5
+Description       :
+Guid              : 00000000-0000-0000-0000-000000000000
+Version           : 0.0
+ModuleBase        :
+ModuleType        : Script
+PrivateData       :
+AccessMode        : ReadWrite
+ExportedAliases   : {}
+ExportedCmdlets   : {}
+ExportedFunctions : {[Hello, Hello]}
+ExportedVariables : {}
+NestedModules     : {}
+</code></pre>
+<h3>例2:ダイナミック・モジュールとGet-ModuleとGet-Commandの作業</h3>
+<p>この例では,動的なモジュールが返回されないことを示しています.<code>Get-Module</code>輸出するメンバーは,返信する によって返されます.<code>Get-Command</code>cmdletです.</p>
+<pre><code class="language-powershell">New-Module -ScriptBlock {function Hello {&quot;Hello!&quot;}}
+</code></pre>
+<pre><code class="language-Output">Name              : __DynamicModule_2ceb1d0a-990f-45e4-9fe4-89f0f6ead0e5
+Path              : 2ceb1d0a-990f-45e4-9fe4-89f0f6ead0e5
+Description       :
+Guid              : 00000000-0000-0000-0000-000000000000
+Version           : 0.0
+ModuleBase        :
+ModuleType        : Script
+PrivateData       :
+AccessMode        : ReadWrite
+ExportedAliases   : {}
+ExportedCmdlets   : {}
+ExportedFunctions : {[Hello, Hello]}
+ExportedVariables : {}
+NestedModules     : {}
+</code></pre>
+<pre><code class="language-powershell">Get-Module
+
+Get-Command Hello
+</code></pre>
+<pre><code class="language-Output">CommandType     Name   Definition
+-----------     ----   ----------
+Function        Hello  &quot;Hello!&quot;
+</code></pre>
+<h3>例3: 変数を現在のセッションに輸出する</h3>
+<p>この例では,という文字を使用しています.<code>Export-ModuleMember</code>変数を現在のセッションに輸出するには cmdlet を使用します.<code>Export-ModuleMember</code>命令では,関数だけが輸出されます.</p>
+<pre><code class="language-powershell">New-Module -ScriptBlock {$SayHelloHelp=&quot;Type 'SayHello', a space, and a name.&quot;; function SayHello ($Name) { &quot;Hello, $Name&quot; }; Export-ModuleMember -Function SayHello -Variable SayHelloHelp}
+$SayHelloHelp
+</code></pre>
+<pre><code class="language-Output">Type 'SayHello', a space, and a name.
+</code></pre>
+<pre><code class="language-powershell">SayHello Jeffrey
+</code></pre>
+<pre><code class="language-Output">Hello, Jeffrey
+</code></pre>
+<p>輸出結果は,変数と関数の両方がセッションに輸出されたことを示しています.</p>
+<h3>例4: Get-Moduleにダイナミックなモジュールを提供してください.</h3>
+<p>この例では,動的なモジュールを  に利用できるようにすることができると示しています.<code>Get-Module</code>ダイナミックモジュールを にパイプして<code>Import-Module</code> .</p>
+<p><code>New-Module</code>にパイプされたモジュールオブジェクトを作成します.<code>Import-Module</code>cmdlet.  の<strong>Name</strong>パラメータ<code>New-Module</code>モデルの友好的な名前を指定します.<code>Import-Module</code>デフォルトでは,返済するオブジェクトはありません.このコマンドから出力はありません. <code>Get-Module</code><strong>GreetingModule</strong>が現在のセッションに輸入されたことを確認します.</p>
+<pre><code class="language-powershell">New-Module -ScriptBlock {function Hello {&quot;Hello!&quot;}} -Name GreetingModule | Import-Module
+Get-Module
+</code></pre>
+<pre><code class="language-Output">Name              : GreetingModule
+Path              : d54dfdac-4531-4db2-9dec-0b4b9c57a1e5
+Description       :
+Guid              : 00000000-0000-0000-0000-000000000000
+Version           : 0.0
+ModuleBase        :
+ModuleType        : Script
+PrivateData       :
+AccessMode        : ReadWrite
+ExportedAliases   : {}
+ExportedCmdlets   : {}
+ExportedFunctions : {[Hello, Hello]}
+ExportedVariables : {}
+NestedModules     : {}
+</code></pre>
+<pre><code class="language-powershell">Get-Command Hello
+</code></pre>
+<pre><code class="language-Output">CommandType     Name                                                               Definition
+-----------     ----                                                               ----------
+Function        Hello                                                              &quot;Hello!&quot;
+</code></pre>
+<p><code>Get-Command</code>cmdlet は,cmdlet を表示します.<code>Hello</code>ダイナミックモジュールが輸出する機能です.</p>
+<h3>例5: 関数を輸出したカスタムオブジェクトを生成する</h3>
+<p>この例では,AsCustomObject**のパラメータをどのように使うか示しています.<code>New-Module</code>輸出された関数を表すスクリプト方法を持つカスタムオブジェクトを生成します.</p>
+<p><code>New-Module</code>cmdlet は,2 つの関数を持つダイナミックモジュールを作成します.<code>Hello</code>そして,<code>Goodbye</code><strong>AsCustomObject</strong>パラメータは,PSModuleInfo**オブジェクトの代わりにカスタムオブジェクトを作成し,その<code>New-Module</code>デフォルトで生成されます.このカスタムオブジェクトは,  に保存されます.<code>$m</code>変数です.<code>$m</code>変数は割り当てられた値がないようです.</p>
+<pre><code class="language-powershell">$m = New-Module -ScriptBlock {
+  function Hello ($Name) {&quot;Hello, $Name&quot;}
+  function Goodbye ($Name) {&quot;Goodbye, $Name&quot;}
+} -AsCustomObject
+$m
+$m | Get-Member
+</code></pre>
+<pre><code class="language-Output">TypeName: System.Management.Automation.PSCustomObject
+
+Name        MemberType   Definition
+----        ----------   ----------
+Equals      Method       bool Equals(System.Object obj)
+GetHashCode Method       int GetHashCode()
+GetType     Method       type GetType()
+ToString    Method       string ToString()
+Goodbye     ScriptMethod System.Object Goodbye();
+Hello       ScriptMethod System.Object Hello();
+</code></pre>
+<pre><code class="language-powershell">$m.Goodbye(&quot;Jane&quot;)
+</code></pre>
+<pre><code class="language-Output">Goodbye, Jane
+</code></pre>
+<pre><code class="language-powershell">$m.Hello(&quot;Manoj&quot;)
+</code></pre>
+<pre><code class="language-Output">Hello, Manoj
+</code></pre>
+<p>パイプリング<code>$m</code>へ<code>Get-Member</code>cmdlet ではカスタムオブジェクトの特性と方法が表示されます.出力では,オブジェクトが  を表示するスクリプト方法を持っていることを示します.<code>Hello</code>そして,<code>Goodbye</code>最後に,これらのスクリプト方法をスクリプト方法と呼び,結果を表示します.</p>
+<h1>新モジュール</h1>
+<h3>例6: スクリプトブロックの結果を取得する</h3>
+<p>この例では,スクリプトブロックを実行した結果を求めるために<strong>ReturnResult</strong>パラメータを使用しています. モジュールオブジェクトを要求する代わりに.新しいモジュール内のスクリプトブロックは, を定義します.<code>SayHello</code>函数に呼びかける.</p>
+<pre><code class="language-powershell">New-Module -ScriptBlock {function SayHello {&quot;Hello, World!&quot;}; SayHello} -ReturnResult
+</code></pre>
+<pre><code class="language-Output">Hello, World!
+</code></pre>
+<h2>パラメータは</h2>
+<h3>-ArgumentList</h3>
+<p>脚本ブロックに転送されるパラメータ値である数値の配列を指定します.ArgumentListの振る舞いについての詳細については, [about_Splatting] (about/about_Splatting.md#splatting-with-arrays) を参照してください.</p>
+<pre><code class="language-yaml">Type: System.Object[]
+Parameter Sets: (All)
+Aliases: Args
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-AsCustomObject でした.</h3>
+<p>このcmdletは,ダイナミックモジュールを表すカスタムオブジェクトを返します.カスタムオブジェクトのスクリプト方法としてモジュールメンバーが実装されていますが,セッションに輸入されません.カスタムオブジェクトを変数に保存し,ドット符号を使用してメンバーを呼び出すことができます.</p>
+<p>模块が同じ名前を持つ複数のメンバーを擁している場合,例えば関数と変数の両方がAと呼ばれる場合,カスタムオブジェクトからそれぞれの名前を持つメンバーが1人しかアクセスできません.</p>
+<pre><code class="language-yaml">Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-Cmdlet</h3>
+<p>このcmdletがモジュールから現在のセッションに輸出するcmdletの配列を指定します.コマ別列のcmdletのリストを入力します.ワイルドカード文字が許可されています.デフォルトでは,モジュール内のすべてのcmdletが輸出されます.</p>
+<p>スクリプトブロックでcmdletsを定義することはできませんが,ダイナミックモジュールが二重モジュールからcmdletsを輸入した場合,cmdletsを含める可能性があります.</p>
+<pre><code class="language-yaml">Type: System.String[]
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-FUNCTION について</h3>
+<p>このcmdletがモジュールから現在のセッションに輸出する関数数数列を指定します. 逗号別列の関数リストを入力します. ワイルドカード文字が許可されています. デフォルトでは,モジュールで定義されたすべての関数が輸出されます.</p>
+<pre><code class="language-yaml">Type: System.String[]
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: True
+</code></pre>
+<h3>-名字は</h3>
+<p>新しいモジュールに名前を指定する.また,モジュール名をNew-Moduleにパイプすることもできます.</p>
+<p>デフォルト値は,自発生成された名前で,  で始まる.<code>__DynamicModule_</code>ダイナミックモジュール経路を指定する GUID が続く.</p>
+<pre><code class="language-yaml">Type: System.String
+Parameter Sets: Name
+Aliases:
+
+Required: True
+Position: 0
+Default value: None
+Accept pipeline input: True (ByValue)
+Accept wildcard characters: False
+</code></pre>
+<h3>-ReturnResult</h3>
+<p>このcmdletがスクリプトブロックを実行し,モジュールオブジェクトを返却する代わりにスクリプトブロック結果を返却することを示します.</p>
+<pre><code class="language-yaml">Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-ScriptBlock</h3>
+<p>ダイナミックモジュールの内容を指定します. 内容を括弧に収め ()<code>{}</code>) を脚本ブロックを作成するために使用します.このパラメータは必須です.</p>
+<pre><code class="language-yaml">Type: System.Management.Automation.ScriptBlock
+Parameter Sets: (All)
+Aliases:
+
+Required: True
+Position: 1
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>共通パラメーター</h3>
+<p>このcmdletは,共通パラメータをサポートしています: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable.詳細については, <a href="を参照してください.https://go.microsoft.com/fwlink/?LinkID=113216">about_CommonParameters</a> でした.</p>
+<h2>輸入は</h2>
+<h3>System.String でした.</h3>
+<p>このcmdletにモジュール名をパイプすることができます.</p>
+<h2>輸出は</h2>
+<h3>システム管理自動化PSModuleInfo</h3>
+<p>このcmdletは,デフォルトで <strong>PSModuleInfo</strong>オブジェクトを生成します.</p>
+<h3>システム管理自動化PSCustomObject</h3>
+<p><strong>AsCustomObject</strong>パラメータを使用すると,PSCustomObject**オブジェクトが生成されます.</p>
+<h3>System.Object について</h3>
+<p><strong>ReturnResult</strong>パラメータを使用すると,このcmdletはダイナミックモジュール内のスクリプトブロックの評価結果を返します.</p>
+<h2>NOTES  記事ができました.</h2>
+<p>Windows PowerShell では,次のアライスがあります.<code>New-Module</code>:</p>
+<ul>
+<li>-<code>nmo</code></li>
+</ul>
+<p>にも言及することができます.<code>New-Module</code> の名前のみにより,<code>nmo</code>詳細については, [about_Aliases] を参照してください.</p>
+<h2>関連リンク</h2>
+<p><a href="Export-ModuleMember.md">Export-ModuleMember</a> でした.</p>
+<p><a href="Get-Module.md">Get-Module</a> </p>
+<p><a href="インポートモジュール.md">インポートモジュール</a> </p>
+<p><a href="Remove-Module.md を削除する">Remove-Module</a></p>
+<p><a href="About/about_Modules.mdについて">about_Modules</a></p></section><section class="en-original"><pre class="source-original"># New-Module
+
+## SYNOPSIS
+Creates a new dynamic module that exists only in memory.
+
+## SYNTAX
+
+### ScriptBlock (Default)
+
+```
+New-Module [-ScriptBlock] &lt;ScriptBlock&gt; [-Function &lt;String[]&gt;] [-Cmdlet &lt;String[]&gt;] [-ReturnResult]
+ [-AsCustomObject] [-ArgumentList &lt;Object[]&gt;] [&lt;CommonParameters&gt;]
+```
+
+### Name
+
+```
+New-Module [-Name] &lt;String&gt; [-ScriptBlock] &lt;ScriptBlock&gt; [-Function &lt;String[]&gt;] [-Cmdlet &lt;String[]&gt;]
+ [-ReturnResult] [-AsCustomObject] [-ArgumentList &lt;Object[]&gt;] [&lt;CommonParameters&gt;]
+```
+
+## DESCRIPTION
+
+The `New-Module` cmdlet creates a dynamic module from a scriptblock. The members of the dynamic
+module, such as functions and variables, are immediately available in the session and remain
+available until you close the session.
+
+Like static modules, by default, the cmdlets and functions in a dynamic module are exported and the
+variables and aliases are not. However, you can use the Export-ModuleMember cmdlet and the
+parameters of `New-Module` to override the defaults.
+
+You can also use the **AsCustomObject** parameter of `New-Module` to return the dynamic module as a
+custom object. The members of the modules, such as functions, are implemented as script methods of
+the custom object instead of being imported into the session.
+
+Dynamic modules exist only in memory, not on disk. Like all modules, the members of dynamic modules
+run in a private module scope that is a child of the global scope. Get-Module cannot get a dynamic
+module, but Get-Command can get the exported members.
+
+To make a dynamic module available to `Get-Module`, pipe a `New-Module` command to Import-Module, or
+pipe the module object that `New-Module` returns to `Import-Module`. This action adds the dynamic
+module to the `Get-Module` list, but it does not save the module to disk or make it persistent.
+
+## EXAMPLES
+
+### Example 1: Create a dynamic module
+
+This example creates a new dynamic module with a function called `Hello`. The command returns a
+module object that represents the new dynamic module.
+
+```powershell
+New-Module -ScriptBlock {function Hello {&quot;Hello!&quot;}}
+```
+
+```Output
+Name              : __DynamicModule_2ceb1d0a-990f-45e4-9fe4-89f0f6ead0e5
+Path              : 2ceb1d0a-990f-45e4-9fe4-89f0f6ead0e5
+Description       :
+Guid              : 00000000-0000-0000-0000-000000000000
+Version           : 0.0
+ModuleBase        :
+ModuleType        : Script
+PrivateData       :
+AccessMode        : ReadWrite
+ExportedAliases   : {}
+ExportedCmdlets   : {}
+ExportedFunctions : {[Hello, Hello]}
+ExportedVariables : {}
+NestedModules     : {}
+```
+
+### Example 2: Working with dynamic modules and Get-Module and Get-Command
+
+This example demonstrates that dynamic modules are not returned by the `Get-Module` cmdlet. The
+members that they export are returned by the `Get-Command` cmdlet.
+
+```powershell
+New-Module -ScriptBlock {function Hello {&quot;Hello!&quot;}}
+```
+
+```Output
+Name              : __DynamicModule_2ceb1d0a-990f-45e4-9fe4-89f0f6ead0e5
+Path              : 2ceb1d0a-990f-45e4-9fe4-89f0f6ead0e5
+Description       :
+Guid              : 00000000-0000-0000-0000-000000000000
+Version           : 0.0
+ModuleBase        :
+ModuleType        : Script
+PrivateData       :
+AccessMode        : ReadWrite
+ExportedAliases   : {}
+ExportedCmdlets   : {}
+ExportedFunctions : {[Hello, Hello]}
+ExportedVariables : {}
+NestedModules     : {}
+```
+
+```powershell
+Get-Module
+
+Get-Command Hello
+```
+
+```Output
+CommandType     Name   Definition
+-----------     ----   ----------
+Function        Hello  &quot;Hello!&quot;
+```
+
+### Example 3: Export a variable into the current session
+
+This example uses the `Export-ModuleMember` cmdlet to export a variable into the current session.
+Without the `Export-ModuleMember` command, only the function is exported.
+
+```powershell
+New-Module -ScriptBlock {$SayHelloHelp=&quot;Type &#x27;SayHello&#x27;, a space, and a name.&quot;; function SayHello ($Name) { &quot;Hello, $Name&quot; }; Export-ModuleMember -Function SayHello -Variable SayHelloHelp}
+$SayHelloHelp
+```
+
+```Output
+Type &#x27;SayHello&#x27;, a space, and a name.
+```
+
+```powershell
+SayHello Jeffrey
+```
+
+```Output
+Hello, Jeffrey
+```
+
+The output shows that both the variable and the function were exported into the session.
+
+### Example 4: Make a dynamic module available to Get-Module
+
+This example demonstrates that you can make a dynamic module available to `Get-Module` by piping the
+dynamic module to `Import-Module`.
+
+`New-Module` creates a module object that is piped to the `Import-Module` cmdlet. The **Name**
+parameter of `New-Module` assigns a friendly name to the module. Because `Import-Module` does not
+return any objects by default, there is no output from this command. `Get-Module` that the
+**GreetingModule** has been imported into the current session.
+
+```powershell
+New-Module -ScriptBlock {function Hello {&quot;Hello!&quot;}} -Name GreetingModule | Import-Module
+Get-Module
+```
+
+```Output
+Name              : GreetingModule
+Path              : d54dfdac-4531-4db2-9dec-0b4b9c57a1e5
+Description       :
+Guid              : 00000000-0000-0000-0000-000000000000
+Version           : 0.0
+ModuleBase        :
+ModuleType        : Script
+PrivateData       :
+AccessMode        : ReadWrite
+ExportedAliases   : {}
+ExportedCmdlets   : {}
+ExportedFunctions : {[Hello, Hello]}
+ExportedVariables : {}
+NestedModules     : {}
+```
+
+```powershell
+Get-Command Hello
+```
+
+```Output
+CommandType     Name                                                               Definition
+-----------     ----                                                               ----------
+Function        Hello                                                              &quot;Hello!&quot;
+```
+
+The `Get-Command` cmdlet shows the `Hello` function that the dynamic module exports.
+
+### Example 5: Generate a custom object that has exported functions
+
+This example shows how to use the **AsCustomObject** parameter of `New-Module` to generate a custom
+object that has script methods that represent the exported functions.
+
+The `New-Module` cmdlet creates a dynamic module with two functions, `Hello` and `Goodbye`. The
+**AsCustomObject** parameter creates a custom object instead of the **PSModuleInfo** object that
+`New-Module` generates by default. This custom object is saved in the `$m` variable.
+The `$m` variable appears to have no assigned value.
+
+```powershell
+$m = New-Module -ScriptBlock {
+  function Hello ($Name) {&quot;Hello, $Name&quot;}
+  function Goodbye ($Name) {&quot;Goodbye, $Name&quot;}
+} -AsCustomObject
+$m
+$m | Get-Member
+```
+
+```Output
+TypeName: System.Management.Automation.PSCustomObject
+
+Name        MemberType   Definition
+----        ----------   ----------
+Equals      Method       bool Equals(System.Object obj)
+GetHashCode Method       int GetHashCode()
+GetType     Method       type GetType()
+ToString    Method       string ToString()
+Goodbye     ScriptMethod System.Object Goodbye();
+Hello       ScriptMethod System.Object Hello();
+```
+
+```powershell
+$m.Goodbye(&quot;Jane&quot;)
+```
+
+```Output
+Goodbye, Jane
+```
+
+```powershell
+$m.Hello(&quot;Manoj&quot;)
+```
+
+```Output
+Hello, Manoj
+```
+
+Piping `$m` to the `Get-Member` cmdlet displays the properties and methods of the custom object. The
+output shows that the object has script methods that represent the `Hello` and `Goodbye` functions.
+Finally, we call these script methods and display the results.
+
+# New-Module
+
+### Example 6: Get the results of the scriptblock
+
+This example uses the **ReturnResult** parameter to request the results of running the scriptblock
+instead of requesting a module object. The scriptblock in the new module defines the `SayHello`
+function and then calls the function.
+
+```powershell
+New-Module -ScriptBlock {function SayHello {&quot;Hello, World!&quot;}; SayHello} -ReturnResult
+```
+
+```Output
+Hello, World!
+```
+
+## PARAMETERS
+
+### -ArgumentList
+
+Specifies an array of arguments which are parameter values that are passed to the scriptblock. For
+more information about the behavior of **ArgumentList**, see [about_Splatting](about/about_Splatting.md#splatting-with-arrays).
+
+```yaml
+Type: System.Object[]
+Parameter Sets: (All)
+Aliases: Args
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -AsCustomObject
+
+Indicates that this cmdlet returns a custom object that represents the dynamic module. The module
+members are implemented as script methods of the custom object, but they are not imported into the
+session. You can save the custom object in a variable and use dot notation to invoke the members.
+
+If the module has multiple members with the same name, such as a function and a variable that are
+both named A, only one member with each name can be accessed from the custom object.
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Cmdlet
+
+Specifies an array of cmdlets that this cmdlet exports from the module into the current session.
+Enter a comma-separated list of cmdlets. Wildcard characters are permitted. By default, all cmdlets
+in the module are exported.
+
+You cannot define cmdlets in a scriptblock, but a dynamic module can include cmdlets if it imports
+the cmdlets from a binary module.
+
+```yaml
+Type: System.String[]
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Function
+
+Specifies an array of functions that this cmdlet exports from the module into the current session.
+Enter a comma-separated list of functions. Wildcard characters are permitted. By default, all
+functions defined in a module are exported.
+
+```yaml
+Type: System.String[]
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: True
+```
+
+### -Name
+
+Specifies a name for the new module. You can also pipe a module name to New-Module.
+
+The default value is an autogenerated name that starts with `__DynamicModule_` and is followed by a
+GUID that specifies the path of the dynamic module.
+
+```yaml
+Type: System.String
+Parameter Sets: Name
+Aliases:
+
+Required: True
+Position: 0
+Default value: None
+Accept pipeline input: True (ByValue)
+Accept wildcard characters: False
+```
+
+### -ReturnResult
+
+Indicates that this cmdlet runs the scriptblock and returns the scriptblock results instead of
+returning a module object.
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -ScriptBlock
+
+Specifies the contents of the dynamic module. Enclose the contents in braces (`{}`) to create a
+scriptblock. This parameter is required.
+
+```yaml
+Type: System.Management.Automation.ScriptBlock
+Parameter Sets: (All)
+Aliases:
+
+Required: True
+Position: 1
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### CommonParameters
+
+This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable,
+-InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose,
+-WarningAction, and -WarningVariable. For more information, see
+[about_CommonParameters](https://go.microsoft.com/fwlink/?LinkID=113216).
+
+## INPUTS
+
+### System.String
+
+You can pipe a module name to this cmdlet.
+
+## OUTPUTS
+
+### System.Management.Automation.PSModuleInfo
+
+This cmdlet generates a **PSModuleInfo** object by default.
+
+### System.Management.Automation.PSCustomObject
+
+If you use the **AsCustomObject** parameter, it generates a **PSCustomObject** object.
+
+### System.Object
+
+If you use the **ReturnResult** parameter, this cmdlet returns the result of evaluating the
+scriptblock in the dynamic module.
+
+## NOTES
+
+Windows PowerShell includes the following aliases for `New-Module`:
+
+- `nmo`
+
+You can also refer to `New-Module` by its alias, `nmo`. For more information, see
+[about_Aliases](About/about_Aliases.md).
+
+## RELATED LINKS
+
+[Export-ModuleMember](Export-ModuleMember.md)
+
+[Get-Module](Get-Module.md)
+
+[Import-Module](Import-Module.md)
+
+[Remove-Module](Remove-Module.md)
+
+[about_Modules](About/about_Modules.md)</pre></section>

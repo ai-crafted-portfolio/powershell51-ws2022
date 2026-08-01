@@ -1,0 +1,211 @@
+<!doctype html><meta charset="utf-8"><section class="jp-official"><h1>about_Loggingについて</h1>
+<h2>簡略説明 PowerShellは,エンジン,プロバイダー,およびcmdletsから内部操作をWindowsイベントログにログインします.</h2>
+<h2>長い説明</h2>
+<p>PowerShellは,エンジンやプロバイダーを起動し,停止し,PowerShellコマンドを実行するなど,PowerShell操作に関する詳細を記録します.</p>
+<p>&gt; [!NOTE]</p>
+<p>&gt; Windows PowerShell 5.1 (およびそれ以上の) には,Windowsイベントログの<em>EventLog</em>cmdletsが含まれています.これらのバージョンでは,EventLog** &gt;cmdletsのリストを表示するには,タイプ: <code>Get-Command -Noun EventLog</code>.詳細については,Windows PowerShellのバージョンの &gt;cmdletドキュメントと[about_EventLogs][02]を参照してください.</p>
+<p>PowerShell 7へのログインに関する情報は,以下の記事を参照してください.</p>
+<p>[Windows_Logging_about_Windows][04] - [Windows_非ログイン_ログインについて] -03] -</p>
+<h2>Windows で PowerShell イベントログのエントリを見る</h2>
+<p>PowerShell ログは,Windows イベントビューヤーを使用して閲覧できます.イベントログは <strong>アプリケーションとサービスログ</strong>グループに位置し, <strong>Microsoft-Windows-PowerShell</strong>と名付けられています.関連 ETW プロバイダーは <code>GUID</code>は<code>{A0C1853B-5C40-4B15-8766-3CF1C58F985A}</code> .</p>
+<p>スクリプトブロックログが有効になったとき,PowerShellは次のイベントをMicrosoft-Windows-PowerShell/Operational**ログに記録します.</p>
+<p>フィールド・バリュー 事件の発生率<code>4104</code> /<code>0x1008</code>チャンネルを表示します.<code>Operational</code>レベルはレベルです.<code>Verbose</code>オープンソースのコードを公開する<code>Create</code>任務は,任務です.<code>CommandStart</code>キーワードは"キーワード"です.<code>Runspace</code>≪ ≫ ≫ ≫ ≫ ≫</p>
+<h2>脚本ブロックログインを有効にする</h2>
+<p>スクリプトブロックログを有効にしたとき,PowerShellは処理するすべてのスクリプトブロックの内容を記録します.有効になったら,新しい PowerShellセッションはこの情報を記録します.</p>
+<p>&gt; [!NOTE] &gt; 敏感データ保護を保証するには,診断目的以外の何ものでもスクリプトブロックログを使用するときに,保護されたイベントログインを有効にしてください.</p>
+<p>ブロックスクリプトログインはグループポリシーまたはレジストリ設定で有効にできます.</p>
+<h3>グループポリシーを使用する</h3>
+<p>自動書き込みを有効にするには,グループポリシーで <strong>管理テンプレート</strong> -&gt; <strong>Windows コンポーネント</strong> -&gt; <strong>Windows PowerShell</strong>を通じて <strong>Turn on PowerShell Script Block Logging</strong>機能を有効にしてください.</p>
+<h3>登録帳を利用して</h3>
+<p>次の関数を実行します:</p>
+<pre><code class="language-powershell">function Enable-PSScriptBlockLogging {
+    $basePath = @(
+        'HKLM:\Software\Policies\Microsoft\Windows'
+        'PowerShell\ScriptBlockLogging'
+    ) -join '\'
+
+    if (-not (Test-Path $basePath)) {
+        $null = New-Item $basePath -Force
+    }
+
+    Set-ItemProperty $basePath -Name EnableScriptBlockLogging -Value &quot;1&quot;
+}
+</code></pre>
+<h2>保護されたイベントログイン</h2>
+<p>システムでのログインのレベルを高めると,ログインされたコンテンツが敏感データを含み得る可能性が増加します.例えば,スクリプトログインが有効になっている場合,スクリプトが使用する認証情報または他の敏感データがイベントログに書き込まれることができます.ログインした機が敏感データに侵害された場合,ログは攻撃者にその範囲を拡大するために必要な情報を提供することができます.</p>
+<p>この情報を保護するために,Windows 10は保護されたイベントログを導入しています.保護されたイベントログは,参加アプリケーションがイベントログに書かれた敏感データを暗号化できるようにします.後で,より安全な,集中的なログ収集器でこれらのログを解読し処理することができます.</p>
+<p>イベントログのコンテンツは,IETF暗号メッセージ構文 (CMS) 標準を使用して保護されています.CMSは公開鍵暗号を使用しています.コンテンツを暗号化するために使用されるキーとコンテンツを解読するために使用されるキーは,別々に保持されます.</p>
+<p>公钥は広く共有され,敏感なデータではない.この公钥で暗号化されたコンテンツは,私钥だけで解読できます.公钥暗号に関する詳細については,[ウィキペディア - 公钥暗号]をご覧ください.</p>
+<p>保護されたイベントログのポリシーを有効にするには,イベントログデータを保護するすべてのマシンに公開鍵を配置する.関連するプライベート鍵は,中央イベントログ収集器,または [SIEM][07]アグリゲーターなどのより安全な場所にイベントログを後処理するために使用されます.AzureでSIEMを設定できます.詳細については, [一般的なSIEM統合][01]を参照してください.</p>
+<h3>グループポリシーを通じて保護されたイベントログインを有効にする</h3>
+<p>保護されたイベントログインを有効にするには,  を有効にします.<code>Enable Protected Event Logging``行政テンプレート -&gt; Windows コンポーネント -&gt; イベントログイン</code>.この設定には暗号化証明書が必要で,複数の形式のいずれかに提供できます.</p>
+<p>ベース-64のX.509証明書の内容 (例えば, によって提供されているように)<code>Export</code>証明書管理者 (Certificate Manager) のオプションで) - ローカルマシン証明書ストアで見つけられる証明書の指紋 (PKIインフラストラクチャによって展開される) - 証明書への完全なパス (ローカルまたはリモートシェア) - 証明書または証明書を含むディレクトリへのパス (ローカルまたはリモートシェア) - ローカルマシン証明書ストアで見つけられる証明書の対象名 (PKIインフラストラクチャによって展開される)</p>
+<p>結果的に証明書が作成された場合は,必ず<code>Document Encryption</code>キーの使用を強化した鍵として ()<code>1.3.6.1.4.1.311.80.1</code>),そしてどちらかです.<code>Data Encipherment</code>     <code>Key Encipherment</code>キー利用が有効です.</p>
+<p>&gt; [!WARNING] &gt; プライベートキーは,イベントを記録するマシンに展開されるべきではなく,メッセージを解読する安全な場所に保管されるべきです.</p>
+<h3>保護されたイベントの解読 記録メッセージ</h3>
+<p>次のスクリプトは,あなたがプライベートキーを持っていると仮定して,イベントを回収し,解読します.</p>
+<pre><code class="language-powershell">Get-WinEvent Microsoft-Windows-PowerShell/Operational |
+    Where-Object Id -EQ 4104 |
+    Unprotect-CmsMessage
+</code></pre>
+<h2>また, を参照してください.</h2>
+<ul>
+<li>[PowerShell the Blue Team][05] - [一般的なSIEM統合][01]</li>
+</ul>
+<p>&lt;!--リンク参照 --&gt; [01]: /cloud-app-security/siem [02]: about_Eventlogs.md [03]: /powershell/module/microsoft.powershell.core/about/about_logging_non-windows [04]: /powershell/module/microsoft.powershell.core/about/about_logging_windows [05]: https://devblogs.microsoft.com/powershell/powershell-the-blue-team/[06]: https://wikipedia.org/wiki/Public-key_cryptography[07]: https://wikipedia.org/wiki/Security_information_and_event_management</p></section><section class="en-original"><pre class="source-original"># about_Logging
+
+## Short description
+PowerShell logs internal operations from the engine, providers, and cmdlets to
+the Windows event log.
+
+## Long description
+
+PowerShell logs details about PowerShell operations, such as starting and
+stopping the engine and providers, and executing PowerShell commands.
+
+&gt; [!NOTE]
+
+&gt; Windows PowerShell 5.1 (and older) include **EventLog** cmdlets for the
+&gt; Windows event logs. In those versions, to display the list of **EventLog**
+&gt; cmdlets type: `Get-Command -Noun EventLog`. For more information, see the
+&gt; cmdlet documentation and [about_EventLogs][02] for your
+&gt; version of Windows PowerShell.
+
+For information about logging in PowerShell 7, see the following articles:
+
+- [about_Logging_Windows][04]
+- [about_Logging_Non-Windows][03]
+
+## Viewing the PowerShell event log entries on Windows
+
+PowerShell logs can be viewed using the Windows Event Viewer. The event log is
+located in the **Application and Services Logs** group and is named
+**Microsoft-Windows-PowerShell**. The associated ETW provider `GUID` is
+`{A0C1853B-5C40-4B15-8766-3CF1C58F985A}`.
+
+When Script Block Logging is enabled, PowerShell logs the following events to
+the **Microsoft-Windows-PowerShell/Operational** log:
+
+|  Field  |       Value       |
+| ------- | ----------------- |
+| EventId | `4104` / `0x1008` |
+| Channel | `Operational`     |
+| Level   | `Verbose`         |
+| Opcode  | `Create`          |
+| Task    | `CommandStart`    |
+| Keyword | `Runspace`        |
+
+## Enabling Script Block Logging
+
+When you enable Script Block Logging, PowerShell records the content of all
+script blocks that it processes. Once enabled, any new PowerShell session logs
+this information.
+
+&gt; [!NOTE]
+&gt; To ensure that sensitive data is protected, enable Protected Event Logging
+&gt; when using Script Block Logging for anything other than diagnostics purposes.
+
+Script Block Logging can be enabled via Group Policy or a registry setting.
+
+### Using Group Policy
+
+To enable automatic transcription, enable the **Turn on PowerShell Script Block
+Logging** feature in Group Policy through **Administrative Templates** -&gt;
+**Windows Components** -&gt; **Windows PowerShell**.
+
+### Using the Registry
+
+Run the following function:
+
+```powershell
+function Enable-PSScriptBlockLogging {
+    $basePath = @(
+        &#x27;HKLM:\Software\Policies\Microsoft\Windows&#x27;
+        &#x27;PowerShell\ScriptBlockLogging&#x27;
+    ) -join &#x27;\&#x27;
+
+    if (-not (Test-Path $basePath)) {
+        $null = New-Item $basePath -Force
+    }
+
+    Set-ItemProperty $basePath -Name EnableScriptBlockLogging -Value &quot;1&quot;
+}
+```
+
+## Protected Event Logging
+
+Increasing the level of logging on a system increases the possibility that
+logged content may contain sensitive data. For example, with script logging
+enabled, credentials or other sensitive data used by a script can be written to
+the event log. When a machine that has logged sensitive data is compromised,
+the logs can provide an attacker with information needed to extend their reach.
+
+To protect this information, Windows 10 introduces Protected Event Logging.
+Protected Event Logging lets participating applications encrypt sensitive data
+written to the event log. Later, you can decrypt and process these logs on a
+more secure and centralized log collector.
+
+Event log content is protected using the IETF Cryptographic Message Syntax
+(CMS) standard. CMS uses public key cryptography. The keys used to encrypt
+content and decrypt content are kept separate.
+
+The public key can be shared widely and isn&#x27;t sensitive data. Any content
+encrypted with this public key can only be decrypted by the private key. For
+more information about Public Key Cryptography, see
+[Wikipedia - Public Key Cryptography][06].
+
+To enable a Protected Event Logging policy, deploy a public key to all machines
+that have event log data to protect. The corresponding private key is used to
+post-process the event logs at a more secure location such as a central event
+log collector, or [SIEM][07] aggregator. You can set up SIEM in Azure. For more
+information, see [Generic SIEM integration][01].
+
+### Enabling Protected Event Logging via Group Policy
+
+To enable Protected Event Logging, enable the `Enable Protected Event Logging`
+feature in Group Policy through `Administrative Templates -&gt; Windows Components
+-&gt; Event Logging`. This setting requires an encryption certificate, which you
+can provide in one of several forms:
+
+- The content of a base-64 encoded X.509 certificate (for example, as offered
+  by the `Export` option in Certificate Manager).
+- The thumbprint of a certificate that can be found in the Local Machine
+  certificate store (can be deployed by PKI infrastructure).
+- The full path to a certificate (can be local, or a remote share).
+- The path to a directory containing a certificate or certificates (can be
+  local, or a remote share).
+- The subject name of a certificate that can be found in the Local Machine
+  certificate store (can be deployed by PKI infrastructure).
+
+The resulting certificate must have `Document Encryption` as an enhanced key
+usage (`1.3.6.1.4.1.311.80.1`), and either `Data Encipherment` or
+`Key Encipherment` key usages enabled.
+
+&gt; [!WARNING]
+&gt; The private key shouldn&#x27;t be deployed to the machines logging events. It
+&gt; should be kept in a secure location where you decrypt the messages.
+
+### Decrypting Protected Event Logging messages
+
+The following script retrieves and decrypts events, assuming that you have the
+private key:
+
+```powershell
+Get-WinEvent Microsoft-Windows-PowerShell/Operational |
+    Where-Object Id -EQ 4104 |
+    Unprotect-CmsMessage
+```
+
+## See also
+
+- [PowerShell the Blue Team][05]
+- [Generic SIEM integration][01]
+
+&lt;!-- link references --&gt;
+[01]: /cloud-app-security/siem
+[02]: about_Eventlogs.md
+[03]: /powershell/module/microsoft.powershell.core/about/about_logging_non-windows
+[04]: /powershell/module/microsoft.powershell.core/about/about_logging_windows
+[05]: https://devblogs.microsoft.com/powershell/powershell-the-blue-team/
+[06]: https://wikipedia.org/wiki/Public-key_cryptography
+[07]: https://wikipedia.org/wiki/Security_information_and_event_management</pre></section>

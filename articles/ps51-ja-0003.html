@@ -1,0 +1,510 @@
+<!doctype html><meta charset="utf-8"><section class="jp-official"><h1>about_ActiveDirectory_Filterについて</h1>
+<h2>短縮説明は,</h2>
+<p>Windows PowerShell用のアクティブディレクトリモジュールによってサポートされている検索フィルターの構文と行動を記述します.</p>
+<h2>長い記述です.</h2>
+<p>ほとんどの get-AD* Active Directory モジュール cmdlet は,オブジェクトを検索するためにフィルターパラメータを使用しています.このフィルターパラメータは,LDAPフィルターの機能を置き換えるために実装され,PowerShell変数,豊富なデータタイプ,改善されたエラーチェック,およびPowerShell表現言語のアクティブディレクトリ拡張形式のサポートを追加しています.</p>
+<ul>
+<li>LDAPフィルターシンタックスへのサポート</li>
+</ul>
+<p>LDAPフィルター構文は<strong>LDAPFilter</strong>パラメータでサポートされています.このトピックのフィルター例セクションでは,新しいアクティブディレクトリモジュールフィルター例とともに,LDAPフィルター例が表示されます.</p>
+<ul>
+<li>検索幅と深さ</li>
+</ul>
+<p>フィルターによる検索の幅と深さは,Active Directory モジュール cmdlet パラメータの2つによって変更できます. <strong>SearchBase</strong>と <strong>SearchScope</strong>.</p>
+<p>Active Directory プロバイダーの文脈では,Searchbase<strong> パラメータが指定されていない場合,SearchBase</strong>は現在のパスにデフォルトで表示されます.Active Directory プロバイダーでは実行されていない場合,SearchBase**はデフォルトでサーバーのDefaultNamingContextに表示されます.</p>
+<p><strong>SearchScope</strong>のパラメータは,標準値に設定されている.<code>Subtree</code>リストされたタイプのADSearchScope の1つです.</p>
+<p>詳細については,任意の  の検索ベースとSearchScope のパラメータ説明を参照してください.<code>Get-AD*</code>cmdletです.</p>
+<ul>
+<li>検索結果行動</li>
+</ul>
+<p>Active Directory モジュールの動作は,検索結果を返却する際には,2つのcmdletパラメータによって変更されます. <strong>ResultPageSize</strong>と <strong>ResultSetSize</strong>.</p>
+<p><strong>ResultSetSize</strong>は,返品対象の最大数を制御しています.</p>
+<p><strong>ResultPageSize</strong>は,返済した情報ページごとに最大限のオブジェクト数を指定します.</p>
+<p>任意の  に関する <strong>ResultPageSize</strong> と <strong>ResultSetSize</strong> パラメータ説明を参照してください.<code>Get-AD*</code>詳細についてはcmdletで確認してください.</p>
+<ul>
+<li>タイムアウト行動</li>
+</ul>
+<p>次の声明は,アクティブディレクトリモジュール内のタイムアウト条件を指定し,そのタイムアウトについて何ができるかを説明します.</p>
+<p>すべての操作のためのデフォルトアクティブディレクトリモジュールタイムアウトは2分です.</p>
+<p>検索操作では,アクティブディレクトリモジュールでは,ページ検索ごとに2分間のタイムアウトを付いているページ管理を使用します.</p>
+<p>[!NOTE] &gt;検索は複数のサーバーページの要求を伴う可能性があるため,検索時間は2分を超えることが可能である.</p>
+<p><strong>TimeoutException</strong>エラーが表示され,タイムアウトが発生しました.</p>
+<p>検索では,検索サイズが小さく <strong>ResultPageSize</strong>パラメータで設定されたページサイズを使用することを選択できます.</p>
+<p>これらの変更を試みた後でも,まだTimeoutExceptionエラーが起きるとしたら,このテーマのフィルター最適化に関するガイドラインを使用してフィルターを最適化することを検討してください.</p>
+<ul>
+<li>フィルタを最適化する</li>
+</ul>
+<p>これらのガイドラインを使用して検索フィルター行動を向上させることができます.</p>
+<p>-検索のリソース利用を強めるため,再帰的パラメータを使用しないこと. - ビットウィス AND オペレーターとビットウィス OR オペレーターを使用しないこと. - このトピックのサポートされたオペレーターセクションを参照してください. - 論理的な NOT オペレーターを使用しないこと. - より狭い条件を持つ複数のクエリに検索を分割します.</p>
+<p>フィルター構文と使用の詳細については,このテーマのフィルター構文のセクションを参照してください.</p>
+<h2>フィルター例</h2>
+<p>次のセクションでは,一般的なクエリでフィルターの使用の多くの例が示されています.</p>
+<h3>例1 - すべてのエントリーを入手する:</h3>
+<ul>
+<li>LDAPフィルター等価: <code>(objectClass=*)</code></li>
+</ul>
+<pre><code class="language-powershell">Get-ADObject -Filter 'ObjectClass -like &quot;*&quot;'
+</code></pre>
+<h3>例2 - 共通の名前の中に"bob"を含むエントリをどこかに取得する</h3>
+<ul>
+<li>LDAPフィルター等価: <code>(cn=*bob*)</code></li>
+</ul>
+<pre><code class="language-powershell">Get-ADObject -Filter 'CN -like &quot;*bob*&quot;'
+</code></pre>
+<h3>例3 - 悪いパスワード数が5以上あるエントリーを入手する</h3>
+<ul>
+<li>LDAPフィルター等価: <code>(&amp;(!badpwdcount&lt;=5)(badpwdcount=*))</code></li>
+</ul>
+<pre><code class="language-powershell">Get-ADUser -Filter 'badpwdcount -ge 5'
+</code></pre>
+<h3>例4 - メール属性を持つすべてのユーザーを入手する</h3>
+<ul>
+<li>LDAPフィルター等価: <code>(&amp;(objectClass=user)(email=*))</code></li>
+</ul>
+<pre><code class="language-powershell">Get-ADUser -filter 'email -like &quot;*&quot;'
+</code></pre>
+<p>-または -</p>
+<pre><code class="language-powershell">Get-ADObject -filter 'email -like &quot;*&quot; -and ObjectClass -eq &quot;user&quot;'
+</code></pre>
+<h3>例5 - メール属性と"スミス"に等しい姓を持つすべてのユーザーエントリーを入手する:</h3>
+<ul>
+<li>LDAPフィルター等価: <code>(&amp;(sn=smith)(objectClass=user)(email=*))</code></li>
+</ul>
+<pre><code class="language-powershell">Get-ADUser -Filter 'Email -like &quot;*&quot; -and SurName -eq &quot;smith&quot;'
+</code></pre>
+<p>-または -</p>
+<pre><code class="language-powershell">Get-ADUser -Filter 'Email -like &quot;*&quot; -and sn -eq &quot;smith&quot;'
+</code></pre>
+<h3>例6 - "アンディ"から始まる共通の名前を持つすべてのユーザーエントリーと"スティーブ"または"マーガレット"の共通の名前を持つユーザーを入手する</h3>
+<ul>
+<li>LDAPフィルター等価: <code>(&amp;(objectClass=user) | (cn=andy*)(cn=steve)(cn=margaret))</code></li>
+</ul>
+<pre><code class="language-powershell">Get-ADUser -Filter 'CN -like &quot;andy*&quot; -or CN -eq &quot;steve&quot; -or CN -eq &quot;margaret&quot;'
+</code></pre>
+<p>この例では,より複雑な論理と括弧による優先順位制御の使用が示されています.</p>
+<pre><code class="language-powershell">Get-ADObject -Filter 'objectClass -eq &quot;user&quot; -and (CN -like &quot;andy*&quot; -or CN -eq &quot;steve&quot; -or CN -eq &quot;margaret&quot;)'
+</code></pre>
+<h3>例7 - メール属性なしですべてのエントリを取得します</h3>
+<ul>
+<li>LDAPフィルター等価: <code>(!(email=*))</code></li>
+</ul>
+<pre><code class="language-powershell">Get-ADUser -Filter '-not Email -like &quot;*&quot;'
+</code></pre>
+<p>-または -</p>
+<pre><code class="language-powershell">Get-ADUser -Filter 'Email -notlike &quot;*&quot;'
+</code></pre>
+<h3>例8 - 2007年1月1日以降ログインしていないユーザー全員を入手する</h3>
+<ul>
+<li>LDAPフィルター等価: <code>(&amp;(lastlogon&lt;=X)(objectClass=user))</code>X は,1月1日 1601年以降の100ナノ秒分のスライスの数です</li>
+</ul>
+<pre><code class="language-powershell">$date = new-object System.DateTime -ArgumentList @(2007,1,1,0,0,0)
+Get-ADUser -Filter '-not LastLogon -le $date'
+</code></pre>
+<h3>例9 - 過去5日間でログインしたユーザー全員を入手する</h3>
+<ul>
+<li>
+<p>LDAPフィルター等価:</p>
+<p><code>(&amp;(lastLogon&gt;=128812906535515110)
+(objectClass=user)(!(objectClass=computer)))</code></p>
+</li>
+</ul>
+<pre><code class="language-powershell">$date = (get-date) - (new-timespan -days 5)
+Get-ADUser -Filter 'lastLogon -gt $date'
+</code></pre>
+<h3>例10 - ADS_GROUP_TYPE_SECURITY_ENABLEDフラグセットを持つグループオブジェクトを検索する</h3>
+<ul>
+<li>LDAPフィルター等価: <code>(&amp;(objectCategory=group)(groupType:1.2.840.113556.1.4.803:=2147483648))</code></li>
+</ul>
+<p>次のクエリ文字列は,ADS_GROUP_TYPE_SECURITY_ENABLEDフラッグセットを持つグループオブジェクトを検索します.比較値のためにADS_GROUP_TYPE_SECURITY_ENABLED (0x80000000 = 2147483648) のデシマルの値が使用されていることに注意してください.</p>
+<pre><code class="language-powershell">Get-ADGroup -filter 'groupType -band 0x80000000'
+</code></pre>
+<h1>about_ActiveDirectory_Filterについて</h1>
+<h3>例11 - 物体の祖先を検索する</h3>
+<ul>
+<li>LDAPフィルター等価: <code>(memberof:1.2.840.113556.1.4.1941:=(cn=Group1,OU=groupsOU,DC=x)))</code></li>
+</ul>
+<p>LDAP_MATCHING_RULE_IN_CHAINは,オブジェクトの祖先を探索するための方法を提供するためのマッチングルールOIDです.Active DirectoryとAD LDSを使用する多くのアプリケーションは通常,親子関係によって順序付けされる階層データで動作します.以前,アプリケーションは,ネットワーク帯域幅が多く使用されたグループ会員数を計算するために,トランジティブグループ拡張を実行していました.アプリケーションは,リンクが最後まで通過した場合,オブジェクトが"チェーン"に落ちるか否かを判断するために複数の回帰を行いました.</p>
+<p>このような問い合わせの例は,ユーザ"user1"が"group1"のメンバーかどうかをチェックするように設計されたものです. "user1"は group1の直接メンバーではない可能性があります.</p>
+<p>ベースをユーザーDNと範囲をベースに設定し,クエリを使用します:</p>
+<pre><code class="language-powershell">Get-ADUser -Filter 'memberOf -RecursiveMatch &quot;CN=Administrators, CN=Builtin,DC=Fabrikam,DC=com&quot;' -SearchBase &quot;CN=Administrator,CN=Users,DC=Fabrikam,DC=com&quot;
+</code></pre>
+<h2>フィルターシンタックス</h2>
+<p>次の文法説明では,フィルターパラメータのためのPowerShell表現言語を示すためにBackus-Naurフォームを使用します.</p>
+<pre><code class="language-Syntax">&lt;filter&gt;  ::= &quot;{&quot; &lt;FilterComponentList&gt; &quot;}&quot;
+
+&lt;FilterComponentList&gt; ::= &lt;FilterComponent&gt; |
+  &lt;FilterComponent&gt; &lt;JoinOperator&gt; &lt;FilterComponent&gt; |
+  &lt;NotOperator&gt;  &lt;FilterComponent&gt;
+
+&lt;FilterComponent&gt; ::= &lt;attr&gt; &lt;FilterOperator&gt; &lt;value&gt; |
+  &quot;(&quot; &lt;FilterComponent&gt; &quot;)&quot;
+
+&lt;FilterOperator&gt; ::= &quot;-eq&quot; | &quot;-le&quot; | &quot;-ge&quot; | &quot;-ne&quot; | &quot;-lt&quot; | &quot;-gt&quot; |
+  &quot;-approx&quot; | &quot;-bor&quot; | &quot;-band&quot; | &quot;-recursivematch&quot; | &quot;-like&quot; |
+  &quot;-notlike&quot;
+
+&lt;JoinOperator&gt; ::= &quot;-and&quot; | &quot;-or&quot;
+
+&lt;NotOperator&gt; ::= &quot;-not&quot;
+
+&lt;attr&gt; ::= &lt;PropertyName&gt; | &lt;LDAPDisplayName of the attribute&gt;
+
+&lt;value&gt;::= &lt; this value will be compared to the object data for
+  attribute &lt;ATTR&gt; using the specified filter operator
+</code></pre>
+<h2>サポートされたオペレーター</h2>
+<p>次の表では,よく使われる検索フィルター操作者が示されています.</p>
+<p>操作者の説明 LDAP等価は,操作者の説明です.<code>-eq</code>ワイルドカードはサポートされていません.<code>-ne</code>ワイルドカードはサポートされていません!<code>-approx</code>約等しい.<code>-le</code>文字面的には,以下よりも小さいか,または等しい.<code>-lt</code>文字文献的には,以下よりも少ない!<code>-ge</code>辞書面的には,より大きい,または等しい.<code>-gt</code>文字面的には,x &lt;=y&gt;より大きい.<code>-and</code>そして,その"つ.<code>-or</code>オー・オー・オー・<code>-not</code>絶対にない!<code>-bor</code>◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎<code>-band</code>◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎<code>-recursivematch</code>LDAP_MATCHING_RULE を中国で使って下さい.<code>-like</code> に似ている.<code>-eq</code>ワイルドカードの比較もサポートしています.サポートされているワイルドカードキャラクターだけが:<code>*</code>◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎<code>-notlike</code>ワイルドのカード比較をサポートします!x=y</p>
+<p>&gt; [!NOTE] &gt; PowerShellワイルドカードは"<em>"以外の"?"などで, &gt; </em><em>Filter</em>*パラメータ構文ではサポートされていません.</p>
+<h3>操作者の先駆け</h3>
+<p>次のリストでは,最高から最低までフィルター用のオペレーターの優先順位が示されています.</p>
+<ul>
+<li>最高優先順位: <code>-eq</code>     <code>-ge</code>     <code>-le</code>     <code>-approx</code>     <code>-band</code>     <code>-bor</code>     <code>-recursivematch</code>     <code>-ne</code>     <code>-like</code>     <code>-not</code>     <code>-and</code>- 最低優先度: <code>-or</code></li>
+</ul>
+<h3>特殊なキャラクターです.</h3>
+<p>次のエスケープシーケンスは,AD Filter STRING データ,すなわち,ダブルまたは単語の引用で囲まれたデータにおける特殊文字の指定に使用されるべきです.</p>
+<p>ASCII Character Escape sequence の代替品は,エスケープシーケンスの代替品です.<code>"</code>ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ <code></code>" (この脱出配列は,文字列のデータが双重引用で付いている場合にのみ必要である) "<code>'</code>ページの"つ.<code>''</code>(この脱出配列は,単一の引用で STRING データを収録した場合にのみ必要である)<code>\00</code>(これは標準的なLDAP脱出シーケンスの例です.)<code>\</code>ページの"つ.<code>\5c</code>(これは標準的なLDAP脱出シーケンスです.)</p>
+<h3>LDAPの特殊キャラクターです.</h3>
+<p>ADFilter parser は,STRING データ,すなわち" "または" "に閉じ込められているデータを自動的にLDAP エスケープシーケンスの下記文字に変換します.エンドユーザーはこれらのLDAP エスケープシーケンスのことを知りなくてもよい.</p>
+<p>ASCII Character Escape sequence の代替品は,エスケープシーケンスの代替品です.<code>*</code>ページの"つ.<code>\2a</code>(キャラクター )<code>*</code>ユーザーにはワイルドカード比較の - -like and -notlike オペレーターしか使えない)<code>(</code>ページの"つ.<code>\28</code>◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎<code>)</code>ページの"つ.<code>\29</code>◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎<code>/</code>ページの"つ.<code>\2f</code>≪ ≫ ≫ ≫ ≫ ≫</p></section><section class="en-original"><pre class="source-original"># about_ActiveDirectory_Filter
+
+## SHORT DESCRIPTION
+
+Describes the syntax and behavior of the search filter supported by the Active
+Directory module for Windows PowerShell.
+
+## LONG DESCRIPTION
+
+Most get-AD* Active Directory module cmdlets use the Filter parameter to search
+for objects. The Filter parameter has been implemented to replace the function
+of the LDAP Filter and adds support for PowerShell variables, rich data types,
+improved error checking and an Active Directory extended form of the PowerShell
+Expression Language.
+
+
+- Support for LDAP Filter Syntax
+
+  The LDAP filter syntax is supported through the **LDAPFilter** parameter. You
+  will find LDAP filter examples along with the new Active Directory module
+  filter examples in the Filter Examples section of this topic.
+
+
+- Search Breadth and Depth
+
+  The breadth and depth of your filter-driven search can be modified by two
+  Active Directory module cmdlet parameters: **SearchBase** and **SearchScope**.
+
+  When within the context of the Active Directory provider, if the
+  **Searchbase** parameter is not specified, **SearchBase** will default to the
+  current path. When not running under the Active Directory provider, the
+  **SearchBase** will default to the server&#x27;s **DefaultNamingContext**.
+
+  The **SearchScope** parameter defaults to the value `Subtree`, of the
+  enumerated type **ADSearchScope**.
+
+  For more information, see the **SearchBase** and **SearchScope** parameter
+  descriptions on any `Get-AD*` cmdlet.
+
+- Search Result Behavior
+
+  The behavior of the Active Directory module when returning results of a
+  search is modified by two cmdlet parameters: **ResultPageSize** and
+  **ResultSetSize**.
+
+  **ResultSetSize** controls the maximum number of returned objects.
+
+  **ResultPageSize** specifies the maximum number of objects for each returned
+  page of information.
+
+  See the **ResultPageSize** and **ResultSetSize** parameter descriptions on
+  any `Get-AD*` cmdlet for more information.
+
+
+- Timeout Behavior
+
+  The following statements specify timeout conditions within the Active
+  Directory module and describe what can be done about a timeout them.
+
+  The default Active Directory module timeout for all operations is 2
+  minutes.
+
+  For search operation, the Active Directory module uses paging control
+  with a 2-minute timeout for each page search.
+
+  &gt; [!NOTE]
+  &gt; Because a search may involve multiple server page requests the overall
+  &gt; search time may exceed 2 minutes.
+
+  A **TimeoutException** error indicates that a timeout has occurred.
+
+  For a search operation, you can choose to use a smaller page size, set with
+  the **ResultPageSize** parameter, if you are getting a **TimeoutException**
+  error.
+
+  If after trying these changes you are still getting a **TimeoutException**
+  error, consider optimizing your filter using the guidance in the
+  Optimizing Filters section of this topic.
+
+
+- Optimizing Filters
+
+  You can enhance the search filter behavior by using these guidelines.
+
+  - Avoid using the **Recursive** parameter as it intensifies resource usage of
+    the search operation.
+  - Avoid using bitwise AND operators and bitwise OR operators. For more
+    information, see the Supported Operators section of this topic.
+  - Avoid using the logical NOT operator.
+  - Break down your search into multiple queries with narrower conditions.
+
+  For a full description of filter syntax and usage, see the Filter Syntax
+  section of this topic.
+
+## Filter Examples
+
+The following section shows many examples of filter use in common queries.
+
+### Example 1 - Get all entries:
+
+- LDAP Filter Equivalent: `(objectClass=*)`
+
+```powershell
+Get-ADObject -Filter &#x27;ObjectClass -like &quot;*&quot;&#x27;
+```
+
+### Example 2 - Get entries containing &quot;bob&quot; somewhere in the common name
+
+- LDAP Filter Equivalent: `(cn=*bob*)`
+
+```powershell
+Get-ADObject -Filter &#x27;CN -like &quot;*bob*&quot;&#x27;
+```
+
+### Example 3 - Get entries with a bad password count greater than five
+
+- LDAP Filter Equivalent: `(&amp;(!badpwdcount&lt;=5)(badpwdcount=*))`
+
+```powershell
+Get-ADUser -Filter &#x27;badpwdcount -ge 5&#x27;
+```
+
+### Example 4 - Get all users with an e-mail attribute
+
+- LDAP Filter Equivalent: `(&amp;(objectClass=user)(email=*))`
+
+```powershell
+Get-ADUser -filter &#x27;email -like &quot;*&quot;&#x27;
+```
+
+-or-
+
+```powershell
+Get-ADObject -filter &#x27;email -like &quot;*&quot; -and ObjectClass -eq &quot;user&quot;&#x27;
+```
+
+### Example 5 - Get all user entries with an e-mail attribute and a surname equal to &quot;smith&quot;:
+
+- LDAP Filter Equivalent: `(&amp;(sn=smith)(objectClass=user)(email=*))`
+
+```powershell
+Get-ADUser -Filter &#x27;Email -like &quot;*&quot; -and SurName -eq &quot;smith&quot;&#x27;
+```
+
+-or-
+
+```powershell
+Get-ADUser -Filter &#x27;Email -like &quot;*&quot; -and sn -eq &quot;smith&quot;&#x27;
+```
+
+### Example 6 - Get all user entries with a common name that starts with &quot;andy&quot; and users with a common name of &quot;steve&quot; or &quot;margaret&quot;
+
+- LDAP Filter Equivalent: `(&amp;(objectClass=user) | (cn=andy*)(cn=steve)(cn=margaret))`
+
+```powershell
+Get-ADUser -Filter &#x27;CN -like &quot;andy*&quot; -or CN -eq &quot;steve&quot; -or CN -eq &quot;margaret&quot;&#x27;
+```
+
+
+This example demonstrates a more complex logic and the use of precedence
+control via parenthesis.
+
+```powershell
+Get-ADObject -Filter &#x27;objectClass -eq &quot;user&quot; -and (CN -like &quot;andy*&quot; -or CN -eq &quot;steve&quot; -or CN -eq &quot;margaret&quot;)&#x27;
+```
+
+### Example 7 - Get all entries without an e-mail attribute
+
+- LDAP Filter Equivalent: `(!(email=*))`
+
+```powershell
+Get-ADUser -Filter &#x27;-not Email -like &quot;*&quot;&#x27;
+```
+
+-or-
+
+```powershell
+Get-ADUser -Filter &#x27;Email -notlike &quot;*&quot;&#x27;
+```
+
+### Example 8 - Get all users who did not logon since January 1, 2007
+
+- LDAP Filter Equivalent: `(&amp;(lastlogon&lt;=X)(objectClass=user))` where X is
+  number of 100-nanosecond slices since Jan 1st 1601
+
+```powershell
+$date = new-object System.DateTime -ArgumentList @(2007,1,1,0,0,0)
+Get-ADUser -Filter &#x27;-not LastLogon -le $date&#x27;
+```
+
+### Example 9 - Get all users who have logged on in the last 5 days
+
+- LDAP Filter Equivalent:
+
+  ```
+  (&amp;(lastLogon&gt;=128812906535515110)
+    (objectClass=user)(!(objectClass=computer)))
+  ```
+
+```powershell
+$date = (get-date) - (new-timespan -days 5)
+Get-ADUser -Filter &#x27;lastLogon -gt $date&#x27;
+```
+
+### Example 10 - Search for group objects that have the ADS_GROUP_TYPE_SECURITY_ENABLED flag set
+
+- LDAP Filter Equivalent:
+  `(&amp;(objectCategory=group)(groupType:1.2.840.113556.1.4.803:=2147483648))`
+
+The following example query string searches for group objects that have the
+ADS_GROUP_TYPE_SECURITY_ENABLED flag set. Be aware that the decimal value of
+ADS_GROUP_TYPE_SECURITY_ENABLED (0x80000000 = 2147483648) is used for the
+comparison value.
+
+```powershell
+Get-ADGroup -filter &#x27;groupType -band 0x80000000&#x27;
+```
+
+# about_ActiveDirectory_Filter
+
+### Example 11 - Search the ancestry of an object
+
+- LDAP Filter Equivalent:
+  `(memberof:1.2.840.113556.1.4.1941:=(cn=Group1,OU=groupsOU,DC=x)))`
+
+The LDAP_MATCHING_RULE_IN_CHAIN is a matching rule OID that is designed to
+provide a method to look up the ancestry of an object. Many applications using
+Active Directory and AD LDS usually work with hierarchical data, which is
+ordered by parent-child relationships. Previously, applications performed
+transitive group expansion to figure out group membership, which used a lot of
+network bandwidth. Applications made multiple round-trips to figure out if an
+object fell &quot;in the chain&quot; if a link were traversed through to the end.
+
+An example of such a query is one designed to check if a user, &quot;user1&quot; is a
+member of group &quot;group1&quot;. &quot;user1&quot; may not be a direct member of group1. It
+could be a member of some other group, which is a member of &quot;group1&quot;.
+
+You would set the base to the user DN and the scope to base, and use the query:
+
+```powershell
+Get-ADUser -Filter &#x27;memberOf -RecursiveMatch &quot;CN=Administrators, CN=Builtin,DC=Fabrikam,DC=com&quot;&#x27; -SearchBase &quot;CN=Administrator,CN=Users,DC=Fabrikam,DC=com&quot;
+```
+
+## Filter Syntax
+
+The following syntax descriptions use Backus-Naur form to show the PowerShell
+Expression Language for the Filter parameter.
+
+```Syntax
+&lt;filter&gt;  ::= &quot;{&quot; &lt;FilterComponentList&gt; &quot;}&quot;
+
+&lt;FilterComponentList&gt; ::= &lt;FilterComponent&gt; |
+  &lt;FilterComponent&gt; &lt;JoinOperator&gt; &lt;FilterComponent&gt; |
+  &lt;NotOperator&gt;  &lt;FilterComponent&gt;
+
+&lt;FilterComponent&gt; ::= &lt;attr&gt; &lt;FilterOperator&gt; &lt;value&gt; |
+  &quot;(&quot; &lt;FilterComponent&gt; &quot;)&quot;
+
+&lt;FilterOperator&gt; ::= &quot;-eq&quot; | &quot;-le&quot; | &quot;-ge&quot; | &quot;-ne&quot; | &quot;-lt&quot; | &quot;-gt&quot; |
+  &quot;-approx&quot; | &quot;-bor&quot; | &quot;-band&quot; | &quot;-recursivematch&quot; | &quot;-like&quot; |
+  &quot;-notlike&quot;
+
+&lt;JoinOperator&gt; ::= &quot;-and&quot; | &quot;-or&quot;
+
+&lt;NotOperator&gt; ::= &quot;-not&quot;
+
+&lt;attr&gt; ::= &lt;PropertyName&gt; | &lt;LDAPDisplayName of the attribute&gt;
+
+&lt;value&gt;::= &lt; this value will be compared to the object data for
+  attribute &lt;ATTR&gt; using the specified filter operator
+```
+
+## Supported Operators
+
+The following table shows frequently used search filter operators.
+
+|     Operator      |              Description               |      LDAP Equivalent       |
+| ----------------- | -------------------------------------- | -------------------------- |
+| `-eq`             | Equal to. Wildcards not supported.     | =                          |
+| `-ne`             | Not equal to. Wildcards not supported. | !x = y                     |
+| `-approx`         | Approximately equal to                 | ~=                         |
+| `-le`             | Lexicographically less than            | &lt;=                         |
+|                   | or equal to                            |                            |
+| `-lt`             | Lexicographically less than            | !x &gt;= y                    |
+| `-ge`             | Lexicographically greater              | &gt;=                         |
+|                   | than or equal to                       |                            |
+| `-gt`             | Lexicographically greater than         | !x &lt;= y                    |
+|                   |                                        |                            |
+| `-and`            | AND                                    | &amp;                          |
+| `-or`             | OR                                     |                            |
+| `-not`            | NOT                                    | !                          |
+| `-bor`            | Bitwise OR                             | :1.2.840.113556.1.4.804:=  |
+| `-band`           | Bitwise AND                            | :1.2.840.113556.1.4.803:=  |
+| `-recursivematch` | Use LDAP_MATCHING_RULE_IN_CHAIN        | :1.2.840.113556.1.4.1941:= |
+| `-like`           | Similar to `-eq` and supports          | =                          |
+|                   | wildcard comparison. The only          |                            |
+|                   | wildcard character supported is: `*`   |                            |
+| `-notlike`        | Not like. Supports wild                | !x = y                     |
+|                   | card comparison.                       |                            |
+
+&gt; [!NOTE]
+&gt; PowerShell wildcards, other than &quot;*&quot;, such as &quot;?&quot; are not supported by the
+&gt; **Filter** parameter syntax.
+
+### Operator Precedence
+
+The following listing shows the precedence of operators for filters from
+highest to lowest.
+
+- Highest precedence: `-eq`, `-ge`, `-le`, `-approx`, `-band`, `-bor`,
+  `-recursivematch`, `-ne`, `-like`, `-not`, `-and`
+- Lowest precedence: `-or`
+
+### Special Characters
+
+The following escape sequence should be used for specifying special characters
+in AD Filter STRING data, that is, data enclosed in double or single quotes.
+
+| ASCII Character |             Escape sequence substitute              |
+| --------------- | --------------------------------------------------- |
+| `&quot;`             | `` `&quot; ``  (This escape sequence is only required if |
+|                 | STRING data is enclosed in double quotes.)          |
+| `&#x27;`             | `&#x27;&#x27;`  (This escape sequence is only required if     |
+|                 | STRING data is enclosed in single quotes.)          |
+| NUL             | `\00` (This is a standard LDAP escape sequence.)    |
+| `\`             | `\5c` (This is a standard LDAP escape sequence.)    |
+
+### LDAP Special Characters
+
+ADFilter parser will automatically convert all the below characters found in
+STRING data, that is data enclosed in &quot; &quot; or &#x27; &#x27; to their LDAP escape sequence.
+End users need not know about these LDAP escape sequence.
+
+| ASCII Character |           Escape sequence substitute            |
+| --------------- | ----------------------------------------------- |
+| `*`             | `\2a`  (Character `*` will only be converted in |
+|                 | -eq and -ne comparisons Users should use        |
+|                 | -like and -notlike operators for wildcard       |
+|                 | comparison.)                                    |
+| `(`             | `\28`                                           |
+| `)`             | `\29`                                           |
+| `/`             | `\2f`                                           |</pre></section>

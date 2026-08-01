@@ -1,0 +1,724 @@
+<!doctype html><meta charset="utf-8"><section class="jp-official"><h1>スタートトランザクション</h1>
+<h2>シノプシスです.</h2>
+<p>取引を開始します.</p>
+<h2>SYNTAXは,のシンタックスです.</h2>
+<pre><code>Start-Transaction [-Timeout &lt;Int32&gt;] [-Independent] [-RollbackPreference &lt;RollbackSeverity&gt;] [-WhatIf]
+ [-Confirm] [&lt;CommonParameters&gt;]
+</code></pre>
+<h2>記述は,</h2>
+<p><code>Start-Transaction</code>cmdlet は,取引を開始し,単位として管理される一連のコマンドである.取引は完了またはコミットすることができます.または,完全にキャンセルまたはロールバックすることができます.したがって,取引によって変更されたデータは元の状態に戻ります.取引のコマンドは単位として管理されるので,すべてのコマンドがコミットされますか,すべてのコマンドがロールバックされます.</p>
+<p>デフォルトでは,取引のコマンドがエラーを生む場合,取引は自動的に戻されます.この行動を変更するには<strong>RollbackPreference</strong>パラメータを使用できます.</p>
+<p>取引で使用されるcmdletsは,取引をサポートするために設計されている必要があります.取引をサポートするCmdletsは, <strong>UseTransaction</strong>パラメータを持っています.プロバイダーで取引を行うためには,プロバイダが取引をサポートする必要があります.Windows VistaおよびWindowsオペレーティングシステムの後バージョンのWindows PowerShell Registryプロバイダは取引をサポートします.また,Windows PowerShellをサポートするWindowsシステムの任意のバージョンのWindowsシステムでの取引に表現を含まれさせるために <strong>Microsoft.PowerShell.Commands.Management.TransactedString</strong>クラスを使用できます.他のWindows PowerShellプロバイダも取引をサポートできます.</p>
+<p>取引が進行中の間に新しい独立した取引を開始すると,新しい取引がアクティブ取引になります.そして,元の取引に変更を加える前に,新しい取引をコミットまたはロールバックする必要があります.</p>
+<p><code>Start-Transaction</code>cmdlet は,Windows PowerShell のトランザクション機能をサポートする一連の cmdlet の1つです.詳細については, [about_Transactions] (../Microsoft.PowerShell.Core/About/about_Transactions.md) を参照してください.</p>
+<h2>例えは</h2>
+<h3>例1: 取引をスタートして後回します.</h3>
+<pre><code class="language-powershell">Set-Location HKCU:\software
+Start-Transaction
+New-Item &quot;ContosoCompany&quot; -UseTransaction
+New-ItemProperty &quot;ContosoCompany&quot; -Name &quot;MyKey&quot; -Value 123 -UseTransaction
+Undo-Transaction
+</code></pre>
+<p>これらのコマンドは,トランザクションを起動し,後回転する.トランザクションが後回転されるので,レジストリに変更はありません.</p>
+<h3>例2: 取引を開始して完了する</h3>
+<pre><code class="language-powershell">Set-Location HKCU:\software
+Start-Transaction
+New-Item &quot;ContosoCompany&quot; -UseTransaction
+New-ItemProperty &quot;ContosoCompany&quot; -Name &quot;MyKey&quot; -Value 123 -UseTransaction
+Complete-Transaction
+</code></pre>
+<p>これらのコマンドは,取引を開始し,その後完了します.  までのレジストリに変更はありません.<code>Complete-Transaction</code>コマンドが使用されています.</p>
+<h3>例3: 異なるロールバック・プレバンスを使用します.</h3>
+<pre><code class="language-powershell">Set-Location HKCU:\software
+Start-Transaction
+New-Item -Path &quot;NoPath&quot; -Name &quot;ContosoCompany&quot; -UseTransaction
+New-Item -Path . -Name &quot;ContosoCompany&quot; -UseTransaction
+Start-Transaction -RollbackPreference Never
+New-Item -Path &quot;NoPath&quot; -Name &quot;ContosoCompany&quot; -UseTransaction
+New-Item -Path . -Name &quot;ContosoCompany&quot; -UseTransaction
+
+# Start-Transaction (-RollbackPreference Error)
+
+Start-Transaction
+New-Item -Path &quot;NoPath&quot; -Name &quot;ContosoCompany&quot; -UseTransaction
+New-Item : The registry key at the specified path does not exist.
+</code></pre>
+<pre><code class="language-Output">At line:1 char:9
++ New-Item &lt;&lt;&lt;&lt;  -Path NoPath -Name ContosoCompany -UseTransaction
+</code></pre>
+<pre><code class="language-powershell">New-Item -Path . -Name &quot;Contoso&quot; -UseTransaction
+</code></pre>
+<pre><code class="language-Output">New-Item : Cannot use transaction. The transaction has been rolled back or has timed out.
+At line:1 char:9
++ New-Item &lt;&lt;&lt;&lt;  -Path . -Name ContosoCompany -UseTransaction
+</code></pre>
+<pre><code class="language-powershell">
+# Start-Transaction (-RollbackPreference Never)
+
+Start-Transaction -RollbackPreference Never
+New-Item -Path &quot;NoPath&quot; -Name &quot;ContosoCompany&quot; -UseTransaction
+</code></pre>
+<pre><code class="language-Output">New-Item : The registry key at the specified path does not exist.
+At line:1 char:9
++ New-Item &lt;&lt;&lt;&lt;  -Path NoPath -Name &quot;ContosoCompany&quot; -UseTransaction
+</code></pre>
+<pre><code class="language-powershell">New-Item -Path . -Name &quot;ContosoCompany&quot; -UseTransaction
+
+Hive: HKEY_CURRENT_USER\Software
+SKC  VC Name                           Property
+---  -- ----                           --------
+0   0 ContosoCompany                 {}
+Complete-Transaction
+
+# Succeeds
+
+</code></pre>
+<p>この例では<strong>RollbackPreference</strong>パラメータ値を変更する効果を示しています.</p>
+<p>最初のコマンドセットでは, <code>Start-Transaction</code><strong>RollbackPreference</strong>を使用しません.その結果,デフォルト値 (Error) が使用されます.トランザクションコマンドでエラーが発生すると,つまり指定されたパスが存在しない場合,トランザクションは自動的に戻されます.</p>
+<p>第二のコマンドセットでは, <code>Start-Transaction</code><strong>RollbackPreference</strong>は Never の値で使用されます.その結果,取引コマンドでエラーが発生すると,取引はまだアクティブで,成功して完了できます.</p>
+<p>ほとんどの取引はエラーなく実行されなければならないため,通常は <strong>RollbackPreference</strong>のデフォルト値は好まれる.</p>
+<h3>例4:取引が進行中のときにこのcmdletを使用します.</h3>
+<pre><code class="language-powershell">Set-Location HKCU:\software
+Start-Transaction
+New-Item &quot;ContosoCompany&quot; -UseTransaction
+Start-Transaction
+Get-Transaction
+New-Item &quot;ContosoCompany2&quot; -UseTransaction
+Complete-Transaction
+Complete-Transaction
+Get-Transaction
+</code></pre>
+<pre><code class="language-Output">RollbackPreference   SubscriberCount   Status
+------------------   ---------------   ------
+Error                2                 Active
+</code></pre>
+<p>この例では,使用する効果を示しています.<code>Start-Transaction</code>取引が進行中である間に,その効果は進行中の取引に加わるようなものです.</p>
+<p>これは簡略化されたコマンドですが,取引には完全な取引を含むスクリプトを実行する場合,このシナリオは頻繁に発生します.</p>
+<p>最初の"人"は<code>Start-Transaction</code>取引を開始する最初のコマンドは,<code>New-Item</code>コマンドは取引の一部です.</p>
+<p>第二の方は,<code>Start-Transaction</code>取引に新しいサブスクリプションを追加するコマンドです.<code>Get-Transaction</code>命令は,次回の2人のサブスクリプション数でトランザクションを返します.<code>New-Item</code>コマンドは同じ取引の一部です.</p>
+<p>取引が完了するまでレジスタに変更はありません.取引を完了するには,2つの を入力する必要があります.<code>Complete-Transaction</code>もし,取引を何時か逆転させるとしたら,両契約者のためにすべての取引が逆転される.</p>
+<h1>スタートトランザクション</h1>
+<h3>例5: 取引が進行中の間,独立した取引を開始します.</h3>
+<pre><code class="language-powershell">Set-Location HKCU:\software
+Start-Transaction
+New-Item &quot;ContosoCompany&quot; -UseTransaction
+Start-Transaction -Independent
+Get-Transaction
+Undo-Transaction
+New-ItemProperty -Path &quot;ContosoCompany&quot; -Name &quot;MyKey&quot; -Value 123 -UseTransaction
+Complete-Transaction
+Get-ChildItem contoso*
+Get-Transaction
+
+RollbackPreference   SubscriberCount   Status
+------------------   ---------------   ------
+Error                1                 Active
+Undo-Transaction
+New-ItemProperty -Path &quot;ContosoCompany&quot; -Name &quot;MyKey&quot; -Value 123 -UseTransaction
+MyKey
+-----
+123
+Complete-Transaction
+Get-ChildItem contoso*
+Hive: HKEY_CURRENT_USER\Software
+SKC  VC Name                           Property
+---  -- ----                           --------
+0   1 MyCompany                      {MyKey}
+</code></pre>
+<p>この例では,  の独立系パラメータを使用する効果を示しています.<code>Start-Transaction</code>別の取引が進行中である間に取引を開始する.この場合は,新しい取引が元の取引に影響を及ぼさないままに,戻されます.</p>
+<p>取引は論理的に独立しているものの,一度に1つの取引がしかアクティブになれないため,元の取引の作業を再開する前に,あなたは取り戻さなければならない.</p>
+<p>最初のコマンドセットで取引が開始されます.<code>New-Item</code>コマンドは最初の取引の一部です.</p>
+<p>第二のコマンドセットでは, <code>Start-Transaction</code>コマンドは <em>Independent</em> パラメータを使用します.<code>Get-Transaction</code>次のコマンドは,最新のものであるアクティブトランザクションのトランザクションオブジェクトを示します.サブスクリプション数値は1に等しいので,トランザクションが関係がないことを示します.</p>
+<p>取引が有効なとき,  を使って戻る.<code>Undo-Transaction</code>命令すると,元の取引が再び活性化します.</p>
+<p><code>New-ItemProperty</code>元の取引の一部であるこの取引はエラーなく完了し,元の取引は""コマンドを使用して完了できます.<code>Complete-Transaction</code>結果として,レジストリが変更されます.</p>
+<h3>例6:取引の一部でないコマンドを実行します.</h3>
+<pre><code class="language-powershell">Set-Location HKCU:\software
+Start-Transaction
+New-Item &quot;ContosoCompany1&quot; -UseTransaction
+New-Item &quot;ContosoCompany2&quot;
+New-Item &quot;ContosoCompany3&quot; -UseTransaction
+Get-ChildItem contoso*
+</code></pre>
+<pre><code class="language-Output">Hive: HKEY_CURRENT_USER\Software
+SKC  VC Name                           Property
+---  -- ----                           --------
+0   0 ContosoCompany2                {}
+</code></pre>
+<pre><code class="language-powershell">Complete-Transaction
+Get-ChildItem contoso*
+</code></pre>
+<pre><code class="language-Output">Hive: HKEY_CURRENT_USER\Software
+SKC  VC Name                           Property
+---  -- ----                           --------
+0   0 ContosoCompany1                     {}
+0   0 ContosoCompany2                     {}
+0   0 ContosoCompany3                     {}
+</code></pre>
+<p>この例は,取引が進行中の間に提出されるコマンドが取引に含まれても含まれない場合も示しています. <strong>UseTransaction</strong>パラメータを使用するコマンドのみが取引の一部です.</p>
+<p>1つ目と3つ目です.<code>New-Item</code>命令は <strong>UseTransaction</strong> パラメータを使用します.これらのコマンドは取引の一部です.第二の命令が2つ目だからです.<code>New-Item</code>コマンドは <strong>UseTransaction</strong> パラメータを使用していないので,取引の一部ではありません.</p>
+<p>最初のGet-ChildItemコマンドは効果を示します.<code>New-Item</code>コマンドはすぐに完了しますが,最初のコマンドと第3のコマンドは,<code>New-Item</code>取引が完了するまでコマンドは有効ではありません.</p>
+<p><code>Complete-Transaction</code>結果として,第2のGet-ChildItemコマンドは,すべての新しいアイテムがレジストリに追加されると表示します.</p>
+<h3>例7: 指定された時間内に完了しない取引をリロールする</h3>
+<pre><code class="language-powershell">Start-Transaction -Timeout 2
+
+# Wait two minutes...
+
+Get-Transaction
+New-Item HKCU:\Software\ContosoCompany -UseTransaction
+Start-Transaction -Timeout 2
+
+# Wait two minutes...
+
+Get-Transaction
+</code></pre>
+<pre><code class="language-Output">RollbackPreference   SubscriberCount   Status
+------------------   ---------------   -----------
+Error                1                 RolledBack
+</code></pre>
+<pre><code class="language-powershell">New-Item HKCU:\Software\ContosoCompany -UseTransaction
+</code></pre>
+<pre><code class="language-Output">New-Item : Cannot use transaction. The transaction has been rolled back or has timed out.
+At line:1 char:9
++ New-Item &lt;&lt;&lt;&lt;  MyCompany -UseTransaction
+</code></pre>
+<p>このコマンドは,  の <strong>Timeout</strong> パラメータを使用します.<code>Start-Transaction</code>取引を開始するには,2分以内に完了する必要があります.タイムアウトが終了するまでに取引が完了していない場合は,自動的に戻されます.</p>
+<p>タイムアウトが終了すると,通知されませんが,取引オブジェクトの <strong>Status</strong> 属性はRolledBack に設定され,UseTransaction** パラメータを使用するコマンドが失敗します.</p>
+<h2>パラメータは</h2>
+<h3>-独立する</h3>
+<p>このcmdletが進行中の取引から独立する取引を開始することを示します.<code>Start-Transaction</code>別の取引が進行中である間に,進行中の取引に新しいサブスクリプションが追加されます.このパラメータは,セッションで既に進行中の取引が有効である場合にのみ有効です.</p>
+<p>デフォルトでは,使用している場合は,<code>Start-Transaction</code>取引が進行中である間に,既存の取引オブジェクトが再利用され,サブスクリプション数が増加します.その効果は,元の取引に加盟するようなものです.<code>Undo-Transaction</code>取引を完了するには,入力する必要があります <code>Complete-Transaction</code>各サブスクリプションのコマンド.同時に進行中のトランザクションがほとんど関係しているため,デフォルトはほとんどの用途に十分です.</p>
+<p><strong>独立</strong>パラメータを指定すると,このcmdletは元のトランザクションに影響を及ぼすことなく完了またはキャンセルできる新しいトランザクションを作成します.しかし,一度に1つのトランザクションのみがアクティブになるので,元のトランザクションの作業を再開する前に新しいトランザクションを完了またはロールバックする必要があります.</p>
+<pre><code class="language-yaml">Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-RollbackPreference ロールバック 優先順位</h3>
+<p>取引が自動的に戻される条件を指定します.このパラメータの受け入れ可能な値は:</p>
+<ul>
+<li>-<code>Error</code>終止または非終止エラーが発生した場合,トランザクションは自動的に戻されます. - <code>TerminatingError</code>取引が終了するエラーが発生した場合,自動的にトランザクションが戻されます.`Never`` 取引は自動的に戻らない.</li>
+</ul>
+<p>デフォルト値は です.<code>Error</code> .</p>
+<pre><code class="language-yaml">Type: System.Management.Automation.RollbackSeverity
+Parameter Sets: (All)
+Aliases:
+Accepted values: Error, TerminatingError, Never
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-タイムアウト</h3>
+<p>取引が有効になる最大限時間を数分で指定する.タイムアウトが終了すると,取引が自動的に戻されます.</p>
+<p>標準的にはコマンドラインで起動するトランザクションにはタイムアウトはありません.トランザクションがスクリプトで起動すると,デフォルトタイムアウトは30分です.</p>
+<pre><code class="language-yaml">Type: System.Int32
+Parameter Sets: (All)
+Aliases: TimeoutMins
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h1>スタートトランザクション</h1>
+<h3>-確認</h3>
+<p>cmdletを実行する前に確認を提示します.</p>
+<pre><code class="language-yaml">Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases: cf
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-WhatIf</h3>
+<p>cmdletが実行されなければどうなるかを示しています.</p>
+<pre><code class="language-yaml">Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases: wi
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>共通パラメーター</h3>
+<p>このcmdletは,共通パラメータをサポートしています: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable.詳細については, <a href="を参照してください.https://go.microsoft.com/fwlink/?LinkID=113216">about_CommonParameters</a> でした.</p>
+<h2>輸入は</h2>
+<h3>どれもない</h3>
+<p>このcmdletに入力パイプすることはできません.</p>
+<h2>輸出は</h2>
+<h3>どれもない</h3>
+<p>このcmdletは,出力を生成しません.</p>
+<h2>NOTES  記事ができました.</h2>
+<h2>関連リンク</h2>
+<p><a href="Complete-Transaction.md">Complete-Transaction</a> について</p>
+<p><a href="Get-Transaction.md">Get-Transaction</a> </p>
+<p><a href="Undo-Transaction.md">Undo-Transaction</a> について</p>
+<p><a href="Use-Transaction.md">Use-Transaction</a> </p></section><section class="en-original"><pre class="source-original"># Start-Transaction
+
+## SYNOPSIS
+
+Starts a transaction.
+
+## SYNTAX
+
+```
+Start-Transaction [-Timeout &lt;Int32&gt;] [-Independent] [-RollbackPreference &lt;RollbackSeverity&gt;] [-WhatIf]
+ [-Confirm] [&lt;CommonParameters&gt;]
+```
+
+## DESCRIPTION
+
+The `Start-Transaction` cmdlet starts a transaction, which is a series of commands that are managed
+as a unit. A transaction can be completed, or committed. Alternatively, it can be completely undone,
+or rolled back, so that any data changed by the transaction is restored to its original state.
+Because the commands in a transaction are managed as a unit, either all commands are committed or
+all commands are rolled back.
+
+By default, if any command in the transaction generates an error, transactions are rolled back
+automatically. You can use the **RollbackPreference** parameter to change this behavior.
+
+The cmdlets used in a transaction must be designed to support transactions. Cmdlets that support
+transactions have a **UseTransaction** parameter. To perform transactions in a provider, the
+provider must support transactions. The Windows PowerShell Registry provider in Windows Vista and
+later versions of the Windows operating system supports transactions. You can also use the
+**Microsoft.PowerShell.Commands.Management.TransactedString** class to include expressions in
+transactions on any version of the Windows system that supports Windows PowerShell. Other Windows
+PowerShell providers can also support transactions.
+
+Only one transaction can be active at a time. If you start a new, independent transaction while a
+transaction is in progress, the new transaction becomes the active transaction, and you must commit
+or roll back the new transaction before you make any changes to the original transaction.
+
+`Start-Transaction` cmdlet is one of a set of cmdlets that support the transactions feature in
+Windows PowerShell. For more information, see [about_Transactions](../Microsoft.PowerShell.Core/About/about_Transactions.md).
+
+## EXAMPLES
+
+### Example 1: Start and roll back a transaction
+
+```powershell
+Set-Location HKCU:\software
+Start-Transaction
+New-Item &quot;ContosoCompany&quot; -UseTransaction
+New-ItemProperty &quot;ContosoCompany&quot; -Name &quot;MyKey&quot; -Value 123 -UseTransaction
+Undo-Transaction
+```
+
+These commands start and then roll back a transaction. Because the transaction is rolled back, no
+changes are made to the registry.
+
+### Example 2: Start and complete a transaction
+
+```powershell
+Set-Location HKCU:\software
+Start-Transaction
+New-Item &quot;ContosoCompany&quot; -UseTransaction
+New-ItemProperty &quot;ContosoCompany&quot; -Name &quot;MyKey&quot; -Value 123 -UseTransaction
+Complete-Transaction
+```
+
+These commands start and then complete a transaction. No changes are made to the registry until the
+`Complete-Transaction` command is used.
+
+### Example 3: Use different rollback preferences
+
+```powershell
+Set-Location HKCU:\software
+Start-Transaction
+New-Item -Path &quot;NoPath&quot; -Name &quot;ContosoCompany&quot; -UseTransaction
+New-Item -Path . -Name &quot;ContosoCompany&quot; -UseTransaction
+Start-Transaction -RollbackPreference Never
+New-Item -Path &quot;NoPath&quot; -Name &quot;ContosoCompany&quot; -UseTransaction
+New-Item -Path . -Name &quot;ContosoCompany&quot; -UseTransaction
+
+# Start-Transaction (-RollbackPreference Error)
+
+Start-Transaction
+New-Item -Path &quot;NoPath&quot; -Name &quot;ContosoCompany&quot; -UseTransaction
+New-Item : The registry key at the specified path does not exist.
+```
+
+```Output
+At line:1 char:9
++ New-Item &lt;&lt;&lt;&lt;  -Path NoPath -Name ContosoCompany -UseTransaction
+```
+
+```powershell
+New-Item -Path . -Name &quot;Contoso&quot; -UseTransaction
+```
+
+```Output
+New-Item : Cannot use transaction. The transaction has been rolled back or has timed out.
+At line:1 char:9
++ New-Item &lt;&lt;&lt;&lt;  -Path . -Name ContosoCompany -UseTransaction
+```
+
+```powershell
+
+# Start-Transaction (-RollbackPreference Never)
+
+Start-Transaction -RollbackPreference Never
+New-Item -Path &quot;NoPath&quot; -Name &quot;ContosoCompany&quot; -UseTransaction
+```
+
+```Output
+New-Item : The registry key at the specified path does not exist.
+At line:1 char:9
++ New-Item &lt;&lt;&lt;&lt;  -Path NoPath -Name &quot;ContosoCompany&quot; -UseTransaction
+```
+
+```powershell
+New-Item -Path . -Name &quot;ContosoCompany&quot; -UseTransaction
+
+Hive: HKEY_CURRENT_USER\Software
+SKC  VC Name                           Property
+---  -- ----                           --------
+0   0 ContosoCompany                 {}
+Complete-Transaction
+
+# Succeeds
+
+```
+
+This example demonstrates the effect of changing the **RollbackPreference** parameter value.
+
+In the first set of commands, `Start-Transaction` does not use **RollbackPreference**. As a result,
+the default value (Error) is used. When an error occurs in a transaction command, that is, the
+specified path does not exist, the transaction is automatically rolled back.
+
+In the second set of commands, `Start-Transaction` uses **RollbackPreference** with a value of
+Never. As a result, when an error occurs in a transaction command, the transaction is still active
+and can be completed successfully.
+
+Because most transactions must be performed without error, the default value of
+**RollbackPreference** is typically preferred.
+
+### Example 4: Use this cmdlet while a transaction is in progress
+
+```powershell
+Set-Location HKCU:\software
+Start-Transaction
+New-Item &quot;ContosoCompany&quot; -UseTransaction
+Start-Transaction
+Get-Transaction
+New-Item &quot;ContosoCompany2&quot; -UseTransaction
+Complete-Transaction
+Complete-Transaction
+Get-Transaction
+```
+
+```Output
+RollbackPreference   SubscriberCount   Status
+------------------   ---------------   ------
+Error                2                 Active
+```
+
+This example shows the effect of using `Start-Transaction` while a transaction is in progress.
+The effect is much like joining the transaction in progress.
+
+Although this is a simplified command, this scenario frequently occurs when the transaction involves
+running a script that includes a complete transaction.
+
+The first `Start-Transaction` command starts the transaction. The first `New-Item` command is part
+of the transaction.
+
+The second `Start-Transaction` command adds a new subscriber to the transaction. The
+`Get-Transaction` command now returns a transaction with a subscriber count of 2. The second
+`New-Item` command is part of the same transaction.
+
+No changes are made to the registry until the whole transaction is completed. To complete the
+transaction, you must enter two `Complete-Transaction` commands, one for each subscriber. If you
+were to roll back the transaction at any point, all the transaction would be rolled back for both
+subscribers.
+
+# Start-Transaction
+
+### Example 5: Start an independent transaction while one is in progress
+
+```powershell
+Set-Location HKCU:\software
+Start-Transaction
+New-Item &quot;ContosoCompany&quot; -UseTransaction
+Start-Transaction -Independent
+Get-Transaction
+Undo-Transaction
+New-ItemProperty -Path &quot;ContosoCompany&quot; -Name &quot;MyKey&quot; -Value 123 -UseTransaction
+Complete-Transaction
+Get-ChildItem contoso*
+Get-Transaction
+
+RollbackPreference   SubscriberCount   Status
+------------------   ---------------   ------
+Error                1                 Active
+Undo-Transaction
+New-ItemProperty -Path &quot;ContosoCompany&quot; -Name &quot;MyKey&quot; -Value 123 -UseTransaction
+MyKey
+-----
+123
+Complete-Transaction
+Get-ChildItem contoso*
+Hive: HKEY_CURRENT_USER\Software
+SKC  VC Name                           Property
+---  -- ----                           --------
+0   1 MyCompany                      {MyKey}
+```
+
+This example shows the effect of using the *Independent* parameter of `Start-Transaction` to start a transaction while another transaction is in progress.
+In this case, the new transaction is rolled back without affecting the original transaction.
+
+Although the transactions are logically independent, because only one transaction can be active at a time, you must roll back or commit the newest transaction before resuming work on the original transaction.
+
+The first set of commands starts a transaction.
+The `New-Item` command is part of the first transaction.
+
+In the second set of commands, the `Start-Transaction` command uses the *Independent* parameter.
+The `Get-Transaction` command that follows shows the transaction object for the active transaction, which is the newest one.
+The subscriber count is equal to 1, that shows that the transactions are unrelated.
+
+When the active transaction is rolled back by using an `Undo-Transaction` command, the original transaction becomes active again.
+
+The `New-ItemProperty` command, which is part of the original transaction, finishes without error, and the original transaction can be completed by using the `Complete-Transaction` command.
+As a result, the registry is changed.
+
+### Example 6: Run commands that are not part of a transaction
+
+```powershell
+Set-Location HKCU:\software
+Start-Transaction
+New-Item &quot;ContosoCompany1&quot; -UseTransaction
+New-Item &quot;ContosoCompany2&quot;
+New-Item &quot;ContosoCompany3&quot; -UseTransaction
+Get-ChildItem contoso*
+```
+
+```Output
+Hive: HKEY_CURRENT_USER\Software
+SKC  VC Name                           Property
+---  -- ----                           --------
+0   0 ContosoCompany2                {}
+```
+
+```powershell
+Complete-Transaction
+Get-ChildItem contoso*
+```
+
+```Output
+Hive: HKEY_CURRENT_USER\Software
+SKC  VC Name                           Property
+---  -- ----                           --------
+0   0 ContosoCompany1                     {}
+0   0 ContosoCompany2                     {}
+0   0 ContosoCompany3                     {}
+```
+
+This example demonstrates that commands that are submitted while a transaction is in progress can be
+included in the transaction or not included. Only commands that use the **UseTransaction** parameter
+are part of the transaction.
+
+The first and third `New-Item` commands use the **UseTransaction** parameter. These commands are
+part of the transaction. Because the second `New-Item` command does not use the **UseTransaction**
+parameter, it is not part of the transaction.
+
+The first Get-ChildItem command shows the effect. The second `New-Item` command is completed
+immediately, but the first and third `New-Item` commands are not effective until the transaction is
+committed.
+
+The `Complete-Transaction` command commits the transaction. As a result, the second Get-ChildItem
+command shows that all of the new items are added to the registry.
+
+### Example 7: Roll back a transaction that does not finish in a specified time
+
+```powershell
+Start-Transaction -Timeout 2
+
+# Wait two minutes...
+
+Get-Transaction
+New-Item HKCU:\Software\ContosoCompany -UseTransaction
+Start-Transaction -Timeout 2
+
+# Wait two minutes...
+
+Get-Transaction
+```
+
+```Output
+RollbackPreference   SubscriberCount   Status
+------------------   ---------------   -----------
+Error                1                 RolledBack
+```
+
+```powershell
+New-Item HKCU:\Software\ContosoCompany -UseTransaction
+```
+
+```Output
+New-Item : Cannot use transaction. The transaction has been rolled back or has timed out.
+At line:1 char:9
++ New-Item &lt;&lt;&lt;&lt;  MyCompany -UseTransaction
+```
+
+This command uses the **Timeout** parameter of `Start-Transaction` to start a transaction that must
+be completed within two minutes. If the transaction is not finished when the time-out expires, it is
+rolled back automatically.
+
+When the time-out expires, you are not notified, but the **Status** property of the transaction
+object is set to RolledBack and commands that use the **UseTransaction** parameter fail.
+
+## PARAMETERS
+
+### -Independent
+
+Indicates that this cmdlet starts a transaction that is independent of any transactions in progress.
+By default, if you use `Start-Transaction` while another transaction is in progress, a new
+subscriber is added to the transaction in progress. This parameter has an effect only when a
+transaction is already in progress in the session.
+
+By default, if you use `Start-Transaction` while a transaction is in progress, the existing
+transaction object is reused and the subscriber count is incremented. The effect is much like
+joining the original transaction. An `Undo-Transaction` command rolls back the whole the transaction.
+To complete the transaction, you must enter a `Complete-Transaction` command for each subscriber.
+Because most transactions that are in progress at the same time are related, the default is
+sufficient for most uses.
+
+If you specify the **Independent** parameter, this cmdlet creates a new transaction that can be
+completed or undone without affecting the original transaction. However, because only one
+transaction can be active at a time, you must complete or roll back the new transaction before
+resuming work on the original transaction.
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -RollbackPreference
+
+Specifies the conditions under which a transaction is automatically rolled back. The acceptable
+values for this parameter are:
+
+- `Error`
+  The transaction is rolled back automatically if a terminating or non-terminating error occurs.
+- `TerminatingError`
+  The transaction is rolled back automatically if a terminating error occurs.
+- ``Never``
+  The transaction is never rolled back automatically.
+
+The default value is `Error`.
+
+```yaml
+Type: System.Management.Automation.RollbackSeverity
+Parameter Sets: (All)
+Aliases:
+Accepted values: Error, TerminatingError, Never
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Timeout
+
+Specifies the maximum time, in minutes, that the transaction is active. When the time-out expires,
+the transaction is automatically rolled back.
+
+By default, there is no time-out for transactions that are started at the command line. When
+transactions are started by a script, the default time-out is 30 minutes.
+
+```yaml
+Type: System.Int32
+Parameter Sets: (All)
+Aliases: TimeoutMins
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+# Start-Transaction
+
+### -Confirm
+
+Prompts you for confirmation before running the cmdlet.
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases: cf
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -WhatIf
+
+Shows what would happen if the cmdlet runs. The cmdlet is not run.
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases: wi
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### CommonParameters
+
+This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable,
+-InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose,
+-WarningAction, and -WarningVariable. For more information, see [about_CommonParameters](https://go.microsoft.com/fwlink/?LinkID=113216).
+
+## INPUTS
+
+### None
+
+You cannot pipe input to this cmdlet.
+
+## OUTPUTS
+
+### None
+
+This cmdlet does not generate any output.
+
+## NOTES
+
+## RELATED LINKS
+
+[Complete-Transaction](Complete-Transaction.md)
+
+[Get-Transaction](Get-Transaction.md)
+
+[Undo-Transaction](Undo-Transaction.md)
+
+[Use-Transaction](Use-Transaction.md)</pre></section>

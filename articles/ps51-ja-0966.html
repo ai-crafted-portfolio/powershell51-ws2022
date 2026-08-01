@@ -1,0 +1,513 @@
+<!doctype html><meta charset="utf-8"><section class="jp-official"><h1>エクポート-DnsServerDnsSecPublicKey</h1>
+<h2>SYNOPSISは,DNSSEC署名区間のDSとDNSKEY情報を輸出する.</h2>
+<h2>SYNTAXは,のシンタックスです.</h2>
+<h3>DnsKey (デフォルト) ```</h3>
+<p>Export-DnsServerDnsSecPublicKey [-ComputerName <String>] [-ZoneName] <String> [-Path <String>] [-PassThru]
+ [-UnAuthenticated] [-Force] [-NoClobber] [-CimSession <CimSession[]>] [-ThrottleLimit <Int32>] [-AsJob]
+ [-WhatIf] [-Confirm] [<CommonParameters>]</p>
+<pre><code>
+###  DS```
+Export-DnsServerDnsSecPublicKey [-ComputerName &lt;String&gt;] [-ZoneName] &lt;String&gt; [-Path &lt;String&gt;] [-PassThru]
+ [-UnAuthenticated] [-Force] [-NoClobber] -DigestType &lt;String[]&gt; [-CimSession &lt;CimSession[]&gt;]
+ [-ThrottleLimit &lt;Int32&gt;] [-AsJob] [-WhatIf] [-Confirm] [&lt;CommonParameters&gt;]
+</code></pre>
+<h2>記述 <strong>Export-DnsServerDnsSecPublicKey</strong> cmdlet は,ドメイン名システムセキュリティ拡張 (DNSSEC) 署名された領域のためのデレグレーションサイン (DS) またはドメイン名システム公開鍵 (DNSKEY) 情報を輸出します.</h2>
+<h2>例えは</h2>
+<h3>例1: 信頼アンカーをファイル共有に輸出する```</h3>
+<p>PS C:&gt; Export-DnsServerDnsSecPublicKey -ComputerName "DNSDC1.Contoso.com" -ZoneName "Contoso.com" -Path "\MyDNSKeyShare\keys" -PassThru -DigestType "Sha1"</p>
+<p>Exporting a trust anchor without using authentication is insecure unless DNSSEC is active on "${ComputerName}", a trust anchor covering "${ZoneName}" is installed, and the connection between the local machine and "${ComputerName}" is secure. Consider alternative means of exporting the trust anchors, such as the DNSCMD protocol, email, or HTTPS. Proceed? [Y] Yes  [A] Yes to All  [N] No  [L] No to All  [S] Suspend  [?] Help (default is "Y"): Y</p>
+<pre><code>
+このコマンドは,Contoso.comの信頼アンカー (DSレコード) をファイル共有に輸出します.DNS管理者は,このコマンドを,ゾーンContoso.comをホストする DNS サーバから実行し,ゾーンサインキーがDSレコードを作成するために SHA-1 アルゴリズムを使用することを指定します.
+
+このコマンドは,\\\\MyDNSKeyShare\keysでDsset-Contoso.comを作成し,Microsoft.Management.Infrastructure.CimInstance#root/Microsoft/Windows/DNS/DNS/DnsServerResourceRecord形式でDSレコードを書きます.
+
+### 例2:未許可アクセスを利用して信頼アンカーを輸出する```
+PS C:\&gt; Export-DnsServerDnsSecPublicKey -ComputerName &quot;DNSDC1.contoso.com&quot; -ZoneName &quot;Contoso.com&quot; - Path &quot;\\MyDNSKeyShare\keys&quot; -PassThru -UnAuthorized -Force
+
+Exporting a trust anchor without using authentication is insecure unless DNSSEC is active on &quot;${ComputerName}&quot;, a trust anchor covering &quot;${ZoneName}&quot; is installed, and the connection between the local machine and &quot;${ComputerName}&quot; is secure. Consider alternative means of exporting the trust anchors, such as the DNSCMD protocol, email, or HTTPS. Proceed? [Y] Yes  [A] Yes to All  [N] No  [L] No to All  [S] Suspend  [?] Help (default is &quot;Y&quot;): Y
+Note: User typing N exits out of the command with no export or output
+</code></pre>
+<p>このコマンドは,Contoso.comの信頼アンカー (DNSKEYレコード) をファイル共有に輸出します.このコマンドを実行する DNS管理者は,ゾーンContoso.comをホストする DNS サーバに権限がありません.このコマンドは,ゾーンサインキーがDSレコードを作成するために SHA-1 アルゴリズムを使用することを指定します.</p>
+<p>このコマンドは\\MyDNSKeyShare\keysでKeyset-Contoso.comを作成し,Microsoft.Management.Infrastructure.CimInstance#root/Microsoft/Windows/DNS/DNS/DnsServerResourceRecord形式でDSレコードを書きます.</p>
+<h3>例3: 署名されたすべてのゾーンに信頼アンカーを取得する```</h3>
+<p>PS C:&gt; Get-DnsServerZone | ForEach-Object {Export-DnsServerDnsSecPublicKey -ComputerName "DNSDC1.Contoso.com" -ZoneName "Contoso.com" -Path "\MyDNSKeyShare\keys" -PassThru -UnAuthorized -Force  }</p>
+<pre><code>
+このコマンドは,DNSサーバーのContoso.comにホストされているすべての署名されたゾーンに対する信頼アンカーを取得します.このシナリオでは,DNSサーバーは現在 contoso.com, dinnernow.com, hrweb.netの署名されたゾーンをホストしています
+
+コマンドは,信頼アンカーを輸出し,パイプラインオペレーターを使用して結果を **Get-DnsServerZone** cmdlet に転送するために **ForEach-Object** cmdlet を使用します.
+
+このコマンドは,DNSサーバー (Keyset-Contoso.com,Keyset-Dinnernow.com,Keyset-Hrweb.net) でホストされている各署名されたゾーンのシェアでキセットファイルを作成し,Microsoft.Management.Infrastructure.CimInstance#root/Microsoft/Windows/DNS/DnsServerResourceRecord形式でDNSKEYレコードを書きます.
+
+### 例4: 信頼アンカーを非認証DNサーバーに輸入する```
+PS C:\&gt; $publicKey = Export-DnsServerDnssecPublicKey -ZoneName &quot;contoso.com&quot; -Path &quot;C:\&quot; -PassThru -UnAuthenticated -Force
+PS C:\&gt; $publicKey[0].RecordData | Add-DnsServerTrustAnchor -Name &quot;constoso.com&quot; -ComputerName &quot;DNSDC1.Contoso.com&quot;
+</code></pre>
+<p>最初のコマンドは,コントソ・ドットコムの信頼アンカー (DNSKEY レコード) を指定されたパスへ輸出し,結果を <strong>$publicKey</strong>変数に保存します. <em>UnAuthenticated</em> パラメータは,このコマンドを実行する DNS アドミナストが,コントソ・ドットコムのゾーンをホストする DNS サーバーに権限がないことを示す.</p>
+<p>2番目のコマンドは,Contoso.comから非認証的な DNS サーバに輸出された最初の信頼記録を追加します. DNSDC1.Contoso.comです.</p>
+<h2>パラメータは</h2>
+<h3>-AsJobは,背景作業としてcmdletを実行する.このパラメータを使用して,完了するのに時間がかかるコマンドを実行します.</h3>
+<p>cmdlet はすぐに,その仕事を代表するオブジェクトを返して,コマンドプロンプトを表示します.作業が完了する間,セッションで作業を続けることができます.作業を管理するには,  を使ってください.<code>*-Job</code>職の結果を入手するには, [Receive-Job] (cmdlets) を使ってください.https://go.microsoft.com/fwlink/?LinkID=113372) cmdlet. </p>
+<p>Windows PowerShell の背景の仕事に関する詳細については, [about_Jobs] (※) を参照してください.https://go.microsoft.com/fwlink/?LinkID=113251) でした.</p>
+<pre><code class="language-yaml">Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-CimSession は,リモートセッションまたはリモートコンピュータでcmdletを実行します.コンピュータ名またはセッションオブジェクトを入力します.例えば,[New-CimSession]の出力です.https://go.microsoft.com/fwlink/p/?LinkId=227967) または [Get-CimSession]https://go.microsoft.com/fwlink/p/?LinkId=227966標準的には,ローカルコンピュータの現在のセッションです.</h3>
+<pre><code class="language-yaml">Type: CimSession[]
+Parameter Sets: (All)
+Aliases: Session
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>遠隔DNSサーバを指定する.IPアドレスまたは,完全に資格のあるドメイン名 (FQDN),ホスト名,またはNETBIOS名などのIPアドレスに解決する任意の値を指定することができます.</h3>
+<pre><code class="language-yaml">Type: String
+Parameter Sets: (All)
+Aliases: Cn
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>- 確認は,cmdletを実行する前に確認を提示します.</h3>
+<pre><code class="language-yaml">Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: cf
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-DigestType は,DSレコードを作成するためにゾーンサインキーの使用するアルゴリズムを指定する.このパラメータの受け入れ可能な値は: - Sha1 - Sha256 - Sha384</h3>
+<pre><code class="language-yaml">Type: String[]
+Parameter Sets: DS
+Aliases: 
+Accepted values: Sha1, Sha256, Sha384
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+</code></pre>
+<h1>エクポート-DnsServerDnsSecPublicKey</h1>
+<h3>フォースは確認を提示せずに署名キーを輸出します.デフォルトでは,cmdletは継続する前に確認を提示します.</h3>
+<pre><code class="language-yaml">Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-NoClobber 輸出操作は,同じ名前を持つ既存の輸出ファイルを覆わないことを指定します.</h3>
+<pre><code class="language-yaml">Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-PassThru は,あなたが取り組んでいるアイテムを表すオブジェクトを返します.デフォルトでは,このcmdlet は出力を生成しません.</h3>
+<pre><code class="language-yaml">Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-Path キーセットファイルを配置するためにcmdletが使用する絶対的なパスを指定します.cmdletは自動的にゾーン名によってファイルに名前付けます.</h3>
+<pre><code class="language-yaml">Type: String
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+</code></pre>
+<h3>-ThrottleLimit は,cmdletを実行するために設定できる最大限の同時操作数を指定します.このパラメータを省略した場合,または値が  の値である場合.<code>0</code>入力すると,Windows PowerShell® は,コンピュータ上で実行されている CIM cmdlets の数に基づいて cmdlet の最適な加速度制限を計算します.加速度制限は,セッションやコンピュータにではなく,現在の cmdlet にのみ適用されます.</h3>
+<pre><code class="language-yaml">Type: Int32
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>認証されていないユーザーはこのcmdletを実行していることを示します.プロバイダのDNSサーバーはDSまたはDNSKEY情報を查询し,リモートDNSサーバーでcmdletを実行するための権限がない場合でも,必要なデータを輸出します.</h3>
+<pre><code class="language-yaml">Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-WhatIf が実行されればどうなるか示します.</h3>
+<pre><code class="language-yaml">Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: wi
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-ZoneName 区画は,cmdletが署名キーを輸出する主要なゾーンの名前を指定します.</h3>
+<pre><code class="language-yaml">Type: String
+Parameter Sets: (All)
+Aliases: TrustPointName, TrustAnchorName
+
+Required: True
+Position: 1
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+</code></pre>
+<h3>共通パラメータ このcmdletは共通パラメータをサポートしています: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable.詳細については, <a href="を参照してください.https://go.microsoft.com/fwlink/?LinkID=113216">about_CommonParameters</a> でした.</h3>
+<h2>輸入は</h2>
+<h2>輸出は</h2>
+<h3>Microsoft.Management.Infrastructure.CimInstance#DnsServerResourceRecordを表示する</h3>
+<h2>NOTES  記事ができました.</h2>
+<h2>関連リンク</h2>
+<p><a href="./Add-DnsServerTrustAnchor.md">DnsServerTrustAnchorを追加する</a></p>
+<p><a href="./Get-DnsServerZone.md">Get-DnsServerZone</a> </p></section><section class="en-original"><pre class="source-original"># Export-DnsServerDnsSecPublicKey
+
+## SYNOPSIS
+Exports DS and DNSKEY information for a DNSSEC-signed zone.
+
+## SYNTAX
+
+### DnsKey (Default)
+```
+Export-DnsServerDnsSecPublicKey [-ComputerName &lt;String&gt;] [-ZoneName] &lt;String&gt; [-Path &lt;String&gt;] [-PassThru]
+ [-UnAuthenticated] [-Force] [-NoClobber] [-CimSession &lt;CimSession[]&gt;] [-ThrottleLimit &lt;Int32&gt;] [-AsJob]
+ [-WhatIf] [-Confirm] [&lt;CommonParameters&gt;]
+```
+
+### DS
+```
+Export-DnsServerDnsSecPublicKey [-ComputerName &lt;String&gt;] [-ZoneName] &lt;String&gt; [-Path &lt;String&gt;] [-PassThru]
+ [-UnAuthenticated] [-Force] [-NoClobber] -DigestType &lt;String[]&gt; [-CimSession &lt;CimSession[]&gt;]
+ [-ThrottleLimit &lt;Int32&gt;] [-AsJob] [-WhatIf] [-Confirm] [&lt;CommonParameters&gt;]
+```
+
+## DESCRIPTION
+The **Export-DnsServerDnsSecPublicKey** cmdlet exports delegation signer (DS) or Domain Name System public key (DNSKEY) information for a Domain Name System Security Extensions (DNSSEC)-signed zone.
+
+## EXAMPLES
+
+### Example 1: Export a trust anchor to a file share
+```
+PS C:\&gt; Export-DnsServerDnsSecPublicKey -ComputerName &quot;DNSDC1.Contoso.com&quot; -ZoneName &quot;Contoso.com&quot; -Path &quot;\\MyDNSKeyShare\keys&quot; -PassThru -DigestType &quot;Sha1&quot;
+
+Exporting a trust anchor without using authentication is insecure unless DNSSEC is active on &quot;${ComputerName}&quot;, a trust anchor covering &quot;${ZoneName}&quot; is installed, and the connection between the local machine and &quot;${ComputerName}&quot; is secure. Consider alternative means of exporting the trust anchors, such as the DNSCMD protocol, email, or HTTPS. Proceed? [Y] Yes  [A] Yes to All  [N] No  [L] No to All  [S] Suspend  [?] Help (default is &quot;Y&quot;): Y
+```
+
+This command exports the trust anchor (DS record) for Contoso.com to a file share.
+A DNS administrator runs this command from the DNS server that hosts the zone Contoso.com and specifies that the zone signing key uses the SHA-1 algorithm to create the DS record.
+
+This command creates Dsset-Contoso.com in \\\\MyDNSKeyShare\keys and writes the DS record in the Microsoft.Management.Infrastructure.CimInstance#root/Microsoft/Windows/DNS/DNS/DnsServerResourceRecord format.
+
+### Example 2: Export a trust anchor by using unauthorized access
+```
+PS C:\&gt; Export-DnsServerDnsSecPublicKey -ComputerName &quot;DNSDC1.contoso.com&quot; -ZoneName &quot;Contoso.com&quot; - Path &quot;\\MyDNSKeyShare\keys&quot; -PassThru -UnAuthorized -Force
+
+Exporting a trust anchor without using authentication is insecure unless DNSSEC is active on &quot;${ComputerName}&quot;, a trust anchor covering &quot;${ZoneName}&quot; is installed, and the connection between the local machine and &quot;${ComputerName}&quot; is secure. Consider alternative means of exporting the trust anchors, such as the DNSCMD protocol, email, or HTTPS. Proceed? [Y] Yes  [A] Yes to All  [N] No  [L] No to All  [S] Suspend  [?] Help (default is &quot;Y&quot;): Y
+Note: User typing N exits out of the command with no export or output
+```
+
+This command exports a trust anchor (DNSKEY record) for Contoso.com to a file share.
+The DNS administrator who runs this command has no permissions to the DNS server that hosts the zone Contoso.com.
+This command specifies that the zone signing key uses the SHA-1 algorithm to create the DS record.
+
+This command creates Keyset-Contoso.com in \\\\MyDNSKeyShare\keys and writes the DS record in the Microsoft.Management.Infrastructure.CimInstance#root/Microsoft/Windows/DNS/DNS/DnsServerResourceRecord format.
+
+### Example 3: Get the trust anchors for all the signed zones
+```
+PS C:\&gt; Get-DnsServerZone | ForEach-Object {Export-DnsServerDnsSecPublicKey -ComputerName &quot;DNSDC1.Contoso.com&quot; -ZoneName &quot;Contoso.com&quot; -Path &quot;\\MyDNSKeyShare\keys&quot; -PassThru -UnAuthorized -Force  }
+```
+
+This command gets the trust anchors for all the signed zones that are hosted on the DNS server Contoso.com.
+In this scenario the DNS Server is currently hosting signed zones for contoso.com, dinnernow.com and hrweb.net
+
+The command uses a **ForEach-Object** cmdlet to export the trust anchors and pass the results to the **Get-DnsServerZone** cmdlet by using the pipeline operator.
+
+This command creates a keyset file in the share for each signed zone that is hosted on the DNS server (Keyset-Contoso.com, Keyset-Dinnernow.com, Keyset-Hrweb.net) and writes the DNSKEY record in the Microsoft.Management.Infrastructure.CimInstance#root/Microsoft/Windows/DNS/DNS/DnsServerResourceRecord format.
+
+### Example 4: Import a trust anchor to a non-authorized DN server
+```
+PS C:\&gt; $publicKey = Export-DnsServerDnssecPublicKey -ZoneName &quot;contoso.com&quot; -Path &quot;C:\&quot; -PassThru -UnAuthenticated -Force
+PS C:\&gt; $publicKey[0].RecordData | Add-DnsServerTrustAnchor -Name &quot;constoso.com&quot; -ComputerName &quot;DNSDC1.Contoso.com&quot;
+```
+
+The first command exports the trust anchor (DNSKEY record) for Contoso.com to the specified path, and stores the results in the **$publicKey** variable.
+The *UnAuthenticated* parameter indicates that the DNS administrator who runs this command has no permissions to the DNS server that hosts the zone Contoso.com.
+
+The second command adds the first trust record that was exported from Contoso.com into a non-authoritative DNS server named DNSDC1.Contoso.com.
+
+## PARAMETERS
+
+### -AsJob
+Runs the cmdlet as a background job. Use this parameter to run commands that take a long time to complete. 
+
+The cmdlet immediately returns an object that represents the job and then displays the command prompt. 
+You can continue to work in the session while the job completes. 
+To manage the job, use the `*-Job` cmdlets. 
+To get the job results, use the [Receive-Job](https://go.microsoft.com/fwlink/?LinkID=113372) cmdlet. 
+
+For more information about Windows PowerShell background jobs, see [about_Jobs](https://go.microsoft.com/fwlink/?LinkID=113251).
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -CimSession
+Runs the cmdlet in a remote session or on a remote computer.
+Enter a computer name or a session object, such as the output of a [New-CimSession](https://go.microsoft.com/fwlink/p/?LinkId=227967) or [Get-CimSession](https://go.microsoft.com/fwlink/p/?LinkId=227966) cmdlet.
+The default is the current session on the local computer.
+
+```yaml
+Type: CimSession[]
+Parameter Sets: (All)
+Aliases: Session
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -ComputerName
+Specifies a remote DNS server.
+You can specify an IP address or any value that resolves to an IP address, such as a fully qualified domain name (FQDN), host name, or NETBIOS name.
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases: Cn
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Confirm
+Prompts you for confirmation before running the cmdlet.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: cf
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -DigestType
+Specifies an array of algorithms that the zone signing key uses to create the DS record.
+The acceptable values for this parameter are:
+- Sha1
+- Sha256
+- Sha384
+
+```yaml
+Type: String[]
+Parameter Sets: DS
+Aliases: 
+Accepted values: Sha1, Sha256, Sha384
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+# Export-DnsServerDnsSecPublicKey
+
+### -Force
+Exports the signing key without prompting you for confirmation.
+By default, the cmdlet prompts you for confirmation before it proceeds.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -NoClobber
+Specifies that the export operation does not overwrite an existing export file that has the same name.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -PassThru
+Returns an object representing the item with which you are working.
+By default, this cmdlet does not generate any output.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Path
+Specifies the absolute path that the cmdlet uses to place the keyset file.
+The cmdlet automatically names the file according to the zone name.
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -ThrottleLimit
+Specifies the maximum number of concurrent operations that can be established to run the cmdlet.
+If this parameter is omitted or a value of `0` is entered, then Windows PowerShell® calculates an optimum throttle limit for the cmdlet based on the number of CIM cmdlets that are running on the computer.
+The throttle limit applies only to the current cmdlet, not to the session or to the computer.
+
+```yaml
+Type: Int32
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -UnAuthenticated
+Indicates that an unauthenticated user is running this cmdlet.
+The provider DNS server queries for the DS or DNSKEY information and exports the required data even if you do not have permissions to run the cmdlet on the remote DNS server.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -WhatIf
+Shows what would happen if the cmdlet runs.
+The cmdlet is not run.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: wi
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -ZoneName
+Specifies the name of the primary zone for which the cmdlet exports the signing keys.
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases: TrustPointName, TrustAnchorName
+
+Required: True
+Position: 1
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### CommonParameters
+This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable. For more information, see [about_CommonParameters](https://go.microsoft.com/fwlink/?LinkID=113216).
+
+## INPUTS
+
+## OUTPUTS
+
+### Microsoft.Management.Infrastructure.CimInstance#DnsServerResourceRecord
+
+## NOTES
+
+## RELATED LINKS
+
+[Add-DnsServerTrustAnchor](./Add-DnsServerTrustAnchor.md)
+
+[Get-DnsServerZone](./Get-DnsServerZone.md)</pre></section>

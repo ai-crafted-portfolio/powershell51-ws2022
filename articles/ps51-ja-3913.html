@@ -1,0 +1,265 @@
+<!doctype html><meta charset="utf-8"><section class="jp-official"><h1>新イベント</h1>
+<h2>シノプシスは新しいイベントを作成します.</h2>
+<h2>SYNTAXは,のシンタックスです.</h2>
+<pre><code>New-Event [-SourceIdentifier] &lt;String&gt; [[-Sender] &lt;PSObject&gt;]
+ [[-EventArguments] &lt;PSObject[]&gt;] [[-MessageData] &lt;PSObject&gt;] [&lt;CommonParameters&gt;]
+</code></pre>
+<h2>記述は,</h2>
+<p><code>New-Event</code>cmdlet は新しいカスタムイベントを作成します.</p>
+<p>プログラム内の状態変更やプログラムが検出できる変更,ハードウェアまたはシステム状態,アプリケーション状態,ディスク状態,ネットワーク状態,または背景の作業の完了を含む,ユーザーに通知するためにカスタムイベントを使用できます.</p>
+<p>設定されたイベントは,セッション内のイベントのキューに自動的に追加されます.そのイベントが挙げるたびに,あなたはそれらを購読する必要はありません.しかし,当局セッションにイベントを転送したい場合,またはイベントに反応するアクションを指定したい場合は,  を使用してください.<code>Register-EngineEvent</code>cmdlet で,カスタムイベントを登録する.</p>
+<p>オーダーメイドイベントのサブスクリプションを登録すると,イベントサブスクリプションがセッションに追加されます.<code>Unregister-Event</code>cmdlet,イベントサブスクリナー,カスタムイベントはセッションから削除されます.カスタムイベントをサブスクリプションしない場合は,イベントを削除するには,プログラム条件を変更するか,PowerShellセッションを終了するかする必要があります.</p>
+<h2>例えは</h2>
+<h3>例1: イベントのキューで新しいイベントを作成します.</h3>
+<pre><code>PS C:\&gt; New-Event -SourceIdentifier Timer -Sender Windows.Timer -MessageData &quot;Test&quot;
+</code></pre>
+<p>このコマンドはPowerShellイベント列に新しいイベントを作成します.このイベントを送信するにはWindows.Timer**オブジェクトを使用します.</p>
+<h3>例2:別のイベントに対してイベントを挙げてください</h3>
+<pre><code>PS C:\&gt; function Enable-ProcessCreationEvent
+{
+   $Query = New-Object System.Management.WqlEventQuery &quot;__InstanceCreationEvent&quot;, (New-Object TimeSpan 0,0,1), &quot;TargetInstance isa 'Win32_Process'&quot;
+   $ProcessWatcher = New-Object System.Management.ManagementEventWatcher $Query
+   $Identifier = &quot;WMI.ProcessCreated&quot;
+   Register-ObjectEvent $ProcessWatcher &quot;EventArrived&quot; -SupportEvent $Identifier -Action
+   {
+      [void] (New-Event -SourceId &quot;PowerShell.ProcessCreated&quot; -Sender $args[0] -EventArguments $args[1].SourceEventArgs.NewEvent.TargetInstance)
+   }
+}
+</code></pre>
+<p>このサンプル関数は,  を使います.<code>New-Event</code>cmdlet は別のイベントに対してイベントを提示するコマンドです.<code>Register-ObjectEvent</code>新しいプロセスが作成されたときに発生する Windows Management Instrumentation (WMI) イベントのサブスクリプションを cmdlet にします.コマンドは,cmdlet の <strong>Action</strong> パラメータを使用して  を呼び出す.<code>New-Event</code>cmdletで新しいイベントが作成されます.</p>
+<p>事件が起こることから<code>New-Event</code>raisedは自動的に PowerShell イベントキューに追加されますので,そのイベントに登録する必要はありません.</p>
+<h2>パラメータは</h2>
+<h3>-EventArguments</h3>
+<p>イベントのオプションを含むオブジェクトを指定します.</p>
+<pre><code class="language-yaml">Type: System.Management.Automation.PSObject[]
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: 2
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-MessageData</h3>
+<p>イベントに関連した追加データを指定します.このパラメータの値は,イベントオブジェクトの <strong>MessageData</strong> 属性で表示されます.</p>
+<pre><code class="language-yaml">Type: System.Management.Automation.PSObject
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: 3
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-送信者</h3>
+<p>イベントを起こすオブジェクトを指定します.デフォルトはPowerShellエンジンです.</p>
+<pre><code class="language-yaml">Type: System.Management.Automation.PSObject
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: 1
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-SourceIdentifier について</h3>
+<p>新しいイベントの名前を指定します.このパラメータは必要であり,セッションでユニークでなければなりません.</p>
+<p>このパラメータの値はイベントの <strong>SourceIdentifier</strong> 属性に表示されます.</p>
+<pre><code class="language-yaml">Type: System.String
+Parameter Sets: (All)
+Aliases:
+
+Required: True
+Position: 0
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>共通パラメーター</h3>
+<p>このcmdletは,共通パラメータをサポートしています: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable.詳細については, <a href="を参照してください.https://go.microsoft.com/fwlink/?LinkID=113216">about_CommonParameters</a> でした.</p>
+<h2>輸入は</h2>
+<h3>どれもない</h3>
+<p>このcmdletに物体をパイプすることはできません.</p>
+<h2>輸出は</h2>
+<h3>システム管理自動化.PSEventArgs</h3>
+<h2>NOTES  記事ができました.</h2>
+<p>新しいカスタムイベント,イベントサブスクリプション,イベントキューは,現在のセッションでのみ存在します.現在のセッションを終了すると,イベントキューは廃棄され,イベントサブスクリプションはキャンセルされます.</p>
+<h2>関連リンク</h2>
+<p><a href="Get-Event.md">Get-Event</a> </p>
+<p><a href="Register-EngineEvent.md">Register-EngineEvent</a> は,登録された</p>
+<p><a href="Register-ObjectEvent.md">Register-ObjectEvent</a> は,登録されたもの.</p>
+<p><a href="Remove-Event.md">Remove-Event</a> </p>
+<p><a href="Unregister-Event.md">Unregister-Event</a> </p>
+<p><a href="Wait-Event.md">Wait-Event</a> </p></section><section class="en-original"><pre class="source-original"># New-Event
+
+## SYNOPSIS
+Creates a new event.
+
+## SYNTAX
+
+```
+New-Event [-SourceIdentifier] &lt;String&gt; [[-Sender] &lt;PSObject&gt;]
+ [[-EventArguments] &lt;PSObject[]&gt;] [[-MessageData] &lt;PSObject&gt;] [&lt;CommonParameters&gt;]
+```
+
+## DESCRIPTION
+
+The `New-Event` cmdlet creates a new custom event.
+
+You can use custom events to notify users about state changes in your program and any change that
+your program can detect, including hardware or system conditions, application status, disk status,
+network status, or the completion of a background job.
+
+Custom events are automatically added to the event queue in your session whenever they are raised;
+you do not need to subscribe to them. However, if you want to forward an event to the local session
+or specify an action to respond to the event, use the `Register-EngineEvent` cmdlet to subscribe to
+the custom event.
+
+When you subscribe to a custom event, the event subscriber is added to your session. If you cancel
+the event subscription by using the `Unregister-Event` cmdlet, the event subscriber and custom event
+are deleted from the session. If you do not subscribe to the custom event, to delete the event, you
+must change the program conditions or close the PowerShell session.
+
+## EXAMPLES
+
+### Example 1: Create a new event in the event queue
+
+```
+PS C:\&gt; New-Event -SourceIdentifier Timer -Sender Windows.Timer -MessageData &quot;Test&quot;
+```
+
+This command creates a new event in the PowerShell event queue. It uses a **Windows.Timer** object
+to send the event.
+
+### Example 2: Raise an event in response to another event
+
+```
+PS C:\&gt; function Enable-ProcessCreationEvent
+{
+   $Query = New-Object System.Management.WqlEventQuery &quot;__InstanceCreationEvent&quot;, (New-Object TimeSpan 0,0,1), &quot;TargetInstance isa &#x27;Win32_Process&#x27;&quot;
+   $ProcessWatcher = New-Object System.Management.ManagementEventWatcher $Query
+   $Identifier = &quot;WMI.ProcessCreated&quot;
+   Register-ObjectEvent $ProcessWatcher &quot;EventArrived&quot; -SupportEvent $Identifier -Action
+   {
+      [void] (New-Event -SourceId &quot;PowerShell.ProcessCreated&quot; -Sender $args[0] -EventArguments $args[1].SourceEventArgs.NewEvent.TargetInstance)
+   }
+}
+```
+
+This sample function uses the `New-Event` cmdlet to raise an event in response to another event. The
+command uses the `Register-ObjectEvent` cmdlet to subscribe to the Windows Management
+Instrumentation (WMI) event that is raised when a new process is created. The command uses the
+**Action** parameter of the cmdlet to call the `New-Event` cmdlet, which creates the new event.
+
+Because the events that `New-Event` raises are automatically added to the PowerShell event queue,
+you do not need to register for that event.
+
+## PARAMETERS
+
+### -EventArguments
+
+Specifies an object that contains options for the event.
+
+```yaml
+Type: System.Management.Automation.PSObject[]
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: 2
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -MessageData
+
+Specifies additional data associated with the event. The value of this parameter appears in the
+**MessageData** property of the event object.
+
+```yaml
+Type: System.Management.Automation.PSObject
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: 3
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Sender
+
+Specifies the object that raises the event. The default is the PowerShell engine.
+
+```yaml
+Type: System.Management.Automation.PSObject
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: 1
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -SourceIdentifier
+
+Specifies a name for the new event. This parameter is required, and it must be unique in the
+session.
+
+The value of this parameter appears in the **SourceIdentifier** property of the events.
+
+```yaml
+Type: System.String
+Parameter Sets: (All)
+Aliases:
+
+Required: True
+Position: 0
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### CommonParameters
+
+This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable,
+-InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose,
+-WarningAction, and -WarningVariable. For more information, see
+[about_CommonParameters](https://go.microsoft.com/fwlink/?LinkID=113216).
+
+## INPUTS
+
+### None
+
+You can&#x27;t pipe objects to this cmdlet.
+
+## OUTPUTS
+
+### System.Management.Automation.PSEventArgs
+
+## NOTES
+
+The new custom event, the event subscription, and the event queue exist only in the current session.
+If you close the current session, the event queue is discarded and the event subscription is
+canceled.
+
+## RELATED LINKS
+
+[Get-Event](Get-Event.md)
+
+[Register-EngineEvent](Register-EngineEvent.md)
+
+[Register-ObjectEvent](Register-ObjectEvent.md)
+
+[Remove-Event](Remove-Event.md)
+
+[Unregister-Event](Unregister-Event.md)
+
+[Wait-Event](Wait-Event.md)</pre></section>

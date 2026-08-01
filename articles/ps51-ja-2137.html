@@ -1,0 +1,350 @@
+<!doctype html><meta charset="utf-8"><section class="jp-official"><h1>New-NetIPsecQuickModeCryptoProposal について</h1>
+<h2>SYNOPSISは,他のコンピュータとのIPsec速モード交渉で提供する暗号プロトコルセットを指定する快モード暗号提案を作成します.</h2>
+<h2>SYNTAXは,のシンタックスです.</h2>
+<pre><code>New-NetIPsecQuickModeCryptoProposal [-Encryption &lt;EncryptionAlgorithm&gt;] [-AHHash &lt;HashAlgorithm&gt;]
+ [-ESPHash &lt;HashAlgorithm&gt;] [-MaxKiloBytes &lt;UInt64&gt;] [-MaxMinutes &lt;UInt64&gt;]
+ [-Encapsulation &lt;IPsecEncapsulation&gt;] [&lt;CommonParameters&gt;]
+</code></pre>
+<h2>記述 ニュー・ネットIPsecQuickModeCryptoProposal** cmdlet は,迅速モード交渉で使用される単一の暗号提案を作成します.</h2>
+<p>AIPsecQuickModeCryptoProposal オブジェクトは,高速モードセキュリティ関連 (SA) の交渉に必要なセキュリティパラメータを提供します.AHまたはESPのIPsecプロトコルは, <em>Encapsulation</em>パラメータで, <em>AHHash</em>および <em>ESPHash</em>パラメータでデータ完整性と認証のためのハッシュアルゴリズム, <em>Encryption</em>パラメータで,要求された場合,暗号化のためのアルゴリズムが提供されます.</p>
+<p>NetIPsecQuickModeCryptoProposal 複数の NetIPsecQuickModeCryptoProposal フィールドは,単一の <strong>NetIPsecQuickModeCryptoSet</strong> オブジェクトにグループ化されます.速モード交換では,同類が共通する最初の提案を使用します. <strong>NetIPsecPhase2AuthSet</strong> オブジェクトと <strong>NetIPsecMainModeCryptoSet</strong> オブジェクトは,カスタマイズされた速モード交渉に必要なすべての SA パラメータを提供するために, <strong>NetIPsecRule</strong> オブジェクトに関連付けられます.</p>
+<h2>例えは</h2>
+<h3>例1 ```</h3>
+<p>PS C:&gt;$QMProposal = New-NetIPsecQuickModeCryptoProposal -Encapsulation ESP -ESPHash SHA1 -Encryption AES128</p>
+<p>PS C:&gt;$QMCryptoSet = New-NetIPsecQuickModeCryptoSet -DisplayName "esp:sha1-des3" -Proposal $QMProposal</p>
+<p>PS C:&gt;New-NetIPSecRule -DisplayName "Tunnel from HQ to Dallas Branch" -Mode Tunnel -LocalAddress 192.168.0.0/16 -RemoteAddress 192.157.0.0/16 -LocalTunnelEndpoint 1.1.1.1 -RemoteTunnelEndpoint 2.2.2.2 -InboundSecurity Require -OutboundSecurity Require -QuickModeCryptoSet $QMCryptoSet.Name</p>
+<pre><code>
+この例では,プライベートネットワーク (192.168.0.0/16) から,公共ネットワークに接続されたローカルコンピュータのインターフェース (1.1.1.1) 経由で,公共ネットワークのインターフェース (2.2.2.2) を介して,別のプライベートネットワーク (192.157.0.0/16) に接続された公共ネットワークへの2番目のコンピュータへのインターフェイスを介して,トラフィックをルーティングするIPsecトンネルを作成します.トンネルを通るすべてのトラフィックは,ESPとSHA1を使用して完整性をチェックし,ESPとAES128を使用して暗号化されています.
+
+### 例2 ```
+This cmdlet illustrates how to include both AH and ESP protocols in a single suite.
+PS C:\&gt;$AHandESPQM = New-NetIPsecQuickModeCryptoProposal -Encapsulation AH,ESP -AHHash SHA1 -ESPHash SHA1 -Encryption DES3
+
+
+This cmdlet illustrates how to specify the use of the AH protocol only.
+PS C:\&gt;$AHQM = New-NetIPsecQuickModeCryptoProposal -Encapsulation AH -AHHash SHA1 -ESPHash None -Encryption None
+
+
+This cmdlet illustrates how to specify the use of the ESP protocol only, and uses the None keyword to specify not to include an encryption option, also known as &quot;ESP null encryption&quot;.
+PS C:\&gt;$ESPQM = New-NetIPsecQuickModeCryptoProposal -Encapsulation ESP -ESPHash SHA1 -Encryption None
+
+
+This cmdlet illustrates how to use the None keyword to specify that ESP is used with an encryption protocol, but with no integrity protocol. This cmdlet also illustrates how to set a custom SA timeout using both time and data amount values.
+PS C:\&gt;$ESPnoAHQM = New-NetIPsecQuickModeCryptoProposal -Encapsulation ESP -ESPHash None -Encryption AES256 -MaxKiloBytes 50000 -MaxMinutes 30
+
+
+
+PS C:\&gt;$QMCryptoSet = New-NetIPsecQuickModeCryptoSet -DisplayName &quot;Custom Quick Mode&quot; -Proposal $AHandESPQM,$AHQM,$ESPQM,$ESPnoAHQM
+
+
+
+PS C:\&gt;New-NetIPsecRule -DisplayName &quot;Domain Isolation Rule&quot; -InboundSecurity Require Request -OutboundSecurity Request -QuickModeCryptoSet $QMCryptoSet.Name
+</code></pre>
+<p>この例では域隔離規則を作成しますが,複数回を構成するカスタム・クイップモード提案を使用します.</p>
+<h2>パラメータは</h2>
+<h3>-AHHash は,データ完整性と認証のための提案されたハッシュアルゴリズムを指定します.このパラメータの受け入れられる値は: None, MD5, SHA1, SHA256, AESGMAC128. AESGMAC192,または AESGMAC256. デフォルト値は Noneです.</h3>
+<pre><code class="language-yaml">Type: HashAlgorithm
+Parameter Sets: (All)
+Aliases: 
+Accepted values: None, MD5, SHA1, SHA256, SHA384, AESGMAC128, AESGMAC192, AESGMAC256
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>このパラメータの受け入れ可能な値は - None, MD5, SHA1, SHA256, AESGMAC128. AESGMAC192,または AESGMAC256. もし <em>Encapsulation</em> パラメータが AH として指定されている場合,このパラメータの受け入れ可能な値は: AESGMAC128, AESGMAC192, AESGMAC256, MD5, SHA1,または SHA256. もし <em>Encapsulation</em> パラメータが ESP または AH,ESP として指定されている場合,このパラメータの受け入れ可能な値は: AESGMAC128, AESGMAC192, AESGMAC256, MD5, SHA1,または SHA256. デフォルト値は Noneです.</h3>
+<pre><code class="language-yaml">Type: HashAlgorithm
+Parameter Sets: (All)
+Aliases: 
+Accepted values: None, MD5, SHA1, SHA256, SHA384, AESGMAC128, AESGMAC192, AESGMAC256
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-エンキャプセレーションはIPsecプロトコル方法を指定します.このパラメータの受け入れられる値は: None, AH, AH,ESP,または ESPです. AH (認証ヘッダー) と ESP (エンキャプセリングセキュリティ・ペイロード) は両方指定できます.または None が指定できます.</h3>
+<ul>
+<li>AH,ESP:すべてのプラットフォームでサポートされています. - None: firstref_server_7とWindows Server® 2012でサポートされています. - AH: nextref_server_7とWindows Server 2012でサポートされています. デフォルト値は Noneです. AHは IKEv2キーリングモジュールでの輸送モードでサポートされていません.</li>
+</ul>
+<pre><code class="language-yaml">Type: IPsecEncapsulation
+Parameter Sets: (All)
+Aliases: 
+Accepted values: None, AH, ESP
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-暗号化 メインまたはファーストモード暗号化提案の値を指定します.このパラメータの受け入れ可能な値は: None, DES, DES3, AES128, AES192, AES256, AESGCM128, AESGCM192,または AESGCM256.GCM暗号化は, nextref_server_7と Windows Server 2012 のフェーズ 1 認証でサポートされていません.AESGCM128, AESGCM192,および AESGCM256 は,IPsec メインモードセキュリティ関連交渉ではサポートされていません.</h3>
+<pre><code class="language-yaml">Type: EncryptionAlgorithm
+Parameter Sets: (All)
+Aliases: 
+Accepted values: None, DES, DES3, AES128, AES192, AES256, AESGCM128, AESGCM192, AESGCM256
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-MaxKiloBytes メッセージ送信者が提案する最大寿命をキロバイトで指定し,セキュリティ関連が作成後有効とみなされる.このパラメータの受け入れ可能な値は:20480から2147483647です.</h3>
+<ul>
+<li>非ゼロ値が求められた寿命をキロバイトで指定します. </li>
+</ul>
+<p>デフォルト値は100000です.</p>
+<pre><code class="language-yaml">Type: UInt64
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h1>New-NetIPsecQuickModeCryptoProposal について</h1>
+<h3>-MaxMinutes は,有効期限が切れる前に,高速モードセキュリティ関連のために設定された数分を指定し,再交渉する必要があります.このパラメータの受け入れ可能な値は: 5 から 2879 までの時間です.</h3>
+<ul>
+<li>非ゼロ値が指定した時間軸は,望ましい分間の寿命です. </li>
+</ul>
+<p>デフォルト値は60分です.</p>
+<pre><code class="language-yaml">Type: UInt64
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>共通パラメータ このcmdletは共通パラメータをサポートしています: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable.詳細については, [about_CommonParameters] を参照してください.https://go.microsoft.com/fwlink/?LinkID=113216) でした.</h3>
+<h2>輸入は</h2>
+<h3>どれもない</h3>
+<h2>輸出は</h2>
+<h3>Microsoft.Management.Infrastructure.CimInstance#root\StandardCimv2\MSFT_NetIKEQMCryptoProposal <code>Microsoft.Management.Infrastructure.CimInstance</code>Windows Management Instrumentation (WMI) のオブジェクトを表示する包装クラスです.ポンドサインの後に行進するパス () は,<code>#</code>) は,元々のWMIオブジェクトの名前空間とクラス名を提供します.</h3>
+<h2>NOTES  記事ができました.</h2>
+<h2>関連リンク</h2>
+<p><a href="./New-NetIPsecMainModeCryptoSet.md">New-NetIPsecMainModeCryptoSet</a> は,新しいModeCryptoSet.md を表示しています.</p>
+<p><a href="./New-NetIPsecRule.md">New-NetIPsecRule</a> について</p></section><section class="en-original"><pre class="source-original"># New-NetIPsecQuickModeCryptoProposal
+
+## SYNOPSIS
+Creates a quick mode cryptographic proposal that specifies a suite of cryptographic protocols to offer in IPsec quick mode negotiations with other computers.
+
+## SYNTAX
+
+```
+New-NetIPsecQuickModeCryptoProposal [-Encryption &lt;EncryptionAlgorithm&gt;] [-AHHash &lt;HashAlgorithm&gt;]
+ [-ESPHash &lt;HashAlgorithm&gt;] [-MaxKiloBytes &lt;UInt64&gt;] [-MaxMinutes &lt;UInt64&gt;]
+ [-Encapsulation &lt;IPsecEncapsulation&gt;] [&lt;CommonParameters&gt;]
+```
+
+## DESCRIPTION
+The **New-NetIPsecQuickModeCryptoProposal** cmdlet creates a single cryptographic proposal to be used in quick mode negotiations.
+
+A NetIPsecQuickModeCryptoProposal object provides the necessary security parameters for the negotiation of a quick mode security association (SA).
+The IPsec protocol, either AH or ESP, is provide in the *Encapsulation* parameter, the hashing algorithm for data integrity and authentication in the *AHHash* and *ESPHash* parameters, and the algorithm for encryption, if requested, in the *Encryption* parameter.
+
+Multiple NetIPsecQuickModeCryptoProposal fields are grouped into a single **NetIPsecQuickModeCryptoSet** object.
+The quick mode exchange will use the first proposal that the peers have in common.
+A **NetIPsecPhase2AuthSet** object and a **NetIPsecMainModeCryptoSet** object get associated to a **NetIPsecRule** object to provide all the necessary SA parameters for customized quick mode negotiations.
+
+## EXAMPLES
+
+### EXAMPLE 1
+```
+PS C:\&gt;$QMProposal = New-NetIPsecQuickModeCryptoProposal -Encapsulation ESP -ESPHash SHA1 -Encryption AES128
+
+
+
+PS C:\&gt;$QMCryptoSet = New-NetIPsecQuickModeCryptoSet -DisplayName &quot;esp:sha1-des3&quot; -Proposal $QMProposal
+
+
+
+PS C:\&gt;New-NetIPSecRule -DisplayName &quot;Tunnel from HQ to Dallas Branch&quot; -Mode Tunnel -LocalAddress 192.168.0.0/16 -RemoteAddress 192.157.0.0/16 -LocalTunnelEndpoint 1.1.1.1 -RemoteTunnelEndpoint 2.2.2.2 -InboundSecurity Require -OutboundSecurity Require -QuickModeCryptoSet $QMCryptoSet.Name
+```
+
+This example creates an IPsec tunnel that routes traffic from a private network (192.168.0.0/16) through an interface on the local computer (1.1.1.1) attached to a public network to a second computer through its public interface (2.2.2.2) to another private network (192.157.0.0/16).
+All traffic through the tunnel is integrity checked using ESP and SHA1, and encrypted using ESP and AES128.
+
+### EXAMPLE 2
+```
+This cmdlet illustrates how to include both AH and ESP protocols in a single suite.
+PS C:\&gt;$AHandESPQM = New-NetIPsecQuickModeCryptoProposal -Encapsulation AH,ESP -AHHash SHA1 -ESPHash SHA1 -Encryption DES3
+
+
+This cmdlet illustrates how to specify the use of the AH protocol only.
+PS C:\&gt;$AHQM = New-NetIPsecQuickModeCryptoProposal -Encapsulation AH -AHHash SHA1 -ESPHash None -Encryption None
+
+
+This cmdlet illustrates how to specify the use of the ESP protocol only, and uses the None keyword to specify not to include an encryption option, also known as &quot;ESP null encryption&quot;.
+PS C:\&gt;$ESPQM = New-NetIPsecQuickModeCryptoProposal -Encapsulation ESP -ESPHash SHA1 -Encryption None
+
+
+This cmdlet illustrates how to use the None keyword to specify that ESP is used with an encryption protocol, but with no integrity protocol. This cmdlet also illustrates how to set a custom SA timeout using both time and data amount values.
+PS C:\&gt;$ESPnoAHQM = New-NetIPsecQuickModeCryptoProposal -Encapsulation ESP -ESPHash None -Encryption AES256 -MaxKiloBytes 50000 -MaxMinutes 30
+
+
+
+PS C:\&gt;$QMCryptoSet = New-NetIPsecQuickModeCryptoSet -DisplayName &quot;Custom Quick Mode&quot; -Proposal $AHandESPQM,$AHQM,$ESPQM,$ESPnoAHQM
+
+
+
+PS C:\&gt;New-NetIPsecRule -DisplayName &quot;Domain Isolation Rule&quot; -InboundSecurity Require Request -OutboundSecurity Request -QuickModeCryptoSet $QMCryptoSet.Name
+```
+
+This example creates a domain isolation rule, but uses a custom quick mode proposal that includes multiple quick mode suites, separated by commas.
+
+## PARAMETERS
+
+### -AHHash
+Specifies the proposed hash algorithm for data integrity and authentication. 
+The acceptable values for this parameter are: None, MD5, SHA1, SHA256, AESGMAC128.
+AESGMAC192, or AESGMAC256.
+The default value is None.
+
+```yaml
+Type: HashAlgorithm
+Parameter Sets: (All)
+Aliases: 
+Accepted values: None, MD5, SHA1, SHA256, SHA384, AESGMAC128, AESGMAC192, AESGMAC256
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -ESPHash
+Specifies the proposed hashing algorithm for data confidentiality and authentication. 
+The acceptable values for this parameter are: None, MD5, SHA1, SHA256, AESGMAC128.
+AESGMAC192, or AESGMAC256.
+If the *Encapsulation* parameter is specified as AH is used, then the acceptable values for this parameter are: AESGMAC128, AESGMAC192, AESGMAC256, MD5, SHA1, or SHA256. 
+If the *Encapsulation* parameter is specified as ESP or AH,ESP, then the acceptable values for this parameter are: AESGMAC128, AESGMAC192, AESGMAC256, MD5, SHA1, or SHA256.
+The default value is None.
+
+```yaml
+Type: HashAlgorithm
+Parameter Sets: (All)
+Aliases: 
+Accepted values: None, MD5, SHA1, SHA256, SHA384, AESGMAC128, AESGMAC192, AESGMAC256
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Encapsulation
+Specifies the IPsec protocol method. 
+The acceptable values for this parameter are: None, AH, AH,ESP, or ESP. 
+AH (authentication header) and ESP (encapsulating security payload) can both be specified or None can be specified. 
+
+- AH,ESP: Supported in all platforms. 
+- None: Supported in firstref_server_7 and Windows Server® 2012. 
+- AH: Supported in nextref_server_7 and Windows Server 2012. 
+The default value is None. 
+AH is not supported with the transport mode IKEv2 keying module.
+
+```yaml
+Type: IPsecEncapsulation
+Parameter Sets: (All)
+Aliases: 
+Accepted values: None, AH, ESP
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Encryption
+Specifies the value for a main or quick mode cryptographic proposal. 
+The acceptable values for this parameter are: None, DES, DES3, AES128, AES192, AES256, AESGCM128, AESGCM192, or AESGCM256.
+GCM encryption is not supported in phase 1 authentication for nextref_server_7 and Windows Server 2012.
+AESGCM128, AESGCM192, and AESGCM256 are not supported for IPsec main mode security association negotiations.
+
+```yaml
+Type: EncryptionAlgorithm
+Parameter Sets: (All)
+Aliases: 
+Accepted values: None, DES, DES3, AES128, AES192, AES256, AESGCM128, AESGCM192, AESGCM256
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -MaxKiloBytes
+Specifies the maximum lifetime, in kilobytes, that the IKE message sender proposes for a security association to be considered valid after it has been created. 
+The acceptable values for this parameter are: 20480 through 2147483647. 
+
+- A non-zero value specifies the desired lifetime, in kilobytes. 
+
+The default value is 100000.
+
+```yaml
+Type: UInt64
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+# New-NetIPsecQuickModeCryptoProposal
+
+### -MaxMinutes
+Specifies the number of minutes established for a quick mode security association before it expires and must be renegotiated. 
+The acceptable values for this parameter are: 5 to 2879. 
+
+- A non-zero value specifies the desired minute lifetime. 
+
+The default value is 60 (minutes).
+
+```yaml
+Type: UInt64
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### CommonParameters
+This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable. For more information, see [about_CommonParameters](https://go.microsoft.com/fwlink/?LinkID=113216).
+
+## INPUTS
+
+### None
+
+## OUTPUTS
+
+### Microsoft.Management.Infrastructure.CimInstance#root\StandardCimv2\MSFT_NetIKEQMCryptoProposal
+The `Microsoft.Management.Infrastructure.CimInstance` object is a wrapper class that displays Windows Management Instrumentation (WMI) objects.
+The path after the pound sign (`#`) provides the namespace and class name for the underlying WMI object.
+
+## NOTES
+
+## RELATED LINKS
+
+[New-NetIPsecMainModeCryptoSet](./New-NetIPsecMainModeCryptoSet.md)
+
+[New-NetIPsecRule](./New-NetIPsecRule.md)</pre></section>

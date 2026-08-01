@@ -1,0 +1,406 @@
+<!doctype html><meta charset="utf-8"><section class="jp-official"><h1>Get-ADReplicationAttribute メタデータ</h1>
+<h2>SYNOPSISは,アクティブディレクトリ複製パートナー1つまたは複数の複製メタデータを取得します.</h2>
+<h2>SYNTAXは,のシンタックスです.</h2>
+<pre><code>Get-ADReplicationAttributeMetadata [-AuthType &lt;ADAuthType&gt;] [-Credential &lt;PSCredential&gt;] [-Filter &lt;String&gt;]
+ [-IncludeDeletedObjects] [-Object] &lt;ADObject&gt; [[-Properties] &lt;String[]&gt;] [-Server] &lt;String&gt;
+ [-ShowAllLinkedValues] [&lt;CommonParameters&gt;]
+</code></pre>
+<h2>記述 <strong>Get-ADReplicationAttributeMetadata</strong> cmdlet は,あるオブジェクトの属性の一つまたは複数の属性に対する複製メタデータを取得する.メタデータは以下の2つのディレクトリオブジェクトに含まれています.</h2>
+<p>単価属性: <strong>msDS-ReplAttributeMetaData</strong> - 多価属性: <strong>msDS-ReplValueMetaData</strong></p>
+<p>cmdlet はバイトアレイを解析し,読みやすい形式でデータを返します.</p>
+<h2>例えは</h2>
+<h3>例1: グループ属性の複製メタデータを取得する```</h3>
+<p>PS C:&gt; Get-ADReplicationAttributeMetadata -Object "CN=Domain Admins,CN=Users,DC=corp,DC=contoso,DC=com" -Server corp-DC01 -ShowAllLinkedValues</p>
+<pre><code>
+このコマンドは,CORP-DC01ドメインコントローラから, CN=Domain Admins,CN=Users,DC=corp,DC=contoso,DC=comという名前のグループ属性に関する複製メタデータを取得します.多値属性がある場合, *ShowAllLinkedValues* パラメータを入力することで,そのすべてのリンクされた値も取り戻されます.
+
+### 例2:オブジェクトの属性に関する重複メタデータを取得する```
+PS C:\&gt; Get-ADReplicationAttributeMetadata -Object &quot;1A7BFEC6-C92C-4804-94B0-D407E51F1B64&quot; -Server corp-DC01 -IncludeDeletedObjects
+</code></pre>
+<p>このコマンドは,削除されたオブジェクトと,オフセットされた前回リンクを含む GUID 1A7BFEC6-C92C-4804-94B0-D407E51F1B64のオブジェクトの属性に関する複製メタデータを取得します.</p>
+<h3>例3:すべてのグループに表示された複製メタデータをフィルタリングする```</h3>
+<p>PS C:&gt; Get-ADObject -Filter 'objectclass -eq "group"' | Get-ADReplicationAttributeMetadata -Server corp-DC01 | Where-Object {$_.lastoriginatingchangetime -like "<em>11/10/2011</em>"} | Format-Table object</p>
+<pre><code>
+このコマンドは,11/10/2011日に変更された属性を持つすべてのグループを表示します.
+
+## パラメータは
+
+### -AuthType は,使用する認証方法を指定します.このパラメータの受け入れ可能な値は:です.
+
+- 交渉するまたは0 - 基本または1
+
+デフォルト認証方法は,交渉です.
+
+基本認証方法には,セキュアソケットレイヤ (SSL) 接続が必要となります.
+
+```yaml
+Type: ADAuthType
+Parameter Sets: (All)
+Aliases: 
+Accepted values: Negotiate, Basic
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-Credential は,このアクションを実行する許可を有するユーザーアカウントを指定します.デフォルトは現在のユーザーです.</h3>
+<p>User01や Domain01\User01のようなユーザー名を入力するか, <strong>Get-Credential</strong> cmdlet によって生成された <strong>PSCredential</strong> オブジェクトを入力します.ユーザー名を入力するとパスワードが提示されます.</p>
+<p>このパラメータは,Windows PowerShellをインストールしたプロバイダによってサポートされていません.</p>
+<pre><code class="language-yaml">Type: PSCredential
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>フィルターは,プロバイダのフォーマットまたは言語でフィルターを指定します.このパラメータの値は, <em>Path</em>パラメータを資格化します.ワイルドカードの使用を含むフィルターの構文は,プロバイダに依存します.フィルターは他のパラメータよりも効率的です,なぜなら,プロバイダがオブジェクトを回収する際にそれらを適用するので,Windows PowerShellでオブジェクトをフィルタリングする代わりに,それらを回収した後でフィルタリングします.</h3>
+<pre><code class="language-yaml">Type: String
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-IncludeDeletedObjects 削除されたオブジェクトと,オフセットされた前後リンクを回収する指定.このパラメータを指定すると,cmdletは以下の軽量ディレクトリアクセスプロトコル (LDAP) コントロールを使用します:</h3>
+<ul>
+<li>削除されたオブジェクト (1.2.840.113556.1.4.417) を表示 - 削除されたリンク (1.2.840.113556.1.4.2065) を表示</li>
+</ul>
+<p>注:このパラメータが指定されていない場合は,cmdletは削除されたオブジェクトに返還したり動作したりしません.</p>
+<pre><code class="language-yaml">Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-Object Active Directory オブジェクトを指定する.以下のプロパティ値のうちの1つを提供することで.括弧の識別子は,属性に対するLDAP表示名です.このパラメータの受け入れ可能な値は:です.</h3>
+<p>特徴的な名前 -  GUID (objectGUID) - </p>
+<p>cmdlet は,オブジェクトを見つけるためにデフォルトの命名コンテキストまたはパーティションを探します.もし2つ以上のオブジェクトが見つかったら,cmdlet は,終了しないエラーを返します.</p>
+<p>このパラメータは,このオブジェクトをパイプラインを通過させることもできます.または,このパラメータをオブジェクトインスタンスの設定でもできます.</p>
+<p>派生型も受け入れられる.例えば以下の類型:</p>
+<p><strong>Microsoft.ActiveDirectory.Management.ADGroup</strong> - <strong>Microsoft.ActiveDirectory.Management.ADUser</strong> - <strong>Microsoft.ActiveDirectory.Management.ADComputer</strong> - <strong>Microsoft.ActiveDirectory.Management.ADServiceAccount</strong> - <strong>Microsoft.ActiveDirectory.Management.ADFineGrainedPasswordPolicy</strong> - <strong>Microsoft.ActiveDirectory.Management.ADDomain</strong></p>
+<pre><code class="language-yaml">Type: ADObject
+Parameter Sets: (All)
+Aliases: 
+
+Required: True
+Position: 0
+Default value: None
+Accept pipeline input: True (ByValue)
+Accept wildcard characters: False
+</code></pre>
+<h3>-プロパティ リストを指定する 一か複数の属性名前のリストは,複製パートナーのためのメタデータを返還するための逗号別列として指定されます.このパラメータは,また,オブジェクトに設定されたすべての属性を返還することを示すように, * (ワイルドカード) を受け入れます.</h3>
+<pre><code class="language-yaml">Type: String[]
+Parameter Sets: (All)
+Aliases: Property, Attribute, Attributes
+
+Required: False
+Position: 2
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-Serverは,対応するドメイン名またはディレクトリサーバーに以下の値のうちの1つを提供することで,接続するアクティブディレクトリ ドメインサービス (AD DS) インスタンスを指定します.サービスは以下のいずれかである可能性があります:アクティブディレクトリ ライトウェイトディレクトリサービス (AD LDS),AD DS,またはアクティブディレクトリ スナップショットインスタンスの.</h3>
+<p>次の方法の一つでAD DSインスタンスを指定してください.</p>
+<p>ドメイン名値:</p>
+<ul>
+<li>完全資格ドメイン名 - NetBIOS名</li>
+</ul>
+<p>ディレクトリサーバーの値: </p>
+<ul>
+<li>完全資格のあるディレクトリサーバー名 - NetBIOS名 - 完全資格のあるディレクトリサーバー名とポート</li>
+</ul>
+<p>このパラメータのデフォルト値は,次の方法のうちの1つによって,列挙された順序で決定されます:</p>
+<ul>
+<li>パイプラインを通過したオブジェクトから <em>Server</em> 値を利用する - - AD DS Windows PowerShell プロバイダードライブに関連したサーバー情報を利用する - - そのドライブでcmdletが実行される場合,Windows PowerShellを実行しているコンピュータのドメインを使用する</li>
+</ul>
+<pre><code class="language-yaml">Type: String
+Parameter Sets: (All)
+Aliases: 
+
+Required: True
+Position: 1
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-ShowAllLinkedValues 返された属性は多値である場合,cmdletがすべてのリンクされた値を返します.</h3>
+<pre><code class="language-yaml">Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h1>Get-ADReplicationAttribute メタデータ</h1>
+<h3>共通パラメータ このcmdletは共通パラメータをサポートしています: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable.詳細については, <a href="を参照してください.https://go.microsoft.com/fwlink/?LinkID=113216">about_CommonParameters</a> でした.</h3>
+<h2>輸入は</h2>
+<h3>Microsoft.ActiveDirectory.Management.ADObject アクティブディレクトリオブジェクトを表示するクラス構造です.</h3>
+<h2>輸出は</h2>
+<h3>Microsoft.ActiveDirectory.Management.ADReplicationAttributeMetadata Active Directoryの複製属性メタデータオブジェクトを表示するクラス構造です.</h3>
+<h2>* 注記 * このcmdletのデフォルト動作はオブジェクトアイデンティティを提示することです.Windows Serverの以前のリリースでこの機能を管理するために提供された他のツールにはRepadmin.exeコマンドラインツールが含まれています.</h2>
+<h2>関連リンク</h2></section><section class="en-original"><pre class="source-original"># Get-ADReplicationAttributeMetadata
+
+## SYNOPSIS
+Gets the replication metadata for one or more Active Directory replication partners.
+
+## SYNTAX
+
+```
+Get-ADReplicationAttributeMetadata [-AuthType &lt;ADAuthType&gt;] [-Credential &lt;PSCredential&gt;] [-Filter &lt;String&gt;]
+ [-IncludeDeletedObjects] [-Object] &lt;ADObject&gt; [[-Properties] &lt;String[]&gt;] [-Server] &lt;String&gt;
+ [-ShowAllLinkedValues] [&lt;CommonParameters&gt;]
+```
+
+## DESCRIPTION
+The **Get-ADReplicationAttributeMetadata** cmdlet gets the replication metadata for one or more attributes on a given object.
+The metadata is contained in the following two directory objects:
+
+- Single-value attribute: **msDS-ReplAttributeMetaData**
+- Multi-value attribute: **msDS-ReplValueMetaData**
+
+The cmdlet parses the byte array(s) and returns the data in a readable format.
+
+## EXAMPLES
+
+### Example 1: Get replication metadata for the attributes of a group
+```
+PS C:\&gt; Get-ADReplicationAttributeMetadata -Object &quot;CN=Domain Admins,CN=Users,DC=corp,DC=contoso,DC=com&quot; -Server corp-DC01 -ShowAllLinkedValues
+```
+
+This command gets the replication metadata for the attributes of a group with distinguished name CN=Domain Admins,CN=Users,DC=corp,DC=contoso,DC=com from the CORP-DC01 domain controller.
+By including the *ShowAllLinkedValues* parameter if a multi-valued attribute is present, all of its linked values are also retrieved.
+
+### Example 2: Get replication metadata for the attributes of an object
+```
+PS C:\&gt; Get-ADReplicationAttributeMetadata -Object &quot;1A7BFEC6-C92C-4804-94B0-D407E51F1B64&quot; -Server corp-DC01 -IncludeDeletedObjects
+```
+
+This command gets the replication metadata for the attributes of an object with the GUID 1A7BFEC6-C92C-4804-94B0-D407E51F1B64, including the deleted objects and the deactivated forward and backward links.
+
+### Example 3: Get filtered replication metadata for all groups
+```
+PS C:\&gt; Get-ADObject -Filter &#x27;objectclass -eq &quot;group&quot;&#x27; | Get-ADReplicationAttributeMetadata -Server corp-DC01 | Where-Object {$_.lastoriginatingchangetime -like &quot;*11/10/2011*&quot;} | Format-Table object
+```
+
+This command gets all groups that have any of their attributes modified on 11/10/2011.
+
+## PARAMETERS
+
+### -AuthType
+Specifies the authentication method to use.
+The acceptable values for this parameter are:
+
+- Negotiate or 0
+- Basic or 1
+
+The default authentication method is Negotiate.
+
+A Secure Sockets Layer (SSL) connection is required for the Basic authentication method.
+
+```yaml
+Type: ADAuthType
+Parameter Sets: (All)
+Aliases: 
+Accepted values: Negotiate, Basic
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Credential
+Specifies a user account that has permission to perform this action.
+The default is the current user.
+
+Type a user name, such as User01 or Domain01\User01, or enter a **PSCredential** object, such as one generated by the **Get-Credential** cmdlet.
+If you type a user name, you are prompted for a password.
+
+This parameter is not supported by any providers installed with Windows PowerShell.
+
+```yaml
+Type: PSCredential
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Filter
+Specifies a filter in the provider&#x27;s format or language.
+The value of this parameter qualifies the *Path* parameter.
+The syntax of the filter, including the use of wildcards, depends on the provider.
+Filters are more efficient than other parameters, because the provider applies them when retrieving the objects, rather than having Windows PowerShell filter the objects after they are retrieved.
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -IncludeDeletedObjects
+Specifies to retrieve deleted objects and the deactivated forward and backward links.
+When this parameter is specified, the cmdlet uses the following Lightweight Directory Access Protocol (LDAP) controls:
+
+- Show Deleted Objects (1.2.840.113556.1.4.417)
+- Show Deactivated Links (1.2.840.113556.1.4.2065)
+
+Note: If this parameter is not specified, the cmdlet does not return or operate on deleted objects.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Object
+Specifies an Active Directory object by providing one of the following property values.
+The identifier in parentheses is the LDAP display name for the attribute.
+The acceptable values for this parameter are:
+
+- A distinguished name
+- A GUID (objectGUID)
+
+The cmdlet searches the default naming context or partition to find the object.
+If two or more objects are found, the cmdlet returns a non-terminating error.
+
+This parameter can also get this object through the pipeline or you can set this parameter to an object instance.
+
+Derived types, such as the following are also accepted:
+
+- **Microsoft.ActiveDirectory.Management.ADGroup**
+- **Microsoft.ActiveDirectory.Management.ADUser**
+- **Microsoft.ActiveDirectory.Management.ADComputer**
+- **Microsoft.ActiveDirectory.Management.ADServiceAccount**
+- **Microsoft.ActiveDirectory.Management.ADFineGrainedPasswordPolicy**
+- **Microsoft.ActiveDirectory.Management.ADDomain**
+
+```yaml
+Type: ADObject
+Parameter Sets: (All)
+Aliases: 
+
+Required: True
+Position: 0
+Default value: None
+Accept pipeline input: True (ByValue)
+Accept wildcard characters: False
+```
+
+### -Properties
+Specifies a list of one or more attribute names as a comma separated list to return the metadata for replication partners.
+This parameter also accepts * (wildcard) to indicate to return all attributes set on the object.
+
+```yaml
+Type: String[]
+Parameter Sets: (All)
+Aliases: Property, Attribute, Attributes
+
+Required: False
+Position: 2
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Server
+Specifies the Active Directory Domain Services (AD DS) instance to connect to, by providing one of the following values for a corresponding domain name or directory server.
+The service may be any of the following: Active Directory Lightweight Directory Services (AD LDS), AD DS, or Active Directory snapshot instance.
+
+Specify the AD DS instance in one of the following ways:  
+
+Domain name values:
+
+- Fully qualified domain name
+- NetBIOS name
+
+Directory server values:  
+
+- Fully qualified directory server name
+- NetBIOS name
+- Fully qualified directory server name and port
+
+The default value for this parameter is determined by one of the following methods in the order that they are listed:
+
+- By using the *Server* value from objects passed through the pipeline
+- By using the server information associated with the AD DS Windows PowerShell provider drive, when the cmdlet runs in that drive
+- By using the domain of the computer running Windows PowerShell
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases: 
+
+Required: True
+Position: 1
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -ShowAllLinkedValues
+Indicates that the cmdlet returns all linked values if the attribute returned is multi-valued.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+# Get-ADReplicationAttributeMetadata
+
+### CommonParameters
+This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable. For more information, see [about_CommonParameters](https://go.microsoft.com/fwlink/?LinkID=113216).
+
+## INPUTS
+
+### Microsoft.ActiveDirectory.Management.ADObject
+A class structure that represents the Active Directory objects.
+
+## OUTPUTS
+
+### Microsoft.ActiveDirectory.Management.ADReplicationAttributeMetadata
+A class structure that represents Active Directory replication attribute metadata objects.
+
+## NOTES
+* The default behavior for this cmdlet is to prompt for object identity. Other tools that have been provided to manage this feature in previous releases of Windows Server include the Repadmin.exe command-line tool.
+
+## RELATED LINKS</pre></section>

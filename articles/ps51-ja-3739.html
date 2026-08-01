@@ -1,0 +1,960 @@
+<!doctype html><meta charset="utf-8"><section class="jp-official"><h1>コンピュータ追加</h1>
+<h2>SYNOPSIS 地元のコンピュータをドメインまたはワークグループに追加します.</h2>
+<h2>SYNTAXは,のシンタックスです.</h2>
+<h3>ドメイン (デフォルト)</h3>
+<pre><code>Add-Computer [-ComputerName &lt;String[]&gt;] [-LocalCredential &lt;PSCredential&gt;]
+ [-UnjoinDomainCredential &lt;PSCredential&gt;] -Credential &lt;PSCredential&gt; [-DomainName] &lt;String&gt;
+ [-OUPath &lt;String&gt;] [-Server &lt;String&gt;] [-Unsecure] [-Options &lt;JoinOptions&gt;] [-Restart] [-PassThru]
+ [-NewName &lt;String&gt;] [-Force] [-WhatIf] [-Confirm] [&lt;CommonParameters&gt;]
+</code></pre>
+<h3>ワークグループです.</h3>
+<pre><code>Add-Computer [-ComputerName &lt;String[]&gt;] [-LocalCredential &lt;PSCredential&gt;]
+ [-Credential &lt;PSCredential&gt;] [-WorkgroupName] &lt;String&gt; [-Restart] [-PassThru] [-NewName &lt;String&gt;]
+ [-Force] [-WhatIf] [-Confirm] [&lt;CommonParameters&gt;]
+</code></pre>
+<h2>記述は,</h2>
+<p><code>Add-Computer</code>cmdlet は,ローカルコンピュータやリモートコンピュータをドメインまたはワークグループに追加したり,ドメインから別のドメインに移行したりします.また,コンピュータがアカウントなしでドメインに追加された場合,ドメインアカウントを作成します.</p>
+<p>このcmdletのパラメータを使用して組織単位 (OU) とドメインコントローラーを指定したり,不安全な結合を実行したりすることができます.</p>
+<p>コマンドの結果を入手するには,VerboseとPassThruのパラメータを使用します.</p>
+<h2>例えは</h2>
+<h3>例1: 域名にローカルコンピュータを追加して,コンピュータを再起動します.</h3>
+<pre><code class="language-powershell">Add-Computer -DomainName Domain01 -Restart
+</code></pre>
+<p>このコマンドは,Domain01域にローカルコンピュータを追加し,変更を有効にするためにコンピュータを再起動します.</p>
+<h3>例2: ワークグループにローカルコンピュータを追加する</h3>
+<pre><code class="language-powershell">Add-Computer -WorkgroupName WORKGROUP-A
+</code></pre>
+<p>このコマンドは,ローカルコンピュータをワークグループ-Aワークグループに追加します.</p>
+<h3>例3: ドメインにローカルコンピュータを追加する</h3>
+<pre><code class="language-powershell">Add-Computer -DomainName Domain01 -Server Domain01\DC01 -PassThru -Verbose
+</code></pre>
+<p>このコマンドは,Domain01ドメインにローカルコンピュータを追加し,  を使います.<code>Domain01\DC01</code>ドメインコントローラーです.</p>
+<p>コマンドは,コマンドの結果に関する詳細な情報を得るために <strong>PassThru</strong>と <strong>Verbose</strong>のパラメータを使用します.</p>
+<h3>例4:OUPathパラメータを使用してドメインにローカルコンピュータを追加する</h3>
+<pre><code class="language-powershell">Add-Computer -DomainName Domain02 -OUPath &quot;OU=testOU,DC=domain,DC=Domain,DC=com&quot;
+</code></pre>
+<p>このコマンドは,Domain02ドメインにローカルコンピュータを追加します.新しいアカウントの組織単位を指定するために,OUPathパラメータを使用します.</p>
+<h3>例5: 認証を活用してローカルコンピュータをドメインに追加する</h3>
+<pre><code class="language-powershell">$addComputerSplat = @{
+    ComputerName = 'Server01'
+    LocalCredential = 'Server01\Admin01'
+    DomainName = 'Domain02'
+    Credential = 'Domain02\Admin02'
+    Restart = $true
+    Force = $true
+}
+Add-Computer @addComputerSplat
+</code></pre>
+<p>このコマンドは,Domain02域に Server01 コンピュータを追加します.このコマンドは, Server01 コンピュータに接続する許可を有するユーザーアカウントを指定するために <strong>LocalCredential</strong> パラメータを使用します.このコマンドは, Server01 コンピュータに接続する許可を有するユーザーアカウントを指定するために <strong>Credential</strong> パラメータを使用します.このドメインにコンピュータを接続する許可を有するユーザーアカウントを指定します.加入操作が完了した後,コンピュータを再起動するために <strong>Restart</strong> パラメタを使用します.そして,ユーザー確認メッセージを削除するために <strong>Force</strong> パラメタを使用します.</p>
+<h3>例6: コンピュータを新しいドメインに移動する</h3>
+<pre><code class="language-powershell">$addComputerSplat = @{
+    ComputerName = 'Server01', 'Server02', 'localhost'
+    DomainName = 'Domain02'
+    LocalCredential = 'Domain01\User01'
+    UnjoinDomainCredential = 'Domain01\Admin01'
+    Credential = 'Domain02\Admin01'
+    Restart = $true
+}
+Add-Computer @addComputerSplat
+</code></pre>
+<p>このコマンドは Server01と Server02のコンピュータとローカルコンピュータを Domain01 から Domain02 に移動させます.</p>
+<p>影響を受けた3台のコンピュータに接続する許可を有するユーザーアカウントを指定するために<strong>LocalCredential</strong>パラメータを使用します. 域01域からのコンピュータを離れる許可を有するユーザーアカウントを指定するために <strong>UnjoinDomainCredential</strong>パラメータを使用します. 移動が完了した後,すべての3台のコンピュータを再起動するために <strong>Restart</strong>パラメータを使用します.</p>
+<h3>例7:コンピュータを新しいドメインに移動し,コンピュータの名前を変更します.</h3>
+<pre><code class="language-powershell">$addComputerSplat = @{
+    ComputerName = 'Server01'
+    DomainName = 'Domain02'
+    NewName = 'Server044'
+    Credential = 'Domain02\Admin01'
+    Restart = $true
+}
+Add-Computer @addComputerSplat
+</code></pre>
+<p>このコマンドは Server01 コンピュータを Domain02 に移動し,マシン名を Server044 に変更します.</p>
+<p>コマンドは,現在のユーザーの認証を用い, Server01 コンピュータに接続し,現在のドメインから分離する.このコマンドは <strong>Credential</strong> パラメータを使用して,コンピュータを Domain02 ドメインに接続する許可を有するユーザーアカウントを指定します.</p>
+<h3>例8: ファイルにリストされているコンピュータを新しいドメインに追加する</h3>
+<pre><code class="language-powershell">$addComputerSplat = @{
+    ComputerName = (Get-Content Servers.txt)
+    DomainName = 'Domain02'
+    Credential = 'Domain02\Admin02'
+    Options = 'Win9xUpgrade'
+    Restart = $true
+}
+Add-Computer @addComputerSplat
+</code></pre>
+<p>このコマンドは,  のリストに記載されているコンピュータを追加します.<code>Servers.txt</code>Domain02ドメインのファイルに. <strong>Win9xUpgrade</strong>のオプションを指定するために <strong>Options</strong>パラメータを使用します. <strong>Restart</strong>パラメータは,加入操作が完了した後,新たに追加されたすべてのコンピュータをリセットします.</p>
+<h3>例 9: コンピュータをドメインに追加する事前定義されたコンピュータ認証を用い</h3>
+<p>この最初のコマンドは,すでにドメインに接続されているコンピュータから管理者が実行する必要があります.<code>Domain03</code>:</p>
+<pre><code class="language-powershell">$newADComputerSplat = @{
+    Name = &quot;Server02&quot;
+    AccountPassword = (ConvertTo-SecureString -String 'TempJoinPA$$' -AsPlainText -Force)
+}
+New-ADComputer @newADComputerSplat
+
+# Then this command is run from `Server02` which is not yet domain-joined:
+
+$joinCred = New-Object pscredential -ArgumentList ([pscustomobject]@{
+    UserName = $null
+    Password = (ConvertTo-SecureString -String 'TempJoinPA$$' -AsPlainText -Force)[0]
+})
+$addComputerSplat = @{
+    DomainName = &quot;Domain03&quot;
+    Options = 'UnsecuredJoin', 'PasswordPass'
+    Credential = $joinCred
+}
+Add-Computer @addComputerSplat
+</code></pre>
+<p>このコマンドの組み合わせにより,既存のドメインに接続されたコンピュータを使用したドメインで,先定名と一時的な加入パスワードを持つ新しいコンピュータアカウントが作成されます.その後,先定名を持つコンピュータは,コンピュータ名と一時的な加入パスワードのみを使用してドメインに加入します.先定パスワードは,加入操作をサポートするためにのみ使用され,コンピュータが加入を完了した後,通常のコンピュータアカウント手順の一部として置き換えられます.</p>
+<h3>例10:新しい名前を持つドメインにコンピュータを追加する</h3>
+<p>このコマンドの組み合わせを使用して複数のリブートを回避し,コンピュータが新しい名前でドメインに加わるときに,複数の Active Directory に書き込みが同じオブジェクトに書き込みます.</p>
+<pre><code class="language-powershell">Rename-Computer -NewName &quot;MyNewPC&quot; -Force
+$addComputerSplat = @{
+    DomainName = 'Contoso.com'
+    Credential = 'contoso\administrator'
+    Options = 'JoinWithNewName', 'AccountCreate'
+}
+Add-Computer @addComputerSplat
+</code></pre>
+<h2>パラメータは</h2>
+<h1>コンピュータ追加</h1>
+<h3>-コンピュータ名</h3>
+<p>コンピュータをドメインまたはワークグループに追加するコンピュータを指定します.デフォルトはローカルコンピュータです.</p>
+<p>遠隔コンピュータのそれぞれにNetBIOS名前,インターネットプロトコル (IP) アドレス,または完全認証ドメイン名を入力してください.ローカルコンピュータを指定するには,コンピュータ名を入力してください.<code>.</code>),または"ローカルホスト"です.</p>
+<p>このパラメータはWindows PowerShellのリモート操作に依存しません. の <strong>ComputerName</strong>パラメータを使用できます.<code>Add-Computer</code>コンピューターがリモートコマンドを実行するように設定されていない場合でも.</p>
+<p>このパラメータはWindows PowerShell 3.0で導入されています.</p>
+<pre><code class="language-yaml">Type: System.String[]
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: Local computer
+Accept pipeline input: True (ByPropertyName, ByValue)
+Accept wildcard characters: False
+</code></pre>
+<h3>- 信用証</h3>
+<p>新しいドメインにコンピュータを接続する許可があるユーザーアカウントを指定します.デフォルトは現在のユーザーです.</p>
+<p>"User01"や"Domain01\User01"などのユーザー名を入力するか,PSCredential**オブジェクトを入力してください.<code>Get-Credential</code>cmdlet.ユーザー名を入力するとパスワードが提示されます.</p>
+<p>現在のドメインからコンピュータを削除する許可があるユーザーアカウントを指定するには, <strong>UnjoinDomainCredential</strong>パラメータを使用します. リモートコンピュータに接続する許可があるユーザーアカウントを指定するには, <strong>LocalCredential</strong>パラメータを使用します.</p>
+<pre><code class="language-yaml">Type: System.Management.Automation.PSCredential
+Parameter Sets: Domain, Workgroup
+Aliases: DomainCredential
+
+Required: True (Domain), False (Workgroup)
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-ドメイン名</h3>
+<p>コンピュータが追加されるドメインを指定します.このパラメータは,ドメインにコンピュータを追加する際に必要となります.</p>
+<pre><code class="language-yaml">Type: System.String
+Parameter Sets: Domain
+Aliases: DN, Domain
+
+Required: True
+Position: 0
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-フォース</h3>
+<p>ユーザー確認プロンプトを削除します.このパラメータなしでは,<code>Add-Computer</code>各コンピュータの追加を確認することを要求します.</p>
+<p>このパラメータはWindows PowerShell 3.0で導入されています.</p>
+<pre><code class="language-yaml">Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-ローカル・クレデッショナル</h3>
+<p><strong>ComputerName</strong>パラメータで指定されたコンピュータに接続する許可を有するユーザーアカウントを指定します.デフォルトは現在のユーザーです.</p>
+<p>"User01"や"Domain01\User01"などのユーザー名を入力するか,PSCredential**オブジェクトを入力してください.<code>Get-Credential</code>cmdlet.ユーザー名を入力するとパスワードが提示されます.</p>
+<p>新しいドメインにコンピュータを追加する許可があるユーザーアカウントを指定するには, <strong>Credential</strong>パラメータを使用します.現在のドメインからコンピュータを削除する許可があるユーザーアカウントを指定するには, <strong>UnjoinDomainCredential</strong>パラメータを使用します.</p>
+<p>このパラメータはWindows PowerShell 3.0で導入されています.</p>
+<pre><code class="language-yaml">Type: System.Management.Automation.PSCredential
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: Current user
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-新名</h3>
+<p>新しいドメインのコンピュータに新しい名前を指定します.このパラメータは,コンピュータが追加または移動される場合にのみ有効です.</p>
+<p>このパラメータはWindows PowerShell 3.0で導入されています.</p>
+<pre><code class="language-yaml">Type: System.String
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+</code></pre>
+<h3>-オプション</h3>
+<p>の先進オプションを指定する.<code>Add-Computer</code>符号配列で分離された文字列に"つ以上の join 値を入力します.</p>
+<p>このパラメータの受け入れられる値は:</p>
+<ul>
+<li><strong>AccountCreate</strong>: ドメインアカウントを作成します.<code>Add-Computer</code>cmdlet は,ドメインにコンピュータを追加すると自動的にドメインアカウントを作成します.このオプションは完全性のために含まれています.</li>
+</ul>
+<p><strong>Win9XUpgrade</strong>: 加入操作がWindowsオペレーティングシステムアップグレードの一部であることを表示します.</p>
+<p><strong>UnsecuredJoin</strong>: セキュリティのない加入を実行します.セキュリティのない加入を要請するには, <strong>Unsecured</strong>パラメータまたはこのオプションを使用します. 機械パスワードを入力したい場合は,このオプションを と組み合わせて使用する必要があります.<code>PasswordPass</code>オプション.</p>
+<p><strong>PasswordPass</strong>: セキュリティのない接続を実行した後,マシンパスワードを <strong>Credential</strong>(DomainCredential) パラメータの値に設定します.このオプションは,また,<strong>Credential</strong> (DomainCredential) パラメータの値がマシンパスワードではなくユーザーパスワードであることを示す.このオプションは, の有効性がある場合にのみです.<code>UnsecuredJoin</code>このオプションを使用する際,  に提供された認証は,このオプションを使用する際には,  に提供される認証は,<code>-Credential</code>_must_parameterは,ゼロのユーザー名を持つ必要があります.</p>
+<p><strong>JoinWithNewName</strong>:新しいドメインのコンピュータ名を<strong>NewName</strong>パラメータで指定された名前に変更します. <strong>NewName</strong>パラメータを使用すると,このオプションが自動的に設定されます.このオプションは,リネームコンピュータのcmdletで使用するように設計されています.<code>Rename-Computer</code>cmdlet を使ってコンピュータの名前を変えてください.しかし,変更を有効にするため,コンピュータを再起動しないでください.このパラメータを使用して,新しい名前を持つドメインにコンピュータを接続できます.</p>
+<p><strong>JoinReadOnly</strong>: 既存のマシンアカウントを使用して,コンピュータを読みのみドメインコントローラに接続します. コンピュータアカウントはパスワード複製ポリシーの許可リストに追加され,アカウントパスワードは加入操作の前に読みのみドメインコントローラに複製されなければなりません.</p>
+<p><strong>InstallInvoke</strong>:JoinDomainOrWorkgroup<strong>方法の </strong>FJoinOptions<strong>パラメータの作成 (0x2) と削除 (0x4) 旗を設定します. </strong>JoinDomainOrWorkgroup**方法についての詳細については, [Win32_ComputerSystem classのJoinDomainOrWorkgroup方法] (/windows/win32/cimwin32/joindomainorworkgroup-method-in-class-win32-computersystem) を参照してください. - 以上の詳細については, [NetJoinDomain function]/windows/32/api/lmjoin/nf-lmjoin-netjoindomain) を参照してください.</p>
+<p>このパラメータはWindows PowerShell 3.0で導入されました.</p>
+<pre><code class="language-yaml">Type: Microsoft.PowerShell.Commands.JoinOptions
+Parameter Sets: Domain
+Aliases:
+Accepted values: AccountCreate, Win9XUpgrade, UnsecuredJoin, PasswordPass, DeferSPNSet, JoinWithNewName, JoinReadOnly, InstallInvoke
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-OUPath</h3>
+<p>ドメインアカウントの組織単位 (OU) を指定します.引用符で OU の完全な名前の表示を入力します.デフォルト値はドメイン内の機械オブジェクトのデフォルト OU です.</p>
+<pre><code class="language-yaml">Type: System.String
+Parameter Sets: Domain
+Aliases: OU
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-PassThru でした.</h3>
+<p>あなたが取り組んでいる項目を表示するオブジェクトを返します.デフォルトでは,このcmdletは出力を生成しません.</p>
+<pre><code class="language-yaml">Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h1>コンピュータ追加</h1>
+<h3>-リスタート</h3>
+<p>ドメインやワークグループに追加されたコンピュータを再起動します.変更を有効にするには,再起動が必要になります.</p>
+<p>このパラメータはWindows PowerShell 3.0で導入されています.</p>
+<pre><code class="language-yaml">Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-サーバー</h3>
+<p>ドメインにコンピュータを追加するドメインコントローラの名前を指定します.FQDN形式で名前を入力します.デフォルトでは,ドメインコントローラが指定されていません.</p>
+<p>2024年8月から,ドメインの加入のためのセキュリティ強化は,ドメインコントローラのFQDNを使用することを要求します.<code>DC1.contoso.com</code>.詳細については, [NetJoin ドメインが硬化変更に加盟する] () を参照してください.https://support.microsoft.com/topic/kb5020276-netjoin-domain-join-hardening-changes-2b65a0f3-1f4c-42ef-ac0f-1caaf421baf8) でした.</p>
+<pre><code class="language-yaml">Type: System.String
+Parameter Sets: Domain
+Aliases: DC
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-UnjoinDomainCredential でした</h3>
+<p>コンピュータを現在のドメインから削除する権限を持つユーザーアカウントを指定します.デフォルトは現在のユーザーです.</p>
+<p>"User01"や"Domain01\User01"などのユーザー名を入力するか,PSCredential**オブジェクトを入力してください.<code>Get-Credential</code>cmdlet.ユーザー名を入力するとパスワードが提示されます.</p>
+<p>このパラメータを使用して,コンピュータを別のドメインに移す.新しいドメインに加わる許可を有するユーザーアカウントを指定するには,<strong>Credential</strong>パラメータを使用します. リモートコンピュータに接続する許可を有するユーザーアカウントを指定するには,<strong>LocalCredential</strong>パラメータを使用します.</p>
+<p>このパラメータはWindows PowerShell 3.0で導入されています.</p>
+<pre><code class="language-yaml">Type: System.Management.Automation.PSCredential
+Parameter Sets: Domain
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-不安全です</h3>
+<p>指定されたドメインに不安全な接続を実行します.</p>
+<pre><code class="language-yaml">Type: System.Management.Automation.SwitchParameter
+Parameter Sets: Domain
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-ワークグループ名稱</h3>
+<p>コンピュータが追加されるワークグループの名前を指定します.デフォルト値は"WORKGROUP"です.</p>
+<pre><code class="language-yaml">Type: System.String
+Parameter Sets: Workgroup
+Aliases: WGN
+
+Required: True
+Position: 0
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-確認する</h3>
+<p>cmdletを実行する前に確認を提示します.</p>
+<pre><code class="language-yaml">Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases: cf
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-WhatIf</h3>
+<p>cmdletが実行されなければどうなるかを示しています.</p>
+<pre><code class="language-yaml">Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases: wi
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>共通パラメーター</h3>
+<p>このcmdletは,共通パラメータである: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction,および -WarningVariableをサポートしています.詳細については, [about_CommonParameters]をご覧ください.</p>
+<h2>輸入は</h2>
+<h3>System.String でした.</h3>
+<p>コンピュータ名と新しい名前をパイプして に送ることができます.<code>Add-Computer</code>Cmdletです.</p>
+<h2>輸出は</h2>
+<h3>Microsoft.PowerShell.Commands.ComputerChangeInfo について</h3>
+<p><strong>PassThru</strong>パラメータを使用すると,<code>Add-Computer</code><strong>ComputerChangeInfo</strong>オブジェクトを生成します.そうでなければ,このcmdletは出力を生成しません.</p>
+<h2>NOTES  記事ができました.</h2>
+<ul>
+<li>Windows PowerShell 2.0では, Serverのパラメータが<code>Add-Computer</code>Windows PowerShell 3.0では, <strong>Server</strong> パラメータの実装が変更され,信頼性が高く動作します.</li>
+</ul>
+<h2>関連リンク</h2>
+<p><a href="Checkpoint-Computer.md">Checkpoint-Computer</a> </p>
+<p><a href="Remove-Computer.md">Remove-Computer</a> でした.</p>
+<p><a href="Restart-Computer.md">コンピュータを再起動</a></p>
+<p><a href="Computer.md の名前変更">Computer-rename</a></p>
+<p><a href="Restore-Computer.md">Restore-Computer</a> </p>
+<p><a href="Stop-Computer.md">Stop-Computer</a> でした.</p>
+<p><a href="テスト接続.md">テスト接続</a></p></section><section class="en-original"><pre class="source-original"># Add-Computer
+
+## SYNOPSIS
+Add the local computer to a domain or workgroup.
+
+## SYNTAX
+
+### Domain (Default)
+
+```
+Add-Computer [-ComputerName &lt;String[]&gt;] [-LocalCredential &lt;PSCredential&gt;]
+ [-UnjoinDomainCredential &lt;PSCredential&gt;] -Credential &lt;PSCredential&gt; [-DomainName] &lt;String&gt;
+ [-OUPath &lt;String&gt;] [-Server &lt;String&gt;] [-Unsecure] [-Options &lt;JoinOptions&gt;] [-Restart] [-PassThru]
+ [-NewName &lt;String&gt;] [-Force] [-WhatIf] [-Confirm] [&lt;CommonParameters&gt;]
+```
+
+### Workgroup
+
+```
+Add-Computer [-ComputerName &lt;String[]&gt;] [-LocalCredential &lt;PSCredential&gt;]
+ [-Credential &lt;PSCredential&gt;] [-WorkgroupName] &lt;String&gt; [-Restart] [-PassThru] [-NewName &lt;String&gt;]
+ [-Force] [-WhatIf] [-Confirm] [&lt;CommonParameters&gt;]
+```
+
+## DESCRIPTION
+
+The `Add-Computer` cmdlet adds the local computer or remote computers to a domain or workgroup, or
+moves them from one domain to another. It also creates a domain account if the computer is added to
+the domain without an account.
+
+You can use the parameters of this cmdlet to specify an organizational unit (OU) and domain
+controller or to perform an unsecure join.
+
+To get the results of the command, use the **Verbose** and **PassThru** parameters.
+
+## EXAMPLES
+
+### Example 1: Add a local computer to a domain then restart the computer
+
+```powershell
+Add-Computer -DomainName Domain01 -Restart
+```
+
+This command adds the local computer to the Domain01 domain and then restarts the computer to make
+the change effective.
+
+### Example 2: Add a local computer to a workgroup
+
+```powershell
+Add-Computer -WorkgroupName WORKGROUP-A
+```
+
+This command adds the local computer to the Workgroup-A workgroup.
+
+### Example 3: Add a local computer to a domain
+
+```powershell
+Add-Computer -DomainName Domain01 -Server Domain01\DC01 -PassThru -Verbose
+```
+
+This command adds the local computer to the Domain01 domain by using the `Domain01\DC01` domain
+controller.
+
+The command uses the **PassThru** and **Verbose** parameters to get detailed information about the
+results of the command.
+
+### Example 4: Add a local computer to a domain using the OUPath parameter
+
+```powershell
+Add-Computer -DomainName Domain02 -OUPath &quot;OU=testOU,DC=domain,DC=Domain,DC=com&quot;
+```
+
+This command adds the local computer to the Domain02 domain. It uses the OUPath parameter to specify
+the organizational unit for the new accounts.
+
+### Example 5: Add a local computer to a domain using credentials
+
+```powershell
+$addComputerSplat = @{
+    ComputerName = &#x27;Server01&#x27;
+    LocalCredential = &#x27;Server01\Admin01&#x27;
+    DomainName = &#x27;Domain02&#x27;
+    Credential = &#x27;Domain02\Admin02&#x27;
+    Restart = $true
+    Force = $true
+}
+Add-Computer @addComputerSplat
+```
+
+This command adds the Server01 computer to the Domain02 domain. It uses the **LocalCredential**
+parameter to specify a user account that has permission to connect to the Server01 computer. It uses
+the **Credential** parameter to specify a user account that has permission to join computers to the
+domain. It uses the **Restart** parameter to restart the computer after the join operation completes
+and the **Force** parameter to suppress user confirmation messages.
+
+### Example 6: Move a group of computers to a new domain
+
+```powershell
+$addComputerSplat = @{
+    ComputerName = &#x27;Server01&#x27;, &#x27;Server02&#x27;, &#x27;localhost&#x27;
+    DomainName = &#x27;Domain02&#x27;
+    LocalCredential = &#x27;Domain01\User01&#x27;
+    UnjoinDomainCredential = &#x27;Domain01\Admin01&#x27;
+    Credential = &#x27;Domain02\Admin01&#x27;
+    Restart = $true
+}
+Add-Computer @addComputerSplat
+```
+
+This command moves the Server01 and Server02 computers, and the local computer, from Domain01 to
+Domain02.
+
+It uses the **LocalCredential** parameter to specify a user account that has permission to connect
+to the three affected computers. It uses the **UnjoinDomainCredential** parameter to specify a user
+account that has permission to unjoin the computers from the Domain01 domain and the **Credential**
+parameter to specify a user account that has permission to join the computers to the Domain02
+domain. It uses the **Restart** parameter to restart all three computers after the move is complete.
+
+### Example 7: Move a computer to a new domain and change the name of the computer
+
+```powershell
+$addComputerSplat = @{
+    ComputerName = &#x27;Server01&#x27;
+    DomainName = &#x27;Domain02&#x27;
+    NewName = &#x27;Server044&#x27;
+    Credential = &#x27;Domain02\Admin01&#x27;
+    Restart = $true
+}
+Add-Computer @addComputerSplat
+```
+
+This command moves the Server01 computer to the Domain02 and changes the machine name to Server044.
+
+The command uses the credential of the current user to connect to the Server01 computer and unjoin
+it from its current domain. It uses the **Credential** parameter to specify a user account that has
+permission to join the computer to the Domain02 domain.
+
+### Example 8: Add computers listed in a file to a new domain
+
+```powershell
+$addComputerSplat = @{
+    ComputerName = (Get-Content Servers.txt)
+    DomainName = &#x27;Domain02&#x27;
+    Credential = &#x27;Domain02\Admin02&#x27;
+    Options = &#x27;Win9xUpgrade&#x27;
+    Restart = $true
+}
+Add-Computer @addComputerSplat
+```
+
+This command adds the computers that are listed in the `Servers.txt` file to the Domain02 domain. It
+uses the **Options** parameter to specify the **Win9xUpgrade** option. The **Restart** parameter
+restarts all the newly added computers after the join operation completes.
+
+### Example 9: Add a computer to a domain using predefined computer credentials
+
+This first command should be run by an administrator from a computer that is already joined to
+domain `Domain03`:
+
+```powershell
+$newADComputerSplat = @{
+    Name = &quot;Server02&quot;
+    AccountPassword = (ConvertTo-SecureString -String &#x27;TempJoinPA$$&#x27; -AsPlainText -Force)
+}
+New-ADComputer @newADComputerSplat
+
+# Then this command is run from `Server02` which is not yet domain-joined:
+
+$joinCred = New-Object pscredential -ArgumentList ([pscustomobject]@{
+    UserName = $null
+    Password = (ConvertTo-SecureString -String &#x27;TempJoinPA$$&#x27; -AsPlainText -Force)[0]
+})
+$addComputerSplat = @{
+    DomainName = &quot;Domain03&quot;
+    Options = &#x27;UnsecuredJoin&#x27;, &#x27;PasswordPass&#x27;
+    Credential = $joinCred
+}
+Add-Computer @addComputerSplat
+```
+
+This combination of commands creates a new computer account with a predefined name and temporary
+join password in a domain using an existing domain-joined computer. Then separately, a computer with
+the predefined name joins the domain using only the computer name and the temporary join password.
+The predefined password is only used to support the join operation and is replaced as part of normal
+computer account procedures after the computer completes the join.
+
+### Example 10: Add a Computer to a domain with a new name
+
+Using this combination of commands avoids multiple reboots and multiple writes to Active Directory
+writes for the same object when the computer joins the domain with the new name.
+
+```powershell
+Rename-Computer -NewName &quot;MyNewPC&quot; -Force
+$addComputerSplat = @{
+    DomainName = &#x27;Contoso.com&#x27;
+    Credential = &#x27;contoso\administrator&#x27;
+    Options = &#x27;JoinWithNewName&#x27;, &#x27;AccountCreate&#x27;
+}
+Add-Computer @addComputerSplat
+```
+
+## PARAMETERS
+
+# Add-Computer
+
+### -ComputerName
+
+Specifies the computers to add to a domain or workgroup.
+The default is the local computer.
+
+Type the NetBIOS name, an Internet Protocol (IP) address, or a fully qualified domain name of each
+of the remote computers. To specify the local computer, type the computer name, a dot (`.`), or
+&quot;localhost&quot;.
+
+This parameter does not rely on Windows PowerShell remoting. You can use the **ComputerName**
+parameter of `Add-Computer` even if your computer is not configured to run remote commands.
+
+This parameter is introduced in Windows PowerShell 3.0.
+
+```yaml
+Type: System.String[]
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: Local computer
+Accept pipeline input: True (ByPropertyName, ByValue)
+Accept wildcard characters: False
+```
+
+### -Credential
+
+Specifies a user account that has permission to join the computers to a new domain.
+The default is the current user.
+
+Type a user name, such as &quot;User01&quot; or &quot;Domain01\User01&quot;, or enter a **PSCredential** object, such as
+one generated by the `Get-Credential` cmdlet. If you type a user name, you will be prompted for a
+password.
+
+To specify a user account that has permission to remove the computer from its current domain, use
+the **UnjoinDomainCredential** parameter. To specify a user account that has permission to connect
+to a remote computer, use the **LocalCredential** parameter.
+
+```yaml
+Type: System.Management.Automation.PSCredential
+Parameter Sets: Domain, Workgroup
+Aliases: DomainCredential
+
+Required: True (Domain), False (Workgroup)
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -DomainName
+
+Specifies the domain to which the computers are added. This parameter is required when adding the
+computers to a domain.
+
+```yaml
+Type: System.String
+Parameter Sets: Domain
+Aliases: DN, Domain
+
+Required: True
+Position: 0
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Force
+
+Suppresses the user confirmation prompt. Without this parameter, `Add-Computer` requires you to
+confirm the addition of each computer.
+
+This parameter is introduced in Windows PowerShell 3.0.
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -LocalCredential
+
+Specifies a user account that has permission to connect to the computers that are specified by the
+**ComputerName** parameter. The default is the current user.
+
+Type a user name, such as &quot;User01&quot; or &quot;Domain01\User01&quot;, or enter a **PSCredential** object, such as
+one generated by the `Get-Credential` cmdlet. If you type a user name, you will be prompted for a
+password.
+
+To specify a user account that has permission to add the computers to a new domain, use the
+**Credential** parameter. To specify a user account that has permission to remove the computers from
+their current domain, use the **UnjoinDomainCredential** parameter.
+
+This parameter is introduced in Windows PowerShell 3.0.
+
+```yaml
+Type: System.Management.Automation.PSCredential
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: Current user
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -NewName
+
+Specifies a new name for the computer in the new domain. This parameter is valid only when one
+computer is being added or moved.
+
+This parameter is introduced in Windows PowerShell 3.0.
+
+```yaml
+Type: System.String
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -Options
+
+Specifies advanced options for the `Add-Computer` join operation. Enter one or more values in a
+comma-separated string.
+
+The acceptable values for this parameter are:
+
+- **AccountCreate**: Creates a domain account. The `Add-Computer` cmdlet automatically creates a
+  domain account when it adds a computer to a domain. This option is included for completeness.
+
+- **Win9XUpgrade**: Indicates that the join operation is part of a Windows operating system upgrade.
+
+- **UnsecuredJoin**: Performs an unsecured join. To request an unsecured join, use the **Unsecure**
+  parameter or this option. If you want to pass a machine password, then you must use this option in
+  combination with `PasswordPass` option.
+
+- **PasswordPass**: Sets the machine password to the value of the **Credential**(DomainCredential)
+  parameter after performing an unsecured join. This option also indicates that the value of the
+  **Credential** (DomainCredential) parameter is a machine password, not a user password. This option
+  is valid only when the `UnsecuredJoin` option is specified. When using this option, the credential
+  provided to the `-Credential` parameter _must_ have a null username.
+
+- **JoinWithNewName**: Renames the computer name in the new domain to the name specified by the
+  **NewName** parameter. When you use the **NewName** parameter, this option is set automatically. This
+  option is designed to be used with the Rename-Computer cmdlet. If you use the `Rename-Computer`
+  cmdlet to rename the computer, but do not restart the computer to make the change effective, you
+  can use this parameter to join the computer to a domain with its new name.
+
+- **JoinReadOnly**: Uses an existing machine account to join the computer to a read-only domain
+  controller. The machine account must be added to the allowed list for password replication policy
+  and the account password must be replicated to the read-only domain controller prior to the join
+  operation.
+
+- **InstallInvoke**: Sets the create (0x2) and delete (0x4) flags of the **FJoinOptions** parameter
+  of the **JoinDomainOrWorkgroup** method. For more information about the **JoinDomainOrWorkgroup**
+  method, see
+  [JoinDomainOrWorkgroup method of the Win32_ComputerSystem class](/windows/win32/cimwin32prov/joindomainorworkgroup-method-in-class-win32-computersystem).
+  For more information about these options, see
+  [NetJoinDomain function](/windows/win32/api/lmjoin/nf-lmjoin-netjoindomain).
+
+This parameter was introduced in Windows PowerShell 3.0.
+
+```yaml
+Type: Microsoft.PowerShell.Commands.JoinOptions
+Parameter Sets: Domain
+Aliases:
+Accepted values: AccountCreate, Win9XUpgrade, UnsecuredJoin, PasswordPass, DeferSPNSet, JoinWithNewName, JoinReadOnly, InstallInvoke
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -OUPath
+
+Specifies an organizational unit (OU) for the domain account. Enter the full distinguished name of
+the OU in quotation marks. The default value is the default OU for machine objects in the domain.
+
+```yaml
+Type: System.String
+Parameter Sets: Domain
+Aliases: OU
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -PassThru
+
+Returns an object representing the item with which you are working. By default, this cmdlet does not
+generate any output.
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+# Add-Computer
+
+### -Restart
+
+Restarts the computers that were added to the domain or workgroup. A restart is often required to
+make the change effective.
+
+This parameter is introduced in Windows PowerShell 3.0.
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Server
+
+Specifies the name of a domain controller that adds the computer to the domain. Enter the name in
+FQDN format. By default, no domain controller is specified.
+
+Beginning in August 2024, security hardening for domain join requires that you use the FQDN of the
+domain controller. For example: `DC1.contoso.com`. For more information, see
+[NetJoin Domain Join Hardening Changes](https://support.microsoft.com/topic/kb5020276-netjoin-domain-join-hardening-changes-2b65a0f3-1f4c-42ef-ac0f-1caaf421baf8).
+
+```yaml
+Type: System.String
+Parameter Sets: Domain
+Aliases: DC
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -UnjoinDomainCredential
+
+Specifies a user account that has permission to remove the computers from their current domains. The
+default is the current user.
+
+Type a user name, such as &quot;User01&quot; or &quot;Domain01\User01&quot;, or enter a **PSCredential** object, such as
+one generated by the `Get-Credential` cmdlet. If you type a user name, you will be prompted for a
+password.
+
+Use this parameter when you are moving computers to a different domain. To specify a user account
+that has permission to join the new domain, use the **Credential** parameter. To specify a user
+account that has permission to connect to a remote computer, use the **LocalCredential** parameter.
+
+This parameter is introduced in Windows PowerShell 3.0.
+
+```yaml
+Type: System.Management.Automation.PSCredential
+Parameter Sets: Domain
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Unsecure
+
+Performs an unsecure join to the specified domain.
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: Domain
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -WorkgroupName
+
+Specifies the name of a workgroup to which the computers are added. The default value is
+&quot;WORKGROUP&quot;.
+
+```yaml
+Type: System.String
+Parameter Sets: Workgroup
+Aliases: WGN
+
+Required: True
+Position: 0
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Confirm
+
+Prompts you for confirmation before running the cmdlet.
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases: cf
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -WhatIf
+
+Shows what would happen if the cmdlet runs.
+The cmdlet is not run.
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases: wi
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### CommonParameters
+
+This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable,
+-InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose,
+-WarningAction, and -WarningVariable. For more information, see
+[about_CommonParameters](../Microsoft.PowerShell.Core/About/about_CommonParameters.md).
+
+## INPUTS
+
+### System.String
+
+You can pipe computer names and new names to the `Add-Computer` Cmdlet.
+
+## OUTPUTS
+
+### Microsoft.PowerShell.Commands.ComputerChangeInfo
+
+When you use the **PassThru** parameter, `Add-Computer` returns a **ComputerChangeInfo** object.
+Otherwise, this cmdlet does not generate any output.
+
+## NOTES
+
+- In Windows PowerShell 2.0, the **Server** parameter of `Add-Computer` fails even when the server
+  is present. In Windows PowerShell 3.0, the implementation of the **Server** parameter is changed
+  so that it works reliably.
+
+## RELATED LINKS
+
+[Checkpoint-Computer](Checkpoint-Computer.md)
+
+[Remove-Computer](Remove-Computer.md)
+
+[Restart-Computer](Restart-Computer.md)
+
+[Rename-Computer](Rename-Computer.md)
+
+[Restore-Computer](Restore-Computer.md)
+
+[Stop-Computer](Stop-Computer.md)
+
+[Test-Connection](Test-Connection.md)</pre></section>

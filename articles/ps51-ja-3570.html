@@ -1,0 +1,509 @@
+<!doctype html><meta charset="utf-8"><section class="jp-official"><h1>about_Modulesについて</h1>
+<h2>短編説明</h2>
+<p>PowerShell モジュールをインストール,輸入,使用する方法について説明します.</p>
+<h2>長い説明</h2>
+<p>PowerShell はコマンドシェルとスクリプト言語の両方です.PowerShell のコマンドはスクリプト,関数,またはcmdlet として実装されます.この言語には [キーワード][07],処理の構造と論理を提供し,変数,プロバイダー,ニックネームなどの他のリソースが含まれます.</p>
+<p>モジュールとは,cmdlets,プロバイダー,機能,変数,その他のリソースを含む自立で再利用可能なユニットです.默认で,PowerShellは,最初にモジュールからのコマンドを使用すると,自動的にインストールされたモジュールをロードします. 変数 を使用して自動モジュールロード行動を設定できます.<code>$PSModuleAutoLoadingPreference</code>.詳細については,[about_Preference_Variables][08]を参照してください.</p>
+<p>PowerShellセッション中に,手動でモジュールをロードまたはダウンロードすることもできます.モジュールをロードまたはリロードするには,  を使用してください.<code>Import-Module</code>模組を卸すには,  を使います.<code>Remove-Module</code>cmdletです.</p>
+<p>PowerShellには,基本的なモジュールセットが含まれています.誰でもC#またはPowerShell脚本言語そのものを使って新しいモジュールを作成できます.C#で作成された .NETアセンブリとして書かれたモジュールはネイティブモジュールとして知られています.PowerShellで作成されたモジュールは脚本モジュールとして知られています.</p>
+<p>この記事では,PowerShellモジュールを使用する方法について説明します.PowerShellモジュールを作成する方法についての詳細については,[PowerShellモジュールを書くこと][02].を参照してください.</p>
+<p>&gt; [!NOTE] &gt; PowerShell 3.0以前,cmdletsとプロバイダはPowerShell &gt;スナップインにパッケージ化されていました.PowerShell 3.0から, <strong>Microsoft.PowerShell.Core</strong> &gt;スナップインはデフォルトで毎セッションに追加されます.これはPowerShellで残っている唯一のスナップインです.他のすべてのスナップインはモジュールに変換されました. &gt;新しいスナップインの作成はもはやサポートされていません.</p>
+<h2>デフォルトモジュール位置は</h2>
+<p>PowerShellでは,以下のデフォルト位置でモジュールが保存されます.</p>
+<ul>
+<li>すべてのユーザー範囲 - <code>$Env:ProgramFiles\WindowsPowerShell\Modules</code>- 現在のユーザー範囲 - <code>$HOME\Documents\WindowsPowerShell\Modules</code>- PowerShellで送られたモジュール - <code>$PSHOME\Modules</code></li>
+</ul>
+<p>デフォルトでは,  を<code>Modules</code>現在のユーザー用のフォルダは存在しない. にモジュールをインストールした場合は,<code>CurrentUser</code> を使った scope を利用する.<code>Install-Module</code>    <code>Install-PSResource</code>上のcmdletは,  を作成します.<code>Modules</code>現在のユーザー向けのフォルダです.フォルダが存在しない場合は,手動で作成できます.</p>
+<p>を作成するには次のコマンドを使用します.<code>Modules</code>現在のユーザー用のフォルダ:</p>
+<pre><code class="language-powershell">$folder = New-Item -Type Directory -Path $HOME\Documents\WindowsPowerShell\Modules
+</code></pre>
+<p>これらの場所は自動的に  に含まれます.<code>$Env:PSModulePath</code>標準モジュール位置についての詳細については, [about_PSModulePath][10] を参照してください.</p>
+<h2>自動運転モジュール</h2>
+<p>インストールされたモジュールからコマンドを実行する最初のとき,PowerShell は自動的にそのモジュールを輸入 (ロード) する.モジュールが で指定された場所に保管されなければならない.<code>$Env:PSModulePath</code>環境の変数.</p>
+<p>モジュール自負荷は,設定やプロフィール設定なしにモジュール内のコマンドを使用できるようにします.以下の例はそれぞれ, を含む<strong>CimCmdlets</strong>モジュールを引き起こす.<code>Get-CimInstance</code>セッションに輸入される.</p>
+<ul>
+<li>
+<p>コマンドを実行する</p>
+<p><code>powershell
+  Get-CimInstance Win32_OperatingSystem</code></p>
+</li>
+<li>
+<p>司令部を取得する</p>
+<p><code>powershell
+  Get-Command Get-CimInstance</code></p>
+</li>
+<li>
+<p>司令部への支援を募集する</p>
+<p><code>powershell
+  Get-Help Get-CimInstance</code></p>
+</li>
+</ul>
+<p>を使用するときに<code>Get-Command</code>ワイルドカード文字 () を持つ.<code>*</code>命令発見のためにワイルドカードを使用できます.セッションで必要ないモジュールをロードせずに使用できます.</p>
+<h2>マニュアルでモジュールを輸入する</h2>
+<p>が指定した場所にモジュールがインストールされていない場合,モジュールを手動に輸入することが必要です.<code>$Env:PSModulePath</code>変数環境,またはモジュールが独立して提供された場合.<code>.dll</code>    <code>.psm1</code>パッケージ化されたモジュールではなくファイルです.</p>
+<p>また,PowerShell プロバイダーを使用するコマンドは自動的にモジュールをインポートしない.例えば,必要なコマンドを使用した場合,<code>WSMan:</code>ドライブなど,<code>Get-PSSessionConfiguration</code>cmdlet では,  を実行する必要があるかもしれません.<code>Import-Module</code> を含むMicrosoft.WSMan.Management** モジュールを輸入するcmdlet<code>WSMan:</code>ドライブです.</p>
+<p>また,セッションでモジュールが輸入される方法を変更することも可能でしょう.例えば,  の <strong>Prefix</strong> パラメータは<code>Import-Module</code>モデルの輸入したcmdletsの名詞部分に特徴的なプレフィックスを追加します. <strong>NoClobber</strong> パラメータは,セッションで既存のコマンドを隠すまたは置き換えることができるコマンドを追加することをモジュールに妨げます.詳細については, [Manage name conflicts][03]を参照してください.</p>
+<p>次の例では,現在のセッションにBitsTransfer モジュールを輸入します.</p>
+<pre><code class="language-powershell">Import-Module BitsTransfer
+</code></pre>
+<p>にないモジュールを輸入する.<code>$Env:PSModulePath</code>模組フォルダへの完全に合格したパスを使用します.例えば, に <strong>TestCmdlets</strong> モジュールを追加するには,<code>C:\ps-test</code>セッションのディレクトリに,入力してください:</p>
+<pre><code class="language-powershell">Import-Module C:\ps-test\TestCmdlets
+</code></pre>
+<p>モジュールフォルダに含まれていないモジュールファイルを輸入するには,コマンド内のモジュールファイルへの完全に合格したパスを使用します.例えば,テストCmdlets.dll モジュールを  に追加するには.<code>C:\ps-test</code>セッションのディレクトリに,入力してください:</p>
+<pre><code class="language-powershell">Import-Module C:\ps-test\TestCmdlets.dll
+</code></pre>
+<p>セッションにモジュールを追加する詳細については, [インポートモジュール][14] を参照してください.</p>
+<h2>各セッションの開始時にモジュールを輸入します.</h2>
+<p><code>Import-Module</code>現在のPowerShellセッションにモジュールを輸入するコマンドです.起動するすべてのPowerShellセッションにモジュールを輸入するには,  を追加します.<code>Import-Module</code>PowerShell プロフィールへのコマンド.</p>
+<p>プロフィールに関する詳細については,[about_Profiles][09]を参照してください.</p>
+<h2>公開されたモジュールをインストールする</h2>
+<p>公開されたモジュールとは,PowerShell Galleryなどの登録されたリポジトリから利用可能なモジュールです. <strong>PowerShellGet</strong>と <strong>Microsoft.PowerShell.PSResourceGet</strong>のモジュールでは,登録されたリポジトリにPowerShellモジュールを見つけ,インストール,公開するためのcmdletsが提供されています.</p>
+<p><strong>PowerShellGet</strong> モジュールはPowerShell 5.0および後期リリースに搭載されています. <strong>Microsoft.PowerShell.PSResourceGet</strong> モジュールはPowerShell 7.4および後期リリースに搭載されており,PowerShellの好みのパッケージマネージャーです. <strong>Microsoft.PowerShell.PSResourceGet</strong>は,PowerShellGet<strong>と並んで,PowerShellGet</strong>の古いバージョンでインストールできます. を使用してください.<code>Install-Module</code>     <code>Install-PSResource</code>PowerShell Galleryからモジュールをインストールするには cmdlet を使用します.</p>
+<pre><code class="language-powershell"> Get-Command Install-Module, Install-PSResource
+</code></pre>
+<pre><code class="language-Output">CommandType  Name                Version    Source
+-----------  ----                -------    ------
+Function     Install-Module      2.9.0      PowerShellGet
+Cmdlet       Install-PSResource  1.0.0      Microsoft.PowerShell.PSResourceGet
+</code></pre>
+<p>詳細については[PowerShellGet Overview][01] を参照してください.</p>
+<h1>about_Modulesについて</h1>
+<h2>手動でモジュールをインストールする</h2>
+<p>フォルダをコピーすることで,モジュールを手動にインストールできます.そのフォルダは,ローカルマシン上の別の場所に位置する可能性があります.または別のマシンにインストールされます.モジュールを手動にインストールするには,モジュールフォルダ全体をあなたの に含まれる新しい場所にコピーしてください.<code>$Env:PSModulePath</code> .</p>
+<p>PowerShellで,  を使います.<code>Copy-Item</code>例えば,次のコマンドを実行して,  をコピーします.<code>MyModule</code>からフォルダへ<code>C:\PSTest</code>:</p>
+<pre><code class="language-powershell">$modulePath = $HOME\Documents\PowerShell\Modules\MyModule
+Copy-Item -Path C:\PSTest\MyModule\* -Destination $modulePath -Recurse
+</code></pre>
+<p>モジュールを任意の場所にインストールできますが,モジュールをデフォルトモジュール場所にインストールすることで,管理が容易になります.</p>
+<h2>インストールされたモジュールを見つけます</h2>
+<p><code>Get-Module</code>cmdlet は,現在のPowerShellセッションでロードされているPowerShell モジュールを取得します.</p>
+<pre><code class="language-powershell">Get-Module
+</code></pre>
+<p>リストのモジュールは,単に からではなく,あらゆる場所から輸入されたモジュールを含むことができます.<code>$Env:PSModulePath</code> .</p>
+<p>にインストールされているモジュールをリストにするために,次のコマンドを使用します.<code>$Env:PSModulePath</code>:</p>
+<pre><code class="language-powershell">Get-Module -ListAvailable
+</code></pre>
+<p>このコマンドは,  にインストールされているすべてのモジュールを取得します.<code>$Env:PSModulePath</code>このコマンドでは,他の場所にインストールされているモジュールをリストにしていない.</p>
+<p>詳細については[Get-Module][13] を参照してください.</p>
+<h2>モデルのコマンドをリストする</h2>
+<p>を使って<code>Get-Command</code>可能なコマンドをすべて検索するにはcmdletをクリックしてください.<code>Get-Command</code>cmdlet は,模組,名前,名詞などのコマンドをフィルタリングする.</p>
+<p>模組内のすべてのコマンドを検索するには,次のタイプを入力してください:</p>
+<pre><code class="language-powershell">Get-Command -Module &lt;module-name&gt;
+</code></pre>
+<p>例えば,BitsTransfer モジュール内のコマンドを検索するには,次のように入力してください.</p>
+<pre><code class="language-powershell">Get-Command -Module BitsTransfer
+</code></pre>
+<p>について詳しい情報はこちらから<code>Get-Command</code>cmdlet,参照 [Get-Command][11].</p>
+<h2>模組を削除する</h2>
+<p>モジュールを取り除くとき,そのモジュールが追加したコマンドはセッションから削除されます.例えば,次のコマンドは,現在のセッションから<strong>BitsTransfer</strong> モジュールを削除します.</p>
+<pre><code class="language-powershell">Remove-Module BitsTransfer
+</code></pre>
+<p>モジュールを取り除くことは,モジュールを輸入する操作を逆転させる. モジュールを取り除くことは,モジュールをアンインストールするわけではありません.詳細については,[Remove-Module][15]を参照してください.</p>
+<p>模块やスナップインからセッションにコマンドを追加できます. 模块はcmdlets,provider,functionなどすべての種類のコマンド,および変数, aliases,PowerShellドライブなどのアイテムを追加できます.Snap-insはcmdletsとproviderのみを追加できます.</p>
+<p>セッションからモジュールを取り除く前に,下記のコマンドを使用して,どのモジュールを取り除きたいかを決定してください.</p>
+<p>例えば,次のコマンドを使って,  の源を検索してください.<code>Get-Date</code>そして,<code>Get-Help</code>cmdlets:</p>
+<pre><code class="language-powershell">Get-Command Get-Date, Get-Help -All |
+    Select-Object -Property Name, CommandType, Module ,PSSnapIn
+</code></pre>
+<p>次の出力では,  の出力が表示されている.<code>Get-Help</code>cmdlet は <strong>Microsoft.PowerShell.Core</strong> スナップインにあります.このスナップインはセッションから削除できません.</p>
+<pre><code class="language-Output">Name     CommandType Module                       PSSnapIn
+----     ----------- ------                       --------
+Get-Date    Function
+Get-Date      Cmdlet Microsoft.PowerShell.Utility
+Get-Help      Cmdlet                              Microsoft.PowerShell.Core
+</code></pre>
+<p>の2つの情報源があります.<code>Get-Date</code>一つは関数であり,もう一つは"Microsoft.PowerShell.Utility**"モジュール内のcmdletです.<code>Remove-Module</code>機能を削除するには,  から削除できます.<code>Function:</code>ドライブです.</p>
+<pre><code class="language-powershell">Remove-Item Function:Get-Date
+</code></pre>
+<p>について詳しい情報はこちらから<code>Function:</code>ドライブを参照してください [about_Function_Provider][05].</p>
+<h2>名前衝突管理</h2>
+<p>セッション内の複数のコマンドが同じ名前を持つ場合,名前衝突が発生します.モジュールを輸入すると,モジュール内のコマンドがセッション内のコマンドまたはアイテムと同じ名前を持つ場合,名前衝突を引き起こす.</p>
+<p><code>Import-Module</code>現在のセッションでコマンドを隠し,置き換えするコマンドを追加する可能性があります.名前衝突によりコマンドが隠され,または置き換えられます.輸入されたモジュールにセッションで既存のコマンドと同じ名前を持つコマンドが含まれるときにコマンドの置き換えが発生します.新しく輸入されたコマンドは既存のコマンドよりも優先されます.</p>
+<p>たとえば,セッションに同じ名前を持つ関数と同じ名前を持つcmdletが含まれる場合,PowerShellはデフォルトで関数を実行します.セッションに同じ名前を持つ同じタイプのコマンド,例えば同じ名前を持つ2つのcmdletがデフォルトで含まれると,最近追加されたコマンドが実行されます.</p>
+<p>優先順位規則と隠されたコマンドを実行するための指示の説明を含む詳細については,[about_Command_Precedence][04]を参照してください.</p>
+<p>コマンド名を指定することで隠されたコマンドまたは置き換えられたコマンドを実行できます. コマンド名を指定するには,あなたが望むコマンドのバージョンを含むモジュール名を追加します.例えば:</p>
+<pre><code class="language-powershell">Microsoft.PowerShell.Utility\Get-Date
+</code></pre>
+<p>ランニング <code>Get-Date</code>模組名前記が付いているのは,Microsoft.PowerShell.Utility** モジュールからバージョンを実行していることを確認する.</p>
+<p>名前衝突を検出するには,  の <strong>All</strong> パラメータを使用します.<code>Get-Command</code>cmdlet.デフォルトでは,<code>Get-Command</code>命令名を入力すると実行されるコマンドのみが表示されます. <strong>All</strong>パラメータはセッションの特定の名前を持つすべてのコマンドを表示します.</p>
+<p>名前衝突を防ぐために,NoClobber のパラメータまたはPrefix のパラメータを使用してください.<code>Import-Module</code>cmdlet. <strong>Prefix</strong> パラメータは,輸入されたコマンドの名前に前記を追加して,セッションでユニークになるようにします. <strong>NoClobber</strong> パラメータは,セッションで既存のコマンドを隠したり,置き換えたりするコマンドを輸入しません.</p>
+<p>また,この  の <strong>Alias</strong>, <strong>Cmdlet</strong>, <strong>Function</strong>, <strong>Variable</strong> パラメータも使えます.<code>Import-Module</code>輸入したいコマンドのみを選択し,セッションで名前衝突を引き起こすコマンドを除外することができます.</p>
+<p>モジュール作者は,すべてのコマンド名にデフォルトプレフィックスを追加するために,モジュールマニフェストの <strong>DefaultCommandPrefix</strong>属性を使って名前衝突を防ぐことができます. <strong>Prefix</strong>パラメータの値は <strong>DefaultCommandPrefix</strong>の値よりも優先されます.</p>
+<h2>また, を参照してください.</h2>
+<p>[about_Command_Precedence][04] - [about_Group_Policy_Settings][06] - [Get-Command][11] - [Get-Help][12] - [Get-Module][13] - [Import-Module][14] - [Remove-Module][15] - [Install-Module][17] - [Install-PSResource][16]</p>
+<p>リンク参照 --&gt; [01]: /powershell/gallery/powershellget/overview [02]: /powershell/scripting/developer/module/writing-a-windows-powershell-module [03]: #manage-name-conflicts [04]: about_Command_Precedence.md [05]: about_Function_Provider.md [06]: about_Power_Power_Policy_Settings.md [07]: about_Language_Keywords.md [08]: about_Preference_Variables.md [09]: about_Profiles.md [10]: about_ModulePath. [11]: Microsoft:PowerShell.GetC.GetShore [12]: xShoreShoreShoreShoreShoreShoreShoreShoreShoreShoreShoreShoreShoreShoreShoreShoreShoreShoreShoreShoreShoreShoreShoreShoreShoreShoreShoreShoreShoreShoreShoreShoreShoreShoreShoreShoreShoreShoreShoreShoreShoreShoreShoreShoreShoreShoreShoreShoreShoreShoreShoreShoreShoreShoreShoreShoreShoreShoreShoreShoreShoreShoreShoreShoreShoreShoreShoreShoreShoreShoreShoreShoreShoreShoreShoreShoreShoreShoreShoreShoreShoreShoreShoreShoreShoreShoreShoreShoreShoreShoreShoreShoreShoreShoreShoreShoreShoreShoreShoreShoreShoreShoreShoreShoreShoreShoreShoreShoreShore: Microsoft: Microsoft: Microsoft: Microsoft: Microsoft: Microsoft: Microsoft: Microsoft: Microsoft: Microsoft: Microsoft: Microsoft: Microsoft: Microsoft: Microsoft: ShoreShoreShoreShoreShoreShoreShoreShoreShoreShoreShoreShoreShoreShoreShoreShoreShoreShoreShoreShoreShoreShoreShoreShoreShoreShoreShoreShoreShoreShoreShoreShoreShoreShoreShoreShoreShoreShoreインストールPSResource [17]: xref:PowerShellGet.Install-Module</p></section><section class="en-original"><pre class="source-original"># about_Modules
+
+## Short description
+
+Explains how to install, import, and use PowerShell modules.
+
+## Long description
+
+PowerShell is both a command shell and a scripting language. Commands in
+PowerShell are implemented as scripts, functions, or cmdlets. The language
+includes [keywords][07], which provide the structure and logic of processing,
+and other resources, such as variables, providers, aliases.
+
+A module is a self-contained, reusable unit that can include cmdlets,
+providers, functions, variables, and other resources. By default, PowerShell
+automatically loads an installed module the first time you use a command from
+the module. You can configure automatic module loading behavior using the
+variable `$PSModuleAutoLoadingPreference`. For more information, see
+[about_Preference_Variables][08].
+
+You can also manually load or unload modules during a PowerShell session. To
+load or reload a module, use `Import-Module`. To unload a module, use the
+`Remove-Module` cmdlet.
+
+PowerShell includes a base set of modules. Anyone can create new modules using
+C# or the PowerShell scripting language itself. Modules written in C# as
+compiled .NET assemblies are known as native modules. Modules written in
+PowerShell are known as script modules.
+
+This article explains how to use PowerShell modules. For information about how
+to create PowerShell modules, see [Writing a PowerShell Module][02].
+
+&gt; [!NOTE]
+&gt; Prior to PowerShell 3.0, cmdlets and providers were packaged in PowerShell
+&gt; snap-ins. Beginning in PowerShell 3.0, the **Microsoft.PowerShell.Core**
+&gt; snap-in is added to every session by default. This is the only snap-in
+&gt; remaining in PowerShell. All other snap-ins were converted to modules.
+&gt; Creation of new snap-ins is no longer supported.
+
+## Default module locations
+
+PowerShell stores modules in the following default locations:
+
+  - All users scope - `$Env:ProgramFiles\WindowsPowerShell\Modules`
+  - Current user scope - `$HOME\Documents\WindowsPowerShell\Modules`
+  - Modules shipped with PowerShell - `$PSHOME\Modules`
+
+By default, the `Modules` folder for the current user doesn&#x27;t exist. If you
+installed a module in the `CurrentUser` scope using `Install-Module` or
+`Install-PSResource`, those cmdlets create the `Modules` folder for the current
+user. If the folder doesn&#x27;t exist, you can create it manually.
+
+Use the following command to create a `Modules` folder for the current user:
+
+```powershell
+$folder = New-Item -Type Directory -Path $HOME\Documents\WindowsPowerShell\Modules
+```
+
+These locations are automatically included in the `$Env:PSModulePath`
+environment variable. For more information about the default module locations,
+see [about_PSModulePath][10].
+
+## Module autoloading
+
+The first time that you run a command from an installed module, PowerShell
+automatically imports (loads) that module. The module must be stored in the
+locations specified in the `$Env:PSModulePath` environment variable.
+
+Module autoloading allows you to use commands in a module without any setup or
+profile configuration. Each of the following examples causes the **CimCmdlets**
+module, which contains `Get-CimInstance`, to be imported into your session.
+
+- Run the Command
+
+  ```powershell
+  Get-CimInstance Win32_OperatingSystem
+  ```
+
+- Get the Command
+
+  ```powershell
+  Get-Command Get-CimInstance
+  ```
+
+- Get Help for the Command
+
+  ```powershell
+  Get-Help Get-CimInstance
+  ```
+
+When you use `Get-Command` with a wildcard character (`*`), PowerShell doesn&#x27;t
+import any modules. You can use wildcards for command discovery without loading
+modules that you might not need in your session.
+
+## Manually import a module
+
+Manually importing a module is required when a module isn&#x27;t installed in the
+locations specified by the `$Env:PSModulePath` environment variable, or when
+the module is provided as a standalone `.dll` or `.psm1` file, rather than a
+packaged module.
+
+Also, commands that use PowerShell providers don&#x27;t automatically import a
+module. For example, if you use a command that requires the `WSMan:` drive,
+such as the `Get-PSSessionConfiguration` cmdlet, you might need to run the
+`Import-Module` cmdlet to import the **Microsoft.WSMan.Management** module that
+includes the `WSMan:` drive.
+
+You might also want to change how the module is imported in your session. For
+example, the **Prefix** parameter of `Import-Module` adds a distinctive prefix
+to the noun portion of the cmdlets imported from the module. The **NoClobber**
+parameter prevents the module from adding commands that would hide or replace
+existing commands in the session. For more information, see
+[Manage name conflicts][03].
+
+The following example imports the **BitsTransfer** module into the current
+session.
+
+```powershell
+Import-Module BitsTransfer
+```
+
+To import a module that isn&#x27;t in your `$Env:PSModulePath`, use the fully
+qualified path to the module folder. For example, to add the **TestCmdlets**
+module in the `C:\ps-test` directory to your session, type:
+
+```powershell
+Import-Module C:\ps-test\TestCmdlets
+```
+
+To import a module file that isn&#x27;t contained in a module folder, use the fully
+qualified path to the module file in the command. For example, to add the
+TestCmdlets.dll module in the `C:\ps-test` directory to your session, type:
+
+```powershell
+Import-Module C:\ps-test\TestCmdlets.dll
+```
+
+For more information about adding modules to your session, see
+[Import-Module][14].
+
+## Import a module at the start of every session
+
+The `Import-Module` command imports modules into your current PowerShell
+session. To import a module into every PowerShell session that you start, add
+the `Import-Module` command to your PowerShell profile.
+
+For more information about profiles, see [about_Profiles][09].
+
+## Install a published module
+
+A published module is a module that&#x27;s available from a registered repository,
+such as the PowerShell Gallery. The **PowerShellGet** and
+**Microsoft.PowerShell.PSResourceGet** modules provide cmdlets for finding,
+installing, and publishing PowerShell modules to a registered repository.
+
+The **PowerShellGet** module is included with PowerShell 5.0 and later
+releases. The **Microsoft.PowerShell.PSResourceGet** module is included with
+PowerShell 7.4 and later releases and is the preferred package manager for
+PowerShell. **Microsoft.PowerShell.PSResourceGet** can be installed, side by
+side with **PowerShellGet**, on older versions of PowerShell. Use the
+`Install-Module` or `Install-PSResource` cmdlet to install modules from the
+PowerShell Gallery.
+
+```powershell
+ Get-Command Install-Module, Install-PSResource
+```
+
+```Output
+CommandType  Name                Version    Source
+-----------  ----                -------    ------
+Function     Install-Module      2.9.0      PowerShellGet
+Cmdlet       Install-PSResource  1.0.0      Microsoft.PowerShell.PSResourceGet
+```
+
+For more information, see [PowerShellGet Overview][01].
+
+# about_Modules
+
+## Manually install a module
+
+You can manually install a module by copying the module contents from another
+folder. That folder can be in another location on the local machine or
+installed on another machine. To install a module manually, copy the entire
+module folder into a new location included in your `$Env:PSModulePath`.
+
+In PowerShell use the `Copy-Item` cmdlet. For example, run the following
+command to copy the `MyModule` folder from `C:\PSTest`:
+
+```powershell
+$modulePath = $HOME\Documents\PowerShell\Modules\MyModule
+Copy-Item -Path C:\PSTest\MyModule\* -Destination $modulePath -Recurse
+```
+
+You can install a module in any location, but installing your modules in a
+default module location makes them easier to manage.
+
+## Find installed modules
+
+The `Get-Module` cmdlet gets the PowerShell modules that are loaded in the
+current PowerShell session.
+
+```powershell
+Get-Module
+```
+
+The modules listed can include modules that were imported from any location,
+not just from `$Env:PSModulePath`.
+
+Use the following command to list modules that are installed in the
+`$Env:PSModulePath`:
+
+```powershell
+Get-Module -ListAvailable
+```
+
+This command gets all modules that are installed in `$Env:PSModulePath`, not
+just the modules that are imported into the current session. This command
+doesn&#x27;t list modules that are installed in other locations.
+
+For more information, see [Get-Module][13].
+
+## List the commands in a module
+
+Use the `Get-Command` cmdlet to find all available commands. You can use the
+parameters of the `Get-Command` cmdlet to filter commands such as by module,
+name, and noun.
+
+To find all commands in a module, type:
+
+```powershell
+Get-Command -Module &lt;module-name&gt;
+```
+
+For example, to find the commands in the **BitsTransfer** module, type:
+
+```powershell
+Get-Command -Module BitsTransfer
+```
+
+For more information about the `Get-Command` cmdlet, see [Get-Command][11].
+
+## Remove a module
+
+When you remove a module, the commands that the module added are deleted from
+the session. For example, the following command removes the **BitsTransfer**
+module from the current session.
+
+```powershell
+Remove-Module BitsTransfer
+```
+
+Removing a module reverses the operation of importing a module. Removing a
+module doesn&#x27;t uninstall the module. For more information, see
+[Remove-Module][15].
+
+Commands can be added to your session from modules and snap-ins. Modules can
+add all types of commands, including cmdlets, providers, and functions, and
+items, such as variables, aliases, and PowerShell drives. Snap-ins can add only
+cmdlets and providers.
+
+Before removing a module from your session, use the following commands to
+determine which module you want to remove.
+
+For example, use the following command to find the source of the `Get-Date` and
+`Get-Help` cmdlets:
+
+```powershell
+Get-Command Get-Date, Get-Help -All |
+    Select-Object -Property Name, CommandType, Module ,PSSnapIn
+```
+
+The following output shows that the `Get-Help` cmdlet is in the
+**Microsoft.PowerShell.Core** snap-in. This snap-in can&#x27;t be removed from the
+session.
+
+```Output
+Name     CommandType Module                       PSSnapIn
+----     ----------- ------                       --------
+Get-Date    Function
+Get-Date      Cmdlet Microsoft.PowerShell.Utility
+Get-Help      Cmdlet                              Microsoft.PowerShell.Core
+```
+
+There are two sources for `Get-Date`. One is a function and the other is a
+cmdlet in the **Microsoft.PowerShell.Utility** module. You can remove the
+module using `Remove-Module`. To remove the function, you can delete it from
+the `Function:` drive.
+
+```powershell
+Remove-Item Function:Get-Date
+```
+
+For more information about the `Function:` drive, see
+[about_Function_Provider][05].
+
+## Manage name conflicts
+
+Name conflicts occur when more than one command in the session has the same
+name. Importing a module causes a name conflict when commands in the module
+have the same names as commands or items in the session.
+
+`Import-Module` might add commands that hide and replace commands in the
+current session. Name conflicts can result in commands being hidden or
+replaced. Command replacement occurs when the imported module contains a
+command with the same name as an existing command in the session. The newly
+imported command takes precedence over the existing command.
+
+For example, when a session includes a function and a cmdlet with the same
+name, PowerShell runs the function by default. When the session includes
+commands of the same type with the same name, such as two cmdlets with the same
+name, by default, it runs the most recently added command.
+
+For more information, including an explanation of the precedence rules and
+instructions for running hidden commands, see [about_Command_Precedence][04].
+
+You can run a hidden or replaced command by qualifying the command name. To
+qualify the command name, add the name of module that contains the version of
+the command you want. For example:
+
+```powershell
+Microsoft.PowerShell.Utility\Get-Date
+```
+
+Running `Get-Date` with the module name prefix ensures that are running the
+version from the **Microsoft.PowerShell.Utility** module.
+
+To detect name conflicts, use the **All** parameter of the `Get-Command`
+cmdlet. By default, `Get-Command` gets only that commands that run when you
+type the command name. The **All** parameter gets all commands with the
+specific name in the session.
+
+To prevent name conflicts, use the **NoClobber** or **Prefix** parameters of
+the `Import-Module` cmdlet. The **Prefix** parameter adds a prefix to the names
+of imported commands so that they&#x27;re unique in the session. The **NoClobber**
+parameter doesn&#x27;t import any commands that would hide or replace existing
+commands in the session.
+
+You can also use the **Alias**, **Cmdlet**, **Function**, and **Variable**
+parameters of `Import-Module` to select only the commands that you want to
+import, and you can exclude commands that cause name conflicts in your session.
+
+Module authors can prevent name conflicts by using the **DefaultCommandPrefix**
+property of the module manifest to add a default prefix to all command names.
+The value of the **Prefix** parameter takes precedence over the value of
+**DefaultCommandPrefix**.
+
+## See also
+
+- [about_Command_Precedence][04]
+- [about_Group_Policy_Settings][06]
+- [Get-Command][11]
+- [Get-Help][12]
+- [Get-Module][13]
+- [Import-Module][14]
+- [Remove-Module][15]
+- [Install-Module][17]
+- [Install-PSResource][16]
+
+&lt;!-- link references --&gt;
+[01]: /powershell/gallery/powershellget/overview
+[02]: /powershell/scripting/developer/module/writing-a-windows-powershell-module
+[03]: #manage-name-conflicts
+[04]: about_Command_Precedence.md
+[05]: about_Function_Provider.md
+[06]: about_Group_Policy_Settings.md
+[07]: about_Language_Keywords.md
+[08]: about_Preference_Variables.md
+[09]: about_Profiles.md
+[10]: about_PSModulePath.md
+[11]: xref:Microsoft.PowerShell.Core.Get-Command
+[12]: xref:Microsoft.PowerShell.Core.Get-Help
+[13]: xref:Microsoft.PowerShell.Core.Get-Module
+[14]: xref:Microsoft.PowerShell.Core.Import-Module
+[15]: xref:Microsoft.PowerShell.Core.Remove-Module
+[16]: xref:Microsoft.PowerShell.PSResourceGet.Install-PSResource
+[17]: xref:PowerShellGet.Install-Module</pre></section>

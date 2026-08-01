@@ -1,0 +1,340 @@
+<!doctype html><meta charset="utf-8"><section class="jp-official"><h1>about_Functions_Argument_Completionについて</h1>
+<h2>短編説明</h2>
+<p>議論の完了は,ヒントを提供し,発見を可能にし,議論の値を入力する速度を加速させるPowerShellの特徴です.</p>
+<h2>長い説明</h2>
+<p>この記事では,PowerShell機能のアーグメント補充機を実装する方法について説明します.アーグメント補充機はパラメータの可能な値を提供します.利用可能な値は,実行時に計算されます.ユーザーがパラメータ名の後の &lt;kbd&gt;Tab&lt;/kbd&gt; キーを押すと.パラメータのアーグメント補充機を定義する方法はいくつかあります.</p>
+<p>[!注] &gt; &lt;kbd&gt;Tab&lt;/kbd&gt;は,Windows上のデフォルトキーバインドです.このキーバインドはPSReadLineモジュールまたはホストしているアプリケーションによって変更されることがあります. &gt;!注] &gt;&lt;kbd&gt;Tab&lt;/kbd&gt;は,Windows以外のプラットフォームでは異なる.詳細については, &gt; <a href="/powershell/module/psreadline/about/about_psreadline#completion-functions">about_PSReadLine</a> を参照してください.</p>
+<h2>ValidateSet属性</h2>
+<p><strong>ValidateSet</strong>属性は,パラメータまたは変数のための有効値の集合を指定し,タブの完了を可能にします.PowerShellは,パラメータまたは変数値がセット内の値と一致しない場合はエラーを生成します.次の例では, <strong>Fruit</strong>パラメータの値は <strong>Apple</strong>, <strong>Banana</strong>, <strong>Pear</strong>のみでよい.</p>
+<pre><code class="language-powershell">param (
+    [Parameter(Mandatory=$true)]
+    [ValidateSet('Apple', 'Banana', 'Pear')]
+    [string[]]$Fruit
+)
+</code></pre>
+<p>次の例では,変数の値が <code>$flavor</code>チョコレート,ストロベリー,バニラ,どちらかでなければならない.<code>ValidateSet</code>属性は,パラメータだけでなく,任意の変数でも使用できます.</p>
+<pre><code class="language-powershell">[ValidateSet('Chocolate', 'Strawberry', 'Vanilla')]
+[string]$Flavor = 'Strawberry'
+</code></pre>
+<p>検証は,スクリプト内でもその変数が割り当てられたときに起こる.</p>
+<pre><code class="language-powershell">param (
+    [ValidateSet('hello', 'world')]
+    [string]$Message
+)
+
+$Message = 'bye'
+</code></pre>
+<p>この例では,実行時に次のエラーが返されます.</p>
+<pre><code>MetadataError: The attribute cannot be added because variable Message with
+value bye would no longer be valid.
+</code></pre>
+<p>タブ拡張に関する詳細については, [about_Tab_Expansion] ([[タブ拡張について_Tab_Expansion.md]]) を参照してください.</p>
+<h3>クラスを使用するDynamic ValidateSet 値を表示します</h3>
+<p>を用いることができる.<code>class</code>実行時に <strong>ValidateSet</strong> の値を動的に生成する.次の例では,変数  の有効値は示します.<code>$Sound</code> を介して生成されます.<code>class</code><strong>SoundNames</strong>は,利用可能なサウンドファイルに3つのファイルシステムパスを確認する: named</p>
+<pre><code class="language-powershell">class SoundNames : System.Management.Automation.IValidateSetValuesGenerator {
+    [string[]] GetValidValues() {
+        $SoundPaths = '/System/Library/Sounds/',
+                      '/Library/Sounds',
+                      '~/Library/Sounds'
+        $SoundNames = foreach ($SoundPath in $SoundPaths) {
+            if (Test-Path $SoundPath) {
+                (Get-ChildItem $SoundPath).BaseName
+            }
+        }
+        return [string[]] $SoundNames
+    }
+}
+</code></pre>
+<p><code>[SoundNames]</code>クラスはその後,動態 <strong>ValidateSet</strong>値として次のように実装されます:</p>
+<pre><code class="language-powershell">param (
+    [ValidateSet([SoundNames])]
+    [string]$Sound
+)
+</code></pre>
+<p>&gt; [!NOTE] &gt;  <code>IValidateSetValuesGenerator</code>PowerShell 6.0でクラスが導入されました.</p>
+<h2>ArgumentCompleter属性</h2>
+<p><strong>ArgumentCompleter</strong>属性は,特定のパラメータにタブ完成値を追加することを可能にする.タブ完成を必要とする各パラメータに対して, <strong>ArgumentCompleter</strong>属性は定義されなければならない.</p>
+<p><strong>ArgumentCompleter</strong>属性を追加するには,値を決定するスクリプトブロックを定義する必要があります.スクリプトブロックは,以下の順に以下のパラメータを考慮する必要があります.パラメータの名前は位置的に表示されているため,関係ありません.</p>
+<p>構文は以下の通りです.</p>
+<pre><code class="language-powershell">function MyArgumentCompleter {
+    param (
+        [Parameter(Mandatory)]
+        [ArgumentCompleter( {
+            param ( $commandName,
+                    $parameterName,
+                    $wordToComplete,
+                    $commandAst,
+                    $fakeBoundParameters )
+            # Perform calculation of tab completed values here.
+        } )]
+        $ParamName
+    )
+}
+</code></pre>
+<h3>議論補完の脚本ブロック</h3>
+<p>スクリプトブロックのパラメータは,以下の値に設定されています.</p>
+<ul>
+<li>-<code>$commandName</code>(位置 0) - このパラメータは,スクリプトブロックがタブの完了を提供しているコマンドの名前に設定されます. - <code>$parameterName</code>(位置 1) - このパラメータは,タブの完了を要求する値のパラメータに設定されます. - <code>$wordToComplete</code>(位置2) - このパラメータは,ユーザが &lt;kbd&gt;Tab&lt;/kbd&gt; を押す前に指定した値に設定されます.あなたのスクリプトブロックは,この値を使用してタブの完了値を決定する必要があります. - <code>$commandAst</code>(位置 3) - このパラメータは,現在の入力ラインの抽象語法樹 (AST) に設定されています.詳細については, <a href="/dotnet/api/system.management.automation.language.ast">AST</a> タイプドキュメントを参照してください. - <code>$fakeBoundParameters</code>(位置 4) - このパラメータは,  を含むハッシュテーブルに設定されています.<code>$PSBoundParameters</code>cmdlet の場合は,ユーザーが &lt;kbd&gt;Tab&lt;/kbd&gt; を押す前にします.詳細については, [about_Automatic_Variables] ([[about_Automatic_Variables.md]] を参照してください.</li>
+</ul>
+<p><strong>ArgumentCompleter</strong>脚本ブロックは,パイプラインを使用して値を解き放す必要があります.<code>ForEach-Object</code>     <code>Where-Object</code>値のアレイを返すと,PowerShellが全アレイを <strong>one</strong> タブ完成値として処理する.</p>
+<p>次の例では,タブの完成を<strong>Value</strong>パラメータに追加します.<strong>Value</strong>パラメータのみが指定されている場合, <strong>Value</strong>のすべての可能な値,または議論が表示されます. <strong>Type</strong>パラメータが指定された場合, <strong>Value</strong>パラメータは,そのタイプの可能な値のみ表示されます.</p>
+<p>さらに,そのは<code>-like</code>操作者は,ユーザーが次のコマンドを入力して &lt;kbd&gt;Tab&lt;/kbd&gt; を完了すると, <strong>Apple</strong>のみが返されることを保証します.</p>
+<p><code>Test-ArgumentCompleter -Type Fruits -Value A</code></p>
+<pre><code class="language-powershell">function MyArgumentCompleter{
+    param ( $commandName,
+            $parameterName,
+            $wordToComplete,
+            $commandAst,
+            $fakeBoundParameters )
+
+    $possibleValues = @{
+        Fruits = @('Apple', 'Orange', 'Banana')
+        Vegetables = @('Onion', 'Carrot', 'Lettuce')
+    }
+
+    if ($fakeBoundParameters.ContainsKey('Type')) {
+        $possibleValues[$fakeBoundParameters.Type] | Where-Object {
+            $_ -like &quot;$wordToComplete*&quot;
+        }
+    } else {
+        $possibleValues.Values | ForEach-Object {$_}
+    }
+}
+
+function Test-ArgumentCompleter {
+[CmdletBinding()]
+ param (
+        [Parameter(Mandatory=$true)]
+        [ValidateSet('Fruits', 'Vegetables')]
+        $Type,
+
+        [Parameter(Mandatory=$true)]
+        [ArgumentCompleter({ MyArgumentCompleter @args })]
+        $Value
+      )
+}
+</code></pre>
+<h2>Register-ArgumentCompleter は,登録した文書の作成者です.</h2>
+<p><code>Register-ArgumentCompleter</code>cmdlet はカスタムなアルグメント コンプリートを登録します.アルグメント コンプリートでは,あなたが指定したコマンドの実行時にダイナミックなタブ コンプリートを提供できます.</p>
+<p>詳細については, [Register-ArgumentCompleter] (xref:Microsoft.PowerShell.Core.Register-ArgumentCompleter) を参照してください.</p>
+<h2>また, を参照してください.</h2>
+<p><a href="about_Functions_Advanced_Parameters.md">about_Functions_Advanced_Parameters</a> - <a href="about_Tab_Expansion.md">about_Tab_Expansion</a> - <a href="xref:Microsoft.PowerShell.Core.Register-ArgumentCompleter">Register-ArgumentCompleter</a> </p></section><section class="en-original"><pre class="source-original"># about_Functions_Argument_Completion
+
+## Short description
+
+Argument completion is a feature of PowerShell that provide hints, enables
+discovery, and speeds up input entry of argument values.
+
+## Long description
+
+This article describes the different ways you can implement argument completers
+for PowerShell functions. Argument completers provide the possible values for a
+parameter. The available values are calculated at runtime when the user presses
+the &lt;kbd&gt;Tab&lt;/kbd&gt; key after the parameter name. There are several ways to
+define an argument completer for a parameter.
+
+&gt; [!NOTE]
+&gt; &lt;kbd&gt;Tab&lt;/kbd&gt; is the default key binding on Windows. This keybinding can be
+&gt; changed by the PSReadLine module or the application that is hosting
+&gt; PowerShell. The keybinding is different on non-Windows platforms. For more
+&gt; information, see
+&gt; [about_PSReadLine](/powershell/module/psreadline/about/about_psreadline#completion-functions).
+
+## ValidateSet attribute
+
+The **ValidateSet** attribute specifies a set of valid values for a parameter
+or variable and enables tab completion. PowerShell generates an error if a
+parameter or variable value doesn&#x27;t match a value in the set. In the following
+example, the value of the **Fruit** parameter can only be **Apple**,
+**Banana**, or **Pear**.
+
+```powershell
+param (
+    [Parameter(Mandatory=$true)]
+    [ValidateSet(&#x27;Apple&#x27;, &#x27;Banana&#x27;, &#x27;Pear&#x27;)]
+    [string[]]$Fruit
+)
+```
+
+In the following example, the value of the variable `$flavor` must be either
+**Chocolate**, **Strawberry**, or **Vanilla**. The `ValidateSet` attribute can
+be used on any variable, not just parameters.
+
+```powershell
+[ValidateSet(&#x27;Chocolate&#x27;, &#x27;Strawberry&#x27;, &#x27;Vanilla&#x27;)]
+[string]$Flavor = &#x27;Strawberry&#x27;
+```
+
+The validation occurs whenever that variable is assigned even within the
+script.
+
+```powershell
+param (
+    [ValidateSet(&#x27;hello&#x27;, &#x27;world&#x27;)]
+    [string]$Message
+)
+
+$Message = &#x27;bye&#x27;
+```
+
+This example returns the following error at runtime:
+
+```
+MetadataError: The attribute cannot be added because variable Message with
+value bye would no longer be valid.
+```
+
+For more information about tab expansion, see
+[about_Tab_Expansion](about_Tab_Expansion.md).
+
+### Dynamic ValidateSet values using classes
+
+You can use a `class` to dynamically generate the values for **ValidateSet**
+at runtime. In the following example, the valid values for the variable
+`$Sound` are generated via a `class` named **SoundNames** that checks three
+filesystem paths for available sound files:
+
+```powershell
+class SoundNames : System.Management.Automation.IValidateSetValuesGenerator {
+    [string[]] GetValidValues() {
+        $SoundPaths = &#x27;/System/Library/Sounds/&#x27;,
+                      &#x27;/Library/Sounds&#x27;,
+                      &#x27;~/Library/Sounds&#x27;
+        $SoundNames = foreach ($SoundPath in $SoundPaths) {
+            if (Test-Path $SoundPath) {
+                (Get-ChildItem $SoundPath).BaseName
+            }
+        }
+        return [string[]] $SoundNames
+    }
+}
+```
+
+The `[SoundNames]` class is then implemented as a dynamic **ValidateSet** value
+as follows:
+
+```powershell
+param (
+    [ValidateSet([SoundNames])]
+    [string]$Sound
+)
+```
+
+&gt; [!NOTE]
+&gt; The `IValidateSetValuesGenerator` class was introduced in PowerShell 6.0.
+
+## ArgumentCompleter attribute
+
+The **ArgumentCompleter** attribute allows you to add tab completion values to
+a specific parameter. An **ArgumentCompleter** attribute must be defined for
+each parameter that needs tab completion.
+
+To add an **ArgumentCompleter** attribute, you need to define a scriptblock
+that determines the values. The scriptblock must take the following
+parameters in the order specified below. The parameter&#x27;s names don&#x27;t matter as
+the values are provided positionally.
+
+The syntax is as follows:
+
+```powershell
+function MyArgumentCompleter {
+    param (
+        [Parameter(Mandatory)]
+        [ArgumentCompleter( {
+            param ( $commandName,
+                    $parameterName,
+                    $wordToComplete,
+                    $commandAst,
+                    $fakeBoundParameters )
+            # Perform calculation of tab completed values here.
+        } )]
+        $ParamName
+    )
+}
+```
+
+### ArgumentCompleter scriptblock
+
+The scriptblock parameters are set to the following values:
+
+- `$commandName` (Position 0) - This parameter is set to the name of the
+  command for which the scriptblock is providing tab completion.
+- `$parameterName` (Position 1) - This parameter is set to the parameter whose
+  value requires tab completion.
+- `$wordToComplete` (Position 2) - This parameter is set to value the user has
+  provided before they pressed &lt;kbd&gt;Tab&lt;/kbd&gt;. Your scriptblock should use
+  this value to determine tab completion values.
+- `$commandAst` (Position 3) - This parameter is set to the Abstract Syntax
+  Tree (AST) for the current input line. For more information, see the
+  [AST](/dotnet/api/system.management.automation.language.ast) type
+  documentation.
+- `$fakeBoundParameters` (Position 4) - This parameter is set to a hashtable
+  containing the `$PSBoundParameters` for the cmdlet, before the user pressed
+  &lt;kbd&gt;Tab&lt;/kbd&gt;. For more information, see
+  [about_Automatic_Variables](about_Automatic_Variables.md).
+
+The **ArgumentCompleter** scriptblock must unroll the values using the
+pipeline, such as `ForEach-Object`, `Where-Object`, or another suitable method.
+Returning an array of values causes PowerShell to treat the entire array as
+**one** tab completion value.
+
+The following example adds tab completion to the **Value** parameter. If only
+the **Value** parameter is specified, all possible values, or arguments, for
+**Value** are displayed. When the **Type** parameter is specified, the
+**Value** parameter only displays the possible values for that type.
+
+In addition, the `-like` operator ensures that if the user types the following
+command and uses &lt;kbd&gt;Tab&lt;/kbd&gt; completion, only **Apple** is returned.
+
+`Test-ArgumentCompleter -Type Fruits -Value A`
+
+```powershell
+function MyArgumentCompleter{
+    param ( $commandName,
+            $parameterName,
+            $wordToComplete,
+            $commandAst,
+            $fakeBoundParameters )
+
+    $possibleValues = @{
+        Fruits = @(&#x27;Apple&#x27;, &#x27;Orange&#x27;, &#x27;Banana&#x27;)
+        Vegetables = @(&#x27;Onion&#x27;, &#x27;Carrot&#x27;, &#x27;Lettuce&#x27;)
+    }
+
+    if ($fakeBoundParameters.ContainsKey(&#x27;Type&#x27;)) {
+        $possibleValues[$fakeBoundParameters.Type] | Where-Object {
+            $_ -like &quot;$wordToComplete*&quot;
+        }
+    } else {
+        $possibleValues.Values | ForEach-Object {$_}
+    }
+}
+
+function Test-ArgumentCompleter {
+[CmdletBinding()]
+ param (
+        [Parameter(Mandatory=$true)]
+        [ValidateSet(&#x27;Fruits&#x27;, &#x27;Vegetables&#x27;)]
+        $Type,
+
+        [Parameter(Mandatory=$true)]
+        [ArgumentCompleter({ MyArgumentCompleter @args })]
+        $Value
+      )
+}
+```
+
+## Register-ArgumentCompleter
+
+The `Register-ArgumentCompleter` cmdlet registers a custom argument completer.
+An argument completer allows you to provide dynamic tab completion, at run time
+for any command that you specify.
+
+For more information, see
+[Register-ArgumentCompleter](xref:Microsoft.PowerShell.Core.Register-ArgumentCompleter).
+
+## See also
+
+- [about_Functions_Advanced_Parameters](about_Functions_Advanced_Parameters.md)
+- [about_Tab_Expansion](about_Tab_Expansion.md)
+- [Register-ArgumentCompleter](xref:Microsoft.PowerShell.Core.Register-ArgumentCompleter)</pre></section>

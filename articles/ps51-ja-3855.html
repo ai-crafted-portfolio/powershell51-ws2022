@@ -1,0 +1,394 @@
+<!doctype html><meta charset="utf-8"><section class="jp-official"><h1>変換文字列</h1>
+<h2>SYNOPSISは,例に一致する文字列をフォーマットします.</h2>
+<h2>SYNTAXは,のシンタックスです.</h2>
+<pre><code>Convert-String [-Example &lt;System.Collections.Generic.List`1[System.Management.Automation.PSObject]&gt;]
+ -InputObject &lt;String&gt; [&lt;CommonParameters&gt;]
+</code></pre>
+<h2>記述は,</h2>
+<p>cmdlet は文字列をフォーマットして,例のフォーマットに一致する.</p>
+<h2>例えは</h2>
+<h3>例1: 文字列のフォーマットを変換する</h3>
+<pre><code class="language-powershell">&quot;Mu Han&quot;, &quot;Jim Hance&quot;, &quot;David Ahs&quot;, &quot;Kim Akers&quot; | Convert-String -Example &quot;Ed Wilson=Wilson, E.&quot;
+</code></pre>
+<pre><code class="language-Output">Han, M.
+Hance, J.
+Ahs, D.
+Akers, K.
+</code></pre>
+<p>最初のコマンドは,名前と姓を含むアレイを作成します.</p>
+<p>第二のコマンドは例のとおり名前をフォーマットします. 輸出の順番に先の姓を入れ,次に初期文字が表示されます.</p>
+<h3>例2:文字列のフォーマットを簡素化する</h3>
+<pre><code class="language-powershell">$composers = @(&quot;Johann Sebastian Bach&quot;, &quot;Wolfgang Amadeus Mozart&quot;, &quot;Frederic Francois Chopin&quot;, &quot;Johannes Brahms&quot;)
+$composers | Convert-String -Example &quot;first middle last=last, first&quot;
+</code></pre>
+<pre><code class="language-Output">Bach, Johann
+Mozart, Wolfgang
+Chopin, Frederic
+Brahms, Johannes
+</code></pre>
+<p>最初のコマンドは,ファースト,ミドル,そしてネームを含むアレイを作成します.最後のエントリはミドルネームがないことに注意してください.</p>
+<p>第二のコマンドは,例のとおり名前をフォーマットします. 輸出でファーストネームを最初に,ファーストネームが次いでします. 中間の名前はすべて削除されます. 中間の名前のないエントリは正しく処理されます.</p>
+<h3>例3: 文字列が一致しないときの輸出管理例</h3>
+<pre><code class="language-powershell">$composers = @(&quot;Johann Sebastian Bach&quot;, &quot;Wolfgang Amadeus Mozart&quot;, &quot;Frederic Francois Chopin&quot;, &quot;Johannes Brahms&quot;)
+$composers | Convert-String -Example &quot;first middle last=middle, first&quot;
+</code></pre>
+<pre><code class="language-Output">Sebastian, Johann
+Amadeus, Wolfgang
+Francois, Frederic
+</code></pre>
+<p>最初のコマンドは,ファースト,ミドル,そしてネームを含むアレイを作成します.最後のエントリはミドルネームがないことに注意してください.</p>
+<p>第二のコマンドは,例のとおり名前をフォーマットします.出力で<strong>中名</strong>を最初に,その後に最初の名前に置きます. の最後のエントリです.<code>$Composers</code>試料パターンに一致しないため,中名は無いので,スキップされます.</p>
+<h3>例4: 美容スペースに注意する</h3>
+<pre><code class="language-powershell">$composers = @(&quot;Antonio Vivaldi&quot;, &quot;Richard Wagner &quot;, &quot;Franz Schubert&quot;, &quot;Johannes Brahms &quot;)
+$composers | Convert-String -Example &quot;Patti Fuller = Fuller, P.&quot;
+</code></pre>
+<pre><code class="language-Output"> Wagner, R.
+ Brahms, J.
+</code></pre>
+<p>最初のコマンドは,名前と姓の配列を作成します.第2項と第4項は,姓の後,余剰余スペースを持っていることに注意してください.</p>
+<p>第二のコマンドは,サンプルパターンに一致するすべての文字列を変換します. <em>word, space, word, and final trailing space</em>,これはすべて等等式符号の前にあります.<code>=</code>) また,出力中の先頭スペースを注意してください.</p>
+<h3>例5:複数のパターンを用いてプロセス情報をフォーマットする</h3>
+<pre><code class="language-powershell">$ExamplePatterns = @(
+    @{before='&quot;Hello&quot;,&quot;World&quot;'; after='World: Hello'},
+    @{before='&quot;Hello&quot;,&quot;1&quot;'; after='1: Hello'},
+    @{before='&quot;Hello-World&quot;,&quot;22&quot;'; after='22: Hello-World'},
+    @{before='&quot;hello world&quot;,&quot;333&quot;'; after='333: hello world'}
+)
+$Processes = Get-Process   | Select-Object -Property ProcessName, Id | ConvertTo-Csv -NoTypeInformation
+$Processes | Convert-String -Example $ExamplePatterns
+</code></pre>
+<pre><code class="language-Output">Id: ProcessName
+4368: AGSService
+8896: Amazon Music Helper
+4420: AppleMobileDeviceService
+...
+11140: git-bash
+0: Idle
+...
+56: Secure System
+...
+13028: WmiPrvSE
+2724: WUDFHost
+2980: WUDFHost
+3348: WUDFHost
+</code></pre>
+<p><strong>$ExamplePatterns</strong>は,例を通して,データ内の異なる予想パターンを定義します.</p>
+<p>最初のパターンです.<code>@{before='"Hello","World"'; after='World: Hello'}</code>読み書きは以下の通りです.</p>
+<p><em>expect stringsで,単語が2つの引用で囲まれた,その後は逗号,</em> _ _ そして,引用で囲まれた2番目の単語,そして最後に,文字列にスペースがない. _ _ output:第2の単語を最初に,<em> - _ _ _ _ quotesfree,その後単一のスペース,そして,引用なしで最初の単語に置く.</em></p>
+<p>第二のパターンは,<code>@{before='"Hello","1"'; after='1: Hello'}</code>読み書きは以下の通りです.</p>
+<p><em>expect stringsで,単語が2つの引用で囲まれた,その後逗号,</em> - <em>そして引用で囲まれた番号が;</em> - _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _</p>
+<p>第三のパターンは,<code>@{before='"Hello-World","22"'; after='22: Hello-World'}</code>読み書きは以下の通りです.</p>
+<p><em>expect strings _expect strings _where between two words with a hyphen come enclosed in</em> - <em>double quotes, then a comma, and then a number enclosed in quotes _ - _expect strings _where two words with a hyphen in between come enclosed in</em> - <em>double quotes, then a comma, and then a number enclosed in quotes _ - _ - _expect strings _expect strings where two words with a hyphen in between come enclosed in</em> - <em>double quotes, then a comma, then a comma, and then a number enclosed in quotes;</em> - _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _</p>
+<p>第4回,最後のパターンです.<code>@{before='"hello world","333"'; after='333: hello world'}</code>読み書きは以下の通りです.</p>
+<p><em>expect strings _expect strings _where two words with a space between come enclosed in</em> - <em>double quotes, then a comma, and then a number enclosed in quotes _ - _expect strings _where two words with a space between come enclosed in</em> - <em>double quotes, then a comma, and then a number enclosed in quotes _ - _ - _comma, then a number enclosed in quotes _ - _expect strings _expect strings _ - _expect strings _expect strings _expect strings _ - _expect strings _expect strings _expect strings where two words with a space between come enclosed in</em> - _double quotes, then a comma, then a number enclosed in quotes; _ - _ - _expect strings _expect strings _expect strings _expect strings where two words with a space between the comma and the third double quotes _ - _expect strings _expect strings _ _expect strings _ _expect strings _expect strings _ _ _expect strings _ _ _ _ _expect strings _ _ _ _ _expect _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _</p>
+<p>最初のコマンドはGet-Process cmdletを使用してすべてのプロセスを取得します.コマンドは,プロセスを選択するプロセス名とプロセスIDを選択する Select-Object cmdlet に転送します.パイプラインの終わりに,コマンドは,ConvertTo-Csv cmdlet を使用して,入力情報なしで,輸出を逗号分離された値に変換します.コマンドは <strong>$Processes</strong>変数で結果を保存します. <strong>$Processes</strong> では現在プロセス名とPID が含まれています.</p>
+<p>第二のコマンドは,入力項目の順序を変える例変数を指定します.このコマンドは,各文字列を""でカバーします.<code>$Processes</code> .</p>
+<p>&gt;!NOTE] &gt; 第4パターンには,スペースによって分離された2つ以上の単語が一致すると暗示されている.</p>
+<h2>パラメータは</h2>
+<h3>-Example</h3>
+<p>ターゲットフォーマットの例の一覧を指定します.等式符号 () によって分離されたペアを指定します.<code>=</code>),左側のソースパターンと右側のターゲットパターンと,以下の例のように:</p>
+<ul>
+<li>-<code>-Example "Hello World=World, Hello"</code> - -<code>-Example "Hello World=World: Hello",'"Hello","1"=1: Hello'</code></li>
+</ul>
+<p>&gt; [!NOTE] &gt;第2例では,パターンリストを使用しています.</p>
+<p>また, <strong>Before</strong>と <strong>After</strong>のプロパティを含むハッシュテーブルの一覧を指定してください.</p>
+<ul>
+<li>-<code>-Example @{before='"Hello","World"'; after='World: Hello'}, @{before='"Hello","1"'; after='1: Hello'}</code></li>
+</ul>
+<p>&gt; [!Caution] &gt;等等式記号の周りのスペースを使用しないこと<code>=</code>),それらはパターンの一部として扱われている.</p>
+<pre><code class="language-yaml">Type: System.Collections.Generic.List`1[System.Management.Automation.PSObject]
+Parameter Sets: (All)
+Aliases: E
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-InputObject</h3>
+<p>文字列をフォーマットする文字列を指定します.</p>
+<pre><code class="language-yaml">Type: System.String
+Parameter Sets: (All)
+Aliases:
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: True (ByValue)
+Accept wildcard characters: False
+</code></pre>
+<h3>共通パラメーター</h3>
+<p>このcmdletは,共通パラメータをサポートしています: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable.詳細については, <a href="を参照してください.https://go.microsoft.com/fwlink/?LinkID=113216">about_CommonParameters</a> でした.</p>
+<h2>輸入は</h2>
+<h1>変換文字列</h1>
+<h3>弦 弦</h3>
+<p>このcmdletに弦をパイプすることができます.</p>
+<h2>輸出は</h2>
+<h3>弦 弦</h3>
+<p>このcmdletは文字列を返します.</p>
+<h2>NOTES  記事ができました.</h2>
+<h2>関連リンク</h2>
+<p><a href="ConvertFrom-String.md">ConvertFrom-String</a> </p>
+<p><a href="ConvertTo-Csv.md">ConvertTo-Csv</a> </p>
+<p><a href="../Microsoft.PowerShell.Management/Get-Process.md">Get-Process</a> </p>
+<p><a href="Out-String.md">Out-String</a> </p>
+<p><a href="Select-Object.md">Select-Object</a> </p></section><section class="en-original"><pre class="source-original"># Convert-String
+
+## SYNOPSIS
+Formats a string to match examples.
+
+## SYNTAX
+
+```
+Convert-String [-Example &lt;System.Collections.Generic.List`1[System.Management.Automation.PSObject]&gt;]
+ -InputObject &lt;String&gt; [&lt;CommonParameters&gt;]
+```
+
+## DESCRIPTION
+
+The  cmdlet formats a string to match the format of examples.
+
+## EXAMPLES
+
+### Example 1: Convert format of a string
+
+```powershell
+&quot;Mu Han&quot;, &quot;Jim Hance&quot;, &quot;David Ahs&quot;, &quot;Kim Akers&quot; | Convert-String -Example &quot;Ed Wilson=Wilson, E.&quot;
+```
+
+```Output
+Han, M.
+Hance, J.
+Ahs, D.
+Akers, K.
+```
+
+The first command creates an array that contains first and last names.
+
+The second command formats the names according to the example. It puts the surname first in the
+output, followed by an initial.
+
+### Example 2: Simplify format of a string
+
+```powershell
+$composers = @(&quot;Johann Sebastian Bach&quot;, &quot;Wolfgang Amadeus Mozart&quot;, &quot;Frederic Francois Chopin&quot;, &quot;Johannes Brahms&quot;)
+$composers | Convert-String -Example &quot;first middle last=last, first&quot;
+```
+
+```Output
+Bach, Johann
+Mozart, Wolfgang
+Chopin, Frederic
+Brahms, Johannes
+```
+
+The first command creates an array that contains first, middle and last names. Note that the last
+entry has no middle name.
+
+The second command formats the names according to the example. It puts the last name first in the
+output, followed by the first name. All middle names removed; entry without middle name is handled
+correctly.
+
+### Example 3: Output management when strings don&#x27;t match example
+
+```powershell
+$composers = @(&quot;Johann Sebastian Bach&quot;, &quot;Wolfgang Amadeus Mozart&quot;, &quot;Frederic Francois Chopin&quot;, &quot;Johannes Brahms&quot;)
+$composers | Convert-String -Example &quot;first middle last=middle, first&quot;
+```
+
+```Output
+Sebastian, Johann
+Amadeus, Wolfgang
+Francois, Frederic
+```
+
+The first command creates an array that contains first, middle and last names. Note that the last
+entry has no middle name.
+
+The second command formats the names according to the example. It puts the **middle name** first in
+the output, followed by the first name. The last entry in `$Composers` is skipped, because it
+doesn&#x27;t match the sample pattern: it has no middle name.
+
+### Example 4: Caution with beauty spaces
+
+```powershell
+$composers = @(&quot;Antonio Vivaldi&quot;, &quot;Richard Wagner &quot;, &quot;Franz Schubert&quot;, &quot;Johannes Brahms &quot;)
+$composers | Convert-String -Example &quot;Patti Fuller = Fuller, P.&quot;
+```
+
+```Output
+ Wagner, R.
+ Brahms, J.
+```
+
+The first command creates an array of first and last names. Note that second and fourth items have
+an extra trailing space, after the last name.
+
+The second command converts all strings that match the sample pattern:
+_word, space, word, and final trailing space_, all of this before the equal sign(`=`). Also, note
+the leading space in the output.
+
+### Example 5: Format process information with multiple patterns
+
+```powershell
+$ExamplePatterns = @(
+    @{before=&#x27;&quot;Hello&quot;,&quot;World&quot;&#x27;; after=&#x27;World: Hello&#x27;},
+    @{before=&#x27;&quot;Hello&quot;,&quot;1&quot;&#x27;; after=&#x27;1: Hello&#x27;},
+    @{before=&#x27;&quot;Hello-World&quot;,&quot;22&quot;&#x27;; after=&#x27;22: Hello-World&#x27;},
+    @{before=&#x27;&quot;hello world&quot;,&quot;333&quot;&#x27;; after=&#x27;333: hello world&#x27;}
+)
+$Processes = Get-Process   | Select-Object -Property ProcessName, Id | ConvertTo-Csv -NoTypeInformation
+$Processes | Convert-String -Example $ExamplePatterns
+```
+
+```Output
+Id: ProcessName
+4368: AGSService
+8896: Amazon Music Helper
+4420: AppleMobileDeviceService
+...
+11140: git-bash
+0: Idle
+...
+56: Secure System
+...
+13028: WmiPrvSE
+2724: WUDFHost
+2980: WUDFHost
+3348: WUDFHost
+```
+
+**$ExamplePatterns** defines different expected patterns in the data, through examples.
+
+The first pattern, `@{before=&#x27;&quot;Hello&quot;,&quot;World&quot;&#x27;; after=&#x27;World: Hello&#x27;}`,
+reads as follows:
+
+- _expect strings where a word comes enclosed in double quotes, then a comma,_
+- _and then the second, and last, word enclosed in quotes;_
+- _with no spaces in the string. On the output: place second word first,_
+- _without quotes, then a single space, and then the first word, without quotes._
+
+The second pattern, `@{before=&#x27;&quot;Hello&quot;,&quot;1&quot;&#x27;; after=&#x27;1: Hello&#x27;}`,
+reads as follows:
+
+- _expect strings where a word comes enclosed in double quotes, then a comma,_
+- _and then a number enclosed in quotes;_
+- _with no spaces in the string. On the output: place the number first,_
+- _without quotes, then a single space, and then the word, without quotes._
+
+The third pattern, `@{before=&#x27;&quot;Hello-World&quot;,&quot;22&quot;&#x27;; after=&#x27;22: Hello-World&#x27;}`,
+reads as follows:
+
+- _expect strings where two words with a hyphen in between come enclosed in_
+- _double quotes, then a comma, and then a number enclosed in quotes;_
+- _with no spaces between the comma and the third double quote._
+- _On the output: place the number first, without quotes, then a single space,_
+- _and then the hyphenated words, without quotes._
+
+The fourth, and final, pattern,
+`@{before=&#x27;&quot;hello world&quot;,&quot;333&quot;&#x27;; after=&#x27;333: hello world&#x27;}`,
+reads as follows:
+
+- _expect strings where two words with a space in between come enclosed in_
+- _double quotes, then a comma, and then a number enclosed in quotes;_
+- _with no spaces between the comma and the third double quote._
+- _On the output: place the number first, without quotes, then a single space,_
+- _and then the words with the space in between, without quotes._
+
+The first command gets all processes by using the Get-Process cmdlet. The command passes them to the
+Select-Object cmdlet, which selects the process name and process ID. At the end of the pipeline, the
+command converts the output to comma separated values, without type information, by using the
+ConvertTo-Csv cmdlet. The command stores the results in the **$Processes** variable. **$Processes**
+now contains process names and PID.
+
+The second command specifies an example variable that changes the order of the input items. The
+command coverts each string in `$Processes`.
+
+&gt; [!NOTE]
+&gt; The fourth pattern implicitly says that two or more words separated by spaces are matched. Without
+&gt; the fourth pattern, only the first word of the string enclosed in double quotes is matched.
+
+## PARAMETERS
+
+### -Example
+
+Specifies a list of examples of the target format. Specify pairs separated by the equal sign (`=`),
+with the source pattern on the left and the target pattern on the right, as in the following
+examples:
+
+- `-Example &quot;Hello World=World, Hello&quot;`
+- `-Example &quot;Hello World=World: Hello&quot;,&#x27;&quot;Hello&quot;,&quot;1&quot;=1: Hello&#x27;`
+
+&gt; [!NOTE]
+&gt; The second example uses a list of patterns
+
+Alternatively, specify a list of hash tables that contain **Before** and
+**After** properties.
+
+- `-Example @{before=&#x27;&quot;Hello&quot;,&quot;World&quot;&#x27;; after=&#x27;World: Hello&#x27;}, @{before=&#x27;&quot;Hello&quot;,&quot;1&quot;&#x27;; after=&#x27;1: Hello&#x27;}`
+
+&gt; [!CAUTION]
+&gt; Avoid using spaces around the equal sign(`=`), as they are treated as part of the pattern.
+
+```yaml
+Type: System.Collections.Generic.List`1[System.Management.Automation.PSObject]
+Parameter Sets: (All)
+Aliases: E
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -InputObject
+
+Specifies a string to format.
+
+```yaml
+Type: System.String
+Parameter Sets: (All)
+Aliases:
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: True (ByValue)
+Accept wildcard characters: False
+```
+
+### CommonParameters
+
+This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable,
+-InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose,
+-WarningAction, and -WarningVariable. For more information, see [about_CommonParameters](https://go.microsoft.com/fwlink/?LinkID=113216).
+
+## INPUTS
+
+# Convert-String
+
+### String
+
+You can pipe strings to this cmdlet.
+
+## OUTPUTS
+
+### String
+
+This cmdlet returns a string.
+
+## NOTES
+
+## RELATED LINKS
+
+[ConvertFrom-String](ConvertFrom-String.md)
+
+[ConvertTo-Csv](ConvertTo-Csv.md)
+
+[Get-Process](../Microsoft.PowerShell.Management/Get-Process.md)
+
+[Out-String](Out-String.md)
+
+[Select-Object](Select-Object.md)</pre></section>

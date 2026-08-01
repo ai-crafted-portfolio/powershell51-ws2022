@@ -1,0 +1,791 @@
+<!doctype html><meta charset="utf-8"><section class="jp-official"><h1>about_Trapについて</h1>
+<h2>短編説明</h2>
+<p>記述式を終了するエラーとスクリプトを終了するエラーを処理するキーワードを記述します.</p>
+<h2>長い説明</h2>
+<p>終了エラーが,声明を実行するのを停止します.PowerShellで, _statement-terminating_エラー (現在の声明のみを停止する) と _script-terminating_エラー (コールスタック全体を解き放す) を区別します.<code>trap</code>キーワードは両方の種類に対応できます.エラーカテゴリーに関する詳細については,[about_Error_Handling][07]を参照してください.</p>
+<p><code>trap</code>キーワードは,終了エラーが発生したときに実行する記述のリストを指定します. <code>trap</code>ステートメントは,次の方法で終了エラーを処理することができます:</p>
+<ul>
+<li>を処理した後にエラーを表示します.<code>trap</code> を含むスクリプトまたは関数の声明をブロックし,実行を続けます.<code>trap</code>この行動はデフォルトです.</li>
+</ul>
+<p>&gt; [!NOTE] &gt; 終了エラーが次元の記述ブロックに発生すると,例えば &gt;  のような<code>if</code>声明や声明を出す<code>foreach</code>ループの記述について<code>trap</code>ブロックは &gt; run で実行され,下属 &gt; ブロックの外で次の記述で実行が続きます.</p>
+<ul>
+<li>
+<p>を含むスクリプトまたは関数のエラーを表示し,実行を中止します.<code>trap</code> using using を使って<code>break</code>の内側にある<code>trap</code>声明.</p>
+</li>
+<li>
+<p>誤りを黙らせて,文字や関数を実行し続けます.<code>trap</code> を使って<code>continue</code>の内側にある<code>trap</code>声明.</p>
+</li>
+</ul>
+<p>の記述リストの記述は,<code>trap</code>複数の条件または関数呼び出しを含むことができます.<code>trap</code>ログ,テスト条件,または別のプログラムを実行することもできます.</p>
+<h2>シンタックス</h2>
+<p><code>trap</code>文は次の構文を持っています:</p>
+<pre><code class="language-powershell">trap [[&lt;error type&gt;]] {&lt;statement list&gt;}
+</code></pre>
+<p><code>trap</code>終了エラーが発生すると実行する記述のリストが含まれます.<code>trap</code>という文で構成されている.<code>trap</code>選択的にキーワードにタイプ式式式が続くし,エラーが巻き込まれるとき実行する記述リストを含む記述ブロックを入力します.タイプ式式式式はエラーの種類を精錬します.<code>trap</code>捕獲する.</p>
+<p>スクリプトやコマンドには複数の文字が含まれる.<code>trap</code>声明です. <code>trap</code>記述は脚本やコマンドのどこでも表示されます.</p>
+<h2>すべての終了エラーをキャプチャする</h2>
+<p>スクリプトやコマンドで他の方法で処理されない終了エラーが発生すると,PowerShellは""をチェックします.<code>trap</code>誤りを処理する記述です.<code>trap</code>PowerShell が実行している場合は,脚本またはコマンドを  で実行し続けます.<code>trap</code>声明.</p>
+<p>次の例は最小のです.<code>trap</code>声明:</p>
+<pre><code class="language-powershell">trap { 'Error found.' }
+</code></pre>
+<p>このこと <code>trap</code>終了するエラーをキャッチする声明です.</p>
+<p>次の例では,関数は,実行時のエラーを引き起こす無意味な文字列を含みます.</p>
+<pre><code class="language-powershell">function TrapTest {
+    trap { 'Error found.' }
+    nonsenseString
+}
+
+TrapTest
+</code></pre>
+<p>この関数を実行すると,次の出力が返されます:</p>
+<pre><code class="language-Output">Error found.
+nonsenseString : The term 'nonsenseString' is not recognized as the name
+of a cmdlet, function, script file, or operable program. Check the
+spelling of the name, or if a path was included, verify that the path is
+correct and try again.
+At line:3 char:5
++     nonsenseString
++     ~~~~~~~~~~~~~~
+    + CategoryInfo          : ObjectNotFound: (nonsenseString:String) []
+   , CommandNotFoundException
+    + FullyQualifiedErrorId : CommandNotFoundException
+</code></pre>
+<p>次の例には,が含まれる.<code>trap</code> を使ってエラーを表示する声明です.<code>$_</code>    <code>$PSItem</code>自動変数:</p>
+<pre><code class="language-powershell">function TrapTest {
+    trap { &quot;Error found: $_&quot; }
+    nonsenseString
+}
+
+TrapTest
+</code></pre>
+<p>このバージョンの関数を実行すると,次の出力が返されます:</p>
+<pre><code class="language-Output">Error found: The term 'nonsenseString' is not recognized as the name of a
+cmdlet, function, script file, or operable program. Check the spelling of
+the name, or if a path was included, verify that the path is correct and
+try again.
+nonsenseString : The term 'nonsenseString' is not recognized as the name
+of a cmdlet, function, script file, or operable program. Check the
+spelling of the name, or if a path was included, verify that the path is
+correct and try again.
+At line:3 char:5
++     nonsenseString
++     ~~~~~~~~~~~~~~
+    + CategoryInfo          : ObjectNotFound: (nonsenseString:String) []
+   , CommandNotFoundException
+    + FullyQualifiedErrorId : CommandNotFoundException
+</code></pre>
+<p>&gt; [!IMPORTANT] &gt; <code>trap</code>記述は,特定のスクリプトブロック内のどこでも定義できますが,そのスクリプトブロック内のすべての記述に適用されます.<code>trap</code>&gt; ブロック内のステートメントは,他のステートメントが実行される前に定義されます. &gt; JavaScriptなどの他の言語では,これは[hoisting][06]として知られています.<code>trap</code>記述は,そのブロック内のすべての記述に適用されます.たとえ&gt;実行が定義された点を超えて進んでいなくても.例えば,&gt;定義する<code>trap</code>スクリプトの終わりにエラーを入力して &gt; 最初の文を入力すると,まだ  が触発されます.<code>trap</code> .</p>
+<h1>about_Trapについて</h1>
+<h2>特定エラーを罠にかけること</h2>
+<p>スクリプトやコマンドには複数の文字が含まれる.<code>trap</code>声明.A  声明.<code>trap</code>特定のエラーを処理するために定義することができます.</p>
+<p>次の例は,です.<code>trap</code>特定のエラーを閉じ込めている記述です.</p>
+<pre><code class="language-powershell">trap [System.Management.Automation.CommandNotFoundException] {
+    'Command error trapped'
+}
+</code></pre>
+<p>機能やスクリプトが既知のコマンドに一致しない文字列に出会うとき,この <code>trap</code>声明は,  を表示します.<code>Command error trapped</code>文字列を走らせた後に.<code>trap</code>PowerShell でエラーオブジェクトをエラーストリームに書き込み,脚本を継続します.</p>
+<p>PowerShell では .NET 例外タイプを使用しています.以下の例では <strong>System.Exception</strong> エラータイプが指定されています.</p>
+<pre><code class="language-powershell">trap [System.Exception] { 'An error trapped' }
+</code></pre>
+<p><strong>CommandNotFoundException</strong> エラータイプは <strong>System.Exception</strong> タイプから継承される.この記述は,未知のコマンドによって発生するエラーを捕捉します.他のエラータイプも捕捉します.</p>
+<p>エラーオブジェクトを検査することでエラーの例外タイプを見つけることができます.以下の例では,セッションで最後のエラーの例外の完全な名前を入手する方法を示しています.</p>
+<pre><code class="language-powershell">nonsenseString
+$Error[0].Exception.GetType().FullName
+</code></pre>
+<pre><code class="language-Output">nonsenseString : The term 'nonsenseString' is not recognized as the name
+of a cmdlet, function, script file, or operable program. Check the
+spelling of the name, or if a path was included, verify that the path is
+correct and try again.
+At line:1 char:1
++ nonsenseString
++ ~~~~~~~~~~~~~~
+    + CategoryInfo          : ObjectNotFound: (nonsenseString:String) []
+   , CommandNotFoundException
+    + FullyQualifiedErrorId : CommandNotFoundException
+
+System.Management.Automation.CommandNotFoundException
+</code></pre>
+<p>ひとつ以上持っていてもいいでしょう.<code>trap</code>スクリプトに書かれている.ただ一つの記述です.<code>trap</code>終了エラーが発生すると,PowerShellは""を検索します.<code>trap</code>最も具体的なマッチで実行の現在のスクリプトブロックから始まる.</p>
+<p>次のスクリプト例にはエラーが含まれています.スクリプトには一般的な が含まれています.<code>trap</code>終了エラーと特定の  を捕捉する声明です.<code>trap</code>命令不成立の例外を指定する式です.</p>
+<pre><code class="language-powershell">trap { 'Other terminating error trapped' }
+trap [System.Management.Automation.CommandNotFoundException] {
+  'Command error trapped'
+}
+nonsenseString
+</code></pre>
+<p>このスクリプトを実行すると,次の結果が得られます.</p>
+<pre><code class="language-Output">Command error trapped
+nonsenseString : The term 'nonsenseString' is not recognized as the name
+of a cmdlet, function, script file, or operable program. Check the
+spelling of the name, or if a path was included, verify that the path is
+correct and try again.
+At line:5 char:1
++ nonsenseString}
++ ~~~~~~~~~~~~~~
+    + CategoryInfo          : ObjectNotFound: (nonsenseString:String) []
+   , CommandNotFoundException
+    + FullyQualifiedErrorId : CommandNotFoundException
+</code></pre>
+<p>PowerShellが認識していないため<code>nonsenseString</code>cmdlet または他の項として,それは <strong>CommandNotFoundException</strong>エラーを返します.<code>trap</code>この終了エラーを記述する文が罠にかけています.</p>
+<p>次のスクリプト例は同じ文字を含んでいます.<code>trap</code>異なるエラーの記述:</p>
+<pre><code class="language-powershell">trap { 'Other terminating error trapped' }
+trap [System.Management.Automation.CommandNotFoundException] {
+    'Command error trapped'
+}
+1/$null
+</code></pre>
+<p>このスクリプトを実行すると,次の結果が得られます.</p>
+<pre><code class="language-Output">Other terminating error trapped
+Attempted to divide by zero.
+At line:5 char:1
++ 1/$null}
++ ~~~~~~~
+    + CategoryInfo          : NotSpecified: (:) [], RuntimeException
+    + FullyQualifiedErrorId : RuntimeException
+</code></pre>
+<p>ゼロで割る試みでは,CommandNotFoundExceptionのエラーが発生しない.<code>trap</code>終了エラーを捕まえる声明は,分割をゼロエラーで捕らえる.</p>
+<h2>脚本ブロックのエラーを捕まえる</h2>
+<p>デフォルトでは,終了エラーが投げられたとき,実行はトラップ声明に転送されます.<code>trap</code>ブロックが実行され,エラーが発生した場所から次のステートメントブロックにコントロールが戻ります.</p>
+<p>例えば,終了エラーが で発生すると,<code>foreach</code>声明は, <code>trap</code>命令が実行され,実行は次の命令に続きます.<code>foreach</code>ブロック内では無い.<code>foreach</code>ブロックです.</p>
+<pre><code class="language-powershell">trap { 'An error occurred!'}
+foreach ($x in 3..-1) {
+       &quot;1/$x = &quot;
+       &quot;`t$(1/$x)&quot;
+}
+'after loop'
+</code></pre>
+<pre><code class="language-Output">1/3 =
+        0.333333333333333
+1/2 =
+        0.5
+1/1 =
+        1
+1/0 =
+An error occurred!
+Attempted to divide by zero.
+At line:3 char:4
++    1/$x
++    ~~~~
+    + CategoryInfo          : NotSpecified: (:) [], RuntimeException
+    + FullyQualifiedErrorId : RuntimeException
+
+after loop
+</code></pre>
+<p>輸出では,ループが最後の再演まで続くことがわかります.スクリプトが1を0で割ろうとするとき,PowerShellは終了エラーを発生させます.スクリプトは残りの を跳ねます.<code>foreach</code> 宣言を実行します.<code>try</code>という文の後,続きをします.<code>foreach</code>声明.</p>
+<h1>about_Trapについて</h1>
+<h2>罠のエラーと範囲を把握する</h2>
+<p>終了エラーが  と同じスクリプトブロックで発生した場合,<code>trap</code>PowerShellで, PowerShell で,  によって定義された記述のリストを実行します.<code>trap</code>実行はエラーの後,声明で続きます.もし,  が実行されれば,<code>trap</code>命令はエラーから異なるスクリプトブロックに存在し,実行は次の命令で続きます.この命令は, と同じスクリプトブロックに存在します.<code>trap</code>声明.</p>
+<p>例えば,関数でエラーが発生し, が<code>trap</code>函数内の記述は,次の記述でスクリプトが続きます.次のスクリプトにはエラーとが含まれています.<code>trap</code>声明:</p>
+<pre><code class="language-powershell">function function1 {
+    trap { 'An error: ' }
+    NonsenseString
+    'function1 was completed'
+}
+
+function1
+</code></pre>
+<p>このスクリプトを実行すると,次の結果が得られます.</p>
+<pre><code class="language-Output">An error:
+NonsenseString : The term 'NonsenseString' is not recognized as the name
+of a cmdlet, function, script file, or operable program. Check the
+spelling of the name, or if a path was included, verify that the path is
+correct and try again.
+At line:3 char:5
++     NonsenseString
++     ~~~~~~~~~~~~~~
+    + CategoryInfo          : ObjectNotFound: (NonsenseString:String) []
+   , CommandNotFoundException
+    + FullyQualifiedErrorId : CommandNotFoundException
+
+function1 was completed
+</code></pre>
+<p><code>trap</code>函数内の記述はエラーを捕らえる.メッセージが表示された後,PowerShell は関数を実行し再開します.注意してください.<code>Function1</code>の完成後に完成した.<code>trap</code>声明.</p>
+<p>この行動を,同じエラーとを伴う次の例と比較してください.<code>trap</code>この例では, という表現が示されています.<code>trap</code>式は関数の外で発生します:</p>
+<pre><code class="language-powershell">function function2 {
+    NonsenseString
+    'function2 was completed'
+}
+
+trap { 'An error:' }
+
+function2
+</code></pre>
+<p>ランニング・ザ・<code>Function2</code>函数で次の結果が得られます.</p>
+<pre><code class="language-Output">An error:
+NonsenseString : The term 'NonsenseString' is not recognized as the name
+of a cmdlet, function, script file, or operable program. Check the
+spelling of the name, or if a path was included, verify that the path is
+correct and try again.
+At line:2 char:5
++     NonsenseString
++     ~~~~~~~~~~~~~~
+    + CategoryInfo          : ObjectNotFound: (NonsenseString:String) []
+   , CommandNotFoundException
+    + FullyQualifiedErrorId : CommandNotFoundException
+</code></pre>
+<p>この例では,の文字が<code>function2 was completed</code>両例において,終了エラーは関数内で発生します.しかし,この例では,命令は です.<code>trap</code>PowerShell は,  後に関数に戻らない.<code>trap</code>実行する. 声明は実行する.</p>
+<p>&gt; [!CAUTION] &gt;同じエラー条件に複数の罠が定義された場合,最初の罠は &gt; <code>trap</code>文字ブロックの中で最も高い) と定義されたレクシカルで定義される.</p>
+<p>次の例では,ただ""だけ<code>trap</code> with with とする<code>whoops 1</code>ランス.</p>
+<pre><code class="language-powershell">Remove-Item -ErrorAction Stop ThisFileDoesNotExist
+trap { 'whoops 1'; continue }
+trap { 'whoops 2'; continue }
+</code></pre>
+<p>&gt; [!IMPORTANT] &gt; A <code>trap</code>記述がコンパイルされる場所まで設定されます.<code>trap</code>&gt;関数またはドットソーススクリプト内の声明,関数またはドット &gt;ソーススクリプトが出ると,すべて<code>trap</code>内部の記述は削除されます.</p>
+<h2>休憩と継続のキーワードを使用します</h2>
+<p>を用いることができます.<code>break</code>そして,<code>continue</code>キーワードは,キーワードの内にある.<code>trap</code>スクリプトやコマンドが終了エラーが発生した後に実行し続けることを判断するための説明です.</p>
+<p>を含む場合は,<code>break</code>声明の中で,<code>trap</code>PowerShell で関数やスクリプトを停止する.次のサンプル関数は  を使います.<code>break</code>キーワードのキーワードは,<code>trap</code>声明:</p>
+<pre><code class="language-powershell">function break_example {
+    trap {
+        'Error trapped'
+        break
+    }
+    1/$null
+    'Function completed.'
+}
+
+break_example
+</code></pre>
+<pre><code class="language-Output">Error trapped
+Attempted to divide by zero.
+At line:6 char:5
++     1/$null
++     ~~~~~~~
+    + CategoryInfo          : NotSpecified: (:) [], ParentContainsErrorR
+   ecordException
+    + FullyQualifiedErrorId : RuntimeException
+</code></pre>
+<p>なぜなら,その <code>trap</code>という声明が含まれていた.<code>break</code>キーワードは,関数が実行し続けないので, <code>Function completed</code>ラインが実行されていない.</p>
+<p>を含む場合は,<code>continue</code>キーワードのキーワードは,<code>trap</code>PowerShell はエラーの原因となる記述の後,エラーが発生しなかった場合と同じく,エラーが発生した状態の後,PowerShell が再起動します.<code>break</code>    <code>continue</code>と.<code>continue</code>しかし,PowerShellではエラーストリームにエラーを書かない.</p>
+<p>次のサンプル関数は,  を使います.<code>continue</code>キーワードのキーワードは,<code>trap</code>声明:</p>
+<pre><code class="language-powershell">function ContinueExample {
+    trap {
+        'Error trapped'
+        continue
+    }
+    foreach ($x in 3..-1) {
+       &quot;1/$x = &quot;
+       &quot;`t$(1/$x)&quot;
+    }
+    'End of function'
+}
+
+ContinueExample
+</code></pre>
+<pre><code class="language-Output">1/3 =
+        0.333333333333333
+1/2 =
+        0.5
+1/1 =
+        1
+1/0 =
+Error trapped
+End of function
+</code></pre>
+<p>誤差が捕まった後,関数は再起動し, <code>End of function</code>誤差はエラーストリームに書き込まれていません.</p>
+<h2>筆記</h2>
+<p><code>trap</code>ステートメントは,スクリプトブロック内のすべての終了エラーが処理されていることを確認するための方法を提供します.より細かなエラー処理のために,使用してください <code>try/catch</code>を使って罠を定義するブロックです.<code>catch</code>  ステートメント<code>catch</code>記述は,関連したコードの内部にあるコードにのみ適用されます.<code>try</code>詳細については,[about_Try_Catch_Finally][05]を参照してください.</p>
+<h2>また, を参照してください.</h2>
+<p>[about_Break][01] - [about_Continue][02] - [about_Error_Handling][07] - [about_Scopes][03] - [about_Throw][04] - [about_Try_Catch_Finally][05]</p>
+<p>&lt;!--リンク参照 --&gt; [01]: about_Break.md [02]: about_Continue.md [03]: about_Scopes.md [04]: about_Throw.md [05]: about_Try_Catch_Finally.md [06]: https://wikipedia.org/wiki/JavaScript_syntax#hoisting[07]: about_Error_Handling.mdについて</p></section><section class="en-original"><pre class="source-original"># about_Trap
+
+## Short description
+
+Describes a keyword that handles statement-terminating and script-terminating
+errors.
+
+## Long description
+
+A terminating error stops a statement from running. PowerShell distinguishes
+_statement-terminating_ errors (which stop only the current statement) from
+_script-terminating_ errors (which unwind the entire call stack). The `trap`
+keyword can handle both kinds. For more information about error categories, see
+[about_Error_Handling][07].
+
+The `trap` keyword specifies a list of statements to run when a terminating
+error occurs. `trap` statements can handle the terminating errors in the
+following ways:
+
+- Display the error after processing the `trap` statement block and continuing
+  execution of the script or function containing the `trap`. This behavior is
+  the default.
+
+  &gt; [!NOTE]
+  &gt; When the terminating error occurs in a subordinate statement block, such as
+  &gt; an `if` statement or `foreach` loop, the statements in the `trap` block are
+  &gt; run and execution continues at the next statement outside the subordinate
+  &gt; block.
+
+- Display the error and abort execution of the script or function containing
+  the `trap` using `break` in the `trap` statement.
+
+- Silence the error, but continue execution of the script or function
+  containing the `trap` by using `continue` in the `trap` statement.
+
+The statement list of the `trap` can include multiple conditions or function
+calls. A `trap` can write logs, test conditions, or even run another program.
+
+## Syntax
+
+The `trap` statement has the following syntax:
+
+```powershell
+trap [[&lt;error type&gt;]] {&lt;statement list&gt;}
+```
+
+The `trap` statement includes a list of statements to run when a terminating
+error occurs. A `trap` statement consists of the `trap` keyword, optionally
+followed by a type expression, and the statement block containing the list of
+statements to run when an error is trapped. The type expression refines the
+types of errors the `trap` catches.
+
+A script or command can have multiple `trap` statements. `trap` statements can
+appear anywhere in the script or command.
+
+## Trapping all terminating errors
+
+When a terminating error occurs that isn&#x27;t handled in another way in a script
+or command, PowerShell checks for a `trap` statement that handles the error. If
+a `trap` statement is present, PowerShell continues running the script or
+command in the `trap` statement.
+
+The following example is a minimal `trap` statement:
+
+```powershell
+trap { &#x27;Error found.&#x27; }
+```
+
+This `trap` statement traps any terminating error.
+
+In the following example, the function includes a nonsense string that causes
+a runtime error.
+
+```powershell
+function TrapTest {
+    trap { &#x27;Error found.&#x27; }
+    nonsenseString
+}
+
+TrapTest
+```
+
+Running this function returns the following output:
+
+```Output
+Error found.
+nonsenseString : The term &#x27;nonsenseString&#x27; is not recognized as the name
+of a cmdlet, function, script file, or operable program. Check the
+spelling of the name, or if a path was included, verify that the path is
+correct and try again.
+At line:3 char:5
++     nonsenseString
++     ~~~~~~~~~~~~~~
+    + CategoryInfo          : ObjectNotFound: (nonsenseString:String) []
+   , CommandNotFoundException
+    + FullyQualifiedErrorId : CommandNotFoundException
+```
+
+The following example includes a `trap` statement that displays the error by
+using the `$_` or `$PSItem` automatic variable:
+
+```powershell
+function TrapTest {
+    trap { &quot;Error found: $_&quot; }
+    nonsenseString
+}
+
+TrapTest
+```
+
+Running this version of the function returns the following output:
+
+```Output
+Error found: The term &#x27;nonsenseString&#x27; is not recognized as the name of a
+cmdlet, function, script file, or operable program. Check the spelling of
+the name, or if a path was included, verify that the path is correct and
+try again.
+nonsenseString : The term &#x27;nonsenseString&#x27; is not recognized as the name
+of a cmdlet, function, script file, or operable program. Check the
+spelling of the name, or if a path was included, verify that the path is
+correct and try again.
+At line:3 char:5
++     nonsenseString
++     ~~~~~~~~~~~~~~
+    + CategoryInfo          : ObjectNotFound: (nonsenseString:String) []
+   , CommandNotFoundException
+    + FullyQualifiedErrorId : CommandNotFoundException
+```
+
+&gt; [!IMPORTANT]
+&gt; `trap` statements can be defined anywhere within a given scriptblock, but
+&gt; always apply to all statements in that scriptblock. At runtime, `trap`
+&gt; statements in a block are defined before any other statements are executed.
+&gt; In other languages, such as JavaScript, this is known as [hoisting][06]. This
+&gt; means that `trap` statements apply to all statements in that block even if
+&gt; execution hasn&#x27;t advanced past the point at which they&#x27;re defined. For
+&gt; example, defining a `trap` at the end of a script and throwing an error in
+&gt; the first statement still triggers that `trap`.
+
+# about_Trap
+
+## Trapping specific errors
+
+A script or command can have multiple `trap` statements. A `trap` can be
+defined to handle specific errors.
+
+The following example is a `trap` statement that traps the specific error
+**CommandNotFoundException**:
+
+```powershell
+trap [System.Management.Automation.CommandNotFoundException] {
+    &#x27;Command error trapped&#x27;
+}
+```
+
+When a function or script encounters a string that doesn&#x27;t match a known
+command, this `trap` statement displays the `Command error trapped` string.
+After running the `trap` statement list, PowerShell writes the error object to
+the error stream and then continues the script.
+
+PowerShell uses .NET exception types. The following example specifies the
+**System.Exception** error type:
+
+```powershell
+trap [System.Exception] { &#x27;An error trapped&#x27; }
+```
+
+The **CommandNotFoundException** error type inherits from the
+**System.Exception** type. This statement traps any errors raised by unknown
+commands. It also traps other error types.
+
+You can find the exception type for an error by inspecting the error object.
+The following example shows how to get the full name of the exception for the
+last error in a session:
+
+```powershell
+nonsenseString
+$Error[0].Exception.GetType().FullName
+```
+
+```Output
+nonsenseString : The term &#x27;nonsenseString&#x27; is not recognized as the name
+of a cmdlet, function, script file, or operable program. Check the
+spelling of the name, or if a path was included, verify that the path is
+correct and try again.
+At line:1 char:1
++ nonsenseString
++ ~~~~~~~~~~~~~~
+    + CategoryInfo          : ObjectNotFound: (nonsenseString:String) []
+   , CommandNotFoundException
+    + FullyQualifiedErrorId : CommandNotFoundException
+
+System.Management.Automation.CommandNotFoundException
+```
+
+You can have more than one `trap` statement in a script. Only one `trap`
+statement can trap each error type. When a terminating error occurs, PowerShell
+searches for the `trap` with the most specific match, starting in the current
+scriptblock of execution.
+
+The following script example contains an error. The script includes a general
+`trap` statement that traps any terminating error and a specific `trap`
+statement that specifies the **CommandNotFoundException** type.
+
+```powershell
+trap { &#x27;Other terminating error trapped&#x27; }
+trap [System.Management.Automation.CommandNotFoundException] {
+  &#x27;Command error trapped&#x27;
+}
+nonsenseString
+```
+
+Running this script produces the following result:
+
+```Output
+Command error trapped
+nonsenseString : The term &#x27;nonsenseString&#x27; is not recognized as the name
+of a cmdlet, function, script file, or operable program. Check the
+spelling of the name, or if a path was included, verify that the path is
+correct and try again.
+At line:5 char:1
++ nonsenseString}
++ ~~~~~~~~~~~~~~
+    + CategoryInfo          : ObjectNotFound: (nonsenseString:String) []
+   , CommandNotFoundException
+    + FullyQualifiedErrorId : CommandNotFoundException
+```
+
+Because PowerShell doesn&#x27;t recognize `nonsenseString` as a cmdlet or other
+item, it returns a **CommandNotFoundException** error. The specific `trap`
+statement traps this terminating error.
+
+The following script example contains the same `trap` statements with a
+different error:
+
+```powershell
+trap { &#x27;Other terminating error trapped&#x27; }
+trap [System.Management.Automation.CommandNotFoundException] {
+    &#x27;Command error trapped&#x27;
+}
+1/$null
+```
+
+Running this script produces the following result:
+
+```Output
+Other terminating error trapped
+Attempted to divide by zero.
+At line:5 char:1
++ 1/$null}
++ ~~~~~~~
+    + CategoryInfo          : NotSpecified: (:) [], RuntimeException
+    + FullyQualifiedErrorId : RuntimeException
+```
+
+The attempt to divide by zero doesn&#x27;t create a **CommandNotFoundException**
+error. The other `trap` statement, which traps any terminating error, traps the
+divide by zero error.
+
+## Trapping errors in a scriptblock
+
+By default, when a terminating error is thrown, execution transfers to the trap
+statement. After the `trap` block is run, control returns to the next statement
+block after the location of the error.
+
+For example, when a terminating error occurs in a `foreach` statement, the
+`trap` statement is run and execution continues at the next statement after the
+`foreach` block, not within the `foreach` block.
+
+```powershell
+trap { &#x27;An error occurred!&#x27;}
+foreach ($x in 3..-1) {
+       &quot;1/$x = &quot;
+       &quot;`t$(1/$x)&quot;
+}
+&#x27;after loop&#x27;
+```
+
+```Output
+1/3 =
+        0.333333333333333
+1/2 =
+        0.5
+1/1 =
+        1
+1/0 =
+An error occurred!
+Attempted to divide by zero.
+At line:3 char:4
++    1/$x
++    ~~~~
+    + CategoryInfo          : NotSpecified: (:) [], RuntimeException
+    + FullyQualifiedErrorId : RuntimeException
+
+after loop
+```
+
+In the output, you can see the loops continue until the last iteration. When
+the script tries to divide 1 by 0, PowerShell throws a terminating error. The
+script skips the rest of the `foreach` statement, runs the `try` statement,
+and continues after the `foreach` statement.
+
+# about_Trap
+
+## Trapping errors and scope
+
+If a terminating error occurs in the same scriptblock as the `trap` statement,
+PowerShell runs the list of statements defined by the `trap`. Execution
+continues at the statement after the error. If the `trap` statement is in a
+different scriptblock from the error, execution continues at the next
+statement that&#x27;s in the same scriptblock as the `trap` statement.
+
+For example, if an error occurs in a function, and the `trap` statement is in
+the function, the script continues at the next statement. The following script
+contains an error and a `trap` statement:
+
+```powershell
+function function1 {
+    trap { &#x27;An error: &#x27; }
+    NonsenseString
+    &#x27;function1 was completed&#x27;
+}
+
+function1
+```
+
+Running this script produces the following result:
+
+```Output
+An error:
+NonsenseString : The term &#x27;NonsenseString&#x27; is not recognized as the name
+of a cmdlet, function, script file, or operable program. Check the
+spelling of the name, or if a path was included, verify that the path is
+correct and try again.
+At line:3 char:5
++     NonsenseString
++     ~~~~~~~~~~~~~~
+    + CategoryInfo          : ObjectNotFound: (NonsenseString:String) []
+   , CommandNotFoundException
+    + FullyQualifiedErrorId : CommandNotFoundException
+
+function1 was completed
+```
+
+The `trap` statement in the function traps the error. After displaying the
+message, PowerShell resumes running the function. Notice that `Function1`
+completed after the `trap` statement.
+
+Compare this behavior with the following example, which has the same error and
+`trap` statement. In this example, the `trap` statement occurs outside the
+function:
+
+```powershell
+function function2 {
+    NonsenseString
+    &#x27;function2 was completed&#x27;
+}
+
+trap { &#x27;An error:&#x27; }
+
+function2
+```
+
+Running the `Function2` function produces the following result:
+
+```Output
+An error:
+NonsenseString : The term &#x27;NonsenseString&#x27; is not recognized as the name
+of a cmdlet, function, script file, or operable program. Check the
+spelling of the name, or if a path was included, verify that the path is
+correct and try again.
+At line:2 char:5
++     NonsenseString
++     ~~~~~~~~~~~~~~
+    + CategoryInfo          : ObjectNotFound: (NonsenseString:String) []
+   , CommandNotFoundException
+    + FullyQualifiedErrorId : CommandNotFoundException
+```
+
+In this example, the `function2 was completed` command wasn&#x27;t run. In both
+examples, the terminating error occurs within the function. In this example,
+however, the `trap` statement is outside the function. PowerShell doesn&#x27;t go
+back into the function after the `trap` statement runs.
+
+&gt; [!CAUTION]
+&gt; When multiple traps are defined for the same error condition, the first
+&gt; `trap` defined lexically (highest in the scriptblock) is used.
+
+In the following example, only the `trap` with `whoops 1` runs.
+
+```powershell
+Remove-Item -ErrorAction Stop ThisFileDoesNotExist
+trap { &#x27;whoops 1&#x27;; continue }
+trap { &#x27;whoops 2&#x27;; continue }
+```
+
+&gt; [!IMPORTANT]
+&gt; A `trap` statement is scoped to where it compiles. If you have a `trap`
+&gt; statement inside a function or dot sourced script, when the function or dot
+&gt; sourced script exits, all `trap` statements inside are removed.
+
+## Using the break and continue keywords
+
+You can use the `break` and `continue` keywords in a `trap` statement to
+determine whether a script or command continues to run after a terminating
+error.
+
+If you include a `break` statement in a `trap` statement list, PowerShell stops
+the function or script. The following sample function uses the `break` keyword
+in a `trap` statement:
+
+```powershell
+function break_example {
+    trap {
+        &#x27;Error trapped&#x27;
+        break
+    }
+    1/$null
+    &#x27;Function completed.&#x27;
+}
+
+break_example
+```
+
+```Output
+Error trapped
+Attempted to divide by zero.
+At line:6 char:5
++     1/$null
++     ~~~~~~~
+    + CategoryInfo          : NotSpecified: (:) [], ParentContainsErrorR
+   ecordException
+    + FullyQualifiedErrorId : RuntimeException
+```
+
+Because the `trap` statement included the `break` keyword, the function doesn&#x27;t
+continue to run, and the `Function completed` line isn&#x27;t run.
+
+If you include a `continue` keyword in a `trap` statement, PowerShell resumes
+after the statement that caused the error, just as it would without `break` or
+`continue`. With the `continue` keyword, however, PowerShell doesn&#x27;t write an
+error to the error stream.
+
+The following sample function uses the `continue` keyword in a `trap`
+statement:
+
+```powershell
+function ContinueExample {
+    trap {
+        &#x27;Error trapped&#x27;
+        continue
+    }
+    foreach ($x in 3..-1) {
+       &quot;1/$x = &quot;
+       &quot;`t$(1/$x)&quot;
+    }
+    &#x27;End of function&#x27;
+}
+
+ContinueExample
+```
+
+```Output
+1/3 =
+        0.333333333333333
+1/2 =
+        0.5
+1/1 =
+        1
+1/0 =
+Error trapped
+End of function
+```
+
+The function resumes after the error is trapped, and the `End of function`
+statement runs. No error is written to the error stream.
+
+## Notes
+
+`trap` statements provide a way to ensure all terminating errors within a
+scriptblock are handled. For more fine-grained error handling, use
+`try/catch` blocks where traps are defined using `catch` statements. The
+`catch` statements only apply to the code inside the associated `try`
+statement. For more information, see
+[about_Try_Catch_Finally][05].
+
+## See also
+
+- [about_Break][01]
+- [about_Continue][02]
+- [about_Error_Handling][07]
+- [about_Scopes][03]
+- [about_Throw][04]
+- [about_Try_Catch_Finally][05]
+
+&lt;!-- link references --&gt;
+[01]: about_Break.md
+[02]: about_Continue.md
+[03]: about_Scopes.md
+[04]: about_Throw.md
+[05]: about_Try_Catch_Finally.md
+[06]: https://wikipedia.org/wiki/JavaScript_syntax#hoisting
+[07]: about_Error_Handling.md</pre></section>

@@ -1,0 +1,592 @@
+<!doctype html><meta charset="utf-8"><section class="jp-official"><h1>Register-WmiEvent</h1>
+<h2>SYNOPSISはWindows管理機器 (WMI) のイベントに登録している.</h2>
+<h2>SYNTAXは,のシンタックスです.</h2>
+<h3>class (デフォルト)</h3>
+<pre><code>Register-WmiEvent [-Namespace &lt;String&gt;] [-Credential &lt;PSCredential&gt;] [-ComputerName &lt;String&gt;] [-Class] &lt;String&gt;
+ [-Timeout &lt;Int64&gt;] [[-SourceIdentifier] &lt;String&gt;] [[-Action] &lt;ScriptBlock&gt;] [-MessageData &lt;PSObject&gt;]
+ [-SupportEvent] [-Forward] [-MaxTriggerCount &lt;Int32&gt;] [&lt;CommonParameters&gt;]
+</code></pre>
+<h3>query を求めました.</h3>
+<pre><code>Register-WmiEvent [-Namespace &lt;String&gt;] [-Credential &lt;PSCredential&gt;] [-ComputerName &lt;String&gt;] [-Query] &lt;String&gt;
+ [-Timeout &lt;Int64&gt;] [[-SourceIdentifier] &lt;String&gt;] [[-Action] &lt;ScriptBlock&gt;] [-MessageData &lt;PSObject&gt;]
+ [-SupportEvent] [-Forward] [-MaxTriggerCount &lt;Int32&gt;] [&lt;CommonParameters&gt;]
+</code></pre>
+<h2>記述は,</h2>
+<p><code>Register-WmiEvent</code>cmdlet は,ローカルコンピュータまたはリモートコンピュータの Windows Management Instrumentation (WMI) イベントに登録します.</p>
+<p>登録されたWMIイベントが挙がると,イベントがリモートコンピュータで発生している場合でも,あなたのローカルセッションのイベントキューに追加されます.イベントキューのイベントを入手するには,  を使います.<code>Get-Event</code>cmdletです.</p>
+<p>のパラメータを使用できます.<code>Register-WmiEvent</code>リモートコンピュータでイベントを登録し,並列でイベントを識別するのに役立つイベントのプロパティ値を指定する.また,登録されたイベントが挙がったときに実行すべき行動を指定するために <strong>アクション</strong>パラメータを使用できます.</p>
+<p>イベントのサブスクリプションを登録すると,イベントサブスクリプションがセッションに追加されます.<code>Get-EventSubscriber</code>cmdlet. サブスクリプションをキャンセルするには,  を使ってください.<code>Unregister-Event</code>cmdletで,イベントのサブスクリプションをセッションから削除します.</p>
+<p>新規通用情報モデル (CIM) cmdletsは,Windows PowerShell 3.0を導入したもので,WMI cmdletsと同じ作業を行います.CIM cmdletsはWS-Management (WSMan) 標準とCIM 標準に準拠しており,CIM cmdletsはWindowsオペレーティングシステムと他のオペレーティングシステムを実行するコンピュータを管理するために同じ技術を使用することができます.<code>Register-WmiEvent</code>[Register-CimIndicationEvent] (注冊-CimIndicationEvent) を使用することを検討してください.</p>
+<h2>例えは</h2>
+<h3>例1: クラスによって生成されるイベントに登録する</h3>
+<p>このコマンドは, <strong>Win32_ProcessStartTrace</strong> クラスによって生成されるイベントを登録します.このクラスでは,プロセスが起動するたびにイベントを発生します.</p>
+<pre><code class="language-powershell">Register-WmiEvent -Class 'Win32_ProcessStartTrace' -SourceIdentifier &quot;ProcessStarted&quot;
+</code></pre>
+<h3>例2:プロセスのための作成イベントにサインアップする</h3>
+<p>このコマンドは Win32_process instance creation イベントのサブスクリプションをクエリで利用します.</p>
+<pre><code class="language-powershell">$wmiParameters = @{
+  Query = &quot;select * from __instancecreationevent within 5 where targetinstance isa 'Win32_Process'&quot;
+  SourceIdentifier = &quot;WMIProcess&quot;
+  MessageData = &quot;Test 01&quot;
+  TimeOut = 500
+}
+Register-WmiEvent @wmiParameters
+</code></pre>
+<h3>例3: イベントに反応するためにアクションを使用します.</h3>
+<p>この例では,イベントに反応するためにアクションを使用する方法を示しています.この場合は,プロセスが開始されたとき,任意の  が実行されます.<code>Start-Process</code>現在のセッションのコマンドは,XMLファイルに書き込まれています.</p>
+<pre><code class="language-powershell">$action = {
+    Get-History |
+    Where-Object { $_.CommandLine -like &quot;*Start-Process*&quot; } |
+    Export-CliXml &quot;commandHistory.clixml&quot;
+}
+Register-WmiEvent -Class Win32_ProcessStartTrace -SourceIdentifier ProcessStarted -Action $action
+</code></pre>
+<pre><code class="language-Output">Id    Name            State      HasMoreData   Location  Command
+--    ----            -----      -----------   --------  -------
+1     ProcessStarted  NotStarted False                   Get-History | where {...
+</code></pre>
+<p><strong>Action</strong>パラメータを使用すると,<code>Register-WmiEvent</code>イベントのアクションを表す背景の仕事です. 返信する例のように<strong>Job</strong> cmdlets を使用できます.<code>Get-Job</code>そして,<code>Receive-Job</code>イベントの仕事を管理するために.</p>
+<p>詳細については, [about_Jobs.md] (Microsoft.PowerShell.Core/About/about_Jobs.md) を参照してください.</p>
+<h3>例4: リモートコンピュータでイベントを登録する</h3>
+<p>この例では,Server01 リモートコンピュータのイベントを記録します.</p>
+<pre><code class="language-powershell">Register-WmiEvent -Class 'Win32_ProcessStartTrace' -SourceIdentifier &quot;Start&quot; -ComputerName Server01
+Get-Event -SourceIdentifier &quot;Start&quot;
+</code></pre>
+<p>WMIは,イベントをローカルコンピュータに返して,現在のセッションでイベントキューに保存します.イベントを回収するには,ローカルを実行します.<code>Get-Event</code>命令です.</p>
+<h2>パラメータは</h2>
+<h3>-アクション</h3>
+<p>イベントを処理するコマンドを指定します. <strong>Action</strong>パラメータのコマンドは,イベントのキューにイベントを送る代わりに,イベントが挙げるときに実行されます.コマンドを括弧に収め ()<code>{}</code>) を脚本ブロックを作成する.</p>
+<p><strong>Action</strong>の値は,  を含むことができます.<code>$Event</code>     <code>$EventSubscriber</code>     <code>$Sender</code>     <code>$EventArgs</code>そして,そして,<code>$args</code>自動変数 (自動変数) は,プログラムについて<strong>Action</strong>脚本ブロックに情報を提供します.詳細については, [about_Automatic_Variables] (Microsoft.PowerShell.Core/About/about_Automatic_Variables.md) を参照してください.</p>
+<p>行動を指定すると,<code>Register-WmiEvent</code>そのアクションを表現するイベントの作業オブジェクトを返します.イベントの作業を管理するために<strong>Job</strong>名詞 (<strong>Job</strong> cmdlets) を含むcmdlets を使用できます.</p>
+<pre><code class="language-yaml">Type: System.Management.Automation.ScriptBlock
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: 101
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-クラス</h3>
+<p>登録しているイベントを指定します.イベントを生成する WMI クラスを入力します.すべてのコマンドには <strong>Class</strong> または <strong>Query</strong> パラメータが求められます.</p>
+<pre><code class="language-yaml">Type: System.String
+Parameter Sets: class
+Aliases:
+
+Required: True
+Position: 0
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-コンピュータ名</h3>
+<p>命令が実行されるコンピュータの名前を指定します.デフォルトはローカルコンピュータです.</p>
+<p>NetBIOS名,IPアドレス,またはコンピュータの完全認証ドメイン名を入力してください.ローカルコンピュータを指定するには,コンピュータ名,点 () を入力してください.<code>.</code>),またはローカルホスト.</p>
+<p>このパラメータはWindows PowerShellのリモート操作に依存しません.コンピュータがリモートコマンドを実行するように設定されていない場合でも, <strong>ComputerName</strong>パラメータを使用できます.</p>
+<pre><code class="language-yaml">Type: System.String
+Parameter Sets: (All)
+Aliases: Cn
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>- 信用証</h3>
+<p>この操作を行う許可を有するユーザーアカウントを指定します.デフォルトは現在のユーザーです.</p>
+<p>User01や Domain01\User01などのユーザー名を入力するか,PSCredential**オブジェクトを入力してください.<code>Get-Credential</code>cmdlet.ユーザー名を入力すると,このcmdletはパスワードを提示します.</p>
+<pre><code class="language-yaml">Type: System.Management.Automation.PSCredential
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-前へ</h3>
+<p>このcmdletは,このセッションのサブスクリプションのためのイベントを局部コンピュータに送信することを示しています.このパラメータをリモートコンピュータまたはリモートセッションでイベントを登録するときに使用します.</p>
+<pre><code class="language-yaml">Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h1>Register-WmiEvent</h1>
+<h3>- マックストリガーカウンタ</h3>
+<p>最大のトリガーカウントを指定します.</p>
+<pre><code class="language-yaml">Type: System.Int32
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-MessageData</h3>
+<p>このイベントのサブスクリプションに関連した追加データを指定します.このパラメータの値は,このサブスクリプションに関連したすべてのイベントの <strong>MessageData</strong> 属性に表示されます.</p>
+<pre><code class="language-yaml">Type: System.Management.Automation.PSObject
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-ネームスペース</h3>
+<p>WMIクラスの名空を指定します.</p>
+<pre><code class="language-yaml">Type: System.String
+Parameter Sets: (All)
+Aliases: NS
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-Query</h3>
+<p>WMI 事件クラスを識別するWMI クエリ言語 (WQL) のクエリを指定します.例えば: <code>select * from __InstanceDeletionEvent</code> .</p>
+<pre><code class="language-yaml">Type: System.String
+Parameter Sets: query
+Aliases:
+
+Required: True
+Position: 0
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-SourceIdentifier について</h3>
+<p>サブスクリプションに指定した名前を指定します.選択した名前は,現在のセッションでユニークでなければなりません.デフォルト値は,Windows PowerShellが割り当てている GUIDです.</p>
+<p>このパラメータの値は,サブスクリプションオブジェクトの <strong>SourceIdentifier</strong>属性と,このサブスクリプションに関連したすべてのイベントオブジェクトの値に表示されます.</p>
+<pre><code class="language-yaml">Type: System.String
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: 100
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-SupportEvent サポートイベント</h3>
+<p>このcmdletはイベント登録を隠していることを示します.現在の登録がより複雑なイベント登録メカニズムの一部であり,独立して発見されるべきでない場合,このパラメータを使用します.</p>
+<p><strong>SupportEvent</strong>パラメータを使用して作成されたサブスクリプションを表示またはキャンセルするには, の <strong>Force</strong>パラメータを指定してください.<code>Get-EventSubscriber</code>そして,<code>Unregister-Event</code>cmdlets.</p>
+<pre><code class="language-yaml">Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-タイムアウト</h3>
+<p>このコマンドが終了するまで Windows PowerShell がどれくらい待つのかを指定します.</p>
+<p>デフォルト値である0 (ゼロ) は,タイムアウトがないことを意味し,Windows PowerShellが無期限に待機するようになる.</p>
+<pre><code class="language-yaml">Type: System.Int64
+Parameter Sets: (All)
+Aliases: TimeoutMSec
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>共通パラメーター</h3>
+<p>このcmdletは,共通パラメータをサポートしています: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable.詳細については, <a href="を参照してください.https://go.microsoft.com/fwlink/?LinkID=113216">about_CommonParameters</a> でした.</p>
+<h2>輸入は</h2>
+<h3>どれもない</h3>
+<p>このcmdletに物体をパイプすることはできません.</p>
+<h2>輸出は</h2>
+<h3>どれもない</h3>
+<p>このcmdletは,出力を生成しません.</p>
+<h2>NOTES  記事ができました.</h2>
+<p>Windows VistaまたはWindowsオペレーティングシステムの後バージョンでこのcmdletを使用するには,管理者として実行するオプションを使用して Windows PowerShell を起動してください.</p>
+<p>イベント,イベントサブスクリプション,イベントキューは,現在のセッションでのみ存在します.現在のセッションを閉じる場合は,イベントキューは廃棄され,イベントサブスクリプションはキャンセルされます.</p>
+<h2>関連リンク</h2></section><section class="en-original"><pre class="source-original"># Register-WmiEvent
+
+## SYNOPSIS
+Subscribes to a Windows Management Instrumentation (WMI) event.
+
+## SYNTAX
+
+### class (Default)
+
+```
+Register-WmiEvent [-Namespace &lt;String&gt;] [-Credential &lt;PSCredential&gt;] [-ComputerName &lt;String&gt;] [-Class] &lt;String&gt;
+ [-Timeout &lt;Int64&gt;] [[-SourceIdentifier] &lt;String&gt;] [[-Action] &lt;ScriptBlock&gt;] [-MessageData &lt;PSObject&gt;]
+ [-SupportEvent] [-Forward] [-MaxTriggerCount &lt;Int32&gt;] [&lt;CommonParameters&gt;]
+```
+
+### query
+
+```
+Register-WmiEvent [-Namespace &lt;String&gt;] [-Credential &lt;PSCredential&gt;] [-ComputerName &lt;String&gt;] [-Query] &lt;String&gt;
+ [-Timeout &lt;Int64&gt;] [[-SourceIdentifier] &lt;String&gt;] [[-Action] &lt;ScriptBlock&gt;] [-MessageData &lt;PSObject&gt;]
+ [-SupportEvent] [-Forward] [-MaxTriggerCount &lt;Int32&gt;] [&lt;CommonParameters&gt;]
+```
+
+## DESCRIPTION
+
+The `Register-WmiEvent` cmdlet subscribes to Windows Management Instrumentation (WMI) events on
+the local computer or on a remote computer.
+
+When the subscribed WMI event is raised, it is added to the event queue in your local session even
+if the event occurs on a remote computer. To get events in the event queue, use the `Get-Event`
+cmdlet.
+
+You can use the parameters of `Register-WmiEvent` to subscribe to events on remote computers and to
+specify the property values of the events that can help you identify the event in the queue. You can
+also use the **Action** parameter to specify actions to take when a subscribed event is raised.
+
+When you subscribe to an event, an event subscriber is added to your session. To get the event
+subscribers in the session, use the `Get-EventSubscriber` cmdlet. To cancel the subscription, use
+the `Unregister-Event` cmdlet, which deletes the event subscriber from the session.
+
+New Common Information Model (CIM) cmdlets, introduced Windows PowerShell 3.0, perform the same
+tasks as the WMI cmdlets. The CIM cmdlets comply with WS-Management (WSMan) standards and with the
+CIM standard, which enables the cmdlets to use the same techniques to manage computers that run the
+Windows operating system and those that run other operating systems. Instead of using
+`Register-WmiEvent`, consider using the
+[Register-CimIndicationEvent](../cimcmdlets/register-cimindicationevent.md) cmdlet.
+
+## EXAMPLES
+
+### Example 1: Subscribe to events generated by a class
+
+This command subscribes to the events generated by the **Win32_ProcessStartTrace** class. This class
+raises an event whenever a process starts.
+
+```powershell
+Register-WmiEvent -Class &#x27;Win32_ProcessStartTrace&#x27; -SourceIdentifier &quot;ProcessStarted&quot;
+```
+
+### Example 2: Subscribe to creation events for a process
+
+This command uses a query to subscribe to Win32_process instance creation events.
+
+```powershell
+$wmiParameters = @{
+  Query = &quot;select * from __instancecreationevent within 5 where targetinstance isa &#x27;Win32_Process&#x27;&quot;
+  SourceIdentifier = &quot;WMIProcess&quot;
+  MessageData = &quot;Test 01&quot;
+  TimeOut = 500
+}
+Register-WmiEvent @wmiParameters
+```
+
+### Example 3: Use an action to respond to an event
+
+This example shows how to use an action to respond to an event. In this case, when a process starts,
+any `Start-Process` commands in the current session are written to an XML file.
+
+```powershell
+$action = {
+    Get-History |
+    Where-Object { $_.CommandLine -like &quot;*Start-Process*&quot; } |
+    Export-CliXml &quot;commandHistory.clixml&quot;
+}
+Register-WmiEvent -Class Win32_ProcessStartTrace -SourceIdentifier ProcessStarted -Action $action
+```
+
+```Output
+Id    Name            State      HasMoreData   Location  Command
+--    ----            -----      -----------   --------  -------
+1     ProcessStarted  NotStarted False                   Get-History | where {...
+```
+
+When you use the **Action** parameter, `Register-WmiEvent` returns a background job that represents
+the event action. You can use the **Job** cmdlets, such as `Get-Job` and `Receive-Job`, to manage
+the event job.
+
+For more information, see [about_Jobs](../Microsoft.PowerShell.Core/About/about_Jobs.md).
+
+### Example 4: Register for events on a remote computer
+
+This example registers for events on the Server01 remote computer.
+
+```powershell
+Register-WmiEvent -Class &#x27;Win32_ProcessStartTrace&#x27; -SourceIdentifier &quot;Start&quot; -ComputerName Server01
+Get-Event -SourceIdentifier &quot;Start&quot;
+```
+
+WMI returns the events to the local computer and stores them in the event queue in the current
+session. To retrieve the events, run a local `Get-Event` command.
+
+## PARAMETERS
+
+### -Action
+
+Specifies commands that handle the events. The commands in the **Action** parameter run when an
+event is raised instead of sending the event to the event queue. Enclose the commands in braces
+(`{}`) to create a script block.
+
+The value of **Action** can include the `$Event`, `$EventSubscriber`, `$Sender`, `$EventArgs`, and
+`$args` automatic variables, which provide information about the event to the **Action** script
+block. For more information, see
+[about_Automatic_Variables](../Microsoft.PowerShell.Core/About/about_Automatic_Variables.md).
+
+When you specify an action, `Register-WmiEvent` returns an event job object that represents that
+action. You can use the cmdlets that contain the **Job** noun (the **Job** cmdlets) to manage the
+event job.
+
+```yaml
+Type: System.Management.Automation.ScriptBlock
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: 101
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Class
+
+Specifies the event to which you are subscribing. Enter the WMI class that generates the events. A
+**Class** or **Query** parameter is required in every command.
+
+```yaml
+Type: System.String
+Parameter Sets: class
+Aliases:
+
+Required: True
+Position: 0
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -ComputerName
+
+Specifies the name of the computer on which the command runs. The default is the local computer.
+
+Type the NetBIOS name, an IP address, or a fully qualified domain name of the computer. To specify
+the local computer, type the computer name, a dot (`.`), or localhost.
+
+This parameter does not rely on Windows PowerShell remoting. You can use the **ComputerName**
+parameter even if your computer is not configured to run remote commands.
+
+```yaml
+Type: System.String
+Parameter Sets: (All)
+Aliases: Cn
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Credential
+
+Specifies a user account that has permission to perform this action. The default is the current
+user.
+
+Type a user name, such as User01 or Domain01\User01, or enter a **PSCredential** object, such as one
+generated by the `Get-Credential` cmdlet. If you type a user name, this cmdlet prompts you for a
+password.
+
+```yaml
+Type: System.Management.Automation.PSCredential
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Forward
+
+Indicates that this cmdlet sends events for this subscription to the session on the local computer.
+Use this parameter when you are registering for events on a remote computer or in a remote session.
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+# Register-WmiEvent
+
+### -MaxTriggerCount
+
+Specifies the maximum trigger count.
+
+```yaml
+Type: System.Int32
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -MessageData
+
+Specifies any additional data to be associated with this event subscription. The value of this
+parameter appears in the **MessageData** property of all events associated with this subscription.
+
+```yaml
+Type: System.Management.Automation.PSObject
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Namespace
+
+Specifies the namespace of the WMI class.
+
+```yaml
+Type: System.String
+Parameter Sets: (All)
+Aliases: NS
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Query
+
+Specifies a query in WMI Query Language (WQL) that identifies the WMI event class, such as:
+`select * from __InstanceDeletionEvent`.
+
+```yaml
+Type: System.String
+Parameter Sets: query
+Aliases:
+
+Required: True
+Position: 0
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -SourceIdentifier
+
+Specifies a name that you select for the subscription. The name that you select must be unique in
+the current session. The default value is the GUID that Windows PowerShell assigns.
+
+The value of this parameter appears in the value of the **SourceIdentifier** property of the
+subscriber object and of all event objects associated with this subscription.
+
+```yaml
+Type: System.String
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: 100
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -SupportEvent
+
+Indicates that this cmdlet hides the event subscription. Use this parameter when the current
+subscription is part of a more complex event registration mechanism and it should not be discovered
+independently.
+
+To view or cancel a subscription that was created by using the **SupportEvent** parameter, specify
+the **Force** parameter of the `Get-EventSubscriber` and `Unregister-Event` cmdlets.
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Timeout
+
+Specifies how long Windows PowerShell waits for this command to finish.
+
+The default value, 0 (zero), means that there is no time-out, and it causes Windows PowerShell to
+wait indefinitely.
+
+```yaml
+Type: System.Int64
+Parameter Sets: (All)
+Aliases: TimeoutMSec
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### CommonParameters
+
+This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable,
+-InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose,
+-WarningAction, and -WarningVariable. For more information, see
+[about_CommonParameters](https://go.microsoft.com/fwlink/?LinkID=113216).
+
+## INPUTS
+
+### None
+
+You cannot pipe objects to this cmdlet.
+
+## OUTPUTS
+
+### None
+
+This cmdlet does not generate any output.
+
+## NOTES
+
+To use this cmdlet in Windows Vista or a later version of the Windows operating system, start
+Windows PowerShell by using the Run as administrator option.
+
+Events, event subscriptions, and the event queue exist only in the current session. If you close the
+current session, the event queue is discarded and the event subscription is canceled.
+
+## RELATED LINKS</pre></section>

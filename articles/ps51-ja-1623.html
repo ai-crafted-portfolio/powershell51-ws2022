@@ -1,0 +1,238 @@
+<!doctype html><meta charset="utf-8"><section class="jp-official"><h1>Get-IISConfigSection を使用する</h1>
+<h2>SYNOPSISは,IIS設定ストアでさらに動作するために構成セクションオブジェクトを取得します.</h2>
+<h2>SYNTAXは,のシンタックスです.</h2>
+<pre><code>Get-IISConfigSection [[-SectionPath] &lt;String&gt;] [[-CommitPath] &lt;String&gt;] [[-Location] &lt;String&gt;]
+ [[-Clr] &lt;String&gt;] [&lt;CommonParameters&gt;]
+</code></pre>
+<h2>記述 <strong>Get-IISConfigSection</strong> cmdlet は,インターネット情報サービス (IIS) 構成商店でさらに動作する構成セクション (Microsoft.Web.Administration.ConfigurationSection) オブジェクトを取得します.通常,構成を読み取ったり更新したりする場合は使用する最初の cmdlet です.この cmdlet の出力は, ConfigurationElement から継承される ConfigurationSection から ConfigurationElement オブジェクトが期待されるパイプライン内の他の cmdlet に転送できます.</h2>
+<p><em>SectionPath</em> パラメータが使用されていない場合,cmdletはすべての利用可能なセクションをリストする.使用できるセクションは,アプリケーションHost.config (IIS Configuration) または root web.config (.NET Framework) で定義されている.</p>
+<h2>例えは</h2>
+<h3>例1: セクションパスのための構成セクションオブジェクトを取得します ```</h3>
+<p>PS C:&gt; $ConfigSection = Get-IISConfigSection -SectionPath "system.applicationHost/sites"</p>
+<pre><code>
+このコマンドは,system.applicationHost/sitesセクションの構成セクションオブジェクトを取得します.
+
+### 例2:IISウェブサイトのプロセスステート情報を入手する```
+PS C:\&gt; $ConfigSection = Get-IISConfigSection -SectionPath &quot;system.applicationHost/sites&quot;
+Get-IISConfigCollection $configSection | Get-IISConfigCollectionElement -ConfigAttribute @{&quot;Name&quot;=&quot;Default Web Site&quot;} | Get-IISConfigAttributeValue -AttributeName &quot;State&quot;
+</code></pre>
+<p>このコマンドは,デフォルトWebサイトの実行時の状態情報を入手します.</p>
+<h3>例3: グローバル構成レベルで新しいデフォルト文書を追加する```</h3>
+<p>PS C:&gt; Get-IISConfigSection -SectionPath "system.webServer/defaultDocument" | Get-IISConfigCollection -CollectionName "files" | New-IISConfigCollectionElement  -ConfigAttribute @{"Value" = "MyDefDoc.htm"}</p>
+<pre><code>
+このコマンドは,アプリケーションHost.config ファイルの \&amp;lt;defaultDocument\&amp;gt; セクションの \&amp;lt;files\&amp;gt; コレクションに MyDefDoc.htm ファイル名を追加します.
+
+### 例4:アプリケーションプールを作成する```
+PS C:\&gt; Start-IISCommitDelay
+PS C:\&gt; $ConfigSectionCollection = Get-IISConfigSection -SectionPath &quot;system.applicationHost/applicationPools&quot; | Get-IISConfigCollection
+PS C:\&gt; New-IISConfigCollectionElement -ConfigCollection $configSectionCollection -ConfigAttribute @{&quot;name&quot;=&quot;MyNewSiteAppPool&quot;; &quot;autoStart&quot;=$true; &quot;managedPipelineMode&quot;=&quot;Integrated&quot; }
+PS C:\&gt; Stop-IISCommitDelay
+</code></pre>
+<p>このコマンドはアプリケーションプールを作成し,結果を変数 $ConfigSectionCollectionに保存します.</p>
+<h3>例5:コレクション要素を作成して,CLRバージョンを指定します.```</h3>
+<p>PS C:&gt; $collection = Get-IISConfigSection -SectionPath "appSettings" -Clr 2.0</p>
+<pre><code>
+このコマンドは, *SectionPath* &quot;appSettings&quot; を使用して新しいコレクション要素を作成します.その要素は$collectionという変数に保存されます.さらに,Common Language Runtime をバージョン2.0 に設定するために, *Clr* パラメータが使用されます.
+
+## パラメータは
+
+### -Clrは,IISが指しているルートレベル .NET Framework Common Language Runtime (CLR) のバージョンを指定します.このパラメータが省略されれば,デフォルト CLR バージョンが使用されます.しかし,コマンドに *CommitPath* パラメータが含まれている場合, *Clr* パラメータは無視され,対応するアプリケーションプールの実行式バージョンが使用されます.
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: 4
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+</code></pre>
+<h3>-CommitPath は設定が取り戻される経路を指定します.CommitPath が省略された場合,applicationHost.config または root .NET設定 (root web.config) が使用されます.</h3>
+<pre><code class="language-yaml">Type: String
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: 2
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+</code></pre>
+<h3>-位置 設定オブジェクトが返される IIS 設定位置の名前を指定します.これは設定ファイル内の \&lt;location\&gt; タグに対応します.</h3>
+<pre><code class="language-yaml">Type: String
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: 3
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+</code></pre>
+<h3>-SectionPath 設定オブジェクトが返される IIS 構成セクションの名前を指定します.</h3>
+<pre><code class="language-yaml">Type: String
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: 1
+Default value: None
+Accept pipeline input: True (ByPropertyName, ByValue)
+Accept wildcard characters: False
+</code></pre>
+<h3>常規パラメータ このcmdletは,共通パラメータである: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction,および -WarningVariableをサポートしています.詳細については, about_CommonParameters () を参照してください.http://go.microsoft.com/fwlink/?LinkID=113216) でした.</h3>
+<h2>輸入は</h2>
+<h3>System.String でした.</h3>
+<h2>輸出は</h2>
+<h3>System.Object について</h3>
+<h2>NOTES  記事ができました.</h2>
+<h2>関連リンク</h2>
+<p><a href="./Get-IISServerManager.md">Get-IISServerManager</a> </p>
+<p><a href="./iisadministration.md">Windows PowerShell用のIIS Administration Cmdlets</a> を表示しています.</p></section><section class="en-original"><pre class="source-original"># Get-IISConfigSection
+
+## SYNOPSIS
+Gets a configuration section object to work further with the IIS Configuration Store.
+
+## SYNTAX
+
+```
+Get-IISConfigSection [[-SectionPath] &lt;String&gt;] [[-CommitPath] &lt;String&gt;] [[-Location] &lt;String&gt;]
+ [[-Clr] &lt;String&gt;] [&lt;CommonParameters&gt;]
+```
+
+## DESCRIPTION
+The **Get-IISConfigSection** cmdlet gets a configuration section (Microsoft.Web.Administration.ConfigurationSection) object to work further with the Internet Information Services (IIS) Configuration Store.
+It is generally the first cmdlet to use if configuration is to be read or updated.
+The output of this cmdlet can be passed to other cmdlets in the pipeline where ConfigurationElement objects are expected, since ConfigurationSection inherits from ConfigurationElement.
+
+If the *SectionPath* parameter is not used, the cmdlet lists all the available sections.
+The sections that can be used are either defined in the applicationHost.config (IIS Configuration) or root web.config (.NET Framework).
+
+## EXAMPLES
+
+### Example 1: Get a configuration section object for a section path
+```
+PS C:\&gt; $ConfigSection = Get-IISConfigSection -SectionPath &quot;system.applicationHost/sites&quot;
+```
+
+This command gets the configuration section object for the system.applicationHost/sites section.
+
+### Example 2: Get process state information for an IIS website
+```
+PS C:\&gt; $ConfigSection = Get-IISConfigSection -SectionPath &quot;system.applicationHost/sites&quot;
+Get-IISConfigCollection $configSection | Get-IISConfigCollectionElement -ConfigAttribute @{&quot;Name&quot;=&quot;Default Web Site&quot;} | Get-IISConfigAttributeValue -AttributeName &quot;State&quot;
+```
+
+This command gets runtime state information for the Default Web Site.
+
+### Example 3: Add a new default document at the global configuration level
+```
+PS C:\&gt; Get-IISConfigSection -SectionPath &quot;system.webServer/defaultDocument&quot; | Get-IISConfigCollection -CollectionName &quot;files&quot; | New-IISConfigCollectionElement  -ConfigAttribute @{&quot;Value&quot; = &quot;MyDefDoc.htm&quot;}
+```
+
+This command adds filename MyDefDoc.htm to the \&lt;files\&gt; collection of the \&lt;defaultDocument\&gt; section of the applicationHost.config file.
+
+### Example 4: Create an application pool
+```
+PS C:\&gt; Start-IISCommitDelay
+PS C:\&gt; $ConfigSectionCollection = Get-IISConfigSection -SectionPath &quot;system.applicationHost/applicationPools&quot; | Get-IISConfigCollection
+PS C:\&gt; New-IISConfigCollectionElement -ConfigCollection $configSectionCollection -ConfigAttribute @{&quot;name&quot;=&quot;MyNewSiteAppPool&quot;; &quot;autoStart&quot;=$true; &quot;managedPipelineMode&quot;=&quot;Integrated&quot; }
+PS C:\&gt; Stop-IISCommitDelay
+```
+
+This command creates an application pool and stores the result in variable $ConfigSectionCollection.
+
+### Example 5: Create a collection element and specify the CLR version
+```
+PS C:\&gt; $collection = Get-IISConfigSection -SectionPath &quot;appSettings&quot; -Clr 2.0
+```
+
+This command creates a new collection element using the *SectionPath* &quot;appSettings&quot;; that element is stored in a variable named $collection.
+In addition, the *Clr* parameter is used to set the Common Language Runtime to version 2.0.
+
+## PARAMETERS
+
+### -Clr
+Specifies the version of the root level .NET Framework Common Language Runtime (CLR) that IIS points to.
+If this parameter is omitted then the default CLR version is used.
+Note, however, that if the *CommitPath* parameter is included in the command the *Clr* parameter will be ignored and the runtime version of the corresponding application pool will be used instead.
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: 4
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -CommitPath
+Specifies the path where the configuration will be retrieved from.
+If CommitPath is omitted, applicationHost.config or root .NET configuration (root web.config) will be used.
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: 2
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -Location
+Specifies the name of the IIS configuration location for which a configuration object is returned.
+This corresponds to the \&lt;location\&gt; tag in configuration files.
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: 3
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -SectionPath
+Specifies the name of the IIS configuration section for which a configuration object is returned.
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: 1
+Default value: None
+Accept pipeline input: True (ByPropertyName, ByValue)
+Accept wildcard characters: False
+```
+
+### CommonParameters
+This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable. For more information, see about_CommonParameters (http://go.microsoft.com/fwlink/?LinkID=113216).
+
+## INPUTS
+
+### System.String
+
+## OUTPUTS
+
+### System.Object
+
+## NOTES
+
+## RELATED LINKS
+
+[Get-IISServerManager](./Get-IISServerManager.md)
+
+[IIS Administration Cmdlets for Windows PowerShell](./iisadministration.md)</pre></section>

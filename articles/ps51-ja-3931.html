@@ -1,0 +1,1149 @@
+<!doctype html><meta charset="utf-8"><section class="jp-official"><h1>Select-String を選択する</h1>
+<h2>SYNOPSIS は文字列やファイルにテキストを見つけます.</h2>
+<h2>SYNTAXは,のシンタックスです.</h2>
+<h3>ファイル (デフォルト)</h3>
+<pre><code>Select-String [-Pattern] &lt;String[]&gt; [-Path] &lt;String[]&gt; [-SimpleMatch] [-CaseSensitive]
+ [-Quiet] [-List] [-Include &lt;String[]&gt;] [-Exclude &lt;String[]&gt;] [-NotMatch] [-AllMatches]
+ [-Encoding &lt;String&gt;] [-Context &lt;Int32[]&gt;] [&lt;CommonParameters&gt;]
+</code></pre>
+<h3>対象</h3>
+<pre><code>Select-String -InputObject &lt;PSObject&gt; [-Pattern] &lt;String[]&gt; [-SimpleMatch]
+ [-CaseSensitive] [-Quiet] [-List] [-Include &lt;String[]&gt;] [-Exclude &lt;String[]&gt;] [-NotMatch]
+ [-AllMatches] [-Encoding &lt;String&gt;] [-Context &lt;Int32[]&gt;] [&lt;CommonParameters&gt;]
+</code></pre>
+<h3>文字ファイル</h3>
+<pre><code>Select-String [-Pattern] &lt;String[]&gt; -LiteralPath &lt;String[]&gt; [-SimpleMatch]
+ [-CaseSensitive] [-Quiet] [-List] [-Include &lt;String[]&gt;] [-Exclude &lt;String[]&gt;] [-NotMatch]
+ [-AllMatches] [-Encoding &lt;String&gt;] [-Context &lt;Int32[]&gt;] [&lt;CommonParameters&gt;]
+</code></pre>
+<h2>記述は,</h2>
+<p><code>Select-String</code>cmdlet は,入力文字列やファイルにテキストパターンを検索するために,レギュラー式表示のマッチングを使用します.<code>Select-String</code> に似ている.<code>grep</code>Unixやで作成したものです.<code>findstr.exe</code>Windows で.</p>
+<p><code>Select-String</code>文字列に基づいている.デフォルトでは,<code>Select-String</code>各行で最初のマッチを見つけ,各行でファイル名,行番号,マッチを含む行内のすべてのテキストを表示します.<code>Select-String</code>ラインに複数のマッチを見つけ,マッチ前のテキストやマッチ後のテキストを表示したり,マッチが見つかったかどうかを示すブル値 (True or False) を表示したりします.</p>
+<p><code>Select-String</code>入力ファイルごとにすべてのテキストマッチを表示したり,最初のマッチ後に停止したりすることができます. <code>Select-String</code>指定されたパターンに一致しないすべてのテキストを表示するために使用できます.</p>
+<p>また,その指定も指定できます.<code>Select-String</code>特定の文字のエンコーディングを期待すべきです.例えば,Unicodeテキストのファイルで検索している場合です.<code>Select-String</code>ファイルのエンコーディング形式を検出するためにバイト・オーダーマーク (BOM) を使用します.ファイルにBOMがない場合は,エンコーディングが UTF8であると仮定します.</p>
+<h2>例えは,</h2>
+<h3>例1:ケースセンシティブのマッチを見つけます.</h3>
+<p>この例では,パイプラインを介して送られてきたテキストが,ケースに敏感なマッチをします.<code>Select-String</code>cmdletです.</p>
+<pre><code class="language-powershell">'Hello', 'HELLO' | Select-String -Pattern 'HELLO' -CaseSensitive -SimpleMatch
+</code></pre>
+<p>文字列の <strong>Hello</strong> と <strong>HELLO</strong> は,パイプラインを介して,  に送信されます.<code>Select-String</code>cmdlet. <code>Select-String</code><strong>HELLO</strong>を指定するには <strong>Pattern</strong>パラメータを使用します. <strong>CaseSensitive</strong>パラメータは,ケースが大文字列のパターンをのみ一致させなければならないことを指定します. <strong>SimpleMatch</strong>はオプションのパラメータで,パターンの文字列が正規表現として解釈されないことを指定します. <code>Select-String</code>PowerShell コンソールでHELLOを表示します.</p>
+<h3>例2:テキストファイルでマッチを見つけます</h3>
+<p>このコマンドは,すべてのファイルに""を入力して検索します.<code>.txt</code>現在のディレクトリ内のファイル名拡張子. 輸出は指定された文字列を含むファイル内の行を表示します.</p>
+<pre><code class="language-powershell">Get-Alias | Out-File -FilePath .\Alias.txt
+Get-Command | Out-File -FilePath .\Command.txt
+Select-String -Path .\*.txt -Pattern 'Get-'
+</code></pre>
+<pre><code class="language-Output">Alias.txt:8:Alias            cat -&gt; Get-Content
+Alias.txt:28:Alias           dir -&gt; Get-ChildItem
+Alias.txt:43:Alias           gal -&gt; Get-Alias
+Command.txt:966:Cmdlet       Get-Acl
+Command.txt:967:Cmdlet       Get-Alias
+</code></pre>
+<p>この例では,<code>Get-Alias</code>そして,<code>Get-Command</code>と並べられる.<code>Out-File</code>cmdlet は,現在のディレクトリで2つのテキストファイル, <strong>Alias.txt</strong> と <strong>Command.txt</strong> を作成します.</p>
+<p><code>Select-String</code><strong>Path</strong>パラメータを"星座"で表示する ()<code>*</code>) ワイルドカードは,ファイル名拡張子で現在のディレクトリ内のすべてのファイルを検索します.<code>.txt</code><strong> パターン</strong>パラメータは,テキストを <strong>Get-</strong> に一致させるように指定します. <code>Select-String</code>PowerShell コンソールで出力値を表示します.ファイル名と行番号は, <strong>Pattern</strong>パラメータに一致するコンテンツの各行前に行います.</p>
+<h3>例3:パターンマッチを見つけます.</h3>
+<p>この例では,複数のファイルが検索され,指定されたパターンに一致するパターンを見つけます.パターンは通常の表現量計を使用します.詳細については, [about_Regular_Expressions.md] を参照してください.</p>
+<pre><code class="language-powershell">Select-String -Path &quot;$PSHOME\en-US\*.txt&quot; -Pattern '\?'
+</code></pre>
+<pre><code class="language-Output">C:\Program Files\PowerShell\6\en-US\default.help.txt:27:    beginning at https://go.microsoft.com/fwlink/?LinkID=108518.
+C:\Program Files\PowerShell\6\en-US\default.help.txt:50:    or go to: https://go.microsoft.com/fwlink/?LinkID=210614
+</code></pre>
+<p><code>Select-String</code>cmdlet では,Path と Pattern の2つのパラメータを使用しています.<code>$PSHOME</code>PowerShell ディレクトリを指定する.残りのパスには<strong>en-US</strong> のサブディレクトリが含まれ,それぞれを指定します.<code>*.txt</code><strong>Pattern</strong>パラメータは,質問符号 () に一致する指定をします.<code>?</code>) が各ファイルに表示されます.バックスラッシュ ()<code>\</code>) は逃亡文字として用いられ,質問符号 () が必要であるため,<code>?</code>) は,規則表現量化器です. <code>Select-String</code>PowerShell コンソールで出力値を表示します.ファイル名と行番号は, <strong>Pattern</strong>パラメータに一致するコンテンツの各行前に行います.</p>
+<h3>例4: 関数で選択文字列を使用する</h3>
+<p>この例では,PowerShell サポートファイルでパターンを探す機能が作成されます.この例では,この機能はPowerShell セッションのみで存在します.PowerShell セッションが終了すると,その機能が削除されます.詳細については,[about_Functions] (../Microsoft.PowerShell.Core/About/about_Functions.md) を参照してください.</p>
+<pre><code class="language-powershell">function Search-Help
+{
+    $PSHelp = &quot;$PSHOME\en-US\*.txt&quot;
+    Select-String -Path $PSHelp -Pattern 'About_'
+}
+
+Search-Help
+</code></pre>
+<pre><code class="language-Output">C:\Windows\System32\WindowsPowerShell\v1.0\en-US\about_ActivityCommonParameters.help.txt:2:   about_ActivityCommonParameters
+C:\Windows\System32\WindowsPowerShell\v1.0\en-US\about_ActivityCommonParameters.help.txt:31:  see about_WorkflowCommonParameters.
+C:\Windows\System32\WindowsPowerShell\v1.0\en-US\about_ActivityCommonParameters.help.txt:33:  about_CommonParameters.
+</code></pre>
+<p>この機能はPowerShellコマンドラインで作成されます.<code>function</code>キーワードは名前を使用します.<code>Search-Help</code>函数に記述を追加し始めるには, <strong>Enter</strong> を押します.<code>&gt;&gt;</code>提示符を追加して,例で示したように<strong>Enter</strong>を押します.閉幕括弧が追加された後,あなたはPowerShell提示符に戻ります.</p>
+<p>この関数は2つのコマンドを含んでいる.<code>$PSHelp</code>PowerShell のサポートファイルへの経路を保存する変数です.<code>$PSHOME</code>PowerShellのインストールディレクトリであり,それぞれ指定するサブディレクトリ <strong>en-US</strong> が含まれています.<code>*.txt</code>ファイルはディレクトリに載っています.</p>
+<p><code>Select-String</code>機能のコマンドは <strong>Path</strong> と <strong>Pattern</strong> のパラメータを使用しています.<code>$PSHelp</code>パートナー・パラメータは検索基準として文字列の <strong>About_</strong> を使用します.</p>
+<p>関数を実行するには,  を入力してください.<code>Search-Help</code>函数は です.<code>Select-String</code>パワーシェルコンソールで出力されているコマンドが表示されます.</p>
+<h1>Select-String を選択する</h1>
+<h3>例5: Windows イベントログで文字列を検索する</h3>
+<p>この例では,Windowsイベントログの文字列を検索します.変数 <code>$_</code>パイプライン内の現在のオブジェクトを表します.詳細については, [about_Automatic_Variables.md] を参照してください.</p>
+<pre><code class="language-powershell">$Events = Get-WinEvent -LogName Application -MaxEvents 50
+$Events | Select-String -InputObject {$_.Message} -Pattern 'Failed'
+</code></pre>
+<p><code>Get-WinEvent</code>cmdlet は,アプリケーションログを指定するために<strong>LogName</strong>パラメータを使用します. <strong>MaxEvents</strong>パラメータは,ログから50の最近のイベントを入手します.ログのコンテンツは, という変数に保存されます.<code>$Events</code> .</p>
+<p><code>$Events</code>変数はパイプラインをダウンして  に送られます.<code>Select-String</code>cmdlet. <code>Select-String</code><strong>InputObject</strong>パラメータを使用しています.<code>$_</code>変数は現在のオブジェクトを表し,<code>Message</code><strong> パターン</strong> パラメータは,文字列 ** 失敗** を指定し,  でマッチを検索します.<code>$_.Message</code>  <code>Select-String</code>PowerShell コンソールで出力値を表示します.</p>
+<h3>例 6:サブディレクトリで文字列を見つけます</h3>
+<p>この例では,特定のテキスト文字列を探してディレクトリとそのサブディレクトリをすべて検索します.</p>
+<pre><code class="language-powershell">Get-ChildItem -Path C:\Windows\System32\*.txt -Recurse |
+    Select-String -Pattern 'Microsoft' -CaseSensitive
+</code></pre>
+<p><code>Get-ChildItem</code><strong>Path</strong>パラメータを使用して <strong>C:\Windows\System32*.txt</strong>を指定します. <strong>Recurse</strong>パラメータにはサブディレクトリが含まれています.オブジェクトはパイプラインを下に送られて, へ送られます.<code>Select-String</code> .</p>
+<p><code>Select-String</code><strong>Pattern</strong>パラメータを使用し,文字列を指定する <strong>Microsoft</strong>. <strong>CaseSensitive</strong>パラメータは文字列の正確なケースに一致する. <code>Select-String</code>PowerShell コンソールで出力値を表示します.</p>
+<p>&gt; [!NOTE] &gt; 許可に応じて,出力中に <strong>Access denied</strong> メッセージが表示される可能性があります.</p>
+<h3>例7:パターンに一致しない文字列を検索する</h3>
+<p>この例では,パターンに一致しないデータラインを排除する方法を示しています.</p>
+<pre><code class="language-powershell">Get-Command | Out-File -FilePath .\Command.txt
+Select-String -Path .\Command.txt -Pattern 'Get', 'Set'  -NotMatch
+</code></pre>
+<p><code>Get-Command</code>cmdlet は,パイプラインを向けて物体を送って,  に送ります.<code>Out-File</code>作成するには,現在のディレクトリで,Command.txt ファイルを作成します.<code>Select-String</code><strong>Command.txt</strong>ファイル指定するには <strong>Path</strong>パラメータを使用します. <strong>Pattern</strong>パラメータは <strong>Get</strong>と <strong>Set</strong>を検索パターンとして指定します. <strong>NotMatch</strong>パラメータは <strong>Get</strong>と <strong>Set</strong>を検索結果から除外します. <code>Select-String</code><strong>Get</strong>や <strong>Set</strong>を含まないPowerShellコンソールで出力値を表示します.</p>
+<h3>例8:試合前と後の行列を検索する</h3>
+<p>この例では,一致したパターン前の線と後に線をどのように取り出すかを示しています.</p>
+<pre><code class="language-powershell">Get-Command | Out-File -FilePath .\Command.txt
+Select-String -Path .\Command.txt -Pattern 'Get-Computer' -Context 2, 3
+</code></pre>
+<pre><code class="language-Output">  Command.txt:1186:Cmdlet          Get-CmsMessage            3.0.0.0    Microsoft.PowerShell.Security
+  Command.txt:1187:Cmdlet          Get-Command               3.0.0.0    Microsoft.PowerShell.Core
+&gt; Command.txt:1188:Cmdlet          Get-ComputerInfo          3.1.0.0    Microsoft.PowerShell.Management
+&gt; Command.txt:1189:Cmdlet          Get-ComputerRestorePoint  3.1.0.0    Microsoft.PowerShell.Management
+  Command.txt:1190:Cmdlet          Get-Content               3.1.0.0    Microsoft.PowerShell.Management
+  Command.txt:1191:Cmdlet          Get-ControlPanelItem      3.1.0.0    Microsoft.PowerShell.Management
+  Command.txt:1192:Cmdlet          Get-Counter               3.0.0.0    Microsoft.PowerShell.Diagnostics
+</code></pre>
+<p><code>Get-Command</code>cmdlet は,パイプラインを向けて物体を送って,  に送ります.<code>Out-File</code>作成するには,現在のディレクトリで,Command.txt ファイルを作成します.<code>Select-String</code><strong>Command.txt</strong>ファイル指定するには <strong>Path</strong>パラメータを使用します. <strong>Pattern</strong>パラメータは,<code>Get-Computer</code><strong>コンテキスト</strong>パラメータは前後2つの値を用い,出力中のパターンと一致するパターンを角括弧 () でマークします.<code>&gt;</code>背景パラメータは,最初のパターンマッチ前の2行,最後のパターンマッチ後の3行を輸出します.</p>
+<h3>例 9: すべてのパターンマッチを検索する</h3>
+<p>この例では,AllMatches**パラメータがテキストの行でパターンが一致する各パターンをどのように見つけるかを示しています.<code>Select-String</code>この例では,文字列でパターンの最初の出現のみが確認されます.この例では,  の文字で得られるオブジェクト属性を利用します.<code>Get-Member</code>cmdletです.</p>
+<pre><code class="language-powershell">$A = Get-ChildItem -Path &quot;$PSHOME\en-US\*.txt&quot; | Select-String -Pattern 'PowerShell'
+$A
+</code></pre>
+<pre><code class="language-Output">C:\Windows\System32\WindowsPowerShell\v1.0\en-US\about_ActivityCommonParameters.help.txt:5:    Describes the parameters that Windows PowerShell
+C:\Windows\System32\WindowsPowerShell\v1.0\en-US\about_ActivityCommonParameters.help.txt:9:    Windows PowerShell Workflow adds the activity common
+</code></pre>
+<pre><code class="language-powershell">$A.Matches
+</code></pre>
+<pre><code class="language-Output">Groups   : {0}
+Success  : True
+Name     : 0
+Captures : {0}
+Index    : 4
+Length   : 10
+Value    : PowerShell
+</code></pre>
+<pre><code class="language-powershell">$A.Matches.Length
+</code></pre>
+<pre><code class="language-Output">2073
+</code></pre>
+<pre><code class="language-powershell">$B = Get-ChildItem -Path &quot;$PSHOME\en-US\*.txt&quot; | Select-String -Pattern 'PowerShell' -AllMatches
+$B.Matches.Length
+</code></pre>
+<pre><code class="language-Output">2200
+</code></pre>
+<p><code>Get-ChildItem</code>cmdlet は <strong>Path</strong> パラメータを使用しています. <strong>Path</strong> パラメータは  変数を使用しています.<code>$PSHOME</code>PowerShell ディレクトリを指定する.残りのパスには<strong>en-US</strong> のサブディレクトリが含まれ,それぞれを指定します.<code>*.txt</code>ファイルはディレクトリです.<code>Get-ChildItem</code>対象は,  に保存されます.<code>$A</code>変数です.<code>$A</code>変数はパイプラインをダウンして  に送られます.<code>Select-String</code>cmdlet. <code>Select-String</code><strong> パターン</strong> パラメタを使用して,各ファイルに文字列 <strong>PowerShell</strong> を検索します.</p>
+<p>PowerShell コマンドラインから,<code>$A</code>PowerShell の変数文字列の2つの発生を含む行があります.</p>
+<p><code>$A.Matches</code>性能は,それぞれの行で最初にパターン <strong>PowerShell</strong>が発生した場所をリストする.</p>
+<p><code>$A.Matches.Length</code>性能は,それぞれの行で最初に発生したパターンを数える.</p>
+<p><code>$B</code>同じ変数を使用します.<code>Get-ChildItem</code>そして,<code>Select-String</code>cmdletsが表示されるが,AllMatches パラメータを追加する.AllMatches は,各行でパターンの発生をそれぞれ見つける.  に保存されているオブジェクトは,<code>$A</code>そして,<code>$B</code>変数は同一です.</p>
+<p><code>$B.Matches.Length</code>性能は増加する,なぜなら,各行で,パターンのすべての発生がカウントされるからです.</p>
+<h3>例10 - を使用してパイプラインオブジェクトを文字列に変換する<code>Out-String</code></h3>
+<p><code>ToString()</code>パイプされたオブジェクトの結果はPowerShellのフォーマットシステムで生成された同じ豊かな文字列表示ではありません.したがって,オブジェクトをパイプして  にする必要があります.<code>Out-String</code>まず最初に.</p>
+<p>管道をパイプして <code>Out-String</code>フォーマットされた出力を単一の多行列文字列オブジェクトに変換します.つまり,当時は<code>Select-String</code>匹配を見つけると,全マルチライン文字列を出力します.</p>
+<pre><code class="language-powershell">PS&gt; $hash = @{
+    Name = 'foo'
+    Category = 'bar'
+}
+
+# !! NO output, due to .ToString() conversion
+$hash | Select-String -Pattern 'foo'
+
+# Out-String converts the output to a single multi-line string object
+PS&gt; $hash | Out-String | Select-String -Pattern 'foo'
+
+Name                           Value
+----                           -----
+Name                           foo
+Category                       bar
+
+# Out-String -Stream converts the output to a multiple single-line string objects
+PS&gt; $hash | Out-String -Stream | Select-String -Pattern 'foo'
+
+Name                           foo
+</code></pre>
+<p>管道をパイプして <code>Out-String -Stream</code>フォーマットされた出力を複数の単行列文字列オブジェクトに変換します.つまり,当時は<code>Select-String</code>匹配を見つけると,匹配線のみ出力します.</p>
+<h2>パラメータは</h2>
+<h3>-AllMatches でした.</h3>
+<p>cmdletが各行テキストで1以上のマッチを検索すると表示します.このパラメータなしでは, <code>Select-String</code>テキストの各行で最初のマッチしか見つからない.</p>
+<p>いつ<code>Select-String</code>文字列で1つ以上のマッチが見つかったら,その文字列に1つだけマッチインフォオブジェクトが出されますが,そのオブジェクトのマッチ属性にはすべてのマッチが含まれます.</p>
+<p>このパラメータは<strong>SimpleMatch</strong>パラメータと組み合わせて使用すると無視されます.すべてのマッチを返したい場合,検索しているパターンは,通常の表現 &gt;文字を含んでいる場合は,SimpleMatch**を使用する代わりに,それらの文字を回避する必要があります. regular expressionsを回避する詳細については, &gt; [about_Regular_Expressions] (..) //Microsoft.PowerShell.Core/About/about_Regular_Expressions.md) を参照してください.</p>
+<pre><code class="language-yaml">Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-CaseSensitive でした</h3>
+<p>cmdletがマッチするケースがセンシティブであることを示します.デフォルトでは,マッチはケースセンシティブではありません.</p>
+<pre><code class="language-yaml">Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-文脈</h3>
+<p>パターンに一致する線前と後に指定された数列を捕捉します.</p>
+<p>このパラメータの値として1つの数字を入力すると,その数字は試合前と後の線の数を決定する.もし2つの数字を値として入力すると,最初の数字は試合前の線数を決定し,第二の数字は試合後の線数を決定する.例えば, <code>-Context 2,3</code> .</p>
+<p>デフォルト表示では,一致する行が正角括弧で表示される ()<code>&gt;</code>) (ASCII 62) は,ディスプレイの最初の列に表示されます.マークされていない行が文脈です.</p>
+<p><strong>コンテキスト</strong>パラメータは, によって生成されたオブジェクトの数を変えることはありません.<code>Select-String</code>  <code>Select-String</code>各試合に [MatchInfo] (/dotnet/api/microsoft.powershell.commands.matchinfo) のオブジェクトを生成します.文脈はオブジェクトの <strong>Context</strong>属性にある文字列の配列として保存されます.</p>
+<p>の出力が上がると,<code>Select-String</code>コマンドはパイプラインを別のパイプラインに送る.<code>Select-String</code>対応するコマンドは,コンテキスト行中のテキストではなく, <strong>MatchInfo</strong>オブジェクトの <strong>Line</strong>属性の値である.その結果, <strong>Context</strong>パラメータは受信する で有効でない.<code>Select-String</code>命令です.</p>
+<p>文脈にマッチが含まれている場合,それぞれのマッチのMatchInfoオブジェクトにはすべての文脈線が含まれていますが,重複する線はディスプレイで一度だけ表示されます.</p>
+<pre><code class="language-yaml">Type: System.Int32[]
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-エンコーディング</h3>
+<p>ターゲットファイルにコードが指定される.デフォルト値は です.<code>default</code> .</p>
+<p>このパラメータの受け入れられる値は以下の通りです.</p>
+<ul>
+<li>-<code>ascii</code>ASCII (7ビット) の文字セットを使用します. - <code>bigendianunicode</code>UTF-16 を大エンディアンバイト順で使用します. - <code>default</code>システム内のアクティブコードページ (通常はANSI) に対応するエンコーディングを使用します. - <code>oem</code>システム内の現在のOEMコードページに対応するエンコーディングを使用します. - <code>unicode</code>UTF-16 を小エンディアンバイト順で使用します. - <code>utf7</code>UTF-7 を使用します.<code>utf8</code>UTF-8 を使用します.<code>utf32</code>UTF-32 を小エンディアンバイト順で使用します.</li>
+</ul>
+<pre><code class="language-yaml">Type: System.String
+Parameter Sets: (All)
+Aliases:
+Accepted values: ASCII, BigEndianUnicode, Default, OEM, Unicode, UTF7, UTF8, UTF32
+
+Required: False
+Position: Named
+Default value: Default
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>- 排除する</h3>
+<p>指定された項目を排除する.このパラメータの値は<strong>Path</strong>パラメータを対象とする. 路径要素またはパターンを入力する.例えば <code>*.txt</code>ワイルドカードは許されている.</p>
+<pre><code class="language-yaml">Type: System.String[]
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: True
+</code></pre>
+<h3>- 含めること</h3>
+<p>指定された項目を含む.このパラメータの値は<strong>Path</strong>パラメータを対象とする. 路径要素またはパターンを入力する.例えば <code>*.txt</code>ワイルドカードは許されている.</p>
+<pre><code class="language-yaml">Type: System.String[]
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: True
+</code></pre>
+<h3>-InputObject</h3>
+<p>検索するテキストを指定します.テキストを含む変数を入力するか,テキストを入手するコマンドまたは表現を入力します.</p>
+<p><strong>InputObject</strong> パラメータを使用することは,パイプラインをダウンして文字列を送るようなものではありません.<code>Select-String</code> .</p>
+<p>に複数の弦をパイプするときに<code>Select-String</code>cmdletでは,それぞれの文字列に指定されたテキストを検索し,検索テキストを含むすべての文字列を返します.</p>
+<p>文字列の集合を送信するために <strong>InputObject</strong> パラメータを使用すると,<code>Select-String</code>集合を単一の組み合わせの文字列として扱います. <code>Select-String</code>文字列を単位として返します.文字列の検索テキストを見つけるとします.</p>
+<pre><code class="language-yaml">Type: System.Management.Automation.PSObject
+Parameter Sets: Object
+Aliases:
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: True (ByValue)
+Accept wildcard characters: False
+</code></pre>
+<h3>-リスト</h3>
+<p>各入力ファイルから一致するテキストの最初のインスタンスはのみ返されます.これは,通常の表現に一致する内容を持つファイルの一覧を回収する最も効率的な方法です.</p>
+<p>デフォルトでは, <code>Select-String</code>発見したすべてのマッチに <strong>MatchInfo</strong>オブジェクトを返します.</p>
+<pre><code class="language-yaml">Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-リテラルパース</h3>
+<p>検索するファイルへのパス指定します.LiteralPath**パラメータの値は入力されたままに使用されます.文字はワイルドカードとして解釈されません.パスにエスケープ文字が含まれている場合は単一の引用符で締め切ってください.単一の引用符はPowerShellにエスケープシーケンスのように解釈しないように指示します.スペースを含むパスには引用符で締め切らなければならない.詳細については,[about_Quoting_Rules]../Microsoft.Powershell.Core/About/about_Quoting_Rules.md) を参照してください.</p>
+<pre><code class="language-yaml">Type: System.String[]
+Parameter Sets: LiteralFile
+Aliases: PSPath
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+</code></pre>
+<h3>-Notch 匹敵する</h3>
+<p><strong>NotMatch</strong>パラメータは,指定されたパターンに一致しないテキストを見つけます.</p>
+<pre><code class="language-yaml">Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h1>Select-String を選択する</h1>
+<h3>- 歩道</h3>
+<p>検索するファイルへの経路を指定します.ワイルドカードは許可されています. デフォルトの位置はローカルディレクトリです. ディレクトリ内のファイルを指定してください. 例えば <code>log1.txt</code>     <code>*.doc</code>       <code>*.*</code>辞書に記載されているスペースを含む経路は引用文に付いている必要があります.詳細については, [about_Quoting_Rules] (../Microsoft.Powershell.Core/About/about_Quoting_Rules.md) を参照してください.</p>
+<pre><code class="language-yaml">Type: System.String[]
+Parameter Sets: File
+Aliases:
+
+Required: True
+Position: 1
+Default value: Local directory
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: True
+</code></pre>
+<h3>- パターン</h3>
+<p>各行で求められるテキストを指定します.パターンの値は正規表現として扱われます.パラメータは数列の複数のパターンを受け入れます.複数のパターンを指定した場合, <code>Select-String</code>各パターンに一致するマッチを返します.</p>
+<p>常用表現について詳しくは, [about_Regular_Expressions] を参照してください.</p>
+<pre><code class="language-yaml">Type: System.String[]
+Parameter Sets: (All)
+Aliases:
+
+Required: True
+Position: 0
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-静かさ</h3>
+<p>cmdlet がMatchInfo**オブジェクトではなくシンプルな応答を返すと表示します.返された値は です.<code>$true</code>パターンが見つかった場合,または<code>$null</code>パターンが見つからない場合.</p>
+<pre><code class="language-yaml">Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-SimpleMatch でした.</h3>
+<p>cmdlet は通常の表現の対照ではなく,単純な対照を使用することを示します.<code>Select-String</code><strong>Pattern</strong>パラメータで入力したテキストを検索します. <strong>Pattern</strong>パラメータの値を正規表現式として解釈しません.</p>
+<p>また,SimpleMatchが使用された場合,返されたMatchInfo<strong>オブジェクトの </strong>Matches**属性は空です.</p>
+<p>&gt; [!NOTE] &gt; このパラメータがAllMatches<strong>パラメータで使用されると,AllMatches</strong>は無視されます.</p>
+<pre><code class="language-yaml">Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>共通パラメーター</h3>
+<p>このcmdletは,共通パラメータをサポートしています: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable.詳細については, <a href="を参照してください.https://go.microsoft.com/fwlink/?LinkID=113216">about_CommonParameters</a> でした.</p>
+<h2>輸入は</h2>
+<h3>システム管理自動化PSObject</h3>
+<p>を持つ任意のオブジェクトをパイプすることができます.<code>ToString()</code>このcmdletの方法です.</p>
+<h2>輸出は</h2>
+<h3>Microsoft.PowerShell.Commands.MatchInfoの提供について</h3>
+<p>デフォルトでは,このcmdletは,見つかったすべてのマッチのための <strong>MatchInfo</strong>オブジェクトを返します.</p>
+<h3>システム.ブルリアン</h3>
+<p><strong>Quiet</strong>パラメータを使用すると,このcmdletは<strong>Boolean</strong>値が返して,パターンが見つかったかどうかを表示します.</p>
+<h2>NOTES  記事ができました.</h2>
+<p>Windows PowerShell では,次のアライスがあります.<code>Select-String</code>:</p>
+<ul>
+<li>-<code>sls</code></li>
+</ul>
+<p><code>Select-String</code> に似ている.<code>grep</code>Unixやで作成したものです.<code>findstr.exe</code>Windows で.</p>
+<p>&gt; [!NOTE] &gt; PowerShell コマンドの承認された動詞 &gt; &gt; [PowerShell コマンドの承認された動詞] ((/powershell/scripting/developer/cmdlet/approved-verbs-for-windows-powershell-commands) &gt; &gt; 公式の名前名前の前記<code>Select-*</code>cmdlets は  です.<code>sc</code>                                                                                                                                       <code>sl</code>.したがって,適切な名 &gt; for <code>Select-String</code>                                                                                                                                                                                                                 <code>scs</code>                                                                                                                                       <code>sls</code>これはこの規則の例外です.</p>
+<p>管道が反対するときに,<code>Select-String</code>:</p>
+<ul>
+<li><strong>FileInfo</strong>オブジェクトはファイルへのパスとして扱われます.<code>Select-String</code>ファイルの内容を検索する,ファイルではなく,<code>ToString()</code>対象の表現. - <code>ToString()</code>パイプされたオブジェクトの結果はPowerShellのフォーマットシステムで生成された同じ豊かな文字列表示ではありません.したがって,オブジェクトをパイプして  にする必要があります.<code>Out-String</code>詳しくは例10を参照してください.</li>
+</ul>
+<p>を使用するには<code>Select-String</code><strong> パターン</strong>パラメータの値として,検索したいテキストを入力します.検索するテキストを指定するには,以下の基準を使用します.</p>
+<ul>
+<li>引用文字列にテキストを入力して,パイプをにします.<code>Select-String</code>- 文字列を変数に保存し,その変数を <strong>InputObject</strong> パラメータの値として指定します. - テキストがファイルに保存されている場合は,ファイルへの経路を指定するには <strong>Path</strong> パラメータを使用します.</li>
+</ul>
+<p>デフォルトでは, <code>Select-String</code><strong>Pattern</strong>パラメータの値を正規表現として解釈する.詳細については, [about_Regular_Expressions] (/Microsoft.PowerShell.Core/About/about_Regular_Expressions.md) を参照してください. 普通の表現のマッチングを覆すために, <strong>SimpleMatch</strong>パラメータを使用できます. <strong>SimpleMatch</strong>パラメータは,入力中の <strong>Pattern</strong>パラメータの値のインスタンスを見つけます.</p>
+<p>のデフォルト出力です.<code>Select-String</code><strong>MatchInfo</strong> オブジェクトは,マッチに関する詳細な情報を含む.このオブジェクトの情報は,ファイル内のテキストを探しているときに有用です.なぜなら, <strong>MatchInfo</strong> オブジェクトには <strong>Filename</strong> と <strong>Line</strong> のような属性があります.入力がファイルからでない場合,これらのパラメータの値は <strong>InputStream</strong>です.</p>
+<p><strong>MatchInfo</strong>オブジェクトの情報が必要でない場合は<strong>Quiet</strong>パラメータを使用します. <strong>Quiet</strong>パラメータは, <strong>MatchInfo</strong>オブジェクトではなく,一致したかどうかを示すためにブル値 (True or False) を返します.</p>
+<p>文章を一致させる時, <code>Select-String</code>システムに設定された現在の文化を使用します.現在の文化を見つけるには,  を使います.<code>Get-Culture</code>cmdletです.</p>
+<p><strong>MatchInfo</strong>オブジェクトの性質を調べるために,次のコマンドを入力してください.</p>
+<p><code>Select-String -Path test.txt -Pattern 'test' | Get-Member | Format-List -Property *</code></p>
+<h2>関連リンク</h2>
+<p><a href="../Microsoft.PowerShell.Core/About/about_Automatic_Variables.md">about_Automatic_Variables</a> について</p>
+<p><a href="../Microsoft.PowerShell.Core/About/about_Comparison_Operators.md">about_Comparison_Operators</a> について</p>
+<p><a href="../Microsoft.PowerShell.Core/About/about_Functions.md">about_Functions</a> について</p>
+<p><a href="../Microsoft.Powershell.Core/About/about_Quoting_Rules.md">about_Quoting_Rules</a> について</p>
+<p><a href="../Microsoft.PowerShell.Core/About/about_Regular_Expressions.md">about_Regular_Expressions</a> について</p>
+<p><a href="Get-Alias.md">Get-Alias</a> </p>
+<p><a href="../Microsoft.PowerShell.Management/Get-ChildItem.md">Get-ChildItem</a> について</p>
+<p><a href="../Microsoft.PowerShell.Core/Get-Command.md">Get-Command</a> </p>
+<p><a href="Get-Member.md">Get-Member</a> でした.</p>
+<p><a href="../Microsoft.PowerShell.Diagnostics/Get-WinEvent.md">Get-WinEvent</a> </p>
+<p><a href="Out-File.md">Out-File</a> </p></section><section class="en-original"><pre class="source-original"># Select-String
+
+## SYNOPSIS
+Finds text in strings and files.
+
+## SYNTAX
+
+### File (Default)
+
+```
+Select-String [-Pattern] &lt;String[]&gt; [-Path] &lt;String[]&gt; [-SimpleMatch] [-CaseSensitive]
+ [-Quiet] [-List] [-Include &lt;String[]&gt;] [-Exclude &lt;String[]&gt;] [-NotMatch] [-AllMatches]
+ [-Encoding &lt;String&gt;] [-Context &lt;Int32[]&gt;] [&lt;CommonParameters&gt;]
+```
+
+### Object
+
+```
+Select-String -InputObject &lt;PSObject&gt; [-Pattern] &lt;String[]&gt; [-SimpleMatch]
+ [-CaseSensitive] [-Quiet] [-List] [-Include &lt;String[]&gt;] [-Exclude &lt;String[]&gt;] [-NotMatch]
+ [-AllMatches] [-Encoding &lt;String&gt;] [-Context &lt;Int32[]&gt;] [&lt;CommonParameters&gt;]
+```
+
+### LiteralFile
+
+```
+Select-String [-Pattern] &lt;String[]&gt; -LiteralPath &lt;String[]&gt; [-SimpleMatch]
+ [-CaseSensitive] [-Quiet] [-List] [-Include &lt;String[]&gt;] [-Exclude &lt;String[]&gt;] [-NotMatch]
+ [-AllMatches] [-Encoding &lt;String&gt;] [-Context &lt;Int32[]&gt;] [&lt;CommonParameters&gt;]
+```
+
+## DESCRIPTION
+
+The `Select-String` cmdlet uses regular expression matching to search for text patterns in input
+strings and files. You can use `Select-String` similar to `grep` in Unix or `findstr.exe` in
+Windows.
+
+`Select-String` is based on lines of text. By default, `Select-String` finds the first match in each
+line and, for each match, it displays the file name, line number, and all text in the line
+containing the match. You can direct `Select-String` to find multiple matches per line, display text
+before and after the match, or display a Boolean value (True or False) that indicates whether a
+match is found.
+
+`Select-String` can display all the text matches or stop after the first match in each input file.
+`Select-String` can be used to display all text that doesn&#x27;t match the specified pattern.
+
+You can also specify that `Select-String` should expect a particular character encoding, such as
+when you&#x27;re searching files of Unicode text. `Select-String` uses the byte-order-mark (BOM) to
+detect the encoding format of the file. If the file has no BOM, it assumes the encoding is UTF8.
+
+## EXAMPLES
+
+### Example 1: Find a case-sensitive match
+
+This example does a case-sensitive match of the text that was sent down the pipeline to the
+`Select-String` cmdlet.
+
+```powershell
+&#x27;Hello&#x27;, &#x27;HELLO&#x27; | Select-String -Pattern &#x27;HELLO&#x27; -CaseSensitive -SimpleMatch
+```
+
+The text strings **Hello** and **HELLO** are sent down the pipeline to the `Select-String` cmdlet.
+`Select-String` uses the **Pattern** parameter to specify **HELLO**. The **CaseSensitive** parameter
+specifies that the case must match only the upper-case pattern. **SimpleMatch** is an optional
+parameter and specifies that the string in the pattern isn&#x27;t interpreted as a regular expression.
+`Select-String` displays **HELLO** in the PowerShell console.
+
+### Example 2: Find matches in text files
+
+This command searches all files with the `.txt` file name extension in the current directory. The
+output displays the lines in those files that include the specified string.
+
+```powershell
+Get-Alias | Out-File -FilePath .\Alias.txt
+Get-Command | Out-File -FilePath .\Command.txt
+Select-String -Path .\*.txt -Pattern &#x27;Get-&#x27;
+```
+
+```Output
+Alias.txt:8:Alias            cat -&gt; Get-Content
+Alias.txt:28:Alias           dir -&gt; Get-ChildItem
+Alias.txt:43:Alias           gal -&gt; Get-Alias
+Command.txt:966:Cmdlet       Get-Acl
+Command.txt:967:Cmdlet       Get-Alias
+```
+
+In this example, `Get-Alias` and `Get-Command` are used with the `Out-File` cmdlet to create two
+text files in the current directory, **Alias.txt** and **Command.txt**.
+
+`Select-String` uses the **Path** parameter with the asterisk (`*`) wildcard to search all files in
+the current directory with the file name extension `.txt`. The **Pattern** parameter specifies the
+text to match **Get-**. `Select-String` displays the output in the PowerShell console. The file name
+and line number precede each line of content that contains a match for the **Pattern** parameter.
+
+### Example 3: Find a pattern match
+
+In this example, multiple files are searched to find matches for the specified pattern. The pattern
+uses a regular expression quantifier. For more information, see
+[about_Regular_Expressions](../Microsoft.PowerShell.Core/About/About_Regular_Expressions.md).
+
+```powershell
+Select-String -Path &quot;$PSHOME\en-US\*.txt&quot; -Pattern &#x27;\?&#x27;
+```
+
+```Output
+C:\Program Files\PowerShell\6\en-US\default.help.txt:27:    beginning at https://go.microsoft.com/fwlink/?LinkID=108518.
+C:\Program Files\PowerShell\6\en-US\default.help.txt:50:    or go to: https://go.microsoft.com/fwlink/?LinkID=210614
+```
+
+The `Select-String` cmdlet uses two parameters, **Path** and **Pattern**. The **Path** parameter
+uses the variable `$PSHOME` that specifies the PowerShell directory. The remainder of the path
+includes the subdirectory **en-US** and specifies each `*.txt` file in the directory. The
+**Pattern** parameter specifies to match a question mark (`?`) in each file. A backslash (`\`) is
+used as an escape character and is necessary because the question mark (`?`) is a regular expression
+quantifier. `Select-String` displays the output in the PowerShell console. The file name and line
+number precede each line of content that contains a match for the **Pattern** parameter.
+
+### Example 4: Use Select-String in a function
+
+This example creates a function to search for a pattern in the PowerShell help files. For this
+example, the function only exists in the PowerShell session. When the PowerShell session is closed,
+the function is deleted. For more information, see
+[about_Functions](../Microsoft.PowerShell.Core/About/about_Functions.md).
+
+```powershell
+function Search-Help
+{
+    $PSHelp = &quot;$PSHOME\en-US\*.txt&quot;
+    Select-String -Path $PSHelp -Pattern &#x27;About_&#x27;
+}
+
+Search-Help
+```
+
+```Output
+C:\Windows\System32\WindowsPowerShell\v1.0\en-US\about_ActivityCommonParameters.help.txt:2:   about_ActivityCommonParameters
+C:\Windows\System32\WindowsPowerShell\v1.0\en-US\about_ActivityCommonParameters.help.txt:31:  see about_WorkflowCommonParameters.
+C:\Windows\System32\WindowsPowerShell\v1.0\en-US\about_ActivityCommonParameters.help.txt:33:  about_CommonParameters.
+```
+
+The function is created on the PowerShell command line. The `function` keyword uses the name
+`Search-Help`. Press **Enter** to begin adding statements to the function. From the `&gt;&gt;` prompt,
+add each statement and press **Enter** as shown in the example. After the closing bracket is added,
+you&#x27;re returned to a PowerShell prompt.
+
+The function contains two commands. The `$PSHelp` variable stores the path to the PowerShell help
+files. `$PSHOME` is the PowerShell installation directory with the subdirectory **en-US** that
+specifies each `*.txt` file in the directory.
+
+The `Select-String` command in the function uses the **Path** and **Pattern** parameters. The
+**Path** parameter uses the `$PSHelp` variable to get the path. The **Pattern** parameter uses the
+string **About_** as the search criteria.
+
+To run the function, type `Search-Help`. The function&#x27;s `Select-String` command displays the output
+in the PowerShell console.
+
+# Select-String
+
+### Example 5: Search for a string in a Windows event log
+
+This example searches for a string in a Windows event log. The variable `$_` represents the current
+object in the pipeline. For more information, see [about_Automatic_Variables](../Microsoft.PowerShell.Core/About/about_Automatic_Variables.md).
+
+```powershell
+$Events = Get-WinEvent -LogName Application -MaxEvents 50
+$Events | Select-String -InputObject {$_.Message} -Pattern &#x27;Failed&#x27;
+```
+
+The `Get-WinEvent` cmdlet uses the **LogName** parameter to specify the Application log. The
+**MaxEvents** parameter gets the 50 most recent events from the log. The log content is stored in
+the variable named `$Events`.
+
+The `$Events` variable is sent down the pipeline to the `Select-String` cmdlet. `Select-String` uses
+the **InputObject** parameter. The `$_` variable represents the current object and `Message` is a
+property of the event. The **Pattern** parameter specifies the string **Failed** and searches for
+matches in `$_.Message`. `Select-String` displays the output in the PowerShell console.
+
+### Example 6: Find a string in subdirectories
+
+This example searches a directory and all of its subdirectories for a specific text string.
+
+```powershell
+Get-ChildItem -Path C:\Windows\System32\*.txt -Recurse |
+    Select-String -Pattern &#x27;Microsoft&#x27; -CaseSensitive
+```
+
+`Get-ChildItem` uses the **Path** parameter to specify **C:\Windows\System32\*.txt**. The
+**Recurse** parameter includes the subdirectories. The objects are sent down the pipeline to
+`Select-String`.
+
+`Select-String` uses the **Pattern** parameter and specifies the string **Microsoft**. The
+**CaseSensitive** parameter is used to match the exact case of the string. `Select-String` displays
+the output in the PowerShell console.
+
+&gt; [!NOTE]
+&gt; Dependent upon your permissions, you might see **Access denied** messages in the output.
+
+### Example 7: Find strings that do not match a pattern
+
+This example shows how to exclude lines of data that don&#x27;t match a pattern.
+
+```powershell
+Get-Command | Out-File -FilePath .\Command.txt
+Select-String -Path .\Command.txt -Pattern &#x27;Get&#x27;, &#x27;Set&#x27;  -NotMatch
+```
+
+The `Get-Command` cmdlet sends objects down the pipeline to the `Out-File` to create the
+**Command.txt** file in the current directory. `Select-String` uses the **Path** parameter to
+specify the **Command.txt** file. The **Pattern** parameter specifies **Get** and **Set** as the
+search pattern. The **NotMatch** parameter excludes **Get** and **Set** from the results.
+`Select-String` displays the output in the PowerShell console that doesn&#x27;t include **Get** or
+**Set**.
+
+### Example 8: Find lines before and after a match
+
+This example shows how to get the lines before and after the matched pattern.
+
+```powershell
+Get-Command | Out-File -FilePath .\Command.txt
+Select-String -Path .\Command.txt -Pattern &#x27;Get-Computer&#x27; -Context 2, 3
+```
+
+```Output
+  Command.txt:1186:Cmdlet          Get-CmsMessage            3.0.0.0    Microsoft.PowerShell.Security
+  Command.txt:1187:Cmdlet          Get-Command               3.0.0.0    Microsoft.PowerShell.Core
+&gt; Command.txt:1188:Cmdlet          Get-ComputerInfo          3.1.0.0    Microsoft.PowerShell.Management
+&gt; Command.txt:1189:Cmdlet          Get-ComputerRestorePoint  3.1.0.0    Microsoft.PowerShell.Management
+  Command.txt:1190:Cmdlet          Get-Content               3.1.0.0    Microsoft.PowerShell.Management
+  Command.txt:1191:Cmdlet          Get-ControlPanelItem      3.1.0.0    Microsoft.PowerShell.Management
+  Command.txt:1192:Cmdlet          Get-Counter               3.0.0.0    Microsoft.PowerShell.Diagnostics
+```
+
+The `Get-Command` cmdlet sends objects down the pipeline to the `Out-File` to create the
+**Command.txt** file in the current directory. `Select-String` uses the **Path** parameter to
+specify the **Command.txt** file. The **Pattern** parameter specifies `Get-Computer` as the search
+pattern. The **Context** parameter uses two values, before and after, and marks pattern matches in
+the output with an angle bracket (`&gt;`). The **Context** parameter outputs the two lines before the
+first pattern match and three lines after the last pattern match.
+
+### Example 9: Find all pattern matches
+
+This example shows how the **AllMatches** parameter finds each pattern match in a line of text. By
+default, `Select-String` only finds the first occurrence of a pattern in a line of text. This
+example uses object properties that are found with the `Get-Member` cmdlet.
+
+```powershell
+$A = Get-ChildItem -Path &quot;$PSHOME\en-US\*.txt&quot; | Select-String -Pattern &#x27;PowerShell&#x27;
+$A
+```
+
+```Output
+C:\Windows\System32\WindowsPowerShell\v1.0\en-US\about_ActivityCommonParameters.help.txt:5:    Describes the parameters that Windows PowerShell
+C:\Windows\System32\WindowsPowerShell\v1.0\en-US\about_ActivityCommonParameters.help.txt:9:    Windows PowerShell Workflow adds the activity common
+```
+
+```powershell
+$A.Matches
+```
+
+```Output
+Groups   : {0}
+Success  : True
+Name     : 0
+Captures : {0}
+Index    : 4
+Length   : 10
+Value    : PowerShell
+```
+
+```powershell
+$A.Matches.Length
+```
+
+```Output
+2073
+```
+
+```powershell
+$B = Get-ChildItem -Path &quot;$PSHOME\en-US\*.txt&quot; | Select-String -Pattern &#x27;PowerShell&#x27; -AllMatches
+$B.Matches.Length
+```
+
+```Output
+2200
+```
+
+The `Get-ChildItem` cmdlet uses the **Path** parameter. The **Path** parameter uses the variable
+`$PSHOME` that specifies the PowerShell directory. The remainder of the path includes the
+subdirectory **en-US** and specifies each `*.txt` file in the directory. The `Get-ChildItem` objects
+are stored in the `$A` variable. The `$A` variable is sent down the pipeline to the `Select-String`
+cmdlet. `Select-String` uses the **Pattern** parameter to search each file for the string
+**PowerShell**.
+
+From the PowerShell command line, the `$A` variable contents are displayed. There&#x27;s a line that
+contains two occurrences of the string **PowerShell**.
+
+The `$A.Matches` property lists the first occurrence of the pattern **PowerShell** on each line.
+
+The `$A.Matches.Length` property counts the first occurrence of the pattern **PowerShell** on each
+line.
+
+The `$B` variable uses the same `Get-ChildItem` and `Select-String` cmdlets, but adds the
+**AllMatches** parameter. **AllMatches** finds each occurrence of the pattern **PowerShell** on each
+line. The objects stored in the `$A` and `$B` variables are identical.
+
+The `$B.Matches.Length` property increases because for each line, every occurrence of the pattern
+**PowerShell** is counted.
+
+### Example 10 - Convert pipeline objects to strings using `Out-String`
+
+The `ToString()` result of the piped object isn&#x27;t the same rich string representation produced by
+PowerShell&#x27;s formatting system. So, you may need to pipe the objects to `Out-String` first.
+
+Piping to `Out-String` converts the formatted output into a single multi-line string object. This
+means that when `Select-String` finds a match it outputs the whole multiline string.
+
+```powershell
+PS&gt; $hash = @{
+    Name = &#x27;foo&#x27;
+    Category = &#x27;bar&#x27;
+}
+
+# !! NO output, due to .ToString() conversion
+$hash | Select-String -Pattern &#x27;foo&#x27;
+
+# Out-String converts the output to a single multi-line string object
+PS&gt; $hash | Out-String | Select-String -Pattern &#x27;foo&#x27;
+
+Name                           Value
+----                           -----
+Name                           foo
+Category                       bar
+
+# Out-String -Stream converts the output to a multiple single-line string objects
+PS&gt; $hash | Out-String -Stream | Select-String -Pattern &#x27;foo&#x27;
+
+Name                           foo
+```
+
+Piping to `Out-String -Stream` converts the formatted output into a multiple single-line string
+objects. This means that when `Select-String` finds a match it outputs only the matching line.
+
+## PARAMETERS
+
+### -AllMatches
+
+Indicates that the cmdlet searches for more than one match in each line of text. Without this
+parameter, `Select-String` finds only the first match in each line of text.
+
+When `Select-String` finds more than one match in a line of text, it still emits only one
+**MatchInfo** object for the line, but the **Matches** property of the object contains all the
+matches.
+
+&gt; [!NOTE]
+&gt; This parameter is ignored when used in combination with the **SimpleMatch** parameter. If you wish
+&gt; to return all matches and the pattern that you are searching for contains regular expression
+&gt; characters, you must escape those characters rather than using **SimpleMatch**. See
+&gt; [about_Regular_Expressions](../Microsoft.PowerShell.Core/About/about_Regular_Expressions.md) for
+&gt; more information about escaping regular expressions.
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -CaseSensitive
+
+Indicates that the cmdlet matches are case-sensitive. By default, matches aren&#x27;t case-sensitive.
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Context
+
+Captures the specified number of lines before and after the line that matches the pattern.
+
+If you enter one number as the value of this parameter, that number determines the number of lines
+captured before and after the match. If you enter two numbers as the value, the first number
+determines the number of lines before the match and the second number determines the number of lines
+after the match. For example, `-Context 2,3`.
+
+In the default display, lines with a match are indicated by a right angle bracket (`&gt;`) (ASCII 62)
+in the first column of the display. Unmarked lines are the context.
+
+The **Context** parameter doesn&#x27;t change the number of objects generated by `Select-String`.
+`Select-String` generates one [MatchInfo](/dotnet/api/microsoft.powershell.commands.matchinfo)
+object for each match. The context is stored as an array of strings in the **Context** property of
+the object.
+
+When the output of a `Select-String` command is sent down the pipeline to another `Select-String`
+command, the receiving command searches only the text in the matched line. The matched line is the
+value of the **Line** property of the **MatchInfo** object, not the text in the context lines. As a
+result, the **Context** parameter isn&#x27;t valid on the receiving `Select-String` command.
+
+When the context includes a match, the **MatchInfo** object for each match includes all the context
+lines, but the overlapping lines appear only once in the display.
+
+```yaml
+Type: System.Int32[]
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Encoding
+
+Specifies the type of encoding for the target file. The default value is `default`.
+
+The acceptable values for this parameter are as follows:
+
+- `ascii` Uses ASCII (7-bit) character set.
+- `bigendianunicode` Uses UTF-16 with the big-endian byte order.
+- `default` Uses the encoding that corresponds to the system&#x27;s active code page (usually ANSI).
+- `oem` Uses the encoding that corresponds to the system&#x27;s current OEM code page.
+- `unicode` Uses UTF-16 with the little-endian byte order.
+- `utf7` Uses UTF-7.
+- `utf8` Uses UTF-8.
+- `utf32` Uses UTF-32 with the little-endian byte order.
+
+```yaml
+Type: System.String
+Parameter Sets: (All)
+Aliases:
+Accepted values: ASCII, BigEndianUnicode, Default, OEM, Unicode, UTF7, UTF8, UTF32
+
+Required: False
+Position: Named
+Default value: Default
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Exclude
+
+Exclude the specified items. The value of this parameter qualifies the **Path** parameter. Enter a
+path element or pattern, such as `*.txt`. Wildcards are permitted.
+
+```yaml
+Type: System.String[]
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: True
+```
+
+### -Include
+
+Includes the specified items. The value of this parameter qualifies the **Path** parameter. Enter a
+path element or pattern, such as `*.txt`. Wildcards are permitted.
+
+```yaml
+Type: System.String[]
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: True
+```
+
+### -InputObject
+
+Specifies the text to be searched. Enter a variable that contains the text, or type a command or
+expression that gets the text.
+
+Using the **InputObject** parameter isn&#x27;t the same as sending strings down the pipeline to
+`Select-String`.
+
+When you pipe more than one string to the `Select-String` cmdlet, it searches for the specified text
+in each string and returns each string that contains the search text.
+
+When you use the **InputObject** parameter to submit a collection of strings, `Select-String` treats
+the collection as a single combined string. `Select-String` returns the strings as a unit if it
+finds the search text in any string.
+
+```yaml
+Type: System.Management.Automation.PSObject
+Parameter Sets: Object
+Aliases:
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: True (ByValue)
+Accept wildcard characters: False
+```
+
+### -List
+
+Only the first instance of matching text is returned from each input file. This is the most
+efficient way to retrieve a list of files that have contents matching the regular expression.
+
+By default, `Select-String` returns a **MatchInfo** object for each match it finds.
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -LiteralPath
+
+Specifies the path to the files to be searched. The value of the **LiteralPath** parameter is used
+exactly as it&#x27;s typed. No characters are interpreted as wildcards. If the path includes escape
+characters, enclose it in single quotation marks. Single quotation marks tell PowerShell not to
+interpret any characters as escape sequences. Paths containing spaces must be enclosed in quotes. For
+more information, see
+[about_Quoting_Rules](../Microsoft.Powershell.Core/About/about_Quoting_Rules.md).
+
+```yaml
+Type: System.String[]
+Parameter Sets: LiteralFile
+Aliases: PSPath
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -NotMatch
+
+The **NotMatch** parameter finds text that doesn&#x27;t match the specified pattern.
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+# Select-String
+
+### -Path
+
+Specifies the path to the files to search. Wildcards are permitted. The default location is the
+local directory. Specify files in the directory, such as `log1.txt`, `*.doc`, or `*.*`. If you
+specify only a directory, the command fails. Paths containing spaces must be enclosed in quotes. For
+more information, see
+[about_Quoting_Rules](../Microsoft.Powershell.Core/About/about_Quoting_Rules.md).
+
+```yaml
+Type: System.String[]
+Parameter Sets: File
+Aliases:
+
+Required: True
+Position: 1
+Default value: Local directory
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: True
+```
+
+### -Pattern
+
+Specifies the text to find on each line. The pattern value is treated as a regular expression. The
+parameter accepts multiple patterns in an array. If you specify more than one pattern,
+`Select-String` returns matches for each pattern.
+
+To learn about regular expressions, see
+[about_Regular_Expressions](../Microsoft.PowerShell.Core/About/about_Regular_Expressions.md).
+
+```yaml
+Type: System.String[]
+Parameter Sets: (All)
+Aliases:
+
+Required: True
+Position: 0
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Quiet
+
+Indicates that the cmdlet returns a simple response instead of a **MatchInfo**
+object. The returned value is `$true` if the pattern is found or `$null` if the
+pattern is not found.
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -SimpleMatch
+
+Indicates that the cmdlet uses a simple match rather than a regular expression match. In a simple
+match, `Select-String` searches the input for the text in the **Pattern** parameter. It doesn&#x27;t
+interpret the value of the **Pattern** parameter as a regular expression statement.
+
+Also, when **SimpleMatch** is used, the **Matches** property of the **MatchInfo** object returned is
+empty.
+
+&gt; [!NOTE]
+&gt; When this parameter is used with the **AllMatches** parameter, the **AllMatches** is ignored.
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### CommonParameters
+
+This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable,
+-InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose,
+-WarningAction, and -WarningVariable. For more information, see
+[about_CommonParameters](https://go.microsoft.com/fwlink/?LinkID=113216).
+
+## INPUTS
+
+### System.Management.Automation.PSObject
+
+You can pipe any object that has a `ToString()` method to this cmdlet.
+
+## OUTPUTS
+
+### Microsoft.PowerShell.Commands.MatchInfo
+
+By default, this cmdlet returns a **MatchInfo** object for each match found.
+
+### System.Boolean
+
+When you use the **Quiet** parameter, this cmdlet returns a **Boolean** value indicating whether
+the pattern was found.
+
+## NOTES
+
+Windows PowerShell includes the following aliases for `Select-String`:
+
+- `sls`
+
+`Select-String` is similar to `grep` in Unix or `findstr.exe` in Windows.
+
+&gt; [!NOTE]
+&gt; According to
+&gt; [Approved Verbs for PowerShell Commands](/powershell/scripting/developer/cmdlet/approved-verbs-for-windows-powershell-commands),
+&gt; the official alias prefix for `Select-*` cmdlets is `sc`, not `sl`. Therefore, the proper alias
+&gt; for `Select-String` should be `scs`, not `sls`. This is an exception to this rule.
+
+When piping objects to `Select-String`:
+
+- **FileInfo** objects are treated as a path to a file. When file paths are specified,
+  `Select-String` searches the contents of the file, not the `ToString()` representation of the
+  object.
+- The `ToString()` result of the piped object isn&#x27;t the same rich string representation produced by
+  PowerShell&#x27;s formatting system. So, you may need to pipe the objects to `Out-String` first. For
+  more information, see Example 10.
+
+To use `Select-String`, type the text that you want to find as the value of the **Pattern**
+parameter. To specify the text to be searched, use the following criteria:
+
+- Type the text in a quoted string, and then pipe it to `Select-String`.
+- Store a text string in a variable, and then specify the variable as the value of the
+  **InputObject** parameter.
+- If the text is stored in files, use the **Path** parameter to specify the path to the files.
+
+By default, `Select-String` interprets the value of the **Pattern** parameter as a regular
+expression. For more information, see
+[about_Regular_Expressions](../Microsoft.PowerShell.Core/About/about_Regular_Expressions.md). You
+can use the **SimpleMatch** parameter to override the regular expression matching. The
+**SimpleMatch** parameter finds instances of the value of the **Pattern** parameter in the input.
+
+The default output of `Select-String` is a **MatchInfo** object, which includes detailed information
+about the matches. The information in the object is useful when you&#x27;re searching for text in files,
+because **MatchInfo** objects have properties such as **Filename** and **Line**. When the input
+isn&#x27;t from the file, the value of these parameters is **InputStream**.
+
+If you don&#x27;t need the information in the **MatchInfo** object, use the **Quiet** parameter. The
+**Quiet** parameter returns a Boolean value (True or False) to indicate whether it found a match,
+instead of a **MatchInfo** object.
+
+When matching phrases, `Select-String` uses the current culture that is set for the system. To find
+the current culture, use the `Get-Culture` cmdlet.
+
+To find the properties of a **MatchInfo** object, type the following command:
+
+`Select-String -Path test.txt -Pattern &#x27;test&#x27; | Get-Member | Format-List -Property *`
+
+## RELATED LINKS
+
+[about_Automatic_Variables](../Microsoft.PowerShell.Core/About/about_Automatic_Variables.md)
+
+[about_Comparison_Operators](../Microsoft.PowerShell.Core/About/about_Comparison_Operators.md)
+
+[about_Functions](../Microsoft.PowerShell.Core/About/about_Functions.md)
+
+[about_Quoting_Rules](../Microsoft.Powershell.Core/About/about_Quoting_Rules.md)
+
+[about_Regular_Expressions](../Microsoft.PowerShell.Core/About/about_Regular_Expressions.md)
+
+[Get-Alias](Get-Alias.md)
+
+[Get-ChildItem](../Microsoft.PowerShell.Management/Get-ChildItem.md)
+
+[Get-Command](../Microsoft.PowerShell.Core/Get-Command.md)
+
+[Get-Member](Get-Member.md)
+
+[Get-WinEvent](../Microsoft.PowerShell.Diagnostics/Get-WinEvent.md)
+
+[Out-File](Out-File.md)</pre></section>

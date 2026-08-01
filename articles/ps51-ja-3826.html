@@ -1,0 +1,298 @@
+<!doctype html><meta charset="utf-8"><section class="jp-official"><h1>ユーザートランザクション</h1>
+<h2>SYNOPSIS 脚本ブロックをアクティブトランザクションに追加します.</h2>
+<h2>SYNTAX</h2>
+<pre><code>Use-Transaction [-TransactedScript] &lt;ScriptBlock&gt; [-UseTransaction] [&lt;CommonParameters&gt;]
+</code></pre>
+<h2>記述は,</h2>
+<p><code>Use-Transaction</code>cmdlet は,アクティブトランザクションにスクリプトブロックを追加します.これは,トランザクション対応のMicrosoft .NET Frameworkオブジェクトを使用してトランザクションスクリプトを実行できるようにします.スクリプトブロックには, <strong>Microsoft.PowerShell.Commands.Management.TransactedString</strong>クラスのようなトランザクション対応の .NET Frameworkオブジェクトのみが含まれます.</p>
+<p>このcmdletを使用する際に,ほとんどのcmdletにオプションである <strong>UseTransaction</strong>パラメータが求められます.</p>
+<p><code>Use-Transaction</code>Windows PowerShell のトランザクション機能をサポートするcmdletの1つのセットです.詳細については, [about_Transactions.md] を参照してください.</p>
+<h2>例えは,</h2>
+<h3>例1: 取引可能のオブジェクトを使用したスクリプト</h3>
+<pre><code class="language-powershell">Start-Transaction
+$transactedString = New-Object Microsoft.PowerShell.Commands.Management.TransactedString
+$transactedString.Append(&quot;Hello&quot;)
+Use-Transaction -TransactedScript { $transactedString.Append(&quot;, World&quot;) } -UseTransaction
+$transactedString.ToString()
+</code></pre>
+<pre><code class="language-Output">Hello
+</code></pre>
+<pre><code class="language-powershell">Use-Transaction -TransactedScript { $transactedString.ToString() } -UseTransaction
+</code></pre>
+<pre><code class="language-Output">Hello, World
+</code></pre>
+<pre><code class="language-powershell">Complete-Transaction
+$transactedString.ToString()
+</code></pre>
+<pre><code class="language-Output">Hello, World
+</code></pre>
+<p>この例では,どのように使用するか示しています.<code>Use-Transaction</code>取引を有効にした .NET Framework オブジェクトに対するスクリプトに.この場合,オブジェクトは <strong>TransactedString</strong> オブジェクトです.</p>
+<p>最初のコマンドは,を用います.<code>Start-Transaction</code>cmdlet で取引を開始します.</p>
+<p>2番目のコマンドは,新オブジェクトコマンドを使用して <strong>TransactedString</strong>オブジェクトを作成します.このコマンドはオブジェクトを に保存します.<code>$TransactedString</code>変数です.</p>
+<p>3つ目のコマンドと4つ目のコマンドは,両者は,トランザクションストリングオブジェクトの <strong>Append</strong> 方法を使用して,文を値に追加します <code>$TransactedString</code>1つのコマンドは取引の一部で,もうひとつのコマンドは,取引の一部ではありません.</p>
+<p>第三のコマンドは,取引された文字列の <strong>Append</strong> 方法を使用して,Hello を  の値に追加します.<code>$TransactedString</code>命令が取引の一部ではないので,変更は直ちに適用されます.</p>
+<p>第4コマンドは,使用します.<code>Use-Transaction</code>取引の文字列にテキストを追加する.コマンドは, "World" を""の値に追加するために <strong>Append</strong> 方法を使用します.<code>$TransactedString</code>コマンドは,ブレーキに囲まれています ().<code>{}</code>このコマンドでは <strong>UseTransaction</strong> パラメータが求められます.</p>
+<p>第5と第6のコマンドは,トランザクションストリングオブジェクトの <strong>ToString</strong>方法を使用して,トランザクションストリング**の値を文字列として表示します.また,一つのコマンドは取引の一部であり,もうひとつの取引はそうではありません.</p>
+<p>第5コマンドは,トランザクションストリング変数の現在の値を表示するために <strong>ToString</strong>方法を使用します.トランザクションの一部ではないため,ストリングの現在の状態のみ表示されます.</p>
+<p>第6コマンドは,使用する<code>Use-Transaction</code>取引の一部であるため,取引の変更の先見のように,取引の現在の文字列の値を表示します.</p>
+<p>第7コマンドは""を用いています.<code>Complete-Transaction</code>cmdlet で取引を実行する.</p>
+<p>最終コマンドは <strong>ToString</strong> 方法を使用して,変数の結果値を文字列として表示します.</p>
+<h3>例2:取引を逆転させる</h3>
+<pre><code class="language-powershell">Start-Transaction
+$transactedString = New-Object Microsoft.PowerShell.Commands.Management.TransactedString
+$transactedString.Append(&quot;Hello&quot;)
+Use-Transaction -TransactedScript { $transactedString.Append(&quot;, World&quot;) } -UseTransaction
+Undo-Transaction
+$transactedString.ToString()
+</code></pre>
+<pre><code class="language-Output">Hello
+</code></pre>
+<p>この例では,取引を巻き戻す効果を示しています.<code>Use-Transaction</code>取引のすべてのコマンドと同様に,取引が戻ると,取引された変更は廃棄され,データは変更されない.</p>
+<p>最初のコマンドは,  を使います.<code>Start-Transaction</code>取引を開始する.</p>
+<p>第二のコマンドは,使用します.<code>New-Object</code><strong>TransactedString</strong>オブジェクトを作成する.  TransactedString**オブジェクトを に保存する.<code>$TransactedString</code>変数です.</p>
+<p>取引の一部でない第三のコマンドは, の値に"Hello"を追加するために <strong>Append</strong>法を使用します.<code>$TransactedString</code> .</p>
+<p>第4コマンドは,使用します.<code>Use-Transaction</code>取引で <strong>Append</strong> 方法を使用する別のコマンドを実行します.このコマンドは, の値に ",World" を追加するために <strong>Append</strong> 方法を使用します.<code>$TransactedString</code> .</p>
+<p>第5コマンドは,トランザクションを後回するために Undo-Transaction cmdlet を使用します.その結果,トランザクションで実行されたすべてのコマンドは逆転します.</p>
+<p>最終コマンドは,結果の値を表示するために <strong>ToString</strong> 方法を使用します.<code>$TransactedString</code>結果は,取引の外で行われた変更のみが対象に適用されたことを示しています.</p>
+<h2>パラメータは</h2>
+<h3>-TransactedScript</h3>
+<p>取引で実行されるスクリプトブロックを指定します. 括弧に囲まれた有効なスクリプトブロックを入力してください ().<code>{}</code>) が求められている.</p>
+<pre><code class="language-yaml">Type: System.Management.Automation.ScriptBlock
+Parameter Sets: (All)
+Aliases:
+
+Required: True
+Position: 0
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-UseTransaction 取引を活用する</h3>
+<p>アクティブトランザクションのコマンドが含まれています.このパラメータは,トランザクションが進行中の場合にのみ有効です.詳細については, [about_Transactions.md]を参照してください.</p>
+<pre><code class="language-yaml">Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases: usetx
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>共通パラメーター</h3>
+<p>このcmdletは,共通パラメータをサポートしています: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable.詳細については, <a href="を参照してください.https://go.microsoft.com/fwlink/?LinkID=113216">about_CommonParameters</a> でした.</p>
+<h2>輸入は</h2>
+<h3>どれもない</h3>
+<p>このcmdletに入力パイプすることはできません.</p>
+<h2>輸出は</h2>
+<h3>PSObject</h3>
+<p>このcmdletは,取引の結果を返します.</p>
+<h2>NOTES  記事ができました.</h2>
+<ul>
+<li><strong>UseTransaction</strong>のパラメータには,アクティブトランザクションのコマンドが含まれています.<code>Use-Transaction</code>cmdlet は常に取引で使用されますが,このパラメータは任意の  を作成するために必要です.<code>Use-Transaction</code>命令は有効です.</li>
+</ul>
+<h2>関連リンク</h2>
+<p><a href="Complete-Transaction.md">Complete-Transaction</a> について</p>
+<p><a href="Get-Transaction.md">Get-Transaction</a> </p>
+<p><a href="スタートトランザクション.md">スタートトランザクション</a></p>
+<p><a href="Undo-Transaction.md">Undo-Transaction</a> について</p></section><section class="en-original"><pre class="source-original"># Use-Transaction
+
+## SYNOPSIS
+Adds the script block to the active transaction.
+
+## SYNTAX
+
+```
+Use-Transaction [-TransactedScript] &lt;ScriptBlock&gt; [-UseTransaction] [&lt;CommonParameters&gt;]
+```
+
+## DESCRIPTION
+
+The `Use-Transaction` cmdlet adds a script block to an active transaction. This enables you to do
+transacted scripting by using transaction-enabled Microsoft .NET Framework objects. The script block
+can contain only transaction-enabled .NET Framework objects, such as instances of the
+**Microsoft.PowerShell.Commands.Management.TransactedString** class.
+
+The **UseTransaction** parameter, which is optional for most cmdlets, is required when you use this
+cmdlet.
+
+`Use-Transaction` is one of a set of cmdlets that support the transactions feature in Windows
+PowerShell. For more information, see [about_Transactions](../Microsoft.PowerShell.Core/About/about_Transactions.md).
+
+## EXAMPLES
+
+### Example 1: Script by using a transaction-enabled object
+
+```powershell
+Start-Transaction
+$transactedString = New-Object Microsoft.PowerShell.Commands.Management.TransactedString
+$transactedString.Append(&quot;Hello&quot;)
+Use-Transaction -TransactedScript { $transactedString.Append(&quot;, World&quot;) } -UseTransaction
+$transactedString.ToString()
+```
+
+```Output
+Hello
+```
+
+```powershell
+Use-Transaction -TransactedScript { $transactedString.ToString() } -UseTransaction
+```
+
+```Output
+Hello, World
+```
+
+```powershell
+Complete-Transaction
+$transactedString.ToString()
+```
+
+```Output
+Hello, World
+```
+
+This example shows how to use `Use-Transaction` to script against a transaction-enabled .NET
+Framework object. In this case, the object is a **TransactedString** object.
+
+The first command uses the `Start-Transaction` cmdlet to start a transaction.
+
+The second command uses the New-Object command to create a **TransactedString** object. It stores
+the object in the `$TransactedString` variable.
+
+The third and fourth commands both use the **Append** method of the **TransactedString** object to
+add text to the value of `$TransactedString`. One command is part of the transaction. The other
+command is not.
+
+The third command uses the **Append** method of the transacted string to add Hello to the value of
+`$TransactedString`. Because the command is not part of the transaction, the change is applied
+immediately.
+
+The fourth command uses `Use-Transaction` to add text to the string in the transaction. The command
+uses the **Append** method to add &quot;, World&quot; to the value of `$TransactedString`. The command is
+enclosed in braces (`{}`) to make it a script block. The **UseTransaction** parameter is required in
+this command.
+
+The fifth and sixth commands use the **ToString** method of the **TransactedString** object to
+display the value of the **TransactedString** as a string. Again, one command is part of the
+transaction. The other transaction is not.
+
+The fifth command uses the **ToString** method to display the current value of the $TransactedString variable.
+Because it is not part of the transaction, it displays only the current state of the string.
+
+The sixth command uses `Use-Transaction` to run the same command in the transaction. Because the
+command is part of the transaction, it displays the current value of the string in the transaction,
+much like a preview of the transaction changes.
+
+The seventh command uses the `Complete-Transaction` cmdlet to commit the transaction.
+
+The final command uses the **ToString** method to display the resulting value of the variable as a
+string.
+
+### Example 2: Roll back a transaction
+
+```powershell
+Start-Transaction
+$transactedString = New-Object Microsoft.PowerShell.Commands.Management.TransactedString
+$transactedString.Append(&quot;Hello&quot;)
+Use-Transaction -TransactedScript { $transactedString.Append(&quot;, World&quot;) } -UseTransaction
+Undo-Transaction
+$transactedString.ToString()
+```
+
+```Output
+Hello
+```
+
+This example shows the effect of rolling back a transaction that includes `Use-Transaction`
+commands. Like all commands in a transaction, when the transaction is rolled back, the transacted
+changes are discarded and the data is unchanged.
+
+The first command uses `Start-Transaction` to start a transaction.
+
+The second command uses `New-Object` to create a **TransactedString** object. It stores the object
+in the `$TransactedString` variable.
+
+The third command, which is not part of the transaction, uses the **Append** method to add &quot;Hello&quot;
+to the value of `$TransactedString`.
+
+The fourth command uses `Use-Transaction` to run another command that uses the **Append** method in
+the transaction. The command uses the **Append** method to add &quot;, World&quot; to the value of
+`$TransactedString`.
+
+The fifth command uses the Undo-Transaction cmdlet to roll back the transaction. As a result, all
+commands performed in the transaction are reversed.
+
+The final command uses the **ToString** method to display the resulting value of `$TransactedString`
+as a string. The results show that only the changes that were made outside the transaction were
+applied to the object.
+
+## PARAMETERS
+
+### -TransactedScript
+
+Specifies the script block that is run in the transaction. Enter any valid script block enclosed in
+braces (`{}`). This parameter is required.
+
+```yaml
+Type: System.Management.Automation.ScriptBlock
+Parameter Sets: (All)
+Aliases:
+
+Required: True
+Position: 0
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -UseTransaction
+
+Includes the command in the active transaction. This parameter is valid only when a transaction is
+in progress. For more information, see [about_Transactions](../Microsoft.PowerShell.Core/About/about_Transactions.md).
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases: usetx
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### CommonParameters
+
+This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable,
+-InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose,
+-WarningAction, and -WarningVariable. For more information, see [about_CommonParameters](https://go.microsoft.com/fwlink/?LinkID=113216).
+
+## INPUTS
+
+### None
+
+You cannot pipe input to this cmdlet.
+
+## OUTPUTS
+
+### PSObject
+
+This cmdlet returns the result of the transaction.
+
+## NOTES
+
+- The **UseTransaction** parameter includes the command in the active transaction. Because the
+  `Use-Transaction` cmdlet is always used in transactions, this parameter is required to make any
+  `Use-Transaction` command effective.
+
+## RELATED LINKS
+
+[Complete-Transaction](Complete-Transaction.md)
+
+[Get-Transaction](Get-Transaction.md)
+
+[Start-Transaction](Start-Transaction.md)
+
+[Undo-Transaction](Undo-Transaction.md)</pre></section>

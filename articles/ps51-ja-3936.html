@@ -1,0 +1,658 @@
+<!doctype html><meta charset="utf-8"><section class="jp-official"><h1>Set-PSBreakpointを設定する</h1>
+<h2>SYNOPSIS は,行,コマンド,または変数に断点を設定します.</h2>
+<h2>SYNTAXは,のシンタックスです.</h2>
+<h3>ライン (デフォルト)</h3>
+<pre><code>Set-PSBreakpoint [-Action &lt;ScriptBlock&gt;] [[-Column] &lt;Int32&gt;] [-Line] &lt;Int32[]&gt;
+ [-Script] &lt;String[]&gt;  [&lt;CommonParameters&gt;]
+</code></pre>
+<h3>コマンド</h3>
+<pre><code>Set-PSBreakpoint [-Action &lt;ScriptBlock&gt;] -Command &lt;String[]&gt;
+ [[-Script] &lt;String[]&gt;] [&lt;CommonParameters&gt;]
+</code></pre>
+<h3>変数</h3>
+<pre><code>Set-PSBreakpoint [-Action &lt;ScriptBlock&gt;] [[-Script] &lt;String[]&gt;] -Variable &lt;String[]&gt;
+ [-Mode &lt;VariableAccessMode&gt;] [&lt;CommonParameters&gt;]
+</code></pre>
+<h2>記述は,</h2>
+<p><code>Set-PSBreakpoint</code>cmdlet は,スクリプトや現在のセッションの任意のコマンド実行で断点を設定します.<code>Set-PSBreakpoint</code>スクリプトを実行する前,コマンドを実行する前,またはデバッグ中に,別のブレークポイントで停止したとき,ブレークポイントを設定します.</p>
+<p><code>Set-PSBreakpoint</code>リモートコンピュータのスクリプトをデバッグするには,スクリプトをローカルコンピュータにコピーして,ローカルでデバッグします.</p>
+<p>それぞれが<code>Set-PSBreakpoint</code>コマンドは,次の3種類のブレイクポイントの1つを作成します:</p>
+<ul>
+<li>ラインブレイクポイント - 特定のラインと列座標でブレイクポイントを設定する. - コマンドブレイクポイント - コマンドと関数でブレイクポイントを設定する. - 変数ブレイクポイント - 変数でブレイクポイントを設定する.</li>
+</ul>
+<p>単一の行列,コマンド,または変数に断点を設定することができます.<code>Set-PSBreakpoint</code>命令は,それぞれが,それぞれに<code>Set-PSBreakpoint</code>コマンドは,breakpointの1種類だけ設定します.</p>
+<p>障害点で,PowerShellは一時的に実行を停止し,デバッグに制御を与えます.コマンドプロンプトは に変更されます.<code>DBG\&gt;</code>しかし,あなたは <strong>Action</strong> パラメータを使用して,breakpoint条件やログリングや診断などの追加作業を実行するための指示などの代替応答を指定することができます.</p>
+<p><code>Set-PSBreakpoint</code>cmdlet は PowerShell スクリプトをデバッグするために設計された数々の cmdlet の1つです.PowerShell デバッグガーに関する詳細については, [about_Debuggers] (../Microsoft.PowerShell.Core/About/about_Debuggers.md) を参照してください.</p>
+<h2>例えは</h2>
+<h3>例1: ラインに断点を設定する</h3>
+<p>この例では,Sample.ps1脚本で5行に断点を設定します.脚本が実行されると,5行が実行される直前に実行が停止します.</p>
+<pre><code class="language-powershell">Set-PSBreakpoint -Script &quot;sample.ps1&quot; -Line 5
+</code></pre>
+<pre><code class="language-output">Column     : 0
+Line       : 5
+Action     :
+Enabled    : True
+HitCount   : 0
+Id         : 0
+Script     : C:\ps-test\sample.ps1
+ScriptName : C:\ps-test\sample.ps1
+</code></pre>
+<p>ライン番号によって新しいブレイクポイントを設定すると,  は<code>Set-PSBreakpoint</code>cmdlet は,breakpoint ID と hit count を含むラインブレークポイントオブジェクト (<strong>System.Management.Automation.LineBreakpoint</strong>) を生成します.</p>
+<h3>例2:関数に断点を設定する</h3>
+<p>この例では,命令の断点を  に作成します.<code>Increment</code>脚本は指定された関数への呼び出しごとにすぐに実行を停止します.</p>
+<pre><code class="language-powershell">Set-PSBreakpoint -Command &quot;Increment&quot; -Script &quot;sample.ps1&quot;
+</code></pre>
+<pre><code class="language-Output">Command    : Increment
+Action     :
+Enabled    : True
+HitCount   : 0
+Id         : 1
+Script     : C:\ps-test\sample.ps1
+ScriptName : C:\ps-test\sample.ps1
+</code></pre>
+<p>結果はコマンドブレイクポイントオブジェクトです.スクリプトが実行される前に,HitCount**のプロパティの値は0です.</p>
+<h3>例3:変数に断点を設定する</h3>
+<p>この例は,Sample.ps1脚本で<strong>Server</strong>変数に断点を設定しています.この例は,変数の値が読み取られ,値が変更される直前に実行を停止するために <strong>ReadWrite</strong>の値を持つ <strong>Mode</strong>パラメータを使用します.</p>
+<pre><code class="language-powershell">Set-PSBreakpoint -Script &quot;sample.ps1&quot; -Variable &quot;Server&quot; -Mode ReadWrite
+</code></pre>
+<h3>例4:指定されたテキストから始まるすべてのコマンドにbreakpointを設定します</h3>
+<p>この例では,Sample.ps1脚本内のすべてのコマンドに" write"から始まるbreakpointを設定します.例えば <code>Write-Host</code> .</p>
+<pre><code class="language-powershell">Set-PSBreakpoint -Script Sample.ps1 -Command &quot;write*&quot;
+</code></pre>
+<h3>例5:変数の値に応じてブレイクポイントを設定する</h3>
+<p>この例では,実行を停止する.<code>DiskTest</code>関数における関数です.<code>Test.ps1</code>の値が値上がった場合にのみスクリプトが表示されます.<code>$Disk</code>変数は2より大きい.</p>
+<pre><code class="language-powershell">Set-PSBreakpoint -Script &quot;test.ps1&quot; -Command &quot;DiskTest&quot; -Action { if ($Disk -gt 2) { break } }
+</code></pre>
+<p><strong>アクション</strong>の値は,文字ブロックで, の値をテストします.<code>$Disk</code>函数内の変数です.</p>
+<p>アクションは""を用いています.<code>break</code>条件を満たす場合,実行を停止するキーワード.代替 (およびデフォルト) は <strong>Continue</strong>です.</p>
+<h3>例 6:関数にbreakpointを設定する</h3>
+<p>この例では,  の断点を設定します.<code>CheckLog</code>機能.コマンドはスクリプトを指定していないため,breakpointは現在のセッションで実行されるすべてのものに設定されます.デバッグは,宣言されたときにではなく,関数を呼び出すときに割ります.</p>
+<pre><code>PS&gt; Set-PSBreakpoint -Command &quot;checklog&quot;
+Id       : 0
+Command  : checklog
+Enabled  : True
+HitCount : 0
+Action   :
+
+function CheckLog {
+&gt;&gt; Get-EventLog -Log Application |
+&gt;&gt; Where-Object {($_.Source -like &quot;TestApp&quot;) -and ($_.Message -like &quot;*failed*&quot;)}
+&gt;&gt;}
+&gt;&gt;
+PS&gt; Checklog
+DEBUG: Hit breakpoint(s)
+DEBUG:  Function breakpoint on 'prompt:Checklog'
+</code></pre>
+<h3>例7:複数の行に断点を設定する</h3>
+<p>この例では,Sample.ps1脚本に3行断点を設定します.脚本に指定された各行で2列に1行断点を設定します. <strong>Action</strong>パラメータで指定されたアクションはすべての断点に適用されます.</p>
+<pre><code class="language-powershell">PS C:\&gt; Set-PSBreakpoint -Script &quot;sample.ps1&quot; -Line 1, 14, 19 -Column 2 -Action {&amp;(log.ps1)}
+</code></pre>
+<pre><code class="language-Output">Column     : 2
+Line       : 1
+Action     :
+Enabled    : True
+HitCount   : 0
+Id         : 6
+Script     : C:\ps-test\sample.ps1
+ScriptName : C:\ps-test\sample.ps1
+
+
+Column     : 2
+Line       : 14
+Action     :
+Enabled    : True
+HitCount   : 0
+Id         : 7
+Script     : C:\ps-test\sample.ps1
+ScriptName : C:\ps-test\sample.ps1
+
+
+Column     : 2
+Line       : 19
+Action     :
+Enabled    : True
+HitCount   : 0
+Id         : 8
+Script     : C:\ps-test\sample.ps1
+ScriptName : C:\ps-test\sample.ps1
+</code></pre>
+<h2>パラメータは</h2>
+<h3>-アクション</h3>
+<p>破局する代わりに各断点で実行されるコマンドを指定します.コマンドを含むスクリプトブロックを入力します.このパラメータを使用して条件断点を設定したり,テストやログリングなどの他の作業を実行することができます.</p>
+<p>このパラメータが省略された場合,またはアクションが指定されていない場合,実行がbreakpointで停止し,デバッグが起動します.</p>
+<p><strong>Action</strong>パラメータを使用すると,Actionのスクリプトブロックは各断点で実行されます.スクリプトブロックに が含まれていない限り,実行は停止しません.<code>break</code>キーワードを""で使うと,<code>continue</code>脚本ブロックのキーワードで,次のbreakpointまで実行が再開されます.</p>
+<p>詳細については, [about_Script_Blocks] (Microsoft.PowerShell.Core/About/about_Script_Blocks.md), [about_Break] (Microsoft.PowerShell.Core/About/about_Break.md),および [about_Continue] (Microsoft.PowerShell.Core/About/about_Continue.md) を参照してください.</p>
+<pre><code class="language-yaml">Type: System.Management.Automation.ScriptBlock
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h1>Set-PSBreakpointを設定する</h1>
+<h3>- コラム</h3>
+<p>スクリプトファイルで実行が停止する列番号を指定します.ただ一つの列番号を入力してください.デフォルトは列1です.</p>
+<p>列値は, breakpoint を指定する<strong>Line</strong>パラメータの値とともに使用されます. <strong>Line</strong>パラメータが複数の行を指定した場合, <strong>Column</strong>パラメータは指定された列の各列の指定された列に breakpoint を設定します. PowerShell は指定された列と列の位置の文字を含む記述または表現の前に実行を停止します.</p>
+<p>コラムは,上左辺から,コラム番号1 (0ではなく) から始まるコラムを数えます.脚本に存在しないコラムを指定すると,エラーが宣言されず,ブレークポイントは実行されません.</p>
+<pre><code class="language-yaml">Type: System.Int32
+Parameter Sets: Line
+Aliases:
+
+Required: False
+Position: 2
+Default value: 1
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>- コマンド</h3>
+<p>コマンドブレイクポイントを設定します.cmdletの名前,例えば を入力してください.<code>Get-Process</code>ワイルドカードは許可されています.</p>
+<p>実行は,各コマンドの各インスタンスの実行前に停止する.コマンドが関数である場合は,関数が呼び出されるたびに実行が停止します.<code>begin</code>     <code>process</code>そして,<code>end</code>ブロックです.</p>
+<pre><code class="language-yaml">Type: System.String[]
+Parameter Sets: Command
+Aliases: C
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: True
+</code></pre>
+<h3>-ライン</h3>
+<p>スクリプトでラインブレイクポイントを設定します. 逗号によって分離された一行または複数の行番号を入力します. PowerShell は指定された行ごとに始まる記述を実行する前にすぐに停止します.</p>
+<p>文字ファイルの上左辺から (1番の文字列から始まる) ラインを数える.空白な行を指定すると,次の空白でない行の前に実行が停止する.行が範囲外である場合は,ブレイクポイントは決してヒットしない.</p>
+<pre><code class="language-yaml">Type: System.Int32[]
+Parameter Sets: Line
+Aliases:
+
+Required: True
+Position: 1
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-モード</h3>
+<p>変数断点を誘発するアクセスモードを指定します.デフォルトは <strong>Write</strong>です.</p>
+<p>このパラメータは,コマンドで<strong>Variable</strong>パラメータを使用した場合のみ有効です.このモードはコマンドで設定されたすべてのブレイクポイントに適用されます.このパラメータの受け入れ可能な値は:</p>
+<p><strong>Write</strong> - 変数に新しい値が書き込まれ直ぐに実行を停止します. - <strong>Read</strong> - 変数が読み取られるとき,すなわちその値にアクセスされるとき,割り当て,表示,または使用されます. 読み込みモードでは,変数の値が変化すると実行が停止しません. - <strong>ReadWrite</strong> - 変数が読み取られるとき,実行を停止します.</p>
+<pre><code class="language-yaml">Type: System.Management.Automation.VariableAccessMode
+Parameter Sets: Variable
+Aliases:
+Accepted values: Read, Write, ReadWrite
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-Script</h3>
+<p>このcmdletが割点を設定するスクリプトファイルの配列を指定します. 脚本ファイルの一かそれ以上の経路とファイル名を入力します. ファイルが現在のディレクトリに含まれている場合は,その経路を省略できます. ワイルドカードは許可されています.</p>
+<p>デフォルトでは,現在のセッションで実行される任意のコマンドに変数断点とコマンド断点が設定されます.このパラメータは,ライン断点設定時にのみ必要です.</p>
+<pre><code class="language-yaml">Type: System.String[]
+Parameter Sets: Line, Command, Variable
+Aliases:
+
+Required: True (Line), False (Command, Variable)
+Position: 0
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-変数</h3>
+<p>このcmdletでブレイクポイントを設定する変数の配列を指定します.ドルマークのない変数の逗号別列を入力します ().<code>$</code>) でした.</p>
+<p>断点点を誘発するアクセスモードを決定するには <strong>Mode</strong>パラメータを使用します.Default mode, Write は,変数に新しい値が書き込まれる直前に実行を停止します.</p>
+<pre><code class="language-yaml">Type: System.String[]
+Parameter Sets: Variable
+Aliases: V
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>共通パラメーター</h3>
+<p>このcmdletは,共通パラメータをサポートしています: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable.詳細については, <a href="を参照してください.https://go.microsoft.com/fwlink/?LinkID=113216">about_CommonParameters</a> でした.</p>
+<h2>輸入は</h2>
+<h3>どれもない</h3>
+<p>このcmdletに物体をパイプすることはできません.</p>
+<h2>輸出は</h2>
+<h3>システム管理自動化 コマンドブレイクポイント</h3>
+<h3>システム管理自動化ラインブレークポイント</h3>
+<h3>システム管理自動化 変数分解点</h3>
+<p><code>Set-PSBreakpoint</code>設定したbreakpointを表示するオブジェクトを返します.</p>
+<h2>NOTES  記事ができました.</h2>
+<p>Windows PowerShell では,次のアライスがあります.<code>Set-PSBreakpoint</code>:</p>
+<ul>
+<li>
+<p>-<code>sbp</code></p>
+</li>
+<li>
+<p>-<code>Set-PSBreakpoint</code>リモートコンピュータでbreakpointを設定することはできません.リモートコンピュータでスクリプトをデバッグするには,スクリプトをローカルコンピュータにコピーして,ローカルでデバッグします. - 複数のライン,コマンド,または変数でbreakpointを設定すると,<code>Set-PSBreakpoint</code>- コマンドプロンプトで関数または変数にbreakpointを設定する際,関数または変数を作成する前にまたは後にbreakpointを設定できます.</p>
+</li>
+</ul>
+<h2>関連リンク</h2>
+<p><a href="Disable-PSBreakpoint.md">Disable-PSBreakpoint</a> を消す</p>
+<p><a href="PSBreakpoint.mdを有効にする">PSBreakpoint</a></p>
+<p><a href="Get-PSBreakpoint.md">Get-PSBreakpoint</a> </p>
+<p><a href="Get-PSCallStack.md">Get-PSCallStack</a> を表示する</p>
+<p><a href="PSBreakpointを削除.md">PSBreakpointを削除</a></p></section><section class="en-original"><pre class="source-original"># Set-PSBreakpoint
+
+## SYNOPSIS
+Sets a breakpoint on a line, command, or variable.
+
+## SYNTAX
+
+### Line (Default)
+
+```
+Set-PSBreakpoint [-Action &lt;ScriptBlock&gt;] [[-Column] &lt;Int32&gt;] [-Line] &lt;Int32[]&gt;
+ [-Script] &lt;String[]&gt;  [&lt;CommonParameters&gt;]
+```
+
+### Command
+
+```
+Set-PSBreakpoint [-Action &lt;ScriptBlock&gt;] -Command &lt;String[]&gt;
+ [[-Script] &lt;String[]&gt;] [&lt;CommonParameters&gt;]
+```
+
+### Variable
+
+```
+Set-PSBreakpoint [-Action &lt;ScriptBlock&gt;] [[-Script] &lt;String[]&gt;] -Variable &lt;String[]&gt;
+ [-Mode &lt;VariableAccessMode&gt;] [&lt;CommonParameters&gt;]
+```
+
+## DESCRIPTION
+
+The `Set-PSBreakpoint` cmdlet sets a breakpoint in a script or in any command run in the current
+session. You can use `Set-PSBreakpoint` to set a breakpoint before executing a script or running a
+command, or during debugging, when stopped at another breakpoint.
+
+`Set-PSBreakpoint` cannot set a breakpoint on a remote computer. To debug a script on a remote
+computer, copy the script to the local computer and then debug it locally.
+
+Each `Set-PSBreakpoint` command creates one of the following three types of breakpoints:
+
+- Line breakpoint - Sets breakpoints at particular line and column coordinates.
+- Command breakpoint - Sets breakpoints on commands and functions.
+- Variable breakpoint - Sets breakpoints on variables.
+
+You can set a breakpoint on multiple lines, commands, or variables in a single `Set-PSBreakpoint`
+command, but each `Set-PSBreakpoint` command sets only one type of breakpoint.
+
+At a breakpoint, PowerShell temporarily stops executing and gives control to the debugger. The
+command prompt changes to `DBG\&gt;`, and a set of debugger commands become available for use. However,
+you can use the **Action** parameter to specify an alternate response, such as conditions for the
+breakpoint or instructions to perform additional tasks such as logging or diagnostics.
+
+The `Set-PSBreakpoint` cmdlet is one of several cmdlets designed for debugging PowerShell scripts.
+For more information about the PowerShell debugger, see
+[about_Debuggers](../Microsoft.PowerShell.Core/About/about_Debuggers.md).
+
+## EXAMPLES
+
+### Example 1: Set a breakpoint on a line
+
+This example sets a breakpoint at line 5 in the Sample.ps1 script. When the script runs, execution
+stops immediately before line 5 would execute.
+
+```powershell
+Set-PSBreakpoint -Script &quot;sample.ps1&quot; -Line 5
+```
+
+```output
+Column     : 0
+Line       : 5
+Action     :
+Enabled    : True
+HitCount   : 0
+Id         : 0
+Script     : C:\ps-test\sample.ps1
+ScriptName : C:\ps-test\sample.ps1
+```
+
+When you set a new breakpoint by line number, the `Set-PSBreakpoint` cmdlet generates a line
+breakpoint object (**System.Management.Automation.LineBreakpoint**) that includes the breakpoint ID
+and hit count.
+
+### Example 2: Set a breakpoint on a function
+
+This example creates a command breakpoint on the `Increment` function in the Sample.ps1 cmdlet. The
+script stops executing immediately before each call to the specified function.
+
+```powershell
+Set-PSBreakpoint -Command &quot;Increment&quot; -Script &quot;sample.ps1&quot;
+```
+
+```Output
+Command    : Increment
+Action     :
+Enabled    : True
+HitCount   : 0
+Id         : 1
+Script     : C:\ps-test\sample.ps1
+ScriptName : C:\ps-test\sample.ps1
+```
+
+The result is a command breakpoint object. Before the script runs, the value of the **HitCount**
+property is 0.
+
+### Example 3: Set a breakpoint on a variable
+
+This example sets a breakpoint on the **Server** variable in the Sample.ps1 script. It uses the
+**Mode** parameter with a value of **ReadWrite** to stop execution when the value of the variable is
+read and just before the value changes.
+
+```powershell
+Set-PSBreakpoint -Script &quot;sample.ps1&quot; -Variable &quot;Server&quot; -Mode ReadWrite
+```
+
+### Example 4: Set a breakpoint on every command that begins with specified text
+
+This example sets a breakpoint on every command in the Sample.ps1 script that begins with &quot;write&quot;,
+such as `Write-Host`.
+
+```powershell
+Set-PSBreakpoint -Script Sample.ps1 -Command &quot;write*&quot;
+```
+
+### Example 5: Set a breakpoint depending on the value of a variable
+
+This example stops execution at the `DiskTest` function in the `Test.ps1` script only when the value
+of the `$Disk` variable is greater than 2.
+
+```powershell
+Set-PSBreakpoint -Script &quot;test.ps1&quot; -Command &quot;DiskTest&quot; -Action { if ($Disk -gt 2) { break } }
+```
+
+The value of the **Action** is a scriptblock that tests the value of the `$Disk` variable in the
+function.
+
+The action uses the `break` keyword to stop execution if the condition is met. The alternative (and
+the default) is **Continue**.
+
+### Example 6: Set a breakpoint on a function
+
+This example sets a breakpoint on the `CheckLog` function. Because the command does not specify a
+script, the breakpoint is set on anything that runs in the current session. The debugger breaks when
+the function is called, not when it is declared.
+
+```
+PS&gt; Set-PSBreakpoint -Command &quot;checklog&quot;
+Id       : 0
+Command  : checklog
+Enabled  : True
+HitCount : 0
+Action   :
+
+function CheckLog {
+&gt;&gt; Get-EventLog -Log Application |
+&gt;&gt; Where-Object {($_.Source -like &quot;TestApp&quot;) -and ($_.Message -like &quot;*failed*&quot;)}
+&gt;&gt;}
+&gt;&gt;
+PS&gt; Checklog
+DEBUG: Hit breakpoint(s)
+DEBUG:  Function breakpoint on &#x27;prompt:Checklog&#x27;
+```
+
+### Example 7: Set breakpoints on multiple lines
+
+This example sets three line breakpoints in the Sample.ps1 script. It sets one breakpoint at column
+2 on each of the lines specified in the script. The action specified in the **Action** parameter
+applies to all breakpoints.
+
+```powershell
+PS C:\&gt; Set-PSBreakpoint -Script &quot;sample.ps1&quot; -Line 1, 14, 19 -Column 2 -Action {&amp;(log.ps1)}
+```
+
+```Output
+Column     : 2
+Line       : 1
+Action     :
+Enabled    : True
+HitCount   : 0
+Id         : 6
+Script     : C:\ps-test\sample.ps1
+ScriptName : C:\ps-test\sample.ps1
+
+
+Column     : 2
+Line       : 14
+Action     :
+Enabled    : True
+HitCount   : 0
+Id         : 7
+Script     : C:\ps-test\sample.ps1
+ScriptName : C:\ps-test\sample.ps1
+
+
+Column     : 2
+Line       : 19
+Action     :
+Enabled    : True
+HitCount   : 0
+Id         : 8
+Script     : C:\ps-test\sample.ps1
+ScriptName : C:\ps-test\sample.ps1
+```
+
+## PARAMETERS
+
+### -Action
+
+Specifies commands that run at each breakpoint instead of breaking. Enter a scriptblock that
+contains the commands. You can use this parameter to set conditional breakpoints or to perform other
+tasks, such as testing or logging.
+
+If this parameter is omitted, or no action is specified, execution stops at the breakpoint, and the
+debugger starts.
+
+When the **Action** parameter is used, the Action scriptblock runs at each breakpoint. Execution
+does not stop unless the scriptblock includes the `break` keyword. If you use the `continue`
+keyword in the scriptblock, execution resumes until the next breakpoint.
+
+For more information, see
+[about_Script_Blocks](../Microsoft.PowerShell.Core/About/about_Script_Blocks.md),
+[about_Break](../Microsoft.PowerShell.Core/About/about_Break.md), and
+[about_Continue](../Microsoft.PowerShell.Core/About/about_Continue.md).
+
+```yaml
+Type: System.Management.Automation.ScriptBlock
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+# Set-PSBreakpoint
+
+### -Column
+
+Specifies the column number of the column in the script file on which execution stops. Enter only
+one column number. The default is column 1.
+
+The Column value is used with the value of the **Line** parameter to specify the breakpoint. If the
+**Line** parameter specifies multiple lines, the **Column** parameter sets a breakpoint at the
+specified column on each of the specified lines. PowerShell stops executing before the statement or
+expression that includes the character at the specified line and column position.
+
+Columns are counted from the top left margin beginning with column number 1 (not 0). If you specify
+a column that does not exist in the script, an error is not declared, but the breakpoint is never
+executed.
+
+```yaml
+Type: System.Int32
+Parameter Sets: Line
+Aliases:
+
+Required: False
+Position: 2
+Default value: 1
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Command
+
+Sets a command breakpoint. Enter cmdlet names, such as `Get-Process`, or function names. Wildcards
+are permitted.
+
+Execution stops just before each instance of each command is executed. If the command is a function,
+execution stops each time the function is called and at each `begin`, `process`, and `end` block.
+
+```yaml
+Type: System.String[]
+Parameter Sets: Command
+Aliases: C
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: True
+```
+
+### -Line
+
+Sets a line breakpoint in a script. Enter one or more line numbers, separated by commas. PowerShell
+stops immediately before executing the statement that begins on each of the specified lines.
+
+Lines are counted from the top left margin of the script file beginning with line number 1 (not 0).
+If you specify a blank line, execution stops before the next non-blank line. If the line is out of
+range, the breakpoint is never hit.
+
+```yaml
+Type: System.Int32[]
+Parameter Sets: Line
+Aliases:
+
+Required: True
+Position: 1
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Mode
+
+Specifies the mode of access that triggers variable breakpoints. The default is **Write**.
+
+This parameter is valid only when the **Variable** parameter is used in the command. The mode
+applies to all breakpoints set in the command. The acceptable values for this parameter are:
+
+- **Write** - Stops execution immediately before a new value is written to the variable.
+- **Read** - Stops execution when the variable is read, that is, when its value is accessed, either
+  to be assigned, displayed, or used. In read mode, execution does not stop when the value of the
+  variable changes.
+- **ReadWrite** - Stops execution when the variable is read or written.
+
+```yaml
+Type: System.Management.Automation.VariableAccessMode
+Parameter Sets: Variable
+Aliases:
+Accepted values: Read, Write, ReadWrite
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Script
+
+Specifies an array of script files that this cmdlet sets a breakpoint in. Enter the paths and file
+names of one or more script files. If the files are in the current directory, you can omit the path.
+Wildcards are permitted.
+
+By default, variable breakpoints and command breakpoints are set on any command that runs in the
+current session. This parameter is required only when setting a line breakpoint.
+
+```yaml
+Type: System.String[]
+Parameter Sets: Line, Command, Variable
+Aliases:
+
+Required: True (Line), False (Command, Variable)
+Position: 0
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Variable
+
+Specifies an array of variables that this cmdlet sets breakpoints on. Enter a comma-separated list
+of variables without dollar signs (`$`).
+
+Use the **Mode** parameter to determine the mode of access that triggers the breakpoints. The
+default mode, Write, stops execution just before a new value is written to the variable.
+
+```yaml
+Type: System.String[]
+Parameter Sets: Variable
+Aliases: V
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### CommonParameters
+
+This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable,
+-InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose,
+-WarningAction, and -WarningVariable. For more information, see
+[about_CommonParameters](https://go.microsoft.com/fwlink/?LinkID=113216).
+
+## INPUTS
+
+### None
+
+You can&#x27;t pipe objects to this cmdlet.
+
+## OUTPUTS
+
+### System.Management.Automation.CommandBreakpoint
+
+### System.Management.Automation.LineBreakpoint
+
+### System.Management.Automation.VariableBreakpoint
+
+`Set-PSBreakpoint` returns an object that represents each breakpoint that it sets.
+
+## NOTES
+
+Windows PowerShell includes the following aliases for `Set-PSBreakpoint`:
+
+- `sbp`
+
+- `Set-PSBreakpoint` cannot set a breakpoint on a remote computer. To debug a script on a remote
+  computer, copy the script to the local computer and then debug it locally.
+- When you set a breakpoint on more than one line, command, or variable, `Set-PSBreakpoint`
+  generates a breakpoint object for each entry.
+- When setting a breakpoint on a function or variable at the command prompt, you can set the
+  breakpoint before or after you create the function or variable.
+
+## RELATED LINKS
+
+[Disable-PSBreakpoint](Disable-PSBreakpoint.md)
+
+[Enable-PSBreakpoint](Enable-PSBreakpoint.md)
+
+[Get-PSBreakpoint](Get-PSBreakpoint.md)
+
+[Get-PSCallStack](Get-PSCallStack.md)
+
+[Remove-PSBreakpoint](Remove-PSBreakpoint.md)</pre></section>

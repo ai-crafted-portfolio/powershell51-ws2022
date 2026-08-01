@@ -1,0 +1,1116 @@
+<!doctype html><meta charset="utf-8"><section class="jp-official"><h1>Get-Content について</h1>
+<h2>SYNOPSISは,指定された場所に商品の内容を入手します.</h2>
+<h2>SYNTAXは,のシンタックスです.</h2>
+<h3>(デフォルト) パス</h3>
+<pre><code>Get-Content [-ReadCount &lt;Int64&gt;] [-TotalCount &lt;Int64&gt;] [-Tail &lt;Int32&gt;] [-Path] &lt;String[]&gt;
+ [-Filter &lt;String&gt;] [-Include &lt;String[]&gt;] [-Exclude &lt;String[]&gt;] [-Force]
+ [-Credential &lt;PSCredential&gt;] [-UseTransaction] [-Delimiter &lt;String&gt;] [-Wait] [-Raw]
+ [-Encoding &lt;FileSystemCmdletProviderEncoding&gt;] [-Stream &lt;String&gt;] [&lt;CommonParameters&gt;]
+</code></pre>
+<h3>文字通りの道です.</h3>
+<pre><code>Get-Content [-ReadCount &lt;Int64&gt;] [-TotalCount &lt;Int64&gt;] [-Tail &lt;Int32&gt;]
+ -LiteralPath &lt;String[]&gt; [-Filter &lt;String&gt;] [-Include &lt;String[]&gt;] [-Exclude &lt;String[]&gt;]
+ [-Force] [-Credential &lt;PSCredential&gt;] [-UseTransaction] [-Delimiter &lt;String&gt;] [-Wait]
+ [-Raw] [-Encoding &lt;FileSystemCmdletProviderEncoding&gt;] [-Stream &lt;String&gt;]
+ [&lt;CommonParameters&gt;]
+</code></pre>
+<h2>記述は,</h2>
+<p><code>Get-Content</code>cmdlet は,ファイル内のテキストや関数の内容など,パスで指定された場所に項目の内容を取得します.ファイルについては,内容が一度に一行ずつ読み取られ,各項が内容の列を表すオブジェクトを集合して返します.</p>
+<p>PowerShell 3.0 から始め,<code>Get-Content</code>また,項目の始まりや終わりから特定の数列を入手することができます.</p>
+<h2>例えは</h2>
+<h3>例1:テキストファイルの内容を入手する</h3>
+<p>この例では,現在のディレクトリ内のファイルの内容が表示されます.<code>LineNumbers.txt</code>ファイルは100行を構成する形式で, <strong>This is Line X</strong> と呼ばれるもので,いくつかの例で使用されています.</p>
+<pre><code class="language-powershell">1..100 | ForEach-Object {
+    Add-Content -Path .\LineNumbers.txt -Value &quot;This is line $_.&quot;
+}
+Get-Content -Path .\LineNumbers.txt
+</code></pre>
+<pre><code class="language-Output">This is line 1.
+This is line 2.
+...
+This is line 99.
+This is line 100.
+</code></pre>
+<p>1-100 のアレイ値がパイプラインを下に送られて,<code>ForEach-Object</code>cmdlet. <code>ForEach-Object</code>という文字でスクリプトブロックを使用します.<code>Add-Content</code> を作成するcmdlet<code>LineNumbers.txt</code>ファイル. 変数 <code>$_</code>配列の値を表示するので,各オブジェクトがパイプラインを下回る.<code>Get-Content</code>cmdlet は,パスのパラメータを使用して,  を指定します.<code>LineNumbers.txt</code>ファイルでコンテンツをPowerShellコンソールで表示します.</p>
+<h3>例2:Get-Contentが返信する行数を制限する</h3>
+<p>このコマンドは,ファイルの最初の5行を表示します. <strong>TotalCount</strong> パラメータは,最初の5行のコンテンツを表示します.この例では,  を使います.<code>LineNumbers.txt</code>例1で参照されている.</p>
+<pre><code class="language-powershell">Get-Content -Path .\LineNumbers.txt -TotalCount 5
+</code></pre>
+<pre><code class="language-Output">This is line 1.
+This is line 2.
+This is line 3.
+This is line 4.
+This is line 5.
+</code></pre>
+<h3>例3:テキストファイルから特定の内容の列を取得します.</h3>
+<p>このコマンドは,ファイルから特定の数列を取得し,そのコンテンツの最後の行だけ表示します. <strong>TotalCount</strong> パラメータは,コンテンツの最初の25行を取得します.この例では,  を使います.<code>LineNumbers.txt</code>例1で参照されているファイルです.</p>
+<pre><code class="language-powershell">(Get-Content -Path .\LineNumbers.txt -TotalCount 25)[-1]
+</code></pre>
+<pre><code class="language-Output">This is line 25.
+</code></pre>
+<p><code>Get-Content</code>コマンドは,次のステップに移る前に,コマンドが完了するように括弧に巻かれています. <code>Get-Content</code>列の配列を構成するので,括弧の後でインデックス符号を追加して特定の行番号を取得できます.<code>[-1]</code>索引は,返回した 25 行のマレイで最後の索引を指定します.</p>
+<h3>例4:テキストファイルの最後の行を表示する</h3>
+<p>このコマンドは,ファイルから最後のコンテンツの列を取得します.この例では,という文字を使用します.<code>LineNumbers.txt</code>例1で作成されたファイルです.</p>
+<pre><code class="language-powershell">Get-Item -Path .\LineNumbers.txt | Get-Content -Tail 1
+</code></pre>
+<pre><code class="language-Output">This is line 100.
+</code></pre>
+<p>この例では,という文字を使用しています.<code>Get-Item</code>cmdlet は,ファイルをパイプして  に送れることを示します.<code>Get-Content</code><strong>Tail</strong>パラメータはファイルの最後の行が表示されます.この方法は変数のすべての行を回収し,  を使って取るよりも速い.<code>[-1]</code>索引記号です.</p>
+<h3>例5: 代替データストリームの内容を入手する</h3>
+<p>この例では,Windows NTFS フォルムに保存されているファイルに対して,代替データストリームのコンテンツを入手するために <strong>Stream</strong> パラメータを使用する方法を説明します.この例では,<code>Set-Content</code>cmdlet は,ファイル名に"sample content"を表示するために使用されます.<code>Stream.txt</code> .</p>
+<pre><code class="language-powershell">Set-Content -Path .\Stream.txt -Value 'This is the content of the Stream.txt file'
+
+# Specify a wildcard to the Stream parameter to display all streams of the recently
+
+# created file.
+Get-Item -Path .\Stream.txt -Stream *
+</code></pre>
+<pre><code class="language-Output">PSPath        : Microsoft.PowerShell.Core\FileSystem::C:\Test\Stream.txt::$DATA
+PSParentPath  : Microsoft.PowerShell.Core\FileSystem::C:\Test
+PSChildName   : Stream.txt::$DATA
+PSDrive       : C
+PSProvider    : Microsoft.PowerShell.Core\FileSystem
+PSIsContainer : False
+FileName      : C:\Test\Stream.txt
+Stream        : :$DATA
+Length        : 44
+</code></pre>
+<pre><code class="language-powershell">
+# Retrieve the content of the primary stream.
+
+# Note the single quotes to prevent variable substitution.
+Get-Content -Path .\Stream.txt -Stream ':$DATA'
+</code></pre>
+<pre><code class="language-Output">This is the content of the Stream.txt file
+</code></pre>
+<pre><code class="language-powershell">
+# Alternative way to get the same content.
+Get-Content -Path .\Stream.txt -Stream &quot;&quot;
+
+# The primary stream doesn't need to be specified to get the primary stream of the file.
+
+# This gets the same data as the prior two examples.
+Get-Content -Path .\Stream.txt
+</code></pre>
+<pre><code class="language-Output">This is the content of the Stream.txt file
+</code></pre>
+<pre><code class="language-powershell">
+# Use the Stream parameter of Add-Content to create a new Stream containing sample
+
+# content.
+$addContentSplat = @{
+    Path = '.\Stream.txt'
+    Stream = 'NewStream'
+    Value = 'Added a stream named NewStream to Stream.txt'
+}
+Add-Content @addContentSplat
+
+# Use Get-Item to verify the stream was created.
+Get-Item -Path .\Stream.txt -Stream *
+</code></pre>
+<pre><code class="language-Output">PSPath        : Microsoft.PowerShell.Core\FileSystem::C:\Test\Stream.txt::$DATA
+PSParentPath  : Microsoft.PowerShell.Core\FileSystem::C:\Test
+PSChildName   : Stream.txt::$DATA
+PSDrive       : C
+PSProvider    : Microsoft.PowerShell.Core\FileSystem
+PSIsContainer : False
+FileName      : C:\Test\Stream.txt
+Stream        : :$DATA
+Length        : 44
+
+PSPath        : Microsoft.PowerShell.Core\FileSystem::C:\Test\Stream.txt:NewStream
+PSParentPath  : Microsoft.PowerShell.Core\FileSystem::C:\Test
+PSChildName   : Stream.txt:NewStream
+PSDrive       : C
+PSProvider    : Microsoft.PowerShell.Core\FileSystem
+PSIsContainer : False
+FileName      : C:\Test\Stream.txt
+Stream        : NewStream
+Length        : 46
+</code></pre>
+<pre><code class="language-powershell">
+# Retrieve the content of your newly created Stream.
+Get-Content -Path .\Stream.txt -Stream NewStream
+</code></pre>
+<pre><code class="language-Output">Added a stream named NewStream to Stream.txt
+</code></pre>
+<p><strong>Stream</strong>パラメータは, [FileSystem provider]のダイナミックパラメータである. デフォルトでは, <code>Get-Content</code>デフォルトからデータしか取得できない,または<code>:$DATA</code><strong>Streams</strong>は属性,セキュリティ設定,その他のデータなどの隠されたデータを保存するために使用できます.また,小項目でないディレクトリに保存することができます.</p>
+<h1>Get-Content について</h1>
+<h3>例 6:原料コンテンツを入手する</h3>
+<p>この例のコマンドは,文字列の配列ではなく,ファイルの内容を一文字列として取り出す.デフォルトでは,Raw**ダイナミックパラメータなしでは,コンテンツが newline-delimited stringsの配列として返されます.この例では,  を使います.<code>LineNumbers.txt</code>例1で参照されているファイルです.</p>
+<pre><code class="language-powershell">$raw = Get-Content -Path .\LineNumbers.txt -Raw
+$lines = Get-Content -Path .\LineNumbers.txt
+Write-Host &quot;Raw contains $($raw.Count) lines.&quot;
+Write-Host &quot;Lines contains $($lines.Count) lines.&quot;
+</code></pre>
+<pre><code class="language-Output">Raw contains 1 lines.
+Lines contains 100 lines.
+</code></pre>
+<h3>例7: Get-Contentのフィルタを使用する</h3>
+<p>にフィルタを指定することができます.<code>Get-Content</code>cmdlet.フィルターを使って<strong>Path</strong>パラメータを資格化するときは,追尾星 () を含める必要があります.<code>*</code>) は,道の内容を表示する.</p>
+<p>次のコマンドは,すべての内容を表示します.<code>*.log</code>のファイルに含まれるファイルです.<code>C:\Temp</code>ディレクトリです.</p>
+<pre><code class="language-powershell">Get-Content -Path C:\Temp\* -Filter *.log
+</code></pre>
+<h3>例8: バイトアレイとしてファイルコンテンツを取得する</h3>
+<p>この例では,ファイルの内容を""として入手する方法を示しています.<code>[byte[]]</code>単一のオブジェクトとして.</p>
+<pre><code class="language-powershell">$byteArray = Get-Content -Path C:\temp\test.txt -Encoding Byte -Raw
+Get-Member -InputObject $byteArray
+</code></pre>
+<pre><code class="language-Output">   TypeName: System.Byte[]
+
+Name           MemberType            Definition
+----           ----------            ----------
+Count          AliasProperty         Count = Length
+Add            Method                int IList.Add(System.Object value)
+</code></pre>
+<p>最初のコマンドは,ファイルからバイトの流れを入手するために, <strong>Encoding</strong>パラメータを使用します. <strong>Raw</strong>パラメータは,バイトが返信されるように保証します.<code>[System.Byte[]]</code><strong>Raw</strong>パラメータが欠けている場合,返却値はバイトの流れであり,PowerShellによって解釈されるのは <code>[System.Object[]]</code> .</p>
+<h2>パラメータは</h2>
+<h3>- 信用証</h3>
+<p>&gt; [!NOTE] &gt;このパラメータはPowerShellをインストールしたプロバイダーによってサポートされていません.他のユーザーを偽装したり,このcmdletを実行する際に認証を高めるとき,使用 &gt; <a href="../Microsoft.PowerShell.Core/Invoke-Command.md">Invoke-Command</a>.</p>
+<pre><code class="language-yaml">Type: System.Management.Automation.PSCredential
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: Current user
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+</code></pre>
+<h3>- 境界線</h3>
+<p>境界線を指定する<code>Get-Content</code>読みながらファイルをオブジェクトに分割するために使用します.デフォルトは です.<code>\n</code>テキストファイルを読みるとき, <code>Get-Content</code>文字列オブジェクトの集合が表示されます.それぞれが端の文字で終わります.ファイルに存在しない境界線を入力すると, <code>Get-Content</code>ファイル全体を単一の無制限オブジェクトとして返します.</p>
+<p>このパラメータを使用して,デリミーターとしてファイル分離器を指定することで,大きなファイルを小さなファイルに分割できます.このデリミターは保存され (捨てられず) 各ファイルセクションの最後の項目になります.</p>
+<p><strong>Delimiter</strong>は,ファイルシステムプロバイダが に追加するダイナミックパラメータです.<code>Get-Content</code>cmdlet.このパラメータはファイルシステムドライブでしか動作しません.</p>
+<p>&gt; [!NOTE] &gt; 現在,Delimiter**パラメータの値は空き文字列であるとき,<code>Get-Content</code>&gt;は返さない.これは既知の問題です.強制的に <code>Get-Content</code>ファイル全体を"つ,無制限の文字列"として返します.ファイルに存在しない値を入力します.</p>
+<pre><code class="language-yaml">Type: System.String
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: End-of-line character
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-エンコーディング</h3>
+<p>ターゲットファイルにコードが指定される.デフォルト値は です.<code>Default</code> .</p>
+<p>このパラメータの受け入れられる値は以下の通りです.</p>
+<ul>
+<li>-<code>Ascii</code>ASCII (7ビット) の文字セットを使用します. - <code>BigEndianUnicode</code>UTF-16 を大エンディアンバイト順で使用します. - <code>BigEndianUTF32</code>UTF-32 を大エンディアンバイト順で使用します. - <code>Byte</code>文字を並べてバイトの連続にコードする. - <code>Default</code>システム内のアクティブコードページ (通常はANSI) に対応するエンコーディングを使用します. - <code>Oem</code>システム内の現在のOEMコードページに対応するエンコーディングを使用します. - <code>String</code>と同じです.<code>Unicode</code>- . <code>Unicode</code>UTF-16 を小エンディアンバイト順で使用します. - <code>Unknown</code>と同じです.<code>Unicode</code>- . <code>UTF7</code>UTF-7 を使用します.<code>UTF8</code>UTF-8 を使用します.<code>UTF32</code>UTF-32 を用いて,小エンディアンバイト順にします.</li>
+</ul>
+<p>暗号化は,ファイルシステムプロバイダが  に追加するダイナミックパラメータです.<code>Get-Content</code>cmdlet.このパラメータはファイルシステムドライブでしか動作しません.</p>
+<p>バイナリーファイルから読み書きをするときは,エンコーディングするダイナミックパラメータの <strong>Byte</strong>と <strong>ReadCount</strong>のパラメータの 0 の値を使用します. 1 つの読み込み操作でファイル全体を読み取り,単一のオブジェクト (PSObject) に変換します. デフォルトの <strong>ReadCount</strong>の値は, 1 は読み込み操作でバイトを1 回読み,各バイトを別々のオブジェクトに変換します.<code>Set-Content</code>cmdlet はファイルにバイトを書き込むために使用されます.</p>
+<pre><code class="language-yaml">Type: Microsoft.PowerShell.Commands.FileSystemCmdletProviderEncoding
+Parameter Sets: (All)
+Aliases:
+Accepted values: ASCII, BigEndianUnicode, BigEndianUTF32, Byte, Default, OEM, String, Unicode, Unknown, UTF7, UTF8, UTF32
+
+Required: False
+Position: Named
+Default value: Default
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>- 排除する</h3>
+<p>このcmdletが操作で排除するアイテムまたはアイテムを文字列のアレイとして指定します.このパラメータの値は<strong>Path</strong>パラメータを資格化します.</p>
+<p>経路要素やパターンを入力します.例えば,<code>*.txt</code>ワイルドカード文字は許される.</p>
+<p><strong>Exclude</strong>パラメータは,コマンドに項目内容が含まれている場合にのみ有効です.例えば,<code>C:\Windows\*</code>ワイルドカード文字が, の内容を指定する.<code>C:\Windows</code>ディレクトリです.</p>
+<pre><code class="language-yaml">Type: System.String[]
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: True
+</code></pre>
+<h3>-フィルター</h3>
+<p><strong>Path</strong>パラメータを資格にするためにフィルターを指定します. [FileSystem] (/Microsoft.PowerShell.Core/About/about_FileSystem_Provider.md) プロバイダーは,フィルターの使用をサポートする唯一のインストールされた PowerShell プロバイダーです. [about_Wildcards] (/Microsoft.PowerShell.Core/About/about_Wildcards.md) で <strong>FileSystem</strong> フィルター言語の構文を見つけることができます. フィルターは他のパラメータよりも効率的です. フィルターは,CPDletがオブジェクトを取得したときにプロバイダーが適用しているため,それらを回収した後に PowerShell でオブジェクトをフィルタする代わりに,それを適用します.</p>
+<pre><code class="language-yaml">Type: System.String
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: True
+</code></pre>
+<h3>-フォース</h3>
+<p><strong>Force</strong>は読み込みのみの属性を取り除くか,ファイルパスを完了するためにディレクトリを作成することができます. <strong>Force</strong>パラメータは,ファイル権限を変更したり,セキュリティ制限を覆うよう試みません.</p>
+<pre><code class="language-yaml">Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h1>Get-Content について</h1>
+<h3>- 含めること</h3>
+<p>このcmdletが操作に含まれるアイテムまたはアイテムを文字列のアレイとして指定します.このパラメータの値は<strong>Path</strong>パラメータを資格化します. 路径要素またはパターンを入力します.例えば <code>"*.txt"</code>ワイルドカード文字が許されている. <strong>Include</strong> パラメータは,コマンドに項目内容が含まれている場合にのみ有効です.例えば,<code>C:\Windows\*</code>ワイルドカード文字が, の内容を指定する.<code>C:\Windows</code>ディレクトリです.</p>
+<pre><code class="language-yaml">Type: System.String[]
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: True
+</code></pre>
+<h3>-リテラルパース</h3>
+<p>単一の引用符で締め付けます.単一の引用符はPowerShellに,文字をエスケープシーケンスのように解釈しないように伝えます.</p>
+<p>詳細については, [about_Quoting_Rules] (Microsoft.PowerShell.Core/About/about_Quoting_Rules.md) を参照してください.</p>
+<pre><code class="language-yaml">Type: System.String[]
+Parameter Sets: LiteralPath
+Aliases: PSPath
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+</code></pre>
+<h3>- 歩道</h3>
+<p>の行径を指定する項目を指定します.<code>Get-Content</code>コンテンツを手に入れる.ワイルドカード文字は許される. 経路はコンテナではなくアイテムへの経路である必要があります. 例えば,ディレクトリへの経路ではなく,一または複数のファイルへの経路を指定する必要があります.</p>
+<pre><code class="language-yaml">Type: System.String[]
+Parameter Sets: Path
+Aliases:
+
+Required: True
+Position: 0
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: True
+</code></pre>
+<h3>- ロー</h3>
+<p>新行文字を無視し,新行文字が保存されているまま,ファイル全体のコンテンツを一文字列に返します.デフォルトでは,ファイル内の新行文字は,入力を文字列の配列に分離するために境界線として使用されます.このパラメータはPowerShell 3.0.で導入されました.</p>
+<p><strong>Raw</strong>は,ファイルシステムプロバイダが に追加するダイナミックパラメータです.<code>Get-Content</code>cmdlet このパラメータはファイルシステムドライブでしか動作しません.</p>
+<pre><code class="language-yaml">Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-ReadCount</h3>
+<p>पाइपラインでどれだけのコンテンツが同時に送信されるかを指定します.デフォルト値は1です. 0 (ゼロ) または負の数値の値は,すべてのコンテンツを同時に送信します.</p>
+<p>このパラメータは表示されたコンテンツを変更しないが,コンテンツを表示するのにかかる時間に影響を与える. <strong>ReadCount</strong>の値は増加するにつれて,最初の行返却に必要な時間は増加しますが,操作の総時間は減少します.これは大きなアイテムで顕著な違いを生むことができます.</p>
+<pre><code class="language-yaml">Type: System.Int64
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: 1
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+</code></pre>
+<h3>-ストリーム</h3>
+<p>指定された代替NTFSファイルストリームの内容をファイルから取得します.ストリームの名前を入力します.ワイルドカードはサポートされていません.</p>
+<p><strong>Stream</strong>は,ファイルシステムプロバイダが に追加するダイナミックパラメータです.<code>Get-Content</code>cmdlet.このパラメータはWindowsシステム上のファイルシステムドライブ에서만動作します.</p>
+<p>このパラメータはWindows PowerShell 3.0で導入されました.</p>
+<pre><code class="language-yaml">Type: System.String
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-尾</h3>
+<p>ファイルまたは他のアイテムの端から行数を指定します. <strong>Tail</strong>パラメータ名またはそのニックネーム, <strong>Last</strong> を使用できます.負の値は,cmdlet がすべてのコンテンツを返却させます.</p>
+<p>このパラメータはPowerShell 3.0で導入されました.</p>
+<pre><code class="language-yaml">Type: System.Int32
+Parameter Sets: (All)
+Aliases: Last
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+</code></pre>
+<h3>-TotalCount</h3>
+<p>ファイルまたは他のアイテムの開始から行数を指定します.負の値は,cmdletに全体的なコンテンツを返します.</p>
+<p><strong>TotalCount</strong>パラメータ名またはそのニックネーム, <strong>First</strong>または <strong>Head</strong>を使用することができます.</p>
+<pre><code class="language-yaml">Type: System.Int64
+Parameter Sets: (All)
+Aliases: First, Head
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+</code></pre>
+<h3>-UseTransaction 取引を活用する</h3>
+<p>アクティブトランザクションのコマンドが含まれています.このパラメータは,トランザクションが進行中の場合にのみ有効です.詳細については, [about_Transactions.md]を参照してください.</p>
+<pre><code class="language-yaml">Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases: usetx
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>- 待って下さい</h3>
+<p>ファイルが開いているまま,停止するまで,cmdletが無期限に待機させる.<code>Get-Content</code>ファイルを秒に1回チェックし,新しい行を出力する.TotalCount**パラメータで使用すると,<code>Get-Content</code>指定したファイルに指定された行数が表示されるまで待つ.例えば,10の合計数を指定し,ファイルには10行以上がある場合は,<code>Get-Content</code>10行を返して出ます.ファイルが10行未満であれば, <code>Get-Content</code>到着するたびに各行を出力しますが,出かける前に第10行が到着するまで待つのです.</p>
+<p>ファイル削除すると,非終了エラーが発生し,また待機を中断します.</p>
+<p><strong>Wait</strong>は,ファイルシステムプロバイダが  に追加するダイナミックパラメータです.<code>Get-Content</code>cmdlet.このパラメータはファイルシステムドライブでのみ動作します. <strong>Wait</strong> は <strong>Raw</strong> と組み合わせることはできません.</p>
+<pre><code class="language-yaml">Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>共通パラメーター</h3>
+<p>このcmdletは,共通パラメータをサポートしています: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable.詳細については, <a href="を参照してください.https://go.microsoft.com/fwlink/?LinkID=113216">about_CommonParameters</a> でした.</p>
+<h2>輸入は</h2>
+<h3>System.Int64 を表示しました.</h3>
+<p>読書数や総数をこのcmdletにパイプすることができます.</p>
+<h3>システム.ストリング[]</h3>
+<p>このcmdletへのパイプパスもできます.</p>
+<h3>システム管理自動化PSCredentialです</h3>
+<p>このcmdletに認証をパイプすることができます.</p>
+<h2>輸出は</h2>
+<h3>System.Byte を表示する.</h3>
+<p><strong>AsByteStream</strong>パラメータを使用すると,このcmdletはバイトとしてコンテンツを返します.</p>
+<h3>System.String でした.</h3>
+<p>デフォルトでは,このcmdletは文字列の配列としてコンテンツを返します.一行ごとに一行です. <strong>Raw</strong>パラメータを使用すると,ファイル内のすべての文字列を含む単一の文字列を返します.</p>
+<h2>NOTES  記事ができました.</h2>
+<p>Windows PowerShell では,次のアライスがあります.<code>Get-Content</code>:</p>
+<ul>
+<li>-<code>cat</code> - -<code>gc</code> - -<code>type</code></li>
+</ul>
+<p><code>Get-Content</code>cmdlet は,どんなプロバイダでも暴露されるデータで働くように設計されています.<code>Get-PSProvider</code>cmdlet.詳細については, [about_Providers.md] を参照してください.</p>
+<h1>Get-Content について</h1>
+<h2>関連リンク</h2>
+<p><a href="../Microsoft.PowerShell.Core/About/about_Automatic_Variables.md">about_Automatic_Variables</a> について</p>
+<p><a href="../Microsoft.PowerShell.Core/About/about_Providers.md">about_Providers</a> について</p>
+<p><a href="Add-Content.md">Add-Content</a> </p>
+<p><a href="Clear-Content.md">Clear-Content</a> </p>
+<p><a href="../Microsoft.PowerShell.Core/ForEach-Object.md">ForEach-Object</a> について</p>
+<p><a href="Get-PSProvider.md">Get-PSProvider</a> でした.</p>
+<p><a href="Set-Content.md">Set-Content</a> </p></section><section class="en-original"><pre class="source-original"># Get-Content
+
+## SYNOPSIS
+Gets the content of the item at the specified location.
+
+## SYNTAX
+
+### Path (Default)
+
+```
+Get-Content [-ReadCount &lt;Int64&gt;] [-TotalCount &lt;Int64&gt;] [-Tail &lt;Int32&gt;] [-Path] &lt;String[]&gt;
+ [-Filter &lt;String&gt;] [-Include &lt;String[]&gt;] [-Exclude &lt;String[]&gt;] [-Force]
+ [-Credential &lt;PSCredential&gt;] [-UseTransaction] [-Delimiter &lt;String&gt;] [-Wait] [-Raw]
+ [-Encoding &lt;FileSystemCmdletProviderEncoding&gt;] [-Stream &lt;String&gt;] [&lt;CommonParameters&gt;]
+```
+
+### LiteralPath
+
+```
+Get-Content [-ReadCount &lt;Int64&gt;] [-TotalCount &lt;Int64&gt;] [-Tail &lt;Int32&gt;]
+ -LiteralPath &lt;String[]&gt; [-Filter &lt;String&gt;] [-Include &lt;String[]&gt;] [-Exclude &lt;String[]&gt;]
+ [-Force] [-Credential &lt;PSCredential&gt;] [-UseTransaction] [-Delimiter &lt;String&gt;] [-Wait]
+ [-Raw] [-Encoding &lt;FileSystemCmdletProviderEncoding&gt;] [-Stream &lt;String&gt;]
+ [&lt;CommonParameters&gt;]
+```
+
+## DESCRIPTION
+
+The `Get-Content` cmdlet gets the content of the item at the location specified by the path, such as
+the text in a file or the content of a function. For files, the content is read one line at a time
+and returns a collection of objects, each representing a line of content.
+
+Beginning in PowerShell 3.0, `Get-Content` can also get a specified number of lines from the
+beginning or end of an item.
+
+## EXAMPLES
+
+### Example 1: Get the content of a text file
+
+This example gets the content of a file in the current directory. The `LineNumbers.txt` file
+has 100 lines in the format, **This is Line X** and is used in several examples.
+
+```powershell
+1..100 | ForEach-Object {
+    Add-Content -Path .\LineNumbers.txt -Value &quot;This is line $_.&quot;
+}
+Get-Content -Path .\LineNumbers.txt
+```
+
+```Output
+This is line 1.
+This is line 2.
+...
+This is line 99.
+This is line 100.
+```
+
+The array values 1-100 are sent down the pipeline to the `ForEach-Object` cmdlet. `ForEach-Object`
+uses a scriptblock with the `Add-Content` cmdlet to create the `LineNumbers.txt` file. The variable
+`$_` represents the array values as each object is sent down the pipeline. The `Get-Content` cmdlet
+uses the **Path** parameter to specify the `LineNumbers.txt` file and displays the content in the
+PowerShell console.
+
+### Example 2: Limit the number of lines Get-Content returns
+
+This command gets the first five lines of a file. The **TotalCount** parameter gets the first five
+lines of content. This example uses the `LineNumbers.txt` referenced in Example 1.
+
+```powershell
+Get-Content -Path .\LineNumbers.txt -TotalCount 5
+```
+
+```Output
+This is line 1.
+This is line 2.
+This is line 3.
+This is line 4.
+This is line 5.
+```
+
+### Example 3: Get a specific line of content from a text file
+
+This command gets a specific number of lines from a file and then displays only the last line of
+that content. The **TotalCount** parameter gets the first 25 lines of content. This example uses the
+`LineNumbers.txt` file referenced in Example 1.
+
+```powershell
+(Get-Content -Path .\LineNumbers.txt -TotalCount 25)[-1]
+```
+
+```Output
+This is line 25.
+```
+
+The `Get-Content` command is wrapped in parentheses so that the command completes before going to
+the next step. `Get-Content`returns an array of lines, this allows you to add the index notation
+after the parenthesis to retrieve a specific line number. In this case, the `[-1]` index specifies
+the last index in the returned array of 25 retrieved lines.
+
+### Example 4: Get the last line of a text file
+
+This command gets the last line of content from a file. This example uses the `LineNumbers.txt` file
+that was created in Example 1.
+
+```powershell
+Get-Item -Path .\LineNumbers.txt | Get-Content -Tail 1
+```
+
+```Output
+This is line 100.
+```
+
+This example uses the `Get-Item` cmdlet to demonstrate that you can pipe files to `Get-Content`. The
+**Tail** parameter gets the last line of the file. This method is faster than retrieving all the
+lines in a variable and using the `[-1]` index notation.
+
+### Example 5: Get the content of an alternate data stream
+
+This example describes how to use the **Stream** parameter to get the content of an alternate data
+stream for files stored on a Windows NTFS volume. In this example, the `Set-Content` cmdlet is used
+to create sample content in a file named `Stream.txt`.
+
+```powershell
+Set-Content -Path .\Stream.txt -Value &#x27;This is the content of the Stream.txt file&#x27;
+
+# Specify a wildcard to the Stream parameter to display all streams of the recently
+
+# created file.
+Get-Item -Path .\Stream.txt -Stream *
+```
+
+```Output
+PSPath        : Microsoft.PowerShell.Core\FileSystem::C:\Test\Stream.txt::$DATA
+PSParentPath  : Microsoft.PowerShell.Core\FileSystem::C:\Test
+PSChildName   : Stream.txt::$DATA
+PSDrive       : C
+PSProvider    : Microsoft.PowerShell.Core\FileSystem
+PSIsContainer : False
+FileName      : C:\Test\Stream.txt
+Stream        : :$DATA
+Length        : 44
+```
+
+```powershell
+
+# Retrieve the content of the primary stream.
+
+# Note the single quotes to prevent variable substitution.
+Get-Content -Path .\Stream.txt -Stream &#x27;:$DATA&#x27;
+```
+
+```Output
+This is the content of the Stream.txt file
+```
+
+```powershell
+
+# Alternative way to get the same content.
+Get-Content -Path .\Stream.txt -Stream &quot;&quot;
+
+# The primary stream doesn&#x27;t need to be specified to get the primary stream of the file.
+
+# This gets the same data as the prior two examples.
+Get-Content -Path .\Stream.txt
+```
+
+```Output
+This is the content of the Stream.txt file
+```
+
+```powershell
+
+# Use the Stream parameter of Add-Content to create a new Stream containing sample
+
+# content.
+$addContentSplat = @{
+    Path = &#x27;.\Stream.txt&#x27;
+    Stream = &#x27;NewStream&#x27;
+    Value = &#x27;Added a stream named NewStream to Stream.txt&#x27;
+}
+Add-Content @addContentSplat
+
+# Use Get-Item to verify the stream was created.
+Get-Item -Path .\Stream.txt -Stream *
+```
+
+```Output
+PSPath        : Microsoft.PowerShell.Core\FileSystem::C:\Test\Stream.txt::$DATA
+PSParentPath  : Microsoft.PowerShell.Core\FileSystem::C:\Test
+PSChildName   : Stream.txt::$DATA
+PSDrive       : C
+PSProvider    : Microsoft.PowerShell.Core\FileSystem
+PSIsContainer : False
+FileName      : C:\Test\Stream.txt
+Stream        : :$DATA
+Length        : 44
+
+PSPath        : Microsoft.PowerShell.Core\FileSystem::C:\Test\Stream.txt:NewStream
+PSParentPath  : Microsoft.PowerShell.Core\FileSystem::C:\Test
+PSChildName   : Stream.txt:NewStream
+PSDrive       : C
+PSProvider    : Microsoft.PowerShell.Core\FileSystem
+PSIsContainer : False
+FileName      : C:\Test\Stream.txt
+Stream        : NewStream
+Length        : 46
+```
+
+```powershell
+
+# Retrieve the content of your newly created Stream.
+Get-Content -Path .\Stream.txt -Stream NewStream
+```
+
+```Output
+Added a stream named NewStream to Stream.txt
+```
+
+The **Stream** parameter is a dynamic parameter of the
+[FileSystem provider](../Microsoft.PowerShell.Core/About/about_FileSystem_Provider.md#stream-string).
+By default `Get-Content` only retrieves data from the default, or `:$DATA` stream. **Streams** can
+be used to store hidden data such as attributes, security settings, or other data. They can also be
+stored on directories without being child items.
+
+# Get-Content
+
+### Example 6: Get raw content
+
+The commands in this example get the contents of a file as one string, instead of an array of
+strings. By default, without the **Raw** dynamic parameter, content is returned as an array of
+newline-delimited strings. This example uses the `LineNumbers.txt` file referenced in Example 1.
+
+```powershell
+$raw = Get-Content -Path .\LineNumbers.txt -Raw
+$lines = Get-Content -Path .\LineNumbers.txt
+Write-Host &quot;Raw contains $($raw.Count) lines.&quot;
+Write-Host &quot;Lines contains $($lines.Count) lines.&quot;
+```
+
+```Output
+Raw contains 1 lines.
+Lines contains 100 lines.
+```
+
+### Example 7: Use Filters with Get-Content
+
+You can specify a filter to the `Get-Content` cmdlet. When using filters to qualify the **Path**
+parameter, you need to include a trailing asterisk (`*`) to indicate the contents of the
+path.
+
+The following command gets the content of all `*.log` files in the `C:\Temp` directory.
+
+```powershell
+Get-Content -Path C:\Temp\* -Filter *.log
+```
+
+### Example 8: Get file contents as a byte array
+
+This example demonstrates how to get the contents of a file as a `[byte[]]` as a single object.
+
+```powershell
+$byteArray = Get-Content -Path C:\temp\test.txt -Encoding Byte -Raw
+Get-Member -InputObject $byteArray
+```
+
+```Output
+   TypeName: System.Byte[]
+
+Name           MemberType            Definition
+----           ----------            ----------
+Count          AliasProperty         Count = Length
+Add            Method                int IList.Add(System.Object value)
+```
+
+The first command uses the **Encoding** parameter to get the stream of bytes from the file.
+The **Raw** parameter ensures that the bytes are returned as a `[System.Byte[]]`. If the **Raw**
+parameter was absent, the return value is a stream of bytes, which is interpreted by
+PowerShell as `[System.Object[]]`.
+
+## PARAMETERS
+
+### -Credential
+
+&gt; [!NOTE]
+&gt; This parameter isn&#x27;t supported by any providers installed with PowerShell. To impersonate another
+&gt; user, or elevate your credentials when running this cmdlet, use
+&gt; [Invoke-Command](../Microsoft.PowerShell.Core/Invoke-Command.md).
+
+```yaml
+Type: System.Management.Automation.PSCredential
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: Current user
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -Delimiter
+
+Specifies the delimiter that `Get-Content` uses to divide the file into objects while it reads. The
+default is `\n`, the end-of-line character. When reading a text file, `Get-Content` returns a
+collection of string objects, each ending with an end-of-line character. When you enter a delimiter
+that doesn&#x27;t exist in the file, `Get-Content` returns the entire file as a single, undelimited
+object.
+
+You can use this parameter to split a large file into smaller files by specifying a file separator,
+as the delimiter. The delimiter is preserved (not discarded) and becomes the last item in each file
+section.
+
+**Delimiter** is a dynamic parameter that the **FileSystem** provider adds to the `Get-Content`
+cmdlet. This parameter works only in file system drives.
+
+&gt; [!NOTE]
+&gt; Currently, when the value of the **Delimiter** parameter is an empty string, `Get-Content` does
+&gt; not return anything. This is a known issue. To force `Get-Content` to return the entire file as
+&gt; a single, undelimited string. Enter a value that doesn&#x27;t exist in the file.
+
+```yaml
+Type: System.String
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: End-of-line character
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Encoding
+
+Specifies the type of encoding for the target file. The default value is `Default`.
+
+The acceptable values for this parameter are as follows:
+
+- `Ascii` Uses ASCII (7-bit) character set.
+- `BigEndianUnicode` Uses UTF-16 with the big-endian byte order.
+- `BigEndianUTF32` Uses UTF-32 with the big-endian byte order.
+- `Byte` Encodes a set of characters into a sequence of bytes.
+- `Default` Uses the encoding that corresponds to the system&#x27;s active code page (usually ANSI).
+- `Oem` Uses the encoding that corresponds to the system&#x27;s current OEM code page.
+- `String` Same as `Unicode`.
+- `Unicode` Uses UTF-16 with the little-endian byte order.
+- `Unknown` Same as `Unicode`.
+- `UTF7` Uses UTF-7.
+- `UTF8` Uses UTF-8.
+- `UTF32` Uses UTF-32 with the little-endian byte order.
+
+Encoding is a dynamic parameter that the **FileSystem** provider adds to the `Get-Content` cmdlet.
+This parameter works only in file system drives.
+
+When reading from and writing to binary files, use a value of **Byte** for the **Encoding** dynamic
+parameter and a value of 0 for the **ReadCount** parameter. A **ReadCount** value of 0 reads the
+entire file in a single read operation and converts it into a single object (PSObject). The default
+**ReadCount** value, 1, reads one byte in each read operation and converts each byte into a separate
+object, which causes errors when you use the `Set-Content` cmdlet to write the bytes to a file.
+
+```yaml
+Type: Microsoft.PowerShell.Commands.FileSystemCmdletProviderEncoding
+Parameter Sets: (All)
+Aliases:
+Accepted values: ASCII, BigEndianUnicode, BigEndianUTF32, Byte, Default, OEM, String, Unicode, Unknown, UTF7, UTF8, UTF32
+
+Required: False
+Position: Named
+Default value: Default
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Exclude
+
+Specifies, as a string array, an item or items that this cmdlet excludes in the operation.
+The value of this parameter qualifies the **Path** parameter.
+
+Enter a path element or pattern, such as `*.txt`. Wildcard characters are permitted.
+
+The **Exclude** parameter is effective only when the command includes the contents of an item,
+such as `C:\Windows\*`, where the wildcard character specifies the contents of the `C:\Windows`
+directory.
+
+```yaml
+Type: System.String[]
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: True
+```
+
+### -Filter
+
+Specifies a filter to qualify the **Path** parameter. The
+[FileSystem](../Microsoft.PowerShell.Core/About/about_FileSystem_Provider.md) provider is the only
+installed PowerShell provider that supports the use of filters. You can find the syntax for the
+**FileSystem** filter language in
+[about_Wildcards](../Microsoft.PowerShell.Core/About/about_Wildcards.md). Filters are more efficient
+than other parameters, because the provider applies them when the cmdlet gets the objects rather
+than having PowerShell filter the objects after they&#x27;re retrieved.
+
+```yaml
+Type: System.String
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: True
+```
+
+### -Force
+
+**Force** can override a read-only attribute or create directories to complete a file path. The
+**Force** parameter doesn&#x27;t attempt to change file permissions or override security restrictions.
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+# Get-Content
+
+### -Include
+
+Specifies, as a string array, an item or items that this cmdlet includes in the operation. The value
+of this parameter qualifies the **Path** parameter. Enter a path element or pattern, such as
+`&quot;*.txt&quot;`. Wildcard characters are permitted. The **Include** parameter is effective only when the
+command includes the contents of an item, such as `C:\Windows\*`, where the wildcard character
+specifies the contents of the `C:\Windows` directory.
+
+```yaml
+Type: System.String[]
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: True
+```
+
+### -LiteralPath
+
+Specifies a path to one or more locations. The value of **LiteralPath** is used exactly as it&#x27;s
+typed. No characters are interpreted as wildcards. If the path includes escape characters, enclose
+it in single quotation marks. Single quotation marks tell PowerShell not to interpret any characters
+as escape sequences.
+
+For more information, see
+[about_Quoting_Rules](../Microsoft.PowerShell.Core/About/about_Quoting_Rules.md).
+
+```yaml
+Type: System.String[]
+Parameter Sets: LiteralPath
+Aliases: PSPath
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -Path
+
+Specifies the path to an item where `Get-Content` gets the content. Wildcard characters are
+permitted. The paths must be paths to items, not to containers. For example, you must specify a path
+to one or more files, not a path to a directory.
+
+```yaml
+Type: System.String[]
+Parameter Sets: Path
+Aliases:
+
+Required: True
+Position: 0
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: True
+```
+
+### -Raw
+
+Ignores newline characters and returns the entire contents of a file in one string with the newlines
+preserved. By default, newline characters in a file are used as delimiters to separate the input
+into an array of strings. This parameter was introduced in PowerShell 3.0.
+
+**Raw** is a dynamic parameter that the **FileSystem** provider adds to the `Get-Content` cmdlet
+This parameter works only in file system drives.
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -ReadCount
+
+Specifies how many lines of content are sent through the pipeline at a time. The default value is 1.
+A value of 0 (zero) or negative numbers sends all the content at one time.
+
+This parameter doesn&#x27;t change the content displayed, but it does affect the time it takes to
+display the content. As the value of **ReadCount** increases, the time it takes to return the first
+line increases, but the total time for the operation decreases. This can make a perceptible
+difference in large items.
+
+```yaml
+Type: System.Int64
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: 1
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -Stream
+
+Gets the contents of the specified alternate NTFS file stream from the file. Enter the stream name.
+Wildcards aren&#x27;t supported.
+
+**Stream** is a dynamic parameter that the **FileSystem** provider adds to the `Get-Content` cmdlet.
+This parameter works only in file system drives on Windows systems.
+
+This parameter was introduced in Windows PowerShell 3.0.
+
+```yaml
+Type: System.String
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Tail
+
+Specifies the number of lines from the end of a file or other item. You can use the **Tail**
+parameter name or its alias, **Last**. Negative values cause the cmdlet to return the entire
+contents.
+
+This parameter was introduced in PowerShell 3.0.
+
+```yaml
+Type: System.Int32
+Parameter Sets: (All)
+Aliases: Last
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -TotalCount
+
+Specifies the number of lines from the beginning of a file or other item. Negative values cause the
+cmdlet to return the entire contents.
+
+You can use the **TotalCount** parameter name or its aliases, **First** or **Head**.
+
+```yaml
+Type: System.Int64
+Parameter Sets: (All)
+Aliases: First, Head
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -UseTransaction
+
+Includes the command in the active transaction. This parameter is valid only when a transaction is
+in progress. For more information, see [about_Transactions](../Microsoft.PowerShell.Core/About/about_Transactions.md).
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases: usetx
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Wait
+
+Causes the cmdlet to wait indefinitely, keeping the file open, until interrupted. While waiting,
+`Get-Content` checks the file once per second and outputs new lines if present. When used with the
+**TotalCount** parameter, `Get-Content` waits until the specified number of lines are available in
+the specified file. For example, if you specify a **TotalCount** of 10 and the file already has 10
+or more lines, `Get-Content` returns the 10 lines and exits. If the file has fewer than 10 lines,
+`Get-Content` outputs each line as it arrives, but waits until the tenth line arrives before
+exiting.
+
+You can interrupt **Wait** by pressing &lt;kbd&gt;Ctrl&lt;/kbd&gt;+&lt;kbd&gt;C&lt;/kbd&gt;. Deleting the file causes a
+non-terminating error that also interrupts the waiting.
+
+**Wait** is a dynamic parameter that the FileSystem provider adds to the `Get-Content` cmdlet. This
+parameter works only in file system drives. **Wait** can&#x27;t be combined with **Raw**.
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### CommonParameters
+
+This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable,
+-InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose,
+-WarningAction, and -WarningVariable. For more information, see
+[about_CommonParameters](https://go.microsoft.com/fwlink/?LinkID=113216).
+
+## INPUTS
+
+### System.Int64
+
+You can pipe the read count or total count to this cmdlet.
+
+### System.String[]
+
+You can pipe paths to this cmdlet.
+
+### System.Management.Automation.PSCredential
+
+You can pipe credentials to this cmdlet.
+
+## OUTPUTS
+
+### System.Byte
+
+When you use the **AsByteStream** parameter, this cmdlet returns the content as bytes.
+
+### System.String
+
+By default, this cmdlet returns the content as an array of strings, one per line. When you use the
+**Raw** parameter, it returns a single string containing every line in the file.
+
+## NOTES
+
+Windows PowerShell includes the following aliases for `Get-Content`:
+
+- `cat`
+- `gc`
+- `type`
+
+The `Get-Content` cmdlet is designed to work with the data exposed by any provider. To get the
+providers in your session, use the `Get-PSProvider` cmdlet. For more information, see
+[about_Providers](../Microsoft.PowerShell.Core/About/about_Providers.md).
+
+# Get-Content
+
+## RELATED LINKS
+
+[about_Automatic_Variables](../Microsoft.PowerShell.Core/About/about_Automatic_Variables.md)
+
+[about_Providers](../Microsoft.PowerShell.Core/About/about_Providers.md)
+
+[Add-Content](Add-Content.md)
+
+[Clear-Content](Clear-Content.md)
+
+[ForEach-Object](../Microsoft.PowerShell.Core/ForEach-Object.md)
+
+[Get-PSProvider](Get-PSProvider.md)
+
+[Set-Content](Set-Content.md)</pre></section>

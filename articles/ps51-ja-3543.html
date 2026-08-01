@@ -1,0 +1,950 @@
+<!doctype html><meta charset="utf-8"><section class="jp-official"><h1>about_Format.ps1xmlについて</h1>
+<h2>短編説明</h2>
+<p><code>Format.ps1xml</code>PowerShellで,PowerShellコンソールでオブジェクトのデフォルト表示を定義します.<code>Format.ps1xml</code>PowerShellで作成した新しいオブジェクトタイプのデフォルト表示を定義するファイルやオブジェクトの表示を変更するファイルです.</p>
+<h2>長い説明</h2>
+<p><code>Format.ps1xml</code>PowerShellでファイルが定義されるのは,PowerShellでオブジェクトのデフォルト表示です.<code>Format.ps1xml</code>PowerShellで作成した新しいオブジェクトタイプのデフォルト表示を定義するファイルやオブジェクトの表示を変更するファイルです.</p>
+<p>PowerShell がオブジェクトを表示する際,構造格式化ファイル内のデータを利用してオブジェクトのデフォルト表示を決定する.格式化ファイル内のデータは,オブジェクトがテーブルまたはリストで表示されているかどうかを決定し,どの属性がデフォルトで表示されているかを決定します.</p>
+<p>フォーマットはディスプレイのみに影響を与え,何物資がパイプラインに渡され,どのように渡されるかには影響しません. <code>Format.ps1xml</code>ファイルはハッシュテーブルのための出力フォーマットをカスタマイズするには使用できません.</p>
+<p>PowerShellには7つのフォーマットファイルが含まれています.これらのファイルはインストールディレクトリ () にあります.<code>$PSHOME</code>ファイルごとに,Microsoft .NET Framework オブジェクトのグループが表示される様子が定義されます.</p>
+<p>1.<code>Certificate.Format.ps1xml</code></p>
+<p>証明書店のオブジェクト,例えばX.509証明書や証明書店など.</p>
+<p>1.<code>DotNetTypes.Format.ps1xml</code></p>
+<p>CultureInfo, FileVersionInfo,および EventLogEntryなどの他の .NET Framework タイプは,物体.</p>
+<p>1.<code>FileSystem.Format.ps1xml</code></p>
+<p>ファイルシステムオブジェクト,例えばファイルやディレクトリなど.</p>
+<p>1.<code>Help.Format.ps1xml</code></p>
+<p>詳細・完全なビュー,パラメータ,例などのサポートビュー.</p>
+<p>1.<code>PowerShellCore.Format.ps1xml</code></p>
+<p>PowerShell のコア cmdlets によって生成されたオブジェクト,例えば <code>Get-Member</code>そして,<code>Get-History</code> .</p>
+<p>1.<code>PowerShellTrace.Format.ps1xml</code></p>
+<p>によって生成されたものなど,追跡対象を追跡する.<code>Trace-Command</code>cmdletです.</p>
+<p>1.<code>Registry.Format.ps1xml</code></p>
+<p>鍵やエントリなどのレジスタオブジェクト.</p>
+<p>フォーマットファイルは,各オブジェクトの4つの異なるビューを定義することができます:</p>
+<p>テーブル - リスト - ワイド - カスタム</p>
+<p>例えば,出力が  の出力であるとき<code>Get-ChildItem</code>コマンドは,piped to a  に送られてきます.<code>Format-List</code> コマンド<code>Format-List</code> のビューを使用します.<code>FileSystem.Format.ps1xml</code>ファイルやフォルダオブジェクトをリストとして表示する方法を決定するファイルです.</p>
+<p>フォーマットファイルにオブジェクトの1以上のビューが含まれる場合,PowerShellは最初に表示されたビューを適用します.</p>
+<pre><code>                                                                                                                                                                   `Format.ps1xml`ファイル,ビューは,ビューの名前,適用可能なオブジェクトの種類,列のヘッダー,およびビューのボディに表示される属性に関するXMLタグが定義されています. 形式はです.`Format.ps1xml`ファイルは,データがユーザーに提示される直前に適用されます.
+</code></pre>
+<h2>新しい Format.ps1xml ファイルを作成する</h2>
+<p><code>.ps1xml</code>PowerShellでインストールされているファイルは,formatにスクリプトブロックが含まれているため,変更されないようにデジタル署名されています.既存のオブジェクトビューの表示形式を変更するには,または新しいオブジェクトの表示を追加するには,独自の を作成してください.<code>Format.ps1xml</code>ファイルを追加して PowerShell セッションに追加します.</p>
+<p>新しいファイルを作成するには,既存のファイルをコピーしてください.<code>Format.ps1xml</code>新しいファイルにはどんな名前も持っていても,必ず""が付いているはずです.<code>.ps1xml</code>新しいファイルをPowerShellでアクセスできる任意のディレクトリに配置できます.</p>
+<p>現在のビューのフォーマットを変更するには,フォーマットファイルでビューを検索し,タグを使用してビューを変更します.新しいオブジェクトタイプのビューを作成するには,新しいビューを作成するか,既存のビューをモデルとして使用します.タグは次のセクションで説明されています.次にファイル内の他のすべてのビューを削除することができますので,変更はファイルを調べる誰にとっても明らかです.</p>
+<p>変更を保存した後,  を使ってください.<code>Update-FormatData</code>パーシェルセッションに新しいファイルを追加するには cmdlet を使用します.あなたのビューが内蔵ファイルで定義されたビューよりも優先されるようにしたい場合は, <strong>PrependPath</strong> パラメータを使用してください. <code>Update-FormatData</code>現在のセッションのみに影響します.将来のセッションに変更を行うには,  を追加してください.<code>Update-FormatData</code>PowerShell プロフィールへのコマンド.</p>
+<h1>about_Format.ps1xmlについて</h1>
+<h3>例:文化オブジェクトにカレンダーデータを追加する</h3>
+<p>この例では,文化オブジェクトのフォーマットを変更する方法を示しています <strong>System.Globalization.CultureInfo</strong> によって生成された<code>Get-Culture</code>現在のPowerShellセッションのcmdlet. 例のコマンドは,文化オブジェクトのデフォルトテーブルビュー表示に <strong>Calendar</strong>属性を追加します.</p>
+<p>最初のステップは,そのを見つけることです.<code>Format.ps1xml</code>文化オブジェクトの現在のビューを含むファイルです.次のファイルは,<code>Select-String</code>コマンドはファイルを見つけます:</p>
+<pre><code class="language-powershell">$selectParams = @{
+  Path    = &quot;$PSHOME\*Format.ps1xml&quot;
+  Pattern = 'System.Globalization.CultureInfo'
+}
+Select-String @selectParams
+</code></pre>
+<pre><code class="language-Output">C:\Windows\System32\WindowsPowerShell\v1.0\DotNetTypes.format.ps1xml:113:
+     &lt;Name&gt;System.Globalization.CultureInfo&lt;/Name&gt;
+C:\Windows\System32\WindowsPowerShell\v1.0\DotNetTypes.format.ps1xml:115:
+&lt;TypeName&gt;System.Globalization.CultureInfo&lt;/TypeName&gt;
+</code></pre>
+<p>このコマンドは定義が  の定義にあることを明らかにします.<code>DotNetTypes.format.ps1xml</code>ファイル.</p>
+<p>次のコマンドは,ファイル内容を新しいファイルにコピーします.<code>MyDotNetTypes.Format.ps1xml</code>新たに作成されたものの中で<code>$HOME\Format</code>ディレクトリです.</p>
+<pre><code class="language-powershell">New-Item -Path $HOME\Format -ItemType Directory -Force
+
+$copyParams = @{
+    LiteralPath = &quot;$PSHOME\DotNetTypes.format.ps1xml&quot;
+    Destination = &quot;$HOME\Format\MyDotNetTypes.Format.ps1xml&quot;
+}
+Copy-Item @copyParams
+</code></pre>
+<p>オープン <code>MyDotNetTypes.Format.ps1xml</code>ビジュアルスタジオコードのような XML またはテキスト編集者ファイルに含まれる. <strong>System.Globalization.CultureInfo</strong> オブジェクトセクションを検索.次の XML は <strong>CultureInfo</strong> オブジェクトのビューを定義します. オブジェクトは <strong>TableControl</strong> ビューのみを持っています.</p>
+<pre><code class="language-xml">&lt;View&gt;
+  &lt;Name&gt;System.Globalization.CultureInfo&lt;/Name&gt;
+  &lt;ViewSelectedBy&gt;
+    &lt;TypeName&gt;Deserialized.System.Globalization.CultureInfo&lt;/TypeName&gt;
+    &lt;TypeName&gt;System.Globalization.CultureInfo&lt;/TypeName&gt;
+  &lt;/ViewSelectedBy&gt;
+  &lt;TableControl&gt;
+    &lt;TableHeaders&gt;
+      &lt;TableColumnHeader&gt;
+        &lt;Width&gt;16&lt;/Width&gt;
+      &lt;/TableColumnHeader&gt;
+      &lt;TableColumnHeader&gt;
+        &lt;Width&gt;16&lt;/Width&gt;
+      &lt;/TableColumnHeader&gt;
+    &lt;/TableHeaders&gt;
+    &lt;TableRowEntries&gt;
+      &lt;TableRowEntry&gt;
+        &lt;TableColumnItems&gt;
+          &lt;TableColumnItem&gt;
+            &lt;PropertyName&gt;LCID&lt;/PropertyName&gt;
+          &lt;/TableColumnItem&gt;
+          &lt;TableColumnItem&gt;
+            &lt;PropertyName&gt;Name&lt;/PropertyName&gt;
+          &lt;/TableColumnItem&gt;
+          &lt;TableColumnItem&gt;
+            &lt;PropertyName&gt;DisplayName&lt;/PropertyName&gt;
+          &lt;/TableColumnItem&gt;
+        &lt;/TableColumnItems&gt;
+      &lt;/TableRowEntry&gt;
+    &lt;/TableRowEntries&gt;
+  &lt;/TableControl&gt;
+&lt;/View&gt;
+</code></pre>
+<p>ファイルの残りを削除する.開いているのは除く.<code>&lt;?xml&gt;</code>     <code>&lt;Configuration&gt;</code>そして,そして,<code>&lt;ViewDefinitions&gt;</code>タグと閉幕のサインです.<code>&lt;ViewDefinitions&gt;</code>そして,<code>&lt;Configuration&gt;</code>タグ.デジタル署名がある場合は,カスタムから削除してください.<code>Format.ps1xml</code>ファイル.</p>
+<p><code>MyDotNetTypes.Format.ps1xml</code>ファイルは次のサンプルのように見えます:</p>
+<pre><code class="language-xml">&lt;?xml version=&quot;1.0&quot; encoding=&quot;utf-8&quot; ?&gt;
+&lt;Configuration&gt;
+&lt;ViewDefinitions&gt;
+&lt;View&gt;
+  &lt;Name&gt;System.Globalization.CultureInfo&lt;/Name&gt;
+  &lt;ViewSelectedBy&gt;
+    &lt;TypeName&gt;Deserialized.System.Globalization.CultureInfo&lt;/TypeName&gt;
+    &lt;TypeName&gt;System.Globalization.CultureInfo&lt;/TypeName&gt;
+  &lt;/ViewSelectedBy&gt;
+  &lt;TableControl&gt;
+    &lt;TableHeaders&gt;
+      &lt;TableColumnHeader&gt;
+        &lt;Width&gt;16&lt;/Width&gt;
+      &lt;/TableColumnHeader&gt;
+      &lt;TableColumnHeader&gt;
+        &lt;Width&gt;16&lt;/Width&gt;
+      &lt;/TableColumnHeader&gt;
+      &lt;TableColumnHeader/&gt;
+    &lt;/TableHeaders&gt;
+    &lt;TableRowEntries&gt;
+      &lt;TableRowEntry&gt;
+        &lt;TableColumnItems&gt;
+          &lt;TableColumnItem&gt;
+            &lt;PropertyName&gt;LCID&lt;/PropertyName&gt;
+          &lt;/TableColumnItem&gt;
+          &lt;TableColumnItem&gt;
+            &lt;PropertyName&gt;Name&lt;/PropertyName&gt;
+          &lt;/TableColumnItem&gt;
+          &lt;TableColumnItem&gt;
+            &lt;PropertyName&gt;DisplayName&lt;/PropertyName&gt;
+          &lt;/TableColumnItem&gt;
+        &lt;/TableColumnItems&gt;
+      &lt;/TableRowEntry&gt;
+    &lt;/TableRowEntries&gt;
+  &lt;/TableControl&gt;
+&lt;/View&gt;
+&lt;/ViewDefinitions&gt;
+&lt;/Configuration&gt;
+</code></pre>
+<p>の新しいセットを追加することで <strong>Calendar</strong> 属性のための新しい列を作成します.<code>&lt;TableColumnHeader&gt;</code><strong>Calendar</strong>のプロパティの値は長くなってきますので,45文字の値を""として指定してください.<code>&lt;Width&gt;</code> .</p>
+<pre><code class="language-xml">&lt;TableHeaders&gt;
+  &lt;TableColumnHeader&gt;
+    &lt;Width&gt;16&lt;/Width&gt;
+  &lt;/TableColumnHeader&gt;
+  &lt;TableColumnHeader&gt;
+    &lt;Width&gt;16&lt;/Width&gt;
+  &lt;/TableColumnHeader&gt;
+  &lt;TableColumnHeader&gt;
+    &lt;Width&gt;45&lt;/Width&gt;
+  &lt;/TableColumnHeader&gt;
+  &lt;TableColumnHeader/&gt;
+&lt;/TableHeaders&gt;
+</code></pre>
+<p>を使ってテーブル行に <strong>カレンダー</strong> の新しい列項目を追加します.<code>&lt;TableColumnItem&gt;</code>そして,<code>&lt;PropertyName</code>タグ:</p>
+<pre><code class="language-xml">&lt;TableRowEntries&gt;
+  &lt;TableRowEntry&gt;
+    &lt;TableColumnItems&gt;
+      &lt;TableColumnItem&gt;
+        &lt;PropertyName&gt;LCID&lt;/PropertyName&gt;
+      &lt;/TableColumnItem&gt;
+      &lt;TableColumnItem&gt;
+        &lt;PropertyName&gt;Name&lt;/PropertyName&gt;
+      &lt;/TableColumnItem&gt;
+      &lt;TableColumnItem&gt;
+        &lt;PropertyName&gt;Calendar&lt;/PropertyName&gt;
+      &lt;/TableColumnItem&gt;
+      &lt;TableColumnItem&gt;
+        &lt;PropertyName&gt;DisplayName&lt;/PropertyName&gt;
+      &lt;/TableColumnItem&gt;
+    &lt;/TableColumnItems&gt;
+  &lt;/TableRowEntry&gt;
+&lt;/TableRowEntries&gt;
+</code></pre>
+<p>保存してファイルを閉じてください.<code>Update-FormatData</code>更新されたフォーマットファイルを現在のPowerShellセッションに追加します.</p>
+<p>この例では <strong>PrependPath</strong> パラメータを使用して,新しいファイルを元のファイルよりも優先順位が高い順に配置します.詳細については,[Update-FormatData][03]を参照してください.</p>
+<pre><code class="language-powershell">Update-FormatData -PrependPath $HOME\Format\MyDotNetTypes.Format.ps1xml
+</code></pre>
+<p>変更をテストするには,TYPE を入力してください.<code>Get-Culture</code><strong>Calendar</strong>のプロパティを含む出力をレビューします.</p>
+<pre><code class="language-powershell">Get-Culture
+</code></pre>
+<pre><code class="language-Output">LCID Name  Calendar                               DisplayName
+---- ----  --------                               -----------
+1033 en-US System.Globalization.GregorianCalendar English (United States)
+</code></pre>
+<h2>形式.ps1xmlのファイルの XML に関するファイル</h2>
+<p>完全なスケーマ定義は,GitHubのPowerShellソースコードリポジトリの [Format.xsd][04]で確認できます.</p>
+<p>各のViewDefinitionsのセクションを表示します.<code>Format.ps1xml</code>ファイルが含まれる.<code>&lt;View&gt;</code>各ビューを定義するタグ.典型的な.<code>&lt;View&gt;</code>タグには以下のタグが含まれています:</p>
+<ul>
+<li>-<code>&lt;Name&gt;</code>ビューの名前を識別します. - <code>&lt;ViewSelectedBy&gt;</code>対象タイプ (または) を指定し,その表示が適用される. - <code>&lt;GroupBy&gt;</code>ビュー内のアイテムがグループにどのように組み合わせられるかを指定します. - <code>&lt;TableControl&gt;</code>     <code>&lt;ListControl&gt;</code>     <code>&lt;WideControl&gt;</code>そして,そして,<code>&lt;CustomControl&gt;</code>各項目の表示方法を指定するタグが含まれます.</li>
+</ul>
+<h3>ビュー選択されたBy タグ</h3>
+<p><code>&lt;ViewSelectedBy&gt;</code>タグは,  を含むことができます.<code>&lt;TypeName&gt;</code>ビューが適用される各オブジェクトタイプのタグです.または,それは""を含む可能性があります.<code>&lt;SelectionSetName&gt;</code> を使って他の場所で定義された選択セットを指すタグです.<code>&lt;SelectionSet&gt;</code>タグ.</p>
+<h3>GroupBy tag グループによってタグ付けされています.</h3>
+<p><code>&lt;GroupBy&gt;</code>タグは,  を含む.<code>&lt;PropertyName&gt;</code>項目がグループ化されるオブジェクト属性を指定するタグ.また,任意の  を含む.<code>&lt;Label&gt;</code>各グループまたは  のラベルとして使用する文字列を指定するタグです.<code>&lt;CustomControlName&gt;</code> を使って他の場所で定義されたカスタムコントロールを参照するタグです.<code>&lt;Control&gt;</code>タグ. <code>&lt;Control&gt;</code>タグは,  を含む.<code>&lt;Name&gt;</code>タグとタグをつけます.<code>&lt;CustomControl&gt;</code>タグ.</p>
+<h1>about_Format.ps1xmlについて</h1>
+<h3>TableControlTag を表示する</h3>
+<p><code>&lt;TableControl&gt;</code>タグは通常,含有します.<code>&lt;TableHeaders&gt;</code>そして,<code>&lt;TableRowEntries&gt;</code>テーブルの頭と行のフォーマットを定義するタグです.<code>&lt;TableHeaders&gt;</code>タグは通常,含有します.<code>&lt;TableColumnHeader&gt;</code>を含むタグを表示します.<code>&lt;Label&gt;</code>     <code>&lt;Width&gt;</code>そして,そして,<code>&lt;Alignment&gt;</code>タグは, <code>&lt;TableRowEntries&gt;</code>タグは含んでいる.<code>&lt;TableRowEntry&gt;</code>テーブル内の各行のためのタグです.<code>&lt;TableRowEntry&gt;</code>タグは,  を含む.<code>&lt;TableColumnItems&gt;</code> を含むタグを表示します.<code>&lt;TableColumnItem&gt;</code>列の各列のタグを表示します.通常,  は<code>&lt;TableColumnItem&gt;</code>タグには,いずれかのタグが含まれます.<code>&lt;PropertyName&gt;</code>指定された場所に表示されるオブジェクト属性を識別するタグ,または <code>&lt;ScriptBlock&gt;</code>位置に表示される結果を計算するスクリプトコードを含むタグです.</p>
+<p>&gt; [!NOTE] &gt; スクリプトブロックは,計算された結果が有用な場所にある場所でも他の場所で使用できます.</p>
+<p><code>&lt;TableColumnItem&gt;</code>タグも,その中に""が含まれます.<code>&lt;FormatString&gt;</code>指定したタグで,プロパティや計算結果がどのように表示されるかを指定します.</p>
+<h3>リストコントロールタグ</h3>
+<p><code>&lt;ListControl&gt;</code>タグは通常,  を含む.<code>&lt;ListEntries&gt;</code>タグ. <code>&lt;ListEntries&gt;</code>タグは,  を含む.<code>&lt;ListEntry&gt;</code>タグ. <code>&lt;ListEntry&gt;</code>タグは,  を含む.<code>&lt;ListItems&gt;</code>タグ. <code>&lt;ListItems&gt;</code>タグは含んでいる.<code>&lt;ListItem&gt;</code>タグが含まれており,その内には"<code>&lt;PropertyName&gt;</code>タグは, <code>&lt;PropertyName&gt;</code>タグは,リストの指定された場所に表示されるオブジェクト属性を指定します.表示選択が選択セットを使用して定義されている場合,  は選択セットで表示されます.<code>&lt;ListControl&gt;</code>そして,<code>&lt;ListEntry&gt;</code>タグも含める可能性があります.<code>&lt;EntrySelectedBy&gt;</code>ひとつ以上のタグを含むタグです.<code>&lt;TypeName&gt;</code>このタグは,<code>&lt;TypeName&gt;</code>タグは,その  のオブジェクトタイプを指定する.<code>&lt;ListControl&gt;</code>タグは表示されるように意図されています.</p>
+<h3>ワイドコントロール タグ</h3>
+<p><code>&lt;WideControl&gt;</code>タグは通常,  を含む.<code>&lt;WideEntries&gt;</code>タグ. <code>&lt;WideEntries&gt;</code>タグは1つまたは複数のタグを含んでいる.<code>&lt;WideEntry&gt;</code>タグ A <code>&lt;WideEntry&gt;</code>タグは1つを含んでいる.<code>&lt;WideItem&gt;</code>タグ.</p>
+<p>A  <code>&lt;WideItem&gt;</code>タグには,いずれか a を含むことなければなりません.<code>&lt;PropertyName&gt;</code>タグまたはタグを<code>&lt;ScriptBlock&gt;</code>A. タグです. <code>&lt;PropertyName&gt;</code>タグは,表示中の指定された場所に表示されるプロパティを指定します.<code>&lt;ScriptBlock&gt;</code>タグは,評価し,表示するスクリプトを表示し,表示する場所が表示される.</p>
+<p>A  <code>&lt;WideItem&gt;</code>タグは,  を含むことができます.<code>&lt;FormatString&gt;</code>資産を表示する方法を指定するタグです.</p>
+<h3>カスタムコントロールタグ</h3>
+<p><code>&lt;CustomControl&gt;</code>タグは,フォーマットを定義するためにスクリプトブロックを使用することを可能にします.<code>&lt;CustomControl&gt;</code>タグは通常,  を含む.<code>&lt;CustomEntries&gt;</code>複数のタグを含むタグです.<code>&lt;CustomEntry&gt;</code>タグはそれぞれです.<code>&lt;CustomEntry&gt;</code>タグは,  を含む.<code>&lt;CustomItem&gt;</code>観覧の指定された場所の内容とフォーマットを指定する様々なタグが含まれるタグです.<code>&lt;Text&gt;</code>     <code>&lt;Indentation&gt;</code>     <code>&lt;ExpressionBinding&gt;</code>そして,そして,<code>&lt;NewLine&gt;</code>タグです.</p>
+<h2>Types.ps1xmlのデフォルト表示は</h2>
+<p>基本的なオブジェクトタイプのデフォルト表示は, で定義されています.<code>Types.ps1xml</code>のファイルに載っている.<code>$PSHOME</code>ノードには <strong>PsStandardMembers</strong>という名前があり,サブノードには以下のタグが使われます.</p>
+<ul>
+<li>-<code>&lt;DefaultDisplayProperty&gt;</code> - -<code>&lt;DefaultDisplayPropertySet&gt;</code> - -<code>&lt;DefaultKeyPropertySet&gt;</code></li>
+</ul>
+<p>詳細については, [about_Types.ps1xml] を参照してください.</p>
+<h2>ファイル使用の Format.ps1xml の追跡です.</h2>
+<p>の読み込みや適用のエラーを検出するために<code>Format.ps1xml</code>ファイルを使用して, ファイルを使用します.<code>Trace-Command</code>フォメート構成要素のうちのいずれかを表示したcmdletは, <strong>Name</strong>パラメータの値として表示されます.</p>
+<ul>
+<li>FormatFileLoading - FormatViewBinding</li>
+</ul>
+<p>詳細については, [Trace-Command][05]と [Get-TraceSource][06] を参照してください.</p>
+<h2>Format.ps1xml ファイルにサインする</h2>
+<p>ユーザーを保護するために<code>Format.ps1xml</code>デジタル署名を使用してファイルにサインしてください.詳細については,[about_Signing][07]を参照してください.</p>
+<h1>about_Format.ps1xmlについて</h1>
+<h2>フォーマット・テーブルのカスタムビューのための XML サンプル</h2>
+<p>次のサンプルが,  を生成する.<code>Format-Table</code>によって作成されたシステム.IO.DirectoryInfo<strong> と </strong>System.IO.FileInfo<strong> オブジェクトのカスタムビュー<code>Get-ChildItem</code>カスタムビューは </strong>MyGciView<strong> と呼ばれ,テーブルに </strong>CreationTime** コラムを追加します.</p>
+<p>活用する<code>Select-String</code>どちらを特定するかを確認します.<code>Format.ps1xml</code>ファイルには,あなたが探しているタイプのデータが含まれています.</p>
+<p>カスタムビューは,編集されたバージョンの の編集から作成されています.<code>FileSystem.Format.ps1xml</code>保存されているファイルです.<code>$PSHOME</code>PowerShell 5.1で使用しました.</p>
+<p>習慣を踏まえて<code>.ps1xml</code>ファイルが保存されているので,使用してください.<code>Update-FormatData</code>または,すべてのPowerShellセッションで利用可能なビューが必要なら,PowerShell プロフィールに更新コマンドを追加してください.</p>
+<p>この例では,カスタムビューはテーブルフォーマットを使用しなければならない.<code>Format-Table</code>失敗する.</p>
+<p>活用する<code>Format-Table</code><strong>View</strong>のパラメータでカスタムビューの名前を指定し, <strong>MyGciView</strong>を表示し,テーブルの出力を <strong>CreationTime</strong>列でフォーマットします.コマンドの実行方法の例については, [Format-Table][08]を参照してください.</p>
+<pre><code class="language-powershell">$selectParams = @{
+  Path    = &quot;$PSHOME\*format.ps1xml&quot;
+  Pattern = 'System.IO.DirectoryInfo'
+}
+Select-String @selectParams
+
+$copyParams = @{
+    LiteralPath = &quot;$PSHOME\FileSystem.format.ps1xml&quot;
+    Destination = &quot;$HOME\Format\MyFileSystem.Format.ps1xml&quot;
+}
+Copy-Item @copyParams
+
+Update-FormatData -PrependPath $HOME\Format\MyFileSystem.Format.ps1xml
+</code></pre>
+<p>&gt;!NOTE] &gt; XMLサンプルをライン幅制限に合わせて,いくつかのインデントを圧縮し,コード内のラインブレイクを使用する必要がありました.</p>
+<pre><code class="language-xml">&lt;?xml version=&quot;1.0&quot; encoding=&quot;utf-8&quot;?&gt;
+&lt;Configuration&gt;
+    &lt;SelectionSets&gt;
+        &lt;SelectionSet&gt;
+            &lt;Name&gt;FileSystemTypes&lt;/Name&gt;
+            &lt;Types&gt;
+                &lt;TypeName&gt;System.IO.DirectoryInfo&lt;/TypeName&gt;
+                &lt;TypeName&gt;System.IO.FileInfo&lt;/TypeName&gt;
+            &lt;/Types&gt;
+        &lt;/SelectionSet&gt;
+    &lt;/SelectionSets&gt;
+&lt;Controls&gt;
+&lt;Control&gt;
+&lt;Name&gt;FileSystemTypes-GroupingFormat&lt;/Name&gt;
+&lt;CustomControl&gt;
+ &lt;CustomEntries&gt;
+  &lt;CustomEntry&gt;
+    &lt;CustomItem&gt;
+    &lt;Frame&gt;
+    &lt;LeftIndent&gt;4&lt;/LeftIndent&gt;
+    &lt;CustomItem&gt;
+    &lt;Text AssemblyName=&quot;System.Management.Automation&quot;
+    BaseName=&quot;FileSystemProviderStrings&quot;
+    ResourceId=&quot;DirectoryDisplayGrouping&quot;/&gt;
+    &lt;ExpressionBinding&gt;
+     &lt;ScriptBlock&gt;
+      $_.PSParentPath.Replace(&quot;Microsoft.PowerShell.Core\FileSystem::&quot;, &quot;&quot;)
+     &lt;/ScriptBlock&gt;
+    &lt;/ExpressionBinding&gt;
+    &lt;NewLine/&gt;
+    &lt;/CustomItem&gt;
+    &lt;/Frame&gt;
+    &lt;/CustomItem&gt;
+    &lt;/CustomEntry&gt;
+ &lt;/CustomEntries&gt;
+&lt;/CustomControl&gt;
+&lt;/Control&gt;
+&lt;/Controls&gt;
+&lt;ViewDefinitions&gt;
+    &lt;View&gt;
+    &lt;Name&gt;MyGciView&lt;/Name&gt;
+    &lt;ViewSelectedBy&gt;
+        &lt;SelectionSetName&gt;FileSystemTypes&lt;/SelectionSetName&gt;
+    &lt;/ViewSelectedBy&gt;
+    &lt;GroupBy&gt;
+      &lt;PropertyName&gt;PSParentPath&lt;/PropertyName&gt;
+      &lt;CustomControlName&gt;FileSystemTypes-GroupingFormat&lt;/CustomControlName&gt;
+    &lt;/GroupBy&gt;
+        &lt;TableControl&gt;
+            &lt;TableHeaders&gt;
+                &lt;TableColumnHeader&gt;
+                    &lt;Label&gt;Mode&lt;/Label&gt;
+                    &lt;Width&gt;7&lt;/Width&gt;
+                    &lt;Alignment&gt;left&lt;/Alignment&gt;
+                &lt;/TableColumnHeader&gt;
+                &lt;TableColumnHeader&gt;
+                    &lt;Label&gt;LastWriteTime&lt;/Label&gt;
+                    &lt;Width&gt;25&lt;/Width&gt;
+                    &lt;Alignment&gt;right&lt;/Alignment&gt;
+                &lt;/TableColumnHeader&gt;
+                &lt;TableColumnHeader&gt;
+                    &lt;Label&gt;CreationTime&lt;/Label&gt;
+                    &lt;Width&gt;25&lt;/Width&gt;
+                    &lt;Alignment&gt;right&lt;/Alignment&gt;
+                &lt;/TableColumnHeader&gt;
+                &lt;TableColumnHeader&gt;
+                    &lt;Label&gt;Length&lt;/Label&gt;
+                    &lt;Width&gt;14&lt;/Width&gt;
+                    &lt;Alignment&gt;right&lt;/Alignment&gt;
+                &lt;/TableColumnHeader&gt;
+                &lt;TableColumnHeader/&gt;
+            &lt;/TableHeaders&gt;
+            &lt;TableRowEntries&gt;
+                &lt;TableRowEntry&gt;
+                    &lt;Wrap/&gt;
+                    &lt;TableColumnItems&gt;
+                        &lt;TableColumnItem&gt;
+                            &lt;PropertyName&gt;Mode&lt;/PropertyName&gt;
+                        &lt;/TableColumnItem&gt;
+                        &lt;TableColumnItem&gt;
+                            &lt;ScriptBlock&gt;
+                                [string]::Format(&quot;{0,10}  {1,8}&quot;,
+                                    $_.LastWriteTime.ToString(&quot;d&quot;),
+                                    $_.LastWriteTime.ToString(&quot;t&quot;))
+                            &lt;/ScriptBlock&gt;
+                        &lt;/TableColumnItem&gt;
+                        &lt;TableColumnItem&gt;
+                            &lt;ScriptBlock&gt;
+                                [string]::Format(&quot;{0,10}  {1,8}&quot;,
+                                    $_.CreationTime.ToString(&quot;d&quot;),
+                                    $_.LastWriteTime.ToString(&quot;t&quot;))
+                            &lt;/ScriptBlock&gt;
+                        &lt;/TableColumnItem&gt;
+                        &lt;TableColumnItem&gt;
+                        &lt;PropertyName&gt;Length&lt;/PropertyName&gt;
+                        &lt;/TableColumnItem&gt;
+                        &lt;TableColumnItem&gt;
+                            &lt;PropertyName&gt;Name&lt;/PropertyName&gt;
+                        &lt;/TableColumnItem&gt;
+                    &lt;/TableColumnItems&gt;
+                &lt;/TableRowEntry&gt;
+            &lt;/TableRowEntries&gt;
+        &lt;/TableControl&gt;
+    &lt;/View&gt;
+  &lt;/ViewDefinitions&gt;
+&lt;/Configuration&gt;
+</code></pre>
+<h2>また, を参照してください.</h2>
+<ul>
+<li>[トラスコマンド][05] - [エクスポート・フォーマットデータ][02] - [Get-FormatData][01] - [更新・フォーマットデータ][03] - [Get-TraceSource][06] - [フォーマット・スケーマ・XML参照][09] - [パワーシェル・フォーマットファイルを書く]][10]</li>
+</ul>
+<p>&lt;!--リンク参照 --&gt; [01]: xref:Microsoft.PowerShell.Utility.Get-FormatData [02]: xref:Microsoft.PowerShell.Utility.Export-FormatData [03]: xref:Microsoft.PowerShell.Utility.Update-FormatData [04]: https://github.com/PowerShell/PowerShell/blob/master/src/Schemas/Format.xsd[05]: xref:Microsoft.PowerShell.Utility.Trace-Command [06]: xref:Microsoft.PowerShell.Utility.Get-TraceSource [07]: about_Signing.md [08]: xref:Microsoft.PowerShell.Utility.Format-Table [09]: /powershell/scripting/developer/format/format/format-schema-xml-reference [10]: /powershell/scripting/developer/format/writing-a-powershell-formatting-file</p></section><section class="en-original"><pre class="source-original"># about_Format.ps1xml
+
+## Short description
+
+The `Format.ps1xml` files in PowerShell define the default display of objects
+in the PowerShell console. You can create your own `Format.ps1xml` files to
+change the display of objects or to define default displays for new object
+types that you create in PowerShell.
+
+## Long description
+
+The `Format.ps1xml` files in PowerShell define the default display of objects
+in PowerShell. You can create your own `Format.ps1xml` files to change the
+display of objects or to define default displays for new object types that you
+create in PowerShell.
+
+When PowerShell displays an object, it uses the data in structured formatting
+files to determine the default display of the object. The data in the
+formatting files determines whether the object is rendered in a table or in a
+list, and it determines which properties are displayed by default.
+
+The formatting affects the display only. It doesn&#x27;t affect which object
+properties are passed down the pipeline or how they&#x27;re passed. `Format.ps1xml`
+files can&#x27;t be used to customize the output format for hash tables.
+
+PowerShell includes seven formatting files. These files are located in the
+installation directory (`$PSHOME`). Each file defines the display of a group of
+Microsoft .NET Framework objects:
+
+1. `Certificate.Format.ps1xml`
+
+   Objects in the Certificate store, such as X.509 certificates and certificate
+   stores.
+
+1. `DotNetTypes.Format.ps1xml`
+
+   Other .NET Framework types, such as CultureInfo, FileVersionInfo, and
+   EventLogEntry objects.
+
+1. `FileSystem.Format.ps1xml`
+
+   File system objects, such as files and directories.
+
+1. `Help.Format.ps1xml`
+
+   Help views, such as detailed and full views, parameters, and examples.
+
+1. `PowerShellCore.Format.ps1xml`
+
+   Objects generated by PowerShell core cmdlets, such as `Get-Member` and
+   `Get-History`.
+
+1. `PowerShellTrace.Format.ps1xml`
+
+   Trace objects, such as those generated by the `Trace-Command` cmdlet.
+
+1. `Registry.Format.ps1xml`
+
+   Registry objects, such as keys and entries.
+
+A formatting file can define four different views of each object:
+
+- Table
+- List
+- Wide
+- Custom
+
+For example, when the output of a `Get-ChildItem` command is piped to a
+`Format-List` command, `Format-List` uses the view in the
+`FileSystem.Format.ps1xml` file to determine how to display the file and folder
+objects as a list.
+
+When a formatting file includes more than one view of an object, PowerShell
+applies the first view that it finds.
+
+In a `Format.ps1xml` file, a view is defined by a set of XML tags that describe
+the name of the view, the type of object to which it can be applied, the column
+headers, and the properties that are displayed in the body of the view. The
+format in `Format.ps1xml` files is applied just before the data is presented to
+the user.
+
+## Creating new Format.ps1xml files
+
+The `.ps1xml` files that are installed with PowerShell are digitally signed to
+prevent tampering because the formatting can include script blocks. To change
+the display format of an existing object view, or to add views for new objects,
+create your own `Format.ps1xml` files, and then add them to your PowerShell
+session.
+
+To create a new file, copy an existing `Format.ps1xml` file. The new file can
+have any name, but it must have a `.ps1xml` file name extension. You can place
+the new file in any directory that is accessible to PowerShell.
+
+To change the formatting of a current view, locate the view in the formatting
+file, and then use the tags to change the view. To create a view for a new
+object type, create a new view, or use an existing view as a model. The tags
+are described in the next section. You can then delete all the other views in
+the file so that the changes are obvious to anyone examining the file.
+
+After you save the changes, use the `Update-FormatData` cmdlet to add the new
+file to your PowerShell session. If you want your view to take precedence over
+a view defined in the built-in files, use the **PrependPath** parameter.
+`Update-FormatData` affects only the current session. To make the change to all
+future sessions, add the `Update-FormatData` command to your PowerShell
+profile.
+
+# about_Format.ps1xml
+
+### Example: Adding calendar data to culture objects
+
+This example shows how to change the formatting of the culture objects
+**System.Globalization.CultureInfo** generated by the `Get-Culture` cmdlet in
+the current PowerShell session. The commands in the example add the
+**Calendar** property to the default table view display of culture objects.
+
+The first step is to find the `Format.ps1xml` file that contains the current
+view of the culture objects. The following `Select-String` command finds the
+file:
+
+```powershell
+$selectParams = @{
+  Path    = &quot;$PSHOME\*Format.ps1xml&quot;
+  Pattern = &#x27;System.Globalization.CultureInfo&#x27;
+}
+Select-String @selectParams
+```
+
+```Output
+C:\Windows\System32\WindowsPowerShell\v1.0\DotNetTypes.format.ps1xml:113:
+     &lt;Name&gt;System.Globalization.CultureInfo&lt;/Name&gt;
+C:\Windows\System32\WindowsPowerShell\v1.0\DotNetTypes.format.ps1xml:115:
+&lt;TypeName&gt;System.Globalization.CultureInfo&lt;/TypeName&gt;
+```
+
+This command reveals that the definition is in the `DotNetTypes.format.ps1xml`
+file.
+
+The following commands copy the file contents to a new file named
+`MyDotNetTypes.Format.ps1xml` in a newly created `$HOME\Format` directory.
+
+```powershell
+New-Item -Path $HOME\Format -ItemType Directory -Force
+
+$copyParams = @{
+    LiteralPath = &quot;$PSHOME\DotNetTypes.format.ps1xml&quot;
+    Destination = &quot;$HOME\Format\MyDotNetTypes.Format.ps1xml&quot;
+}
+Copy-Item @copyParams
+```
+
+Open the `MyDotNetTypes.Format.ps1xml` file in any XML or text editor, such as
+Visual Studio Code. Find the **System.Globalization.CultureInfo** object
+section. The following XML defines the views of the **CultureInfo** object. The
+object has only a **TableControl** view.
+
+```xml
+&lt;View&gt;
+  &lt;Name&gt;System.Globalization.CultureInfo&lt;/Name&gt;
+  &lt;ViewSelectedBy&gt;
+    &lt;TypeName&gt;Deserialized.System.Globalization.CultureInfo&lt;/TypeName&gt;
+    &lt;TypeName&gt;System.Globalization.CultureInfo&lt;/TypeName&gt;
+  &lt;/ViewSelectedBy&gt;
+  &lt;TableControl&gt;
+    &lt;TableHeaders&gt;
+      &lt;TableColumnHeader&gt;
+        &lt;Width&gt;16&lt;/Width&gt;
+      &lt;/TableColumnHeader&gt;
+      &lt;TableColumnHeader&gt;
+        &lt;Width&gt;16&lt;/Width&gt;
+      &lt;/TableColumnHeader&gt;
+    &lt;/TableHeaders&gt;
+    &lt;TableRowEntries&gt;
+      &lt;TableRowEntry&gt;
+        &lt;TableColumnItems&gt;
+          &lt;TableColumnItem&gt;
+            &lt;PropertyName&gt;LCID&lt;/PropertyName&gt;
+          &lt;/TableColumnItem&gt;
+          &lt;TableColumnItem&gt;
+            &lt;PropertyName&gt;Name&lt;/PropertyName&gt;
+          &lt;/TableColumnItem&gt;
+          &lt;TableColumnItem&gt;
+            &lt;PropertyName&gt;DisplayName&lt;/PropertyName&gt;
+          &lt;/TableColumnItem&gt;
+        &lt;/TableColumnItems&gt;
+      &lt;/TableRowEntry&gt;
+    &lt;/TableRowEntries&gt;
+  &lt;/TableControl&gt;
+&lt;/View&gt;
+```
+
+Delete the remainder of the file, except for the opening `&lt;?xml&gt;`,
+`&lt;Configuration&gt;`, and `&lt;ViewDefinitions&gt;` tags and the closing
+`&lt;ViewDefinitions&gt;` and `&lt;Configuration&gt;` tags. If there is a digital
+signature, delete it from your custom `Format.ps1xml`file.
+
+The `MyDotNetTypes.Format.ps1xml` file should now look like the following
+sample:
+
+```xml
+&lt;?xml version=&quot;1.0&quot; encoding=&quot;utf-8&quot; ?&gt;
+&lt;Configuration&gt;
+&lt;ViewDefinitions&gt;
+&lt;View&gt;
+  &lt;Name&gt;System.Globalization.CultureInfo&lt;/Name&gt;
+  &lt;ViewSelectedBy&gt;
+    &lt;TypeName&gt;Deserialized.System.Globalization.CultureInfo&lt;/TypeName&gt;
+    &lt;TypeName&gt;System.Globalization.CultureInfo&lt;/TypeName&gt;
+  &lt;/ViewSelectedBy&gt;
+  &lt;TableControl&gt;
+    &lt;TableHeaders&gt;
+      &lt;TableColumnHeader&gt;
+        &lt;Width&gt;16&lt;/Width&gt;
+      &lt;/TableColumnHeader&gt;
+      &lt;TableColumnHeader&gt;
+        &lt;Width&gt;16&lt;/Width&gt;
+      &lt;/TableColumnHeader&gt;
+      &lt;TableColumnHeader/&gt;
+    &lt;/TableHeaders&gt;
+    &lt;TableRowEntries&gt;
+      &lt;TableRowEntry&gt;
+        &lt;TableColumnItems&gt;
+          &lt;TableColumnItem&gt;
+            &lt;PropertyName&gt;LCID&lt;/PropertyName&gt;
+          &lt;/TableColumnItem&gt;
+          &lt;TableColumnItem&gt;
+            &lt;PropertyName&gt;Name&lt;/PropertyName&gt;
+          &lt;/TableColumnItem&gt;
+          &lt;TableColumnItem&gt;
+            &lt;PropertyName&gt;DisplayName&lt;/PropertyName&gt;
+          &lt;/TableColumnItem&gt;
+        &lt;/TableColumnItems&gt;
+      &lt;/TableRowEntry&gt;
+    &lt;/TableRowEntries&gt;
+  &lt;/TableControl&gt;
+&lt;/View&gt;
+&lt;/ViewDefinitions&gt;
+&lt;/Configuration&gt;
+```
+
+Create a new column for the **Calendar** property by adding a new set of
+`&lt;TableColumnHeader&gt;` tags. The value of the **Calendar** property can be long,
+so specify a value of 45 characters as the `&lt;Width&gt;`.
+
+```xml
+&lt;TableHeaders&gt;
+  &lt;TableColumnHeader&gt;
+    &lt;Width&gt;16&lt;/Width&gt;
+  &lt;/TableColumnHeader&gt;
+  &lt;TableColumnHeader&gt;
+    &lt;Width&gt;16&lt;/Width&gt;
+  &lt;/TableColumnHeader&gt;
+  &lt;TableColumnHeader&gt;
+    &lt;Width&gt;45&lt;/Width&gt;
+  &lt;/TableColumnHeader&gt;
+  &lt;TableColumnHeader/&gt;
+&lt;/TableHeaders&gt;
+```
+
+Add a new column item for **Calendar** in the table rows using the
+`&lt;TableColumnItem&gt;` and `&lt;PropertyName` tags:
+
+```xml
+&lt;TableRowEntries&gt;
+  &lt;TableRowEntry&gt;
+    &lt;TableColumnItems&gt;
+      &lt;TableColumnItem&gt;
+        &lt;PropertyName&gt;LCID&lt;/PropertyName&gt;
+      &lt;/TableColumnItem&gt;
+      &lt;TableColumnItem&gt;
+        &lt;PropertyName&gt;Name&lt;/PropertyName&gt;
+      &lt;/TableColumnItem&gt;
+      &lt;TableColumnItem&gt;
+        &lt;PropertyName&gt;Calendar&lt;/PropertyName&gt;
+      &lt;/TableColumnItem&gt;
+      &lt;TableColumnItem&gt;
+        &lt;PropertyName&gt;DisplayName&lt;/PropertyName&gt;
+      &lt;/TableColumnItem&gt;
+    &lt;/TableColumnItems&gt;
+  &lt;/TableRowEntry&gt;
+&lt;/TableRowEntries&gt;
+```
+
+Save and close the file. Use `Update-FormatData` to add the new format file to
+the current PowerShell session.
+
+This example uses the **PrependPath** parameter to place the new file in a
+higher precedence order than the original file. For more information, see
+[Update-FormatData][03].
+
+```powershell
+Update-FormatData -PrependPath $HOME\Format\MyDotNetTypes.Format.ps1xml
+```
+
+To test the change, type `Get-Culture` and review the output that includes the
+**Calendar** property.
+
+```powershell
+Get-Culture
+```
+
+```Output
+LCID Name  Calendar                               DisplayName
+---- ----  --------                               -----------
+1033 en-US System.Globalization.GregorianCalendar English (United States)
+```
+
+## The XML in Format.ps1xml files
+
+The full schema definition can be found in [Format.xsd][04] in the PowerShell
+source code repository on GitHub.
+
+The **ViewDefinitions** section of each `Format.ps1xml` file contains the
+`&lt;View&gt;` tags that define each view. A typical `&lt;View&gt;` tag includes the
+following tags:
+
+- `&lt;Name&gt;` identifies the name of the view.
+- `&lt;ViewSelectedBy&gt;` specifies the object type or types to which the view
+  applies.
+- `&lt;GroupBy&gt;` specifies how items in the view will be combined in groups.
+- `&lt;TableControl&gt;`, `&lt;ListControl&gt;`, `&lt;WideControl&gt;`, and `&lt;CustomControl&gt;`
+  contain the tags that specify how each item will be displayed.
+
+### ViewSelectedBy tag
+
+The `&lt;ViewSelectedBy&gt;` tag can contain a `&lt;TypeName&gt;` tag for each object type
+to which the view applies. Or, it can contain a `&lt;SelectionSetName&gt;` tag that
+references a selection set that is defined elsewhere by using a
+`&lt;SelectionSet&gt;` tag.
+
+### GroupBy tag
+
+The `&lt;GroupBy&gt;` tag contains a `&lt;PropertyName&gt;` tag that specifies the object
+property by which items are to be grouped. It also contains either a `&lt;Label&gt;`
+tag that specifies a string to be used as a label for each group or a
+`&lt;CustomControlName&gt;` tag that references a custom control defined elsewhere
+using a `&lt;Control&gt;` tag. The `&lt;Control&gt;` tag contains a `&lt;Name&gt;` tag and a
+`&lt;CustomControl&gt;` tag.
+
+# about_Format.ps1xml
+
+### TableControlTag
+
+The `&lt;TableControl&gt;` tag typically contains `&lt;TableHeaders&gt;` and
+`&lt;TableRowEntries&gt;` tags that define the formatting for the table&#x27;s heads and
+rows. The `&lt;TableHeaders&gt;` tag typically contains `&lt;TableColumnHeader&gt;` tags
+that contain `&lt;Label&gt;`, `&lt;Width&gt;`, and `&lt;Alignment&gt;` tags. The
+`&lt;TableRowEntries&gt;` tag contains `&lt;TableRowEntry&gt;` tags for each row in the
+table. The `&lt;TableRowEntry&gt;` tag contains a `&lt;TableColumnItems&gt;` tag that
+contains a `&lt;TableColumnItem&gt;` tag for each column in the row. Typically, the
+`&lt;TableColumnItem&gt;` tag contains either a `&lt;PropertyName&gt;` tag that identifies
+the object property to be displayed in the defined location, or a
+`&lt;ScriptBlock&gt;` tag that contains script code that calculates a result that is
+to be displayed in the location.
+
+&gt; [!NOTE]
+&gt; Scriptblocks can also be used elsewhere in locations where calculated
+&gt; results can be useful.
+
+The `&lt;TableColumnItem&gt;` tag can also contain a `&lt;FormatString&gt;` tag that
+specifies how the property or the calculated results will be displayed.
+
+### ListControl tag
+
+The `&lt;ListControl&gt;` tag typically contains a `&lt;ListEntries&gt;` tag. The
+`&lt;ListEntries&gt;` tag contains a `&lt;ListEntry&gt;` tag. The `&lt;ListEntry&gt;` tag
+contains a `&lt;ListItems&gt;` tag. The `&lt;ListItems&gt;` tag contains `&lt;ListItem&gt;` tags,
+which contain `&lt;PropertyName&gt;` tags. The `&lt;PropertyName&gt;` tags specify the
+object property to be displayed at the specified location in the list. If the
+view selection is defined using a selection set, the `&lt;ListControl&gt;` and
+`&lt;ListEntry&gt;` tags can also contain an `&lt;EntrySelectedBy&gt;` tag that contains
+one or more `&lt;TypeName&gt;` tags. These `&lt;TypeName&gt;` tags specify the object type
+that the `&lt;ListControl&gt;` tag is intended to display.
+
+### WideControl tag
+
+The `&lt;WideControl&gt;` tag typically contains a `&lt;WideEntries&gt;` tag. The
+`&lt;WideEntries&gt;` tag contains one or more `&lt;WideEntry&gt;` tags. A `&lt;WideEntry&gt;`
+tag contains one `&lt;WideItem&gt;` tag.
+
+A `&lt;WideItem&gt;` tag must include either a `&lt;PropertyName&gt;` tag or a
+`&lt;ScriptBlock&gt;` tag. A `&lt;PropertyName&gt;` tag specifies the property to display
+at the specified location in the view. A `&lt;ScriptBlock&gt;` tag specifies a script
+to evaluate and display at the specified location in the view.
+
+A `&lt;WideItem&gt;` tag can contain a `&lt;FormatString&gt;` tag that specifies how to
+display the property.
+
+### CustomControl tag
+
+The `&lt;CustomControl&gt;` tag lets you use a scriptblock to define a format. A
+`&lt;CustomControl&gt;` tag typically contains a `&lt;CustomEntries&gt;` tag that contains
+multiple `&lt;CustomEntry&gt;` tags. Each `&lt;CustomEntry&gt;` tag contains a
+`&lt;CustomItem&gt;` tag that can contain a variety of tags that specify contents and
+formatting of the specified location in the view, including `&lt;Text&gt;`,
+`&lt;Indentation&gt;`, `&lt;ExpressionBinding&gt;`, and `&lt;NewLine&gt;` tags.
+
+## Default displays in Types.ps1xml
+
+The default displays of some basic object types are defined in the
+`Types.ps1xml` file in the `$PSHOME` directory. The nodes are named
+**PsStandardMembers**, and the subnodes use one of the following tags:
+
+- `&lt;DefaultDisplayProperty&gt;`
+- `&lt;DefaultDisplayPropertySet&gt;`
+- `&lt;DefaultKeyPropertySet&gt;`
+
+For more information, see [about_Types.ps1xml](about_Types.ps1xml.md).
+
+## Tracing Format.ps1xml file use
+
+To detect errors in the loading or application of `Format.ps1xml` files, use
+the `Trace-Command` cmdlet with any of the following format components as the
+value of the **Name** parameter:
+
+- FormatFileLoading
+- FormatViewBinding
+
+For more information, see [Trace-Command][05] and [Get-TraceSource][06].
+
+## Signing a Format.ps1xml file
+
+To protect the users of your `Format.ps1xml` file, sign the file using a
+digital signature. For more information, see [about_Signing][07].
+
+# about_Format.ps1xml
+
+## Sample XML for a Format-Table custom view
+
+The following sample creates a `Format-Table` custom view for the
+**System.IO.DirectoryInfo** and **System.IO.FileInfo** objects created by
+`Get-ChildItem`. The custom view is named **MyGciView** and adds the
+**CreationTime** column to the table.
+
+Use `Select-String` to identify which `Format.ps1xml` file contains data for
+the type you&#x27;re looking for.
+
+The custom view is created from an edited version of the
+`FileSystem.Format.ps1xml` file that&#x27;s stored in `$PSHOME` on PowerShell 5.1.
+
+After the custom `.ps1xml` file is saved, use the `Update-FormatData` cmdlet to
+include the view in the current PowerShell session. Or, add the update command
+to your PowerShell profile if you need the view available in all PowerShell
+sessions.
+
+For this example, the custom view must use the table format, otherwise,
+`Format-Table` fails.
+
+Use `Format-Table` with the **View** parameter to specify the custom view&#x27;s
+name, **MyGciView**, and format the table&#x27;s output with the **CreationTime**
+column. For an example of how the command is run, see [Format-Table][08].
+
+```powershell
+$selectParams = @{
+  Path    = &quot;$PSHOME\*format.ps1xml&quot;
+  Pattern = &#x27;System.IO.DirectoryInfo&#x27;
+}
+Select-String @selectParams
+
+$copyParams = @{
+    LiteralPath = &quot;$PSHOME\FileSystem.format.ps1xml&quot;
+    Destination = &quot;$HOME\Format\MyFileSystem.Format.ps1xml&quot;
+}
+Copy-Item @copyParams
+
+Update-FormatData -PrependPath $HOME\Format\MyFileSystem.Format.ps1xml
+```
+
+&gt; [!NOTE]
+&gt; To fit the XML sample within line width limitations, it was necessary to
+&gt; compress some indentation and use line breaks within the code.
+
+```xml
+&lt;?xml version=&quot;1.0&quot; encoding=&quot;utf-8&quot;?&gt;
+&lt;Configuration&gt;
+    &lt;SelectionSets&gt;
+        &lt;SelectionSet&gt;
+            &lt;Name&gt;FileSystemTypes&lt;/Name&gt;
+            &lt;Types&gt;
+                &lt;TypeName&gt;System.IO.DirectoryInfo&lt;/TypeName&gt;
+                &lt;TypeName&gt;System.IO.FileInfo&lt;/TypeName&gt;
+            &lt;/Types&gt;
+        &lt;/SelectionSet&gt;
+    &lt;/SelectionSets&gt;
+&lt;Controls&gt;
+&lt;Control&gt;
+&lt;Name&gt;FileSystemTypes-GroupingFormat&lt;/Name&gt;
+&lt;CustomControl&gt;
+ &lt;CustomEntries&gt;
+  &lt;CustomEntry&gt;
+    &lt;CustomItem&gt;
+    &lt;Frame&gt;
+    &lt;LeftIndent&gt;4&lt;/LeftIndent&gt;
+    &lt;CustomItem&gt;
+    &lt;Text AssemblyName=&quot;System.Management.Automation&quot;
+    BaseName=&quot;FileSystemProviderStrings&quot;
+    ResourceId=&quot;DirectoryDisplayGrouping&quot;/&gt;
+    &lt;ExpressionBinding&gt;
+     &lt;ScriptBlock&gt;
+      $_.PSParentPath.Replace(&quot;Microsoft.PowerShell.Core\FileSystem::&quot;, &quot;&quot;)
+     &lt;/ScriptBlock&gt;
+    &lt;/ExpressionBinding&gt;
+    &lt;NewLine/&gt;
+    &lt;/CustomItem&gt;
+    &lt;/Frame&gt;
+    &lt;/CustomItem&gt;
+    &lt;/CustomEntry&gt;
+ &lt;/CustomEntries&gt;
+&lt;/CustomControl&gt;
+&lt;/Control&gt;
+&lt;/Controls&gt;
+&lt;ViewDefinitions&gt;
+    &lt;View&gt;
+    &lt;Name&gt;MyGciView&lt;/Name&gt;
+    &lt;ViewSelectedBy&gt;
+        &lt;SelectionSetName&gt;FileSystemTypes&lt;/SelectionSetName&gt;
+    &lt;/ViewSelectedBy&gt;
+    &lt;GroupBy&gt;
+      &lt;PropertyName&gt;PSParentPath&lt;/PropertyName&gt;
+      &lt;CustomControlName&gt;FileSystemTypes-GroupingFormat&lt;/CustomControlName&gt;
+    &lt;/GroupBy&gt;
+        &lt;TableControl&gt;
+            &lt;TableHeaders&gt;
+                &lt;TableColumnHeader&gt;
+                    &lt;Label&gt;Mode&lt;/Label&gt;
+                    &lt;Width&gt;7&lt;/Width&gt;
+                    &lt;Alignment&gt;left&lt;/Alignment&gt;
+                &lt;/TableColumnHeader&gt;
+                &lt;TableColumnHeader&gt;
+                    &lt;Label&gt;LastWriteTime&lt;/Label&gt;
+                    &lt;Width&gt;25&lt;/Width&gt;
+                    &lt;Alignment&gt;right&lt;/Alignment&gt;
+                &lt;/TableColumnHeader&gt;
+                &lt;TableColumnHeader&gt;
+                    &lt;Label&gt;CreationTime&lt;/Label&gt;
+                    &lt;Width&gt;25&lt;/Width&gt;
+                    &lt;Alignment&gt;right&lt;/Alignment&gt;
+                &lt;/TableColumnHeader&gt;
+                &lt;TableColumnHeader&gt;
+                    &lt;Label&gt;Length&lt;/Label&gt;
+                    &lt;Width&gt;14&lt;/Width&gt;
+                    &lt;Alignment&gt;right&lt;/Alignment&gt;
+                &lt;/TableColumnHeader&gt;
+                &lt;TableColumnHeader/&gt;
+            &lt;/TableHeaders&gt;
+            &lt;TableRowEntries&gt;
+                &lt;TableRowEntry&gt;
+                    &lt;Wrap/&gt;
+                    &lt;TableColumnItems&gt;
+                        &lt;TableColumnItem&gt;
+                            &lt;PropertyName&gt;Mode&lt;/PropertyName&gt;
+                        &lt;/TableColumnItem&gt;
+                        &lt;TableColumnItem&gt;
+                            &lt;ScriptBlock&gt;
+                                [string]::Format(&quot;{0,10}  {1,8}&quot;,
+                                    $_.LastWriteTime.ToString(&quot;d&quot;),
+                                    $_.LastWriteTime.ToString(&quot;t&quot;))
+                            &lt;/ScriptBlock&gt;
+                        &lt;/TableColumnItem&gt;
+                        &lt;TableColumnItem&gt;
+                            &lt;ScriptBlock&gt;
+                                [string]::Format(&quot;{0,10}  {1,8}&quot;,
+                                    $_.CreationTime.ToString(&quot;d&quot;),
+                                    $_.LastWriteTime.ToString(&quot;t&quot;))
+                            &lt;/ScriptBlock&gt;
+                        &lt;/TableColumnItem&gt;
+                        &lt;TableColumnItem&gt;
+                        &lt;PropertyName&gt;Length&lt;/PropertyName&gt;
+                        &lt;/TableColumnItem&gt;
+                        &lt;TableColumnItem&gt;
+                            &lt;PropertyName&gt;Name&lt;/PropertyName&gt;
+                        &lt;/TableColumnItem&gt;
+                    &lt;/TableColumnItems&gt;
+                &lt;/TableRowEntry&gt;
+            &lt;/TableRowEntries&gt;
+        &lt;/TableControl&gt;
+    &lt;/View&gt;
+  &lt;/ViewDefinitions&gt;
+&lt;/Configuration&gt;
+```
+
+## See also
+
+- [Trace-Command][05]
+- [Export-FormatData][02]
+- [Get-FormatData][01]
+- [Update-FormatData][03]
+- [Get-TraceSource][06]
+- [Format Schema XML Reference][09]
+- [Writing a PowerShell Formatting File][10]
+
+&lt;!-- link references --&gt;
+[01]: xref:Microsoft.PowerShell.Utility.Get-FormatData
+[02]: xref:Microsoft.PowerShell.Utility.Export-FormatData
+[03]: xref:Microsoft.PowerShell.Utility.Update-FormatData
+[04]: https://github.com/PowerShell/PowerShell/blob/master/src/Schemas/Format.xsd
+[05]: xref:Microsoft.PowerShell.Utility.Trace-Command
+[06]: xref:Microsoft.PowerShell.Utility.Get-TraceSource
+[07]: about_Signing.md
+[08]: xref:Microsoft.PowerShell.Utility.Format-Table
+[09]: /powershell/scripting/developer/format/format-schema-xml-reference
+[10]: /powershell/scripting/developer/format/writing-a-powershell-formatting-file</pre></section>

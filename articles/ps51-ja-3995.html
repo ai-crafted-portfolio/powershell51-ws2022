@@ -1,0 +1,1275 @@
+<!doctype html><meta charset="utf-8"><section class="jp-official"><h1>セットPSReadLineOption を選択する</h1>
+<h2>SYNOPSISは,PSReadLine**でコマンドライン編集の行動をカスタマイズします.</h2>
+<h2>SYNTAXは,のシンタックスです.</h2>
+<pre><code>Set-PSReadLineOption [-EditMode &lt;EditMode&gt;] [-ContinuationPrompt &lt;string&gt;]
+ [-HistoryNoDuplicates] [-AddToHistoryHandler &lt;Func[string,Object]&gt;]
+ [-CommandValidationHandler &lt;Action[CommandAst]&gt;] [-HistorySearchCursorMovesToEnd]
+ [-MaximumHistoryCount &lt;int&gt;] [-MaximumKillRingCount &lt;int&gt;] [-ShowToolTips]
+ [-ExtraPromptLineCount &lt;int&gt;] [-DingTone &lt;int&gt;] [-DingDuration &lt;int&gt;]
+ [-BellStyle &lt;BellStyle&gt;] [-CompletionQueryItems &lt;int&gt;] [-WordDelimiters &lt;string&gt;]
+ [-HistorySearchCaseSensitive] [-HistorySaveStyle &lt;HistorySaveStyle&gt;]
+ [-HistorySavePath &lt;string&gt;] [-AnsiEscapeTimeout &lt;int&gt;] [-PromptText &lt;string[]&gt;]
+ [-ViModeIndicator &lt;ViModeStyle&gt;] [-ViModeChangeHandler &lt;scriptblock&gt;]
+ [-Colors &lt;hashtable&gt;] [&lt;CommonParameters&gt;]
+</code></pre>
+<h2>記述は,</h2>
+<p><code>Set-PSReadLineOption</code>cmdlet はコマンドラインを編集するときに <strong>PSReadLine</strong> モジュールの行動をカスタマイズします. <strong>PSReadLine</strong> の設定を表示するには,  を使います.<code>Get-PSReadLineOption</code> .</p>
+<p>このコマンドで設定されたオプションは,現在のセッションにのみ適用されます.任意のオプションを継続するには,プロフィールスクリプトに追加してください.詳細については, [about_Profiles] (/Microsoft.PowerShell.Core/About/about_Profiles.md) と [Shell環境をカスタマイズする] (/powershell/scripting/learn/shell/creating-profiles) を参照してください.</p>
+<h2>例えは</h2>
+<h3>例1:前景と背景の色を設定する</h3>
+<p>この例では <strong>PSReadLine</strong>を設定して,灰色の背景に緑の前景テキストを表示する <strong>Comment</strong>トークンを設定します.例で使用したエスケープシーケンスの場合, <strong>32</strong>は前景色を表し, <strong>47</strong>は背景色を表します.</p>
+<pre><code class="language-powershell">Set-PSReadLineOption -Colors @{ &quot;Comment&quot;=&quot;$([char]0x1b)[32;47m&quot; }
+</code></pre>
+<p>例えば,コメント符号の明るい緑の先端テキスト色: <code>"Comment"="$([char]0x1b)[92m"</code> .</p>
+<h3>例2: ベルスタイルを設定する</h3>
+<p>この例では,PSReadLineは,ユーザー注意を促すエラーや条件に反応する.BellStyleは,1221 Hzで60 ms間音響ビップを発信する設定です.</p>
+<pre><code class="language-powershell">Set-PSReadLineOption -BellStyle Audible -DingTone 1221 -DingDuration 60
+</code></pre>
+<p>&gt; [!NOTE] &gt; この機能は,プラットフォーム上のすべてのホストで動作しない可能性があります.</p>
+<h3>例3:複数のオプションを設定する</h3>
+<p><code>Set-PSReadLineOption</code>ハッシュテーブルで複数のオプションを設定できます.</p>
+<pre><code class="language-powershell">$PSReadLineOptions = @{
+    EditMode = &quot;Emacs&quot;
+    HistoryNoDuplicates = $true
+    HistorySearchCursorMovesToEnd = $true
+    Colors = @{
+        &quot;Command&quot; = &quot;#8181f7&quot;
+    }
+}
+Set-PSReadLineOption @PSReadLineOptions
+</code></pre>
+<p><code>$PSReadLineOptions</code>ハッシュテーブルはキーと値を設定します. <code>Set-PSReadLineOption</code> のキーと値を使用します.<code>@PSReadLineOptions</code><strong>PSReadLine</strong>のオプションに更新する.</p>
+<p>ハッシュテーブル名に入力したキーと値を表示できます.<code>$PSReadLineOptions</code>PowerShell コマンドラインに載せます.</p>
+<h3>例4:複数の色を選択する設定</h3>
+<p>この例では,単一のコマンドで複数の色値を設定する方法を示しています.</p>
+<pre><code class="language-powershell">Set-PSReadLineOption -Colors @{
+  Command            = 'Magenta'
+  Number             = 'DarkGray'
+  Member             = 'DarkGray'
+  Operator           = 'DarkGray'
+  Type               = 'DarkGray'
+  Variable           = 'DarkGreen'
+  Parameter          = 'DarkGreen'
+  ContinuationPrompt = 'DarkGray'
+  Default            = 'DarkGray'
+}
+</code></pre>
+<h3>例5:複数のタイプに色値を設定する</h3>
+<p>この例では,PSReadLine**で表示されるトークンの色を設定する方法について3つの異なる方法が示されています.</p>
+<pre><code class="language-powershell">Set-PSReadLineOption -Colors @{
+ # Use a ConsoleColor enum
+ &quot;Error&quot; = [ConsoleColor]::DarkRed
+
+ # 24 bit color escape sequence
+ &quot;String&quot; = &quot;$([char]0x1b)[38;5;100m&quot;
+
+ # RGB value
+ &quot;Command&quot; = &quot;#8181f7&quot;
+}
+</code></pre>
+<h3>例 6: ViModeChangeHandler を使用して Viモード変更を表示します.</h3>
+<p>この例では, <strong>Vi</strong>モード変更に反応して,カーソル変更 VT エスケープを発射します.</p>
+<pre><code class="language-powershell">function OnViModeChange {
+    if ($args[0] -eq 'Command') {
+        # Set the cursor to a blinking block.
+        Write-Host -NoNewline &quot;$([char]0x1b)[1 q&quot;
+    } else {
+        # Set the cursor to a blinking line.
+        Write-Host -NoNewline &quot;$([char]0x1b)[5 q&quot;
+    }
+}
+Set-PSReadLineOption -ViModeIndicator Script -ViModeChangeHandler $Function:OnViModeChange
+</code></pre>
+<p><strong>OnViModeChange</strong>機能は, <strong>Vi</strong>モードのカーソルオプションを設定します.挿入とコマンド. <strong>ViModeChangeHandler</strong>は, を使用します.<code>Function:</code>サービス提供者が,スクリプトブロックオブジェクトとして参照する.</p>
+<p>詳細については, [about_Providers] (/powershell/module/microsoft.powershell.core/about/about_providers) を参照してください.</p>
+<h3>例7:歴史に追加されたコマンドをフィルタリングするには,HistoryHandler を使用します.</h3>
+<p>次の例では,の使い方について説明します.<code>AddToHistoryHandler</code>gitコマンドを履歴に保存することを防ぐために.</p>
+<pre><code class="language-powershell">$ScriptBlock = {
+    param ([string]$Line)
+
+    if ($Line -match &quot;^git&quot;) {
+        return $false
+    } else {
+        return $true
+    }
+}
+
+Set-PSReadLineOption -AddToHistoryHandler $ScriptBlock
+</code></pre>
+<p>脚本ブロックが返ってくる.<code>$false</code>命令が  で始まる場合<code>git</code>これは,返信する値と同じ効果を及ぼします.<code>SkipAdding</code><strong>AddToHistory</strong> enum. もしコマンドが""から始まらないなら,<code>git</code>操作者が返却する場合は,<code>$true</code>PSReadLineとPSReadLineは,コマンドを歴史に保存します.</p>
+<h3>例8:コマンド実行前にコマンドを検証するために CommandValidationHandler を使用します.</h3>
+<p>この例では,コマンドValidationHandler**のパラメータを使用して実行する前にコマンドを検証する方法を示しています.例は,命令を特定してチェックします <code>git</code>というサブコマンドで<code>cmt</code>その代わりに,その全名を入れ替える.<code>commit</code>この方法で,サブコマンドの略称を作ることができます.</p>
+<pre><code class="language-powershell">
+# Load the namespace so you can use the [CommandAst] object type
+using namespace System.Management.Automation.Language
+
+Set-PSReadLineOption -CommandValidationHandler {
+    param([CommandAst]$CommandAst)
+
+    switch ($CommandAst.GetCommandName()) {
+        'git' {
+            $gitCmd = $CommandAst.CommandElements[1].Extent
+            switch ($gitCmd.Text) {
+                'cmt' {
+                    [Microsoft.PowerShell.PSConsoleReadLine]::Replace(
+                        $gitCmd.StartOffset, $gitCmd.EndOffset - $gitCmd.StartOffset, 'commit')
+                }
+            }
+        }
+    }
+}
+
+# This checks the validation script when you hit enter
+Set-PSReadLineKeyHandler -Chord Enter -Function ValidateAndAcceptLine
+</code></pre>
+<h3>例 9: PromptText パラメータを使用する</h3>
+<p>解析エラーが発生すると,PSReadLineはプロンプトの部分が赤に変わります. <strong>PromptText</strong> パラメータは,プロンプト文字の部分が赤に変わることをPSReadLineに指示します.</p>
+<p>例えば,次の例では,現在の経路を,greater-than文字 () に続くプロンプトを作成します.<code>&gt;</code>) とスペースを設定する.</p>
+<pre><code class="language-powershell">function prompt { &quot;PS $PWD&gt; &quot; }`
+Set-PSReadLineOption -PromptText '&gt; ' # change the '&gt;' character red
+Set-PSReadLineOption -PromptText '&gt; ', 'X ' # replace the '&gt;' character with a red 'X'
+</code></pre>
+<p>最初の文字列は,解析エラーが発生したときに赤にしたいプロンプト文字列の部分で,第2文字列は解析エラーが発生したときに使用する代替文字列です.</p>
+<h2>パラメータは</h2>
+<h1>セットPSReadLineOption を選択する</h1>
+<h3>-AddToHistoryHandler について</h3>
+<p><strong>PSReadLine</strong>の履歴にコマンドが追加される方法を制御する<strong>ScriptBlock</strong>を指定します.</p>
+<p><strong>ScriptBlock</strong>はコマンドラインを入力として受信します.</p>
+<p><strong>ScripBlock</strong>は <strong>AddToHistoryOption</strong> enumのメンバー,それらのメンバーの文字列名,またはブーラン値を返してくるべきです.下記のリストは,可能な値とその効果を説明します.</p>
+<ul>
+<li>-<code>MemoryAndFile</code>- 履歴ファイルと現在のセッションにコマンドを追加する. - <code>MemoryOnly</code>- 現在のセッションのみの履歴にコマンドを追加する. - <code>SkipAdding</code>- 現在のセッションの履歴ファイルにコマンドを追加しないでください. - <code>$false</code>- 値が だったかのように同じです.<code>SkipAdding</code>- <code>$true</code>- 値が だったかのように同じです.<code>MemoryAndFile</code> .</li>
+</ul>
+<pre><code class="language-yaml">Type: System.Func`2[System.String,System.Object]
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-AnsiEscapeTimeout でした</h3>
+<p>このオプションは,入力がリダイレクトされた場合,例えば, で実行された場合,Windowsに特有のものです.<code>tmux</code>    <code>screen</code> .</p>
+<p>Windowsでリダイレクト入力により,多くのキーはエスケープ文字から始まる文字列として送信されます.複数の文字が続く単一のエスケープ文字と有効なエスケープ文字列の区別は不可能です.</p>
+<p>ターミナルがユーザータイプよりも文字を速く送信できるという前提です. <strong>PSReadLine</strong>は,完全な脱出シーケンスを受信したと結論付ける前に,このタイムアウトを待っている.</p>
+<p>タイプする際にランダムまたは予想外の文字が表示される場合は,このタイムアウトを調整できます.</p>
+<pre><code class="language-yaml">Type: System.Int32
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: 100
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-ベルスタイルの</h3>
+<p><strong>PSReadLine</strong>が様々なエラーと曖昧な条件にどのように反応するかを指定します.</p>
+<p>有効値は以下の通りです.</p>
+<ul>
+<li>-<code>Audible</code>: 短いビップ. - <code>Visual</code>:テキストは短く閃いている. - <code>None</code>: 感想がない.</li>
+</ul>
+<pre><code class="language-yaml">Type: Microsoft.PowerShell.BellStyle
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: Audible
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-カラー</h3>
+<p><strong>Colors</strong>パラメータは <strong>PSReadLine</strong>によって使用される様々な色を指定しています.</p>
+<p>議論はハッシュテーブルで,キーが要素を指定し,値が色を指定する.詳細については, [about_Hash_Tables] (/powershell/module/microsoft.powershell.core/about/about_hash_tables) を参照してください.</p>
+<p>カラーは,例えば,ConsoleColorから値になる場合もある.<code>[ConsoleColor]::Red</code>有効なエスケープシーケンスは,あなたの端末に依存します.PowerShell 5.0では,赤いテキストのためのエスケープシーケンスの例は,<code>$([char]0x1b)[91m</code>. PowerShell 6および後期では,同じエスケープシーケンスは <code>です.</code> `e[91m``. 次のタイプを含む他の脱出配列を指定することができます:</p>
+<p>256色 - 24ビット色 - 前面,背景,または両方 - 逆向,大体 - </p>
+<p>ANSIのカラーコードについての詳細については,ウィキペディアの記事 [ANSI エスケープコード] () を参照してください.https://wikipedia.org/wiki/ANSI_escape_code#Colors_) でした.</p>
+<p>有効なキーには以下のものが含まれる.</p>
+<ul>
+<li>-<code>ContinuationPrompt</code>: 継続プロンプトの色. - <code>Emphasis</code>: 強調色.例えば,検索履歴で一致するテキスト. - <code>Error</code>: エラー色.例えば,プロンプト. - <code>Selection</code>: メニュー選択または選択されたテキストを強調する色. - <code>Default</code>: デフォルトトークンカラー. - <code>Comment</code>コメントトークンの色. - <code>Keyword</code>: キーワードトークン色. - <code>String</code>: 文字列トークン色. - <code>Operator</code>: オペレーターのトークン色. - <code>Variable</code>: 変数トークン色. - <code>Command</code>: コマンドトークン色. - <code>Parameter</code>: パラメータトークン色. - <code>Type</code>: タイプトークン色. - <code>Number</code>:番号トークンの色. - <code>Member</code>:メンバー名符号色.</li>
+</ul>
+<pre><code class="language-yaml">Type: System.Collections.Hashtable
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-CommandValidationHandler について</h3>
+<p><strong>ValidateAndAcceptLine</strong>から呼び出された <strong>ScriptBlock</strong>を指定します.例外が投げられた場合,検証が失敗し,エラーが報告されます.</p>
+<p>例外を投げる前に,検証ハンドラーはエラーの点にカーソルを配置し,修正を容易にする.検証ハンドラーは,一般的なタイプエラーを修正するためにコマンドラインを変更することもできます.</p>
+<p><strong>ValidateAndAcceptLine</strong>は,機能しないコマンドで履歴を混ぜないようにするために使用されています.</p>
+<pre><code class="language-yaml">Type: System.Action`1[System.Management.Automation.Language.CommandAst]
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-CompletionQueryItems を完成させました.</h3>
+<p>提示せずに表示される最大限の完成項目を指定します.</p>
+<p>この値より多くの項目が表示される場合,PSReadLineは完成項目表示前に,Yes/Noを提示します.</p>
+<pre><code class="language-yaml">Type: System.Int32
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: 100
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-継続プロンプト</h3>
+<p>複数の行入力が入力されたときに,次の行開始に表示される文字列を指定します.デフォルトは,サイン () より2倍大きいです.<code>&gt;&gt;</code>文字列は有効です.</p>
+<pre><code class="language-yaml">Type: System.String
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: &gt;&gt;
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-DingDuration</h3>
+<p><strong>BellStyle</strong>が設定されたときにビップの期間を指定します.<code>Audible</code> .</p>
+<pre><code class="language-yaml">Type: System.Int32
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: 50ms
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-DingTone</h3>
+<p><strong>BellStyle</strong>が設定されたときにビップのヒートズ (Hz) での音色を指定します.<code>Audible</code></p>
+<pre><code class="language-yaml">Type: System.Int32
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: 1221
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-EditMode を編集する</h3>
+<p>コマンドライン編集モードを指定します.このパラメータを使用して, によって設定されたすべてのキーバインドをリセットします.<code>Set-PSReadLineKeyHandler</code> .</p>
+<p>有効値は以下の通りです.</p>
+<ul>
+<li>-<code>Windows</code>: キーバインディングはPowerShell,cmd,Visual Studioを模倣する. (デフォルト) - <code>Emacs</code>:キーバインディングはBashやEmacsを模倣する. - <code>Vi</code>: キーバインディングはViを模倣する.</li>
+</ul>
+<p>活用する<code>Get-PSReadLineKeyHandler</code>現在設定されている <strong>EditMode</strong>のキーバインドを表示します.</p>
+<pre><code class="language-yaml">Type: Microsoft.PowerShell.EditMode
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: Windows
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-ExtraPromptLineCount</h3>
+<p>余行の数を指定します.</p>
+<p>提示が1行以上ある場合は,このパラメータの値を指定してください.PSReadLine<strong>が出力を表示した後,提示を表示したとき,追加行の利用ができるようにしたいときにこのオプションを使用してください.例えば,PSReadLine</strong>は完成のリストを返します.</p>
+<p>このオプションはPSReadLineの以前のバージョンよりも少なく必要ですが, の使用時に有用です.<code>InvokePrompt</code>機能が使用されます.</p>
+<pre><code class="language-yaml">Type: System.Int32
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: 0
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h1>セットPSReadLineOption を選択する</h1>
+<h3>-HistoryNoDuplicates 履歴書</h3>
+<p>このオプションは,呼び出し行動を制御します. 複製コマンドは,まだ履歴ファイルに追加されます. このオプションを設定すると,命令を呼び出すときに最も最近の呼び出しのみ表示されます. 呼び出し中に順序を保存するために,繰り返しコマンドは,履歴に追加されます. しかし,通常,呼び出しまたは履歴検索時にコマンドを複数表示したくない.</p>
+<p>デフォルトでは,PSConsoleReadLineOptions<strong>のグローバルオブジェクトのHistoryNoDuplicates</strong>プロパティが に設定されます.<code>True</code>資産値を変更するには,以下のように<strong>SwitchParameter</strong>の値を指定する必要があります.<code>-HistoryNoDuplicates:$false</code>に戻すことができます.<code>True</code>単にSwitchParameter を使って,<code>-HistoryNoDuplicates</code> .</p>
+<p>次のコマンドを使用して,プロパティの値を直接設定できます:</p>
+<p><code>(Get-PSReadLineOption).HistoryNoDuplicates = $false</code></p>
+<pre><code class="language-yaml">Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-HistorySavePath について</h3>
+<p>履歴が保存されているファイルへの経路を指定します.Windowsまたは非Windowsプラットフォームを実行しているコンピュータは,異なる場所にファイルを保存します.ファイル名は変数に保存されます.<code>$($Host.Name)_history.txt</code>例えば,<code>ConsoleHost_history.txt</code> .</p>
+<p>このパラメータを使用していない場合は,デフォルトパスです:</p>
+<p><code>$Env:APPDATA\Microsoft\Windows\PowerShell\PSReadLine\$($Host.Name)_history.txt</code></p>
+<pre><code class="language-yaml">Type: System.String
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: A file named $($Host.Name)_history.txt in $Env:APPDATA\Microsoft\Windows\PowerShell\PSReadLine on Windows and $Env:XDG_DATA_HOME/powershell/PSReadLine or $HOME/.local/share/powershell/PSReadLine on non-Windows platforms
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-HistorySaveStyle でした</h3>
+<p><strong>PSReadLine</strong>がどのように歴史を保存するか指定します.</p>
+<p>有効な値は以下の通りです.</p>
+<ul>
+<li>-<code>SaveIncrementally</code>: 各コマンドが実行された後に履歴を保存し,PowerShellの複数のインスタンスを共有します. - <code>SaveAtExit</code>: PowerShell が出かける時に履歴ファイルを添加します. - <code>SaveNothing</code>: 履歴ファイルを使用しないでください.</li>
+</ul>
+<p>&gt; [!NOTE] &gt; HISTORYSAVESTyleを"HistorySaveStyle"に設定すると,<code>SaveNothing</code>そして,それを  に設定します.<code>SaveIncrementally</code>&gt;同じセッションで,PSReadLineはセッションで以前に実行されたすべてのコマンドを保存します.</p>
+<pre><code class="language-yaml">Type: Microsoft.PowerShell.HistorySaveStyle
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: SaveIncrementally
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-HistorySearchCaseSensitive</h3>
+<p>歴史検索は,ReverseSearchHistory<strong>やHistorySearchBackward</strong>のような機能でケースに敏感であることを指定します.</p>
+<p>デフォルトでは,グローバル <strong>PSConsoleReadLineOptions</strong>オブジェクトの <strong>HistorySearchCaseSensitive</strong>属性は,  に設定されます.<code>False</code>このSwitchParameter を使用して,プロパティの値を  に設定します.<code>True</code>資産値を戻すためには,次のように<strong>SwitchParameter</strong>の値を指定する必要があります.<code>-HistorySearchCaseSensitive:$false</code> .</p>
+<p>次のコマンドを使用して,プロパティの値を直接設定できます:</p>
+<p><code>(Get-PSReadLineOption).HistorySearchCaseSensitive = $false</code></p>
+<pre><code class="language-yaml">Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-HistorySearchCursorMovesToEnd でした</h3>
+<p>カーソルが検索で履歴から読み込むコマンドの末端に移動することを表示します.このパラメータが  に設定された場合<code>$false</code>カーソルは,上下矢印を押したときに位置づけられている.</p>
+<p>デフォルトでは,グローバル <strong>PSConsoleReadLineOptions</strong>オブジェクトの <strong>HistorySearchCursorMovesToEnd</strong>属性は,  に設定されます.<code>False</code>このSwitchParameterを使って,プロパティ値を  に設定します.<code>True</code>資産値を戻すためには,次のように<strong>SwitchParameter</strong>の値を指定する必要があります.<code>-HistorySearchCursorMovesToEnd:$false</code> .</p>
+<p>次のコマンドを使用して,プロパティの値を直接設定できます:</p>
+<p><code>(Get-PSReadLineOption).HistorySearchCursorMovesToEnd = $false</code></p>
+<pre><code class="language-yaml">Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>- 最大歴史数</h3>
+<p><strong>PSReadLine</strong>の履歴に保存するコマンドの最大数を指定します.</p>
+<p><strong>PSReadLine</strong>の履歴はPowerShellの履歴から分離されています.</p>
+<pre><code class="language-yaml">Type: System.Int32
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-最大KillRingCount</h3>
+<p>殺害リングに保存されている最大限のアイテム数を指定します.</p>
+<pre><code class="language-yaml">Type: System.Int32
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: 10
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-PromptText</h3>
+<p>このパラメータは<strong>PromptText</strong>のプロパティの値を設定します.デフォルト値は です.<code>"&gt; "</code> .</p>
+<p><strong>PSReadLine</strong>はプロンプト機能を分析して,プロンプトの一部の色だけを変更する方法を決定します.この分析は100%信頼性ではありません. <strong>PSReadLine</strong>がプロンプトを意外に変更している場合はこのオプションを使用してください. 追跡するホワイトスペースを入れます.</p>
+<p>このパラメータの値は単一の文字列または2文字列の配列である可能性があります.最初の文字列は,解析エラーが発生したときに赤に変更したいプロンプト文字列の部分です.第2文字列は解析エラーが発生したときに使用する代替文字列です.</p>
+<pre><code class="language-yaml">Type: System.String[]
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: &gt;
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-ShowToolTips について</h3>
+<p>完成の可能性を表示する際には,完成のリストにツール提示が表示されます.</p>
+<p>このオプションはデフォルトで有効です.PSReadLineの以前のバージョンでは,このオプションはデフォルトで有効ではありませんでした.無効化するには,このオプションを  に設定してください.<code>$false</code> .</p>
+<p>デフォルトでは,PSConsoleReadLineOptions<strong>のグローバルオブジェクトの </strong>ShowToolTips<strong>属性は,  に設定されます.<code>True</code>このSwitchParameter を使用して,プロパティの値を  に設定します.<code>True</code>資産値を変更するには,以下のように</strong>SwitchParameter**の値を指定する必要があります.<code>-ShowToolTips:$false</code> .</p>
+<p>次のコマンドを使用して,プロパティの値を直接設定できます:</p>
+<p><code>(Get-PSReadLineOption).ShowToolTips = $false</code></p>
+<pre><code class="language-yaml">Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: True
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-ViModeChangeHandler でした</h3>
+<p><strong>ViModeIndicator</strong>が設定されたとき,<code>Script</code>設定モードが変更されるたびに,提供されたスクリプトブロックが呼び出される.<code>ViMode</code> .</p>
+<p>このパラメータはPowerShell 7で導入されました.</p>
+<pre><code class="language-yaml">Type: System.Management.Automation.ScriptBlock
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h1>セットPSReadLineOption を選択する</h1>
+<h3>-ViModeIndicator でした</h3>
+<p>このオプションは,現在の視野指標を設定します <code>Vi</code>挿入モードかコマンドモードか.</p>
+<p>有効値は以下の通りです.</p>
+<ul>
+<li>-<code>None</code>: 指示符が存在しない. - <code>Prompt</code>: 提示は色を変えます. - <code>Cursor</code>: カーソルはサイズを変更します. - <code>Script</code>:ユーザー指定テキストが印刷されます.</li>
+</ul>
+<pre><code class="language-yaml">Type: Microsoft.PowerShell.ViModeStyle
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-WordDelimiters</h3>
+<p><strong>ForwardWord</strong>や <strong>KillWord</strong>のような機能の単語を定義する文字を指定します.</p>
+<pre><code class="language-yaml">Type: System.String
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: ;:,.[]{}()/\|^&amp;*-=+'&quot;---
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>共通パラメーター</h3>
+<p>このcmdletは,共通パラメータをサポートしています: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable.詳細については, <a href="を参照してください.https://go.microsoft.com/fwlink/?LinkID=113216">about_CommonParameters</a> でした.</p>
+<h2>輸入は</h2>
+<h3>どれもない</h3>
+<p>このcmdletに物体をパイプすることはできません.</p>
+<h2>輸出は</h2>
+<h3>どれもない</h3>
+<p>このcmdletは出力返さない.</p>
+<h2>NOTES  記事ができました.</h2>
+<h2>関連リンク</h2>
+<p><a href="./About/about_PSReadLine.md">PSReadLineについて</a></p>
+<p><a href="Get-PSReadLineKeyHandler.md">Get-PSReadLineKeyHandler</a> について</p>
+<p><a href="Get-PSReadLineOption.md">Get-PSReadLineOption</a> を表示する</p>
+<p><a href="Remove-PSReadLineKeyHandler.md">Remove-PSReadLineKeyHandler</a> を削除する</p>
+<p><a href="セット-PSReadLineKeyHandler.md">セット-PSReadLineKeyHandler</a></p></section><section class="en-original"><pre class="source-original"># Set-PSReadLineOption
+
+## SYNOPSIS
+Customizes the behavior of command line editing in **PSReadLine**.
+
+## SYNTAX
+
+```
+Set-PSReadLineOption [-EditMode &lt;EditMode&gt;] [-ContinuationPrompt &lt;string&gt;]
+ [-HistoryNoDuplicates] [-AddToHistoryHandler &lt;Func[string,Object]&gt;]
+ [-CommandValidationHandler &lt;Action[CommandAst]&gt;] [-HistorySearchCursorMovesToEnd]
+ [-MaximumHistoryCount &lt;int&gt;] [-MaximumKillRingCount &lt;int&gt;] [-ShowToolTips]
+ [-ExtraPromptLineCount &lt;int&gt;] [-DingTone &lt;int&gt;] [-DingDuration &lt;int&gt;]
+ [-BellStyle &lt;BellStyle&gt;] [-CompletionQueryItems &lt;int&gt;] [-WordDelimiters &lt;string&gt;]
+ [-HistorySearchCaseSensitive] [-HistorySaveStyle &lt;HistorySaveStyle&gt;]
+ [-HistorySavePath &lt;string&gt;] [-AnsiEscapeTimeout &lt;int&gt;] [-PromptText &lt;string[]&gt;]
+ [-ViModeIndicator &lt;ViModeStyle&gt;] [-ViModeChangeHandler &lt;scriptblock&gt;]
+ [-Colors &lt;hashtable&gt;] [&lt;CommonParameters&gt;]
+```
+
+## DESCRIPTION
+
+The `Set-PSReadLineOption` cmdlet customizes the behavior of the **PSReadLine** module when you&#x27;re
+editing the command line. To view the **PSReadLine** settings, use `Get-PSReadLineOption`.
+
+The options set by this command only apply to the current session. To persist any options, add them
+to a profile script. For more information, see
+[about_Profiles](../Microsoft.PowerShell.Core/About/about_Profiles.md) and
+[Customizing your shell environment](/powershell/scripting/learn/shell/creating-profiles).
+
+## EXAMPLES
+
+### Example 1: Set foreground and background colors
+
+This example sets **PSReadLine** to display the **Comment** token with green foreground text on a
+gray background. In the escape sequence used in the example, **32** represents the foreground color
+and **47** represents the background color.
+
+```powershell
+Set-PSReadLineOption -Colors @{ &quot;Comment&quot;=&quot;$([char]0x1b)[32;47m&quot; }
+```
+
+You can choose to set only a foreground text color. For example, a bright green foreground text
+color for the **Comment** token: `&quot;Comment&quot;=&quot;$([char]0x1b)[92m&quot;`.
+
+### Example 2: Set bell style
+
+In this example, **PSReadLine** will respond to errors or conditions that require user attention.
+The **BellStyle** is set to emit an audible beep at 1221 Hz for 60 ms.
+
+```powershell
+Set-PSReadLineOption -BellStyle Audible -DingTone 1221 -DingDuration 60
+```
+
+&gt; [!NOTE]
+&gt; This feature may not work in all hosts on platforms.
+
+### Example 3: Set multiple options
+
+`Set-PSReadLineOption` can set multiple options with a hash table.
+
+```powershell
+$PSReadLineOptions = @{
+    EditMode = &quot;Emacs&quot;
+    HistoryNoDuplicates = $true
+    HistorySearchCursorMovesToEnd = $true
+    Colors = @{
+        &quot;Command&quot; = &quot;#8181f7&quot;
+    }
+}
+Set-PSReadLineOption @PSReadLineOptions
+```
+
+The `$PSReadLineOptions` hash table sets the keys and values. `Set-PSReadLineOption` uses the keys
+and values with `@PSReadLineOptions` to update the **PSReadLine** options.
+
+You can view the keys and values entering the hash table name, `$PSReadLineOptions` on the
+PowerShell command line.
+
+### Example 4: Set multiple color options
+
+This example shows how to set more than one color value in a single command.
+
+```powershell
+Set-PSReadLineOption -Colors @{
+  Command            = &#x27;Magenta&#x27;
+  Number             = &#x27;DarkGray&#x27;
+  Member             = &#x27;DarkGray&#x27;
+  Operator           = &#x27;DarkGray&#x27;
+  Type               = &#x27;DarkGray&#x27;
+  Variable           = &#x27;DarkGreen&#x27;
+  Parameter          = &#x27;DarkGreen&#x27;
+  ContinuationPrompt = &#x27;DarkGray&#x27;
+  Default            = &#x27;DarkGray&#x27;
+}
+```
+
+### Example 5: Set color values for multiple types
+
+This example shows three different methods for how to set the color of tokens displayed in
+**PSReadLine**.
+
+```powershell
+Set-PSReadLineOption -Colors @{
+ # Use a ConsoleColor enum
+ &quot;Error&quot; = [ConsoleColor]::DarkRed
+
+ # 24 bit color escape sequence
+ &quot;String&quot; = &quot;$([char]0x1b)[38;5;100m&quot;
+
+ # RGB value
+ &quot;Command&quot; = &quot;#8181f7&quot;
+}
+```
+
+### Example 6: Use ViModeChangeHandler to display Vi mode changes
+
+This example emits a cursor change VT escape in response to a **Vi** mode change.
+
+```powershell
+function OnViModeChange {
+    if ($args[0] -eq &#x27;Command&#x27;) {
+        # Set the cursor to a blinking block.
+        Write-Host -NoNewline &quot;$([char]0x1b)[1 q&quot;
+    } else {
+        # Set the cursor to a blinking line.
+        Write-Host -NoNewline &quot;$([char]0x1b)[5 q&quot;
+    }
+}
+Set-PSReadLineOption -ViModeIndicator Script -ViModeChangeHandler $Function:OnViModeChange
+```
+
+The **OnViModeChange** function sets the cursor options for the **Vi** modes: insert and command.
+**ViModeChangeHandler** uses the `Function:` provider to reference **OnViModeChange** as a
+scriptblock object.
+
+For more information, see
+[about_Providers](/powershell/module/microsoft.powershell.core/about/about_providers).
+
+### Example 7: Use HistoryHandler to filter commands added to history
+
+The following example shows how to use the `AddToHistoryHandler` to prevent saving any git commands
+to history.
+
+```powershell
+$ScriptBlock = {
+    param ([string]$Line)
+
+    if ($Line -match &quot;^git&quot;) {
+        return $false
+    } else {
+        return $true
+    }
+}
+
+Set-PSReadLineOption -AddToHistoryHandler $ScriptBlock
+```
+
+The scriptblock returns `$false` if the command started with `git`. This has the same effect as
+returning the `SkipAdding` **AddToHistory** enum. If the command doesn&#x27;t start with `git`, the
+handler returns `$true` and PSReadLine saves the command in history.
+
+### Example 8: Use CommandValidationHandler to validate a command before its executed
+
+This example shows how to use the **CommandValidationHandler** parameter to run a validate a command
+before it&#x27;s executed. The example specifically checks for the command `git` with the sub command
+`cmt` and replaces that with the full name `commit`. This way you can create shorthand aliases for
+subcommands.
+
+```powershell
+
+# Load the namespace so you can use the [CommandAst] object type
+using namespace System.Management.Automation.Language
+
+Set-PSReadLineOption -CommandValidationHandler {
+    param([CommandAst]$CommandAst)
+
+    switch ($CommandAst.GetCommandName()) {
+        &#x27;git&#x27; {
+            $gitCmd = $CommandAst.CommandElements[1].Extent
+            switch ($gitCmd.Text) {
+                &#x27;cmt&#x27; {
+                    [Microsoft.PowerShell.PSConsoleReadLine]::Replace(
+                        $gitCmd.StartOffset, $gitCmd.EndOffset - $gitCmd.StartOffset, &#x27;commit&#x27;)
+                }
+            }
+        }
+    }
+}
+
+# This checks the validation script when you hit enter
+Set-PSReadLineKeyHandler -Chord Enter -Function ValidateAndAcceptLine
+```
+
+### Example 9: Using the PromptText parameter
+
+When there&#x27;s a parse error, **PSReadLine** changes a part of the prompt red. The **PromptText**
+parameter tells **PSReadLine** the part of the prompt string to make red.
+
+For example, the following example creates a prompt that contains the current path followed by the
+greater-than character (`&gt;`) and a space.
+
+```powershell
+function prompt { &quot;PS $PWD&gt; &quot; }`
+Set-PSReadLineOption -PromptText &#x27;&gt; &#x27; # change the &#x27;&gt;&#x27; character red
+Set-PSReadLineOption -PromptText &#x27;&gt; &#x27;, &#x27;X &#x27; # replace the &#x27;&gt;&#x27; character with a red &#x27;X&#x27;
+```
+
+The first string is the portion of your prompt string that you want to make red when there is a
+parse error. The second string is an alternate string to use for when there is a parse error.
+
+## PARAMETERS
+
+# Set-PSReadLineOption
+
+### -AddToHistoryHandler
+
+Specifies a **ScriptBlock** that controls how commands get added to **PSReadLine** history.
+
+The **ScriptBlock** receives the command line as input.
+
+The  **ScripBlock** should return a member of the **AddToHistoryOption** enum, the string name of
+one of those members, or a boolean value. The list below describes the possible values and their
+effects.
+
+- `MemoryAndFile` - Add the command to the history file and the current session.
+- `MemoryOnly` - Add the command to history for the current session only.
+- `SkipAdding` - Don&#x27;t add the command to the history file for current session.
+- `$false` - Same as if the value was `SkipAdding`.
+- `$true` - Same as if the value was `MemoryAndFile`.
+
+```yaml
+Type: System.Func`2[System.String,System.Object]
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -AnsiEscapeTimeout
+
+This option is specific to Windows when input is redirected, for example, when running under `tmux`
+or `screen`.
+
+With redirected input on Windows, many keys are sent as a sequence of characters starting with the
+escape character. It&#x27;s impossible to distinguish between a single escape character followed by
+more characters and a valid escape sequence.
+
+The assumption is that the terminal can send the characters faster than a user types. **PSReadLine**
+waits for this timeout before concluding that it has received a complete escape sequence.
+
+If you see random or unexpected characters when you type, you can adjust this timeout.
+
+```yaml
+Type: System.Int32
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: 100
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -BellStyle
+
+Specifies how **PSReadLine** responds to various error and ambiguous conditions.
+
+The valid values are as follows:
+
+- `Audible`: A short beep.
+- `Visual`: Text flashes briefly.
+- `None`: No feedback.
+
+```yaml
+Type: Microsoft.PowerShell.BellStyle
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: Audible
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Colors
+
+The **Colors** parameter specifies various colors used by **PSReadLine**.
+
+The argument is a hash table where the keys specify the elements and the values specify the color.
+For more information, see
+[about_Hash_Tables](/powershell/module/microsoft.powershell.core/about/about_hash_tables).
+
+Colors can be either a value from **ConsoleColor**, for example `[ConsoleColor]::Red`, or a valid
+ANSI escape sequence. Valid escape sequences depend on your terminal. In PowerShell 5.0, an example
+escape sequence for red text is `$([char]0x1b)[91m`. In PowerShell 6 and newer, the same escape
+sequence is `` `e[91m``. You can specify other escape sequences including the following types:
+
+- 256 color
+- 24-bit color
+- Foreground, background, or both
+- Inverse, bold
+
+For more information about ANSI color codes, see the Wikipedia article
+[ANSI escape code](https://wikipedia.org/wiki/ANSI_escape_code#Colors_).
+
+The valid keys include:
+
+- `ContinuationPrompt`: The color of the continuation prompt.
+- `Emphasis`: The emphasis color. For example, the matching text when searching history.
+- `Error`: The error color. For example, in the prompt.
+- `Selection`: The color to highlight the menu selection or selected text.
+- `Default`: The default token color.
+- `Comment`: The comment token color.
+- `Keyword`: The keyword token color.
+- `String`: The string token color.
+- `Operator`: The operator token color.
+- `Variable`: The variable token color.
+- `Command`: The command token color.
+- `Parameter`: The parameter token color.
+- `Type`: The type token color.
+- `Number`: The number token color.
+- `Member`: The member name token color.
+
+```yaml
+Type: System.Collections.Hashtable
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -CommandValidationHandler
+
+Specifies a **ScriptBlock** that is called from **ValidateAndAcceptLine**. If an exception is
+thrown, validation fails and the error is reported.
+
+Before throwing an exception, the validation handler can place the cursor at the point of the error
+to make it easier to fix. A validation handler can also change the command line to correct common
+typographical errors.
+
+**ValidateAndAcceptLine** is used to avoid cluttering your history with commands that can&#x27;t work.
+
+```yaml
+Type: System.Action`1[System.Management.Automation.Language.CommandAst]
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -CompletionQueryItems
+
+Specifies the maximum number of completion items that are shown without prompting.
+
+If the number of items to show is greater than this value, **PSReadLine** prompts **yes/no** before
+displaying the completion items.
+
+```yaml
+Type: System.Int32
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: 100
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -ContinuationPrompt
+
+Specifies the string displayed at the beginning of the subsequent lines when multi-line input is
+entered. The default is double greater-than signs (`&gt;&gt;`). An empty string is valid.
+
+```yaml
+Type: System.String
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: &gt;&gt;
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -DingDuration
+
+Specifies the duration of the beep when **BellStyle** is set to `Audible`.
+
+```yaml
+Type: System.Int32
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: 50ms
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -DingTone
+
+Specifies the tone in Hertz (Hz) of the beep when **BellStyle** is set to `Audible`
+
+```yaml
+Type: System.Int32
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: 1221
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -EditMode
+
+Specifies the command line editing mode. Using this parameter resets any key bindings set by
+`Set-PSReadLineKeyHandler`.
+
+The valid values are as follows:
+
+- `Windows`: Key bindings emulate PowerShell, cmd, and Visual Studio. (default)
+- `Emacs`: Key bindings emulate Bash or Emacs.
+- `Vi`: Key bindings emulate Vi.
+
+Use `Get-PSReadLineKeyHandler` to see the key bindings for the currently configured **EditMode**.
+
+```yaml
+Type: Microsoft.PowerShell.EditMode
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: Windows
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -ExtraPromptLineCount
+
+Specifies the number of extra lines.
+
+If your prompt spans more than one line, specify a value for this parameter. Use this option when
+you want extra lines to be available when **PSReadLine** displays the prompt after showing some
+output. For example, **PSReadLine** returns a list of completions.
+
+This option is needed less than in previous versions of **PSReadLine**, but is useful when the
+`InvokePrompt` function is used.
+
+```yaml
+Type: System.Int32
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: 0
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+# Set-PSReadLineOption
+
+### -HistoryNoDuplicates
+
+This option controls the recall behavior. Duplicate commands are still added to the history file.
+When this option is set, only the most recent invocation appears when recalling commands. Repeated
+commands are added to history to preserve ordering during recall. However, you typically don&#x27;t want
+to see the command multiple times when recalling or searching the history.
+
+By default, the **HistoryNoDuplicates** property of the global **PSConsoleReadLineOptions** object
+is set to `True`. To change the property value, you must specify the value of the
+**SwitchParameter** as follows: `-HistoryNoDuplicates:$false`. You can set back to `True` by using
+just the **SwitchParameter**, `-HistoryNoDuplicates`.
+
+Using the following command, you can set the property value directly:
+
+`(Get-PSReadLineOption).HistoryNoDuplicates = $false`
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -HistorySavePath
+
+Specifies the path to the file where history is saved. Computers running Windows or non-Windows
+platforms store the file in different locations. The filename is stored in a variable
+`$($Host.Name)_history.txt`, for example `ConsoleHost_history.txt`.
+
+If you don&#x27;t use this parameter, the default path is:
+
+`$Env:APPDATA\Microsoft\Windows\PowerShell\PSReadLine\$($Host.Name)_history.txt`
+
+```yaml
+Type: System.String
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: A file named $($Host.Name)_history.txt in $Env:APPDATA\Microsoft\Windows\PowerShell\PSReadLine on Windows and $Env:XDG_DATA_HOME/powershell/PSReadLine or $HOME/.local/share/powershell/PSReadLine on non-Windows platforms
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -HistorySaveStyle
+
+Specifies how **PSReadLine** saves history.
+
+Valid values are as follows:
+
+- `SaveIncrementally`: Save history after each command is executed and share across multiple
+  instances of PowerShell.
+- `SaveAtExit`: Append history file when PowerShell exits.
+- `SaveNothing`: Don&#x27;t use a history file.
+
+&gt; [!NOTE]
+&gt; If you set **HistorySaveStyle** to `SaveNothing` and then set it to `SaveIncrementally` later in
+&gt; the same session, PSReadLine saves all the commands previously run in the session.
+
+```yaml
+Type: Microsoft.PowerShell.HistorySaveStyle
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: SaveIncrementally
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -HistorySearchCaseSensitive
+
+Specifies that history searching is case-sensitive in functions like **ReverseSearchHistory** or
+**HistorySearchBackward**.
+
+By default, the **HistorySearchCaseSensitive** property of the global **PSConsoleReadLineOptions**
+object is set to `False`. Using this **SwitchParameter** sets the property value to `True`. To
+change the property value back, you must specify the value of the **SwitchParameter** as follows:
+`-HistorySearchCaseSensitive:$false`.
+
+Using the following command, you can set the property value directly:
+
+`(Get-PSReadLineOption).HistorySearchCaseSensitive = $false`
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -HistorySearchCursorMovesToEnd
+
+Indicates that the cursor moves to the end of commands that you load from history by using a search.
+When this parameter is set to `$false`, the cursor remains at the position it was when you pressed
+the up or down arrows.
+
+By default, the **HistorySearchCursorMovesToEnd** property of the global
+**PSConsoleReadLineOptions** object is set to `False`. Using this **SwitchParameter** set the
+property value to `True`. To change the property value back, you must specify the value of the
+**SwitchParameter** as follows: `-HistorySearchCursorMovesToEnd:$false`.
+
+Using the following command, you can set the property value directly:
+
+`(Get-PSReadLineOption).HistorySearchCursorMovesToEnd = $false`
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -MaximumHistoryCount
+
+Specifies the maximum number of commands to save in **PSReadLine** history.
+
+**PSReadLine** history is separate from PowerShell history.
+
+```yaml
+Type: System.Int32
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -MaximumKillRingCount
+
+Specifies the maximum number of items stored in the kill ring.
+
+```yaml
+Type: System.Int32
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: 10
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -PromptText
+
+This parameter sets the value of the **PromptText** property. The default value is `&quot;&gt; &quot;`.
+
+**PSReadLine** analyzes your prompt function to determine how to change only the color of part of
+your prompt. This analysis isn&#x27;t 100% reliable. Use this option if **PSReadLine** is changing your
+prompt in unexpected ways. Include any trailing whitespace.
+
+The value of this parameter can be a single string or an array of two strings. The first string is
+the portion of your prompt string that you want to be changed to red when there is a parse error.
+The second string is an alternate string to use for when there is a parse error.
+
+```yaml
+Type: System.String[]
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: &gt;
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -ShowToolTips
+
+When displaying possible completions, tooltips are shown in the list of completions.
+
+This option is enabled by default. This option wasn&#x27;t enabled by default in prior versions of
+**PSReadLine**. To disable, set this option to `$false`.
+
+By default, the **ShowToolTips** property of the global **PSConsoleReadLineOptions** object is set
+to `True`. Using this **SwitchParameter** sets the property value to `True`. To change the property
+value, you must specify the value of the **SwitchParameter** as follows: `-ShowToolTips:$false`.
+
+Using the following command, you can set the property value directly:
+
+`(Get-PSReadLineOption).ShowToolTips = $false`
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: True
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -ViModeChangeHandler
+
+When the **ViModeIndicator** is set to `Script`, the scriptblock provided will be invoked every time
+the mode changes. The scriptblock is provided one argument of type `ViMode`.
+
+This parameter was introduced in PowerShell 7.
+
+```yaml
+Type: System.Management.Automation.ScriptBlock
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+# Set-PSReadLineOption
+
+### -ViModeIndicator
+
+This option sets the visual indicator for the current `Vi` mode. Either insert mode or command
+mode.
+
+The valid values are as follows:
+
+- `None`: There&#x27;s no indicator.
+- `Prompt`: The prompt changes color.
+- `Cursor`: The cursor changes size.
+- `Script`: User-specified text is printed.
+
+```yaml
+Type: Microsoft.PowerShell.ViModeStyle
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -WordDelimiters
+
+Specifies the characters that delimit words for functions like **ForwardWord** or **KillWord**.
+
+```yaml
+Type: System.String
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: ;:,.[]{}()/\|^&amp;*-=+&#x27;&quot;---
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### CommonParameters
+
+This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable,
+-InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose,
+-WarningAction, and -WarningVariable. For more information, see
+[about_CommonParameters](https://go.microsoft.com/fwlink/?LinkID=113216).
+
+## INPUTS
+
+### None
+
+You can&#x27;t pipe objects to this cmdlet.
+
+## OUTPUTS
+
+### None
+
+This cmdlet returns no output.
+
+## NOTES
+
+## RELATED LINKS
+
+[about_PSReadLine](./About/about_PSReadLine.md)
+
+[Get-PSReadLineKeyHandler](Get-PSReadLineKeyHandler.md)
+
+[Get-PSReadLineOption](Get-PSReadLineOption.md)
+
+[Remove-PSReadLineKeyHandler](Remove-PSReadLineKeyHandler.md)
+
+[Set-PSReadLineKeyHandler](Set-PSReadLineKeyHandler.md)</pre></section>

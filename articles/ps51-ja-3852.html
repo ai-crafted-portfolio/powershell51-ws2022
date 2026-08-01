@@ -1,0 +1,1170 @@
+<!doctype html><meta charset="utf-8"><section class="jp-official"><h1>Add-Type 追加型</h1>
+<h2>SYNOPSIS PowerShellセッションに Microsoft .NET クラスを追加します.</h2>
+<h2>SYNTAXは,のシンタックスです.</h2>
+<h3>FromSource (デフォルト)</h3>
+<pre><code>Add-Type [-CodeDomProvider &lt;CodeDomProvider&gt;] [-CompilerParameters &lt;CompilerParameters&gt;]
+ [-TypeDefinition] &lt;String&gt; [-Language &lt;Language&gt;] [-ReferencedAssemblies &lt;String[]&gt;]
+ [-OutputAssembly &lt;String&gt;] [-OutputType &lt;OutputAssemblyType&gt;] [-PassThru] [-IgnoreWarnings]
+ [&lt;CommonParameters&gt;]
+</code></pre>
+<h3>FromMember から</h3>
+<pre><code>Add-Type [-CodeDomProvider &lt;CodeDomProvider&gt;] [-CompilerParameters &lt;CompilerParameters&gt;]
+ [-Name] &lt;String&gt; [-MemberDefinition] &lt;String[]&gt; [-Namespace &lt;String&gt;] [-UsingNamespace &lt;String[]&gt;]
+ [-Language &lt;Language&gt;] [-ReferencedAssemblies &lt;String[]&gt;] [-OutputAssembly &lt;String&gt;]
+ [-OutputType &lt;OutputAssemblyType&gt;] [-PassThru] [-IgnoreWarnings] [&lt;CommonParameters&gt;]
+</code></pre>
+<h3>FromPath から</h3>
+<pre><code>Add-Type [-CompilerParameters &lt;CompilerParameters&gt;] [-Path] &lt;String[]&gt;
+ [-ReferencedAssemblies &lt;String[]&gt;] [-OutputAssembly &lt;String&gt;] [-OutputType &lt;OutputAssemblyType&gt;]
+ [-PassThru] [-IgnoreWarnings] [&lt;CommonParameters&gt;]
+</code></pre>
+<h3>FromLiteralPathから</h3>
+<pre><code>Add-Type [-CompilerParameters &lt;CompilerParameters&gt;] -LiteralPath &lt;String[]&gt;
+ [-ReferencedAssemblies &lt;String[]&gt;] [-OutputAssembly &lt;String&gt;] [-OutputType &lt;OutputAssemblyType&gt;]
+ [-PassThru] [-IgnoreWarnings] [&lt;CommonParameters&gt;]
+</code></pre>
+<h3>FromAssemblyName から</h3>
+<pre><code>Add-Type -AssemblyName &lt;String[]&gt; [-PassThru] [-IgnoreWarnings] [&lt;CommonParameters&gt;]
+</code></pre>
+<h2>記述は,</h2>
+<p><code>Add-Type</code>cmdlet は,PowerShell セッションでMicrosoft .NET Framework クラスを定義できるようにします.その後,オブジェクトをインスタンスして,  を使ってオブジェクトをインスタンスすることができます.<code>New-Object</code>cmdlet を,任意の .NET Framework オブジェクトを使用するように,オブジェクトを使用します.<code>Add-Type</code>PowerShell プロフィールに表示されるコマンドでは,すべての PowerShell セッションでクラスが利用可能です.</p>
+<p>既存のアセンブリやソースコードファイルを指定することでタイプを指定することもできますし,ソースコードをインラインで指定したり,変数で保存することもできます.<code>Add-Type</code>クラスを定義し生成します.Windowsでは,この機能を使用して,PowerShellで管理されていない機能にPlatform Invoke (P/Invoke) を呼び出すことができます.ソースコードを指定すると, <code>Add-Type</code>指定されたソースコードをまとめ,新しい .NET Framework タイプを含む内存の組み立てを生成します.</p>
+<p>のパラメータを使用できます.<code>Add-Type</code>代替言語とコンパイラを指定するには,C#はデフォルト,コンパイラオプション,アセンブリ依存,クラス名空,タイプの名前,および結果のアセンブリです.</p>
+<h2>例えは</h2>
+<h3>例1:セッションに .NET タイプを追加する</h3>
+<p>この例では,変数に保存されているソースコードを指定することで <strong>BasicTest</strong> クラスをセッションに追加します. <strong>BasicTest</strong> クラスでは整数を追加し,オブジェクトを作成し,整数を掛けます.</p>
+<pre><code class="language-powershell">$Source = @&quot;
+public class BasicTest
+{
+  public static int Add(int a, int b)
+    {
+        return (a + b);
+    }
+  public int Multiply(int a, int b)
+    {
+    return (a * b);
+    }
+}
+&quot;@
+
+Add-Type -TypeDefinition $Source
+[BasicTest]::Add(4, 3)
+$BasicTestObject = New-Object BasicTest
+$BasicTestObject.Multiply(5, 2)
+</code></pre>
+<p><code>$Source</code>クラス用のソースコードを保存する.タイプには,変数と呼ばれる静的方法があります.<code>Add</code>そして,非静止な方法と呼ばれる方法です.<code>Multiply</code> .</p>
+<p><code>Add-Type</code>cmdlet はセッションにクラスを追加します.インラインソースコードを使用しているため,コマンドは <strong>TypeDefinition</strong> パラメータを使用して,  のコードを指定します.<code>$Source</code>変数です.</p>
+<p><code>Add</code><strong>BasicTest</strong>クラスの静的方法は,双列文字を使用しています ().<code>::</code>) は,クラス内の静态メンバーを指定します.整数が追加され,合計が表示されます.</p>
+<p><code>New-Object</code>cmdlet は <strong>BasicTest</strong> クラスのインスタンスをインスタンスします.新しいオブジェクトを  に保存します.<code>$BasicTestObject</code>変数です.</p>
+<p><code>$BasicTestObject</code>は利用しています.<code>Multiply</code>整数を掛け直して,その結果が表示される.</p>
+<h3>例2:追加型を検証する</h3>
+<p>この例では,という文字を使用しています.<code>Get-Member</code>cmdlet で,その物体を調べる.<code>Add-Type</code>そして,<code>New-Object</code>cmdletsは <strong>例 1</strong>で作成されました.</p>
+<pre><code class="language-powershell">[BasicTest] | Get-Member
+</code></pre>
+<pre><code class="language-Output">   TypeName: System.RuntimeType
+
+Name                 MemberType Definition
+----                 ---------- ----------
+AsType               Method     type AsType()
+Clone                Method     System.Object Clone(), System.Object ICloneable.Clone()
+Equals               Method     bool Equals(System.Object obj), bool Equals(type o)
+FindInterfaces       Method     type[] FindInterfaces(System.Reflection.TypeFilter filter...
+...
+</code></pre>
+<pre><code class="language-powershell">[BasicTest] | Get-Member -Static
+</code></pre>
+<pre><code class="language-Output">  TypeName: BasicTest
+
+Name            MemberType Definition
+----            ---------- ----------
+Add             Method     static int Add(int a, int b)
+Equals          Method     static bool Equals(System.Object objA, System.Object objB)
+new             Method     BasicTest new()
+ReferenceEquals Method     static bool ReferenceEquals(System.Object objA, System.Object objB)
+</code></pre>
+<pre><code class="language-powershell">$BasicTestObject | Get-Member
+</code></pre>
+<pre><code class="language-Output">   TypeName: BasicTest
+
+Name        MemberType Definition
+----        ---------- ----------
+Equals      Method     bool Equals(System.Object obj)
+GetHashCode Method     int GetHashCode()
+GetType     Method     type GetType()
+Multiply    Method     int Multiply(int a, int b)
+ToString    Method     string ToString()
+</code></pre>
+<p><code>Get-Member</code>cmdlet は,BASICTest のタイプとメンバーを獲得します.<code>Add-Type</code>セッションに追加されました.<code>Get-Member</code>コマンドは,システム.ランタイムタイプ<strong>オブジェクトであることを明らかにし,これは </strong>System.Object**クラスから派生したものです.</p>
+<p><code>Get-Member</code><strong>Static</strong>パラメータは <strong>BasicTest</strong>クラスの静的特性と方法を取得します.出力量は,  の静的特性と方法を示します.<code>Add</code>方法が含まれています.</p>
+<p><code>Get-Member</code>cmdlet は,オブジェクトのメンバーを  に保存したオブジェクトに取得します.<code>$BasicTestObject</code> 変数<code>$BasicTestObject</code> を使って作成されました.<code>New-Object</code><strong>BasicTest</strong>クラスを持つcmdlet. 出力では,値が  の値であることを明らかにします.<code>$BasicTestObject</code>ベーステストのクラスに含まれる変数として,その中に というメンバーが含まれている.<code>Multiply</code> .</p>
+<h3>例3: 集合からタイプを追加する</h3>
+<p>この例では, からクラスを追加します.<code>Accessibility.dll</code>会議は現在のセッションに組み込まれます.</p>
+<pre><code class="language-powershell">$AccType = Add-Type -AssemblyName &quot;accessib*&quot; -PassThru
+</code></pre>
+<p><code>$AccType</code>変数で作成されたオブジェクトを保存します.<code>Add-Type</code>cmdlet. <code>Add-Type</code><strong>AssemblyName</strong>のパラメータを使用して,アセンブリの名前を指定します.<code>*</code>) ワイルドカード文字は,名前や綴りについて確信がない場合でも正しい組み立てを得ることができます. <strong>PassThru</strong> パラメータは,セッションに追加されたクラスを表すオブジェクトを生成します.</p>
+<h3>例4:ネイティブのWindows APIを呼び出す</h3>
+<p>この例では,PowerShellでネイティブ Windows APIを呼び出す方法を示しています. <code>Add-Type</code>プラットフォームインボーク (P/Invoke) メカニズムを使用して,関数を  で呼び出す.<code>User32.dll</code>この例は,Windowsオペレーティング・システムを実行するコンピュータでのみ動作します.</p>
+<pre><code class="language-powershell">$Signature = @&quot;
+[DllImport(&quot;user32.dll&quot;)]public static extern bool ShowWindowAsync(IntPtr hWnd, int nCmdShow);
+&quot;@
+
+$addTypeSplat = @{
+    MemberDefinition = $Signature
+    Name = &quot;Win32ShowWindowAsync&quot;
+    Namespace = 'Win32Functions'
+    PassThru = $true
+}
+$ShowWindowAsync = Add-Type @addTypeSplat
+
+# Minimize the PowerShell console
+
+$ShowWindowAsync::ShowWindowAsync((Get-Process -Id $PID).MainWindowHandle, 2)
+
+# Restore the PowerShell console
+
+$ShowWindowAsync::ShowWindowAsync((Get-Process -Id $PID).MainWindowHandle, 4)
+</code></pre>
+<p><code>$Signature</code>変数  の C# 署名を保存する.<code>ShowWindowAsync</code>機能. PowerShell セッションで結果のメソッドが表示されるようにするには,  を入力します.<code>public</code>標準署名にキーワードが追加されました.詳細については, [ShowWindowAsync] (/windows/win32/api/winuser/nf-winuser-showwindowasync) 機能を参照してください.</p>
+<p><code>$ShowWindowAsync</code>変数によって作成されたオブジェクトを保存します.<code>Add-Type</code><strong>PassThru</strong>パラメータ. <code>Add-Type</code>cmdlet は,cmdlet を追加して,<code>ShowWindowAsync</code>パワーシェルセッションに静态方法として機能する.コマンドは,MemberDefinition<strong>パラメータを使用して, に保存された方法定義を指定します.<code>$Signature</code>コマンドは,クラス名とネームスペースを指定するために</strong>Name<strong>とNamespace</strong>のパラメータを使用します. <strong>PassThru</strong>のパラメータは,タイプを表すオブジェクトを生成します.</p>
+<p>新しい <code>ShowWindowAsync</code>PowerShell コンソールを最小限に抑え,復元するためにコマンドで静止方法を使用しています.この方法は,ウィンドウのハンドルとウィンドウの表示方法を指定する整数で2つのパラメータを考慮します.</p>
+<p>PowerShell コンソルを最小限にするために,<code>ShowWindowAsync</code>は利用しています.<code>Get-Process</code>のcmdletを表示する.<code>$PID</code>現在のPowerShellセッションをホストしているプロセスを取得するために自動的に変数します.その後,現在のプロセスの <strong>MainWindowHandle</strong>属性と値の値を使用します.<code>2</code>を代表する.<code>SW_MINIMIZE</code>値.</p>
+<p>窓を修復するには,<code>ShowWindowAsync</code>の値を使用します.<code>4</code>を表示する窓の位置についてです.<code>SW_RESTORE</code>値.</p>
+<p>窓を最大限に拡大するには, の値を用いてください.<code>3</code>を表示する.<code>SW_MAXIMIZE</code> .</p>
+<h3>例5:Visual Basicファイルからタイプを追加する</h3>
+<p>この例では,という文字を使用しています.<code>Add-Type</code> で定義されている <strong>VBFromFile</strong> クラスを追加するには cmdlet を追加します.<code>Hello.vb</code>ファイルは現在のセッションに. のテキスト.<code>Hello.vb</code>ファイルはコマンド出力で表示されます.</p>
+<pre><code class="language-powershell">Add-Type -Path &quot;C:\PS-Test\Hello.vb&quot;
+[VBFromFile]::SayHello(&quot;, World&quot;)
+
+# From Hello.vb
+
+Public Class VBFromFile
+  Public Shared Function SayHello(sourceName As String) As String
+    Dim myValue As String = &quot;Hello&quot;
+    return myValue + sourceName
+  End Function
+End Class
+</code></pre>
+<pre><code class="language-Output">Hello, World
+</code></pre>
+<p><code>Add-Type</code>ソースファイル指定するには <strong>Path</strong>パラメータを使用します.<code>Hello.vb</code>ファイルに定義されたタイプを追加します.<code>SayHello</code>この関数は,VBFromFile** の静止方法として呼び出される.</p>
+<h3>例 6: JScript.NETでクラスを追加する</h3>
+<p>この例では,JScript.NETを使用して,あなたのPowerShellセッションで新しいクラス, <strong>FRectangle</strong> を作成します.</p>
+<pre><code class="language-powershell">Add-Type @'
+ class FRectangle {
+   var Length : double;
+   var Height : double;
+   function Perimeter() : double {
+       return (Length + Height) * 2; }
+   function Area() : double {
+       return Length * Height;  } }
+'@ -Language JScript
+
+$rect = [FRectangle]::new()
+$rect
+</code></pre>
+<pre><code class="language-Output">Length Height
+------ ------
+     0      0
+</code></pre>
+<h3>例7: F#コンパイラを追加する</h3>
+<p>この例では,どのように""を用いられるかを示しています.<code>Add-Type</code>PowerShellセッションにF#コードコンパイラを追加するには cmdlet を使用します.<code>FSharp.Compiler.CodeDom.dll</code>F#言語でインストールされている.</p>
+<pre><code class="language-powershell">Add-Type -Path &quot;FSharp.Compiler.CodeDom.dll&quot;
+$Provider = New-Object Microsoft.FSharp.Compiler.CodeDom.FSharpCodeProvider
+$FSharpCode = @&quot;
+let rec loop n =if n &lt;= 0 then () else beginprint_endline (string_of_int n);loop (n-1)end
+&quot;@
+$FSharpType = Add-Type -TypeDefinition $FSharpCode -CodeDomProvider $Provider -PassThru |
+   Where-Object { $_.IsPublic }
+$FSharpType::loop(4)
+</code></pre>
+<pre><code class="language-Output">4
+3
+2
+1
+</code></pre>
+<p><code>Add-Type</code>集合を指定するために <strong>Path</strong> パラメータを使用し,集合内のタイプを取得します. <code>New-Object</code>F#コードプロバイダのインスタンスを作成し,結果を に保存します.<code>$Provider</code>変数です.<code>$FSharpCode</code>変数は, <strong>Loop</strong>方法を定義する F#コードを保存します.</p>
+<p><code>$FSharpType</code>変数の結果を保存する.<code>Add-Type</code> で定義された公共のタイプを保存するcmdletです.<code>$FSharpCode</code><strong>TypeDefinition</strong>パラメータは,タイプを定義するソースコードを指定します. <strong>CodeDomProvider</strong>パラメータは,ソースコードコンパイラを指定します. <strong>PassThru</strong>パラメータは, を指示します.<code>Add-Type</code>タイプを表す<strong>ランタイム</strong>オブジェクトを返します.オブジェクトはパイプラインを介して へ送られます.<code>Where-Object</code>cmdletで,公開タイプのみ返します.<code>Where-Object</code>cmdletは,F#プロバイダが公開でないタイプを生成し,その結果公開タイプをサポートするため使用されます.</p>
+<p>ループ方法は, に保存されているタイプの静的方法として呼ばれています.<code>$FSharpType</code>変数です.</p>
+<h2>パラメータは</h2>
+<h3>-AssemblyName</h3>
+<p>タイプを含む集合の名前を指定します. <code>Add-Type</code>指定されたアセンブリからタイプを採取する.このパラメータは,アセンブリ名に基づいてタイプを作成するときに必要である.</p>
+<p>集合の完全な名前または単一の名前,または部分名称として知られる.集合の名前にはワイルドカード文字が許可されています. 単一の名前または部分名を入力すると,<code>Add-Type</code>完全な名前に解決し,その後に完全な名前を使用してアセンブリをロードします.</p>
+<p><strong>Path</strong>または <strong>LiteralPath</strong>パラメータを使用すると,あなたが読み込む予定のアセンブリをロードしていることを保証します. <strong>AssemblyName</strong>パラメータを使用すると,PowerShellは標準的な .NETアセンブリ解像度プロセスを使用して,アセンブリ名を解決するように .NETに要求します.NETは最初にアプリケーションフォルダを検索するので, <code>Add-Type</code>からアセンブリをロードする可能性があります.<code>$PSHOME</code>現在のフォルダのバージョンではなく,そのバージョンです.詳細については, [アセンブリ場所] (/dotnet/standard/assembly/location) を参照してください.</p>
+<p>.NETが名前を解決できなければ,PowerShellは現在の位置を検索して,アセンブリを見つけます. <strong>AssemblyName</strong>パラメータでワイルドカードを使用すると, .NETアセンブリ解像度プロセスは失敗し,PowerShellが現在の位置を検索する原因になります.</p>
+<pre><code class="language-yaml">Type: System.String[]
+Parameter Sets: FromAssemblyName
+Aliases: AN
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: True
+</code></pre>
+<h3>-CodeDomProvider</h3>
+<p>コード生成器やコンパイラを指定します. <code>Add-Type</code>指定されたコンパイラを使用してソースコードをまとめます.デフォルトはC#コンパイラです.このパラメータを使用している場合は <strong>Language</strong>パラメータを使用して指定できない言語を使用します.指定した <strong>CodeDomProvider</strong>は,ソースコードからアセンブリを生成することができます.</p>
+<pre><code class="language-yaml">Type: System.CodeDom.Compiler.CodeDomProvider
+Parameter Sets: FromSource, FromMember
+Aliases: Provider
+
+Required: False
+Position: Named
+Default value: C# compiler
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-CompilerParameters</h3>
+<p>ソースコードコンパイラのオプションを指定します.これらのオプションは修正なしでコンパイラに送られます.</p>
+<p>このパラメータは,コンパイラを実行可能なファイルを作成,リソースを埋め込み,またはコマンドラインオプションを設定するように指示します.<code>/unsafe</code>このパラメータは,CompilerParameters<strong>クラス, </strong>System.CodeDom.Compiler.Compiler.CompilerParameters**を実装しています.</p>
+<p>同じコマンドで<strong>CompilerParameters</strong>と<strong>ReferencedAssemblies</strong>のパラメータを使用することはできません.</p>
+<pre><code class="language-yaml">Type: System.CodeDom.Compiler.CompilerParameters
+Parameter Sets: FromSource, FromMember, FromPath, FromLiteralPath
+Aliases: CP
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h1>Add-Type 追加型</h1>
+<h3>-IgnoreWarnings について</h3>
+<p>編集者警告を無視する.このパラメータを使用して,防止します.<code>Add-Type</code>編集者警告をエラーとして処理することから.</p>
+<pre><code class="language-yaml">Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-Language</h3>
+<p>ソースコードで使われている言語を指定します.<code>Add-Type</code>cmdlet はこのパラメータの値を用い,適切な <strong>CodeDomProvider</strong> を選択します. CSharp はデフォルト値です.このパラメータの受け入れ可能な値は以下の通りです:</p>
+<ul>
+<li>-<code>CSharp</code> - -<code>CSharpVersion2</code> - -<code>CSharpVersion3</code> - -<code>JScript</code> - -<code>VisualBasic</code></li>
+</ul>
+<pre><code class="language-yaml">Type: Microsoft.PowerShell.Commands.Language
+Parameter Sets: FromSource, FromMember
+Aliases:
+Accepted values: CSharp, CSharpVersion2, CSharpVersion3, JScript, VisualBasic
+
+Required: False
+Position: Named
+Default value: CSharp
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-リテラルパース</h3>
+<p>ソースコードファイルまたはDLLファイルを組み立てるルートを指定します. <strong>Path</strong>とは異なり,LiteralPath**パラメータの値は入力されたまま使用されます.文字はワイルドカードとして解釈されません. 道路にエスケープ文字が含まれている場合は,単一の引用符で囲み付けます.単一の引用符はPowerShellに文字をエスケープシーケンスのように解釈しないように言います.</p>
+<p><strong>Path</strong>または <strong>LiteralPath</strong>のパラメータを使用すると,あなたが読み込む予定の組み立てをロードしていることが保証されます.</p>
+<pre><code class="language-yaml">Type: System.String[]
+Parameter Sets: FromLiteralPath
+Aliases: PSPath
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-MemberDefinition メンバー定義</h3>
+<p>クラスに新しい特性や方法を指定します. <code>Add-Type</code>属性や方法をサポートするために必要なテンプレートコードを生成します.</p>
+<p>Windowsでは,この機能を使用して,PowerShellで管理されていない機能にPlatform Invoke (P/Invoke) を呼び出すことができます.</p>
+<pre><code class="language-yaml">Type: System.String[]
+Parameter Sets: FromMember
+Aliases:
+
+Required: True
+Position: 1
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-名字は</h3>
+<p>作成するクラスの名前を指定します.メンバー定義からタイプを生成する際にこのパラメータが必要です.</p>
+<p>タイプ名と名前空間はセッション内でユニークでなければならない.タイプをダウンロードしたり変更したりすることはできません.タイプのコードを変更するには,名前を変更するか,新しいPowerShellセッションを開始するかする必要があります.そうでなければコマンドが失敗します.</p>
+<pre><code class="language-yaml">Type: System.String
+Parameter Sets: FromMember
+Aliases:
+
+Required: True
+Position: 0
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-ネームスペース</h3>
+<p>デフォルトでは,このコマンドは <strong>Microsoft.PowerShell.Commands.AddType.AutoGeneratedTypes</strong>名空にタイプを作成します.このパラメータを使用すると,指定された名空にタイプが作成されます.値が空き文字列である場合は,タイプがグローバル名空に作成されます.</p>
+<pre><code class="language-yaml">Type: System.String
+Parameter Sets: FromMember
+Aliases: NS
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-OutputAssembly</h3>
+<p>場所の指定された名前で組み立てのためのDLLファイルを生成します.オプションのパスとファイル名を入力します.ワイルドカード文字が許可されています.デフォルトでは, <code>Add-Type</code>組み立てをメモリでのみ生成します. 組み立てをファイルに輸出する場合は,新たに作成された組み立てからタイプを返すために <strong>PassThru</strong> パラメータを入力する必要があります.</p>
+<pre><code class="language-yaml">Type: System.String
+Parameter Sets: FromSource, FromMember, FromPath, FromLiteralPath
+Aliases: OA
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: True
+</code></pre>
+<h3>-OutputType</h3>
+<p>輸出組の出力タイプを指定します.デフォルトでは出力タイプが指定されていません.このパラメータはコマンドで出力組が指定された場合にのみ有効です.値についての詳細については, <a href="/dotnet/api/microsoft.powershell.commands.outputassemblytype">OutputAssemblyType Enumeration</a> を参照してください.</p>
+<p>このパラメータの受け入れられる値は以下の通りです.</p>
+<ul>
+<li>-<code>ConsoleApplication</code> - -<code>Library</code> - -<code>WindowsApplication</code></li>
+</ul>
+<pre><code class="language-yaml">Type: Microsoft.PowerShell.Commands.OutputAssemblyType
+Parameter Sets: FromSource, FromMember, FromPath, FromLiteralPath
+Aliases: OT
+Accepted values: ConsoleApplication, Library, WindowsApplication
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-PassThru でした.</h3>
+<p>追加されたタイプを表す<strong>System.Runtime</strong>オブジェクトを返します.デフォルトでは,このcmdletは出力を生成しません.DLLファイルを作成するために<strong>OutputAssembly</strong>を使用し,新たに作成されたアセンブリからタイプを返したい場合は,このパラメータを使用します.</p>
+<pre><code class="language-yaml">Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>- 歩道</h3>
+<p>ソースコードファイルまたはDLLファイルを組み立てる方法を指定します.</p>
+<p>ソースコードファイルを送信すると, <code>Add-Type</code>ファイル内のコードをコンパイルし,メモリ内でのタイプの集合を作成します. <strong>Path</strong>の値で指定されたファイル拡張子は,コンパイラが を決定する.<code>Add-Type</code>活用する.</p>
+<p>アセンブリファイルを送信すると, <code>Add-Type</code>メモリ内での集合またはグローバルな集合キャッシュを指定するには, <strong>AssemblyName</strong>パラメータを使用します.</p>
+<pre><code class="language-yaml">Type: System.String[]
+Parameter Sets: FromPath
+Aliases:
+
+Required: True
+Position: 0
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-ReferencedAssemblies 代表大会について</h3>
+<p>タイプが依存する組列を指定します.デフォルトでは, <code>Add-Type</code>参照 <code>System.dll</code>そして,<code>System.Management.Automation.dll</code>このパラメータを使用して指定したアセンブリは,デフォルトアセンブリに加えて参照されます.</p>
+<p>同じコマンドで<strong>CompilerParameters</strong>と<strong>ReferencedAssemblies</strong>のパラメータを使用することはできません.</p>
+<pre><code class="language-yaml">Type: System.String[]
+Parameter Sets: FromSource, FromMember, FromPath, FromLiteralPath
+Aliases: RA
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-TypeDefinition</h3>
+<p>字符の定義を含むソースコードを指定します. 文字列またはHere-stringにソースコードを入力するか,ソースコードを含む変数を入力します.Here-stringsに関する詳細については,[about_Quoting_Rules]../Microsoft.PowerShell.Core/about/about_Quoting_Rules.md を参照してください.</p>
+<p>型定義に名前空間宣言を入れます.名前空間宣言を省略した場合,タイプは別のタイプと同じ名前または別のタイプのショートカットを持つ可能性があります.故意にオーバーライティングを引き起こす可能性があります.例えば, <strong>Exception</strong>と呼ばれるタイプを定義した場合, <strong>Exception</strong> をシステム.Exception** のショートカットとして使用するスクリプトは失敗します.</p>
+<pre><code class="language-yaml">Type: System.String
+Parameter Sets: FromSource
+Aliases:
+
+Required: True
+Position: 0
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h1>Add-Type 追加型</h1>
+<h3>-UsingNamespace を使って</h3>
+<p>クラスに必要な他のネームスペースを指定します.これはC#キーワードに似ている.<code>Using</code> .</p>
+<p>デフォルトでは, <code>Add-Type</code><strong>System</strong>の名前空間を参照します. <strong>MemberDefinition</strong>のパラメータが使用された場合,<code>Add-Type</code>また,標準的に <strong>System.Runtime.InteropServices</strong> 名前空間を参照します. <strong>UsingNamespace</strong>  параметрを使用して追加した名前空間は,標準的な名前空間に加えて参照されます.</p>
+<pre><code class="language-yaml">Type: System.String[]
+Parameter Sets: FromMember
+Aliases: Using
+
+Required: False
+Position: Named
+Default value: System namespace
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>共通パラメーター</h3>
+<p>このcmdletは,共通パラメータをサポートしています: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable.詳細については, <a href="を参照してください.https://go.microsoft.com/fwlink/?LinkID=113216">about_CommonParameters</a> でした.</p>
+<h2>輸入は</h2>
+<h3>どれもない</h3>
+<p>このcmdletに物体をパイプすることはできません.</p>
+<h2>輸出は</h2>
+<h3>どれもない</h3>
+<p>デフォルトでは,このcmdletは出力返さない.</p>
+<h3>System.Type システム.タイプ</h3>
+<p><strong>PassThru</strong>パラメータを使用すると,このcmdletは新しいタイプを表す <strong>System.Type</strong>オブジェクトを返します.</p>
+<h2>NOTES  記事ができました.</h2>
+<p>あなたが追加したタイプは,現在のセッションでのみ存在します.すべてのセッションでタイプを使用するには,PowerShell プロフィールに追加してください.プロフィールについての詳細については, [about_Profiles] (Microsoft.PowerShell.Core/About/about_Profiles.md) を参照してください.</p>
+<p>タイプ名と名前空間はセッション内でユニークでなければならない.タイプをダウンロードしたり変更したりすることはできません.タイプのコードを変更する必要がある場合は,名前を変更するか,新しいPowerShellセッションを開始するかする必要があります.そうでなければコマンドが失敗します.</p>
+<p>代码PythonやJ#などのいくつかの言語のCodeDomProviderクラスでは出力量が生成されません.その結果,これらの言語で書かれたタイプは,  で使用できません.<code>Add-Type</code> .</p>
+<p>このcmdletは,Microsoft .NET Framework [CodeDomProvider Class] (Xref:System.CodeDom.Compiler.CodeDomProvider) に基づいている.</p>
+<h2>関連リンク</h2>
+<p><a href="../Microsoft.PowerShell.Core/About/about_profiles.md">about_profiles</a> について</p>
+<p><a href="../Microsoft.PowerShell.Core/About/about_Quoting_Rules.md">about_Quoting_Rules</a> について</p>
+<p><a href="Add-Member.md">Add-Member</a> </p>
+<p><a href="New-Object.md">New-Object</a> </p>
+<p><a href="/dotnet/api/microsoft.powershell.commands.outputassemblytype">OutputAssemblyType</a> は,</p>
+<p><a href="/dotnet/standard/native-interop/pinvoke">Platform Invoke (P/Invoke) </a> </p>
+<p><a href="../Microsoft.PowerShell.Core/Where-Object.md">Where-Object</a> について</p></section><section class="en-original"><pre class="source-original"># Add-Type
+
+## SYNOPSIS
+Adds a Microsoft .NET class to a PowerShell session.
+
+## SYNTAX
+
+### FromSource (Default)
+
+```
+Add-Type [-CodeDomProvider &lt;CodeDomProvider&gt;] [-CompilerParameters &lt;CompilerParameters&gt;]
+ [-TypeDefinition] &lt;String&gt; [-Language &lt;Language&gt;] [-ReferencedAssemblies &lt;String[]&gt;]
+ [-OutputAssembly &lt;String&gt;] [-OutputType &lt;OutputAssemblyType&gt;] [-PassThru] [-IgnoreWarnings]
+ [&lt;CommonParameters&gt;]
+```
+
+### FromMember
+
+```
+Add-Type [-CodeDomProvider &lt;CodeDomProvider&gt;] [-CompilerParameters &lt;CompilerParameters&gt;]
+ [-Name] &lt;String&gt; [-MemberDefinition] &lt;String[]&gt; [-Namespace &lt;String&gt;] [-UsingNamespace &lt;String[]&gt;]
+ [-Language &lt;Language&gt;] [-ReferencedAssemblies &lt;String[]&gt;] [-OutputAssembly &lt;String&gt;]
+ [-OutputType &lt;OutputAssemblyType&gt;] [-PassThru] [-IgnoreWarnings] [&lt;CommonParameters&gt;]
+```
+
+### FromPath
+
+```
+Add-Type [-CompilerParameters &lt;CompilerParameters&gt;] [-Path] &lt;String[]&gt;
+ [-ReferencedAssemblies &lt;String[]&gt;] [-OutputAssembly &lt;String&gt;] [-OutputType &lt;OutputAssemblyType&gt;]
+ [-PassThru] [-IgnoreWarnings] [&lt;CommonParameters&gt;]
+```
+
+### FromLiteralPath
+
+```
+Add-Type [-CompilerParameters &lt;CompilerParameters&gt;] -LiteralPath &lt;String[]&gt;
+ [-ReferencedAssemblies &lt;String[]&gt;] [-OutputAssembly &lt;String&gt;] [-OutputType &lt;OutputAssemblyType&gt;]
+ [-PassThru] [-IgnoreWarnings] [&lt;CommonParameters&gt;]
+```
+
+### FromAssemblyName
+
+```
+Add-Type -AssemblyName &lt;String[]&gt; [-PassThru] [-IgnoreWarnings] [&lt;CommonParameters&gt;]
+```
+
+## DESCRIPTION
+
+The `Add-Type` cmdlet lets you define a Microsoft .NET Framework class in your PowerShell session.
+You can then instantiate objects, by using the `New-Object` cmdlet, and use the objects just as you
+would use any .NET Framework object. If you add an `Add-Type` command to your PowerShell profile,
+the class is available in all PowerShell sessions.
+
+You can specify the type by specifying an existing assembly or source code files, or you can specify
+the source code inline or saved in a variable. You can even specify only a method and `Add-Type`
+defines and generates the class. On Windows, you can use this feature to make Platform Invoke
+(P/Invoke) calls to unmanaged functions in PowerShell. If you specify source code, `Add-Type`
+compiles the specified source code and generates an in-memory assembly that contains the new .NET
+Framework types.
+
+You can use the parameters of `Add-Type` to specify an alternate language and compiler, C# is the
+default, compiler options, assembly dependencies, the class namespace, the names of the type, and
+the resulting assembly.
+
+## EXAMPLES
+
+### Example 1: Add a .NET type to a session
+
+This example adds the **BasicTest** class to the session by specifying source code that&#x27;s stored in
+a variable. The **BasicTest** class is used to add integers, create an object, and multiply
+integers.
+
+```powershell
+$Source = @&quot;
+public class BasicTest
+{
+  public static int Add(int a, int b)
+    {
+        return (a + b);
+    }
+  public int Multiply(int a, int b)
+    {
+    return (a * b);
+    }
+}
+&quot;@
+
+Add-Type -TypeDefinition $Source
+[BasicTest]::Add(4, 3)
+$BasicTestObject = New-Object BasicTest
+$BasicTestObject.Multiply(5, 2)
+```
+
+The `$Source` variable stores the source code for the class. The type has a static method called
+`Add` and a non-static method called `Multiply`.
+
+The `Add-Type` cmdlet adds the class to the session. Because it&#x27;s using inline source code, the
+command uses the **TypeDefinition** parameter to specify the code in the `$Source` variable.
+
+The `Add` static method of the **BasicTest** class uses the double-colon characters (`::`) to
+specify a static member of the class. The integers are added and the sum is displayed.
+
+The `New-Object` cmdlet instantiates an instance of the **BasicTest** class. It saves the new object
+in the `$BasicTestObject` variable.
+
+`$BasicTestObject` uses the `Multiply` method. The integers are multiplied and the product is
+displayed.
+
+### Example 2: Examine an added type
+
+This example uses the `Get-Member` cmdlet to examine the objects that the `Add-Type` and
+`New-Object` cmdlets created in **Example 1**.
+
+```powershell
+[BasicTest] | Get-Member
+```
+
+```Output
+   TypeName: System.RuntimeType
+
+Name                 MemberType Definition
+----                 ---------- ----------
+AsType               Method     type AsType()
+Clone                Method     System.Object Clone(), System.Object ICloneable.Clone()
+Equals               Method     bool Equals(System.Object obj), bool Equals(type o)
+FindInterfaces       Method     type[] FindInterfaces(System.Reflection.TypeFilter filter...
+...
+```
+
+```powershell
+[BasicTest] | Get-Member -Static
+```
+
+```Output
+  TypeName: BasicTest
+
+Name            MemberType Definition
+----            ---------- ----------
+Add             Method     static int Add(int a, int b)
+Equals          Method     static bool Equals(System.Object objA, System.Object objB)
+new             Method     BasicTest new()
+ReferenceEquals Method     static bool ReferenceEquals(System.Object objA, System.Object objB)
+```
+
+```powershell
+$BasicTestObject | Get-Member
+```
+
+```Output
+   TypeName: BasicTest
+
+Name        MemberType Definition
+----        ---------- ----------
+Equals      Method     bool Equals(System.Object obj)
+GetHashCode Method     int GetHashCode()
+GetType     Method     type GetType()
+Multiply    Method     int Multiply(int a, int b)
+ToString    Method     string ToString()
+```
+
+The `Get-Member` cmdlet gets the type and members of the **BasicTest** class that `Add-Type` added
+to the session. The `Get-Member` command reveals that it&#x27;s a **System.RuntimeType** object, which is
+derived from the **System.Object** class.
+
+The `Get-Member` **Static** parameter gets the static properties and methods of the **BasicTest**
+class. The output shows that the `Add` method is included.
+
+The `Get-Member` cmdlet gets the members of the object stored in the `$BasicTestObject` variable.
+`$BasicTestObject` was created by using the `New-Object` cmdlet with the **BasicTest** class. The
+output reveals that the value of the `$BasicTestObject` variable is an instance of the **BasicTest**
+class and that it includes a member called `Multiply`.
+
+### Example 3: Add types from an assembly
+
+This example adds the classes from the `Accessibility.dll` assembly to the current session.
+
+```powershell
+$AccType = Add-Type -AssemblyName &quot;accessib*&quot; -PassThru
+```
+
+The `$AccType` variable stores an object created with the `Add-Type` cmdlet. `Add-Type` uses the
+**AssemblyName** parameter to specify the name of the assembly. The asterisk (`*`) wildcard
+character allows you to get the correct assembly even when you aren&#x27;t sure of the name or its
+spelling. The **PassThru** parameter generates objects that represent the classes that are added to
+the session.
+
+### Example 4: Call native Windows APIs
+
+This example demonstrates how to call native Windows APIs in PowerShell. `Add-Type` uses the
+Platform Invoke (P/Invoke) mechanism to call a function in `User32.dll` from PowerShell. This
+example only works on computers running the Windows operating system.
+
+```powershell
+$Signature = @&quot;
+[DllImport(&quot;user32.dll&quot;)]public static extern bool ShowWindowAsync(IntPtr hWnd, int nCmdShow);
+&quot;@
+
+$addTypeSplat = @{
+    MemberDefinition = $Signature
+    Name = &quot;Win32ShowWindowAsync&quot;
+    Namespace = &#x27;Win32Functions&#x27;
+    PassThru = $true
+}
+$ShowWindowAsync = Add-Type @addTypeSplat
+
+# Minimize the PowerShell console
+
+$ShowWindowAsync::ShowWindowAsync((Get-Process -Id $PID).MainWindowHandle, 2)
+
+# Restore the PowerShell console
+
+$ShowWindowAsync::ShowWindowAsync((Get-Process -Id $PID).MainWindowHandle, 4)
+```
+
+The `$Signature` variable stores the C# signature of the `ShowWindowAsync` function. To ensure that
+the resulting method is visible in a PowerShell session, the `public` keyword was added to the
+standard signature. For more information, see
+[ShowWindowAsync](/windows/win32/api/winuser/nf-winuser-showwindowasync) function.
+
+The `$ShowWindowAsync` variable stores the object created by the `Add-Type` **PassThru** parameter.
+The `Add-Type` cmdlet adds the `ShowWindowAsync` function to the PowerShell session as a static
+method. The command uses the **MemberDefinition** parameter to specify the method definition saved
+in the `$Signature` variable. The command uses the **Name** and **Namespace** parameters to specify
+a name and namespace for the class. The **PassThru** parameter generates an object that represents
+the types.
+
+The new `ShowWindowAsync` static method is used in the commands to minimize and restore the
+PowerShell console. The method takes two parameters: the window handle, and an integer that
+specifies how the window is displayed.
+
+To minimize the PowerShell console, `ShowWindowAsync` uses the `Get-Process` cmdlet with the `$PID`
+automatic variable to get the process that&#x27;s hosting the current PowerShell session. Then it uses
+the **MainWindowHandle** property of the current process and a value of `2`, which represents the
+`SW_MINIMIZE` value.
+
+To restore the window, `ShowWindowAsync` uses a value of `4` for the window position, which
+represents the `SW_RESTORE` value.
+
+To maximize the window, use the value of `3` that represents `SW_MAXIMIZE`.
+
+### Example 5: Add a type from a Visual Basic file
+
+This example uses the `Add-Type` cmdlet to add the **VBFromFile** class that&#x27;s defined in the
+`Hello.vb` file to the current session. The text of the `Hello.vb` file is shown in the command
+output.
+
+```powershell
+Add-Type -Path &quot;C:\PS-Test\Hello.vb&quot;
+[VBFromFile]::SayHello(&quot;, World&quot;)
+
+# From Hello.vb
+
+Public Class VBFromFile
+  Public Shared Function SayHello(sourceName As String) As String
+    Dim myValue As String = &quot;Hello&quot;
+    return myValue + sourceName
+  End Function
+End Class
+```
+
+```Output
+Hello, World
+```
+
+`Add-Type` uses the **Path** parameter to specify the source file, `Hello.vb`, and adds the type
+defined in the file. The `SayHello` function is called as a static method of the **VBFromFile**
+class.
+
+### Example 6: Add a class with JScript.NET
+
+This example uses JScript.NET to create a new class, **FRectangle**, in your PowerShell session.
+
+```powershell
+Add-Type @&#x27;
+ class FRectangle {
+   var Length : double;
+   var Height : double;
+   function Perimeter() : double {
+       return (Length + Height) * 2; }
+   function Area() : double {
+       return Length * Height;  } }
+&#x27;@ -Language JScript
+
+$rect = [FRectangle]::new()
+$rect
+```
+
+```Output
+Length Height
+------ ------
+     0      0
+```
+
+### Example 7: Add an F# compiler
+
+This example shows how to use the `Add-Type` cmdlet to add an F# code compiler to your PowerShell
+session. To run this example in PowerShell, you must have the `FSharp.Compiler.CodeDom.dll` that is
+installed with the F# language.
+
+```powershell
+Add-Type -Path &quot;FSharp.Compiler.CodeDom.dll&quot;
+$Provider = New-Object Microsoft.FSharp.Compiler.CodeDom.FSharpCodeProvider
+$FSharpCode = @&quot;
+let rec loop n =if n &lt;= 0 then () else beginprint_endline (string_of_int n);loop (n-1)end
+&quot;@
+$FSharpType = Add-Type -TypeDefinition $FSharpCode -CodeDomProvider $Provider -PassThru |
+   Where-Object { $_.IsPublic }
+$FSharpType::loop(4)
+```
+
+```Output
+4
+3
+2
+1
+```
+
+`Add-Type` uses the **Path** parameter to specify an assembly and gets the types in the assembly.
+`New-Object` creates an instance of the F# code provider and saves the result in the `$Provider`
+variable. The `$FSharpCode` variable saves the F# code that defines the **Loop** method.
+
+The `$FSharpType` variable stores the results of the `Add-Type` cmdlet that saves the public
+types defined in `$FSharpCode`. The **TypeDefinition** parameter specifies the source code that
+defines the types. The **CodeDomProvider** parameter specifies the source code compiler. The
+**PassThru** parameter directs `Add-Type` to return a **Runtime** object that represents the types.
+The objects are sent down the pipeline to the `Where-Object` cmdlet, which returns only the public
+types. The `Where-Object` cmdlet is used because the F# provider generates non-public types to
+support the resulting public type.
+
+The Loop method is called as a static method of the type stored in the `$FSharpType` variable.
+
+## PARAMETERS
+
+### -AssemblyName
+
+Specifies the name of an assembly that includes the types. `Add-Type` takes the types from the
+specified assembly. This parameter is required when you&#x27;re creating types based on an assembly name.
+
+Enter the full or simple name, also known as the partial name, of an assembly. Wildcard characters
+are permitted in the assembly name. If you enter a simple or partial name, `Add-Type` resolves it to
+the full name, and then uses the full name to load the assembly.
+
+Using the **Path** or **LiteralPath** parameters guarantees that you are loading the assembly that
+you intended to load. When you use the **AssemblyName** parameter, PowerShell asks .NET to resolve
+the assembly name using the standard .NET assembly resolution process. Since .NET searches the
+application folder first, `Add-Type` might load an assembly from `$PSHOME` instead of the version in
+the current folder. For more information, see
+[Assembly location](/dotnet/standard/assembly/location).
+
+If .NET fails to resolve the name, PowerShell then looks in the current location to find the
+assembly. When you use wildcards in the **AssemblyName** parameter, the .NET assembly resolution
+process fails causing PowerShell to look in the current location.
+
+
+```yaml
+Type: System.String[]
+Parameter Sets: FromAssemblyName
+Aliases: AN
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: True
+```
+
+### -CodeDomProvider
+
+Specifies a code generator or compiler. `Add-Type` uses the specified compiler to compile the source
+code. The default is the C# compiler. Use this parameter if you&#x27;re using a language that can&#x27;t be
+specified by using the **Language** parameter. The **CodeDomProvider** that you specify must be able
+to generate assemblies from source code.
+
+```yaml
+Type: System.CodeDom.Compiler.CodeDomProvider
+Parameter Sets: FromSource, FromMember
+Aliases: Provider
+
+Required: False
+Position: Named
+Default value: C# compiler
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -CompilerParameters
+
+Specifies the options for the source code compiler. These options are sent to the compiler without
+revision.
+
+This parameter allows you to direct the compiler to generate an executable file, embed resources, or
+set command-line options, such as the `/unsafe` option. This parameter implements the
+**CompilerParameters** class, **System.CodeDom.Compiler.CompilerParameters**.
+
+You can&#x27;t use the **CompilerParameters** and **ReferencedAssemblies** parameters in the same
+command.
+
+```yaml
+Type: System.CodeDom.Compiler.CompilerParameters
+Parameter Sets: FromSource, FromMember, FromPath, FromLiteralPath
+Aliases: CP
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+# Add-Type
+
+### -IgnoreWarnings
+
+Ignores compiler warnings. Use this parameter to prevent `Add-Type` from handling compiler warnings
+as errors.
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Language
+
+Specifies the language that is used in the source code. The `Add-Type` cmdlet uses the value of this
+parameter to select the appropriate **CodeDomProvider**. CSharp is the default value. The acceptable
+values for this parameter are as follows:
+
+- `CSharp`
+- `CSharpVersion2`
+- `CSharpVersion3`
+- `JScript`
+- `VisualBasic`
+
+```yaml
+Type: Microsoft.PowerShell.Commands.Language
+Parameter Sets: FromSource, FromMember
+Aliases:
+Accepted values: CSharp, CSharpVersion2, CSharpVersion3, JScript, VisualBasic
+
+Required: False
+Position: Named
+Default value: CSharp
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -LiteralPath
+
+Specifies the path to source code files or assembly DLL files that contain the types. Unlike
+**Path**, the value of the **LiteralPath** parameter is used exactly as it&#x27;s typed. No characters
+are interpreted as wildcards. If the path includes escape characters, enclose it in single quotation
+marks. Single quotation marks tell PowerShell not to interpret any characters as escape sequences.
+
+Using the **Path** or **LiteralPath** parameters guarantees that you are loading the assembly that
+you intended to load.
+
+```yaml
+Type: System.String[]
+Parameter Sets: FromLiteralPath
+Aliases: PSPath
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -MemberDefinition
+
+Specifies new properties or methods for the class. `Add-Type` generates the template code that&#x27;s
+required to support the properties or methods.
+
+On Windows, you can use this feature to make Platform Invoke (P/Invoke) calls to unmanaged functions
+in PowerShell.
+
+```yaml
+Type: System.String[]
+Parameter Sets: FromMember
+Aliases:
+
+Required: True
+Position: 1
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Name
+
+Specifies the name of the class to create. This parameter is required when generating a type from a
+member definition.
+
+The type name and namespace must be unique within a session. You can&#x27;t unload a type or change it.
+To change the code for a type, you must change the name or start a new PowerShell session.
+Otherwise, the command fails.
+
+```yaml
+Type: System.String
+Parameter Sets: FromMember
+Aliases:
+
+Required: True
+Position: 0
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Namespace
+
+By default, this command creates the type in the
+**Microsoft.PowerShell.Commands.AddType.AutoGeneratedTypes** namespace. When you use this parameter,
+the type is created in the specified namespace. If the value an empty string, the type is created in
+the global namespace.
+
+```yaml
+Type: System.String
+Parameter Sets: FromMember
+Aliases: NS
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -OutputAssembly
+
+Generates a DLL file for the assembly with the specified name in the location. Enter an optional
+path and filename. Wildcard characters are permitted. By default, `Add-Type` generates the assembly
+only in memory. If you output the assembly to a file you should include the **PassThru** parameter
+to return the type from the newly created assembly.
+
+```yaml
+Type: System.String
+Parameter Sets: FromSource, FromMember, FromPath, FromLiteralPath
+Aliases: OA
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: True
+```
+
+### -OutputType
+
+Specifies the output type of the output assembly. By default, no output type is specified. This
+parameter is valid only when an output assembly is specified in the command. For more information
+about the values, see
+[OutputAssemblyType Enumeration](/dotnet/api/microsoft.powershell.commands.outputassemblytype).
+
+The acceptable values for this parameter are as follows:
+
+- `ConsoleApplication`
+- `Library`
+- `WindowsApplication`
+
+```yaml
+Type: Microsoft.PowerShell.Commands.OutputAssemblyType
+Parameter Sets: FromSource, FromMember, FromPath, FromLiteralPath
+Aliases: OT
+Accepted values: ConsoleApplication, Library, WindowsApplication
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -PassThru
+
+Returns a **System.Runtime** object that represents the types that were added. By default, this
+cmdlet doesn&#x27;t generate any output. Use this parameter if you used **OutputAssembly** to create a
+DLL file and you want to return the type from the newly created assembly.
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Path
+
+Specifies the path to source code files or assembly DLL files that contain the types.
+
+If you submit source code files, `Add-Type` compiles the code in the files and creates an in-memory
+assembly of the types. The file extension specified in the value of **Path** determines the compiler
+that `Add-Type` uses.
+
+If you submit an assembly file, `Add-Type` takes the types from the assembly. To specify an
+in-memory assembly or the global assembly cache, use the **AssemblyName** parameter.
+
+```yaml
+Type: System.String[]
+Parameter Sets: FromPath
+Aliases:
+
+Required: True
+Position: 0
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -ReferencedAssemblies
+
+Specifies the assemblies upon which the type depends. By default, `Add-Type` references `System.dll`
+and `System.Management.Automation.dll`. The assemblies that you specify by using this parameter are
+referenced in addition to the default assemblies.
+
+You can&#x27;t use the **CompilerParameters** and **ReferencedAssemblies** parameters in the same
+command.
+
+```yaml
+Type: System.String[]
+Parameter Sets: FromSource, FromMember, FromPath, FromLiteralPath
+Aliases: RA
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -TypeDefinition
+
+Specifies the source code that contains the type definitions. Enter the source code in a string or
+here-string, or enter a variable that contains the source code. For more information about
+here-strings, see [about_Quoting_Rules](../Microsoft.PowerShell.Core/about/about_Quoting_Rules.md).
+
+Include a namespace declaration in your type definition. If you omit the namespace declaration, your
+type might have the same name as another type or the shortcut for another type, causing an
+unintentional overwrite. For example, if you define a type called **Exception**, scripts that use
+**Exception** as the shortcut for **System.Exception** will fail.
+
+```yaml
+Type: System.String
+Parameter Sets: FromSource
+Aliases:
+
+Required: True
+Position: 0
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+# Add-Type
+
+### -UsingNamespace
+
+Specifies other namespaces that are required for the class. This is much like the C# keyword,
+`Using`.
+
+By default, `Add-Type` references the **System** namespace. When the **MemberDefinition** parameter
+is used, `Add-Type` also references the **System.Runtime.InteropServices** namespace by default. The
+namespaces that you add by using the **UsingNamespace** parameter are referenced in addition to the
+default namespaces.
+
+```yaml
+Type: System.String[]
+Parameter Sets: FromMember
+Aliases: Using
+
+Required: False
+Position: Named
+Default value: System namespace
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### CommonParameters
+
+This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable,
+-InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose,
+-WarningAction, and -WarningVariable. For more information, see
+[about_CommonParameters](https://go.microsoft.com/fwlink/?LinkID=113216).
+
+## INPUTS
+
+### None
+
+You can&#x27;t pipe objects to this cmdlet.
+
+## OUTPUTS
+
+### None
+
+By default, this cmdlet returns no output.
+
+### System.Type
+
+When you use the **PassThru** parameter, this cmdlet returns a **System.Type** object representing
+the new type.
+
+## NOTES
+
+The types that you add exist only in the current session. To use the types in all sessions, add them
+to your PowerShell profile. For more information about the profile, see
+[about_Profiles](../Microsoft.PowerShell.Core/About/about_Profiles.md).
+
+Type names and namespaces must be unique within a session. You can&#x27;t unload a type or change it. If
+you need to change the code for a type, you must change the name or start a new PowerShell session.
+Otherwise, the command fails.
+
+The **CodeDomProvider** class for some languages, such as IronPython and J#, doesn&#x27;t generate
+output. As a result, types written in these languages can&#x27;t be used with `Add-Type`.
+
+This cmdlet is based on the Microsoft .NET Framework [CodeDomProvider Class](xref:System.CodeDom.Compiler.CodeDomProvider).
+
+## RELATED LINKS
+
+[about_Profiles](../Microsoft.PowerShell.Core/About/about_profiles.md)
+
+[about_Quoting_Rules](../Microsoft.PowerShell.Core/About/about_Quoting_Rules.md)
+
+[Add-Member](Add-Member.md)
+
+[New-Object](New-Object.md)
+
+[OutputAssemblyType](/dotnet/api/microsoft.powershell.commands.outputassemblytype)
+
+[Platform Invoke (P/Invoke)](/dotnet/standard/native-interop/pinvoke)
+
+[Where-Object](../Microsoft.PowerShell.Core/Where-Object.md)</pre></section>

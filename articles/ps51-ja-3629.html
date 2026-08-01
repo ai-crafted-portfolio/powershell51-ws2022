@@ -1,0 +1,1211 @@
+<!doctype html><meta charset="utf-8"><section class="jp-official"><h1>about_Transactionsについて</h1>
+<h2>短編説明</h2>
+<p>PowerShellで取引された操作を管理する方法について説明します.</p>
+<h2>長い説明</h2>
+<p>この機能により,トランザクションを開始し,トランザクションの一部となるコマンドを表示し,トランザクションをコミットまたはロールバックすることができます.</p>
+<p>PowerShellでは,トランザクションは論理単位として管理される1つまたは複数のコマンドの集合である.トランザクションが完了できる ("コミット"),その取引に影響されたデータを変更する.または,トランザクションが完全に撤回される ("ロールバック") により,影響を受けたデータは取引によって変更されない.</p>
+<p>取引のコマンドは単位として管理されているため,すべてのコマンドがコミットされるか,すべてのコマンドがロールバックされるか.</p>
+<p>取引は,データ処理において,特にデータベース操作や金融取引において,広く使用されています.取引は,コマンドセットの最悪のシナリオは,すべてのコマンドが失敗するというのではなく,一部のコマンドが成功し,他のコマンドが失敗し,システムが損傷した,誤り,または解釈できない状態で残され,修復するのが難しい場合に最もよく使用されます.</p>
+<h2>取引のcmdlets</h2>
+<p>PowerShellには,トランザクションを管理するために設計されたいくつかのcmdletが含まれています.</p>
+<ul>
+<li>-<code>Start-Transaction</code>: 新しい取引を開始します. - <code>Use-Transaction</code>: 取引にコマンドまたは表現を追加します.コマンドは取引可能のオブジェクトを使用する必要があります. - <code>Undo-Transaction</code>: 取引が変更されないように取引をバックアップします. - <code>Complete-Transaction</code>: 取引を約束する. 取引に影響されたデータは変更されます. - <code>Get-Transaction</code>: 活動中の取引に関する情報を入手します.</li>
+</ul>
+<p>取引のcmdletsのリストのために,入力してください:</p>
+<pre><code class="language-powershell">Get-Command *transaction
+</code></pre>
+<p>詳細な情報については,以下のような文字を入力してください.</p>
+<pre><code class="language-powershell">Get-Help Use-Transaction -Detailed
+</code></pre>
+<h2>取引可能要素</h2>
+<p>取引に参加するには,cmdletとプロバイダの両方が取引をサポートする必要があります.この機能は取引に影響を受けるオブジェクトに組み込まれています.</p>
+<p>PowerShell Registry プロバイダーはWindowsでトランザクションをサポートしています. <strong>TransactedString</strong> オブジェクトはPowerShellを実行するあらゆるオペレーティングシステムで動作します.</p>
+<p>取引をサポートするセッション内のPowerShellプロバイダーを見つけるには,次のコマンドを使用して,プロバイダの能力のプロパティの <strong>トランザクション</strong>値を検索してください:</p>
+<pre><code class="language-powershell">Get-PSProvider | Where-Object {$_.Capabilities -like &quot;*transactions*&quot;}
+</code></pre>
+<p>プロバイダーに関する詳細については,プロバイダーへの支援を参照してください.プロバイダーへの支援を入手するには,次のタイプを入力してください.</p>
+<pre><code>Get-Help &lt;provider-name&gt;
+</code></pre>
+<p>例えば,レジストリプロバイダーへのヘルプを取得するには,入力してください:</p>
+<pre><code class="language-powershell">Get-Help Registry
+</code></pre>
+<h2><strong>UseTransaction</strong>のパラメータを表示する</h2>
+<p>取引をサポートできるCmdletsには,UseTransaction<strong>のパラメータがあります.このパラメータにはアクティブトランザクションのコマンドが含まれています.完全なパラメータ名またはそのアライアス, </strong>usetx**を使用できます.</p>
+<p>このパラメータは,セッションがアクティブトランザクションを含んでいる場合にのみ使用できます.もし,アクティブトランザクションがないときに <strong>UseTransaction</strong>パラメータでコマンドを入力すると,コマンドが失敗します.</p>
+<p><strong>UseTransaction</strong>パラメータを持つcmdletsを見つけるには,次のタイプを入力してください.</p>
+<pre><code class="language-powershell">Get-Help * -Parameter UseTransaction
+</code></pre>
+<p>PowerShellコアでは,PowerShellプロバイダーと連携するように設計されたすべてのcmdletがトランザクションをサポートする.その結果,トランザクションを管理するためにプロバイダーcmdletsを使用することができます.</p>
+<p>PowerShell プロバイダーについての詳細については, [about_Providers] (about_Providers.md) を参照してください.</p>
+<h2>取引オブジェクト</h2>
+<p>PowerShellでトランザクションはトランザクションオブジェクト,システム管理自動化トランザクションによって表示されています.</p>
+<p>対象は以下の性質を有する:</p>
+<p><strong>RollbackPreference</strong>: 現在の取引のロールバック・プレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレレ<code>Start-Transaction</code>取引を開始する.</p>
+<p>ロールバックの優先順位は,トランザクションが自動的にロールバックされる条件を決定します.有効値は です.<code>Error</code>     <code>TerminatingError</code>そして,そして,<code>Never</code>デフォルト値は です.<code>Error</code> .</p>
+<p><strong>ステータス</strong>: 取引の現在の状態を記載しています.有効値は です.<code>Active</code>     <code>Committed</code>そして,そして,<code>RolledBack</code> .</p>
+<p><strong>SubscriberCount</strong>: 取引のサブスクリプション数を含みます. 取引を開始する際に別の取引が進行中である際に,取引にサブスクリプションを追加されます. 取引を契約する際にサブスクリプション数が減ります.</p>
+<h2>アクティブトランザクション</h2>
+<p>PowerShellでは,一度に1つのトランザクションがアクティブで,アクティブトランザクションのみを管理できます.複数のトランザクションが同時に同じセッションで進行できますが,最も最近開始されたトランザクションのみがアクティブです.</p>
+<p>その結果,取引のcmdletsを使用する際に特定の取引を指定することはできません.コマンドは常にアクティブ取引に適用されます.</p>
+<p>これは, の行動で最も明らかです.<code>Get-Transaction</code>cmdlet.  を入力すると,<code>Get-Transaction</code> コマンド<code>Get-Transaction</code>必ず1つのトランザクションオブジェクトしか得られない.このオブジェクトは,アクティブトランザクションを表すオブジェクトです.</p>
+<p>異なる取引を管理するには,まず,実行する取引を完了する必要があります.またはそれを実行するか,またはそれを戻す必要があります.そうすると,以前の取引は自動的に活性化します.取引は,開始された順の逆で活性化します.したがって,最も最近開始された取引は常に活性化します.</p>
+<h2>サブスクライヤーと独立取引です.</h2>
+<p>別の取引が進行中である間に取引を開始した場合,默认的に,PowerShell は新しい取引を開始しません.代わりに,現在の取引に"サブスクリプション"を追加します.</p>
+<p>取引が複数のサブスクリプションを持つ場合,単一の取引は<code>Undo-Transaction</code>命令は,すべてのサブスクリプションの取引をすべて後回します.しかし,取引を実行するには,  を入力する必要があります.<code>Complete-Transaction</code>各サブスクリプションのコマンド.</p>
+<p>取引のサブスクリプション数を調べるには,取引オブジェクトのサブスクリプションカウントプロパティをチェックしてください.例えば,次のコマンドは""を使用します.<code>Get-Transaction</code>活跃取引のサブスクリプションカウントプロパティの値を入手するには cmdlet:</p>
+<pre><code class="language-powershell">(Get-Transaction).SubscriberCount
+</code></pre>
+<p>サブランクを追加することは,他の取引が進行中である間に開始されたほとんどの取引が元の取引に関連しているため,デフォルトの行動です.典型的なモデルでは,取引を含むスクリプトは,取引を含むヘルパースクリプトを呼びます.取引が関連しているため,それらを回転または単位としてコミットする必要があります.</p>
+<p>しかし,現在の取引から独立する取引を開始するには, の独立パラメータを使用して開始できます.<code>Start-Transaction</code>cmdletです.</p>
+<p>独立取引を開始すると,<code>Start-Transaction</code>新しいトランザクションオブジェクトが作成され,新しいトランザクションがアクティブトランザクションになります.独立したトランザクションは,元のトランザクションに影響を及ぼすことなく,コミットまたはロールバックすることができます.</p>
+<p>独立取引が完了すると (コミットまたはロールバック) 最初取引は再びアクティブ取引になります.</p>
+<h1>about_Transactionsについて</h1>
+<h2>データの変更について</h2>
+<p>取引でデータを変更する際に,取引が影響を受けるデータは,あなたが取引を実行するまで変更されません.しかし,同じデータは取引の一部でないコマンドによって変更できます.</p>
+<p>共有されたデータを管理するために取引を使用しているときに,これを覚えておいてください.通常,データベースには,あなたが作業している間にデータをロックするメカニズムがあり,他のユーザー,および他のコマンド,スクリプト,および機能が変更されないようにします.</p>
+<p>しかし,ロックはデータベースの特徴です. 取引とは関係ありません. 取引を有効にしたファイルシステムまたは他のデータストレージで働いている場合は,取引が進行中である間にデータが変更できます.</p>
+<h2>例文</h2>
+<p>このセクションの例では,PowerShell Registry プロバイダーを使用し,あなたがそれを熟知していると考えます.Registry プロバイダーに関する情報については,  タイプしてください.<code>Get-Help Registry</code> .</p>
+<h3>例1:取引を遂行する</h3>
+<p>取引を作成するには,  を使います.<code>Start-Transaction</code>cmdlet.次のコマンドは,デフォルト設定で取引を開始します.</p>
+<pre><code class="language-powershell">Start-Transaction
+</code></pre>
+<p>取引にコマンドを入れると,cmdletの UseTransaction パラメータを使用します.デフォルトでは,コマンドは取引に含まれていません.</p>
+<p>例えば,次のコマンドで,  のソフトウェアキーで現在の位置を設定します.<code>HKCU:</code>ドライブは取引に含まれていない.</p>
+<pre><code class="language-powershell">cd HKCU:\Software
+</code></pre>
+<p>MyCompany キーを作成する次のコマンドは,  の <strong>UseTransaction</strong> パラメータを使用します.<code>New-Item</code>cmdlet は,アクティブトランザクションにコマンドを入れます.</p>
+<pre><code class="language-powershell">New-Item MyCompany -UseTransaction
+</code></pre>
+<p>このコマンドは新しい鍵を表すオブジェクトを返しますが,コマンドは取引の一部なので,レジスタはまだ変更されていません.</p>
+<pre><code>Hive: HKEY_CURRENT_USER\Software
+
+SKC  VC Name                           Property
+---  -- ----                           --------
+  0   0 MyCompany                      {}
+</code></pre>
+<p>取引を遂行するには,  を使ってください.<code>Complete-Transaction</code>cmdlet.常にアクティブトランザクションに影響を与えるので,トランザクションを指定することはできません.</p>
+<pre><code class="language-powershell">Complete-Transaction
+</code></pre>
+<p>その結果,その  は<code>MyCompany</code>鍵がレジストリに追加されます.</p>
+<pre><code class="language-powershell">dir m*
+</code></pre>
+<pre><code class="language-output">Hive: HKEY_CURRENT_USER\software
+
+SKC  VC Name                           Property
+---  -- ----                           --------
+ 83   1 Microsoft                      {(default)}
+  0   0 MyCompany                      {}
+</code></pre>
+<h3>例2:取引を巻き戻す</h3>
+<p>取引を作成するには,  を使います.<code>Start-Transaction</code>cmdlet.次のコマンドは,デフォルト設定で取引を開始します.</p>
+<pre><code class="language-powershell">Start-Transaction
+</code></pre>
+<p>次のコマンドでMyOtherCompanyキーが作成され, のUseTransactionパラメータを使用します.<code>New-Item</code>cmdlet は,アクティブトランザクションにコマンドを入れます.</p>
+<pre><code class="language-powershell">New-Item MyOtherCompany -UseTransaction
+</code></pre>
+<p>このコマンドは新しい鍵を表すオブジェクトを返しますが,コマンドは取引の一部なので,レジスタはまだ変更されていません.</p>
+<pre><code>Hive: HKEY_CURRENT_USER\Software
+
+SKC  VC Name                           Property
+---  -- ----                           --------
+  0   0 MyOtherCompany                 {}
+</code></pre>
+<p>取引を後回すには,  を使います.<code>Undo-Transaction</code>cmdlet.常にアクティブトランザクションに影響を与えるので,トランザクションを指定しません.</p>
+<pre><code class="language-powershell">Undo-Transaction
+</code></pre>
+<p>結果として,その  は<code>MyOtherCompany</code>鍵は登録に追加されていない.</p>
+<pre><code class="language-powershell">dir m*
+</code></pre>
+<pre><code class="language-output">Hive: HKEY_CURRENT_USER\software
+
+SKC  VC Name                           Property
+---  -- ----                           --------
+ 83   1 Microsoft                      {(default)}
+  0   0 MyCompany                      {}
+</code></pre>
+<h3>例3:取引の先見を表示する</h3>
+<p>通常,取引で使用されるコマンドはデータを変更する.しかし,データを取得するコマンドは,取引中にデータを取得しているため,取引でも有用です.これは取引を実行することで引き起こされる変化の予見を提供します.</p>
+<p>次の例では,の使い方について説明します.<code>Get-ChildItem</code>コマンド (仮名は )<code>dir</code>) 取引の変更を先見で見ることができます.</p>
+<p>次のコマンドで取引を開始します.</p>
+<pre><code class="language-powershell">Start-Transaction
+</code></pre>
+<p>次のコマンドは,  を使っています.<code>New-ItemProperty</code> を追加するcmdlet<code>MyKey</code>MyCompany のレジスタキーのエントリーです.このコマンドは,取引にコマンドを組み込むために,UseTransaction パラメータを使用します.</p>
+<pre><code class="language-powershell">New-ItemProperty -Path MyCompany -Name MyKey -Value 123 -UseTransaction
+</code></pre>
+<p>コマンドは,新しいレジストリエントリを表すオブジェクトを返却しますが,レジストリエントリは変更されていません.</p>
+<pre><code>MyKey
+-----
+123
+</code></pre>
+<p>現在登録されているアイテムを取得するには,  を使ってください.<code>Get-ChildItem</code>コマンド ()<code>dir</code>) で使用トランザクションパラメータなし.次のコマンドは"M." で始まるアイテムを表示します.</p>
+<pre><code class="language-powershell">dir m*
+</code></pre>
+<p>結果は,まだ  に追加されたエントリがないことを示しています.<code>MyCompany</code>鍵です.</p>
+<pre><code class="language-output">Hive: HKEY_CURRENT_USER\Software
+
+SKC  VC Name                           Property
+---  -- ----                           --------
+ 83   1 Microsoft                      {(default)}
+  0   0 MyCompany                      {}
+</code></pre>
+<p>取引を行う結果を先見見見るために,  を入力してください.<code>Get-ChildItem</code>()<code>dir</code>) コマンドは,UseTransaction パラメータで操作されます.このコマンドは,取引中のデータを見ることができます.</p>
+<pre><code class="language-powershell">dir m* -UseTransaction
+</code></pre>
+<p>結果は,取引が完了した場合,取引の  が決まることを示しています.<code>MyKey</code>へのエントリが追加されます.<code>MyCompany</code>鍵です.</p>
+<pre><code class="language-output">Hive: HKEY_CURRENT_USER\Software
+
+SKC  VC Name                           Property
+---  -- ----                           --------
+ 83   1 Microsoft                      {(default)}
+  0   1 MyCompany                      {MyKey}
+</code></pre>
+<h1>about_Transactionsについて</h1>
+<h3>例4:取引されたコマンドと取引されていないコマンドを組み合わせる</h3>
+<p>取引中に取引されていないコマンドを入力できます.取引されていないコマンドは,データを直ちに影響しますが,取引に影響しません.次のコマンドは,  で取引を開始します.<code>HKCU:\Software</code>登録鍵です.</p>
+<pre><code class="language-powershell">Start-Transaction
+</code></pre>
+<p>次の3つのコマンドは""を用います.<code>New-Item</code>cmdlet はレジストリにキーを追加する.最初のコマンドと第3のコマンドは,取引のコマンドを包含するためにUseTransaction パラメータを使用します.第2のコマンドはパラメータを省きます.第2のコマンドは取引に含まれていないため,すぐに有効になります.</p>
+<pre><code class="language-powershell">New-Item MyCompany1 -UseTransaction
+New-Item MyCompany2
+New-Item MyCompany3 -UseTransaction
+</code></pre>
+<p>登録の現在の状態を表示するには,  を使ってください.<code>Get-ChildItem</code>() <code>dir</code>) は,UseTransaction パラメータなしでコマンドされます.このコマンドは,  で始まるアイテムを取得します.<code>M</code> .</p>
+<pre><code class="language-powershell">dir m*
+</code></pre>
+<p>結果は,  の値が<code>MyCompany2</code>鍵はレジストリに追加されますが,鍵は です.<code>MyCompany1</code>そして,<code>MyCompany3</code>取引の一部となる鍵は追加されません.</p>
+<pre><code class="language-output">Hive: HKEY_CURRENT_USER\Software
+
+SKC  VC Name                           Property
+---  -- ----                           --------
+ 83   1 Microsoft                      {(default)}
+  0    0 MyCompany2                     {}
+</code></pre>
+<p>次のコマンドで取引を実行します.</p>
+<pre><code class="language-powershell">Complete-Transaction
+</code></pre>
+<p>さて,取引の一環として追加された鍵は,レジストリに表示されます.</p>
+<pre><code class="language-powershell">dir m*
+</code></pre>
+<pre><code class="language-output">Hive: HKEY_CURRENT_USER\Software
+
+SKC  VC Name                           Property
+---  -- ----                           --------
+83   1 Microsoft                      {(default)}
+0    0 MyCompany1                     {}
+0    0 MyCompany2                     {}
+0    0 MyCompany3                     {}
+</code></pre>
+<h3>例5:自動ロールバックを使用する</h3>
+<p>取引のコマンドが何らかのエラーを生む場合,取引は自動的に戻されます.</p>
+<p>このデフォルト行動は,トランザクションを実行するスクリプトのために設計されています.スクリプトは通常テストされ,エラー処理論理を含んでいます.したがって,エラーが予想されないため,トランザクションを終了する必要があります.</p>
+<p>最初のコマンドは,  のトランザクションを起動します.<code>HKCU:\Software</code>登録鍵です.</p>
+<pre><code class="language-powershell">Start-Transaction
+</code></pre>
+<p>次のコマンドは,  を使っています.<code>New-Item</code> を追加するcmdlet<code>MyCompany</code>コマンドは,取引にコマンドを組み込むために, <strong>UseTransaction</strong>パラメータ (仮名は <strong>usetx</strong>) を使用します.</p>
+<pre><code class="language-powershell">New-Item MyCompany -usetx
+</code></pre>
+<p>なぜなら,その <code>MyCompany</code>鍵は既にレジストリに存在し,コマンドが失敗し,取引が戻る.</p>
+<pre><code class="language-output">New-Item : A key at this path already exists
+At line:1 char:9
++ New-Item &lt;&lt;&lt;&lt;  MyCompany -usetx
+</code></pre>
+<p>A  <code>Get-Transaction</code>取引が戻されたと確認し,サブスクリバーカウントが0であることを確認します.</p>
+<pre><code class="language-output">RollbackPreference   SubscriberCount   Status
+------------------   ---------------   ------
+Error                0                 RolledBack
+</code></pre>
+<h3>例6:ロールバックの好みを変更する</h3>
+<p>取引がエラー耐性が高いようにしたい場合は,RollbackPreferenceのパラメータを使用できます.<code>Start-Transaction</code>選択を変更する.</p>
+<p>次のコマンドは,ロールバック・プレレファンスの のトランザクションを起動します.<code>Never</code> .</p>
+<pre><code class="language-powershell">Start-Transaction -RollbackPreference Never
+</code></pre>
+<p>この場合,コマンドが失敗すると,トランザクションは自動的に戻らない.</p>
+<pre><code class="language-powershell">New-Item MyCompany -usetx
+</code></pre>
+<pre><code class="language-output">New-Item : A key at this path already exists
+At line:1 char:9
++ New-Item &lt;&lt;&lt;&lt;  MyCompany -usetx
+</code></pre>
+<p>取引がまだ活発なので,取引の一環としてコマンドを再提出できます.</p>
+<pre><code class="language-powershell">New-Item MyOtherCompany -usetx
+</code></pre>
+<h3>例7:  を使って<code>Use-Transaction</code>cmdlet</h3>
+<p><code>Use-Transaction</code>cmdlet は,取引を可能にする Microsoft .NET Framework オブジェクトに対して直接スクリプトを作成できるようにします. <code>Use-Transaction</code>取引可能である .NET Framework オブジェクトを使用するコマンドと表現のみを含むスクリプトブロックを採取します.例えば <strong>Microsoft.PowerShell.Commands.Management.TransactedString</strong> クラスのインスタンスの例です.</p>
+<p>次のコマンドで取引を開始します.</p>
+<pre><code class="language-powershell">Start-Transaction
+</code></pre>
+<p>以下のようなもの<code>New-Object</code>コマンドは <strong>TransactedString</strong> クラスのインスタンスを作成し,それを  に保存します.<code>$t</code>変数です.</p>
+<pre><code class="language-powershell">$t = New-Object Microsoft.PowerShell.Commands.Management.TransactedString
+</code></pre>
+<p>次のコマンドは,文字列にテキストを追加するために, <strong>TransactedString</strong>オブジェクトの添付方法を使用します.コマンドは取引の一部ではないので,変更は直ちに有効です.</p>
+<pre><code class="language-powershell">$t.Append(&quot;Windows&quot;)
+</code></pre>
+<p>次のコマンドは,テキストを追加するために同じアペンド方法を使用しますが,トランザクションの一部としてテキストを追加します.コマンドは括弧に囲まれ, の <strong>ScriptBlock</strong>パラメータの値として設定されます.<code>Use-Transaction</code>. <strong>UseTransaction</strong>のパラメータ (<strong>usetx</strong>) が求められます.</p>
+<pre><code class="language-powershell">Use-Transaction {$t.Append(&quot; PowerShell&quot;)} -usetx
+</code></pre>
+<p>取引された文字列の現在の内容を  で表示するには,<code>$t</code> を使って,<code>ToString</code><strong>トランザクションストリング</strong>オブジェクトの方法.</p>
+<pre><code class="language-powershell">$t.ToString()
+</code></pre>
+<p>輸出結果は,取引されていない変更のみが有効であることを示しています.</p>
+<pre><code class="language-output">Windows
+</code></pre>
+<p>取引中のトランザクションから$tで取引された文字列の現在のコンテンツを表示するには,表現を""に埋め込む.<code>Use-Transaction</code>命令です.</p>
+<pre><code class="language-powershell">Use-Transaction {$t.ToString()} -usetx
+</code></pre>
+<p>輸出はトランザクションビューを表示します.</p>
+<pre><code class="language-output">PowerShell
+</code></pre>
+<p>次のコマンドで取引を実行します.</p>
+<pre><code class="language-powershell">Complete-Transaction
+</code></pre>
+<p>最終文字列を見るために:</p>
+<pre><code>$t.ToString()
+PowerShell
+</code></pre>
+<h1>about_Transactionsについて</h1>
+<h3>例8:マルチサブスクリプション取引を管理する</h3>
+<p>別の取引が進行中である間に取引を開始すると,PowerShellはデフォルトで2番目の取引を作成しません.代わりに,現在の取引にサブスクリプションを追加します.</p>
+<p>この例では,複数のサブスクリントの取引を表示し管理する方法を示しています.</p>
+<p>取引を開始して始めましょう.<code>HKCU:\Software</code>鍵です.</p>
+<pre><code class="language-powershell">Start-Transaction
+</code></pre>
+<p>次のコマンドは,  を使っています.<code>Get-Transaction</code>取引をアクティブにするコマンドです.</p>
+<pre><code class="language-powershell">Get-Transaction
+</code></pre>
+<p>結果は,アクティブトランザクションを表すオブジェクトを示します.</p>
+<pre><code class="language-output">RollbackPreference   SubscriberCount   Status
+------------------   ---------------   ------
+Error                1                 Active
+</code></pre>
+<p>次のコマンドは,レジストリにMyCompanyキーを追加します.このコマンドは,取引にコマンドを組み込むために UseTransaction パラメータを使用します.</p>
+<pre><code class="language-powershell">New-Item MyCompany -UseTransaction
+</code></pre>
+<p>次のコマンドは,  を使っています.<code>Start-Transaction</code>このコマンドはコマンドプロンプトで入力されているが,取引を含むスクリプトを実行するとこのシナリオが起こる可能性が高い.</p>
+<pre><code class="language-powershell">Start-Transaction
+</code></pre>
+<p>A  <code>Get-Transaction</code>取引オブジェクトのサブスクリントカウントが増加していることを示すコマンドです.現在値は2です.</p>
+<pre><code class="language-output">RollbackPreference   SubscriberCount   Status
+------------------   ---------------   ------
+Error                2                 Active
+</code></pre>
+<p>次のコマンドは,  を使います.<code>New-ItemProperty</code>MyCompany キーにMyKey レジストリエントリを追加するには cmdlet を使用します.この操作には,コマンドを入れます.</p>
+<pre><code class="language-powershell">New-ItemProperty -Path MyCompany -Name MyKey -UseTransaction
+</code></pre>
+<p>MyCompany キーは登録書に存在しないが,このコマンドは成功する理由は,両コマンドが同じ取引の一部だからです.</p>
+<p>次のコマンドで取引を約束します.もし取引を逆転させれば,すべてのサブスクリプションで取引が逆転されます.</p>
+<pre><code class="language-powershell">Complete-Transaction
+</code></pre>
+<p>A  <code>Get-Transaction</code>取引オブジェクトのサブスクリントカウントが1であることを示すコマンドですが,ステータスの値はまだアクティブ (コミットされていない) です.</p>
+<pre><code class="language-output">RollbackPreference   SubscriberCount   Status
+------------------   ---------------   ------
+Error                1                 Active
+</code></pre>
+<p>取引を完了するには,第2の Complete- Transaction コマンドを入力します.<code>Complete-Transaction</code>各のコマンドに該当する.<code>Start-Transaction</code>命令です.</p>
+<pre><code class="language-powershell">Complete-Transaction
+</code></pre>
+<p>もう1つ <code>Get-Transaction</code>コマンドは,取引が完了したことを示す.</p>
+<pre><code class="language-output">RollbackPreference   SubscriberCount   Status
+------------------   ---------------   ------
+Error                0                 Committed
+</code></pre>
+<h3>例 9: 独立取引を管理する</h3>
+<p>別の取引が進行中である間に取引を開始する際, の独立パラメータを用いることができます.<code>Start-Transaction</code>新しい取引を元の取引から独立させる.</p>
+<p>あなたがそうするときは,<code>Start-Transaction</code>新しいトランザクションオブジェクトを作成し,新しいトランザクションをアクティブトランザクションにする.</p>
+<p>取引を開始して始めましょう.<code>HKCU:\Software</code>鍵です.</p>
+<pre><code class="language-powershell">Start-Transaction
+</code></pre>
+<p>次のコマンドは,  を使っています.<code>Get-Transaction</code>取引をアクティブにするコマンドです.</p>
+<pre><code class="language-powershell">Get-Transaction
+</code></pre>
+<p>結果は,アクティブトランザクションを表すオブジェクトを示します.</p>
+<pre><code class="language-output">RollbackPreference   SubscriberCount   Status
+------------------   ---------------   ------
+Error                1                 Active
+</code></pre>
+<p>次のコマンドは,取引の一環としてMyCompanyレジストリキーを追加します.このコマンドをアクティブトランザクションに組み込むために, <strong>UseTransaction</strong>パラメータ (<strong>usetx</strong>) を使用します.</p>
+<pre><code class="language-powershell">New-Item MyCompany -use
+</code></pre>
+<p>次のコマンドは新しいトランザクションを起動します.このコマンドは,このトランザクションがアクティブトランザクションのサブスクランタではないことを示すために独立パラメータを使用します.</p>
+<pre><code class="language-powershell">Start-Transaction -Independent
+</code></pre>
+<p>独立した取引を作成すると,新しい (最近作成された) 取引がアクティブ取引になります.<code>Get-Transaction</code>取引をアクティブにするコマンドです.</p>
+<pre><code class="language-powershell">Get-Transaction
+</code></pre>
+<p>取引のサブスクリプションカウントが1であることを注意してください.これは他のサブスクリプションがないことを示すものであり,取引は新しくなっていることを示すものです.</p>
+<pre><code class="language-output">RollbackPreference   SubscriberCount   Status
+------------------   ---------------   ------
+Error                1                 Active
+</code></pre>
+<p>新しい取引は,元の取引を管理する前に完成する必要があります (コミットまたはロールバックです).</p>
+<p>次のコマンドは,レジストリにMyOtherCompanyキーを追加します.このコマンドは,アクティブトランザクションにコマンドを組み込むために, <strong>UseTransaction</strong>パラメータ (<strong>usetx</strong>) を使用します.</p>
+<pre><code class="language-powershell">New-Item MyOtherCompany -usetx
+</code></pre>
+<p>もし2人のサブスクリントが取引を回すだけで,取引を回すということは,すべてのサブスクリントに取引を回すことになる.</p>
+<p>しかし,これらの取引は独立しているため,最新の取引をリロールするとレジストリ変更がキャンセルされ,元の取引がアクティブ取引になります.</p>
+<pre><code class="language-powershell">Undo-Transaction
+</code></pre>
+<p>A  <code>Get-Transaction</code>コマンドは,元の取引がセッション中にまだ活発であることを確認します.</p>
+<pre><code class="language-powershell">Get-Transaction
+</code></pre>
+<pre><code class="language-output">RollbackPreference   SubscriberCount   Status
+------------------   ---------------   ------
+Error                1                 Active
+</code></pre>
+<p>次のコマンドで,アクティブトランザクションをコミットします.</p>
+<pre><code class="language-powershell">Complete-Transaction
+</code></pre>
+<p>A  <code>Get-ChildItem</code>命令は,レジストリが変更されたことを示します.</p>
+<pre><code class="language-powershell">dir m*
+</code></pre>
+<pre><code class="language-output">Hive: HKEY_CURRENT_USER\Software
+
+SKC  VC Name                           Property
+---  -- ----                           --------
+ 83   1 Microsoft                      {(default)}
+  0   0 MyCompany                      {}
+</code></pre>
+<h2>また, を参照してください.</h2>
+<p>[about_Providers] ((about_Providers.md) - [Get-ChildItem] (xref:Microsoft.PowerShell.Management.Get-ChildItem) - [Get-PSProvider] (xref:Microsoft.PowerShell.Management.Get-PSProvider) - [Complete-Transaction] (xref:Microsoft.PowerShell.Management.Complete-Transaction) - [Get-Transaction] (xref:Microsoft.PowerShell.Get-Management.Get-Transaction) - [Start-Transaction] (xref:Microsoft.PowerShell.Management.Get-Start-Transaction) - [U-Transaction] (xref:Microsoft.PowerShell.Management.U-Transaction) - [U-Transaction.U-Transaction.U-Transaction.U-Transaction.U-Transaction.</p></section><section class="en-original"><pre class="source-original"># about_Transactions
+
+## Short description
+
+Describes how to manage transacted operations in PowerShell.
+
+## Long description
+
+Transactions are supported in PowerShell beginning in PowerShell 2.0. This
+feature enables you to start a transaction, to indicate which commands are part
+of the transaction, and to commit or roll back a transaction.
+
+In PowerShell, a transaction is a set of one or more commands that are managed
+as a logical unit. A transaction can be completed (&quot;committed&quot;), which changes
+data affected by the transaction. Or, a transaction can be completely undone
+(&quot;rolled back&quot;) so that the affected data isn&#x27;t changed by the transaction.
+
+Because the commands in a transaction are managed as a unit, either all
+commands are committed, or all commands are rolled back.
+
+Transactions are widely used in data processing, most notably in database
+operations and for financial transactions. Transactions are most often used
+when the worst-case scenario for a set of commands isn&#x27;t that they all fail,
+but that some commands succeed while others fail, leaving the system in a
+damaged, false, or uninterpretable state that&#x27;s difficult to repair.
+
+## Transaction cmdlets
+
+PowerShell includes several cmdlets designed for managing transactions.
+
+- `Start-Transaction`: Starts a new transaction.
+- `Use-Transaction`: Adds a command or expression to the transaction. The
+  command must use transaction-enabled objects.
+- `Undo-Transaction`: Rolls back the transaction so that no data is changed by
+  the transaction.
+- `Complete-Transaction`: Commits the transaction. The data affected by the
+  transaction is changed.
+- `Get-Transaction`: Gets information about the active transaction.
+
+For a list of transaction cmdlets, type:
+
+```powershell
+Get-Command *transaction
+```
+
+For detailed information about the cmdlets, type:
+
+```powershell
+Get-Help Use-Transaction -Detailed
+```
+
+## Transaction-enabled elements
+
+To participate in a transaction, both the cmdlet and the provider must support
+transactions. This feature is built into the objects that are affected by the
+transaction.
+
+The PowerShell Registry provider supports transactions in Windows. The
+**TransactedString** object works with any operating system that runs
+PowerShell.
+
+Other PowerShell providers can support transactions. To find the PowerShell
+providers in your session that support transactions, use the following command
+to find the **Transactions** value in the **Capabilities** property of
+providers:
+
+```powershell
+Get-PSProvider | Where-Object {$_.Capabilities -like &quot;*transactions*&quot;}
+```
+
+For more information about a provider, see the Help for the provider. To get
+provider help, type:
+
+```
+Get-Help &lt;provider-name&gt;
+```
+
+For example, to get Help for the Registry provider, type:
+
+```powershell
+Get-Help Registry
+```
+
+## The **UseTransaction** parameter
+
+Cmdlets that can support transactions have a **UseTransaction** parameter. This
+parameter includes the command in the active transaction. You can use the full
+parameter name or its alias, **usetx**.
+
+The parameter can be used only when the session contains an active transaction.
+If you enter a command with the **UseTransaction** parameter when there is no
+active transaction, the command fails.
+
+To find cmdlets with the **UseTransaction** parameter, type:
+
+```powershell
+Get-Help * -Parameter UseTransaction
+```
+
+In PowerShell core, all the cmdlets designed to work with PowerShell providers
+support transactions. As a result, you can use the provider cmdlets to manage
+transactions.
+
+For more information about PowerShell providers, see
+[about_Providers](about_Providers.md).
+
+## The transaction object
+
+Transactions are represented in PowerShell by a transaction object,
+**System.Management.Automation.Transaction**.
+
+The object has the following properties:
+
+- **RollbackPreference**: Contains the rollback preference set for the current
+  transaction. You can set the rollback preference when you use
+  `Start-Transaction` to start the transaction.
+
+  The rollback preference determines the conditions under which the transaction
+  is rolled back automatically. Valid values are `Error`, `TerminatingError`,
+  and `Never`. The default value is `Error`.
+
+- **Status**: Contains the current status of the transaction. Valid values are
+  `Active`, `Committed`, and `RolledBack`.
+
+- **SubscriberCount**: Contains the number of subscribers to the transaction. A
+  subscriber is added to a transaction when you start a transaction while
+  another transaction is in progress. The subscriber count is decremented when
+  a subscriber commits the transaction.
+
+## Active transactions
+
+In PowerShell, only one transaction is active at a time, and you can manage
+only the active transaction. Multiple transactions can be in progress in the
+same session at the same time, but only the most-recently started transaction
+is active.
+
+As a result, you can&#x27;t specify a particular transaction when using the
+transaction cmdlets. Commands always apply to the active transaction.
+
+This is most evident in the behavior of the `Get-Transaction` cmdlet. When you
+enter a `Get-Transaction` command, `Get-Transaction` always gets only one
+transaction object. This object is the object that represents the active
+transaction.
+
+To manage a different transaction, you must first finish the active
+transaction, either by committing it or rolling it back. When you do this, the
+previous transaction becomes active automatically. Transactions become active
+in the reverse of order of which they&#x27;re started, so that the most recently
+started transaction is always active.
+
+## Subscribers and independent transactions
+
+If you start a transaction while another transaction is in progress, by
+default, PowerShell doesn&#x27;t start a new transaction. Instead, it adds a
+&quot;subscriber&quot; to the current transaction.
+
+When a transaction has multiple subscribers, a single `Undo-Transaction`
+command at any point rolls back the entire transaction for all subscribers.
+However, to commit the transaction, you must enter a `Complete-Transaction`
+command for every subscriber.
+
+To find the number of subscribers to a transaction, check the SubscriberCount
+property of the transaction object. For example, the following command uses the
+`Get-Transaction` cmdlet to get the value of the SubscriberCount property of
+the active transaction:
+
+```powershell
+(Get-Transaction).SubscriberCount
+```
+
+Adding a subscriber is the default behavior because most transactions that are
+started while another transaction is in progress are related to the original
+transaction. In the typical model, a script that contains a transaction calls a
+helper script that contains its own transaction. Because the transactions are
+related, they should be rolled back or committed as a unit.
+
+However, you can start a transaction that&#x27;s independent of the current
+transaction by using the Independent parameter of the `Start-Transaction`
+cmdlet.
+
+When you start an independent transaction, `Start-Transaction` creates a new
+transaction object, and the new transaction becomes the active transaction. The
+independent transaction can be committed or rolled back without affecting the
+original transaction.
+
+When the independent transaction is finished (committed or rolled back), the
+original transaction becomes the active transaction again.
+
+# about_Transactions
+
+## Changing data
+
+When you use transactions to change data, the data that&#x27;s affected by the
+transaction isn&#x27;t changed until you commit the transaction. However, the same
+data can be changed by commands that aren&#x27;t part of the transaction.
+
+Keep this in mind when you are using transactions to manage shared data.
+Typically, databases have mechanisms that lock the data while you are working
+on it, preventing other users, and other commands, scripts, and functions, from
+changing it.
+
+However, the lock is a feature of the database. It isn&#x27;t related to
+transactions. If you are working in a transaction-enabled file system or other
+data store, the data can be changed while the transaction is in progress.
+
+## Examples
+
+The examples in this section use the PowerShell Registry provider and assume
+that you are familiar with it. For information about the Registry provider,
+type `Get-Help Registry`.
+
+### Example 1: Committing a transaction
+
+To create a transaction, use the `Start-Transaction` cmdlet. The following
+command starts a transaction with the default settings.
+
+```powershell
+Start-Transaction
+```
+
+To include commands in the transaction, use the UseTransaction parameter of the
+cmdlet. By default, commands aren&#x27;t included in the transaction,
+
+For example, the following command, which sets the current location in the
+Software key of the `HKCU:` drive, isn&#x27;t included in the transaction.
+
+```powershell
+cd HKCU:\Software
+```
+
+The following command, which creates the MyCompany key, uses the
+**UseTransaction** parameter of the `New-Item` cmdlet to include the command in
+the active transaction.
+
+```powershell
+New-Item MyCompany -UseTransaction
+```
+
+The command returns an object that represents the new key, but because the
+command is part of the transaction, the registry isn&#x27;t yet changed.
+
+```
+Hive: HKEY_CURRENT_USER\Software
+
+SKC  VC Name                           Property
+---  -- ----                           --------
+  0   0 MyCompany                      {}
+```
+
+To commit the transaction, use the `Complete-Transaction` cmdlet. Because it
+always affects the active transaction, you can&#x27;t specify the transaction.
+
+```powershell
+Complete-Transaction
+```
+
+As a result, the `MyCompany` key is added to the registry.
+
+```powershell
+dir m*
+```
+
+```output
+Hive: HKEY_CURRENT_USER\software
+
+SKC  VC Name                           Property
+---  -- ----                           --------
+ 83   1 Microsoft                      {(default)}
+  0   0 MyCompany                      {}
+```
+
+### Example 2: Rolling back a transaction
+
+To create a transaction, use the `Start-Transaction` cmdlet. The following
+command starts a transaction with the default settings.
+
+```powershell
+Start-Transaction
+```
+
+The following command, which creates the MyOtherCompany key, uses the
+UseTransaction parameter of the `New-Item` cmdlet to include the command in the
+active transaction.
+
+```powershell
+New-Item MyOtherCompany -UseTransaction
+```
+
+The command returns an object that represents the new key, but because the
+command is part of the transaction, the registry isn&#x27;t yet changed.
+
+```
+Hive: HKEY_CURRENT_USER\Software
+
+SKC  VC Name                           Property
+---  -- ----                           --------
+  0   0 MyOtherCompany                 {}
+```
+
+To roll back the transaction, use the `Undo-Transaction` cmdlet. Because it
+always affects the active transaction, you don&#x27;t specify the transaction.
+
+```powershell
+Undo-Transaction
+```
+
+The result is that the `MyOtherCompany` key isn&#x27;t added to the registry.
+
+```powershell
+dir m*
+```
+
+```output
+Hive: HKEY_CURRENT_USER\software
+
+SKC  VC Name                           Property
+---  -- ----                           --------
+ 83   1 Microsoft                      {(default)}
+  0   0 MyCompany                      {}
+```
+
+### Example 3: Previewing a transaction
+
+Typically, the commands used in a transaction change data. However, the
+commands that get data are useful in a transaction, too, because they get data
+inside of the transaction. This provides a preview of the changes that
+committing the transaction would cause.
+
+The following example shows how to use the `Get-ChildItem` command (the alias
+is `dir`) to preview the changes in a transaction.
+
+The following command starts a transaction.
+
+```powershell
+Start-Transaction
+```
+
+The following command uses the `New-ItemProperty` cmdlet to add the `MyKey`
+registry entry to the MyCompany key. The command uses the UseTransaction
+parameter to include the command in the transaction.
+
+```powershell
+New-ItemProperty -Path MyCompany -Name MyKey -Value 123 -UseTransaction
+```
+
+The command returns an object representing the new registry entry, but the
+registry entry isn&#x27;t changed.
+
+```
+MyKey
+-----
+123
+```
+
+To get the items that are currently in the registry, use a `Get-ChildItem`
+command (`dir`) without the UseTransaction parameter. The following command
+gets items that begin with &quot;M.&quot;
+
+```powershell
+dir m*
+```
+
+The result shows that no entries have yet been added to the `MyCompany` key.
+
+```output
+Hive: HKEY_CURRENT_USER\Software
+
+SKC  VC Name                           Property
+---  -- ----                           --------
+ 83   1 Microsoft                      {(default)}
+  0   0 MyCompany                      {}
+```
+
+To preview the effect of committing the transaction, enter a `Get-ChildItem`
+(`dir`) command with the UseTransaction parameter. This command has a view of
+the data from within the transaction.
+
+```powershell
+dir m* -UseTransaction
+```
+
+The result shows that, if the transaction is committed, the `MyKey` entry is
+added to the `MyCompany` key.
+
+```output
+Hive: HKEY_CURRENT_USER\Software
+
+SKC  VC Name                           Property
+---  -- ----                           --------
+ 83   1 Microsoft                      {(default)}
+  0   1 MyCompany                      {MyKey}
+```
+
+# about_Transactions
+
+### Example 4: Combining transacted and non-transacted commands
+
+You can enter non-transacted commands during a transaction. The non-transacted
+commands affect the data immediately, but they don&#x27;t affect the transaction.
+The following command starts a transaction in the `HKCU:\Software` registry
+key.
+
+```powershell
+Start-Transaction
+```
+
+The next three commands use the `New-Item` cmdlet to add keys to the registry.
+The first and third commands use the UseTransaction parameter to include the
+commands in the transaction. The second command omits the parameter. Because
+the second command isn&#x27;t included in the transaction, it&#x27;s effective
+immediately.
+
+```powershell
+New-Item MyCompany1 -UseTransaction
+New-Item MyCompany2
+New-Item MyCompany3 -UseTransaction
+```
+
+To view the current state of the registry, use a `Get-ChildItem` (`dir`)
+command without the UseTransaction parameter. This command gets items that
+begin with `M`.
+
+```powershell
+dir m*
+```
+
+The result shows that the `MyCompany2` key is added to the registry, but the
+`MyCompany1` and `MyCompany3` keys, which are part of the transaction, aren&#x27;t
+added.
+
+```output
+Hive: HKEY_CURRENT_USER\Software
+
+SKC  VC Name                           Property
+---  -- ----                           --------
+ 83   1 Microsoft                      {(default)}
+  0    0 MyCompany2                     {}
+```
+
+The following command commits the transaction.
+
+```powershell
+Complete-Transaction
+```
+
+Now, the keys that were added as part of the transaction appear in the
+registry.
+
+```powershell
+dir m*
+```
+
+```output
+Hive: HKEY_CURRENT_USER\Software
+
+SKC  VC Name                           Property
+---  -- ----                           --------
+83   1 Microsoft                      {(default)}
+0    0 MyCompany1                     {}
+0    0 MyCompany2                     {}
+0    0 MyCompany3                     {}
+```
+
+### Example 5: Using automatic rollback
+
+When a command in a transaction generates an error of any kind, the transaction
+is automatically rolled back.
+
+This default behavior is designed for scripts that run transactions. Scripts
+are typically well tested and include error-handling logic, so errors aren&#x27;t
+expected and should terminate the transaction.
+
+The first command starts a transaction in the `HKCU:\Software` registry key.
+
+```powershell
+Start-Transaction
+```
+
+The following command uses the `New-Item` cmdlet to add the `MyCompany` key to
+the registry. The command uses the **UseTransaction** parameter (the alias is
+**usetx**) to include the command in the transaction.
+
+```powershell
+New-Item MyCompany -usetx
+```
+
+Because the `MyCompany` key already exists in the registry, the command fails,
+and the transaction is rolled back.
+
+```output
+New-Item : A key at this path already exists
+At line:1 char:9
++ New-Item &lt;&lt;&lt;&lt;  MyCompany -usetx
+```
+
+A `Get-Transaction` command confirms that the transaction has been rolled back
+and that the SubscriberCount is 0.
+
+```output
+RollbackPreference   SubscriberCount   Status
+------------------   ---------------   ------
+Error                0                 RolledBack
+```
+
+### Example 6: Changing the rollback preference
+
+If you want the transaction to be more error tolerant, you can use the
+**RollbackPreference** parameter of `Start-Transaction` to change the
+preference.
+
+The following command starts a transaction with a rollback preference of
+`Never`.
+
+```powershell
+Start-Transaction -RollbackPreference Never
+```
+
+In this case, when the command fails, the transaction isn&#x27;t automatically
+rolled back.
+
+```powershell
+New-Item MyCompany -usetx
+```
+
+```output
+New-Item : A key at this path already exists
+At line:1 char:9
++ New-Item &lt;&lt;&lt;&lt;  MyCompany -usetx
+```
+
+Because the transaction is still active, you can resubmit the command as part
+of the transaction.
+
+```powershell
+New-Item MyOtherCompany -usetx
+```
+
+### Example 7: Using the `Use-Transaction` cmdlet
+
+The `Use-Transaction` cmdlet enables you to do direct scripting against
+transaction-enabled Microsoft .NET Framework objects. `Use-Transaction` takes a
+script block that can only contain commands and expressions that use
+transaction-enabled .NET Framework objects, such as instances of the
+**Microsoft.PowerShell.Commands.Management.TransactedString** class.
+
+The following command starts a transaction.
+
+```powershell
+Start-Transaction
+```
+
+The following `New-Object` command creates an instance of the
+**TransactedString** class and saves it in the `$t` variable.
+
+```powershell
+$t = New-Object Microsoft.PowerShell.Commands.Management.TransactedString
+```
+
+The following command uses the Append method of the **TransactedString** object
+to add text to the string. Because the command isn&#x27;t part of the transaction,
+the change is effective immediately.
+
+```powershell
+$t.Append(&quot;Windows&quot;)
+```
+
+The following command uses the same Append method to add text, but it adds the
+text as part of the transaction. The command is enclosed in braces, and it&#x27;s
+set as the value of the **ScriptBlock** parameter of `Use-Transaction`. The
+**UseTransaction** parameter (**usetx**) is required.
+
+```powershell
+Use-Transaction {$t.Append(&quot; PowerShell&quot;)} -usetx
+```
+
+To see the current content of the transacted string in `$t`, use the `ToString`
+method of the **TransactedString** object.
+
+```powershell
+$t.ToString()
+```
+
+The output shows that only the non-transacted changes are effective.
+
+```output
+Windows
+```
+
+To see the current content of the transacted string in $t from within the
+transaction, embed the expression in a `Use-Transaction` command.
+
+```powershell
+Use-Transaction {$t.ToString()} -usetx
+```
+
+The output shows the transaction view.
+
+```output
+PowerShell
+```
+
+The following command commits the transaction.
+
+```powershell
+Complete-Transaction
+```
+
+To see the final string:
+
+```
+$t.ToString()
+PowerShell
+```
+
+# about_Transactions
+
+### Example 8: Managing multi-subscriber transactions
+
+When you start a transaction while another transaction is in progress,
+PowerShell doesn&#x27;t create a second transaction by default. Instead, it adds a
+subscriber to the current transaction.
+
+This example shows how to view and manage a multi-subscriber transaction.
+
+Begin by starting a transaction in the `HKCU:\Software` key.
+
+```powershell
+Start-Transaction
+```
+
+The following command uses the `Get-Transaction` command to get the active
+transaction.
+
+```powershell
+Get-Transaction
+```
+
+The result shows the object that represents the active transaction.
+
+```output
+RollbackPreference   SubscriberCount   Status
+------------------   ---------------   ------
+Error                1                 Active
+```
+
+The following command adds the MyCompany key to the registry. The command uses
+the UseTransaction parameter to include the command in the transaction.
+
+```powershell
+New-Item MyCompany -UseTransaction
+```
+
+The following command uses the `Start-Transaction` command to start a
+transaction. Although this command is typed at the command prompt, this
+scenario is more likely to happen when you run a script that contains a
+transaction.
+
+```powershell
+Start-Transaction
+```
+
+A `Get-Transaction` command shows that the subscriber count on the transaction
+object is incremented. The value is now 2.
+
+```output
+RollbackPreference   SubscriberCount   Status
+------------------   ---------------   ------
+Error                2                 Active
+```
+
+The next command uses the `New-ItemProperty` cmdlet to add the MyKey registry
+entry to the MyCompany key. It uses the UseTransaction parameter to include
+the command in the transaction.
+
+```powershell
+New-ItemProperty -Path MyCompany -Name MyKey -UseTransaction
+```
+
+The MyCompany key doesn&#x27;t exist in the registry, but this command succeeds
+because the two commands are part of the same transaction.
+
+The following command commits the transaction. If it rolled back the
+transaction, the transaction would be rolled back for all the subscribers.
+
+```powershell
+Complete-Transaction
+```
+
+A `Get-Transaction` command shows that the subscriber count on the transaction
+object is 1, but the value of Status is still Active (not Committed).
+
+```output
+RollbackPreference   SubscriberCount   Status
+------------------   ---------------   ------
+Error                1                 Active
+```
+
+To finish committing the transaction, enter a second Complete- Transaction
+command. To commit a multi-subscriber transaction, you must enter one
+`Complete-Transaction` command for each `Start-Transaction` command.
+
+```powershell
+Complete-Transaction
+```
+
+Another `Get-Transaction` command shows that the transaction has been committed.
+
+```output
+RollbackPreference   SubscriberCount   Status
+------------------   ---------------   ------
+Error                0                 Committed
+```
+
+### Example 9: Managing independent transactions
+
+When you start a transaction while another transaction is in progress, you can
+use the **Independent** parameter of `Start-Transaction` to make the new
+transaction independent of the original transaction.
+
+When you do, `Start-Transaction` creates a new transaction object and makes the
+new transaction the active transaction.
+
+Begin by starting a transaction in the `HKCU:\Software` key.
+
+```powershell
+Start-Transaction
+```
+
+The following command uses the `Get-Transaction` command to get the active
+transaction.
+
+```powershell
+Get-Transaction
+```
+
+The result shows the object that represents the active transaction.
+
+```output
+RollbackPreference   SubscriberCount   Status
+------------------   ---------------   ------
+Error                1                 Active
+```
+
+The following command adds the MyCompany registry key as part of the
+transaction. It uses the **UseTransaction** parameter (**usetx**) to include
+the command in the active transaction.
+
+```powershell
+New-Item MyCompany -use
+```
+
+The following command starts a new transaction. The command uses the
+Independent parameter to indicate that this transaction isn&#x27;t a subscriber to
+the active transaction.
+
+```powershell
+Start-Transaction -Independent
+```
+
+When you create an independent transaction, the new (most-recently created)
+transaction becomes the active transaction. You can use a `Get-Transaction`
+command to get the active transaction.
+
+```powershell
+Get-Transaction
+```
+
+Note that the SubscriberCount of the transaction is 1, indicating that there
+are no other subscribers and that the transaction is new.
+
+```output
+RollbackPreference   SubscriberCount   Status
+------------------   ---------------   ------
+Error                1                 Active
+```
+
+The new transaction must be finished (either committed or rolled back) before
+you can manage the original transaction.
+
+The following command adds the MyOtherCompany key to the registry. It uses the
+**UseTransaction** parameter (**usetx**) to include the command in the active
+transaction.
+
+```powershell
+New-Item MyOtherCompany -usetx
+```
+
+Now, roll back the transaction. If there were a single transaction with two
+subscribers, rolling back the transaction would roll back the entire
+transaction for all the subscribers.
+
+However, because these transactions are independent, rolling back the newest
+transaction cancels the registry changes and makes the original transaction
+the active transaction.
+
+```powershell
+Undo-Transaction
+```
+
+A `Get-Transaction` command confirms that the original transaction is still
+active in the session.
+
+```powershell
+Get-Transaction
+```
+
+```output
+RollbackPreference   SubscriberCount   Status
+------------------   ---------------   ------
+Error                1                 Active
+```
+
+The following command commits the active transaction.
+
+```powershell
+Complete-Transaction
+```
+
+A `Get-ChildItem` command shows that the registry has been changed.
+
+```powershell
+dir m*
+```
+
+```output
+Hive: HKEY_CURRENT_USER\Software
+
+SKC  VC Name                           Property
+---  -- ----                           --------
+ 83   1 Microsoft                      {(default)}
+  0   0 MyCompany                      {}
+```
+
+## See also
+
+- [about_Providers](about_Providers.md)
+- [Get-ChildItem](xref:Microsoft.PowerShell.Management.Get-ChildItem)
+- [Get-PSProvider](xref:Microsoft.PowerShell.Management.Get-PSProvider)
+- [Complete-Transaction](xref:Microsoft.PowerShell.Management.Complete-Transaction)
+- [Get-Transaction](xref:Microsoft.PowerShell.Management.Get-Transaction)
+- [Start-Transaction](xref:Microsoft.PowerShell.Management.Start-Transaction)
+- [Undo-Transaction](xref:Microsoft.PowerShell.Management.Undo-Transaction)
+- [Use-Transaction](xref:Microsoft.PowerShell.Management.Use-Transaction)</pre></section>

@@ -1,0 +1,591 @@
+<!doctype html><meta charset="utf-8"><section class="jp-official"><h1>about_Member-Access_Enumerationについて</h1>
+<h2>短編説明</h2>
+<p>メンバーアクセスオペレーターを使用する際にコレクションの自動数値を記述します.</p>
+<h2>長い説明</h2>
+<p>PowerShellでは数え切れないタイプのリストを保持しています.PowerShell 3.0から, _member-access enumeration_機能は,メンバーアクセスオペレーター () を利用の便利性を向上させます.<code>.</code>) は数え切れないほどのコレクションオブジェクトに.</p>
+<p>メンバーアクセス数目化は,よりシンプルで短いコードを書くのに役立ちます. 集合オブジェクトをパイプして  に送る代わりに,<code>ForEach-Object</code> を使ったりしない.<code>ForEach()</code>[内在方法][04]は,コレクション内の各項目のメンバーにアクセスするには,コレクションオブジェクトのメンバーアクセスオペレーターを使用できます.</p>
+<p>次の例では同じ結果が得られます.最後の例では,メンバーアクセスオペレーターの使用を示しています.</p>
+<pre><code class="language-powershell">PS&gt; Get-Service -Name event* | ForEach-Object -Process { $_.DisplayName }
+Windows Event Log
+COM+ Event System
+PS&gt; (Get-Service -Name event*).ForEach({ $_.DisplayName })
+Windows Event Log
+COM+ Event System
+PS&gt; (Get-Service -Name event*).DisplayName
+Windows Event Log
+COM+ Event System
+</code></pre>
+<p>&gt; [!NOTE] &gt; 集合内の &gt; 項目の属性の値を入手するためにメンバーアクセスオペレータを使用できますが,直接設定することはできません.詳細については, [about_Arrays][02]を参照してください.メンバーアクセスリストは &gt; 便利機能です.様々なリスト方法の間に微妙な行動とパフォーマンス差異が起こり得る.</p>
+<p>オブジェクトでメンバーアクセスオペレーターを使用すると,指定されたメンバーがそのオブジェクトに存在すると,そのメンバーが呼び出される.指定されたメンバーがないコレクションオブジェクトでメンバーアクセスオペレーターを使用すると,PowerShell はそのコレクション内のアイテムをリストアップし,各リストのアイテムにメンバーアクセスオペレーターを使用します.</p>
+<p>属性に関する会員アクセス数算中に,オペレーターはその属性を持つ各項目の属性の値を返します.いずれも指定された属性を持たない場合,オペレーターは返します <code>$null</code> .</p>
+<p>方法のメンバーアクセス数算中に,オペレーターは集合内の各項目の方法を呼び出すことを試みます.集合内のいずれかの項目は指定された方法がない場合,オペレーターは <strong>MethodNotFound</strong>例外を返します.</p>
+<p>[!WARNING] &gt; 方法のメンバーアクセス数列中に,その方法がコレクション内の各項目の"つに呼び出される.あなたが呼び出す方法が変更をすると,その変更はコレクション内の各項目の"つにします. リストの"つ中にエラーが発生した場合,その方法は"つ前のリストの"つにのみ呼び出される.追加の安全のために,手動でリストをしたり,任意のエラーを明確に処理したりすることを考慮してください.</p>
+<h2>数え切れないオブジェクトのアクセスメンバー</h2>
+<p>計数できないコレクションではないオブジェクトにメンバーアクセスオペレーターを使用すると,PowerShellはそのオブジェクトの方法のプロパティまたは輸出値を返却するためにメンバーを呼び出す.</p>
+<pre><code class="language-powershell">PS&gt; $MyString = 'abc'
+PS&gt; $MyString.Length
+3
+PS&gt; $MyString.ToUpper()
+ABC
+</code></pre>
+<p>メンバーがいない数目のないオブジェクトでメンバーアクセスオペレーターを使用すると,PowerShellが返却します.<code>$null</code>欠落したプロパティや,欠落した方法に対するMethodNotFoundエラーについて.</p>
+<pre><code class="language-powershell">PS&gt; $MyString = 'abc'
+PS&gt; $null -eq $MyString.DoesNotExist
+True
+PS&gt; $MyString.DoesNotExist()
+Method invocation failed because [System.String] does not contain a method named 'DoesNotExist'.
+At line:1 char:1
++ $MyString.DoesNotExist()
++ ~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidOperation: (:) [], RuntimeException
+    + FullyQualifiedErrorId : MethodNotFound
+
+</code></pre>
+<h2>集合オブジェクトのアクセスメンバー</h2>
+<p>会員を持つ集合オブジェクトでメンバーアクセスオペレーターを使用すると,常に集合オブジェクトのプロパティ値または方法結果が返されます.</p>
+<h3>集合に存在するアクセスメンバーが,そのアイテムではない.</h3>
+<p>この例では,指定されたメンバーはコレクションに存在しますが,その中のアイテムには含まれていません.</p>
+<pre><code class="language-powershell">PS&gt; [System.Collections.Generic.List[string]]$Collection = @('a', 'b')
+PS&gt; $Collection.IsReadOnly
+False
+PS&gt; $Collection.Add('c')
+PS&gt; $Collection
+a
+b
+c
+</code></pre>
+<h3>集合とそのアイテムに存在するアクセスメンバー</h3>
+<p>この例では,指定されたメンバーは集合とその中のアイテムの両方で存在します. 集合のメンバーアクセスオペレーターを使用したコマンドの結果を,集合のメンバーアクセスオペレーターを使用した結果と比較してください.  の集合アイテムでメンバーアクセスオペレーターを使用した結果.<code>ForEach-Object</code>集合では,オペレーターは集合対象のプロパティ値または方法結果を返します.その中の項目を返さない.</p>
+<pre><code class="language-powershell">PS&gt; [System.Collections.Generic.List[string]]$Collection = @('a', 'b', 'c')
+PS&gt; $Collection.Count
+3
+PS&gt; $Collection | ForEach-Object -Process { $_.Count }
+1
+1
+1
+PS&gt; $Collection.ToString()
+System.Collections.Generic.List`1[System.String]
+PS&gt; $Collection | ForEach-Object -Process { $_.ToString() }
+a
+b
+c
+</code></pre>
+<p>&gt; [!NOTE] &gt;HashTable<strong>やOrderedDictionary</strong>などの<strong>System.Collections.IDictionary</strong>インターフェースを実装するコレクションは,異なる行動をとる. &gt; キーがプロパティと同じ名前を持つ辞書でメンバーアクセスオペレーターを使用すると,そのキーがプロパティの代わりに鍵の値を返します. &gt; &gt; 辞書オブジェクトのプロパティ値を<strong>psbase</strong> &gt; [内在メンバー][03].例えば,キー名は である場合は,<code>keys</code>そして,あなたがHashTable キーのコレクションを返したい場合は,この構文を使用してください.```powershell</p>
+<blockquote>
+<p>$hashtable.psbase.Keys
+```</p>
+</blockquote>
+<h3>集合内のすべての項目に存在するアクセスメンバーが,その中に存在しない.</h3>
+<p>メンバーがいない集合オブジェクトでメンバーアクセスオペレーターを使用する場合は,PowerShellで集合中のアイテムをリストし,各アイテムのプロパティ値または方法結果を返します.</p>
+<pre><code class="language-powershell">PS&gt; [System.Collections.Generic.List[string]]$Collection = @('a', 'b', 'c')
+PS&gt; $Collection.Length
+1
+1
+1
+PS&gt; $Collection.ToUpper()
+A
+B
+C
+</code></pre>
+<h3>集合やそのアイテムに存在しないアクセスメンバーです.</h3>
+<p>メンバーがいない,その中のアイテムもいないコレクションオブジェクトでメンバーアクセスオペレーターを使用すると,コマンドは返されます.<code>$null</code>資産や,  を指定した場合.<code>MethodNotFound</code>方法を指定するとエラーが発生します.</p>
+<pre><code class="language-powershell">PS&gt; [System.Collections.Generic.List[string]]$Collection = @('a', 'b', 'c')
+PS&gt; $null -eq $Collection.DoesNotExist
+True
+PS&gt; $Collection.DoesNotExist()
+InvalidOperation: Method invocation failed because [System.String] does not
+contain a method named 'DoesNotExist'.
+</code></pre>
+<p>集合オブジェクトにメンバーがいないため,PowerShell で集合内のアイテムをリストにしました. <strong>MethodNotFound</strong>エラーでは <strong>System.String</strong> が <strong>System.Collections.Generic.List</strong> の代わりに方法を含まないことを指定しています.</p>
+<h3>集合内の一部の項目にのみ存在するアクセス方法</h3>
+<p>集合対象にメソッドが存在しない,集合内の一部の項目のみがある方法にアクセスするためにメンバーアクセスオペレーターを使用すると,コマンドは  を返します.<code>MethodNotFound</code>方法がないコレクションの最初の項目の場合は,その方法が一部の項目に呼び出される場合でも,コマンドはエラーのみ返します.</p>
+<pre><code class="language-powershell">PS&gt; @('a', 1, 'c').ToUpper()
+InvalidOperation: Method invocation failed because [System.Int32] does not
+contain a method named 'ToUpper'.
+</code></pre>
+<h1>about_Member-Access_Enumerationについて</h1>
+<h3>集合内の一部の項目にのみ存在するアクセスプロパティです</h3>
+<p>集合の属性を持たないオブジェクトの属性にアクセスするためにメンバーアクセスオペレーターを使用すると,コレクション内の一部の項目はそれを持っているだけで,コマンドは属性を持つコレクション内の各項目の属性値を返します.</p>
+<pre><code class="language-powershell">PS&gt; $CapitalizedProperty = @{
+    MemberType = 'ScriptProperty'
+    Name       = 'Capitalized'
+    Value      = { $this.ToUpper() }
+    PassThru   = $true
+}
+PS&gt; [System.Collections.Generic.List[Object]]$MixedCollection = @(
+    'a'
+    ('b' | Add-Member @CapitalizedProperty)
+    ('c' | Add-Member @CapitalizedProperty)
+    'd'
+)
+PS&gt; $MixedCollection.Capitalized
+B
+C
+</code></pre>
+<h3>巣箱集合のメンバーへのアクセス</h3>
+<p>集合が巣立っている集合を含んでいる場合,それぞれの集合にメンバーアクセス数値が適用されます.</p>
+<p>例えば, <code>$a</code>2つの要素を構成するアレイです. 巣の配列と単一の文字列です.</p>
+<pre><code class="language-powershell">
+# Get the count of items in the array.
+PS&gt; $a.Count
+2
+
+# Get the count of items in each nested item.
+PS&gt; $a.GetEnumerator().Count
+2
+1
+
+# Call the ToUpper() method on all items in the nested array.
+PS&gt; $a = @(, ('bar', 'baz'), 'foo')
+PS&gt; $a.ToUpper()
+BAR
+BAZ
+FOO
+</code></pre>
+<p>メンバーアクセスオペレーターを使用すると,PowerShellは,  で項目をリストする.<code>$a</code>そして,その名詞を呼んでます.<code>ToUpper()</code>すべての項目の方法.</p>
+<h2>筆記</h2>
+<p>前述したように,様々な数算方法の間に微妙な行動とパフォーマンス差がある可能性があります.</p>
+<h3>誤りによって输出が失われる.</h3>
+<p>メンバーアクセス数目がエラーによって終了すると,以前の成功方法通話からの出力が返されません.終了するエラー条件には:</p>
+<ul>
+<li>リストに載っているオブジェクトにはアクセスされた方法がない - アクセスされた方法により終了エラーが発生します</li>
+</ul>
+<p>次の例を見てみましょう.</p>
+<pre><code class="language-powershell">class Class1 { [Object] Foo() { return 'Bar' } }
+class Class2 { [void] Foo() { throw 'Error' } }
+class Class3 {}
+
+$example1 = ([Class1]::new(), [Class1]::new())
+$example2 = ([Class1]::new(), [Class2]::new())
+$example3 = ([Class1]::new(), [Class3]::new())
+</code></pre>
+<p>両項目は,  のいずれかにあります.<code>$example1</code> を持っていきます.<code>Foo()</code>方法,つまり方法呼び出しが成功します.</p>
+<pre><code class="language-powershell">PS&gt; $example1.Foo()
+Bar
+Bar
+</code></pre>
+<p><code>Foo()</code> の第2項の方法について<code>$example2</code>誤差を投げ出しますので,数えが失敗します.</p>
+<pre><code class="language-powershell">PS&gt; $example2.Foo()
+Exception:
+Line |
+   2 |  class Class2 { [void] Foo() { throw 'Error' } }
+     |                                ~~~~~~~~~~~~~
+     | Error
+</code></pre>
+<p>の第2項目です.<code>$example2</code>は持っていない.<code>Foo()</code>計算方法が失敗するので,計算方法が失敗する.</p>
+<pre><code class="language-powershell">PS&gt; $example3.Foo()
+InvalidOperation: Method invocation failed because [Class3] does not contain
+a method named 'Foo'.
+</code></pre>
+<p>これは,  を使って数えることに比較してみてください.<code>ForEach-Object</code></p>
+<pre><code class="language-powershell">PS&gt; $example2 | ForEach-Object -MemberName Foo
+Bar
+ForEach-Object: Exception calling &quot;Foo&quot; with &quot;0&quot; argument(s): &quot;Error&quot;
+PS&gt; $example3 | ForEach-Object -MemberName Foo
+Bar
+</code></pre>
+<p>輸出が成功した呼び出しを表示していることを注意してください.<code>Foo()</code>アレア内の最初の項目に.</p>
+<h3>PSCustomObject インスタンスを含むコレクション</h3>
+<p>オブジェクトコレクションにPSCustomObject オブジェクトのインスタンスを含む場合,PowerShellが予期せぬ形で返却します.<code>$null</code>アクセスしたプロパティが欠けているときの値です.</p>
+<p>次の例では,少なくとも一つのオブジェクトが参照された属性を持っている.</p>
+<pre><code class="language-powershell">PS&gt; $foo = [pscustomobject]@{ Foo = 'Foo' }
+PS&gt; $bar = [pscustomobject]@{ Bar = 'Bar' }
+PS&gt; $baz = [pscustomobject]@{ Baz = 'Baz' }
+PS&gt; ConvertTo-Json ($foo, $bar, $baz).Foo
+[
+  &quot;Foo&quot;,
+  null,
+  null
+]
+PS&gt; ConvertTo-Json ((Get-Process -Id $PID), $foo).Name
+[
+  &quot;pwsh&quot;,
+  null
+]
+</code></pre>
+<p>PowerShellが指定したプロパティを持つアイテムに対して単一のオブジェクトを返すことを期待する.代わりに,PowerShellはまた""を返します.<code>$null</code>属性を持たない各項目の値です.</p>
+<p>この行動に関する詳細については,PowerShell Issue [#13752][13752]を参照してください.</p>
+<h2>また, を参照してください.</h2>
+<p>[about_Arrays][01] - [about_Intrinsic_Members][03] - [about_Methods][05] - [about_Operators][06] - [about_Properties][07]</p>
+<p>&lt;!--リンク参照 --&gt; [01]: about_Arrays.md [02]: about_Arrays.md#member-access-enumeration [03]: about_Intrinsic_Members.md [04]: about_Intrinsic_Members.md#methods [05]: about_Methods.md [06]: about_Operators.md [07]: about_Properties.md [13752]: https://github.com/PowerShell/PowerShell/issues/13752</p></section><section class="en-original"><pre class="source-original"># about_Member-Access_Enumeration
+
+## Short description
+
+Describes the automatic enumeration of collections when using the member-access
+operator.
+
+## Long description
+
+PowerShell maintains a list of types that are enumerable. Starting in
+PowerShell 3.0, the _member-access enumeration_ feature improves the
+convenience of using the member-access operator (`.`) on collection objects
+that are enumerable.
+
+Member-access enumeration helps you write simpler and shorter code. Instead of
+piping a collection object to `ForEach-Object` or using the `ForEach()`
+[intrinsic method][04] to access members on each item in the collection, you
+can use the member-access operator on the collection object.
+
+The following examples produce the same results. The last example demonstrates
+the use of the member-access operator:
+
+```powershell
+PS&gt; Get-Service -Name event* | ForEach-Object -Process { $_.DisplayName }
+Windows Event Log
+COM+ Event System
+PS&gt; (Get-Service -Name event*).ForEach({ $_.DisplayName })
+Windows Event Log
+COM+ Event System
+PS&gt; (Get-Service -Name event*).DisplayName
+Windows Event Log
+COM+ Event System
+```
+
+&gt; [!NOTE]
+&gt; You can use the member-access operator to get the values of a property on
+&gt; items in a collection but you can&#x27;t use it to set them directly. For more
+&gt; information, see [about_Arrays][02]. Member-access enumeration is a
+&gt; convenience feature. There can be subtle behavior and performance differences
+&gt; between the various enumeration methods.
+
+When you use the member-access operator on an object and the specified member
+exists on that object, the member is invoked. When you use the member-access
+operator on a collection object that doesn&#x27;t have the specified member,
+PowerShell enumerates the items in that collection and uses the member-access
+operator on each enumerated item.
+
+During member-access enumeration for a property, the operator returns the value
+of the property for each item that has that property. If no items have the
+specified property, the operator returns `$null`.
+
+During member-access enumeration for a method, the operator attempts to call
+the method on each item in the collection. If any item in the collection does
+not have the specified method, the operator returns the **MethodNotFound**
+exception.
+
+&gt; [!WARNING]
+&gt; During member-access enumeration for a method, the method is called on each
+&gt; item in the collection. If the method you are calling makes changes, the
+&gt; changes are made for every item in the collection. If an error occurs during
+&gt; enumeration, the method is called only on the items enumerated before the
+&gt; error. For additional safety, consider manually enumerating the items and
+&gt; explicitly handling any errors.
+
+## Access members of a non-enumerable object
+
+When you use the member-access operator on an object that isn&#x27;t an enumerable
+collection, PowerShell invokes the member to returns the value of the property
+or output of the method for that object.
+
+```powershell
+PS&gt; $MyString = &#x27;abc&#x27;
+PS&gt; $MyString.Length
+3
+PS&gt; $MyString.ToUpper()
+ABC
+```
+
+When you use the member-access operator on a non-enumerable object that doesn&#x27;t
+have the member, PowerShell returns `$null` for the missing property or a
+**MethodNotFound** error for the missing method.
+
+```powershell
+PS&gt; $MyString = &#x27;abc&#x27;
+PS&gt; $null -eq $MyString.DoesNotExist
+True
+PS&gt; $MyString.DoesNotExist()
+Method invocation failed because [System.String] does not contain a method named &#x27;DoesNotExist&#x27;.
+At line:1 char:1
++ $MyString.DoesNotExist()
++ ~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidOperation: (:) [], RuntimeException
+    + FullyQualifiedErrorId : MethodNotFound
+
+```
+
+## Access members of a collection object
+
+When you use the member-access operator on a collection object that has the
+member, it always returns the property value or method result for the
+collection object.
+
+### Access members that exist on the collection but not its items
+
+In this example, the specified members exist on the collection but not the
+items in it.
+
+```powershell
+PS&gt; [System.Collections.Generic.List[string]]$Collection = @(&#x27;a&#x27;, &#x27;b&#x27;)
+PS&gt; $Collection.IsReadOnly
+False
+PS&gt; $Collection.Add(&#x27;c&#x27;)
+PS&gt; $Collection
+a
+b
+c
+```
+
+### Access members that exist on the collection and its items
+
+For this example, the specified members exist on both the collection and the
+items in it. Compare the results of the commands using the member-access
+operator on the collection to the results from using the member-access operator
+on the collection items in `ForEach-Object`. On the collection, the operator
+returns the property value or method result for the collection object and not
+the items in it.
+
+```powershell
+PS&gt; [System.Collections.Generic.List[string]]$Collection = @(&#x27;a&#x27;, &#x27;b&#x27;, &#x27;c&#x27;)
+PS&gt; $Collection.Count
+3
+PS&gt; $Collection | ForEach-Object -Process { $_.Count }
+1
+1
+1
+PS&gt; $Collection.ToString()
+System.Collections.Generic.List`1[System.String]
+PS&gt; $Collection | ForEach-Object -Process { $_.ToString() }
+a
+b
+c
+```
+
+&gt; [!NOTE]
+&gt; Collections that implement the **System.Collections.IDictionary** interface,
+&gt; such as **HashTable** and **OrderedDictionary**, have a different behavior.
+&gt; When you use the member-access operator on a dictionary that has a key with
+&gt; the same name as a property, it returns the key&#x27;s value instead of the
+&gt; property&#x27;s.
+&gt;
+&gt; You can access the dictionary object&#x27;s property value with the **psbase**
+&gt; [intrinsic member][03]. For example, if the key name is `keys` and you want
+&gt; to return the collection of the **HashTable** keys, use this syntax:
+&gt;
+&gt; ```powershell
+&gt; $hashtable.psbase.Keys
+&gt; ```
+
+### Access members that exist on all items in a collection but not itself
+
+When you use the member-access operator on a collection object that doesn&#x27;t
+have the member but the items in it do, PowerShell enumerates the items in the
+collection and returns the property value or method result for each item.
+
+```powershell
+PS&gt; [System.Collections.Generic.List[string]]$Collection = @(&#x27;a&#x27;, &#x27;b&#x27;, &#x27;c&#x27;)
+PS&gt; $Collection.Length
+1
+1
+1
+PS&gt; $Collection.ToUpper()
+A
+B
+C
+```
+
+### Access members that don&#x27;t exist on collection or its items
+
+When you use the member-access operator on a collection object that doesn&#x27;t
+have the member and neither do the items in it, the command returns `$null` if
+you specify a property or a `MethodNotFound` error if you specify a method.
+
+```powershell
+PS&gt; [System.Collections.Generic.List[string]]$Collection = @(&#x27;a&#x27;, &#x27;b&#x27;, &#x27;c&#x27;)
+PS&gt; $null -eq $Collection.DoesNotExist
+True
+PS&gt; $Collection.DoesNotExist()
+InvalidOperation: Method invocation failed because [System.String] does not
+contain a method named &#x27;DoesNotExist&#x27;.
+```
+
+Because the collection object doesn&#x27;t have the member, PowerShell enumerated
+the items in the collection. Notice that the **MethodNotFound** error specifies
+that **System.String** doesn&#x27;t contain the method instead of
+**System.Collections.Generic.List**.
+
+### Access methods that exist only on some items in a collection
+
+When you use the member-access operator to access a method on a collection
+object that doesn&#x27;t have the method and only some items in the collection have
+it, the command returns a `MethodNotFound` error for the first item in the
+collection that doesn&#x27;t have the method. Even though the method gets called on
+some items, the command only returns the error.
+
+```powershell
+PS&gt; @(&#x27;a&#x27;, 1, &#x27;c&#x27;).ToUpper()
+InvalidOperation: Method invocation failed because [System.Int32] does not
+contain a method named &#x27;ToUpper&#x27;.
+```
+
+# about_Member-Access_Enumeration
+
+### Access properties that exist only on some items in a collection
+
+When you use the member-access operator to access a property on a collection
+object that doesn&#x27;t have the property and only some items in the collection
+have it, the command returns the property value for each item in the collection
+that has the property.
+
+```powershell
+PS&gt; $CapitalizedProperty = @{
+    MemberType = &#x27;ScriptProperty&#x27;
+    Name       = &#x27;Capitalized&#x27;
+    Value      = { $this.ToUpper() }
+    PassThru   = $true
+}
+PS&gt; [System.Collections.Generic.List[Object]]$MixedCollection = @(
+    &#x27;a&#x27;
+    (&#x27;b&#x27; | Add-Member @CapitalizedProperty)
+    (&#x27;c&#x27; | Add-Member @CapitalizedProperty)
+    &#x27;d&#x27;
+)
+PS&gt; $MixedCollection.Capitalized
+B
+C
+```
+
+### Access members of a nested collection
+
+When an enumerable collection contains a nested collection, member-access
+enumeration is applied to each nested collection.
+
+For example, `$a` is an array containing two elements: a nested array of
+strings and a single string.
+
+```powershell
+
+# Get the count of items in the array.
+PS&gt; $a.Count
+2
+
+# Get the count of items in each nested item.
+PS&gt; $a.GetEnumerator().Count
+2
+1
+
+# Call the ToUpper() method on all items in the nested array.
+PS&gt; $a = @(, (&#x27;bar&#x27;, &#x27;baz&#x27;), &#x27;foo&#x27;)
+PS&gt; $a.ToUpper()
+BAR
+BAZ
+FOO
+```
+
+When you use the member-access operator, PowerShell enumerates the items in
+`$a` and calls the `ToUpper()` method on all items.
+
+## Notes
+
+As previously stated, there can be subtle behavior and performance differences
+between the various enumeration methods.
+
+### Errors result in lost output
+
+When member-access enumeration is terminated by an error, output from prior
+successful method calls isn&#x27;t returned. Terminating error conditions include:
+
+- the enumerated object lacks the accessed method
+- the accessed method raises a terminating error
+
+Consider the following example:
+
+```powershell
+class Class1 { [Object] Foo() { return &#x27;Bar&#x27; } }
+class Class2 { [void] Foo() { throw &#x27;Error&#x27; } }
+class Class3 {}
+
+$example1 = ([Class1]::new(), [Class1]::new())
+$example2 = ([Class1]::new(), [Class2]::new())
+$example3 = ([Class1]::new(), [Class3]::new())
+```
+
+Both items in `$example1` have the `Foo()` method, so the method call succeeds.
+
+```powershell
+PS&gt; $example1.Foo()
+Bar
+Bar
+```
+
+The `Foo()` method on second item in `$example2` throws an error, so the
+enumeration fails.
+
+```powershell
+PS&gt; $example2.Foo()
+Exception:
+Line |
+   2 |  class Class2 { [void] Foo() { throw &#x27;Error&#x27; } }
+     |                                ~~~~~~~~~~~~~
+     | Error
+```
+
+The second item in `$example2` doesn&#x27;t have the `Foo()` method, so the
+enumeration fails.
+
+```powershell
+PS&gt; $example3.Foo()
+InvalidOperation: Method invocation failed because [Class3] does not contain
+a method named &#x27;Foo&#x27;.
+```
+
+Compare this to enumeration using `ForEach-Object`
+
+```powershell
+PS&gt; $example2 | ForEach-Object -MemberName Foo
+Bar
+ForEach-Object: Exception calling &quot;Foo&quot; with &quot;0&quot; argument(s): &quot;Error&quot;
+PS&gt; $example3 | ForEach-Object -MemberName Foo
+Bar
+```
+
+Notice that the output show the successful call to `Foo()` on the first item
+in the array.
+
+### Collections containing PSCustomObject instances
+
+If the collection of objects contains instances of **PSCustomObject** items,
+PowerShell unexpectedly returns `$null` values when the accessed property is
+missing.
+
+In the following examples at least one object has the referenced property.
+
+```powershell
+PS&gt; $foo = [pscustomobject]@{ Foo = &#x27;Foo&#x27; }
+PS&gt; $bar = [pscustomobject]@{ Bar = &#x27;Bar&#x27; }
+PS&gt; $baz = [pscustomobject]@{ Baz = &#x27;Baz&#x27; }
+PS&gt; ConvertTo-Json ($foo, $bar, $baz).Foo
+[
+  &quot;Foo&quot;,
+  null,
+  null
+]
+PS&gt; ConvertTo-Json ((Get-Process -Id $PID), $foo).Name
+[
+  &quot;pwsh&quot;,
+  null
+]
+```
+
+You would expect PowerShell to return a single object for the item that has the
+property specified. Instead, PowerShell also returns a `$null` value for each
+item that doesn&#x27;t have the property.
+
+For more information on this behavior, see PowerShell Issue [#13752][13752].
+
+## See also
+
+- [about_Arrays][01]
+- [about_Intrinsic_Members][03]
+- [about_Methods][05]
+- [about_Operators][06]
+- [about_Properties][07]
+
+&lt;!-- link references --&gt;
+[01]: about_Arrays.md
+[02]: about_Arrays.md#member-access-enumeration
+[03]: about_Intrinsic_Members.md
+[04]: about_Intrinsic_Members.md#methods
+[05]: about_Methods.md
+[06]: about_Operators.md
+[07]: about_Properties.md
+[13752]: https://github.com/PowerShell/PowerShell/issues/13752</pre></section>

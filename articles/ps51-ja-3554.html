@@ -1,0 +1,239 @@
+<!doctype html><meta charset="utf-8"><section class="jp-official"><h1>隠されたことについて</h1>
+<h2>短編説明</h2>
+<p>を記述する.<code>hidden</code>キーワードは,クラスメンバーをデフォルトから隠す.<code>Get-Member</code>結果は.</p>
+<h2>長い説明</h2>
+<p>を使うとき<code>hidden</code>スクリプトのキーワードでは,クラスメンバーをデフォルトで隠す.隠されたメンバーは,デフォルトの結果では表示されない.<code>Get-Member</code>cmdlet,IntelliSense,またはタブの完了結果. で隠したメンバーを表示するために.<code>hidden</code>キーワードで,Forece パラメータを""に追加する.<code>Get-Member</code>命令です.</p>
+<p><code>hidden</code>キーワードは隠すことができます:</p>
+<ul>
+<li>メソッド (コンストラクターを含む) - イベント - アリアプロパティ - 他のメンバータイプ (静的メンバーを含む)</li>
+</ul>
+<p>隠されたメンバーは,隠されたメンバーを定義するクラスで完成が起こらない限り,タブの完成またはIntelliSenseでは表示されません.</p>
+<p>新しい属性"System.Management.Automation.HiddenAttribute"は,C#コードがPowerShell内で同じセマンティックを持つようにします.</p>
+<p><code>hidden</code>キーワードは,クラス内の属性や方法を作成するのに役立つもので,そのクラスのユーザーが必ずしも見たり,簡単に編集したりすることが望ましくない.</p>
+<p><code>hidden</code>キーワードは,クラスメンバーの表示や変更に何の影響も及ぼさない.PowerShellのすべての言語キーワードと同様に,<code>hidden</code>ケースセンシティブではないし,隠れたメンバーは依然として公開されている.</p>
+<p><code>hidden</code>キーワードとカスタムクラスと共に,Windows PowerShell 5.0.で導入されました.</p>
+<h2>例</h2>
+<p>次の例では,の使い方について説明します.<code>hidden</code><strong>カー</strong>クラスの方法, <strong>Drive</strong>は, <strong>Rides</strong>という属性を持ち,その表示や変更は必要ないので, <strong>Drive</strong>が<strong>Car</strong>クラスで呼び出された回数を数えるだけです.そのメトリックは,クラスユーザーのために重要ではありません (例えば,車を購入するときに,車を何回走ったかを販売者に尋ねないことを考えてください).</p>
+<p>クラスユーザーがこのプロパティを変更する必要がほとんどないため,プロパティを隠すことができます.<code>Get-Member</code> を使って自動化・完成の結果を出す.<code>hidden</code>キーワードです.</p>
+<p>を追加する<code>hidden</code>キーワードは,そのプロパティとデータタイプと同じ記述行で入力することで,キーワードを入力します.キーワードは,この行上の任意の順に設定できますが, で記述を開始します.<code>hidden</code>キーワードは,後にあなたが隠したメンバーをすべて識別することを容易にする.</p>
+<pre><code class="language-powershell">class Car
+{
+   # Properties
+   [string] $Color
+   [string] $ModelYear
+   [int] $Distance
+
+   # Method
+   [int] Drive ([int]$Miles)
+   {
+      $this.Distance += $Miles
+      $this.Rides++
+      return $this.Distance
+   }
+
+   # Hidden property of the Drive method
+    hidden [int] $Rides = 0
+}
+</code></pre>
+<p>さて, <strong>カー</strong> クラスの新しいインスタンスを作成し,変数に保存します.<code>$TestCar</code> .</p>
+<pre><code class="language-powershell">$TestCar = [Car]::new()
+</code></pre>
+<p>新しいインスタンスを作成した後,パイプで の内容を入力します.<code>$TestCar</code> 変数から変数へ<code>Get-Member</code><strong>Rides</strong>のプロパティが に記載されているメンバーに含まれていないことに注意してください.<code>Get-Member</code>コマンド結果です.</p>
+<pre><code class="language-output">PS C:\Windows\system32&gt; $TestCar | Get-Member
+
+   TypeName: Car
+
+Name        MemberType Definition
+----        ---------- ----------
+Drive       Method     int Drive(int Miles)
+Equals      Method     bool Equals(System.Object obj)
+GetHashCode Method     int GetHashCode()
+GetType     Method     type GetType()
+ToString    Method     string ToString()
+Color       Property   string Color {get;set;}
+Distance    Property   int Distance {get;set;}
+ModelYear   Property   string ModelYear {get;set;}
+
+</code></pre>
+<p>さて,実行してみてください.<code>Get-Member</code>しかし,今回は再び""を足して加えましょう.<code>-Force</code>解析項.結果には,デフォルトで隠されている他のメンバーの間で隠された <strong>Rides</strong> 属性が含まれていることに注意してください.</p>
+<pre><code class="language-output">PS C:\Windows\system32&gt; $TestCar | Get-Member -Force
+
+   TypeName: Car
+
+Name          MemberType   Definition
+----          ----------   ----------
+pstypenames   CodeProperty System.Collections.ObjectModel.Collection`1
+psadapted     MemberSet    psadapted {Color, ModelYear, Distance,
+psbase        MemberSet    psbase {Color, ModelYear, Distance,...
+psextended    MemberSet    psextended {}
+psobject      MemberSet    psobject {BaseObject, Members,...
+Drive         Method       int Drive(int Miles)
+Equals        Method       bool Equals(System.Object obj)
+GetHashCode   Method       int GetHashCode()
+GetType       Method       type GetType()
+get_Color     Method       string get_Color()
+get_Distance  Method       int get_Distance()
+get_ModelYear Method       string get_ModelYear()
+get_Rides     Method       int get_Rides()
+set_Color     Method       void set_Color(string )
+set_Distance  Method       void set_Distance(int )
+set_ModelYear Method       void set_ModelYear(string )
+set_Rides     Method       void set_Rides(int )
+ToString      Method       string ToString()
+Color         Property     string Color {get;set;}
+Distance      Property     int Distance {get;set;}
+ModelYear     Property     string ModelYear {get;set;}
+Rides         Property     int Rides {get;set;}
+
+</code></pre>
+<h2>また, を参照してください.</h2>
+<p><a href="about_Classes.md">about_Classes</a> - [about_Language_Keywords] ((about_Language_Keywords.md) - [about_Wildcards] ((about_Wildcards.md) - [Get-Member] (xref:Microsoft.PowerShell.Utility.Get-Member) - [about_Wildcards]</p></section><section class="en-original"><pre class="source-original"># about_Hidden
+
+## Short description
+
+Describes the `hidden` keyword, which hides class members from default
+`Get-Member` results.
+
+## Long description
+
+When you use the `hidden` keyword in a script, you hide the members of a class
+by default. Hidden members do not display in the default results of the
+`Get-Member` cmdlet, IntelliSense, or tab completion results. To display
+members that you have hidden with the `hidden` keyword, add the **Force**
+parameter to a `Get-Member` command.
+
+The `hidden` keyword can hide:
+
+- methods (including constructors)
+- events
+- alias properties
+- other member types (including static members)
+
+Hidden members are not displayed in tab completion or IntelliSense unless the
+completion occurs in the class that defines the hidden member.
+
+The new attribute, **System.Management.Automation.HiddenAttribute**, enables C#
+code to have the same semantics within PowerShell.
+
+The `hidden` keyword is useful for creating properties and methods within a
+class that you do not necessarily want users of the class to see or readily be
+able to edit.
+
+The `hidden` keyword has no effect on how you can view or make changes to
+members of a class. Like all language keywords in PowerShell, `hidden` is not
+case-sensitive, and hidden members are still public.
+
+The `hidden` keyword, along with custom classes, was introduced in Windows
+PowerShell 5.0.
+
+## Example
+
+The following example shows how to use the `hidden` keyword in a class
+definition. The **Car** class method, **Drive**, has a property, **Rides**,
+that does not need to be viewed or changed as it merely tallies the number of
+times that **Drive** is called on the **Car** class. That metric that is not
+important to users of the class (consider, for example, that when you are
+buying a car, you do not ask the seller on how many drives the car has been
+taken).
+
+Because there is little need for users of the class to change this property, we
+can hide the property from `Get-Member` and automatic completion results by
+using the `hidden` keyword.
+
+Add the `hidden` keyword by entering it on the same statement line as the
+property and its data type. Although the keyword can be in any order on this
+line, starting the statement with the `hidden` keyword makes it easier for you
+later to identify all members that you have hidden.
+
+```powershell
+class Car
+{
+   # Properties
+   [string] $Color
+   [string] $ModelYear
+   [int] $Distance
+
+   # Method
+   [int] Drive ([int]$Miles)
+   {
+      $this.Distance += $Miles
+      $this.Rides++
+      return $this.Distance
+   }
+
+   # Hidden property of the Drive method
+    hidden [int] $Rides = 0
+}
+```
+
+Now, create a new instance of the **Car** class, and save it in a variable,
+`$TestCar`.
+
+```powershell
+$TestCar = [Car]::new()
+```
+
+After you create the new instance, pipe the contents of the `$TestCar` variable
+to `Get-Member`. Observe that the **Rides** property is not among the members
+listed in the `Get-Member` command results.
+
+```output
+PS C:\Windows\system32&gt; $TestCar | Get-Member
+
+   TypeName: Car
+
+Name        MemberType Definition
+----        ---------- ----------
+Drive       Method     int Drive(int Miles)
+Equals      Method     bool Equals(System.Object obj)
+GetHashCode Method     int GetHashCode()
+GetType     Method     type GetType()
+ToString    Method     string ToString()
+Color       Property   string Color {get;set;}
+Distance    Property   int Distance {get;set;}
+ModelYear   Property   string ModelYear {get;set;}
+
+```
+
+Now, try running `Get-Member` again, but this time, add the `-Force` parameter.
+Note that the results contain the hidden **Rides** property, among other
+members that are hidden by default.
+
+```output
+PS C:\Windows\system32&gt; $TestCar | Get-Member -Force
+
+   TypeName: Car
+
+Name          MemberType   Definition
+----          ----------   ----------
+pstypenames   CodeProperty System.Collections.ObjectModel.Collection`1
+psadapted     MemberSet    psadapted {Color, ModelYear, Distance,
+psbase        MemberSet    psbase {Color, ModelYear, Distance,...
+psextended    MemberSet    psextended {}
+psobject      MemberSet    psobject {BaseObject, Members,...
+Drive         Method       int Drive(int Miles)
+Equals        Method       bool Equals(System.Object obj)
+GetHashCode   Method       int GetHashCode()
+GetType       Method       type GetType()
+get_Color     Method       string get_Color()
+get_Distance  Method       int get_Distance()
+get_ModelYear Method       string get_ModelYear()
+get_Rides     Method       int get_Rides()
+set_Color     Method       void set_Color(string )
+set_Distance  Method       void set_Distance(int )
+set_ModelYear Method       void set_ModelYear(string )
+set_Rides     Method       void set_Rides(int )
+ToString      Method       string ToString()
+Color         Property     string Color {get;set;}
+Distance      Property     int Distance {get;set;}
+ModelYear     Property     string ModelYear {get;set;}
+Rides         Property     int Rides {get;set;}
+
+```
+
+## See also
+
+- [about_Classes](about_Classes.md)
+- [about_Language_Keywords](about_Language_Keywords.md)
+- [about_Wildcards](about_Wildcards.md)
+- [Get-Member](xref:Microsoft.PowerShell.Utility.Get-Member)</pre></section>

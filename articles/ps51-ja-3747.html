@@ -1,0 +1,463 @@
+<!doctype html><meta charset="utf-8"><section class="jp-official"><h1>完全な取引です.</h1>
+<h2>SYNOPSISは,アクティブ取引を約束する.</h2>
+<h2>SYNTAXは,のシンタックスです.</h2>
+<pre><code>Complete-Transaction [-WhatIf] [-Confirm] [&lt;CommonParameters&gt;]
+</code></pre>
+<h2>記述は,</h2>
+<p><code>Complete-Transaction</code>cmdlet はアクティブトランザクションを実行します.あなたがトランザクションを実行すると,トランザクション内のコマンドは最終化され,コマンドに影響されたデータは変更されます.</p>
+<p>取引には複数のサブスクリプションが含まれている場合,取引をコミットするには,一つ入力する必要があります.<code>Complete-Transaction</code>の命令ごとに命令します.<code>Start-Transaction</code>命令です.</p>
+<p><code>Complete-Transaction</code>cmdlet は,Windows PowerShell のトランザクション機能をサポートする一連の cmdlet の1つです.詳細については, [about_Transactions] (../Microsoft.PowerShell.Core/About/about_Transactions.md) を参照してください.</p>
+<h2>例えは</h2>
+<h3>例1:取引を約束する</h3>
+<pre><code class="language-powershell">Set-Location HKCU:\software
+Start-Transaction
+New-Item MyCompany -UseTransaction
+Get-ChildItem m*
+</code></pre>
+<pre><code class="language-Output">Hive: HKEY_CURRENT_USER\software
+
+SKC  VC Name                           Property
+---  -- ----                           --------
+82   1 Microsoft                      {(default)}
+</code></pre>
+<pre><code class="language-powershell">Complete-Transaction
+Get-ChildItem m*
+</code></pre>
+<pre><code class="language-Output">Hive: HKEY_CURRENT_USER\Software
+
+SKC  VC Name                           Property
+---  -- ----                           --------
+82   1 Microsoft                      {(default)}
+0   0 MyCompany                      {}
+</code></pre>
+<p>この例では,使用するときに何が起こるか示しています.<code>Complete-Transaction</code>cmdlet で取引をします.</p>
+<p><code>Start-Transaction</code>取引を開始するコマンド.ニューアイテムコマンドは,取引にコマンドを組み込むために <strong>UseTransaction</strong>パラメータを使用します.</p>
+<p>最初の"人"は<code>Get-ChildItem</code>コマンドは,新しいアイテムがまだレジストリに追加されていないことを示します.</p>
+<p><code>Complete-Transaction</code>取引を実行するコマンドが,レジストリ変更を有効にする.結果として,第2の命令は,<code>Get-ChildItem</code>命令は,レジストリが変更されたことを示します.</p>
+<h3>例2:複数のサブスクリプションを持つ取引を実行する</h3>
+<pre><code class="language-powershell">Set-Location HKCU:\software
+Start-Transaction
+New-Item MyCompany -UseTransaction
+</code></pre>
+<pre><code class="language-Output">Hive: HKEY_CURRENT_USER\Software
+
+SKC  VC Name                           Property
+---  -- ----                           --------
+0   0 MyCompany                      {}
+</code></pre>
+<pre><code class="language-powershell">Start-Transaction
+Get-Transaction
+</code></pre>
+<pre><code class="language-Output">RollbackPreference   SubscriberCount  Status
+------------------   ---------------  ------
+Error                2                Active
+</code></pre>
+<pre><code class="language-powershell">New-ItemProperty -Path MyCompany -Name MyKey -Value -UseTransaction
+</code></pre>
+<pre><code class="language-Output">MyKey
+-----
+123
+</code></pre>
+<pre><code class="language-powershell">Complete-Transaction
+Get-Transaction
+</code></pre>
+<pre><code class="language-Output">RollbackPreference   SubscriberCount  Status
+------------------   ---------------  ------
+Error                1                Active
+</code></pre>
+<pre><code class="language-powershell">Get-ChildItem m*
+</code></pre>
+<pre><code class="language-Output">Hive: HKEY_CURRENT_USER\Software
+
+SKC  VC Name                           Property
+---  -- ----                           --------
+82   1 Microsoft                      {(default)}
+</code></pre>
+<pre><code class="language-powershell">Complete-Transaction
+Get-ChildItem m*
+</code></pre>
+<pre><code class="language-Output">Hive: HKEY_CURRENT_USER\Software
+
+SKC  VC Name                           Property
+---  -- ----                           --------
+82   1 Microsoft                      {(default)}
+0   1 MyCompany                      {MyKey}
+</code></pre>
+<p>この例では,どのように使用するか示しています.<code>Complete-Transaction</code>複数のサブスクリプションを持つ取引を約束する.</p>
+<p>マルチサブスクリプション取引を行うには,一つ入力する必要があります.<code>Complete-Transaction</code>の命令ごとに命令します.<code>Start-Transaction</code>データは最終的な  の命令で変更されるだけです.<code>Complete-Transaction</code>コマンドが送信されました.</p>
+<p>演示目的として,この例ではコマンドラインで入力された一連のコマンドが表示されます.実際,トランザクションはスクリプトで実行され,次元のトランザクションは,メインスクリプトで呼び出される関数またはヘルパースクリプトによって実行されます.</p>
+<p>この例では,a <code>Start-Transaction</code>コマンドは取引を開始します.<code>New-Item</code><strong>UseTransaction</strong>パラメータを持つソフトウェアキーにはMyCompanyキーを追加します.<code>New-Item</code>cmdlet で鍵のオブジェクトが返されますが,レジストリ内のデータはまだ変更されていません.</p>
+<p>一秒間の時間です.<code>Start-Transaction</code>コマンドは,既存の取引に2番目のサブスクリプションを追加します.<code>Get-Transaction</code>cmdlet は,サブスクリプション数値が2であることを確認します. <strong>UseTransaction</strong> パラメータを持つNew-ItemProperty コマンドは,新しいMyCompany キーにレジストリエントリを追加します.また,コマンドは値返却しますが,レジストリは変更されません.</p>
+<p>最初の"人"は<code>Complete-Transaction</code>コマンドは,サブスクリプション数を1倍に減らす.これは,で確認されます.<code>Get-Transaction</code>しかし,データ変更はなく,これは""という文字で示されています.<code>Get-ChildItem m*</code>命令です.</p>
+<p>第二の方は,<code>Complete-Transaction</code>コマンドは,トランザクション全体を実行し,レジストリ内のデータを変更します.これは第2回の確認です.<code>Get-ChildItem m*</code>変更を表示するコマンドです.</p>
+<h3>例3: データを変更しない取引を実行する</h3>
+<pre><code class="language-powershell">Set-Location HKCU:\software
+Start-Transaction
+New-Item MyCompany -UseTransaction
+Get-ChildItem m*
+</code></pre>
+<pre><code class="language-Output">Hive: HKEY_CURRENT_USER\Software
+
+SKC  VC Name                           Property
+---  -- ----                           --------
+82   1 Microsoft                      {(default)}
+</code></pre>
+<pre><code class="language-powershell">Get-ChildItem m* -UseTransaction
+</code></pre>
+<pre><code class="language-Output">Hive: HKEY_CURRENT_USER\Software
+
+SKC  VC Name                           Property
+---  -- ----                           --------
+82   1 Microsoft                      {(default)}
+0   0 MyCompany                      {}
+</code></pre>
+<pre><code class="language-powershell">Complete-Transaction
+</code></pre>
+<p>この例では,取引においてGet-*コマンドやその他のデータを変更しないコマンドを使用する価値を示しています.<code>Get-\*</code>コマンドは取引で使用され,取引の一部であるオブジェクトを入手します.これは変更が実行される前に取引の変更を先見見ることができます.</p>
+<p>この例では,取引が開始される. <strong>UseTransaction</strong>パラメータを持つニューアイテムコマンドは,取引の一環としてレジストリに新しい鍵を追加します.</p>
+<p>新しいレジストリキーは,レジストリに追加されるまで,レジストリキーは  になるから.<code>Complete-Transaction</code>コマンドは実行され,シンプルな命令です.<code>Get-ChildItem</code>命令は新しい鍵のないレジストリを表示します.</p>
+<p>しかし,このパラメータを追加すると,  にUseTransaction を追加します.<code>Get-ChildItem</code>コマンドは,取引の一部となり,データがまだ追加されていない場合でも,取引のアイテムを取得します.</p>
+<h2>パラメータは</h2>
+<h3>-確認する</h3>
+<p>cmdletを実行する前に確認を提示します.</p>
+<pre><code class="language-yaml">Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases: cf
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-WhatIf</h3>
+<p>cmdletが実行されなければどうなるかを示しています.</p>
+<pre><code class="language-yaml">Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases: wi
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>共通パラメーター</h3>
+<p>このcmdletは,共通パラメータをサポートしています: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable.詳細については, <a href="を参照してください.https://go.microsoft.com/fwlink/?LinkID=113216">about_CommonParameters</a> でした.</p>
+<h1>完全な取引です.</h1>
+<h2>輸入は</h2>
+<h3>どれもない</h3>
+<p>このcmdletに物体をパイプすることはできません.</p>
+<h2>輸出は</h2>
+<h3>どれもない</h3>
+<p>このcmdletは,出力を生成しません.</p>
+<h2>NOTES  記事ができました.</h2>
+<ul>
+<li>引き返された取引を逆転させたり,引き返された取引を逆転させたりすることはできません.</li>
+</ul>
+<p>取引を逆転させることはできません. 取引を逆転させたい場合は,まず,取引を逆転させなければなりません.</p>
+<p>デフォルトでは,取引の一部がコミットできない場合,例えば取引のコマンドがエラーを引き起こす場合,取引全体が後回されます.</p>
+<h2>関連リンク</h2>
+<p><a href="Get-Transaction.md">Get-Transaction</a> </p>
+<p><a href="スタートトランザクション.md">スタートトランザクション</a></p>
+<p><a href="Undo-Transaction.md">Undo-Transaction</a> について</p>
+<p><a href="Use-Transaction.md">Use-Transaction</a> </p>
+<p><a href="Get-ChildItem.md">Get-ChildItem</a> </p>
+<p><a href="New-Item.md">New-Item</a> </p>
+<p><a href="New-ItemProperty.md">New-ItemProperty</a> </p></section><section class="en-original"><pre class="source-original"># Complete-Transaction
+
+## SYNOPSIS
+Commits the active transaction.
+
+## SYNTAX
+
+```
+Complete-Transaction [-WhatIf] [-Confirm] [&lt;CommonParameters&gt;]
+```
+
+## DESCRIPTION
+
+The `Complete-Transaction` cmdlet commits an active transaction. When you commit a transaction, the
+commands in the transaction are finalized and the data affected by the commands is changed.
+
+If the transaction includes multiple subscribers, to commit the transaction, you must enter one
+`Complete-Transaction` command for every `Start-Transaction` command.
+
+The `Complete-Transaction` cmdlet is one of a set of cmdlets that support the transactions feature in Windows PowerShell.
+For more information, see [about_Transactions](../Microsoft.PowerShell.Core/About/about_Transactions.md).
+
+## EXAMPLES
+
+### Example 1: Commit a transaction
+
+```powershell
+Set-Location HKCU:\software
+Start-Transaction
+New-Item MyCompany -UseTransaction
+Get-ChildItem m*
+```
+
+```Output
+Hive: HKEY_CURRENT_USER\software
+
+SKC  VC Name                           Property
+---  -- ----                           --------
+82   1 Microsoft                      {(default)}
+```
+
+```powershell
+Complete-Transaction
+Get-ChildItem m*
+```
+
+```Output
+Hive: HKEY_CURRENT_USER\Software
+
+SKC  VC Name                           Property
+---  -- ----                           --------
+82   1 Microsoft                      {(default)}
+0   0 MyCompany                      {}
+```
+
+This example shows what happens when you use the `Complete-Transaction` cmdlet to commit a
+transaction.
+
+The `Start-Transaction` command starts the transaction. The New-Item command uses the
+**UseTransaction** parameter to include the command in the transaction.
+
+The first `Get-ChildItem` command shows that the new item has not yet been added to the
+registry.
+
+The `Complete-Transaction` command commits the transaction, which makes the registry change
+effective. As a result, the second `Get-ChildItem` command shows that the registry is changed.
+
+### Example 2: Commit a transaction that has more than one subscriber
+
+```powershell
+Set-Location HKCU:\software
+Start-Transaction
+New-Item MyCompany -UseTransaction
+```
+
+```Output
+Hive: HKEY_CURRENT_USER\Software
+
+SKC  VC Name                           Property
+---  -- ----                           --------
+0   0 MyCompany                      {}
+```
+
+```powershell
+Start-Transaction
+Get-Transaction
+```
+
+```Output
+RollbackPreference   SubscriberCount  Status
+------------------   ---------------  ------
+Error                2                Active
+```
+
+```powershell
+New-ItemProperty -Path MyCompany -Name MyKey -Value -UseTransaction
+```
+
+```Output
+MyKey
+-----
+123
+```
+
+```powershell
+Complete-Transaction
+Get-Transaction
+```
+
+```Output
+RollbackPreference   SubscriberCount  Status
+------------------   ---------------  ------
+Error                1                Active
+```
+
+```powershell
+Get-ChildItem m*
+```
+
+```Output
+Hive: HKEY_CURRENT_USER\Software
+
+SKC  VC Name                           Property
+---  -- ----                           --------
+82   1 Microsoft                      {(default)}
+```
+
+```powershell
+Complete-Transaction
+Get-ChildItem m*
+```
+
+```Output
+Hive: HKEY_CURRENT_USER\Software
+
+SKC  VC Name                           Property
+---  -- ----                           --------
+82   1 Microsoft                      {(default)}
+0   1 MyCompany                      {MyKey}
+```
+
+This example shows how to use `Complete-Transaction` to commit a transaction that has more than one
+subscriber.
+
+To commit a multi-subscriber transaction, you must enter one `Complete-Transaction` command for
+every `Start-Transaction` command. The data is changed only when the final `Complete-Transaction`
+command is submitted.
+
+For demonstration purposes, this example shows a series of commands entered at the command line. In
+practice, transactions are likely to be run in scripts, with the secondary transaction being run by
+a function or helper script that is called by the main script.
+
+In this example, a `Start-Transaction` command starts the transaction. A `New-Item` command with the
+**UseTransaction** parameter adds the MyCompany key to the Software key. Although the `New-Item`
+cmdlet returns a key object, the data in the registry is not yet changed.
+
+A second `Start-Transaction` command adds a second subscriber to the existing transaction. The
+`Get-Transaction` cmdlet confirms that the subscriber count is 2. A New-ItemProperty command with
+the **UseTransaction** parameter adds a registry entry to the new MyCompany key. Again, the command
+returns a value, but the registry is not changed.
+
+The first `Complete-Transaction` command reduces the subscriber count by 1. This is confirmed by a
+`Get-Transaction` command. However, no data is changed, as evidenced by a `Get-ChildItem m*`
+command.
+
+The second `Complete-Transaction` command commits the entire transaction and changes the data in the
+registry. This is confirmed by a second `Get-ChildItem m*` command, which shows the changes.
+
+### Example 3: Perform a transaction that does not change any data
+
+```powershell
+Set-Location HKCU:\software
+Start-Transaction
+New-Item MyCompany -UseTransaction
+Get-ChildItem m*
+```
+
+```Output
+Hive: HKEY_CURRENT_USER\Software
+
+SKC  VC Name                           Property
+---  -- ----                           --------
+82   1 Microsoft                      {(default)}
+```
+
+```powershell
+Get-ChildItem m* -UseTransaction
+```
+
+```Output
+Hive: HKEY_CURRENT_USER\Software
+
+SKC  VC Name                           Property
+---  -- ----                           --------
+82   1 Microsoft                      {(default)}
+0   0 MyCompany                      {}
+```
+
+```powershell
+Complete-Transaction
+```
+
+This example shows the value of using Get-\* commands, and other commands that do not change data,
+in a transaction. When a `Get-\*` command is used in a transaction, it gets the objects that are
+part of the transaction. This allows you to preview the changes in the transaction before the
+changes are committed.
+
+In this example, a transaction is started. A New-Item command with the **UseTransaction** parameter
+adds a new key to the registry as part of the transaction.
+
+Because the new registry key is not added to the registry until the `Complete-Transaction` command
+is run, a simple `Get-ChildItem` command shows the registry without the new key.
+
+However, when you add the **UseTransaction** parameter to the `Get-ChildItem` command, the command
+becomes part of the transaction, and it gets the items in the transaction even if they are not yet
+added to the data.
+
+## PARAMETERS
+
+### -Confirm
+
+Prompts you for confirmation before running the cmdlet.
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases: cf
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -WhatIf
+
+Shows what would happen if the cmdlet runs. The cmdlet is not run.
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases: wi
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### CommonParameters
+
+This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable,
+-InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose,
+-WarningAction, and -WarningVariable. For more information, see [about_CommonParameters](https://go.microsoft.com/fwlink/?LinkID=113216).
+
+# Complete-Transaction
+
+## INPUTS
+
+### None
+
+You cannot pipe objects to this cmdlet.
+
+## OUTPUTS
+
+### None
+
+This cmdlet does not generate any output.
+
+## NOTES
+
+- You cannot roll back a transaction that has been committed, or commit a transaction that has been
+  rolled back.
+
+  You cannot roll back any transaction other than the active transaction. To roll back a different
+  transaction, you must first commit or roll back the active transaction.
+
+  By default, if any part of a transaction cannot be committed, such as when a command in the
+  transaction results in an error, the entire transaction is rolled back.
+
+## RELATED LINKS
+
+[Get-Transaction](Get-Transaction.md)
+
+[Start-Transaction](Start-Transaction.md)
+
+[Undo-Transaction](Undo-Transaction.md)
+
+[Use-Transaction](Use-Transaction.md)
+
+[Get-ChildItem](Get-ChildItem.md)
+
+[New-Item](New-Item.md)
+
+[New-ItemProperty](New-ItemProperty.md)</pre></section>

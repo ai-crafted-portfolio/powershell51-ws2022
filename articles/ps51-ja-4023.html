@@ -1,0 +1,182 @@
+<!doctype html><meta charset="utf-8"><section class="jp-official"><h1>about_Suspend-Workflowについて</h1>
+<h2>短編説明</h2>
+<p>を記述する.<code>Suspend-Workflow</code>活動が登場するワークフローを停止する活動です.</p>
+<h2>長い説明</h2>
+<p><code>Suspend-Workflow</code>作業流の処理を一時停止する活動です.停止する前に,Windows PowerShell Workflow はチェックポイントを採取し,作業流の状態とデータが保存され,作業流は停止点から再開できます.</p>
+<p>ワークフローを再開するには,ワークフローを実行しているユーザーは,  を使用します.<code>Resume-Job</code>cmdlet. ワークフローをワークフロー内のままに再開することはできません.</p>
+<h2>シンタックス</h2>
+<pre><code>workflow &lt;Verb-Noun&gt; {
+    Suspend-Workflow
+}
+</code></pre>
+<h2>詳細な説明</h2>
+<p><code>Suspend-Workflow</code>ワークフローを一時的に停止し,ワークフローの仕事を代表するワークフローオブジェクトを返します.ワークフローを仕事として実行しなかったとしても,ワークフローオブジェクトが返されます.例えば,ワークフローの共通パラメータ <strong>AsJob</strong> を使用します. ワークフロー状態は <strong>Suspended</strong>です.</p>
+<p>停止されたワークフローの仕事を管理するために,仕事用cmdletsを使用できます.ワークフローの仕事を再開するには,  を使ってください.<code>Resume-Job</code>cmdletです.</p>
+<p>ワークフローの仕事を再開すると,ワークフローは,次のコマンドで再開されます.<code>Suspend-Workflow</code>活動.</p>
+<p>例えば,次のワークフローには,  の文字が含まれます.<code>Suspend-Workflow</code>ワークフローを実行すると,その作業は""を実行します.<code>Get-Date</code>活動で出力を貯める.<code>$a</code>変数として,作業流を停止し,停止された作業流を表す作業オブジェクトを返します.作業タイプは <strong>PSWorkflowJob</strong>です.</p>
+<p>職のcmdletsを使用することができます,例えば <code>Get-Job</code>ワークフローの仕事を管理するために.</p>
+<pre><code class="language-powershell">workflow Test-Suspend {
+    $a = Get-Date
+    Suspend-Workflow
+    (Get-Date)- $a
+}
+
+Test-Suspend
+</code></pre>
+<pre><code class="language-Output">Id  Name  PSJobTypeName  State      HasMoreData  Location  Command
+--  ----  -------------  -----      -----------  --------  -------
+8   Job8  PSWorkflowJob  Suspended  True         localhost Test-Suspend
+</code></pre>
+<h2>ワークフローの仕事を再開する</h2>
+<p>ワークフローの仕事を再開するには,  を使ってください.<code>Resume-Job</code>cmdlet. のcmdlet.<code>Resume-Job</code>cmdlet は,作業流の作業オブジェクトを直ちに返します.まだ再開されていないかもしれませんが.作業を再開するのを待つために, <strong>Wait</strong> パラメータを使用するか,または  を使用してください.<code>Get-Job</code>現在の仕事オブジェクトを入手するには cmdlet を入力します.</p>
+<pre><code class="language-powershell">Resume-Job -Name Job8
+</code></pre>
+<pre><code class="language-Output">Id  Name  PSJobTypeName  State    HasMoreData  Location  Command
+--  ----  -------------  -----    -----------  --------  -------
+8   Job8  PSWorkflowJob  Running  True         localhost Test-Suspend
+</code></pre>
+<pre><code class="language-powershell">Get-Job -Name Job8
+</code></pre>
+<pre><code class="language-Output">Id  Name  PSJobTypeName  State      HasMoreData  Location  Command
+--  ----  -------------  -----      -----------  --------  -------
+8   Job8  PSWorkflowJob  Completed  True         localhost Test-Suspend
+</code></pre>
+<h2>ワークフローの作業結果を出すこと</h2>
+<p>ワークフローの作業結果を出すには,  を使ってください.<code>Receive-Job</code>cmdlet. 出力では,作業流が""を次ぐコマンドで再開されたことを示しています.<code>Suspend-Workflow</code>cmdlet. の値です.<code>$a</code>停止前に埋め込まれた変数は,再開時にワークフローに利用可能になります.</p>
+<pre><code class="language-powershell">Get-Job -Name Job8 | Receive-Job
+</code></pre>
+<pre><code class="language-Output">Days              : 0
+Hours             : 0
+Minutes           : 0
+Seconds           : 19
+Milliseconds      : 823
+Ticks             : 198230041
+TotalDays         : 0.000229432917824074
+TotalHours        : 0.00550639002777778
+TotalMinutes      : 0.330383401666667
+TotalSeconds      : 19.8230041
+TotalMilliseconds : 19823.0041
+PSComputerName    : localhost
+</code></pre>
+<h2>また, を参照してください.</h2>
+<p>[about_Workflows] ((about_Workflows.md) - [about_WorkflowCommonParameters] ((about_WorkflowCommonParameters.md) - [PSWorkflow] (xref:PSWorkflow) cmdlets - [Workflow Guide] (/previous-versions/powershell/scripting/components/workflows-guide) - [Windows PowerShell Workflow] (/previous-versions/powershell/scripting/developer/workflow/writing-a-windows-shell-workflow) - -</p></section><section class="en-original"><pre class="source-original"># about_Suspend-Workflow
+
+## Short description
+
+Describes the `Suspend-Workflow` activity, which suspends the workflow in which
+the activity appears.
+
+## Long description
+
+The `Suspend-Workflow` activity temporarily stops workflow processing from
+within the workflow. Before suspending, Windows PowerShell Workflow takes a
+checkpoint so the workflow&#x27;s state and data are preserved and the workflow can
+resume from the suspension point.
+
+To resume the workflow, the user running the workflow uses the `Resume-Job`
+cmdlet. You can&#x27;t resume a workflow from within the workflow.
+
+## Syntax
+
+```
+workflow &lt;Verb-Noun&gt; {
+    Suspend-Workflow
+}
+```
+
+## Detailed description
+
+The `Suspend-Workflow` temporarily stops the workflow and returns a job object
+that represents the workflow job. A job object is returned even if you didn&#x27;t
+run the workflow as a job. For example, such as by using the **AsJob** workflow
+common parameter. The job state is **Suspended**.
+
+You can use the job cmdlets to manage the suspended workflow job. To resume the
+workflow job, use the `Resume-Job` cmdlet.
+
+When you resume the workflow job, the workflow resumes at the command that
+follows the `Suspend-Workflow` activity.
+
+For example, the following workflow includes the `Suspend-Workflow` activity.
+When you run the workflow, it runs the `Get-Date` activity, saves its output in
+the `$a` variable, and then suspends the workflow, and returns a job object
+that represents the suspended workflow. The job type is **PSWorkflowJob**.
+
+You can use the job cmdlets, such as `Get-Job`, to manage the workflow job.
+
+```powershell
+workflow Test-Suspend {
+    $a = Get-Date
+    Suspend-Workflow
+    (Get-Date)- $a
+}
+
+Test-Suspend
+```
+
+```Output
+Id  Name  PSJobTypeName  State      HasMoreData  Location  Command
+--  ----  -------------  -----      -----------  --------  -------
+8   Job8  PSWorkflowJob  Suspended  True         localhost Test-Suspend
+```
+
+## Resuming a workflow job
+
+To resume the workflow job, use the `Resume-Job` cmdlet. The `Resume-Job`
+cmdlet returns the workflow job object immediately, even though it might not
+yet be resumed. To wait for the job to be resumed, use the **Wait** parameter,
+or use the `Get-Job` cmdlet to get the current job object.
+
+```powershell
+Resume-Job -Name Job8
+```
+
+```Output
+Id  Name  PSJobTypeName  State    HasMoreData  Location  Command
+--  ----  -------------  -----    -----------  --------  -------
+8   Job8  PSWorkflowJob  Running  True         localhost Test-Suspend
+```
+
+```powershell
+Get-Job -Name Job8
+```
+
+```Output
+Id  Name  PSJobTypeName  State      HasMoreData  Location  Command
+--  ----  -------------  -----      -----------  --------  -------
+8   Job8  PSWorkflowJob  Completed  True         localhost Test-Suspend
+```
+
+## Getting the output of a workflow job
+
+To get the output of a workflow job, use the `Receive-Job` cmdlet. The output
+shows that the workflow resumed at the command that followed the
+`Suspend-Workflow` cmdlet. The value of the `$a` variable, which was populated
+before the suspension, is available to the workflow when it resumes.
+
+```powershell
+Get-Job -Name Job8 | Receive-Job
+```
+
+```Output
+Days              : 0
+Hours             : 0
+Minutes           : 0
+Seconds           : 19
+Milliseconds      : 823
+Ticks             : 198230041
+TotalDays         : 0.000229432917824074
+TotalHours        : 0.00550639002777778
+TotalMinutes      : 0.330383401666667
+TotalSeconds      : 19.8230041
+TotalMilliseconds : 19823.0041
+PSComputerName    : localhost
+```
+
+## See also
+
+- [about_Workflows](about_Workflows.md)
+- [about_WorkflowCommonParameters](about_WorkflowCommonParameters.md)
+- [PSWorkflow](xref:PSWorkflow) cmdlets
+- [Workflows Guide](/previous-versions/powershell/scripting/components/workflows-guide)
+- [Writing a Windows PowerShell Workflow](/previous-versions/powershell/scripting/developer/workflow/writing-a-windows-powershell-workflow)</pre></section>

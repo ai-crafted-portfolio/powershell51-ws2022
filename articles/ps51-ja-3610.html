@@ -1,0 +1,252 @@
+<!doctype html><meta charset="utf-8"><section class="jp-official"><h1>about_Remote_Variablesについて</h1>
+<h2>短編説明</h2>
+<p>遠隔コマンドでローカル・アンド・リモート・変数をどのように使うか説明します.</p>
+<h2>長い説明</h2>
+<p>リモートコンピュータで実行するコマンドで変数を使用できます.変数に値を割り当て,その代わりに変数を使用します.</p>
+<p>デフォルトでは,リモートコマンドの変数はコマンドを実行するセッションで定義されていると仮定されます.ローカルセッションで定義された変数は,コマンドのローカル変数として識別する必要があります.</p>
+<h2>リモート変数を利用する</h2>
+<p>PowerShellでは,リモートコマンドで使用される変数は,コマンドが実行されるセッションで定義されていると仮定します.</p>
+<p>この例では,の文字が<code>$ps</code>変数は,一時セッションで定義される.<code>Get-WinEvent</code>コマンドは実行されます.</p>
+<pre><code class="language-powershell">Invoke-Command -ComputerName S1 -ScriptBlock {
+  $ps = &quot;*PowerShell*&quot;; Get-WinEvent -LogName $ps
+}
+</code></pre>
+<p>命令が継続的なセッションで実行される場合,PSSessionでは,そのセッションでリモート変数が定義されなければならない.</p>
+<pre><code class="language-powershell">$s = New-PSSession -ComputerName S1
+Invoke-Command -Session $s -ScriptBlock {$ps = &quot;*PowerShell*&quot;}
+Invoke-Command -Session $s -ScriptBlock {Get-WinEvent -LogName $ps}
+</code></pre>
+<h2>ローカル変数を利用する</h2>
+<p>リモートコマンドではローカル変数を使用できますが,変数はローカルセッションで定義する必要があります.</p>
+<p>PowerShell 3.0 から始めると,あなたは  を使用することができます.<code>Using:</code>遠隔コマンドでローカル変数を識別するためのスコープ・モディファイヤー.</p>
+<p>の構文は<code>Using:</code>は次のとおりです:</p>
+<pre><code>$Using:&lt;VariableName&gt;
+</code></pre>
+<p>次の例では,の文字が<code>$ps</code>ローカルセッションで作成されるが,コマンドが実行されるセッションで使用されます.<code>Using:</code>範囲変更符が識別する<code>$ps</code>ローカル変数として.</p>
+<pre><code class="language-powershell">$ps = &quot;*PowerShell*&quot;
+Invoke-Command -ComputerName S1 -ScriptBlock {
+  Get-WinEvent -LogName $Using:ps
+}
+</code></pre>
+<p><code>Using:</code>範囲変更者はPSSessionで使用できます.</p>
+<pre><code class="language-powershell">$s = New-PSSession -ComputerName S1
+$ps = &quot;*PowerShell*&quot;
+Invoke-Command -Session $s -ScriptBlock {Get-WinEvent -LogName $Using:ps}
+</code></pre>
+<p>などの変数参照を表示する.<code>$Using:var</code>変数の値に拡大する.<code>$var</code>呼び出し者の文脈から.呼び出し者の変数オブジェクトにアクセスできません. <code>Using:</code>範囲変更者は <strong>PSSession</strong> の内のローカル変数を変更するために使用できません.例えば,次のコードは動作しません:</p>
+<pre><code class="language-powershell">$s = New-PSSession -ComputerName S1
+$ps = &quot;*PowerShell*&quot;
+Invoke-Command -Session $s -ScriptBlock {$Using:ps = 'Cannot assign new value'}
+</code></pre>
+<p>に関する詳細については,<code>Using:</code>[about_Scopes.md] を参照してください.</p>
+<h3>スプラッティングを使用します</h3>
+<p>PowerShell スプラッティングでは,パラメータ名と値の集合をコマンドに転送します.詳細については, [about_Splatting] (about_Splatting.md) を参照してください.</p>
+<p>この例では,スプラッティング変数, <code>$Splat</code>地方コンピュータで設定されているハッシュテーブルです.<code>Invoke-Command</code>リモートコンピュータセッションに接続する.The <strong>ScriptBlock</strong>は,  を使います.<code>Using:</code>At () の範囲変更機を使用する.<code>@</code>) シンボルは,スプラットされた変数を表現する.</p>
+<pre><code class="language-powershell">$Splat = @{ Name = &quot;Win*&quot;; Include = &quot;WinRM&quot; }
+Invoke-Command -Session $s -ScriptBlock { Get-Service @Using:Splat }
+</code></pre>
+<h3>が他の状況で<code>Using:</code>範囲変更は必要だ</h3>
+<p>セッション中執行するスクリプトやコマンドには,  が必要です.<code>Using:</code>呼び出しセッションの範囲から変数値を埋め込むための範囲変更器,セッションコードから外へアクセスできるようにします.<code>Using:</code>scope modifier は以下の文脈でサポートされています.</p>
+<ul>
+<li>遠隔操作命令で実行され,  で始まる<code>Invoke-Command</code><strong>ComputerName</strong>または <strong>Session</strong>パラメータ (遠隔セッション) を使って - 背景の仕事,  で開始された<code>Start-Job</code>(プロセス終了セッション) - 糸作業は, 経由で開始されました.<code>Start-ThreadJob</code>(分離したスレッドセッション)</li>
+</ul>
+<p>文脈によって,埋め込み変数値は,呼び手の範囲内のデータの独立したコピーまたは参照である.リモートおよびオフ・オブ・プロセスのセッションでは,常に独立したコピーである.スレッドセッションでは,参照によって送信されます.</p>
+<h2>変数値のシリアライゼーション</h2>
+<p>遠隔操作されたコマンドと背景作業は処理が終了.処理の終了セッションでは,XMLベースのシリアライゼーションとデシリアライゼーションを使用して,プロセス境界を越えて変数の値を利用できます.シリアライゼーションプロセスでは,オブジェクトが元のオブジェクトのプロパティを含む<strong>PSObject</strong>に変換されますが,その方法ではありません.</p>
+<p>限定型には,デセリアライゼーションがオブジェクトを元のタイプに戻します.再水化対象は,元のオブジェクトインスタンスのコピーです.タイプの性質と方法があります.シンプル型には,例えば<strong>System.Version</strong>のようなタイプでは,コピーが正確です.複雑なタイプでは,コピーが不完全です.例えば再水化証明書オブジェクトにはプライベートキーが含まれません.</p>
+<p>他のすべてのタイプのインスタンスはPSObject<strong>インスタンスのものです. </strong>pstypenames<strong>のプロパティには,原型型名が </strong>Deserialized<strong>で前記されている.例えば, </strong>Deserialized.System.Data.DataTable**と記されています.</p>
+<h2><strong>ArgumentList</strong>パラメータを持つローカル変数を使用する</h2>
+<p>リモートコマンドのパラメータを定義し,  のパラメータを <strong>ArgumentList</strong> で使って,リモートコマンドのローカル変数を利用できます.<code>Invoke-Command</code>cmdlet で,ローカル変数をパラメータ値として指定します.</p>
+<ul>
+<li>
+<p>を用いること<code>param</code>遠隔コマンドのパラメータを定義するキーワードです.パラメータ名は,ローカル変数の名前と一致する必要のない場所保持者です.</p>
+</li>
+<li>
+<p>によって定義されたパラメータを使用します.<code>param</code>キーワードはコマンドで.</p>
+</li>
+<li>
+<p>のパラメータを使用する.<code>Invoke-Command</code>cmdlet で,ローカル変数をパラメータ値として指定します.</p>
+</li>
+</ul>
+<p>例えば,次のコマンドで,  を定義します.<code>$ps</code>ローカルセッションで変数を表示し,リモートコマンドで使用します.<code>$Log</code>パラメータ名とローカル変数として,<code>$ps</code>値として,</p>
+<pre><code class="language-powershell">$ps = &quot;*PowerShell*&quot;
+Invoke-Command -ComputerName S1 -ScriptBlock {
+  param($Log)
+  Get-WinEvent -LogName $Log
+} -ArgumentList $ps
+</code></pre>
+<h2>また, を参照してください.</h2>
+<p>[about_PSSessions] ((about_PSSessions.md) - [about_Remote] ((about_Remote.md) - [about_Scopes] ((about_Scopes.md) - [about_Splatting] ((about_Splatting.md) - [about_Variables] ((about_Variables.md) - [Invoke-Command] ((xref:Microsoft.PowerShell.Core.Invoke-Command) - [Enter-Session] (xref:Microsoft.PowerShell.Core.Enter-Session) - [New-PSSessions] ([New-PSSessions]xref:Microsoft.PowerShell.Core.New-PSSessions) - [Job-Start/Job-Start/Thread/Thread/Thread/Thread/Thread/Thread]</p></section><section class="en-original"><pre class="source-original"># about_Remote_Variables
+
+## Short description
+
+Explains how to use local and remote variables in remote commands.
+
+## Long description
+
+You can use variables in commands that you run on remote computers. Assign a
+value to the variable and then use the variable in place of the value.
+
+By default, the variables in remote commands are assumed to be defined in the
+session that runs the command. Variables that are defined in a local session,
+must be identified as local variables in the command.
+
+## Using remote variables
+
+PowerShell assumes that the variables used in remote commands are defined in
+the session in which the command runs.
+
+In this example, the `$ps` variable is defined in the temporary session in
+which the `Get-WinEvent` command runs.
+
+```powershell
+Invoke-Command -ComputerName S1 -ScriptBlock {
+  $ps = &quot;*PowerShell*&quot;; Get-WinEvent -LogName $ps
+}
+```
+
+When the command runs in a persistent session, **PSSession**, the remote
+variable must be defined in that session.
+
+```powershell
+$s = New-PSSession -ComputerName S1
+Invoke-Command -Session $s -ScriptBlock {$ps = &quot;*PowerShell*&quot;}
+Invoke-Command -Session $s -ScriptBlock {Get-WinEvent -LogName $ps}
+```
+
+## Using local variables
+
+You can use local variables in remote commands, but the variable must be
+defined in the local session.
+
+Beginning in PowerShell 3.0, you can use the `Using:` scope modifier to
+identify a local variable in a remote command.
+
+The syntax of `Using:` is as follows:
+
+```
+$Using:&lt;VariableName&gt;
+```
+
+In the following example, the `$ps` variable is created in the local session,
+but is used in the session in which the command runs. The `Using:` scope
+modifier identifies `$ps` as a local variable.
+
+```powershell
+$ps = &quot;*PowerShell*&quot;
+Invoke-Command -ComputerName S1 -ScriptBlock {
+  Get-WinEvent -LogName $Using:ps
+}
+```
+
+The `Using:` scope modifier can be used in a **PSSession**.
+
+```powershell
+$s = New-PSSession -ComputerName S1
+$ps = &quot;*PowerShell*&quot;
+Invoke-Command -Session $s -ScriptBlock {Get-WinEvent -LogName $Using:ps}
+```
+
+A variable reference such as `$Using:var` expands to the value of variable
+`$var` from the caller&#x27;s context. You do not get access to the caller&#x27;s
+variable object. The `Using:` scope modifier cannot be used to modify a local
+variable within the **PSSession**. For example, the following code does not
+work:
+
+```powershell
+$s = New-PSSession -ComputerName S1
+$ps = &quot;*PowerShell*&quot;
+Invoke-Command -Session $s -ScriptBlock {$Using:ps = &#x27;Cannot assign new value&#x27;}
+```
+
+For more information about `Using:`, see [about_Scopes](./about_Scopes.md)
+
+### Using splatting
+
+PowerShell splatting passes a collection of parameter names and values to a
+command. For more information, see [about_Splatting](about_Splatting.md).
+
+In this example, the splatting variable, `$Splat` is a hash table that is set
+up on the local computer. The `Invoke-Command` connects to a remote computer
+session. The **ScriptBlock** uses the `Using:` scope modifier with the At (`@`)
+symbol to represent the splatted variable.
+
+```powershell
+$Splat = @{ Name = &quot;Win*&quot;; Include = &quot;WinRM&quot; }
+Invoke-Command -Session $s -ScriptBlock { Get-Service @Using:Splat }
+```
+
+### Other situations where the `Using:` scope modifier is needed
+
+For any script or command that executes out of session, you need the `Using:`
+scope modifier to embed variable values from the calling session scope, so that
+out of session code can access them. The `Using:` scope modifier is supported
+in the following contexts:
+
+- Remotely executed commands, started with `Invoke-Command` using the
+  **ComputerName** or **Session** parameter (remote session)
+- Background jobs, started with `Start-Job` (out-of-process session)
+- Thread jobs started via `Start-ThreadJob` (separate thread session)
+
+Depending on the context, embedded variable values are either independent
+copies of the data in the caller&#x27;s scope or references to it. In remote and
+out-of-process sessions, they are always independent copies. In thread
+sessions, they are passed by reference.
+
+## Serialization of variable values
+
+Remotely executed commands and background jobs run out-of-process.
+Out-of-process sessions use XML-based serialization and deserialization to make
+the values of variables available across the process boundaries. The
+serialization process converts objects to a **PSObject** that contains the
+original objects properties but not its methods.
+
+For a limited set of types, deserialization rehydrates objects back to the
+original type. The rehydrated object is a copy of the original object instance.
+It has the type properties and methods. For simple types, such as
+**System.Version**, the copy is exact. For complex types, the copy is
+imperfect. For example, rehydrated certificate objects do not include the
+private key.
+
+Instances of all other types are **PSObject** instances. The **pstypenames**
+property contains the original type name prefixed with **Deserialized**, for
+example, **Deserialized.System.Data.DataTable**
+
+## Using local variables with **ArgumentList** parameter
+
+You can use local variables in a remote command by defining parameters for the
+remote command and using the **ArgumentList** parameter of the `Invoke-Command`
+cmdlet to specify the local variable as the parameter value.
+
+- Use the `param` keyword to define parameters for the remote command. The
+  parameter names are placeholders that don&#x27;t need to match the local
+  variable&#x27;s name.
+
+- Use the parameters defined by the `param` keyword in the command.
+
+- Use the **ArgumentList** parameter of the `Invoke-Command` cmdlet to specify
+  the local variable as the parameter value.
+
+For example, the following commands define the `$ps` variable in the local
+session and then use it in a remote command. The command uses `$Log` as the
+parameter name and the local variable, `$ps`, as its value.
+
+```powershell
+$ps = &quot;*PowerShell*&quot;
+Invoke-Command -ComputerName S1 -ScriptBlock {
+  param($Log)
+  Get-WinEvent -LogName $Log
+} -ArgumentList $ps
+```
+
+## See also
+
+- [about_PSSessions](about_PSSessions.md)
+- [about_Remote](about_Remote.md)
+- [about_Scopes](about_Scopes.md)
+- [about_Splatting](about_Splatting.md)
+- [about_Variables](about_Variables.md)
+- [Invoke-Command](xref:Microsoft.PowerShell.Core.Invoke-Command)
+- [Enter-PSSession](xref:Microsoft.PowerShell.Core.Enter-PSSession)
+- [New-PSSession](xref:Microsoft.PowerShell.Core.New-PSSession)
+- [Start-ThreadJob](/powershell/module/ThreadJob/Start-ThreadJob)</pre></section>

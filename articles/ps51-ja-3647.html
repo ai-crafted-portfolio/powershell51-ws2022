@@ -1,0 +1,960 @@
+<!doctype html><meta charset="utf-8"><section class="jp-official"><h1>about_WQLについて</h1>
+<h2>短編説明</h2>
+<p>PowerShellでWMIオブジェクトを取得するために使用できるWMIクエリ言語 (WQL) を記述します.</p>
+<h2>長い説明</h2>
+<p>WQLは,Windows Management Instrumentation (WMI) のクエリ言語であり,WMIから情報を入手するために使用される言語です.</p>
+<p>PowerShellでWQLを WMIクエリを実行するために使用する必要はありません.代わりに,CIM cmdletsのパラメータを使用できます.WQLクエリは標準的なCIMコマンドよりも少し速く,コマンドが数百台のシステムで実行されたときに性能が向上することが明らかです.しかし,成功したWQLクエリを書くのに費やされた時間はパフォーマンス向上を上回らないことを確認してください.</p>
+<p>WQLを使用するために必要な基本的なWQLステートメントは,<code>SELECT</code>     <code>WHERE</code>そして,<code>FROM</code> .</p>
+<h2>WQLをいつ使うか</h2>
+<p>WMI,特にWQLで作業する際,PowerShellも使っていることを忘れないでください.WQLのクエリが期待通り動作しない場合,WQLのクエリをデバッグするよりも標準的なPowerShellコマンドを使用することが容易です.</p>
+<p>膨大な量のデータを返却しない限り,同じことをする許容可能なPowerShell cmdletが存在する複雑なWQLクエリを完善しようと何時間も費やすることは,ほとんど生産的ではありません.</p>
+<h2>SELECT ステートメントを使用する</h2>
+<p>典型的なWMIクエリは, で始まる.<code>SELECT</code>WMIクラスのすべての性質または特定の性質を得る声明です.WMIクラスのすべての性質を選択するには,アステリス () を使用します.<code>*</code>                                                                                                                                                                                                                                                           <code>FROM</code>キーワードはWMIクラスを指定します.</p>
+<p>A  <code>SELECT</code>文は以下の形式で表示されます.</p>
+<pre><code>SELECT &lt;property&gt; FROM &lt;WMI-class&gt;
+</code></pre>
+<p>例えば,次の <code>SELECT</code>声明はすべての属性を選択します ()<code>*</code>) をWin32_BIOS** WMIクラスから入手した.</p>
+<pre><code>SELECT * FROM Win32_BIOS
+</code></pre>
+<p>&gt; [!NOTE] &gt; PowerShell では,デフォルトオブジェクトプロパティのみが表示されます.これらのプロパティは,  で定義されている.<code>Types.ps1xml</code>ファイルで  を使って<code>Select-Object</code>cmdlet または &gt; <code>Format-*</code>cmdlet は追加的プロパティを表示する.</p>
+<p>WMIクラスの一つの特定のプロパティを選択するには,プロパティ名を""の間で配置します.<code>SELECT</code>そして,<code>FROM</code>キーワードです.</p>
+<p>次のクエリでは,Win32_BIOS** WMIクラスから BIOSの名前のみを選択します.コマンドは,クエリを  に保存します.<code>$queryName</code>変数です.</p>
+<pre><code>SELECT Name FROM Win32_BIOS
+</code></pre>
+<p>複数のプロパティを選択するには,コマを使ってプロパティ名を分離します.次のWMIクエリは <strong>Win32_BIOS</strong> WMIクラス名とバージョンを選択します.コマンドはクエリを に保存します.<code>$queryNameVersion</code>変数です.</p>
+<pre><code class="language-WQL">SELECT name, version FROM Win32_BIOS
+</code></pre>
+<h2>WQLクエリを使用する</h2>
+<p>PowerShell コマンドでWQLクエリを使用する方法は2つあります.</p>
+<ul>
+<li>CIM cmdlets を使って -  を使って<code>[wmisearcher]</code>加速器型</li>
+</ul>
+<h2>Get-CimInstance cmdlet を使って</h2>
+<p><code>Get-CimInstance</code>CIM cmdletsは,PowerShell 3.0を導入したCIM cmdletsは,WMI cmdletsと同じ作業を実行します.CIM cmdletsはWS-Management (WSMan) 標準とCIM (Common Information Model) 標準に準拠しています.このことで,CIMはWindowsコンピュータや他のオペレーティングシステムを実行しているコンピュータを管理するために同じ技術を使用することができます.</p>
+<p>次のコマンドは,  を使っています.<code>Get-CimInstance</code>cmdlet でWQL 查询を実行します.</p>
+<p>と使用できる任意のWQLクエリです.<code>Get-WmiObject</code>ととも使用できます.<code>Get-CimInstance</code> .</p>
+<pre><code class="language-powershell">Get-CimInstance -Query &quot;SELECT * FROM Win32_BIOS&quot;
+</code></pre>
+<pre><code class="language-output">SMBIOSBIOSVersion : S03KT39A
+Manufacturer      : LENOVO
+Name              : S03KT39A
+SerialNumber      : MJ0AETTX
+Version           : LENOVO - 1270
+</code></pre>
+<p><code>Get-CimInstance</code>管理オブジェクトの代わりに,CimInstanceオブジェクトを返します.<code>Get-WmiObject</code>返却するものの,オブジェクトはかなり似ている.</p>
+<pre><code class="language-powershell">PS&gt; (Get-CimInstance -Query &quot;SELECT * FROM Win32_BIOS&quot;).GetType().FullName
+Microsoft.Management.Infrastructure.CimInstance
+
+PS&gt; (Get-WmiObject -Query &quot;SELECT * FROM Win32_BIOS&quot;).GetType().FullName
+System.Management.ManagementObject
+</code></pre>
+<h2>を使って<code>[wmisearcher]</code>加速器型</h2>
+<p><code>[wmisearcher]</code>加速器は,WQL ステートメント文字列から管理オブジェクト検索者オブジェクトを作成します.管理オブジェクト検索者オブジェクトには多くの性質と方法がありますが,最も基本的な方法はGet 方法です.この方法は指定されたWMI 查询を呼び出し,結果のオブジェクトを返します.</p>
+<p>を使って<code>[wmisearcher]</code>管理ObjectSearcher.NETクラスへの簡単にアクセスできます.これは,WMIをクエリし,クエリが実行される方法を設定することができます.</p>
+<p>を使って<code>[wmisearcher]</code>加速器の種類:</p>
+<p>1.WQL文字列をManagementObjectSearcher<strong>オブジェクトに投げ込む. 1.ManagementObjectSearcher</strong>オブジェクトのGet方法に呼び出す.</p>
+<p>例えば,次のコマンドは"すべてを選択"のクエリを投げ出し,結果を""に保存します.<code>$bios</code>変数を呼び出す.<code>Get()</code>管理ObjectSearcher オブジェクトの方法を<code>$bios</code>変数です.</p>
+<pre><code class="language-powershell">$bios = [wmisearcher]&quot;SELECT * FROM Win32_BIOS&quot;
+$bios.Get()
+</code></pre>
+<pre><code class="language-output">SMBIOSBIOSVersion : 8BET56WW (1.36 )
+Manufacturer      : LENOVO
+Name              : Default System BIOS
+SerialNumber      : R9FPY3P
+Version           : LENOVO - 1360
+</code></pre>
+<p>を用いることができます.<code>[wmisearcher]</code>問い合わせまたは変数を投げ出すために加速器を入力します.次の例では,  を入力します.<code>[wmisearcher]</code>変数を放出するためにタイプ加速器を使用します.結果は同じです.</p>
+<pre><code class="language-powershell">[wmisearcher]$bios = &quot;SELECT * FROM Win32_BIOS&quot;
+$bios.Get()
+</code></pre>
+<pre><code class="language-output">SMBIOSBIOSVersion : S03KT39A
+Manufacturer      : LENOVO
+Name              : S03KT39A
+SerialNumber      : MJ0AETTX
+Version           : LENOVO - 1270
+</code></pre>
+<p>を使うとき<code>[wmisearcher]</code>速縮器は,次のコマンドで示すように,クエリ文字列を <strong>ManagementObjectSearcher</strong> オブジェクトに変更します.</p>
+<pre><code class="language-powershell">$a = &quot;SELECT * FROM Win32_BIOS&quot;
+$a.GetType().FullName
+System.String
+
+$a = [wmisearcher]&quot;SELECT * FROM Win32_BIOS&quot;
+$a.GetType().FullName
+System.Management.ManagementObjectSearcher
+</code></pre>
+<p>このコマンドフォーマットは任意のクエリで動作します.次のコマンドは <strong>Win32_BIOS</strong> WMI クラスの <strong>Name</strong> 属性の値を得ます.</p>
+<pre><code class="language-powershell">$biosName = [wmisearcher]&quot;Select Name from Win32_BIOS&quot;
+$biosName.Get()
+</code></pre>
+<pre><code class="language-output">__GENUS          : 2
+__CLASS          : Win32_BIOS
+__SUPERCLASS     :
+__DYNASTY        :
+__RELPATH        :
+__PROPERTY_COUNT : 1
+__DERIVATION     : {}
+__SERVER         :
+__NAMESPACE      :
+__PATH           :
+Name             : S03KT39A
+PSComputerName   :
+</code></pre>
+<h2>基本的なWQL WHERE 文を用い,</h2>
+<p>A  <code>WHERE</code>記述は,データに条件を設定し,a <code>SELECT</code>返済声明が返されます.</p>
+<p><code>WHERE</code>文は以下の形式で表示されます.</p>
+<pre><code>WHERE &lt;property&gt; &lt;operator&gt; &lt;value&gt;
+</code></pre>
+<p>例えば:</p>
+<pre><code>WHERE Name = 'Notepad.exe'
+</code></pre>
+<p><code>WHERE</code>という文で表現される.<code>SELECT</code>次の例で示されているように.</p>
+<pre><code>SELECT * FROM Win32_Process WHERE Name = 'Notepad.exe'
+</code></pre>
+<p>を使ったときに<code>WHERE</code>声明,財産名と値は正確である必要があります.</p>
+<p>例えば,次のコマンドは,ローカルコンピュータのノートパッドプロセスを取得します.</p>
+<pre><code class="language-powershell">Get-CimInstance -Query &quot;SELECT * FROM Win32_Process WHERE name='Notepad.exe'&quot;
+</code></pre>
+<p>しかし,次のコマンドは失敗します.プロセス名には""が含まれているため.<code>.exe</code>ファイル拡張子です.</p>
+<pre><code class="language-powershell">Get-CimInstance -Query &quot;SELECT * FROM Win32_Process WHERE name='Notepad'&quot;
+</code></pre>
+<h1>about_WQLについて</h1>
+<h2>WHERE 表現比較オペレータ</h2>
+<p>次のオペレータはWQLで有効です.<code>WHERE</code>声明.</p>
+<pre><code>Operator    Description
+-----------------------
+=           Equal
+!=          Not equal
+&lt;&gt;          Not equal
+&lt;           Less than
+&gt;           Greater than
+&lt;=          Less than or equal
+&gt;=          Greater than or equal
+LIKE        Wildcard match
+IS          Evaluates null
+ISNOT       Evaluates not null
+ISA         Evaluates a member of a WMI class
+</code></pre>
+<p>他のオペレーターもありますが,比較をするのに使うのはこれです.</p>
+<p>例えば,次のクエリでは,プロセス優先度が11より大きいまたは等しい<strong>Win32_Process</strong>クラス内のプロセスから<strong>Name</strong>と<strong>Priority</strong>のプロパティを選択します.<code>Get-WmiObject</code>cmdlet はクエリを実行します.</p>
+<pre><code class="language-powershell">$highPriority = &quot;Select Name, Priority from Win32_Process &quot; +
+  &quot;WHERE Priority &gt;= 11&quot;
+Get-CimInstance -Query $highPriority
+</code></pre>
+<h2>-FilterパラメータでWQLオペレータを使用します</h2>
+<p>WQL オペレーターは,また,  の <strong>Filter</strong> パラメータの値に用いられる.<code>Get-CimInstance</code>cmdlet,およびこれらの cmdlet の <strong>Query</strong> パラメータの値.</p>
+<p>例えば,次のコマンドは,過去5つのプロセスが1004以上の <strong>ProcessId</strong>値を持つ <strong>Name</strong>と <strong>ProcessId</strong>のプロパティを取得します.このコマンドは <strong>ProcessId</strong>の条件を指定するために <strong>Filter</strong>パラメータを使用します.</p>
+<pre><code class="language-powershell">$getCimInstance = @{
+    Class = 'Win32_Process'
+    Property = 'Name', 'ProcessId'
+    Filter = &quot;ProcessId &gt;= 1004&quot;
+}
+Get-CimInstance @getCimInstance |
+    Sort-Object ProcessId |
+    Select-Object Name, ProcessId -Last 5
+</code></pre>
+<pre><code class="language-output">Name                                 ProcessId
+----                                 ---------
+SROSVC.exe                                4220
+WINWORD.EXE                               4664
+TscHelp.exe                               4744
+SnagIt32.exe                              4748
+WmiPrvSE.exe                              5056
+</code></pre>
+<h2>LIKE オペレーターを使って</h2>
+<p><code>LIKE</code>ワイルドカード文字を使ってWQLクエリの結果をフィルタリングできます.</p>
+<pre><code>Like Operator  Description
+--------------------------------------------------
+[]             Character in a range [a-f] or a set
+               of characters [abcdef]. The items in
+               a set don't need to be consecutive or
+               listed in alphabetical order.
+
+^              Character not in a range [^a-f] or
+               not in a set [^abcdef]. The items in
+               a set don't need to be consecutive or
+               listed in alphabetical order.
+
+%              A string of zero or more characters
+
+_              One character.
+(underscore)   NOTE: To use a literal underscore
+               in a query string, enclose it in
+               square brackets [_].
+</code></pre>
+<p>がいつになったら<code>LIKE</code>ワイルドカード文字や範囲操作者がなく,平等操作員のように振る舞う ()<code>=</code>) と同じパターンに正確に一致する場合にのみ返します.</p>
+<p>範囲操作を百分数 () と組み合わせることができます.<code>%</code>) は,シンプルで,しかしながら強力なフィルターを作成するワイルドカードキャラクターです.</p>
+<h3>操作者の例をのようにします.</h3>
+<h4>例1: [\&lt;range&gt;]</h4>
+<p>次のコマンドはNotepadを起動し,後に"H"と"N" (ケース無感覚) の間の文字から始まる名前を持つ <strong>Win32_Process</strong>クラスの一例を探します.</p>
+<p>查询は,任意のプロセスから返済する必要があります.<code>Hotepad.exe</code> 経由で<code>Notepad.exe</code> .</p>
+<pre><code class="language-powershell">Notepad   # Starts Notepad
+$query = &quot;SELECT * FROM Win32_Process WHERE Name LIKE '[H-N]otepad.exe'&quot;
+Get-CimInstance -Query $query | select Name, ProcessId
+</code></pre>
+<pre><code class="language-output">Name                                ProcessId
+----                                ---------
+notepad.exe                              1740
+</code></pre>
+<h4>例2: [\&lt;range&gt;] と %</h4>
+<p>次のコマンドでは,AとP (ケース無感覚) の間の文字から始まる名前を持つすべてのプロセスを選択し,任意の組み合わせでゼロまたはそれ以上の文字が続く.</p>
+<p><code>Get-CimInstance</code>cmdlet はクエリを実行し,その  を実行します.<code>Select-Object</code>cmdlet は <strong>Name</strong> と <strong>ProcessId</strong> のプロパティ,および  を獲得します.<code>Sort-Object</code>cmdlet は,結果を名前によってアルファベティ順に並べます.</p>
+<pre><code class="language-powershell">$query = &quot;SELECT * FROM Win32_Process WHERE name LIKE '[A-P]%'&quot;
+Get-CimInstance -Query $query |
+    Select-Object -Property Name, ProcessId |
+    Sort-Object -Property Name
+</code></pre>
+<h4>例3: 範囲内ではない (^)</h4>
+<p>次のコマンドは,名前が以下の文字から始まるプロセスを受け取ります: A, S, W, P, R, C, U, N</p>
+<p>そして,ゼロ以上の文字が続きます.</p>
+<pre><code class="language-powershell">$query = &quot;SELECT * FROM Win32_Process WHERE name LIKE '[^ASWPRCUN]%'&quot;
+Get-CimInstance -Query $query |
+    Select-Object -Property Name, ProcessId |
+    Sort-Object -Property Name
+</code></pre>
+<h4>例4:任意の文字か,文字は全くない (%)</h4>
+<p>次のコマンドは,  で始まる名前を持つプロセスを取得します.<code>calc</code>パーセントのシンボル ().<code>%</code>) はWQLワイルドカード文字です.これは星座 () に等しいです.<code>*</code>) はPowerShellでワイルドカードです.</p>
+<pre><code class="language-powershell">$query = &quot;SELECT * FROM Win32_Process WHERE Name LIKE 'calc%'&quot;
+Get-CimInstance -Query $query | Select-Object -Property Name, ProcessId
+</code></pre>
+<pre><code class="language-output">Name                               ProcessId
+----                               ---------
+calc.exe                                4424
+</code></pre>
+<h4>例5: 1文字 (_)</h4>
+<p>次のコマンドは,次のパターンを持つ名前を持つプロセスを得ます.<code>c_lc.exe</code>このパターンは,  からどんな名前と一致する.<code>calc.exe</code> 経由で<code>czlc.exe</code>       <code>c9lc.exe</code>文字が"つ以上で区切られている"c"と"l"の名前には一致しない.</p>
+<pre><code class="language-powershell">$query = &quot;SELECT * FROM Win32_Process WHERE Name LIKE 'c_lc.exe'&quot;
+Get-CimInstance -Query $query | Select-Object -Property Name, ProcessId
+</code></pre>
+<pre><code class="language-output">Name                                 ProcessId
+----                                 ---------
+calc.exe                                  4424
+</code></pre>
+<h4>例 6:正確なマッチ</h4>
+<p>次のコマンドは,プロセスに名前付けられる.<code>WLIDSVC.exe</code> を使っているのに,このクエリは<code>LIKE</code>キーワードは,正確なマッチが必要になりますが,その値はワイルドカード文字を含まないからです.</p>
+<pre><code class="language-powershell">$query = &quot;SELECT * FROM Win32_Process WHERE name LIKE 'WLIDSVC.exe'&quot;
+Get-CimInstance -Query $query | Select-Object -Property Name, ProcessId
+</code></pre>
+<pre><code class="language-output">Name                                 ProcessId
+----                                 ---------
+WLIDSVC.exe                                84
+</code></pre>
+<h2>OR オペレーターを使って</h2>
+<p>複数の独立した条件を指定するには,  を使います.<code>OR</code>キーワードは""です.<code>OR</code>キーワードは,  のキーワードに表示されます.<code>WHERE</code>条項. それは包括的な実行します <code>OR</code>2 (またはそれ以上) の条件で操作し,いずれかの条件を満たすアイテムを返します.</p>
+<p><code>OR</code>オペレーターは次の形式で表示されます.</p>
+<pre><code>WHERE &lt;property&gt; &lt;operator&gt; &lt;value&gt; OR &lt;property&gt; &lt;operator&gt; &lt;value&gt; ...
+</code></pre>
+<p>例えば,次のコマンドは <strong>Win32_Process</strong> WMI クラスのすべてのインスタンスを取得するが,プロセス名は である場合にのみ返却する.<code>winword.exe</code>    <code>excel.exe</code> .</p>
+<pre><code class="language-powershell">$q = &quot;SELECT * FROM Win32_Process WHERE Name='winword.exe'&quot; +
+  &quot; OR Name='excel.exe'&quot;
+Get-CimInstance -Query $q
+</code></pre>
+<p><code>OR</code>記述は2以上の条件で使用できます.次の質問では, <code>OR</code>声明が得られる.<code>Winword.exe</code>     <code>Excel.exe</code>       <code>powershell.exe</code> .</p>
+<pre><code class="language-powershell">$q = &quot;SELECT * FROM Win32_Process WHERE Name='winword.exe'&quot; +
+  &quot; OR Name='excel.exe' OR Name='powershell.exe'&quot;
+</code></pre>
+<h1>about_WQLについて</h1>
+<h2>AND オペレーターを使って</h2>
+<p>複数の関連条件を指定するには,  を使います.<code>AND</code>キーワードは""です.<code>AND</code>キーワードは,  のキーワードに表示されます.<code>WHERE</code>条項.すべての条件を満たす項目を返します.</p>
+<p><code>AND</code>オペレーターは次の形式で表示されます.</p>
+<pre><code>WHERE &lt;property&gt; &lt;operator&gt; &lt;value&gt; `AND` &lt;property&gt; &lt;operator&gt; &lt;value&gt; ...
+</code></pre>
+<p>例えば,次のコマンドは, という名前を持つプロセスを取得します.<code>Winword.exe</code>そして,プロセスID 6512です.</p>
+<p>命令では""という文字が使っていることに注意してください.<code>Get-CimInstance</code>cmdletです.</p>
+<pre><code class="language-powershell">$q = &quot;SELECT * FROM Win32_Process WHERE Name = 'winword.exe' &quot; +
+  &quot;AND ProcessId =6512&quot;
+Get-CimInstance -Query $q
+</code></pre>
+<pre><code class="language-output">ProcessId   Name             HandleCount      WorkingSetSize   VirtualSize
+---------   ----             -----------      --------------   -----------
+
+# 6512      WINWORD.EXE      768              117170176        633028608
+</code></pre>
+<p>を含むすべてのオペレーター.<code>LIKE</code>運行者は,有効な  号で有効です.<code>OR</code>そして,<code>AND</code>そして,操作者は  を組み合わせることができます.<code>OR</code>そして,<code>AND</code>括弧でWMIに最初に処理する条項を伝える単一のクエリのオペレーターです.</p>
+<p>このコマンドはPowerShell継続文字 (<code>) を使用します.</code> ``) 命令を2行に分けます.</p>
+<h2>ゼロ値を探している</h2>
+<p>WMIでゼロ値を探すのは難しい,予測不能な結果をもたらす可能性があるからです. <code>Null</code>ゼロとは違うし,空の文字列に等しいとは限らない.WMIクラスプロパティの一部は初期化され,他のものは初期化されていないので,ゼロの検索はすべてのプロパティに有効でない可能性があります.</p>
+<p>ゼロ値を探すには,値の""を持つIs オペレーターを用い,<code>null</code> .</p>
+<p>例えば,次のコマンドは, <strong>InstallDate</strong> 属性に対してゼロ値を持つプロセスを取得します.コマンドは,多くのプロセスを返します.</p>
+<pre><code class="language-powershell">$q = &quot;SELECT * FROM Win32_Process WHERE InstallDate is null&quot;
+Get-CimInstance -Query $q
+</code></pre>
+<p>このコマンドでは,ほとんどのユーザーアカウントが <strong>Description</strong>属性に対して値を持たないにもかかわらず,ユーザーアカウントは返されません.</p>
+<pre><code class="language-powershell">$q = &quot;SELECT * FROM Win32_UserAccount WHERE Description is null&quot;
+Get-CimInstance -Query $q
+</code></pre>
+<p><strong>Description</strong>属性に対して値を持たないユーザーアカウントを検索するには,等式操作符を使って空文字列を表示します.空文字列を表示するには,連続して2つの単一の引用符を使用します.</p>
+<pre><code class="language-powershell">$q = &quot;SELECT * FROM Win32_UserAccount WHERE Description = '' &quot;
+</code></pre>
+<h2>真実か偽りのことを使って</h2>
+<p>WMIオブジェクトのプロパティのブーラン値を入手するには,使用する<code>True</code>そして,<code>False</code>ケースセンシティブではない.</p>
+<p>次のWQLクエリでは,ドメインに接続されたコンピュータからローカルユーザーアカウントのみが返されます.</p>
+<pre><code class="language-powershell">$q = &quot;SELECT * FROM Win32_UserAccount WHERE LocalAccount = True&quot;
+Get-CimInstance -Query $q
+</code></pre>
+<p>ドメインアカウントを見つけるには,以下の例で示されている False の値を使用してください.</p>
+<pre><code class="language-powershell">$q = &quot;SELECT * FROM Win32_UserAccount WHERE LocalAccount = False&quot;
+Get-CimInstance -Query $q
+</code></pre>
+<h2>エスケープキャラクターを使って</h2>
+<p>WQLはバックスラッシュを使用している ()<code>\</code>これは,バックティック文字 (<code>) を使っているPowerShellとは異なります.</code> <code>`</code>) <code></code> `</p>
+<p>引用符や引用符に使われる文字は,誤解されないように避ける必要がある.</p>
+<p>単一の引用符を含むユーザーを検索するには,次のコマンドで示されているように,単一の引用符を逃れるためにバックスラッシュを使用します.</p>
+<pre><code class="language-powershell">$q = &quot;SELECT * FROM Win32_UserAccount WHERE Name = 'Tim O\'Brian'&quot;
+Get-CimInstance -Query $q
+</code></pre>
+<pre><code class="language-output">Name             Caption          AccountType      SID              Domain
+----             -------          -----------      ---              ------
+Tim O'Brian      FABRIKAM\TimO    512              S-1-5-21-1457... FABRIKAM
+</code></pre>
+<p>例えば,以下のコマンドは,キャプション値のバックスラッシュにより無効なクエリエラーを生成します.</p>
+<pre><code class="language-powershell">$q = &quot;SELECT * FROM Win32_UserAccount WHERE Caption = 'Fabrikam\TimO'&quot;
+Get-CimInstance -Query $q
+</code></pre>
+<pre><code class="language-output">Get-CimInstance : Invalid query
+At line:1 char:1
++ Get-CimInstance -Query $q
++ ~~~~~~~~~~~
+  + CategoryInfo          : InvalidArgument: (:) [Get-CimInstance], CimExcep
+  + FullyQualifiedErrorId : HRESULT 0x80041017,Microsoft.Management.Infrastr
+</code></pre>
+<p>バックスラッシュから逃れるには,次のコマンドで示されているように,第2のバックスラッシュ文字を使用してください.</p>
+<pre><code class="language-powershell">$q = &quot;SELECT * FROM Win32_UserAccount WHERE Caption = 'Fabrikam\\TimO'&quot;
+Get-CimInstance -Query $q
+</code></pre>
+<h2>また, を参照してください.</h2>
+<ul>
+<li>[about_Special_Characters][02] - [about_Quoting_Rules][01] - [about_WMI][04]</li>
+</ul>
+<p>&lt;!--リンク参照 --&gt; [01]: about_Quoting_Rules.md [02]: about_Special_Characters.md [03]: about_WMI_Cmdlets.md [04]: about_WMI.md</p></section><section class="en-original"><pre class="source-original"># about_WQL
+
+## Short description
+
+Describes WMI Query Language (WQL), which can be used to get WMI objects in
+PowerShell.
+
+## Long description
+
+WQL is the Windows Management Instrumentation (WMI) query language, which is
+the language used to get information from WMI.
+
+You aren&#x27;t required to use WQL to perform a WMI query in PowerShell. Instead,
+you can use the parameters of the CIM cmdlets. WQL queries are somewhat faster
+than standard CIM commands and the improved performance is evident when the
+commands run on hundreds of systems. However, be sure that the time you spend
+to write a successful WQL query doesn&#x27;t outweigh the performance improvement.
+
+The basic WQL statements you need to use WQL are `SELECT`, `WHERE`, and `FROM`.
+
+## When to use WQL
+
+When working with WMI, and especially with WQL, don&#x27;t forget that you are also
+using PowerShell. Often, if a WQL query doesn&#x27;t work as expected, it&#x27;s easier
+to use a standard PowerShell command than to debug the WQL query.
+
+Unless your query returns massive amounts of data, it&#x27;s rarely productive to
+spend hours trying to perfect a complicated WQL query when there is an
+acceptable PowerShell cmdlet that does the same thing.
+
+## Using the SELECT statement
+
+A typical WMI query begins with a `SELECT` statement that gets all properties
+or particular properties of a WMI class. To select all properties of a WMI
+class, use an asterisk (`*`). The `FROM` keyword specifies the WMI class.
+
+A `SELECT` statement has the following format:
+
+```
+SELECT &lt;property&gt; FROM &lt;WMI-class&gt;
+```
+
+For example, the following `SELECT` statement selects all properties (`*`) from
+the instances of the **Win32_BIOS** WMI class.
+
+```
+SELECT * FROM Win32_BIOS
+```
+
+&gt; [!NOTE]
+&gt; PowerShell only displays the default object properties. These properties are
+&gt; defined in the `Types.ps1xml` file. Use the `Select-Object` cmdlet or a
+&gt; `Format-*` cmdlet to display additional properties.
+
+To select a particular property of a WMI class, place the property name
+between the `SELECT` and `FROM` keywords.
+
+The following query selects only the name of the BIOS from the **Win32_BIOS**
+WMI class. The command saves the query in the `$queryName` variable.
+
+```
+SELECT Name FROM Win32_BIOS
+```
+
+To select more than one property, use commas to separate the property names.
+The following WMI query selects the name and the version of the **Win32_BIOS**
+WMI class. The command saves the query in the `$queryNameVersion` variable.
+
+```WQL
+SELECT name, version FROM Win32_BIOS
+```
+
+## Using the WQL query
+
+There are two ways to use WQL query in PowerShell command.
+
+- Use the CIM cmdlets
+- Use the `[wmisearcher]` type accelerator
+
+## Using the Get-CimInstance cmdlet
+
+`Get-CimInstance` gets instances of CIM-compliant classes, including WMI
+classes. The CIM cmdlets, introduced PowerShell 3.0, perform the same tasks as
+the WMI cmdlets. The CIM cmdlets comply with WS-Management (WSMan) standards
+and with the Common Information Model (CIM) standard, which enables the cmdlets
+to use the same techniques to manage Windows computers and computers that are
+running other operating systems.
+
+The following command uses the `Get-CimInstance` cmdlet to run a WQL query.
+
+Any WQL query that can be used with `Get-WmiObject` can also be used with
+`Get-CimInstance`.
+
+```powershell
+Get-CimInstance -Query &quot;SELECT * FROM Win32_BIOS&quot;
+```
+
+```output
+SMBIOSBIOSVersion : S03KT39A
+Manufacturer      : LENOVO
+Name              : S03KT39A
+SerialNumber      : MJ0AETTX
+Version           : LENOVO - 1270
+```
+
+`Get-CimInstance` returns a **CimInstance** object, instead of the
+**ManagementObject** that `Get-WmiObject` returns, but the objects are quite
+similar.
+
+```powershell
+PS&gt; (Get-CimInstance -Query &quot;SELECT * FROM Win32_BIOS&quot;).GetType().FullName
+Microsoft.Management.Infrastructure.CimInstance
+
+PS&gt; (Get-WmiObject -Query &quot;SELECT * FROM Win32_BIOS&quot;).GetType().FullName
+System.Management.ManagementObject
+```
+
+## Using the `[wmisearcher]` type accelerator
+
+The `[wmisearcher]` type accelerator creates a **ManagementObjectSearcher**
+object from a WQL statement string. The **ManagementObjectSearcher** object has
+many properties and methods, but the most basic method is the Get method, which
+invokes the specified WMI query and returns the resulting objects.
+
+Using `[wmisearcher]`, you gain easy access to the **ManagementObjectSearcher**
+.NET class. This lets you query WMI and to configure the way the query is
+conducted.
+
+To use the `[wmisearcher]` type accelerator:
+
+1. Cast the  WQL string into a **ManagementObjectSearcher** object.
+1. Call the Get method of the **ManagementObjectSearcher** object.
+
+For example, the following command casts the &quot;select all&quot; query, saves the
+result in the `$bios` variable, and then calls the `Get()` method of the
+**ManagementObjectSearcher** object in the `$bios` variable.
+
+```powershell
+$bios = [wmisearcher]&quot;SELECT * FROM Win32_BIOS&quot;
+$bios.Get()
+```
+
+```output
+SMBIOSBIOSVersion : 8BET56WW (1.36 )
+Manufacturer      : LENOVO
+Name              : Default System BIOS
+SerialNumber      : R9FPY3P
+Version           : LENOVO - 1360
+```
+
+You can use the `[wmisearcher]` type accelerator to cast the query or the
+variable. In the following example, the `[wmisearcher]` type accelerator is
+used to cast the variable. The result is the same.
+
+```powershell
+[wmisearcher]$bios = &quot;SELECT * FROM Win32_BIOS&quot;
+$bios.Get()
+```
+
+```output
+SMBIOSBIOSVersion : S03KT39A
+Manufacturer      : LENOVO
+Name              : S03KT39A
+SerialNumber      : MJ0AETTX
+Version           : LENOVO - 1270
+```
+
+When you use the `[wmisearcher]` type accelerator, it changes the query string
+into a **ManagementObjectSearcher** object, as shown in the following commands.
+
+```powershell
+$a = &quot;SELECT * FROM Win32_BIOS&quot;
+$a.GetType().FullName
+System.String
+
+$a = [wmisearcher]&quot;SELECT * FROM Win32_BIOS&quot;
+$a.GetType().FullName
+System.Management.ManagementObjectSearcher
+```
+
+This command format works on any query. The following command gets the value
+of the **Name** property of the **Win32_BIOS** WMI class.
+
+```powershell
+$biosName = [wmisearcher]&quot;Select Name from Win32_BIOS&quot;
+$biosName.Get()
+```
+
+```output
+__GENUS          : 2
+__CLASS          : Win32_BIOS
+__SUPERCLASS     :
+__DYNASTY        :
+__RELPATH        :
+__PROPERTY_COUNT : 1
+__DERIVATION     : {}
+__SERVER         :
+__NAMESPACE      :
+__PATH           :
+Name             : S03KT39A
+PSComputerName   :
+```
+
+## Using the basic WQL WHERE statement
+
+A `WHERE` statement establishes conditions for the data that a `SELECT`
+statement returns.
+
+The `WHERE` statement has the following format:
+
+```
+WHERE &lt;property&gt; &lt;operator&gt; &lt;value&gt;
+```
+
+For example:
+
+```
+WHERE Name = &#x27;Notepad.exe&#x27;
+```
+
+The `WHERE` statement is used with the `SELECT` statement, as shown in the
+following example.
+
+```
+SELECT * FROM Win32_Process WHERE Name = &#x27;Notepad.exe&#x27;
+```
+
+When using the `WHERE` statement, the property name and value must be accurate.
+
+For example, the following command gets the Notepad processes on the local
+computer.
+
+```powershell
+Get-CimInstance -Query &quot;SELECT * FROM Win32_Process WHERE name=&#x27;Notepad.exe&#x27;&quot;
+```
+
+However, the following command fails, because the process name includes the
+`.exe` file extension.
+
+```powershell
+Get-CimInstance -Query &quot;SELECT * FROM Win32_Process WHERE name=&#x27;Notepad&#x27;&quot;
+```
+
+# about_WQL
+
+## WHERE statement comparison operators
+
+The following operators are valid in a WQL `WHERE` statement.
+
+```
+Operator    Description
+-----------------------
+=           Equal
+!=          Not equal
+&lt;&gt;          Not equal
+&lt;           Less than
+&gt;           Greater than
+&lt;=          Less than or equal
+&gt;=          Greater than or equal
+LIKE        Wildcard match
+IS          Evaluates null
+ISNOT       Evaluates not null
+ISA         Evaluates a member of a WMI class
+```
+
+There are other operators, but these are the ones used for making comparisons.
+
+For example, the following query selects the **Name** and **Priority**
+properties from processes in the **Win32_Process** class where the process
+priority is greater than or equal to 11. The `Get-WmiObject` cmdlet runs the
+query.
+
+```powershell
+$highPriority = &quot;Select Name, Priority from Win32_Process &quot; +
+  &quot;WHERE Priority &gt;= 11&quot;
+Get-CimInstance -Query $highPriority
+```
+
+## Using the WQL operators in the -Filter parameter
+
+The WQL operators can also be used in the value of the **Filter** parameter of
+the `Get-CimInstance` cmdlet, as well as in the value of the **Query**
+parameters of these cmdlets.
+
+For example, the following command gets the **Name** and **ProcessId**
+properties of the last five processes that have **ProcessId** values greater
+than 1004. The command uses the **Filter** parameter to specify the
+**ProcessId** condition.
+
+```powershell
+$getCimInstance = @{
+    Class = &#x27;Win32_Process&#x27;
+    Property = &#x27;Name&#x27;, &#x27;ProcessId&#x27;
+    Filter = &quot;ProcessId &gt;= 1004&quot;
+}
+Get-CimInstance @getCimInstance |
+    Sort-Object ProcessId |
+    Select-Object Name, ProcessId -Last 5
+```
+
+```output
+Name                                 ProcessId
+----                                 ---------
+SROSVC.exe                                4220
+WINWORD.EXE                               4664
+TscHelp.exe                               4744
+SnagIt32.exe                              4748
+WmiPrvSE.exe                              5056
+```
+
+## Using the LIKE operator
+
+The `LIKE` operator lets you use wildcard characters to filter the results of a
+WQL query.
+
+```
+Like Operator  Description
+--------------------------------------------------
+[]             Character in a range [a-f] or a set
+               of characters [abcdef]. The items in
+               a set don&#x27;t need to be consecutive or
+               listed in alphabetical order.
+
+^              Character not in a range [^a-f] or
+               not in a set [^abcdef]. The items in
+               a set don&#x27;t need to be consecutive or
+               listed in alphabetical order.
+
+%              A string of zero or more characters
+
+_              One character.
+(underscore)   NOTE: To use a literal underscore
+               in a query string, enclose it in
+               square brackets [_].
+```
+
+When the `LIKE` operator is used without any wildcard characters or range
+operators, it behaves like the equality operator (`=`) and returns objects only
+when they&#x27;re an exact match for the pattern.
+
+You can combine the range operation with the percent (`%`) wildcard character
+to create simple, yet powerful filters.
+
+### LIKE operator examples
+
+#### Example 1: [\&lt;range&gt;]
+
+The following commands start Notepad and then search for an instance of the
+**Win32_Process** class that has a name that starts with a letter between &quot;H&quot;
+and &quot;N&quot; (case-insensitive).
+
+The query should return any process from `Hotepad.exe` through `Notepad.exe`.
+
+```powershell
+Notepad   # Starts Notepad
+$query = &quot;SELECT * FROM Win32_Process WHERE Name LIKE &#x27;[H-N]otepad.exe&#x27;&quot;
+Get-CimInstance -Query $query | select Name, ProcessId
+```
+
+```output
+Name                                ProcessId
+----                                ---------
+notepad.exe                              1740
+```
+
+#### Example 2: [\&lt;range&gt;] and %
+
+The following commands select all process that have a name that begins with a
+letter between A and P (case-insensitive) followed by zero or more letters in
+any combination.
+
+The `Get-CimInstance` cmdlet runs the query, the `Select-Object` cmdlet gets the
+**Name** and **ProcessId** properties, and the `Sort-Object` cmdlet sorts the
+results in alphabetical order by name.
+
+```powershell
+$query = &quot;SELECT * FROM Win32_Process WHERE name LIKE &#x27;[A-P]%&#x27;&quot;
+Get-CimInstance -Query $query |
+    Select-Object -Property Name, ProcessId |
+    Sort-Object -Property Name
+```
+
+#### Example 3: Not in Range (^)
+
+The following command gets processes whose names don&#x27;t begin with any of the
+following letters: A, S, W, P, R, C, U, N
+
+and followed zero or more letters.
+
+```powershell
+$query = &quot;SELECT * FROM Win32_Process WHERE name LIKE &#x27;[^ASWPRCUN]%&#x27;&quot;
+Get-CimInstance -Query $query |
+    Select-Object -Property Name, ProcessId |
+    Sort-Object -Property Name
+```
+
+#### Example 4: Any characters -- or none (%)
+
+The following commands get processes that have names that begin with `calc`.
+The percent symbol (`%`) is the WQL wildcard character. It&#x27;s equivalent to the
+asterisk (`*`) wildcard in PowerShell.
+
+```powershell
+$query = &quot;SELECT * FROM Win32_Process WHERE Name LIKE &#x27;calc%&#x27;&quot;
+Get-CimInstance -Query $query | Select-Object -Property Name, ProcessId
+```
+
+```output
+Name                               ProcessId
+----                               ---------
+calc.exe                                4424
+```
+
+#### Example 5: One character (_)
+
+The following commands get processes that have names that have the following
+pattern, `c_lc.exe` where the underscore character represents any one
+character. This pattern matches any name from `calc.exe` through `czlc.exe`, or
+`c9lc.exe`, but doesn&#x27;t match names in which the &quot;c&quot; and &quot;l&quot; are separated by
+more than one character.
+
+```powershell
+$query = &quot;SELECT * FROM Win32_Process WHERE Name LIKE &#x27;c_lc.exe&#x27;&quot;
+Get-CimInstance -Query $query | Select-Object -Property Name, ProcessId
+```
+
+```output
+Name                                 ProcessId
+----                                 ---------
+calc.exe                                  4424
+```
+
+#### Example 6: Exact match
+
+The following commands get processes named `WLIDSVC.exe`. Even though the query
+uses the `LIKE` keyword, it requires an exact match, because the value doesn&#x27;t
+include any wildcard characters.
+
+```powershell
+$query = &quot;SELECT * FROM Win32_Process WHERE name LIKE &#x27;WLIDSVC.exe&#x27;&quot;
+Get-CimInstance -Query $query | Select-Object -Property Name, ProcessId
+```
+
+```output
+Name                                 ProcessId
+----                                 ---------
+WLIDSVC.exe                                84
+```
+
+## Using the OR operator
+
+To specify multiple independent conditions, use the `OR` keyword. The `OR`
+keyword appears in the `WHERE` clause. It performs an inclusive `OR` operation
+on two (or more) conditions and returns items that meet any of the conditions.
+
+The `OR` operator has the following format:
+
+```
+WHERE &lt;property&gt; &lt;operator&gt; &lt;value&gt; OR &lt;property&gt; &lt;operator&gt; &lt;value&gt; ...
+```
+
+For example, the following commands get all instances of the **Win32_Process**
+WMI class but returns them only if the process name is `winword.exe` or
+`excel.exe`.
+
+```powershell
+$q = &quot;SELECT * FROM Win32_Process WHERE Name=&#x27;winword.exe&#x27;&quot; +
+  &quot; OR Name=&#x27;excel.exe&#x27;&quot;
+Get-CimInstance -Query $q
+```
+
+The `OR` statement can be used with more than two conditions. In the following
+query, the `OR` statement gets `Winword.exe`, `Excel.exe`, or `powershell.exe`.
+
+```powershell
+$q = &quot;SELECT * FROM Win32_Process WHERE Name=&#x27;winword.exe&#x27;&quot; +
+  &quot; OR Name=&#x27;excel.exe&#x27; OR Name=&#x27;powershell.exe&#x27;&quot;
+```
+
+# about_WQL
+
+## Using the AND operator
+
+To specify multiple related conditions, use the `AND` keyword. The `AND`
+keyword appears in the `WHERE` clause. It returns items that meet all the
+conditions.
+
+The `AND` operator has the following format:
+
+```
+WHERE &lt;property&gt; &lt;operator&gt; &lt;value&gt; `AND` &lt;property&gt; &lt;operator&gt; &lt;value&gt; ...
+```
+
+For example, the following commands get processes that have a name of
+`Winword.exe` and the process ID of 6512.
+
+Note that the commands use the `Get-CimInstance` cmdlet.
+
+```powershell
+$q = &quot;SELECT * FROM Win32_Process WHERE Name = &#x27;winword.exe&#x27; &quot; +
+  &quot;AND ProcessId =6512&quot;
+Get-CimInstance -Query $q
+```
+
+```output
+ProcessId   Name             HandleCount      WorkingSetSize   VirtualSize
+---------   ----             -----------      --------------   -----------
+
+# 6512      WINWORD.EXE      768              117170176        633028608
+```
+
+All operators, including the `LIKE` operators are valid with the `OR` and `AND`
+operators. And, you can combine the `OR` and `AND` operators in a single query
+with parentheses that tell WMI which clauses to process first.
+
+This command uses the PowerShell continuation character (`` ` ``)
+divide the command into two lines.
+
+## Searching for null values
+
+Searching for null values in WMI is challenging, because it can lead to
+unpredictable results. `Null` isn&#x27;t zero and it isn&#x27;t equivalent to an empty
+string. Some WMI class properties are initialized and others aren&#x27;t, so a
+search for null might not work for all properties.
+
+To search for null values, use the Is operator with a value of `null`.
+
+For example, the following commands get processes that have a null value for
+the **InstallDate** property. The commands return many processes.
+
+```powershell
+$q = &quot;SELECT * FROM Win32_Process WHERE InstallDate is null&quot;
+Get-CimInstance -Query $q
+```
+
+In contrast, the following command, gets user accounts that have a null value
+for the **Description** property. This command doesn&#x27;t return any user
+accounts, even though most user accounts don&#x27;t have any value for the
+**Description** property.
+
+```powershell
+$q = &quot;SELECT * FROM Win32_UserAccount WHERE Description is null&quot;
+Get-CimInstance -Query $q
+```
+
+To find the user accounts that have no value for the **Description** property,
+use the equality operator to get an empty string. To represent the empty
+string, use two consecutive single quotation marks.
+
+```powershell
+$q = &quot;SELECT * FROM Win32_UserAccount WHERE Description = &#x27;&#x27; &quot;
+```
+
+## Using true or false
+
+To get boolean values in the properties of WMI objects, use `True` and `False`.
+They aren&#x27;t case sensitive.
+
+The following WQL query returns only local user accounts from a domain joined
+computer.
+
+```powershell
+$q = &quot;SELECT * FROM Win32_UserAccount WHERE LocalAccount = True&quot;
+Get-CimInstance -Query $q
+```
+
+To find domain accounts, use a value of False, as shown in the following
+example.
+
+```powershell
+$q = &quot;SELECT * FROM Win32_UserAccount WHERE LocalAccount = False&quot;
+Get-CimInstance -Query $q
+```
+
+## Using the escape character
+
+WQL uses the backslash (`\`) as its escape character. This is different from
+PowerShell, which uses the backtick character (`` ` ``).
+
+Quotation marks, and the characters used for quotation marks, often need to be
+escaped so that they aren&#x27;t misinterpreted.
+
+To find a user whose name includes a single quotation mark, use a backslash to
+escape the single quotation mark, as shown in the following command.
+
+```powershell
+$q = &quot;SELECT * FROM Win32_UserAccount WHERE Name = &#x27;Tim O\&#x27;Brian&#x27;&quot;
+Get-CimInstance -Query $q
+```
+
+```output
+Name             Caption          AccountType      SID              Domain
+----             -------          -----------      ---              ------
+Tim O&#x27;Brian      FABRIKAM\TimO    512              S-1-5-21-1457... FABRIKAM
+```
+
+In some case, the backslash also needs to be escaped. For example, the
+following commands generate an Invalid Query error due to the backslash in the
+Caption value.
+
+```powershell
+$q = &quot;SELECT * FROM Win32_UserAccount WHERE Caption = &#x27;Fabrikam\TimO&#x27;&quot;
+Get-CimInstance -Query $q
+```
+
+```output
+Get-CimInstance : Invalid query
+At line:1 char:1
++ Get-CimInstance -Query $q
++ ~~~~~~~~~~~
+  + CategoryInfo          : InvalidArgument: (:) [Get-CimInstance], CimExcep
+  + FullyQualifiedErrorId : HRESULT 0x80041017,Microsoft.Management.Infrastr
+```
+
+To escape the backslash, use a second backslash character, as shown in the
+following command.
+
+```powershell
+$q = &quot;SELECT * FROM Win32_UserAccount WHERE Caption = &#x27;Fabrikam\\TimO&#x27;&quot;
+Get-CimInstance -Query $q
+```
+
+## See also
+
+- [about_Special_Characters][02]
+- [about_Quoting_Rules][01]
+- [about_WMI][04]
+
+&lt;!-- link references --&gt;
+[01]: about_Quoting_Rules.md
+[02]: about_Special_Characters.md
+[03]: about_WMI_Cmdlets.md
+[04]: about_WMI.md</pre></section>

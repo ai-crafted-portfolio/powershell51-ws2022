@@ -1,0 +1,706 @@
+<!doctype html><meta charset="utf-8"><section class="jp-official"><h1>グループオブジェクト</h1>
+<h2>SYNOPSIS グループは,指定された属性に対して同じ値を含むオブジェクトです.</h2>
+<h2>SYNTAXは,のシンタックスです.</h2>
+<h3>ハッシュタブル</h3>
+<pre><code>Group-Object [-NoElement] [-AsHashTable] [-AsString] [-InputObject &lt;PSObject&gt;]
+ [[-Property] &lt;Object[]&gt;] [-Culture &lt;String&gt;] [-CaseSensitive] [&lt;CommonParameters&gt;]
+</code></pre>
+<h2>記述は,</h2>
+<p><code>Group-Object</code>cmdlet は,指定されたプロパティの値に基づいてグループに分類されたオブジェクトを表示します. <code>Group-Object</code>各プロパティ値に対して一行ずつあるテーブルと,その値を持つアイテムの数を表示する列を表示します.</p>
+<p>複数のプロパティを指定した場合,<code>Group-Object</code>まず,最初のプロパティの値によってグループ化し,次に,それぞれのプロパティグループ内で次のプロパティの値によってグループ化します.</p>
+<h2>例えは</h2>
+<h3>例1: 拡張によるグループファイル</h3>
+<p>この例では,ファイルが回帰的に  の下にある.<code>$PSHOME</code>ファイル名拡張子によってグループ化します. 輸出は,  に送信されます.<code>Sort-Object</code>cmdletで,指定された拡張子で発見されたカウントファイルによって分類します.空き <strong>Name</strong>はディレクトリを表します.</p>
+<p>この例では,グループメンバーを省略するために <strong>NoElement</strong>パラメータを使用しています.</p>
+<pre><code class="language-powershell">$files = Get-ChildItem -Path $PSHOME -Recurse
+$files |
+    Group-Object -Property Extension -NoElement |
+    Sort-Object -Property Count -Descending
+</code></pre>
+<pre><code class="language-Output">Count Name
+----- ----
+  365 .xml
+  231 .cdxml
+  197
+  169 .ps1xml
+  142 .txt
+  114 .psd1
+   63 .psm1
+   49 .xsd
+   36 .dll
+   15 .mfl
+   15 .mof
+...
+</code></pre>
+<h3>例2: 確率と等価によるグループ整数</h3>
+<p>この例では,スクリプトブロックを<strong>プロパティ</strong>パラメータの値として使用する方法を示しています.このコマンドは,確率と偶数によってグループ化された1から20までの整数を表示します.</p>
+<pre><code class="language-powershell">1..20 | Group-Object -Property {$_ % 2}
+</code></pre>
+<pre><code class="language-Output">Count Name                      Group
+----- ----                      -----
+   10 0                         {2, 4, 6, 8...}
+   10 1                         {1, 3, 5, 7...}
+</code></pre>
+<h3>例3:グループイベントログイベント by EntryType</h3>
+<p>この例では,システムイベントログで最も最近の1,000件のエントリーが表示され, <strong>EntryType</strong>によってグループ化されています.</p>
+<p>出力では, <strong>Count</strong> コラムは各グループ内のエントリの数を表す. <strong>Name</strong> コラムはグループを定義する <strong>EventType</strong> 値を表す. <strong>Group</strong> コラムは各グループ内のオブジェクトを表す.</p>
+<pre><code class="language-powershell">Get-WinEvent -LogName System -MaxEvents 1000 | Group-Object -Property LevelDisplayName
+</code></pre>
+<pre><code class="language-Output">Count Name          Group
+----- ----          -----
+  153 Error         {System.Diagnostics.Eventing.Reader.EventLogRecord, System.Diag...}
+  722 Information   {System.Diagnostics.Eventing.Reader.EventLogRecord, System.Diag...}
+  125 Warning       {System.Diagnostics.Eventing.Reader.EventLogRecord, System.Diag...}
+</code></pre>
+<h3>例4:優先順位クラスによるグループプロセス</h3>
+<p>この例ではNoElement**パラメータの効果を示しています.これらのコマンドは,優先順位クラスによってコンピュータ上のプロセスをグループ化します.</p>
+<p>最初のコマンドは,を用います.<code>Get-Process</code>cmdlet は,コンピュータにプロセスを載せ,パイプラインに物体を送る.<code>Group-Object</code>プロセスが対象となる<strong>PriorityClass</strong>のプロパティの値によって,オブジェクトをグループ化します.</p>
+<p>第二例では <strong>NoElement</strong> パラメータを使用して,出力からグループメンバーを削除します.結果として, <strong>Count</strong>と <strong>Name</strong>のプロパティ値のみが表になります.</p>
+<p>結果は以下のサンプル出力で示されています.</p>
+<pre><code class="language-powershell">Get-Process | Group-Object -Property PriorityClass
+</code></pre>
+<pre><code class="language-Output">Count Name         Group
+----- ----         -----
+   55 Normal       {System.Diagnostics.Process (AdtAgent), System.Diagnosti...
+    1              {System.Diagnostics.Process (Idle)}
+    3 High         {System.Diagnostics.Process (Newproc), System.Diagnostic...
+    2 BelowNormal  {System.Diagnostics.Process (winperf),
+</code></pre>
+<pre><code class="language-powershell">Get-Process | Group-Object -Property PriorityClass -NoElement
+</code></pre>
+<pre><code class="language-Output">Count Name
+----- ----
+   55 Normal
+    1
+    3 High
+    2 BelowNormal
+</code></pre>
+<h3>例5: 名前によるグループプロセス</h3>
+<p>次の例では,を使用します.<code>Group-Object</code>ローカルコンピュータで実行されているプロセスの数々のインスタンスをグループ化します. <code>Where-Object</code>複数のインスタンスを含むプロセスを表示します.</p>
+<pre><code class="language-powershell">Get-Process | Group-Object -Property Name -NoElement | Where-Object {$_.Count -gt 1}
+</code></pre>
+<pre><code class="language-Output">Count Name
+----- ----
+2     csrss
+5     svchost
+2     winlogon
+2     wmiprvse
+</code></pre>
+<h3>例 6:ハッシュテーブルのグループオブジェクト</h3>
+<p>この例では,ハッシュテーブル内のグループを,キー値ペア集合として返還するために <strong>AsHashTable</strong>と <strong>AsString</strong>パラメータを使用します.</p>
+<p>結果的にハッシュテーブルに,それぞれのプロパティ値はキーであり,グループ要素は値である.各キーがハッシュテーブルオブジェクトのプロパティであるため,ドット符号を使用して値を表示することができます.</p>
+<p>最初のコマンドは,  を取得します.<code>Get</code>そして,<code>Set</code>セッションのcmdletsを動詞でグループ化し,グループをハッシュテーブルとして返して,ハッシュテーブルを  に保存します.<code>$A</code>変数です.</p>
+<p>2番目のコマンドは,ハッシュテーブルを  で表示します.<code>$A</code>キー値ペアが2つあり,一つは"つで,<code>Get</code>cmdletsとcmdletsとcmdletsとcmdletsとcmdletsとcmdletsとcmdletsとcmdletsとcmdletsとcmdletsとcmdletsとcmdletsとcmdletsとcmdletsとcmdletsとcmdletsとcmdletsとcmdletsとcmdletsとcmdletsとcmdletsとcmdletsとcmdletsとcmdletsとcmdletsとcmdletsとcmdletsとcmdletsとcmdletsとcmdletsとcmdletとcmdletとcmdletとcmdletとcmdletとcmdletとcmdletとcmdletとcmdletとcmdletとcmdletとcmdletとcmdletとcmdletとcmdletとcmdletとcmdletとcmdletとcmdletとcmdletとcmdletとcmdletとcmdletとcmdletとcmdletとcmdletとcmdletとcmdletとcmdletとcmdletとcmdletとcmdletとcmdletとcmdletとcmdletとcmdletとcmdletとcmdletとcmdletとcmdletとcmdletとcmdletとcmdletとcmdletとcmdletとcmdletとcmdletとcmdletとcmdletとcmdletとcmdletとcmdletとcmdletとcmdletとcmdletとcmdletとcmdletとcmdletとcmdletとcmdletとcmdletとcmdletとcmdletとcmdletとcmdletとcmdletとcmdletとcmdletとcmdddletとcmdddletとcmdletとcmdletとcmdletとcmdletとcmdletletletletletletletletletletletletletletletletletletletletletletletletletletletletletletletletletletletletletletletletletletletletletletletletletletletletletletletletletletletletletletletletletletletletletletletletletletletletletletletletletletletletletletletletlet<code>Set</code>cmdlets.</p>
+<p>第三のコマンドは,ドット符号を使用します.<code>$A.Get</code> で <strong>Get</strong> キーの値を表示する.<code>$A</code>値は <strong>CmdletInfo</strong>オブジェクトです. <strong>AsString</strong>パラメータは,グループ内のオブジェクトを文字列に変換しません.</p>
+<pre><code class="language-powershell">$A = Get-Command Get-*, Set-* -CommandType Cmdlet |
+     Group-Object -Property Verb -AsHashTable -AsString
+$A
+</code></pre>
+<pre><code class="language-Output">Name     Value
+----     -----
+Get      {Get-Acl, Get-Alias, Get-AppLockerFileInformation, Get-AppLockerPolicy...}
+Set      {Set-Acl, Set-Alias, Set-AppBackgroundTaskResourcePolicy, Set-AppLockerPolicy...}
+</code></pre>
+<pre><code class="language-powershell">$A.Get
+</code></pre>
+<pre><code class="language-Output">CommandType     Name                              Version    Source
+-----------     ----                              -------    ------
+Cmdlet          Get-Acl                           3.0.0.0    Microsoft.PowerShell.Security
+Cmdlet          Get-Alias                         3.1.0.0    Microsoft.PowerShell.Utility
+Cmdlet          Get-AppLockerFileInformation      2.0.0.0    AppLocker
+Cmdlet          Get-AppLockerPolicy               2.0.0.0    AppLocker
+...
+</code></pre>
+<h3>例10: 計算された性質を持つキー値によってハッシュタブルをグループする</h3>
+<p>この例では,ハッシュタブルオブジェクトをキー値によってグループ化する方法を示しています. 指定する場合は,プロパティパラメータに1つまたは複数のスクリプトブロックを指定できます. これらのスクリプトブロックの表現は,指定されたプロパティの値のように入力のためにグループ化されます.</p>
+<pre><code class="language-powershell">@(
+    @{ name = 'a' ; weight = 7 }
+    @{ name = 'b' ; weight = 1 }
+    @{ name = 'c' ; weight = 3 }
+    @{ name = 'd' ; weight = 7 }
+) | Group-Object -Property { $_.weight } -NoElement
+</code></pre>
+<pre><code class="language-output">Count Name
+----- ----
+    2 7
+    1 1
+    1 3
+</code></pre>
+<h2>パラメータは</h2>
+<h3>-AsHashTable</h3>
+<p>このcmdletは,グループをハッシュテーブルとして返します.ハッシュテーブルのキーとは,オブジェクトがグループ化されたプロパティ値です.ハッシュテーブルの値は,そのプロパティ値を持つオブジェクトです.</p>
+<p><strong>AsHashTable</strong>パラメータは,それぞれのキーがグループ化されたオブジェクトのインスタンスの各ハッシュテーブルを返します. <strong>AsHashTable</strong>パラメータで使用すると,ハッシュテーブル内のキーが文字列です.</p>
+<pre><code class="language-yaml">Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases: AHT
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h1>グループオブジェクト</h1>
+<h3>-AsString</h3>
+<p>このcmdletはハッシュテーブルキーを文字列に変換すると示します.デフォルトでは,ハッシュテーブルキーがグループ化されたオブジェクトのインスタンスのようです.このパラメータは <strong>AsHashTable</strong>パラメータで使用された場合にのみ有効です.</p>
+<pre><code class="language-yaml">Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-CaseSensitive でした</h3>
+<p>このcmdletがグループをケースに敏感にすることを示します.このパラメータがなければ,グループ内のオブジェクトのプロパティ値は異なるケースを持つ可能性があります.</p>
+<pre><code class="language-yaml">Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-文化</h3>
+<p>文字列を比較する際に使わなければならない文化を指定します.</p>
+<pre><code class="language-yaml">Type: System.String
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-InputObject</h3>
+<p>グループにまとめるオブジェクトを指定します.オブジェクトを含む変数を入力するか,オブジェクトを入手するコマンドまたは表情を入力します.</p>
+<p>入力Object パラメータを使用して,オブジェクトの集合を  に送信するときに<code>Group-Object</code>     <code>Group-Object</code>集合を表す一つのオブジェクトを獲得し,その結果としてそのオブジェクトがメンバーとして単一のグループを作成します.</p>
+<p>集合のオブジェクトをグループにまとめるために,オブジェクトをパイプして  にします.<code>Group-Object</code> .</p>
+<pre><code class="language-yaml">Type: System.Management.Automation.PSObject
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByValue)
+Accept wildcard characters: False
+</code></pre>
+<h3>-NoElement</h3>
+<p>このcmdletは,結果からグループメンバーを省略することを示します.</p>
+<pre><code class="language-yaml">Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-プロパティ</h3>
+<p>グループ化する属性を指定する.オブジェクトは指定された属性の値に基づいて名前のグループに分かれています.属性が指定されていない場合,オブジェクトはその値または によってグループ化されます.<code>ToString()</code>輸出は,グループオブジェクトが作成された順序で提示されています.</p>
+<p><strong>プロパティ</strong>パラメータの値は,新しい計算性である可能性があります.計算されたプロパティはスクリプトブロックまたはハッシュテーブルである可能性があります.有効なキー-値ペアは:</p>
+<ul>
+<li>表現 - <code>&lt;string&gt;</code>     <code>&lt;scriptblock&gt;</code></li>
+</ul>
+<p>詳細については, [about_Calculated_Properties.md] を参照してください.</p>
+<pre><code class="language-yaml">Type: System.Object[]
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: 0
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>共通パラメーター</h3>
+<p>このcmdletは,共通パラメータをサポートしています: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable.詳細については, <a href="を参照してください.https://go.microsoft.com/fwlink/?LinkID=113216">about_CommonParameters</a> でした.</p>
+<h2>輸入は</h2>
+<h3>システム管理自動化PSObject</h3>
+<p>このcmdletに任意のオブジェクトをパイプすることができます.</p>
+<h2>輸出は</h2>
+<h3>Microsoft.PowerShell.Commands.GroupInfoの提供について</h3>
+<p>デフォルトでは,このcmdletは <strong>GroupInfo</strong>オブジェクトを返します.</p>
+<h3>System.Collections.Hashtable について</h3>
+<p><strong>AsHashTable</strong>パラメータを使用すると,このcmdletは <strong>Hashtable</strong>オブジェクトを返します.</p>
+<h2>NOTES  記事ができました.</h2>
+<p>Windows PowerShell では,次のアライスがあります.<code>Group-Object</code>:</p>
+<ul>
+<li>-<code>group</code></li>
+</ul>
+<p>フォーマットするcmdletsの <strong>GroupBy</strong>パラメータを使用できます.<code>Format-Table</code>そして,<code>Format-List</code>グループオブジェクトに. とは異なり.<code>Group-Object</code>グループバイ**パラメータは,各属性値に対して,1行ずつある表を作成し,各属性値を持つ各項目のために,1行ずつある表を作成します.</p>
+<p><code>Group-Object</code>グループ化されたオブジェクトは同じMicrosoft .NETタイプである必要はありません.異なる .NETタイプのオブジェクトをグループ化する際に,<code>Group-Object</code>ルールが以下のとおりです:</p>
+<ul>
+<li>同じ物件名と種類.</li>
+</ul>
+<p>対象が指定された名前を持つ属性を持ち,属性値は同じ .NETタイプを持っている場合,属性値は同じタイプのオブジェクトに使用される同じルールによってグループ化されます.</p>
+<ul>
+<li>同じ物件名と異なる種類.</li>
+</ul>
+<p>対象が指定された名前を持つプロパティを持っているが,プロパティ値は異なるオブジェクトで異なる .NETタイプを持っている場合,<code>Group-Object</code>そのプロパティグループの .NET タイプとして,プロパティの最初の発生時の .NET タイプを使用します.オブジェクトが別のタイプを持つプロパティを持っている場合,プロパティ値はそのグループのタイプに変換されます.タイプ変換が失敗した場合,オブジェクトはグループに含まれません.</p>
+<ul>
+<li>失踪物件</li>
+</ul>
+<p>指定された属性がないオブジェクトはグループ化できない.グループ化されていないオブジェクトは,最終的なグループ情報オブジェクト出力で,グループ名で表示される.<code>AutomationNull.Value</code> .</p>
+<p>出力グループが,グループが作成された順に提示されています.各グループに属するアイテムは,並べられていません. 受信順にリストされています.</p>
+<h2>関連リンク</h2>
+<p><a href="../Microsoft.PowerShell.Core/About/about_Calculated_Properties.md">about_Calculated_Properties</a> について</p>
+<p><a href="../Microsoft.PowerShell.Core/About/about_Hash_Tables.md">about_Hash_Tables</a> について</p>
+<p><a href="Compare-Object.md を比較する">Compare-Object</a></p>
+<p><a href="../Microsoft.PowerShell.Core/ForEach-Object.md">ForEach-Object</a> について</p>
+<p><a href="Measure-Object.md">Measure-Object</a> でした.</p>
+<p><a href="New-Object.md">New-Object</a> </p>
+<p><a href="Select-Object.md">Select-Object</a> </p>
+<p><a href="Sort-Object.md">Sort-Object</a> </p>
+<p><a href="Tee-Object.md">Tee-Object</a> </p>
+<p><a href="../Microsoft.PowerShell.Core/Where-Object.md">Where-Object</a> について</p></section><section class="en-original"><pre class="source-original"># Group-Object
+
+## SYNOPSIS
+Groups objects that contain the same value for specified properties.
+
+## SYNTAX
+
+### HashTable
+
+```
+Group-Object [-NoElement] [-AsHashTable] [-AsString] [-InputObject &lt;PSObject&gt;]
+ [[-Property] &lt;Object[]&gt;] [-Culture &lt;String&gt;] [-CaseSensitive] [&lt;CommonParameters&gt;]
+```
+
+## DESCRIPTION
+
+The `Group-Object` cmdlet displays objects in groups based on the value of a specified property.
+`Group-Object` returns a table with one row for each property value and a column that displays the
+number of items with that value.
+
+If you specify more than one property, `Group-Object` first groups them by the values of the first
+property, and then, within each property group, it groups by the value of the next property.
+
+## EXAMPLES
+
+### Example 1: Group files by extension
+
+This example recursively gets the files under `$PSHOME` and groups them by filename extension. The
+output is sent to the `Sort-Object` cmdlet, which sorts them by the count files found for the given
+extension. The empty **Name** represents directories.
+
+This example uses the **NoElement** parameter to omit the members of the group.
+
+```powershell
+$files = Get-ChildItem -Path $PSHOME -Recurse
+$files |
+    Group-Object -Property Extension -NoElement |
+    Sort-Object -Property Count -Descending
+```
+
+```Output
+Count Name
+----- ----
+  365 .xml
+  231 .cdxml
+  197
+  169 .ps1xml
+  142 .txt
+  114 .psd1
+   63 .psm1
+   49 .xsd
+   36 .dll
+   15 .mfl
+   15 .mof
+...
+```
+
+### Example 2: Group integers by odds and evens
+
+This example shows how to use scriptblocks as the value of the **Property** parameter. This command
+displays the integers from 1 to 20, grouped by odds and even.
+
+```powershell
+1..20 | Group-Object -Property {$_ % 2}
+```
+
+```Output
+Count Name                      Group
+----- ----                      -----
+   10 0                         {2, 4, 6, 8...}
+   10 1                         {1, 3, 5, 7...}
+```
+
+### Example 3: Group event log events by EntryType
+
+This example displays the 1,000 most recent entries in the System event log, grouped by
+**EntryType**.
+
+In the output, the **Count** column represents the number of entries in each group. The **Name**
+column represents the **EventType** values that define a group. The **Group** column represents the
+objects in each group.
+
+```powershell
+Get-WinEvent -LogName System -MaxEvents 1000 | Group-Object -Property LevelDisplayName
+```
+
+```Output
+Count Name          Group
+----- ----          -----
+  153 Error         {System.Diagnostics.Eventing.Reader.EventLogRecord, System.Diag...}
+  722 Information   {System.Diagnostics.Eventing.Reader.EventLogRecord, System.Diag...}
+  125 Warning       {System.Diagnostics.Eventing.Reader.EventLogRecord, System.Diag...}
+```
+
+### Example 4: Group processes by priority class
+
+This example demonstrates the effect of the **NoElement** parameter. These commands group the
+processes on the computer by priority class.
+
+The first command uses the `Get-Process` cmdlet to get the processes on the computer and sends the
+objects down the pipeline. `Group-Object`groups the objects by the value of the **PriorityClass**
+property of the process.
+
+The second example uses the **NoElement** parameter to remove the members of the group from the
+output. The result is a table with only the **Count** and **Name** property value.
+
+The results are shown in the following sample output.
+
+```powershell
+Get-Process | Group-Object -Property PriorityClass
+```
+
+```Output
+Count Name         Group
+----- ----         -----
+   55 Normal       {System.Diagnostics.Process (AdtAgent), System.Diagnosti...
+    1              {System.Diagnostics.Process (Idle)}
+    3 High         {System.Diagnostics.Process (Newproc), System.Diagnostic...
+    2 BelowNormal  {System.Diagnostics.Process (winperf),
+```
+
+```powershell
+Get-Process | Group-Object -Property PriorityClass -NoElement
+```
+
+```Output
+Count Name
+----- ----
+   55 Normal
+    1
+    3 High
+    2 BelowNormal
+```
+
+### Example 5: Group processes by name
+
+The following example uses `Group-Object` to group multiple instances of processes running on the
+local computer. `Where-Object` displays processes with more than one instance.
+
+```powershell
+Get-Process | Group-Object -Property Name -NoElement | Where-Object {$_.Count -gt 1}
+```
+
+```Output
+Count Name
+----- ----
+2     csrss
+5     svchost
+2     winlogon
+2     wmiprvse
+```
+
+### Example 6: Group objects in a hash table
+
+This example uses the **AsHashTable** and **AsString** parameters to return the groups in a hash
+table, as a collection of key-value pairs.
+
+In the resulting hash table, each property value is a key, and the group elements are the values.
+Because each key is a property of the hash table object, you can use dot notation to display the
+values.
+
+The first command gets the `Get` and `Set` cmdlets in the session, groups them by verb, returns the
+groups as a hash table, and saves the hash table in the `$A` variable.
+
+The second command displays the hash table in `$A`. There are two key-value pairs, one for the `Get`
+cmdlets and one for the `Set` cmdlets.
+
+The third command uses dot notation, `$A.Get` to display the values of the **Get** key in `$A`. The
+values are **CmdletInfo** object. The **AsString** parameter doesn&#x27;t convert the objects in the
+groups to strings.
+
+```powershell
+$A = Get-Command Get-*, Set-* -CommandType Cmdlet |
+     Group-Object -Property Verb -AsHashTable -AsString
+$A
+```
+
+```Output
+Name     Value
+----     -----
+Get      {Get-Acl, Get-Alias, Get-AppLockerFileInformation, Get-AppLockerPolicy...}
+Set      {Set-Acl, Set-Alias, Set-AppBackgroundTaskResourcePolicy, Set-AppLockerPolicy...}
+```
+
+```powershell
+$A.Get
+```
+
+```Output
+CommandType     Name                              Version    Source
+-----------     ----                              -------    ------
+Cmdlet          Get-Acl                           3.0.0.0    Microsoft.PowerShell.Security
+Cmdlet          Get-Alias                         3.1.0.0    Microsoft.PowerShell.Utility
+Cmdlet          Get-AppLockerFileInformation      2.0.0.0    AppLocker
+Cmdlet          Get-AppLockerPolicy               2.0.0.0    AppLocker
+...
+```
+
+### Example 10: Group hashtables by their key values with calculated properties
+
+This example shows how you can group **hashtable** objects by the value of their keys. You can
+specify one or more **scriptblocks** for the **Property** parameter. The expressions in these
+scriptblocks are used to group for the input like the values for named properties.
+
+```powershell
+@(
+    @{ name = &#x27;a&#x27; ; weight = 7 }
+    @{ name = &#x27;b&#x27; ; weight = 1 }
+    @{ name = &#x27;c&#x27; ; weight = 3 }
+    @{ name = &#x27;d&#x27; ; weight = 7 }
+) | Group-Object -Property { $_.weight } -NoElement
+```
+
+```output
+Count Name
+----- ----
+    2 7
+    1 1
+    1 3
+```
+
+## PARAMETERS
+
+### -AsHashTable
+
+Indicates that this cmdlet returns the group as a hash table. The keys of the hash table are the
+property values by which the objects are grouped. The values of the hash table are the objects that
+have that property value.
+
+By itself, the **AsHashTable** parameter returns each hash table in which each key is an instance of
+the grouped object. When used with the **AsString** parameter, the keys in the hash table are
+strings.
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases: AHT
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+# Group-Object
+
+### -AsString
+
+Indicates that this cmdlet converts the hash table keys to strings. By default, the hash table keys
+are instances of the grouped object. This parameter is valid only when used with the **AsHashTable**
+parameter.
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -CaseSensitive
+
+Indicates that this cmdlet makes the grouping case-sensitive. Without this parameter, the property
+values of objects in a group might have different cases.
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Culture
+
+Specifies the culture to use when comparing strings.
+
+```yaml
+Type: System.String
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -InputObject
+
+Specifies the objects to group. Enter a variable that contains the objects, or type a command or
+expression that gets the objects.
+
+When you use the **InputObject** parameter to submit a collection of objects to `Group-Object`,
+`Group-Object` receives one object that represents the collection. As a result, it creates a single
+group with that object as its member.
+
+To group the objects in a collection, pipe the objects to `Group-Object`.
+
+```yaml
+Type: System.Management.Automation.PSObject
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByValue)
+Accept wildcard characters: False
+```
+
+### -NoElement
+
+Indicates that this cmdlet omits the members of a group from the results.
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Property
+
+Specifies the properties for grouping. The objects are arranged into named groups based on the value
+of the specified properties. When no property is specified, objects are grouped by their value or
+the `ToString()` representation of their value. The output is presented in order the group objects
+were created.
+
+The value of the **Property** parameter can be a new calculated property. The calculated property
+can be a scriptblock or a hashtable. Valid key-value pairs are:
+
+- Expression - `&lt;string&gt;` or `&lt;scriptblock&gt;`
+
+For more information, see
+[about_Calculated_Properties](../Microsoft.PowerShell.Core/About/about_Calculated_Properties.md).
+
+```yaml
+Type: System.Object[]
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: 0
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### CommonParameters
+
+This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable,
+-InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose,
+-WarningAction, and -WarningVariable. For more information, see
+[about_CommonParameters](https://go.microsoft.com/fwlink/?LinkID=113216).
+
+## INPUTS
+
+### System.Management.Automation.PSObject
+
+You can pipe any object to this cmdlet.
+
+## OUTPUTS
+
+### Microsoft.PowerShell.Commands.GroupInfo
+
+By default, this cmdlet returns a **GroupInfo** object.
+
+### System.Collections.Hashtable
+
+When you use the **AsHashTable** parameter, this cmdlet returns a **Hashtable** object.
+
+## NOTES
+
+Windows PowerShell includes the following aliases for `Group-Object`:
+
+- `group`
+
+You can use the **GroupBy** parameter of the formatting cmdlets, such as `Format-Table` and
+`Format-List`, to group objects. Unlike `Group-Object`, which creates a single table with a row for
+each property value, the **GroupBy** parameters create a table for each property value with a row
+for each item that has the property value.
+
+`Group-Object` doesn&#x27;t require that the objects being grouped are of the same Microsoft .NET type.
+When grouping objects of different .NET types, `Group-Object` uses the following rules:
+
+- Same Property Names and Types.
+
+  If the objects have a property with the specified name, and the property values have the same
+  .NET type, the property values are grouped by the same rules that would be used for objects
+  of the same type.
+
+- Same Property Names, Different Types.
+
+  If the objects have a property with the specified name, but the property values have a different
+  .NET type in different objects, `Group-Object` uses the .NET type of the first occurrence of the
+  property as the .NET type for that property group. When an object has a property with a different
+  type, the property value is converted to the type for that group. If the type conversion fails,
+  the object isn&#x27;t included in the group.
+
+- Missing Properties.
+
+  Objects that don&#x27;t have a specified property can&#x27;t be grouped. Objects that aren&#x27;t grouped appear
+  in the final **GroupInfo** object output in a group named `AutomationNull.Value`.
+
+The output groups are presented in order the group were created. The items belonging to each group
+are not sorted. They are listed in the order in which they were received.
+
+## RELATED LINKS
+
+[about_Calculated_Properties](../Microsoft.PowerShell.Core/About/about_Calculated_Properties.md)
+
+[about_Hash_Tables](../Microsoft.PowerShell.Core/About/about_Hash_Tables.md)
+
+[Compare-Object](Compare-Object.md)
+
+[ForEach-Object](../Microsoft.PowerShell.Core/ForEach-Object.md)
+
+[Measure-Object](Measure-Object.md)
+
+[New-Object](New-Object.md)
+
+[Select-Object](Select-Object.md)
+
+[Sort-Object](Sort-Object.md)
+
+[Tee-Object](Tee-Object.md)
+
+[Where-Object](../Microsoft.PowerShell.Core/Where-Object.md)</pre></section>

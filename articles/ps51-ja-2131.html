@@ -1,0 +1,1028 @@
+<!doctype html><meta charset="utf-8"><section class="jp-official"><h1>New-NetIPsecDospSetting について</h1>
+<h2>SYNOPSIS は IPsec DoS 保護設定を作成し,設定をターゲットコンピュータに追加します.</h2>
+<h2>SYNTAXは,のシンタックスです.</h2>
+<pre><code>New-NetIPsecDospSetting -Name &lt;String&gt; [-StateIdleTimeoutSeconds &lt;UInt32&gt;]
+ [-PerIPRateLimitQueueIdleTimeoutSeconds &lt;UInt32&gt;] [-IpV6IPsecUnauthDscp &lt;UInt32&gt;]
+ [-IpV6IPsecUnauthRateLimitBytesPerSec &lt;UInt32&gt;] [-IpV6IPsecUnauthPerIPRateLimitBytesPerSec &lt;UInt32&gt;]
+ [-IpV6IPsecAuthDscp &lt;UInt16&gt;] [-IpV6IPsecAuthRateLimitBytesPerSec &lt;UInt32&gt;] [-IcmpV6Dscp &lt;UInt16&gt;]
+ [-IcmpV6RateLimitBytesPerSec &lt;UInt32&gt;] [-IpV6FilterExemptDscp &lt;UInt32&gt;]
+ [-IpV6FilterExemptRateLimitBytesPerSec &lt;UInt32&gt;] [-DefBlockExemptDscp &lt;UInt16&gt;]
+ [-DefBlockExemptRateLimitBytesPerSec &lt;UInt32&gt;] [-MaxStateEntries &lt;UInt32&gt;] [-MaxPerIPRateLimitQueues &lt;UInt32&gt;]
+ [-EnabledKeyingModules &lt;DospKeyModules&gt;] [-FilteringFlags &lt;DospFlags&gt;]
+ -PublicInterfaceAliases &lt;WildcardPattern[]&gt; -PrivateInterfaceAliases &lt;WildcardPattern[]&gt;
+ [-PublicV6Address &lt;String&gt;] [-PrivateV6Address &lt;String&gt;] [-CimSession &lt;CimSession[]&gt;] [-ThrottleLimit &lt;Int32&gt;]
+ [-AsJob] [-WhatIf] [-Confirm] [&lt;CommonParameters&gt;]
+</code></pre>
+<h2>記述 ニュー・NetIPsecDospSetting* cmdlet は IPsec DoS 保護設定を作成し,ターゲットコンピュータに追加します.</h2>
+<p>NetIPsecDospSettingの設定は,Encapsulating Security Payload (ESP) を使用して保護されているIPv6ベースの接続のみ,およびそれらの接続を確立するために必要なIPsec交渉トラフィックとICMPv6トラフィックに影響します.</p>
+<p>建築的に,このcmdletを使用してIPsec Dospが構成されているコンピュータはネットワーク端に位置し,テレド,6to4およびIP-HTTPSなどのトンネル内に封鎖されたネイティブIPv6トラフィックとIPv6トラフィックの経路にあります.コンピュータはテレドリレー,6to4ゲートウェイまたはリレー,またはIP-HTTPSサーバーと同じコンピュータである可能性があります.そのような場合,IPsec DoS保護機能は,パケットがトンネルから抽出した後,転送されたパケットを傍受します.唯一の例外は,IPsec DoS保護機能はIPsec DoS保護機能を回避しているため,IPsec トンネルゲートウェイに展開することはできません.IPsec DoS保護機能の保護機能の保護のために,IPsec DoS保護機能の保護機能を配置します.ction機能はインターネットとIPsecゲートウェイの間にある別のコンピュータに搭載されています.</p>
+<p>デフォルトでは,IPsec DoS 保護機能にインターフェースが割り当てられていない.機能の運用のために,少なくとも 1 つの公共インターフェースを使用して <em>PublicInterfaceAliases</em> パラメータと 1 つの内部インターフェイスを使用して <em>PrivateInterfaceAliases</em> パラメータを追加する必要があります.指定されていない機能は,デフォルト値が割り当てられます.デフォルトでは,AuthIP はすべての内部アドレスにのみ許可されています.</p>
+<p>このcmdletは既存のIPsec接続に影響を与えない.IKEv1,IKEv2またはAuthIPを使用するIPsec交渉トラフィックのみに影響を与える.Teredoやその他の高度なネットワークシナリオが動作できるように,ICMPv6ネットワークトラフィックは常に許可されています.</p>
+<p>ESPを使用する確立された接続の一部であるIPsec保護されたトラフィックは常に許可されています.ただし,接続が1秒以上で無効でない限り, <em>StateIdleTimeoutSeconds</em> パラメータで指定されている数秒以上です. <em>DefBlockExemptRateLimitBytesPerSec</em>, IcmpV6RateLimitBytesPerSec, <em>IpV6FilterExemptRateLimitBytesPerSec</em>, <em>IpV6IPsecAuthRateLBytesPerSec</em>, <em>IpV6IPsecUnauthRateLimitBytesPerSec</em>,および <em>IpV6IPUnauthRateLimitBytesPerSec</em> パラメータは,公衆から内部への流通のインバウンドトラフィックを制限します.指定されたトラフィックタイプを指定したり,全体的なインターフェースレートを設定したりできます.指定されたIPアドレスに afffic.</p>
+<p>このcmdletが成功するためには,次の2つの前提のステップが実行されなければならない. - <code>Set-NetIpv4Protocol -CimSession $session -GroupForwardedFragments Enabled$sessionEnabled</code> - -<code>Set-NetIpv6Protocol -CimSession $session -GroupForwardedFragments Enabled$sessionEnabled</code> - -<code>New-NetIPsecDospSetting -CimSession $session -Name "Enforce IPsec DoS protection" -PublicInterfaceAliases $publicInterface -PrivateInterfaceAliases $privateInterface$session"Enforce IPsec DoS protection"$publicInterface$privateInterface</code></p>
+<h2>例えは</h2>
+<h3>例1 ```</h3>
+<p>PS C:&gt;New-NetIPsecDospSetting -Name PubNet-CorpNet -PublicInterfaceAliases PubNet -PrivateInterfaceAliases CorpNet</p>
+<pre><code>
+この例では,IPsec DoS保護機能のインターフェースとして,公共のネットワークアダプタと内部ネットワークアダプタを追加します.
+
+### 例2 ```
+PS C:\&gt;New-NetIPsecDospSetting -Name IKEv1-PubNet-CorpNet -PublicInterfaceAliases PubNet -PrivateInterfaceAliases CorpNet -EnabledKeyingModules IKEv1
+</code></pre>
+<p>この例では,すべてのIPv6アドレスへのIKEv1交渉トラフィックが可能になります.</p>
+<h3>例 3 ```</h3>
+<p>PS C:&gt;New-NetIPsecDospSetting -Name "IKEv1-PubNet-CorpNet-3ff3:401d:1f00:baa::1" -PublicInterfaceAliases PubNet -PrivateInterfaceAliases CorpNet -EnabledKeyingModules IKEv1 -Privatev6Address 3ff3:401d:1f00:baa::1</p>
+<pre><code>
+この例では,単一のIPv6アドレスへのIKEv1交渉トラフィックを可能にします.
+
+### 例4 ```
+PS C:\&gt;New-NetIPsecDospSetting -Name &quot;Block-3ffe:401d:1f00::/64-PubNet-CorpNet&quot; -PublicInterfaceAliases PubNet -PrivateInterfaceAliases CorpNet -FilteringFlags FilterBlock -Publicv6Address 3ff3:401d:1f00:baa::1
+</code></pre>
+<p>この例では,指定された公共IPv6サブネットからIPsecで保護されたトラフィックでさえも,すべてのネットワークトラフィックをブロックします.</p>
+<h3>例5 ```</h3>
+<p>PS C:&gt;New-NetIPsecDospSetting -Name PubNet-CorpNet-Unauth10 -PublicInterfaceAliases PubNet -PrivateInterfaceAliases CorpNet -IpV6IPsecUnauthDscp 10</p>
+<pre><code>
+この例では,認証されていないIPsecトラフィックをすべて10の値でマークします.
+
+### 例 6 ```
+PS C:\&gt;New-NetIPsecDospSetting -Name PubNet-CorpNet -PublicInterfaceAliases PubNet -PrivateInterfaceAliases CorpNet -IpV6IPsecUnauthRateLimitBytesPerSec 2048
+</code></pre>
+<p>この例では,IPsec未認証ネットワークトラフィックを2秒2048バイトに制限しています.</p>
+<h3>例 7 ```</h3>
+<p>PS C:&gt;New-NetIPsecDospSetting -Name PubNet-CorpNet -PublicInterfaceAliases PubNet -PrivateInterfaceAliases CorpNet -StateIdleTimeoutSeconds 480 -MaxStateEntries 100000</p>
+<pre><code>
+この例では,IPsec DoS保護機能が480秒間無効になった接続を追跡するのを停止し,最大10万接続を追跡するように設定されています.
+
+## パラメータは
+
+### -AsJobは,背景作業としてcmdletを実行する.このパラメータを使用して,完了するのに時間がかかるコマンドを実行します.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-CimSession は,リモートセッションまたはリモートコンピュータでcmdletを実行します.コンピュータ名またはセッションオブジェクトを入力します.例えば,[New-CimSession]の出力です.https://go.microsoft.com/fwlink/p/?LinkId=227967) または [Get-CimSession]https://go.microsoft.com/fwlink/p/?LinkId=227966標準的には,ローカルコンピュータの現在のセッションです.</h3>
+<pre><code class="language-yaml">Type: CimSession[]
+Parameter Sets: (All)
+Aliases: Session
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>- 確認は,cmdletを実行する前に確認を提示します.</h3>
+<pre><code class="language-yaml">Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: cf
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h1>New-NetIPsecDospSetting について</h1>
+<h3>-DefBlockExemptDscp は,IPsec認証,IPsec認証,ICMPv6などのデフォルトブロック行動から免除されているトラフィックに一致するトラフィックタイプが IPv6 ヘッダの差別化されたサービスコードポイント (DSCP) フィールドに配置される6ビット値,1から63までの整数として指定されます.DSCP値は,QoS実装でネットワークトラフィックを優先させ,より重要なネットワークパケットがより重要なネットワークパケットの成功的な配信に干渉するほど帯域幅を消費しないようにするために使用できます.このパラメータの受け入れ可能な値は: 1〜63および障害です.デフォルトvalue is Disabled.</h3>
+<ul>
+<li>障害者: これは,デフォルトブロック行動から免除されているトラフィックに対する DSCP マークをオフにします.これはIPsec 認証された,IPsec 認証されていない,ICMPv6 トラフィックを含む.このパラメータはケースに敏感で,ドットノテーションを使用して障害者指定する必要があります.</li>
+</ul>
+<pre><code class="language-yaml">Type: UInt16
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-DefBlockExemptRateLimitBytesPerSec は,IPsecが認証された,IPsecが認証されていない,ICMPv6の入路ネットワークトラフィックが,デフォルトブロック行動から自設に除外されているトラフィックが,公用インターフェースから内部インターフェースに転送される最大速度を指定します.このパラメータの受け入れ可能な値は: 1 から秒あたり4,294,967,295バイトです.デフォルト値は102400.</h3>
+<pre><code class="language-yaml">Type: UInt32
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-EnabledKeyingModules は,IPsec交渉プロトコル,またはキーリングモジュールを許可するために指定します.指定されたIPsec交渉プロトコルが <em>PrivateV6Address</em> パラメータで送信されるIPv6アドレスまたはサブネットをオプションで指定できます.デフォルトでは,AuthIPを使用するIPsec交渉トラフィックのみがすべてのアドレスに許可されます.ICMPv6ネットワークトラフィックは常にTeredoおよび他の高度なネットワークシナリオの動作を可能にします.ESPを使用する確立された接続の一部であるIPsec保護されたトラフィックは常に許可されています.接続が <em>StateIdleTimeSeconds</em> パラメータで指定された数秒以上無動していない限り,接続は常に許可されます.このパラメータの ptable 値は: None, IkeV1, IkeV2,または AuthIP. デフォルト値は AuthIPです.</h3>
+<pre><code class="language-yaml">Type: DospKeyModules
+Parameter Sets: (All)
+Aliases: 
+Accepted values: None, IkeV1, IkeV2, AuthIP
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-フィルタリングフラグ Dosp設定アドレスに一致するネットワークトラフィックに取るべき行動を指定します.Dosp設定アドレスに一致するネットワークトラフィックをフィルタリングする公開V6アドレスとプライベートV6アドレス.特定のアドレスまたはサブネットにたった1つのフィルタしか適用できません.同じアドレスまたはサブネットパラメータを持つ2番目のDosp設定が作成された場合,エラーが表示されます.アドレスが1以上のフィルタに一致する場合は,最も特定のマッチが選択され,対応するフィルタが適用されます.例えば,2006:2006::2は,前文字 2006:2006::2/128のフィルタよりも前文字 2006:2006::2/64のフィルタに近い.このパラメータの許容値は:</h3>
+<p>どれも:IPsec DoS保護機能は,IPsec以外のすべてのIPv4トラフィックを削除し,公共のインターフェースと内部のインターフェースの間に転送されるすべてのIPsec以外のIPv6トラフィック (ICMPv6を除く) を削除します. - DisableDefaultBlock:IPsec DoS保護機能は,トラフィックをブロックしません. - FilterBlock: <em>PublicV6Address</em> と <em>PrivateV6Address</em> パラメータを使用したDosp設定アドレスフィルターに一致するネットワークトラフィックがIPsec保護されている場合でもブロックされます. - FilterExempt: <em>PublicV6Address</em> と <em>PrivateV6Address</em> パラメータを使用するDospublicアドレスフィルターに一致する IPv6ネットワークトラフィック設定がIPsec保護されている場合でもブロックされます. - 標準値は,無です.</p>
+<pre><code class="language-yaml">Type: DospFlags
+Parameter Sets: (All)
+Aliases: 
+Accepted values: None, DisableDefaultBlock, FilterBlock, FilterExempt
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-IcmpV6Dscp ICMPv6プロトコルトラフィックに与えられたDSCP値が割り当てられていることを指定します.このパラメータは,トラフィックタイプがICMPv6プロトコルトラフィックに匹敵する IPv6ヘッダのDSCPフィールドに配置される6ビット値,すなわち1から63までの整数として指定された 6-bit値を指定します.DSCP値は,QoS実装でネットワークトラフィックを優先させ,重要でないネットワークパケットが,より重要なネットワークパケットの成功的な配信に間接するほど帯域幅を消費しないようにするために使用できます.このパラメータの受け入れられる値は: 1〜63とDisabledです.デフォルト値は Disabledです.</h3>
+<ul>
+<li>障害者: ICMPv6 プロトコルトラフィックのための DSCP マークをオフにします.このパラメータはケースセンシティブで,ドットノテーションを使用して障害者指定する必要があります.</li>
+</ul>
+<pre><code class="language-yaml">Type: UInt16
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-IcmpV6RateLimitBytesPerSec ICMPv6のインバウンドネットワークトラフィックが公衆から内部インターフェースに転送される最大速度を指定します.このパラメータの受け入れられる値は:1~4,294,967,295バイト/秒です.デフォルト値は10240です.</h3>
+<pre><code class="language-yaml">Type: UInt32
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-IpV6FilterExemptDscp は,アドレスフィルタを使用して免除される IP アドレスを持つ IPv6 トラフィックに与えられた DSCP 値が割り当てられていることを指定します. <em>PublicV6Address</em> と <em>PrivateV6Address</em> パラメータを使用したDosp 設定アドレスフィルタに一致する IPv6 ネットワークトラフィックが,IPsec 保護されなくてもよいので,フィルター免除値に <em>FilteringFlags</em> パラメータを設定することで許可されます.このパラメータは,1から63までの整数として指定された6 ビット値を指定します.トラフィックタイプが免除されたアドレスフィルタに一致する際, IPv6 ヘッダーの DSCP フィールドに配置されます. DSCP 値は,サービス品質 (QoS) 実装で優先順位に使用できます.ネットワークトラフィックを拡大し,より重要なネットワークパケットがより重要なネットワークパケットの成功的な配送に障害を与えるほど多くの帯域幅を消費しないようにします.このパラメータの受け入れ可能な値は: 1 から 63 までの,および障害です.デフォルト値は障害です.</h3>
+<ul>
+<li>障害者:指定されたアドレスフィルターからトラフィックのためのDSCPマークをオフにします.このパラメータは, <em>PrivateV6Address</em>または <em>PublicV6Address</em> パラメータで指定されています.このパラメータはケースに敏感で,ドットノテーションを使用して障害者指定する必要があります.</li>
+</ul>
+<pre><code class="language-yaml">Type: UInt32
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h1>New-NetIPsecDospSetting について</h1>
+<h3>-IpV6FilterExemptRateLimitBytesPerSec は,アドレスフィルターを使用して免除される入場中のIPv6ネットワークトラフィックが公衆から内部インターフェースに転送される最大速度を指定します. <em>PublicV6Address</em>および <em>PrivateV6Address</em>パラメータを使用したDosp設定アドレスフィルターに一致するIPv6ネットワークトラフィックが,フィルター免除値に設定される <em>FilteringFlags</em>パラメータを設定することでIPsecで保護されなくてもよい.このパラメータの受け入れ値は: 1 から 4,294,967,295バイト以内の2.デフォルト値は102400です.</h3>
+<pre><code class="language-yaml">Type: UInt32
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-IpV6IPsecAuthDscp 認証されたIPv6IPsec保護されたトラフィックが与えられたDSCP値に割り当てられていることを指定します.このパラメータは,IPv6ヘッダのDSCPフィールドに配置される6ビット値,その値が1から63までの整数として指定され,トラフィックタイプが認証されたIPv6IPsec保護されたトラフィックに匹敵するときに指定されます.DSCP値は,ネットワークトラフィックを優先的に設定し,重要なネットワークパケットがより重要なネットワークパケットの成功的な配信に干渉するほど帯域幅を消費しないことを確保するのに役立つ.デフォルト値は障害です. -障害者:認証されたIPv6IPsec保護されたトラフィックへのDSCPマークをオフにしますfic. このパラメータはケースに敏感で,ドットノテーションを使用して Disabled を指定する必要があります.</h3>
+<pre><code class="language-yaml">Type: UInt16
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-IpV6IPsecAuthRateLimitBytesPerSec 認証されたIPv6IPsecで保護されたインバウンドトラフィックが公衆から内部インターフェースに送信される最大速さを指定します.このパラメータの受け入れ可能な値は:1から秒間に4,294,967,295バイトです.デフォルト値は0で,このトラフィックに対する速度制限を無効化します.</h3>
+<pre><code class="language-yaml">Type: UInt32
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-IpV6IPsecUnauthDscp 認証されていない IPv6 IPsec 保護されたトラフィックが与えられた DSCP 値に割り当てられていることを指定します.このパラメータは,認証されていない IPv6 IPsec 保護されたトラフィックにトラフィックタイプが一致する際,IPv6 ヘッダの DSCP フィールドに配置される 6 ビット値, 1 から 63 の整数として指定されます. DSCP 値は,ネットワークトラフィックを優先的に設定し,より重要なネットワークパケットがより重要なネットワークパケットの成功的な配信に干渉するほど帯域幅を消費しないことを保証します.このパラメータの受け入れられる値は: 1 から 63 までの,および Disabled です.デフォルト値は Disabled です.</h3>
+<ul>
+<li>障害者:認証されていないIPv6IPsec保護トラフィックに関するDSCPマークをオフにします.このパラメータはケースに敏感で,ドットノテーションを使用して障害者指定する必要があります.</li>
+</ul>
+<pre><code class="language-yaml">Type: UInt32
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-IpV6IPsecUnauthPerIPRateLimitBytesPerSec 認証されていないIPv6IPsec保護されたインバウンドトラフィックが公衆から内部インターフェースに送信される最大速さを指定します.IPアドレス速率制限が定義されている場合,IPアドレス速率制限が定義される代わりに,世界速率制限が使用されます. <em>IpV6IPsecUnauthRateLimitBytesPerSec</em>パラメータを使用します.IPアドレスごとに制限を評価するには,IPアドレスごとに並列数を設定して,このことをサポートします. <em>MaxPerIPRateLimitQueues</em>パラメータを使用して.このパラメータの受け入れ可能な値は: 1 から 4,294,967,295バイト以内の設定です.デフォルト値は 10240.</h3>
+<pre><code class="language-yaml">Type: UInt32
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-IpV6IPsecUnauthRateLimitBytesPerSec は,IPsec保護された入口トラフィックが公衆から内部インターフェースに送信される最大速さを指定します.この速度はネットワーク全体ではなく,IPアドレスごとに適用されます.IPアドレスごとにIPアドレス制限が <em>IpV6IPsecUnauthPerIPRateLimitBytesPerSec</em>パラメータを使用して定義されている場合,それはグローバル・レート制限ではなく使用されます.IPアドレスごとにIPアドレスに基づいてレート制限を評価するには,IP列数を設定して,このことをサポートしてください.このパラメータの受け入れ値は: 1 から 4,294,967,295バイト以内のパラメータです.デフォルト値は10240.</h3>
+<pre><code class="language-yaml">Type: UInt32
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-MaxPerIPRateLimitQueues 認証されていないトラフィックに対するレート制限を使用すると,この値は,設定されたレートでトラフィックを配信する間に,トラフィックを保持するために使用できる最大数の列を指定します.IPアドレスレート制限は, <em>IpV6IPsecUnauthPerIPRateLimitBytesPerSec</em> パラメータで定義されています.このパラメータの受け入れ可能な値は: 1 から 4,294,967,295 の列です.デフォルト値は 50000 です.</h3>
+<pre><code class="language-yaml">Type: UInt32
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-MaxStateEntries は,IPsec DoS 保護機能が一度に追跡できる最大限の接続数を指定します.このパラメータの受け入れられる値は:1〜4,294,967,295 セッションです.デフォルト値は75000です.</h3>
+<pre><code class="language-yaml">Type: UInt32
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-Name Dosp設定のユニークな識別子を指定します.このパラメータは必須です.</h3>
+<pre><code class="language-yaml">Type: String
+Parameter Sets: (All)
+Aliases: 
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-PerIPRateLimitQueueIdleTimeoutSeconds は,IPアドレスごとに認証されていないトラフィックに対する制限を用いるとき,IPsec DoS 保護機能が接続を過時扱い,状態を追跡するのを停止する前に接続が無効になる数秒間のタイムアウトを指定します.IPアドレスごとに制限は <em>IpV6IPsecUnauthPerIPRateLimitBytesPerSec</em> パラメータで定義されます.このパラメータの受け入れられる値は: 1 から 4,294,967,295秒です.デフォルト値は360です.</h3>
+<pre><code class="language-yaml">Type: UInt32
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-PrivateInterfaceAliases 指定されたインターフェースをIPsec DoS 保護設定に内部インターフェースとして追加します.少なくとも 1 つの公共インターフェースが <em>PublicInterfaceAliases</em> パラメータを使用し, 1 つの内部インターフェースが Dosp 設定のための <em>PrivateInterfaceAliases</em> パラメータを使用し,動作するように設定する必要があります.</h3>
+<pre><code class="language-yaml">Type: WildcardPattern[]
+Parameter Sets: (All)
+Aliases: 
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h1>New-NetIPsecDospSetting について</h1>
+<h3>-PrivateV6Address 指定する内部IPsecアドレスまたはサブネットがDospアドレスフィルターと一致する.このパラメータは,IPv6以外のネットワークトラフィックを排除し,IPsecで保護されたIPsecを指定した公共アドレスまたはサブネットから指定した <em>PublicV6Address</em>パラメータを使用して指定した内部アドレスまたはサブネットに指定するフィルターを追加します.この動作は,ブロックまたは例外を指すため, <em>FilteringFlags</em>パラメータで指定されます.特定のアドレスまたはサブネットにたった1つのフィルターしか適用できません.同じアドレスまたはサブネットパラメータを持つ2番目のルールが作成されれば,エラーが表示されます.アドレスが1つ以上のフィルターと一致する場合は,特定のマッチが選択され,対応するフィルターが適用されます.例えば,2006:2006::2は,マッチのフィルターとプレフィックス 2006:2006::2/128のフィルターよりも,プレフィックス 2006:2006::2/64のフィルターと密接に一致します.もし,PublicV6Address<em>パラメータとこのパラメータの両方が指定されている場合,Dosp規則は,パラメータ値を論理的 AND オペレーターとして扱います.トラフィックが指定された公共プレフィックスとアドレスを参照し,トラフィックが指定された内部プレフィックスとアドレスを対象とする場合,トラフィックが規則に一致します.指定されたプロトコルのネットワークトラフィックは, </em>EnabledKeyingModules<em>パラメータを使用して指定された </em>EnabledKeyingModules*パラメータを使用してリストに記載されていないアドレスまたはサブネットから送信される.もしサブネットであれば,前向きのスラッシュ (/) を入力し,その後にネットワーク識別子を表示する数字の数値を入力します.</h3>
+<pre><code class="language-yaml">Type: String
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-PublicInterfaceAliases 公開インターフェースとして IPsec DoS 保護設定に指定されたインターフェースを追加します.少なくとも 1 つの公開インターフェイスが使用され,Dosp 設定の <em>PublicInterfaceAliases</em> パラメータと 1 つの内部インターフェイスが使用され,Dosp 設定の <em>PrivateInterfaceAliases</em> パラメータが追加され,動作する必要があります.</h3>
+<pre><code class="language-yaml">Type: WildcardPattern[]
+Parameter Sets: (All)
+Aliases: 
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-PublicV6Address は,Dosp アドレスフィルターと一致する外部IPsecアドレスまたはサブネットを指定します.このパラメータは,IPv6およびIPsecで保護されたネットワークトラフィックを指定した公共アドレスまたはサブネットからこのパラメータを使用して指定した内部アドレスまたはサブネットに除外することによって,Dosp アドレスフィルターと一致するフィルターを追加します.このパラメータは,ブロックまたは例外を指すこの動作を, <em>PrivateV6Address</em>パラメータを使用して指定した内部アドレスまたはサブネットに制限されます.この動作は,ブロックまたは例外を指すこの動作は, <em>FilteringFlags</em>パラメータで指定されます.特定のアドレスまたはサブネットにたった1つのフィルターしか適用できません.同じアドレスまたはサブネットパラメータを持つ第2のルールが作成されれば,エラーが表示されます.アドレスが1つ以上のフィルターと一致する場合は,例えば,2006:2006::2/128は,前文字のフィルターよりも,前文字のフィルターと 2006:2006::2/128が密接に一致する.このパラメータと <em>PrivateV6Address</em>パラメータの両方が指定されている場合,Dosp ルールでは,パラメータ値を論理的 AND オペレーターとして扱います.トラフィックが指定された公開前文字のアドレスから来ていて,トラフィックが指定された内部前文字のアドレスに宛てた場合,トラフィックが規則に一致します. <em>EnabledKeyingModules</em> パラメータを使用して指定されたプロトコルのネットワークトラフィックが指定されたアドレスまたはサブネットから送信されるのは,削除されます. Spe リストに記載されていないアドレスまたはサブネットから送信されます. Spe 列表に記載されていないアドレスまたはサブネットから送信されるのは,削除されます.サブネットを表示し,前向きのスラッシュ (/) を入力し,ネットワーク識別子を表示する数字数に付随します.</h3>
+<pre><code class="language-yaml">Type: String
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-StateIdleTimeoutSeconds は,IPsec DoS 保護機能が機能によって許可されている有効なIPsec 保護された接続であると考えるのを止める前に,IPsec セッションが無効にできる数秒を指定します.指定された数秒後,IPsec セッションは時代遅れとみなされ,セッションの一部であるトラフィックが標準的に機能を通過することができません.このパラメータの受け入れられる値は: 1 から 4,294,967,295 秒です.デフォルト値は 360 です.または6分です.</h3>
+<pre><code class="language-yaml">Type: UInt32
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-ThrottleLimit は,cmdletを実行するために設定できる最大限の同時操作数を指定します.このパラメータを省略した場合,または値が  の値である場合.<code>0</code>入力すると,Windows PowerShell® は,コンピュータ上で実行されている CIM cmdlets の数に基づいて cmdlet の最適な加速度制限を計算します.加速度制限は,セッションやコンピュータにではなく,現在の cmdlet にのみ適用されます.</h3>
+<pre><code class="language-yaml">Type: Int32
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-WhatIf が実行されればどうなるか示します.</h3>
+<pre><code class="language-yaml">Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: wi
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>共通パラメータ このcmdletは共通パラメータをサポートしています: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable.詳細については, <a href="を参照してください.https://go.microsoft.com/fwlink/?LinkID=113216">about_CommonParameters</a> でした.</h3>
+<h2>輸入は</h2>
+<h3>どれもない</h3>
+<h2>輸出は</h2>
+<h3>Microsoft.Management.Infrastructure.CimInstance#root\StandardCimv2\NetIPsecDospSetting[] について<code>Microsoft.Management.Infrastructure.CimInstance</code>Windows Management Instrumentation (WMI) のオブジェクトを表示する包装クラスです.ポンドサインの後に行進するパス () は,<code>#</code>) は,元々のWMIオブジェクトの名前空間とクラス名を提供します.</h3>
+<h2>NOTES  記事ができました.</h2>
+<h2>関連リンク</h2>
+<p><a href="./Get-NetIPsecDospSetting.md">Get-NetIPsecDospSetting</a> </p>
+<p><a href="./Remove-NetIPsecDospSetting.md">Remove-NetIPsecDospSetting</a> を削除する</p>
+<p><a href="./Set-NetIPsecDospSetting.md">Set-NetIPsecDospSetting</a> </p></section><section class="en-original"><pre class="source-original"># New-NetIPsecDospSetting
+
+## SYNOPSIS
+Creates an IPsec DoS protection setting and adds the setting to the target computer.
+
+## SYNTAX
+
+```
+New-NetIPsecDospSetting -Name &lt;String&gt; [-StateIdleTimeoutSeconds &lt;UInt32&gt;]
+ [-PerIPRateLimitQueueIdleTimeoutSeconds &lt;UInt32&gt;] [-IpV6IPsecUnauthDscp &lt;UInt32&gt;]
+ [-IpV6IPsecUnauthRateLimitBytesPerSec &lt;UInt32&gt;] [-IpV6IPsecUnauthPerIPRateLimitBytesPerSec &lt;UInt32&gt;]
+ [-IpV6IPsecAuthDscp &lt;UInt16&gt;] [-IpV6IPsecAuthRateLimitBytesPerSec &lt;UInt32&gt;] [-IcmpV6Dscp &lt;UInt16&gt;]
+ [-IcmpV6RateLimitBytesPerSec &lt;UInt32&gt;] [-IpV6FilterExemptDscp &lt;UInt32&gt;]
+ [-IpV6FilterExemptRateLimitBytesPerSec &lt;UInt32&gt;] [-DefBlockExemptDscp &lt;UInt16&gt;]
+ [-DefBlockExemptRateLimitBytesPerSec &lt;UInt32&gt;] [-MaxStateEntries &lt;UInt32&gt;] [-MaxPerIPRateLimitQueues &lt;UInt32&gt;]
+ [-EnabledKeyingModules &lt;DospKeyModules&gt;] [-FilteringFlags &lt;DospFlags&gt;]
+ -PublicInterfaceAliases &lt;WildcardPattern[]&gt; -PrivateInterfaceAliases &lt;WildcardPattern[]&gt;
+ [-PublicV6Address &lt;String&gt;] [-PrivateV6Address &lt;String&gt;] [-CimSession &lt;CimSession[]&gt;] [-ThrottleLimit &lt;Int32&gt;]
+ [-AsJob] [-WhatIf] [-Confirm] [&lt;CommonParameters&gt;]
+```
+
+## DESCRIPTION
+The **New-NetIPsecDospSetting** cmdlet creates an IPsec DoS protection setting and adds it to the target computer.
+
+The NetIPsecDospSetting configurations affect only IPv6-based connections that are protected by using Encapsulating Security Payload (ESP), and the IPsec negotiation traffic and ICMPv6 traffic that is required to establish those connections.
+
+Architecturally, the computer on which IPsec Dosp is configured using this cmdlet is located on the network edge and is in the path for any native IPv6 traffic and IPv6 traffic encapsulated inside tunnels such as Teredo, 6to4, and IP-HTTPS.
+The computer can be the same computer as the Teredo relay, 6to4 gateway or relay, or IP-HTTPS server.
+In those cases, the IPsec DoS protection feature intercepts the forwarded packets after the packets are extracted from the tunnel.
+The only exception is that the IPsec DoS protection feature cannot be deployed on an IPsec gateway, because IPsec tunnel traffic bypasses the IPsec DoS protection feature.
+To protect an IPsec gateway, place the IPsec DoS protection feature on a separate computer that is between the Internet and the IPsec gateway.
+
+By default, no interfaces are assigned to the IPsec DoS protection feature.
+At least one public interface using the *PublicInterfaceAliases* parameter and one internal interface using the *PrivateInterfaceAliases* parameter for the feature must be added to be operational.
+Those features that are not specified are assigned the default values.
+By default, AuthIP only is allowed to all internal addresses.
+
+This cmdlet has no effect on existing IPsec connections; it only affects IPsec negotiation traffic that uses IKEv1, IKEv2 or AuthIP.
+ICMPv6 network traffic is always allowed to enable Teredo and other advanced network scenarios to work.
+
+IPsec-protected traffic that is part of an established connection that uses ESP is always allowed, as long as the connection has not been idle for more than the number of seconds specified with the *StateIdleTimeoutSeconds* parameter.
+The *DefBlockExemptRateLimitBytesPerSec*, IcmpV6RateLimitBytesPerSec, *IpV6FilterExemptRateLimitBytesPerSec*, *IpV6IPsecAuthRateLimitBytesPerSec*, *IpV6IPsecUnauthPerIPRateLimitBytesPerSec*, and *IpV6IPsecUnauthRateLimitBytesPerSec* parameters limit the rate of inbound traffic of the specified type flowing from the public to the internal interface.
+You can specify an overall rate for all traffic of a specified type, or you can limit the rate of the specified traffic to a specified IP address.
+
+The following two prerequisite steps must be taken for this cmdlet to succeed. 
+- `Set-NetIpv4Protocol -CimSession $session -GroupForwardedFragments Enabled$sessionEnabled`
+- `Set-NetIpv6Protocol -CimSession $session -GroupForwardedFragments Enabled$sessionEnabled`
+- `New-NetIPsecDospSetting -CimSession $session -Name &quot;Enforce IPsec DoS protection&quot; -PublicInterfaceAliases $publicInterface -PrivateInterfaceAliases $privateInterface$session&quot;Enforce IPsec DoS protection&quot;$publicInterface$privateInterface`
+
+## EXAMPLES
+
+### EXAMPLE 1
+```
+PS C:\&gt;New-NetIPsecDospSetting -Name PubNet-CorpNet -PublicInterfaceAliases PubNet -PrivateInterfaceAliases CorpNet
+```
+
+This example adds the public and internal network adapters as interfaces of the IPsec DoS protection feature.
+
+### EXAMPLE 2
+```
+PS C:\&gt;New-NetIPsecDospSetting -Name IKEv1-PubNet-CorpNet -PublicInterfaceAliases PubNet -PrivateInterfaceAliases CorpNet -EnabledKeyingModules IKEv1
+```
+
+This example enables IKEv1 negotiation traffic to all IPv6 addresses.
+
+### EXAMPLE 3
+```
+PS C:\&gt;New-NetIPsecDospSetting -Name &quot;IKEv1-PubNet-CorpNet-3ff3:401d:1f00:baa::1&quot; -PublicInterfaceAliases PubNet -PrivateInterfaceAliases CorpNet -EnabledKeyingModules IKEv1 -Privatev6Address 3ff3:401d:1f00:baa::1
+```
+
+This example enables IKEv1 negotiation traffic to a single IPv6 addresses.
+
+### EXAMPLE 4
+```
+PS C:\&gt;New-NetIPsecDospSetting -Name &quot;Block-3ffe:401d:1f00::/64-PubNet-CorpNet&quot; -PublicInterfaceAliases PubNet -PrivateInterfaceAliases CorpNet -FilteringFlags FilterBlock -Publicv6Address 3ff3:401d:1f00:baa::1
+```
+
+This example blocks all network traffic, even IPsec-protected traffic from the specified public IPv6 subnet.
+
+### EXAMPLE 5
+```
+PS C:\&gt;New-NetIPsecDospSetting -Name PubNet-CorpNet-Unauth10 -PublicInterfaceAliases PubNet -PrivateInterfaceAliases CorpNet -IpV6IPsecUnauthDscp 10
+```
+
+This example marks all unauthenticated IPsec traffic with the value of 10.
+
+### EXAMPLE 6
+```
+PS C:\&gt;New-NetIPsecDospSetting -Name PubNet-CorpNet -PublicInterfaceAliases PubNet -PrivateInterfaceAliases CorpNet -IpV6IPsecUnauthRateLimitBytesPerSec 2048
+```
+
+This example limits all IPsec unauthenticated network traffic to 2048 bytes per second.
+
+### EXAMPLE 7
+```
+PS C:\&gt;New-NetIPsecDospSetting -Name PubNet-CorpNet -PublicInterfaceAliases PubNet -PrivateInterfaceAliases CorpNet -StateIdleTimeoutSeconds 480 -MaxStateEntries 100000
+```
+
+This example configures the IPsec DoS protection feature to stop tracking a connection after it is idle for 480 seconds, and to track a maximum of 100,000 connections.
+
+## PARAMETERS
+
+### -AsJob
+Runs the cmdlet as a background job. Use this parameter to run commands that take a long time to complete.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -CimSession
+Runs the cmdlet in a remote session or on a remote computer.
+Enter a computer name or a session object, such as the output of a [New-CimSession](https://go.microsoft.com/fwlink/p/?LinkId=227967) or [Get-CimSession](https://go.microsoft.com/fwlink/p/?LinkId=227966) cmdlet.
+The default is the current session on the local computer.
+
+```yaml
+Type: CimSession[]
+Parameter Sets: (All)
+Aliases: Session
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Confirm
+Prompts you for confirmation before running the cmdlet.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: cf
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+# New-NetIPsecDospSetting
+
+### -DefBlockExemptDscp
+Specifies the 6-bit value, specified as an integer from 1 to 63, that is placed in the differentiated services code point (DSCP) field of the IPv6 header when the traffic type matches traffic that is by default exempted from the default block behavior such as IPsec authenticated, IPsec unauthenticated, and ICMPv6 traffic.
+The DSCP value can be used in Quality of Service (QoS) implementations to prioritize network traffic and help ensure that less important network packets do not consume so much bandwidth that they interfere with the successful delivery of more important network packets. 
+The acceptable values for this parameter are: 1 through 63, and Disabled.
+The default value is Disabled. 
+
+- Disabled: This turns off DSCP marking for traffic that is by default exempted from the default block behavior.
+This includes IPsec authenticated, IPsec unauthenticated, and ICMPv6 traffic.
+This parameter is case-sensitive and requires Disabled to be specified using dot-notation.
+
+```yaml
+Type: UInt16
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -DefBlockExemptRateLimitBytesPerSec
+Specifies the maximum rate at which IPsec authenticated, IPsec unauthenticated, and ICMPv6 inbound network traffic such as traffic that is by default exempted from the default block behavior is forwarded from the public interface to the internal interface. 
+The acceptable values for this parameter are: 1 through 4,294,967,295 bytes per second. 
+The default value is 102400.
+
+```yaml
+Type: UInt32
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -EnabledKeyingModules
+Specifies the IPsec negotiation protocol, or keying module, to allow.
+The IPv6 address or subnet to which the specified IPsec negotiation protocol is allowed to be sent with the *PrivateV6Address* parameter can be optionally specified.
+By default, only IPsec negotiation traffic that uses AuthIP is allowed to all addresses. 
+ICMPv6 network traffic is always allowed to enable Teredo and other advanced network scenarios to work.
+The IPsec-protected traffic that is part of an established connection that uses ESP is always allowed, as long as the connection has not been idle for more than the number of seconds specified with the *StateIdleTimeoutSeconds* parameter. 
+The acceptable values for this parameter are: None, IkeV1, IkeV2, or AuthIP.
+The default value is AuthIP.
+
+```yaml
+Type: DospKeyModules
+Parameter Sets: (All)
+Aliases: 
+Accepted values: None, IkeV1, IkeV2, AuthIP
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -FilteringFlags
+Specifies the action to take on network traffic that matches the Dosp setting address filters the public V6 address and the privateV6 address. 
+Only one filter can be applied to a specific address or subnet.
+If a second Dosp setting with the exact same address or subnet parameter is created, then an error is displayed.
+If an address matches more than one filter, then the most specific match is selected and the corresponding filter is applied.
+For example, 2006:2006::2 matches a filter with the prefix 2006:2006::2/128 more closely than a filter with the prefix 2006:2006::2/64. 
+The acceptable values for this parameter are:
+
+- None: IPsec DoS protection feature drops all IPv4 traffic, and all non-IPsec IPv6 traffic (except ICMPv6) that is forwarded between a public interface and an internal interface. 
+- DisableDefaultBlock: IPsec DoS protection feature blocks no traffic. 
+- FilterBlock: Specifies that network traffic that matches the Dosp setting address filters using the *PublicV6Address* and *PrivateV6Address* parameters is blocked even if it is IPsec-protected. 
+- FilterExempt: Specifies that IPv6 network traffic that matches the Dosp setting address filters using the *PublicV6Address* and *PrivateV6Address* parameters does not have to be IPsec-protected to be allowed through. 
+The default value is None.
+
+```yaml
+Type: DospFlags
+Parameter Sets: (All)
+Aliases: 
+Accepted values: None, DisableDefaultBlock, FilterBlock, FilterExempt
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -IcmpV6Dscp
+Specifies that ICMPv6 protocol traffic is assigned the given DSCP value. 
+This parameter specifies the 6-bit value, specified as an integer from 1 to 63, that is placed in the DSCP field of the IPv6 header, when the traffic type matches ICMPv6 protocol traffic.
+The DSCP value can be used in Quality of Service (QoS) implementations to prioritize network traffic and help ensure that less important network packets do not consume so much bandwidth that the packets interfere with the successful delivery of more important network packets. 
+The acceptable values for this parameter are: 1 through 63, and Disabled.
+The default value is Disabled. 
+
+- Disabled: Turns off DSCP marking for ICMPv6 protocol traffic.
+This parameter is case-sensitive and requires Disabled to be specified using dot-notation.
+
+```yaml
+Type: UInt16
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -IcmpV6RateLimitBytesPerSec
+Specifies the maximum rate at which ICMPv6 inbound network traffic is forwarded from the public to the internal interface. 
+The acceptable values for this parameter are: 1 through 4,294,967,295 bytes per second.
+The default value is 10240.
+
+```yaml
+Type: UInt32
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -IpV6FilterExemptDscp
+Specifies that IPv6 traffic with an IP address that is exempted by using an address filter is assigned the given DSCP value. 
+To specify that the IPv6 network traffic that matches the Dosp setting address filters using the *PublicV6Address* and *PrivateV6Address* parameters does not have to be IPsec-protected to be allowed through set the *FilteringFlags* parameter to the filter exempt value. 
+This parameter specifies the 6-bit value, specified as an integer from 1 to 63, that is placed in the DSCP field of the IPv6 header when the traffic type matches the exempted address filter traffic.
+The DSCP value can be used in Quality of Service (QoS) implementations to prioritize network traffic and help ensure that less important network packets do not consume so much bandwidth that they interfere with the successful delivery of more important network packets. 
+The acceptable values for this parameter are: 1 through 63, and Disabled.
+The default value is Disabled.
+
+- Disabled: Turns off DSCP marking for traffic from the specified address filter, specified with the *PrivateV6Address* or *PublicV6Address* parameter.
+This parameter is case-sensitive and requires Disabled to be specified using dot-notation.
+
+```yaml
+Type: UInt32
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+# New-NetIPsecDospSetting
+
+### -IpV6FilterExemptRateLimitBytesPerSec
+Specifies the maximum rate at which inbound IPv6 network traffic, that is exempted by using an address filter, is forwarded from the public to the internal interface. 
+To specify that the IPv6 network traffic that matches the Dosp setting address filters using the *PublicV6Address* and *PrivateV6Address* parameters does not have to be IPsec-protected to be allowed through set the *FilteringFlags* parameter to the filter exempt value. 
+The acceptable values for this parameter are: 1 through 4,294,967,295 bytes per second.
+The default value is 102400.
+
+```yaml
+Type: UInt32
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -IpV6IPsecAuthDscp
+Specifies that authenticated IPv6 IPsec-protected traffic is assigned the given DSCP value. 
+This parameter specifies the 6-bit value, specified as an integer from 1 to 63, that is placed in the DSCP field of the IPv6 header, when the traffic type matches authenticated IPv6 IPsec-protected traffic.
+The DSCP value can be used in Quality of Service (QoS) implementations to prioritize network traffic and help ensure that less important network packets do not consume so much bandwidth that they interfere with the successful delivery of more important network packets. 
+The default value is Disabled. 
+- Disabled: Turns off DSCP marking for authenticated IPv6 IPsec-protected traffic.
+This parameter is case-sensitive and requires Disabled to be specified using dot-notation.
+
+```yaml
+Type: UInt16
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -IpV6IPsecAuthRateLimitBytesPerSec
+Specifies the maximum rate at which authenticated IPv6 IPsec-protected inbound traffic is forwarded from the public to the internal interface. 
+The acceptable values for this parameter are: 1 through 4,294,967,295 bytes per second.
+The default value is 0, which disables the rate limit for this traffic.
+
+```yaml
+Type: UInt32
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -IpV6IPsecUnauthDscp
+Specifies that unauthenticated IPv6 IPsec-protected traffic is assigned the given DSCP value. 
+This parameter specifies the 6-bit value, specified as an integer from 1 to 63, that is placed in the DSCP field of the IPv6 header when the traffic type matches unauthenticated IPv6 IPsec-protected traffic.
+The DSCP value can be used in Quality of Service (QoS) implementations to prioritize network traffic and help ensure that less important network packets do not consume so much bandwidth that they interfere with the successful delivery of more important network packets. 
+The acceptable values for this parameter are: 1 through 63, and Disabled.
+The default value is Disabled. 
+
+- Disabled: Turns off DSCP marking for unauthenticated IPv6 IPsec-protected traffic.
+This parameter is case-sensitive and requires Disabled to be specified using dot-notation.
+
+```yaml
+Type: UInt32
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -IpV6IPsecUnauthPerIPRateLimitBytesPerSec
+Specifies the maximum rate at which unauthenticated IPv6 IPsec-protected inbound traffic is forwarded from the public to the internal interface. 
+If a per IP address rate limit is defined, then it is used instead of the global rate limit using the *IpV6IPsecUnauthRateLimitBytesPerSec* parameter.
+To rate limit on a per IP address basis, configure the number of per IP queues to support this by using the *MaxPerIPRateLimitQueues* parameter. 
+The acceptable values for this parameter are: 1 through 4,294,967,295 bytes per second.
+The default value is 10240.
+
+```yaml
+Type: UInt32
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -IpV6IPsecUnauthRateLimitBytesPerSec
+Specifies the maximum rate at which unauthenticated IPv6 IPsec-protected inbound traffic is forwarded from the public to the internal interface.
+This rate limit is applied on a per IP address basis, instead of network-wide. 
+If a per IP address rate limit is defined using the *IpV6IPsecUnauthPerIPRateLimitBytesPerSec* parameter, then it is used instead of the global rate limit.
+To rate limit on a per IP address basis, configure the number of per IP queues to support this by using the **MaxPerIPRateLimitQueues** parameter. 
+The acceptable values for this parameter are: 1 through 4,294,967,295 bytes per second.
+The default value is 10240.
+
+```yaml
+Type: UInt32
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -MaxPerIPRateLimitQueues
+When using rate limits on unauthenticated traffic, this value specifies the maximum number of queues that can be used to hold traffic while it is delivered at the configured rate. 
+The per IP address rate limit is defined with the *IpV6IPsecUnauthPerIPRateLimitBytesPerSec* parameter. 
+The acceptable values for this parameter are: 1 through 4,294,967,295 queues.
+The default value is 50000.
+
+```yaml
+Type: UInt32
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -MaxStateEntries
+Specifies the maximum number of connections that the IPsec DoS protection feature can track at one time. 
+The acceptable values for this parameter are: 1 through 4,294,967,295 sessions.
+The default value is 75000.
+
+```yaml
+Type: UInt32
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Name
+Specifies the unique identifier of the Dosp configuration setting.
+This parameter is mandatory.
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases: 
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -PerIPRateLimitQueueIdleTimeoutSeconds
+Specifies, when using rate limits on unauthenticated traffic on a per IP address basis, the timeout in seconds that the connection can be idle before the IPsec DoS protection feature treats the connection as stale and stops tracking the state. 
+The per IP address rate limit is defined with the *IpV6IPsecUnauthPerIPRateLimitBytesPerSec* parameter. 
+The acceptable values for this parameter are: 1 through 4,294,967,295 seconds.
+The default value is 360, or six minutes.
+
+```yaml
+Type: UInt32
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -PrivateInterfaceAliases
+Adds the specified interface to the IPsec DoS protection configuration as an internal interface. 
+At least one public interface using the *PublicInterfaceAliases* parameter and one internal interface using the *PrivateInterfaceAliases* parameter for the Dosp setting must be set to be operational.
+
+```yaml
+Type: WildcardPattern[]
+Parameter Sets: (All)
+Aliases: 
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+# New-NetIPsecDospSetting
+
+### -PrivateV6Address
+Specifies the internal IPsec address or subnet that matches the Dosp address filter. 
+This parameter adds a filter that either blocks or allows via exempting the network traffic that is not IPv6 and IPsec-protected from the specified public address or subnet using the *PublicV6Address* parameter to the specified internal address or subnet using this parameter.
+This behavior, referring to blocking or exempting, is specified with the *FilteringFlags* parameter. 
+Only one filter can be applied to a specific address or subnet.
+If a second rule with the exact same address or subnet parameter is created, then an error is displayed.
+If an address matches more than one filter, then the most specific match is selected and the corresponding filter is applied.
+For example, 2006:2006::2 matches a filter with the prefix 2006:2006::2/128 more closely than a filter with the prefix 2006:2006::2/64.
+If both the *PublicV6Address* parameter and this parameter are specified, then the Dosp rule treats the parameter values as a logical AND operator.
+Traffic matches the rule if it comes from an address with the specified public prefix and the traffic is destined for an address with the specified internal prefix. 
+Network traffic of the specified protocol as specified using the *EnabledKeyingModules* parameter that is sent from an address or subnet not on the list is dropped.
+To specify a subnet, include the forward slash (/) followed by the number of digits that represent the network identifier.
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -PublicInterfaceAliases
+Adds the specified interface to the IPsec DoS protection configuration as a public interface. 
+At least one public interface using the *PublicInterfaceAliases* parameter and one internal interface using the *PrivateInterfaceAliases* parameter for the Dosp setting must be added to be operational.
+
+```yaml
+Type: WildcardPattern[]
+Parameter Sets: (All)
+Aliases: 
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -PublicV6Address
+Specifies the external IPsec address or subnet that matches the Dosp address filter. 
+This parameter adds a filter that either blocks or allows via exempting the network traffic that is not IPv6 and IPsec-protected from the specified public address or subnet using this parameter to the specified internal address or subnet using the *PrivateV6Address* parameter.
+This behavior, referring to blocking or exempting, is specified with the *FilteringFlags* parameter. 
+Only one filter can be applied to a specific address or subnet.
+If a second rule with the exact same address or subnet parameter is created, then an error is displayed.
+If an address matches more than one filter, then the most specific match is selected and the corresponding filter is applied.
+For example, 2006:2006::2 matches a filter with the prefix 2006:2006::2/128 more closely than a filter with the prefix 2006:2006::2/64.
+If both this parameter and the *PrivateV6Address* parameter are specified, then the Dosp rule treats the parameter values as a logical AND operator.
+Traffic matches the rule if it comes from an address with the specified public prefix and the traffic is destined for an address with the specified internal prefix. 
+Network traffic of the specified protocol as specified using the *EnabledKeyingModules* parameter that is sent from an address or subnet not on the list is dropped.
+To specify a subnet, include the forward slash (/) followed by the number of digits that represent the network identifier.
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -StateIdleTimeoutSeconds
+Specifies the number of seconds that an IPsec session can be idle before the IPsec DoS protection feature stops considering it to be a valid IPsec-protected connection that is allowed by the feature.
+After the specified number of seconds, the IPsec session is considered stale, and traffic that is part of the session is no longer allowed through the feature by default. 
+The acceptable values for this parameter are: 1 through 4,294,967,295 seconds. 
+The default value is 360, or six minutes.
+
+```yaml
+Type: UInt32
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -ThrottleLimit
+Specifies the maximum number of concurrent operations that can be established to run the cmdlet.
+If this parameter is omitted or a value of `0` is entered, then Windows PowerShell® calculates an optimum throttle limit for the cmdlet based on the number of CIM cmdlets that are running on the computer.
+The throttle limit applies only to the current cmdlet, not to the session or to the computer.
+
+```yaml
+Type: Int32
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -WhatIf
+Shows what would happen if the cmdlet runs.
+The cmdlet is not run.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: wi
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### CommonParameters
+This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable. For more information, see [about_CommonParameters](https://go.microsoft.com/fwlink/?LinkID=113216).
+
+## INPUTS
+
+### None
+
+## OUTPUTS
+
+### Microsoft.Management.Infrastructure.CimInstance#root\StandardCimv2\NetIPsecDospSetting[]
+The `Microsoft.Management.Infrastructure.CimInstance` object is a wrapper class that displays Windows Management Instrumentation (WMI) objects.
+The path after the pound sign (`#`) provides the namespace and class name for the underlying WMI object.
+
+## NOTES
+
+## RELATED LINKS
+
+[Get-NetIPsecDospSetting](./Get-NetIPsecDospSetting.md)
+
+[Remove-NetIPsecDospSetting](./Remove-NetIPsecDospSetting.md)
+
+[Set-NetIPsecDospSetting](./Set-NetIPsecDospSetting.md)</pre></section>

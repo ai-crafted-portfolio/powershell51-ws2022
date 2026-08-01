@@ -1,0 +1,589 @@
+<!doctype html><meta charset="utf-8"><section class="jp-official"><h1>書き込み進歩です.</h1>
+<h2>SYNOPSISは,PowerShellコマンドウィンドウ内の進捗バーを表示します.</h2>
+<h2>SYNTAXは,のシンタックスです.</h2>
+<pre><code>Write-Progress [-Activity] &lt;String&gt; [[-Status] &lt;String&gt;] [[-Id] &lt;Int32&gt;] [-PercentComplete &lt;Int32&gt;]
+ [-SecondsRemaining &lt;Int32&gt;] [-CurrentOperation &lt;String&gt;] [-ParentId &lt;Int32&gt;] [-Completed]
+ [-SourceId &lt;Int32&gt;] [&lt;CommonParameters&gt;]
+</code></pre>
+<h2>記述は,</h2>
+<p><code>Write-Progress</code>cmdlet は PowerShell コマンドウィンドウで実行中のコマンドまたはスクリプトの状態を示す進捗バーを表示します.このバーが反映する指標と進捗バーの上のと下のテキストを選択できます.</p>
+<h2>例えは</h2>
+<h3>例1: の進行を表示する<code>for</code>ループの</h3>
+<pre><code class="language-powershell">for ($i = 1; $i -le 100; $i++ ) {
+    Write-Progress -Activity &quot;Search in Progress&quot; -Status &quot;$i% Complete:&quot; -PercentComplete $i
+    Start-Sleep -Milliseconds 250
+}
+</code></pre>
+<p>このコマンドは,  の進行を表示します.<code>for</code>1から100まで数えられるループです.</p>
+<p><code>Write-Progress</code>cmdlet には,ステータスバーのヘッティングが含まれています.<code>Activity</code>状態線と変数 <code>$i</code>(このカウンターには,<code>for</code>ループ),これは,仕事の相対的な完全性を示しています.</p>
+<h3>例2: 巣の進捗状況を表示する<code>for</code>ループです.</h3>
+<pre><code class="language-powershell">for($I = 0; $I -lt 10; $I++ ) {
+    $OuterLoopProgressParameters = @{
+        Activity         = 'Updating'
+        Status           = 'Progress-&gt;'
+        PercentComplete  = $I * 10
+        CurrentOperation = 'OuterLoop'
+    }
+    Write-Progress @OuterLoopProgressParameters
+    for($j = 1; $j -lt 101; $j++ ) {
+        $InnerLoopProgressParameters = @{
+            ID               = 1
+            Activity         = 'Updating'
+            Status           = 'Progress'
+            PercentComplete  = $j
+            CurrentOperation = 'InnerLoop'
+        }
+        Write-Progress @InnerLoopProgressParameters
+        Start-Sleep -Milliseconds 25
+    }
+}
+</code></pre>
+<pre><code class="language-Output">Updating
+Progress -&gt;
+ [ooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo]
+OuterLoop
+Updating
+Progress
+ [oooooooooooooooooo                                                   ]
+InnerLoop
+</code></pre>
+<p>この例では,巣の2つの進捗状況を示しています.<code>for</code>ループはそれぞれ進行バーで表示されています.</p>
+<p><code>Write-Progress</code>第2進度バーのコマンドには,第1進度バーから区別する<strong>Id</strong>パラメータが含まれます.</p>
+<p><strong>Id</strong>パラメータがなければ,進捗バーは互いに重ね合わせたのでなく,それぞれが次から次へと表示される.</p>
+<h3>例3: 文字列の検索中に進捗状況を表示します.</h3>
+<pre><code class="language-powershell">
+# Use Get-EventLog to get the events in the System log and store them in the $Events variable.
+$Events = Get-EventLog -LogName System
+
+# Pipe the events to the ForEach-Object cmdlet.
+$Events | ForEach-Object -Begin {
+    # In the Begin block, use Clear-Host to clear the screen.
+    Clear-Host
+    # Set the $i counter variable to zero.
+    $i = 0
+    # Set the $out variable to an empty string.
+    $out = &quot;&quot;
+} -Process {
+    # In the Process scriptblock search the message property of each incoming object for &quot;bios&quot;.
+    if($_.Message -like &quot;*bios*&quot;)
+    {
+        # Append the matching message to the out variable.
+        $out=$out + $_.Message
+    }
+    # Increment the $i counter variable which is used to create the progress bar.
+    $i = $i+1
+    # Determine the completion percentage
+    $Completed = ($i/$Events.Count) * 100
+    # Use Write-Progress to output a progress bar.
+    # The Activity and Status parameters create the first and second lines of the progress bar
+    # heading, respectively.
+    Write-Progress -Activity &quot;Searching Events&quot; -Status &quot;Progress:&quot; -PercentComplete $Completed
+} -End {
+    # Display the matching messages using the out variable.
+    $out
+}
+</code></pre>
+<p>このコマンドは,システムイベントログで文字列"bios"を見つけるコマンドの進行を表示します.</p>
+<p><strong>PercentComplete</strong>のパラメータ値は,処理されたイベント数を分割して計算されます.<code>$i</code>追いついたイベントの総数で,<code>$Events.Count</code>そして,その結果を100で掛ける.</p>
+<h3>例4: 巣立つのプロセス各レベルでの進捗を表示します.</h3>
+<pre><code class="language-powershell">foreach ( $i in 1..10 ) {
+  Write-Progress -Id 0 &quot;Step $i&quot;
+  foreach ( $j in 1..10 ) {
+    Write-Progress -Id 1 -ParentId 0 &quot;Step $i - Substep $j&quot;
+    foreach ( $k in 1..10 ) {
+      Write-Progress -Id 2  -ParentId 1 &quot;Step $i - Substep $j - iteration $k&quot;
+      Start-Sleep -Milliseconds 150
+    }
+  }
+}
+</code></pre>
+<pre><code class="language-Output">Step 1
+     Processing
+    Step 1 - Substep 2
+         Processing
+        Step 1 - Substep 2 - Iteration 3
+             Processing
+</code></pre>
+<p>この例では,各ステップの進行中に親子関係を示すために,インデントされた出力を表示するために<strong>ParentId</strong>パラメータを使用できます.</p>
+<h2>パラメータは</h2>
+<h3>-活動</h3>
+<p>状態バーの上の頭文字の最初の文字列を指定します.このテキストは,その進行が報告されている活動を記述します.</p>
+<pre><code class="language-yaml">Type: System.String
+Parameter Sets: (All)
+Aliases:
+
+Required: True
+Position: 0
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-完成しました</h3>
+<p>進捗バーが表示されているかどうかを表示します.このパラメータが省略された場合, <code>Write-Progress</code>進歩情報が表示されます.</p>
+<pre><code class="language-yaml">Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-CurrentOperation について</h3>
+<p>進行欄の下の文字列を指定します.このテキストは,現在進行中の操作を記述します.</p>
+<pre><code class="language-yaml">Type: System.String
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-Id</h3>
+<p>各進捗バーを他のものから区別するIDを指定します.このパラメータを使用して,単一のコマンドで複数の進捗バーを作成する場合.進捗バーに異なるIDがない場合は,連続で表示される代わりに重複されます.負の値は許されません.</p>
+<pre><code class="language-yaml">Type: System.Int32
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: 2
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-親子さん</h3>
+<p>現在の活動の親の活動を指定します.値を使用します <code>-1</code>もし現在の活動に親活動がない場合.</p>
+<pre><code class="language-yaml">Type: System.Int32
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-PercentComplete でした.</h3>
+<p>完了した活動の割合を指定します.値を用いてください.<code>-1</code>完全な百分比が不明または適用できない場合.</p>
+<pre><code class="language-yaml">Type: System.Int32
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-SecondsRemaining でした</h3>
+<p>プロジェクトが完了するまで残る予測された秒数を指定します. 値を使用します <code>-1</code>残りの秒数は不明か適用されない場合.</p>
+<pre><code class="language-yaml">Type: System.Int32
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h1>書き込み進歩です.</h1>
+<h3>-SourceId</h3>
+<p>記録のソースを指定します.これは <strong>Id</strong> の代わりに使用できますが, <strong>ParentId</strong> のような他のパラメータでは使用できません.</p>
+<pre><code class="language-yaml">Type: System.Int32
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>- ステータス</h3>
+<p>状態バーの上の頭文字の2行列を指定します.このテキストは活動の現在の状態を記述します.</p>
+<pre><code class="language-yaml">Type: System.String
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: 1
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>共通パラメーター</h3>
+<p>このcmdletは,共通パラメータである: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction,および -WarningVariableをサポートしています.詳細については, [about_CommonParameters]をご覧ください.</p>
+<h2>輸入は</h2>
+<h3>どれもない</h3>
+<p>このcmdletに物体をパイプすることはできません.</p>
+<h2>輸出は</h2>
+<h3>どれもない</h3>
+<p>このcmdletは出力返さない.</p>
+<h2>NOTES  記事ができました.</h2>
+<p>進捗バーが表示されない場合は, の値をチェックしてください.<code>$ProgressPreference</code>値が変数に設定されている場合.<code>SilentlyContinue</code>PowerShell 選択の詳細については, [about_Preference_Variables] を参照してください.</p>
+<p>cmdletのパラメータは, <strong>System.Management.Automation.ProgressRecord</strong>クラスのプロパティに対応しています.詳細については, [ProgressRecord Class] (/dotnet/api/system.management.automation.progressrecord) を参照してください.</p>
+<h2>関連リンク</h2>
+<p><a href="Write-Debug.md">Write-Debug</a> </p>
+<p><a href="Write-Error.md">Write-Error</a> </p>
+<p><a href="Write-Host.md">Write-Host</a> について</p>
+<p><a href="Write-Output.md">Write-Output</a> について</p>
+<p><a href="Write-Progress.md">Write-Progress</a> </p>
+<p><a href="Write-Verbose.md">Write-Verbose</a> </p>
+<p><a href="Write-Warning.md">Write-Warning</a> について</p></section><section class="en-original"><pre class="source-original"># Write-Progress
+
+## SYNOPSIS
+Displays a progress bar within a PowerShell command window.
+
+## SYNTAX
+
+```
+Write-Progress [-Activity] &lt;String&gt; [[-Status] &lt;String&gt;] [[-Id] &lt;Int32&gt;] [-PercentComplete &lt;Int32&gt;]
+ [-SecondsRemaining &lt;Int32&gt;] [-CurrentOperation &lt;String&gt;] [-ParentId &lt;Int32&gt;] [-Completed]
+ [-SourceId &lt;Int32&gt;] [&lt;CommonParameters&gt;]
+```
+
+## DESCRIPTION
+
+The `Write-Progress` cmdlet displays a progress bar in a PowerShell command window that depicts the
+status of a running command or script. You can select the indicators that the bar reflects and the
+text that appears above and below the progress bar.
+
+## EXAMPLES
+
+### Example 1: Display the progress of a `for` loop
+
+```powershell
+for ($i = 1; $i -le 100; $i++ ) {
+    Write-Progress -Activity &quot;Search in Progress&quot; -Status &quot;$i% Complete:&quot; -PercentComplete $i
+    Start-Sleep -Milliseconds 250
+}
+```
+
+This command displays the progress of a `for` loop that counts from 1 to 100.
+
+The `Write-Progress` cmdlet includes a status bar heading `Activity`, a status line, and the
+variable `$i` (the counter in the `for` loop), which indicates the relative completeness of the
+task.
+
+### Example 2: Display the progress of nested `for` loops
+
+```powershell
+for($I = 0; $I -lt 10; $I++ ) {
+    $OuterLoopProgressParameters = @{
+        Activity         = &#x27;Updating&#x27;
+        Status           = &#x27;Progress-&gt;&#x27;
+        PercentComplete  = $I * 10
+        CurrentOperation = &#x27;OuterLoop&#x27;
+    }
+    Write-Progress @OuterLoopProgressParameters
+    for($j = 1; $j -lt 101; $j++ ) {
+        $InnerLoopProgressParameters = @{
+            ID               = 1
+            Activity         = &#x27;Updating&#x27;
+            Status           = &#x27;Progress&#x27;
+            PercentComplete  = $j
+            CurrentOperation = &#x27;InnerLoop&#x27;
+        }
+        Write-Progress @InnerLoopProgressParameters
+        Start-Sleep -Milliseconds 25
+    }
+}
+```
+
+```Output
+Updating
+Progress -&gt;
+ [ooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo]
+OuterLoop
+Updating
+Progress
+ [oooooooooooooooooo                                                   ]
+InnerLoop
+```
+
+This example displays the progress of two nested `for` loops, each of which is represented by a
+progress bar.
+
+The `Write-Progress` command for the second progress bar includes the **Id** parameter that
+distinguishes it from the first progress bar.
+
+Without the **Id** parameter, the progress bars would be superimposed on each other instead of
+being displayed one below the other.
+
+### Example 3: Display the progress while searching for a string
+
+```powershell
+
+# Use Get-EventLog to get the events in the System log and store them in the $Events variable.
+$Events = Get-EventLog -LogName System
+
+# Pipe the events to the ForEach-Object cmdlet.
+$Events | ForEach-Object -Begin {
+    # In the Begin block, use Clear-Host to clear the screen.
+    Clear-Host
+    # Set the $i counter variable to zero.
+    $i = 0
+    # Set the $out variable to an empty string.
+    $out = &quot;&quot;
+} -Process {
+    # In the Process scriptblock search the message property of each incoming object for &quot;bios&quot;.
+    if($_.Message -like &quot;*bios*&quot;)
+    {
+        # Append the matching message to the out variable.
+        $out=$out + $_.Message
+    }
+    # Increment the $i counter variable which is used to create the progress bar.
+    $i = $i+1
+    # Determine the completion percentage
+    $Completed = ($i/$Events.Count) * 100
+    # Use Write-Progress to output a progress bar.
+    # The Activity and Status parameters create the first and second lines of the progress bar
+    # heading, respectively.
+    Write-Progress -Activity &quot;Searching Events&quot; -Status &quot;Progress:&quot; -PercentComplete $Completed
+} -End {
+    # Display the matching messages using the out variable.
+    $out
+}
+```
+
+This command displays the progress of a command to find the string &quot;bios&quot; in the System event log.
+
+The **PercentComplete** parameter value is calculated by dividing the number of events that have
+been processed `$i` by the total number of events retrieved `$Events.Count` and then multiplying
+that result by 100.
+
+### Example 4: Display progress for each level of a nested process
+
+```powershell
+foreach ( $i in 1..10 ) {
+  Write-Progress -Id 0 &quot;Step $i&quot;
+  foreach ( $j in 1..10 ) {
+    Write-Progress -Id 1 -ParentId 0 &quot;Step $i - Substep $j&quot;
+    foreach ( $k in 1..10 ) {
+      Write-Progress -Id 2  -ParentId 1 &quot;Step $i - Substep $j - iteration $k&quot;
+      Start-Sleep -Milliseconds 150
+    }
+  }
+}
+```
+
+```Output
+Step 1
+     Processing
+    Step 1 - Substep 2
+         Processing
+        Step 1 - Substep 2 - Iteration 3
+             Processing
+```
+
+In this example you can use the **ParentId** parameter to have indented output to show parent-child
+relationships in the progress of each step.
+
+## PARAMETERS
+
+### -Activity
+
+Specifies the first line of text in the heading above the status bar. This text describes the
+activity whose progress is being reported.
+
+```yaml
+Type: System.String
+Parameter Sets: (All)
+Aliases:
+
+Required: True
+Position: 0
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Completed
+
+Indicates whether the progress bar is visible. If this parameter is omitted, `Write-Progress`
+displays progress information.
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -CurrentOperation
+
+Specifies the line of text below the progress bar. This text describes the operation that&#x27;s
+currently taking place.
+
+```yaml
+Type: System.String
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Id
+
+Specifies an ID that distinguishes each progress bar from the others. Use this parameter when you
+are creating more than one progress bar in a single command. If the progress bars don&#x27;t have
+different IDs, they&#x27;re superimposed instead of being displayed in a series. Negative values aren&#x27;t
+allowed.
+
+```yaml
+Type: System.Int32
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: 2
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -ParentId
+
+Specifies the parent activity of the current activity. Use the value `-1` if the current activity
+has no parent activity.
+
+```yaml
+Type: System.Int32
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -PercentComplete
+
+Specifies the percentage of the activity that&#x27;s completed. Use the value `-1` if the percentage
+complete is unknown or not applicable.
+
+```yaml
+Type: System.Int32
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -SecondsRemaining
+
+Specifies the projected number of seconds remaining until the activity is completed. Use the value
+`-1` if the number of seconds remaining is unknown or not applicable.
+
+```yaml
+Type: System.Int32
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+# Write-Progress
+
+### -SourceId
+
+Specifies the source of the record. You can use this in place of **Id** but can&#x27;t be used with
+other parameters like **ParentId**.
+
+```yaml
+Type: System.Int32
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Status
+
+Specifies the second line of text in the heading above the status bar. This text describes current
+state of the activity.
+
+```yaml
+Type: System.String
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: 1
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### CommonParameters
+
+This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable,
+-InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose,
+-WarningAction, and -WarningVariable. For more information, see
+[about_CommonParameters](../Microsoft.PowerShell.Core/About/about_CommonParameters.md).
+
+## INPUTS
+
+### None
+
+You can&#x27;t pipe objects to this cmdlet.
+
+## OUTPUTS
+
+### None
+
+This cmdlet returns no output.
+
+## NOTES
+
+If the progress bar doesn&#x27;t appear, check the value of the `$ProgressPreference` variable. If the
+value is set to `SilentlyContinue`, the progress bar isn&#x27;t displayed. For more information about
+PowerShell preferences, see
+[about_Preference_Variables](../Microsoft.PowerShell.Core/About/about_Preference_Variables.md).
+
+The parameters of the cmdlet correspond to the properties of the
+**System.Management.Automation.ProgressRecord** class. For more information, see
+[ProgressRecord Class](/dotnet/api/system.management.automation.progressrecord).
+
+## RELATED LINKS
+
+[Write-Debug](Write-Debug.md)
+
+[Write-Error](Write-Error.md)
+
+[Write-Host](Write-Host.md)
+
+[Write-Output](Write-Output.md)
+
+[Write-Progress](Write-Progress.md)
+
+[Write-Verbose](Write-Verbose.md)
+
+[Write-Warning](Write-Warning.md)</pre></section>

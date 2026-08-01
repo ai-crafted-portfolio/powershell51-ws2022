@@ -1,0 +1,388 @@
+<!doctype html><meta charset="utf-8"><section class="jp-official"><h1>新証明書通知 タスク</h1>
+<h2>SYNOPSISはタスクスケジララーで新しいタスクを作成し,証明書が交換され,期限切れ,または期限切れに迫っているときに起動します.</h2>
+<h2>SYNTAX</h2>
+<pre><code>New-CertificateNotificationTask -Type &lt;CertificateNotificationType&gt;
+ [-RunTaskForExistingCertificates] -PSScript &lt;String&gt; -Name &lt;String&gt;
+ -Channel &lt;NotificationChannel&gt; [-WhatIf] [-Confirm] [&lt;CommonParameters&gt;]
+</code></pre>
+<h2>記述は,</h2>
+<p><code>New-CertificateNotificationTask</code>cmdlet はタスクスケジララーで新しいタスクを作成し,証明書が交換されたり,期限切れになったりすると起動します.このタスクはPSScript**パラメータで指定されたスクリプトを起動します.</p>
+<p><strong>RunTaskForExistingCertificates</strong> パラメータが指定されている場合,このcmdletが登録された後,cmdletはMy storeのすべての証明書 (アーカイブされた証明書を含む) を閲覧し, を起動します.<code>Replace</code>更新資産を持つすべての証明書のためのイベント.<code>NewCertHash</code>更新チェーン末端のものです.例えば,証明書Aが証明書Bに更新され,その後証明書Cに更新された場合,cmdletは二つのイベントを起動します:証明書Aが証明書Cに値し,証明書Bが証明書Cに値する.これは,古い証明書をまだ使用しているアプリケーションが最新の証明書に適切に更新されることを保証します.いずれかの証明書には20以上の更新チェーンがある場合,証明書はログインされません.</p>
+<h2>例えは,</h2>
+<h3>例1</h3>
+<pre><code class="language-powershell">$params = @{
+    PSScript = 'C:\myscript.ps1'
+    Channel = 'System'
+    Type = 'Replace'
+    Name = 'My System Certificate Task'
+}
+New-CertificateNotificationTask @params
+</code></pre>
+<p>この例では,証明書交換イベントに"名"を付けられるシステム通知タスクを作成します.<code>My System Certificate Task</code>を起動させる.<code>C:\myscript.ps1</code>脚本.cmdletは,ローカルシステムで実行されます.</p>
+<h3>例2</h3>
+<pre><code class="language-powershell">$params = @{
+    PSScript = 'C:\myscript.ps1'
+    Channel = 'User'
+    Type = 'Expire'
+    Name = 'My User Certificate Task'
+}
+New-CertificateNotificationTask @params
+</code></pre>
+<p>この例では,期限切れと期限切れの近期証明書イベントにシステム通知タスクを作成し,その名称を  とします.<code>My User Certificate Task</code>を起動させる.<code>C:\myscript.ps1</code>.cmdletは,ユーザーコンテキストで現在ログインしているユーザー全員に実行されます.</p>
+<h2>パラメータは</h2>
+<h3>-チャネル</h3>
+<p>証明書ライフサイクルイベントを監視するCertificateServicesClient-Notifications**ログのチャンネルを設定します.このパラメータの受け入れ可能な値は:</p>
+<ul>
+<li>
+<p>-<code>System</code>: <strong>Operation-System</strong>チャンネルが使用されます.このチャンネルは,コンピュータ証明書を使用するシステム証明書結合を変更するために使用されるべきです.</p>
+</li>
+<li>
+<p>-<code>User</code>: <strong>Operational-User</strong>チャンネルが使用されます.このチャンネルはユーザー証明書の拘束を修正するために使用されるべきです.</p>
+</li>
+</ul>
+<pre><code class="language-yaml">Type: Microsoft.CertificateServices.Commands.NotificationChannel
+Parameter Sets: (All)
+Aliases: 
+Accepted values: System, User
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-確認</h3>
+<p>cmdletを実行する前に確認を提示します.</p>
+<pre><code class="language-yaml">Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases: cf
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-名字は</h3>
+<p>証明書通知タスクのユニークな名前を指定します.同じ名前を持つ証明書通知タスクが既に存在している場合は,エラーが生じます.</p>
+<pre><code class="language-yaml">Type: System.String
+Parameter Sets: (All)
+Aliases: 
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-PSScript</h3>
+<p>証明書通知タスクで起動されるWindows PowerShellスクリプトを識別します.スクリプトは <strong>NonInteractive</strong>パラメータで起動します.</p>
+<pre><code class="language-yaml">Type: System.String
+Parameter Sets: (All)
+Aliases: 
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-RunTaskForExistingCertificates を実行する</h3>
+<p>過去に交換されたMy Storeの証明書に対して,交換通知を生成します.生成される通知は,両方の証明書が店舗内に存在する必要があります.このパラメータは,  号のみで使用できます.<code>Replace</code>タイプです.</p>
+<p>&gt; [!NOTE] &gt; このパラメータが設定されたとき,次の警告が表示されます.<code>False</code>MY ストアには,通知がもたらされる &gt; &gt; 証明書がある.```Output</p>
+<blockquote>
+<p>There are certificates in My store that have been replaced in the past. You can use the
+New-CertificateNotification cmdlet with the RunTaskForExistingCerts parameter to generate
+notifications for those certificates to correct any configuration problems that you may already
+have on this machine.
+```</p>
+</blockquote>
+<pre><code class="language-yaml">Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-Type</h3>
+<p>証明書通知を誘発するイベントの種類を指定します.このパラメータの受け入れ可能な値は:</p>
+<ul>
+<li>
+<p>-<code>Replace</code>: 証明書交換イベントにより,自動登録,証明書スナップイン,または を使用することで更新される証明書を含むこの通知が触発されます.<code>Switch-Certificate</code>cmdletです.</p>
+</li>
+<li>
+<p>-<code>Expire</code>: 証明書の期限切れと終了後のイベントは,この通知を触発します.</p>
+</li>
+</ul>
+<pre><code class="language-yaml">Type: Microsoft.CertificateServices.Commands.CertificateNotificationType
+Parameter Sets: (All)
+Aliases: 
+Accepted values: Replace, Expire
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-WhatIf</h3>
+<p>cmdletが実行されなければどうなるかを示しています.</p>
+<pre><code class="language-yaml">Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases: wi
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>共通パラメーター</h3>
+<p>このcmdletは,共通パラメータをサポートしています: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable.詳細については, <a href="を参照してください.https://go.microsoft.com/fwlink/?LinkID=113216">about_CommonParameters</a> でした.</p>
+<h2>輸入は</h2>
+<h3>どれもない</h3>
+<h2>輸出は</h2>
+<h3>Microsoft.CertificateServices.Command.CertificateNotification タスク</h3>
+<p><strong>CertificateNotificationTask</strong>というオブジェクトは,新しく作成されたタスクに関する詳細を記載している.</p>
+<h2>NOTES  記事ができました.</h2>
+<h2>関連リンク</h2>
+<p><a href="./Get-CertificateNotificationTask.md">Get-CertificateNotificationTask</a> について</p>
+<p><a href="./Remove-CertificateNotificationTask.md">Remove-CertificateNotificationTask</a> を削除する</p>
+<p><a href="./Switch-Certificate.md">Switch-Certificate</a> について</p></section><section class="en-original"><pre class="source-original"># New-CertificateNotificationTask
+
+## SYNOPSIS
+Creates a new task in the Task Scheduler that will be triggered when a certificate is replaced,
+expired, or about to expired.
+
+## SYNTAX
+
+```
+New-CertificateNotificationTask -Type &lt;CertificateNotificationType&gt;
+ [-RunTaskForExistingCertificates] -PSScript &lt;String&gt; -Name &lt;String&gt;
+ -Channel &lt;NotificationChannel&gt; [-WhatIf] [-Confirm] [&lt;CommonParameters&gt;]
+```
+
+## DESCRIPTION
+
+The `New-CertificateNotificationTask` cmdlet creates a new task in the Task Scheduler that will be
+triggered when a certificate is replaced or expires. The task will launch the script specified by
+the **PSScript** parameter.
+
+If the **RunTaskForExistingCertificates** parameter is specified, then after this cmdlet is
+registered, the cmdlet will go through all certificates (including archived certificates) in the My
+store and initiate `Replace` events for all certificates with a Renewal property. The `NewCertHash`
+value will always be the one at the end of the renewal chain. For example; if certificate A was
+renewed to certificate B, which was then renewed to certificate C, then the cmdlet fires two events:
+certificate A to certificate C and certificate B to certificate C. This will ensure that
+applications that are still using old certificates are properly updated to the newest certificates.
+If any certificate has a renewal chain longer than 20, then the certificate is not logged.
+
+## EXAMPLES
+
+### EXAMPLE 1
+
+```powershell
+$params = @{
+    PSScript = &#x27;C:\myscript.ps1&#x27;
+    Channel = &#x27;System&#x27;
+    Type = &#x27;Replace&#x27;
+    Name = &#x27;My System Certificate Task&#x27;
+}
+New-CertificateNotificationTask @params
+```
+
+This example creates a system notification task for certificate replacement events with the name
+`My System Certificate Task` that will launch the `C:\myscript.ps1` script. The cmdlet will run on
+the local system.
+
+### EXAMPLE 2
+
+```powershell
+$params = @{
+    PSScript = &#x27;C:\myscript.ps1&#x27;
+    Channel = &#x27;User&#x27;
+    Type = &#x27;Expire&#x27;
+    Name = &#x27;My User Certificate Task&#x27;
+}
+New-CertificateNotificationTask @params
+```
+
+This example creates a system notification task for the expiration and close-to-expiration
+certificate events with the name `My User Certificate Task` that will launch the `C:\myscript.ps1`.
+The cmdlet will run for all currently logged on users in the user contexts.
+
+## PARAMETERS
+
+### -Channel
+
+Sets the channel of the **CertificateServicesClient-Notifications** log that will be monitored for
+certificate lifecycle events. The acceptable values for this parameter are:
+
+- `System`: The **Operation-System** channel will be used. This channel should be used to modify
+  system certificate bindings that use computer certificates.
+
+- `User`: The **Operational-User** channel will be used. This channel should be used to modify user
+  certificate bindings.
+
+```yaml
+Type: Microsoft.CertificateServices.Commands.NotificationChannel
+Parameter Sets: (All)
+Aliases: 
+Accepted values: System, User
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Confirm
+
+Prompts you for confirmation before running the cmdlet.
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases: cf
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Name
+
+Specifies the unique name for the certificate notification task. If a certificate notification task
+with the same name already exists, then an error is generated.
+
+```yaml
+Type: System.String
+Parameter Sets: (All)
+Aliases: 
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -PSScript
+
+Identifies the Windows PowerShell script that will be triggered by the certificate notification
+task. The script will be launched with the **NonInteractive** parameter.
+
+```yaml
+Type: System.String
+Parameter Sets: (All)
+Aliases: 
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -RunTaskForExistingCertificates
+
+Generates a replacement notification for any certificate in the My store that has been replaced in
+the past. For the notification to be generated both certificates must be present in the store. This
+parameter can only be used with the `Replace` type.
+
+&gt; [!NOTE]
+&gt; The following warning is displayed when this parameter set to `False` and there are some
+&gt; certificates in MY store that would have resulted in a notification.
+&gt;
+&gt; ```Output
+&gt; There are certificates in My store that have been replaced in the past. You can use the
+&gt; New-CertificateNotification cmdlet with the RunTaskForExistingCerts parameter to generate
+&gt; notifications for those certificates to correct any configuration problems that you may already
+&gt; have on this machine.
+&gt; ```
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Type
+
+Specifies the type of events that will trigger certificate notifications. The acceptable values for
+this parameter are:
+
+- `Replace`: Certificate replacement events will trigger this notification, including certificates
+  that are renewed by auto-enrollment, using the Certificates snap-in, or by using the
+  `Switch-Certificate` cmdlet.
+
+- `Expire`: Certificate expiration and close-to-expire events will trigger this notification.
+
+```yaml
+Type: Microsoft.CertificateServices.Commands.CertificateNotificationType
+Parameter Sets: (All)
+Aliases: 
+Accepted values: Replace, Expire
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -WhatIf
+
+Shows what would happen if the cmdlet runs.
+The cmdlet is not run.
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases: wi
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### CommonParameters
+
+This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable,
+-InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose,
+-WarningAction, and -WarningVariable. For more information, see
+[about_CommonParameters](https://go.microsoft.com/fwlink/?LinkID=113216).
+
+## INPUTS
+
+### None
+
+## OUTPUTS
+
+### Microsoft.CertificateServices.Command.CertificateNotificationTask
+
+A **CertificateNotificationTask** object that contains details about a newly created task.
+
+## NOTES
+
+## RELATED LINKS
+
+[Get-CertificateNotificationTask](./Get-CertificateNotificationTask.md)
+
+[Remove-CertificateNotificationTask](./Remove-CertificateNotificationTask.md)
+
+[Switch-Certificate](./Switch-Certificate.md)</pre></section>

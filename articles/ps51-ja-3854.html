@@ -1,0 +1,812 @@
+<!doctype html><meta charset="utf-8"><section class="jp-official"><h1>比較対象の物体</h1>
+<h2>シンプシスとは,二つの集合の物体を比較する.</h2>
+<h2>SYNTAXは,のシンタックスです.</h2>
+<pre><code>Compare-Object [-ReferenceObject] &lt;PSObject[]&gt; [-DifferenceObject] &lt;PSObject[]&gt;
+ [-SyncWindow &lt;Int32&gt;] [-Property &lt;Object[]&gt;] [-ExcludeDifferent] [-IncludeEqual] [-PassThru]
+ [-Culture &lt;String&gt;] [-CaseSensitive] [&lt;CommonParameters&gt;]
+</code></pre>
+<h2>記述は,</h2>
+<p><code>Compare-Object</code>cmdlet は,二つの集合のオブジェクトを比較する.ある集合は <strong>reference</strong>,もうひとつの集合は <strong>difference</strong>です.</p>
+<p><code>Compare-Object</code>対象全体を比較する方法を探します.適切な方法が見つからない場合は,入力オブジェクトの **ToString() ** 方法を呼び出し,文字列結果を比較します.比較に使用する属性または複数の属性を提供できます.属性が提供された場合,cmdletはそれらの属性の値を比較するだけです.</p>
+<p>比較の結果は,プロパティ値が <strong>reference</strong>オブジェクト () にのみ出たかどうかを示す.<code>&lt;=</code>) または, <strong>difference</strong> オブジェクト () にのみ<code>=&gt;</code>) が使用されている場合, () は, () のインクルード・エグアルパラメータ (**) を含む.<code>==</code>) は,その値が両方のオブジェクトにあることを示します.</p>
+<p><strong>参照</strong>または <strong>差</strong>のオブジェクトが無効である場合 ()<code>$null</code>), <code>Compare-Object</code>終結エラーを生成します.</p>
+<p>いくつかの例では,コードサンプルの行長を縮小するためにスプラッティングを使用しています.詳細については, [about_Splatting] (../Microsoft.PowerShell.Core/About/about_Splatting.md) を参照してください.</p>
+<h2>例えは,</h2>
+<h3>例1 - 2つのテキストファイルの内容を比較する</h3>
+<p>この例では,2つのテキストファイルの内容を比較します.例では次の2つのテキストファイルの使用で,それぞれ別の行で値が表示されます.</p>
+<ul>
+<li>-<code>Testfile1.txt</code>犬,エビ,鳥の値が含まれています. - <code>Testfile2.txt</code>猫,鳥,ラコンの値が含まれています.</li>
+</ul>
+<p>輸出はファイル間の異なる行のみ表示されます.両方のファイルに表示されるコンテンツの行は表示されません.</p>
+<pre><code class="language-powershell">$objects = @{
+  ReferenceObject = (Get-Content -Path C:\Test\Testfile1.txt)
+  DifferenceObject = (Get-Content -Path C:\Test\Testfile2.txt)
+}
+Compare-Object @objects
+</code></pre>
+<pre><code class="language-Output">InputObject SideIndicator
+----------- -------------
+cat         =&gt;
+racoon      =&gt;
+dog         &lt;=
+squirrel    &lt;=
+</code></pre>
+<p>この例では,出力が次の情報を示します</p>
+<ul>
+<li>-<code>cat</code>そして,<code>racoon</code>差異オブジェクトファイルで見つけられているが,参照オブジェクトファイルに欠けている - <code>dog</code>そして,<code>squirrel</code>参照オブジェクトファイルに含まれているが,違いオブジェクトファイルに欠けている.</li>
+</ul>
+<h3>例2 - 各内容の行を比較して,違いを排除する</h3>
+<p>この例では,二つのテキストファイルで各行コンテンツを比較するために <strong>ExcludeDifferent</strong> パラメータを使用しています.</p>
+<p>PowerShell 7.1 から,ExcludeDifferent<strong> パラメータを使用すると,IncludeEqual</strong>が推移され,出力量は両方のファイルに含まれる行のみを含んでいる.<code>==</code>) でした.</p>
+<pre><code class="language-powershell">$objects = @{
+  ReferenceObject = (Get-Content -Path C:\Test\Testfile1.txt)
+  DifferenceObject = (Get-Content -Path C:\Test\Testfile2.txt)
+}
+Compare-Object @objects -IncludeEqual -ExcludeDifferent
+</code></pre>
+<pre><code class="language-Output">InputObject SideIndicator
+----------- -------------
+bird        ==
+</code></pre>
+<h3>例3 - PassThru パラメータを使用するときに違いを表示します</h3>
+<p>&lt;a id="ex3" &gt;&lt;/a&gt;</p>
+<p>通常は,<code>Compare-Object</code><strong>PSCustomObject</strong>タイプを返して,以下の性質を持つ:</p>
+<p>比較される <strong>InputObject</strong> - 出力がどの入力オブジェクトに属しているかを示す <strong>SideIndicator</strong>属性</p>
+<p><strong>PassThru</strong>パラメータを使用すると,オブジェクトの <strong>Type</strong> は変更されませんが,返還されたオブジェクトのインスタンスは <strong>SideIndicator</strong> というNoteProperty<strong> を追加しています. </strong>SideIndicator**は,出力対象の入力オブジェクトを表示します.</p>
+<p>次の例では,異なる輸出タイプが示されています.</p>
+<pre><code class="language-powershell">$a = $true
+Compare-Object -IncludeEqual $a $a
+(Compare-Object -IncludeEqual $a $a) | Get-Member
+</code></pre>
+<pre><code class="language-Output">InputObject SideIndicator
+----------- -------------
+       True ==
+
+   TypeName: System.Management.Automation.PSCustomObject
+Name          MemberType   Definition
+----          ----------   ----------
+Equals        Method       bool Equals(System.Object obj)
+GetHashCode   Method       int GetHashCode()
+GetType       Method       type GetType()
+ToString      Method       string ToString()
+InputObject   NoteProperty System.Boolean InputObject=True
+SideIndicator NoteProperty string SideIndicator===
+</code></pre>
+<pre><code class="language-powershell">Compare-Object -IncludeEqual $a $a -PassThru
+(Compare-Object -IncludeEqual $a $a -PassThru) | Get-Member
+</code></pre>
+<pre><code class="language-Output">True
+
+   TypeName: System.Boolean
+Name          MemberType   Definition
+----          ----------   ----------
+CompareTo     Method       int CompareTo(System.Object obj), int CompareTo(bool value), int IComparable.CompareTo(Syst
+Equals        Method       bool Equals(System.Object obj), bool Equals(bool obj), bool IEquatable[bool].Equals(bool ot
+GetHashCode   Method       int GetHashCode()
+GetType       Method       type GetType()
+GetTypeCode   Method       System.TypeCode GetTypeCode(), System.TypeCode IConvertible.GetTypeCode()
+ToBoolean     Method       bool IConvertible.ToBoolean(System.IFormatProvider provider)
+ToByte        Method       byte IConvertible.ToByte(System.IFormatProvider provider)
+ToChar        Method       char IConvertible.ToChar(System.IFormatProvider provider)
+ToDateTime    Method       datetime IConvertible.ToDateTime(System.IFormatProvider provider)
+ToDecimal     Method       decimal IConvertible.ToDecimal(System.IFormatProvider provider)
+ToDouble      Method       double IConvertible.ToDouble(System.IFormatProvider provider)
+ToInt16       Method       short IConvertible.ToInt16(System.IFormatProvider provider)
+ToInt32       Method       int IConvertible.ToInt32(System.IFormatProvider provider)
+ToInt64       Method       long IConvertible.ToInt64(System.IFormatProvider provider)
+ToSByte       Method       sbyte IConvertible.ToSByte(System.IFormatProvider provider)
+ToSingle      Method       float IConvertible.ToSingle(System.IFormatProvider provider)
+ToString      Method       string ToString(), string ToString(System.IFormatProvider provider), string IConvertible.To
+ToType        Method       System.Object IConvertible.ToType(type conversionType, System.IFormatProvider provider)
+ToUInt16      Method       ushort IConvertible.ToUInt16(System.IFormatProvider provider)
+ToUInt32      Method       uint IConvertible.ToUInt32(System.IFormatProvider provider)
+ToUInt64      Method       ulong IConvertible.ToUInt64(System.IFormatProvider provider)
+TryFormat     Method       bool TryFormat(System.Span[char] destination, [ref] int charsWritten)
+SideIndicator NoteProperty string SideIndicator===
+</code></pre>
+<p><strong>PassThru</strong>を使用すると,元のオブジェクトタイプ (<strong>System.Boolean</strong>) が返されます. <strong>System.Boolean</strong>オブジェクトのデフォルトフォーマットで表示された出力が <strong>System.Boolean</strong>オブジェクトの <strong>SideIndicator</strong>プロパティを表示していないことに注意してください.しかし返された <strong>System.Boolean</strong>オブジェクトには <strong>NoteProperty</strong>が追加されています.</p>
+<h3>例4 - 性質を使って2つの単純なオブジェクトを比較してみてください</h3>
+<p>この例では,同じ長さの異なる文字列を2つ比較します.</p>
+<pre><code class="language-powershell">$objects = @{
+  ReferenceObject = 'abc'
+  DifferenceObject = 'xyz'
+  Property = 'Length'
+}
+Compare-Object @objects -IncludeEqual
+</code></pre>
+<pre><code class="language-Output">Length SideIndicator
+------ -------------
+     3 ==
+</code></pre>
+<h1>比較対象の物体</h1>
+<h3>例5 - 複雑なオブジェクトをプロパティを用いて比較する</h3>
+<p>この例では複雑なオブジェクトを比較する時の行動を示します.この例では,PowShellの異なるインスタンスのために2つの異なるプロセスオブジェクトを保存します.両方の変数は同じ名前を持つプロセスオブジェクトを含みます.オブジェクトがプロパティ<strong>パラメータを指定せずに比較されると,cmdletはオブジェクトを等とみなします.注意してください, </strong>InputObject<strong>の値は </strong>ToString()<strong>方法の結果と同じです. </strong>System.Diagnostics.Process<strong>クラスには </strong>IComparable**インターフェースがないので,cmdletはオブジェクトを文字列に変換し,結果を比較します.</p>
+<pre><code class="language-powershell">PS&gt; Get-Process pwsh
+
+ NPM(K)    PM(M)      WS(M)     CPU(s)      Id  SI ProcessName
+ ------    -----      -----     ------      --  -- -----------
+    101   123.32     139.10      35.81   11168   1 pwsh
+     89   107.55      66.97      11.44   17600   1 pwsh
+
+PS&gt; $a = Get-Process -Id 11168
+PS&gt; $b = Get-Process -Id 17600
+PS&gt; $a.ToString()
+System.Diagnostics.Process (pwsh)
+PS&gt; $b.ToString()
+System.Diagnostics.Process (pwsh)
+PS&gt; Compare-Object $a $b -IncludeEqual
+
+InputObject                       SideIndicator
+-----------                       -------------
+System.Diagnostics.Process (pwsh) ==
+
+PS&gt; Compare-Object $a $b -Property ProcessName, Id, CPU
+
+ProcessName    Id       CPU SideIndicator
+-----------    --       --- -------------
+pwsh        17600   11.4375 =&gt;
+pwsh        11168 36.203125 &lt;=
+</code></pre>
+<p>比較する属性を指定すると,cmdletで違いが表示されます.</p>
+<h3>例6 - IComparableを実装する複雑なオブジェクトを比較する</h3>
+<p>対象が <strong>IComparable</strong>を実行すると,cmdletはオブジェクトを比較する方法を探します.オブジェクトが異なるタイプである場合は, <strong>Difference</strong>オブジェクトは <strong>ReferenceObject</strong>のタイプに変換され,比較されます.</p>
+<p>この例では,文字列をTimeSpan<strong>オブジェクトと比較しています.最初の例では,文字列がTimeSpan</strong>に変換され,オブジェクトが等しいです.</p>
+<pre><code class="language-powershell">Compare-Object ([timespan]&quot;0:0:1&quot;) &quot;0:0:1&quot; -IncludeEqual
+</code></pre>
+<pre><code class="language-Output">InputObject SideIndicator
+----------- -------------
+00:00:01    ==
+</code></pre>
+<pre><code class="language-powershell">Compare-Object &quot;0:0:1&quot; ([timespan]&quot;0:0:1&quot;)
+</code></pre>
+<pre><code class="language-Output">InputObject SideIndicator
+----------- -------------
+00:00:01    =&gt;
+0:0:1       &lt;=
+</code></pre>
+<p>第二例では,TimeSpanを文字列に変換して,オブジェクトが異なる.</p>
+<h2>パラメータは</h2>
+<h3>-CaseSensitive でした</h3>
+<p>比較はケースに敏感なものであるべきだと示しています.</p>
+<pre><code class="language-yaml">Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-文化</h3>
+<p>比較のために使う文化を指定します.</p>
+<pre><code class="language-yaml">Type: System.String
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-DifferenceObject について</h3>
+<p><strong>参照</strong>オブジェクトと比較するオブジェクトを指定します.</p>
+<pre><code class="language-yaml">Type: System.Management.Automation.PSObject[]
+Parameter Sets: (All)
+Aliases:
+
+Required: True
+Position: 1
+Default value: None
+Accept pipeline input: True (ByValue)
+Accept wildcard characters: False
+</code></pre>
+<h3>-ExcludeDifferent を排除する</h3>
+<p>このcmdletは,同じものとする比較対象の特徴のみ表示することを示しています.対象間の違いは排除されます.</p>
+<p><strong>IncludeEqual</strong>と <strong>ExcludeDifferent</strong> を使って,参照<strong>と差</strong>のオブジェクトの間の一致する行のみを表示します.</p>
+<p><strong>IncludeEqual</strong> を含まないと, <strong>ExcludeDifferent</strong> が指定されている場合,出力はありません.</p>
+<pre><code class="language-yaml">Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-IncludeEqual</h3>
+<p><strong>IncludeEqual</strong>は, <strong>reference</strong>と <strong>difference</strong>のオブジェクトの一致性を表示します.</p>
+<p>デフォルトでは,出力には <strong>reference</strong> と <strong>difference</strong> のオブジェクトの違いも含まれます.</p>
+<pre><code class="language-yaml">Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-PassThru でした.</h3>
+<p><strong>PassThru</strong>パラメータを使用すると,<code>Compare-Object</code>比較されたオブジェクトの周りの包装を省略し,異なるオブジェクトを未変更に返します.</p>
+<pre><code class="language-yaml">Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-プロパティ</h3>
+<p>比較する<strong>参照</strong>と<strong>差</strong>オブジェクトの性質の配列を指定します.</p>
+<p><strong>プロパティ</strong>パラメータの値は,新しい計算性である可能性があります.計算されたプロパティはスクリプトブロックまたはハッシュテーブルである可能性があります.有効なキー-値ペアは:</p>
+<ul>
+<li>表現 - <code>&lt;string&gt;</code>     <code>&lt;scriptblock&gt;</code></li>
+</ul>
+<p>詳細については, [about_Calculated_Properties.md] を参照してください.</p>
+<pre><code class="language-yaml">Type: System.Object[]
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-ReferenceObject</h3>
+<p>比較基準として使用される物体の配列を指定します.</p>
+<pre><code class="language-yaml">Type: System.Management.Automation.PSObject[]
+Parameter Sets: (All)
+Aliases:
+
+Required: True
+Position: 0
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-SyncWindow</h3>
+<p>隣接するオブジェクトの数を指定します.<code>Compare-Object</code>対象のコレクションで一致するものを探している間,検査を行います.<code>Compare-Object</code>集合内の同じ位置に物体を発見できない場合,隣接する物体を調べます.デフォルト値は です.<code>[int32]::MaxValue</code>つまり,その意味では,<code>Compare-Object</code>対象の集合全体を調べます.</p>
+<p>大量のコレクションで作業する際,デフォルト値は効率的ではなく正確である可能性があります.SyncWindowの小さな値を指定するとパフォーマンスは向上しますが,精度が低下します.</p>
+<pre><code class="language-yaml">Type: System.Int32
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: [int32]::MaxValue
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>共通パラメーター</h3>
+<p>このcmdletは,共通パラメータをサポートしています: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable.詳細については, <a href="を参照してください.https://go.microsoft.com/fwlink/?LinkID=113216">about_CommonParameters</a> でした.</p>
+<h2>輸入は</h2>
+<h3>システム管理自動化PSObject</h3>
+<p>管道に沿って,あるオブジェクトを DifferenceObject パラメータに送ることができます.</p>
+<h2>輸出は</h2>
+<h3>どれもない</h3>
+<p>デフォルトでは,このcmdletは <strong>ReferenceObject</strong> と <strong>DifferenceObject</strong> が同じとき,出力返却しません.</p>
+<h3>システム管理自動化PSCustomObject</h3>
+<p>対象が異なる場合,このcmdletは異なる対象を <strong>PSCustomObject</strong> 包装に包んで,違いを参照するための <strong>SideIndicator</strong> 属性を持つ.</p>
+<p><strong>PassThru</strong>パラメータを使用すると,オブジェクトの <strong>Type</strong> は変更されませんが,返還されたオブジェクトのインスタンスは <strong>SideIndicator</strong> というNoteProperty<strong> を追加しています. </strong>SideIndicator**は,出力対象の入力オブジェクトを表示します.</p>
+<h1>比較対象の物体</h1>
+<h2>NOTES  記事ができました.</h2>
+<p>Windows PowerShell では,次のアライスがあります.<code>Compare-Object</code>:</p>
+<ul>
+<li>-<code>compare</code> - -<code>diff</code></li>
+</ul>
+<p><strong>PassThru</strong>パラメータを使用する際,コンソールで表示される輸出には <strong>SideIndicator</strong> 属性が含まれない可能性があります. で生成されるオブジェクトタイプのデフォルトフォーマットビューは,<code>Compare-Object</code><strong>SideIndicator</strong>属性を含まない.詳細については,この記事の [例 3] (#ex3) を参照してください.</p>
+<h2>関連リンク</h2>
+<p><a href="../Microsoft.PowerShell.Core/About/about_Calculated_Properties.md">about_Calculated_Properties</a> について</p>
+<p><a href="../Microsoft.PowerShell.Core/ForEach-Object.md">ForEach-Object</a> について</p>
+<p><a href="Group-Object.md">Group-Object</a> について</p>
+<p><a href="Measure-Object.md">Measure-Object</a> でした.</p>
+<p><a href="New-Object.md">New-Object</a> </p>
+<p><a href="Select-Object.md">Select-Object</a> </p>
+<p><a href="Sort-Object.md">Sort-Object</a> </p>
+<p><a href="Tee-Object.md">Tee-Object</a> </p>
+<p><a href="../Microsoft.PowerShell.Core/Where-Object.md">Where-Object</a> について</p>
+<p><a href="../Microsoft.PowerShell.Management/Get-Process.md">Get-Process</a> </p></section><section class="en-original"><pre class="source-original"># Compare-Object
+
+## SYNOPSIS
+Compares two sets of objects.
+
+## SYNTAX
+
+```
+Compare-Object [-ReferenceObject] &lt;PSObject[]&gt; [-DifferenceObject] &lt;PSObject[]&gt;
+ [-SyncWindow &lt;Int32&gt;] [-Property &lt;Object[]&gt;] [-ExcludeDifferent] [-IncludeEqual] [-PassThru]
+ [-Culture &lt;String&gt;] [-CaseSensitive] [&lt;CommonParameters&gt;]
+```
+
+## DESCRIPTION
+
+The `Compare-Object` cmdlet compares two sets of objects. One set of objects is the **reference**,
+and the other set of objects is the **difference**.
+
+`Compare-Object` checks for available methods of comparing a whole object. If it can&#x27;t find a
+suitable method, it calls the **ToString()** methods of the input objects and compares the string
+results. You can provide one or more properties to be used for comparison. When properties are
+provided, the cmdlet compares the values of those properties only.
+
+The result of the comparison indicates whether a property value appeared only in the **reference**
+object (`&lt;=`) or only in the **difference** object (`=&gt;`). If the **IncludeEqual** parameter is
+used, (`==`) indicates the value is in both objects.
+
+If the **reference** or the **difference** objects are null (`$null`), `Compare-Object` generates a
+terminating error.
+
+Some examples use splatting to reduce the line length of the code samples. For more information, see
+[about_Splatting](../Microsoft.PowerShell.Core/About/about_Splatting.md).
+
+## EXAMPLES
+
+### Example 1 - Compare the content of two text files
+
+This example compares the contents of two text files. The example uses the following two text files,
+with each value on a separate line.
+
+- `Testfile1.txt` contains the values: dog, squirrel, and bird.
+- `Testfile2.txt` contains the values: cat, bird, and racoon.
+
+The output displays only the lines that are different between the files. Lines with content that
+appear in both files aren&#x27;t displayed.
+
+```powershell
+$objects = @{
+  ReferenceObject = (Get-Content -Path C:\Test\Testfile1.txt)
+  DifferenceObject = (Get-Content -Path C:\Test\Testfile2.txt)
+}
+Compare-Object @objects
+```
+
+```Output
+InputObject SideIndicator
+----------- -------------
+cat         =&gt;
+racoon      =&gt;
+dog         &lt;=
+squirrel    &lt;=
+```
+
+For this example, the output shows the following information
+
+- `cat` and `racoon` are found in the difference object file, but missing from the reference object
+  file
+- `dog` and `squirrel` are found in the reference object file, but missing from the difference
+  object file
+
+### Example 2 - Compare each line of content and exclude the differences
+
+This example uses the **ExcludeDifferent** parameter to compare each line of content in two text
+files.
+
+As of PowerShell 7.1, when using the **ExcludeDifferent** parameter, **IncludeEqual** is inferred
+and the output only contains lines contained in both files, as shown by the **SideIndicator**
+(`==`).
+
+```powershell
+$objects = @{
+  ReferenceObject = (Get-Content -Path C:\Test\Testfile1.txt)
+  DifferenceObject = (Get-Content -Path C:\Test\Testfile2.txt)
+}
+Compare-Object @objects -IncludeEqual -ExcludeDifferent
+```
+
+```Output
+InputObject SideIndicator
+----------- -------------
+bird        ==
+```
+
+### Example 3 - Show the difference when using the PassThru parameter
+
+&lt;a id=&quot;ex3&quot; &gt;&lt;/a&gt;
+
+Normally, `Compare-Object` returns a **PSCustomObject** type with the following properties:
+
+- The **InputObject** being compared
+- The **SideIndicator** property showing which input object the output belongs to
+
+When you use the **PassThru** parameter, the **Type** of the object is not changed but the instance
+of the object returned has an added **NoteProperty** named **SideIndicator**. **SideIndicator**
+shows which input object the output belongs to.
+
+The following examples shows the different output types.
+
+```powershell
+$a = $true
+Compare-Object -IncludeEqual $a $a
+(Compare-Object -IncludeEqual $a $a) | Get-Member
+```
+
+```Output
+InputObject SideIndicator
+----------- -------------
+       True ==
+
+   TypeName: System.Management.Automation.PSCustomObject
+Name          MemberType   Definition
+----          ----------   ----------
+Equals        Method       bool Equals(System.Object obj)
+GetHashCode   Method       int GetHashCode()
+GetType       Method       type GetType()
+ToString      Method       string ToString()
+InputObject   NoteProperty System.Boolean InputObject=True
+SideIndicator NoteProperty string SideIndicator===
+```
+
+```powershell
+Compare-Object -IncludeEqual $a $a -PassThru
+(Compare-Object -IncludeEqual $a $a -PassThru) | Get-Member
+```
+
+```Output
+True
+
+   TypeName: System.Boolean
+Name          MemberType   Definition
+----          ----------   ----------
+CompareTo     Method       int CompareTo(System.Object obj), int CompareTo(bool value), int IComparable.CompareTo(Syst
+Equals        Method       bool Equals(System.Object obj), bool Equals(bool obj), bool IEquatable[bool].Equals(bool ot
+GetHashCode   Method       int GetHashCode()
+GetType       Method       type GetType()
+GetTypeCode   Method       System.TypeCode GetTypeCode(), System.TypeCode IConvertible.GetTypeCode()
+ToBoolean     Method       bool IConvertible.ToBoolean(System.IFormatProvider provider)
+ToByte        Method       byte IConvertible.ToByte(System.IFormatProvider provider)
+ToChar        Method       char IConvertible.ToChar(System.IFormatProvider provider)
+ToDateTime    Method       datetime IConvertible.ToDateTime(System.IFormatProvider provider)
+ToDecimal     Method       decimal IConvertible.ToDecimal(System.IFormatProvider provider)
+ToDouble      Method       double IConvertible.ToDouble(System.IFormatProvider provider)
+ToInt16       Method       short IConvertible.ToInt16(System.IFormatProvider provider)
+ToInt32       Method       int IConvertible.ToInt32(System.IFormatProvider provider)
+ToInt64       Method       long IConvertible.ToInt64(System.IFormatProvider provider)
+ToSByte       Method       sbyte IConvertible.ToSByte(System.IFormatProvider provider)
+ToSingle      Method       float IConvertible.ToSingle(System.IFormatProvider provider)
+ToString      Method       string ToString(), string ToString(System.IFormatProvider provider), string IConvertible.To
+ToType        Method       System.Object IConvertible.ToType(type conversionType, System.IFormatProvider provider)
+ToUInt16      Method       ushort IConvertible.ToUInt16(System.IFormatProvider provider)
+ToUInt32      Method       uint IConvertible.ToUInt32(System.IFormatProvider provider)
+ToUInt64      Method       ulong IConvertible.ToUInt64(System.IFormatProvider provider)
+TryFormat     Method       bool TryFormat(System.Span[char] destination, [ref] int charsWritten)
+SideIndicator NoteProperty string SideIndicator===
+```
+
+When using **PassThru**, the original object type (**System.Boolean**) is returned. Note how the
+output displayed by the default format for **System.Boolean** objects didn&#x27;t display the
+**SideIndicator** property. However, the returned **System.Boolean** object has the added
+**NoteProperty**.
+
+### Example 4 - Compare two simple objects using properties
+
+In this example, we compare two different string that have the same length.
+
+```powershell
+$objects = @{
+  ReferenceObject = &#x27;abc&#x27;
+  DifferenceObject = &#x27;xyz&#x27;
+  Property = &#x27;Length&#x27;
+}
+Compare-Object @objects -IncludeEqual
+```
+
+```Output
+Length SideIndicator
+------ -------------
+     3 ==
+```
+
+# Compare-Object
+
+### Example 5 - Comparing complex objects using properties
+
+This example shows the behavior when comparing complex objects. In this example we store two
+different process objects for different instances of PowerShell. Both variables contain process
+objects with the same name. When the objects are compared without specifying the **Property**
+parameter, the cmdlet considers the objects to be equal. Notice that the value of the
+**InputObject** is the same as the result of the **ToString()** method. Since the
+**System.Diagnostics.Process** class does not have the **IComparable** interface, the cmdlet
+converts the objects to strings then compares the results.
+
+```powershell
+PS&gt; Get-Process pwsh
+
+ NPM(K)    PM(M)      WS(M)     CPU(s)      Id  SI ProcessName
+ ------    -----      -----     ------      --  -- -----------
+    101   123.32     139.10      35.81   11168   1 pwsh
+     89   107.55      66.97      11.44   17600   1 pwsh
+
+PS&gt; $a = Get-Process -Id 11168
+PS&gt; $b = Get-Process -Id 17600
+PS&gt; $a.ToString()
+System.Diagnostics.Process (pwsh)
+PS&gt; $b.ToString()
+System.Diagnostics.Process (pwsh)
+PS&gt; Compare-Object $a $b -IncludeEqual
+
+InputObject                       SideIndicator
+-----------                       -------------
+System.Diagnostics.Process (pwsh) ==
+
+PS&gt; Compare-Object $a $b -Property ProcessName, Id, CPU
+
+ProcessName    Id       CPU SideIndicator
+-----------    --       --- -------------
+pwsh        17600   11.4375 =&gt;
+pwsh        11168 36.203125 &lt;=
+```
+
+When you specify properties to be compared, the cmdlet shows the differences.
+
+### Example 6 - Comparing complex objects that implement IComparable
+
+If the object implements **IComparable**, the cmdlet searches for ways to compare the objects.If the
+objects are different types, the **Difference** object is converted to the type of the
+**ReferenceObject** then compared.
+
+In this example, we are comparing a string to a **TimeSpan** object. In the first case, the string
+is converted to a **TimeSpan** so the objects are equal.
+
+```powershell
+Compare-Object ([timespan]&quot;0:0:1&quot;) &quot;0:0:1&quot; -IncludeEqual
+```
+
+```Output
+InputObject SideIndicator
+----------- -------------
+00:00:01    ==
+```
+
+```powershell
+Compare-Object &quot;0:0:1&quot; ([timespan]&quot;0:0:1&quot;)
+```
+
+```Output
+InputObject SideIndicator
+----------- -------------
+00:00:01    =&gt;
+0:0:1       &lt;=
+```
+
+In the second case, the **TimeSpan** is converted to a string so the object are different.
+
+## PARAMETERS
+
+### -CaseSensitive
+
+Indicates that comparisons should be case-sensitive.
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Culture
+
+Specifies the culture to use for comparisons.
+
+```yaml
+Type: System.String
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -DifferenceObject
+
+Specifies the objects that are compared to the **reference** objects.
+
+```yaml
+Type: System.Management.Automation.PSObject[]
+Parameter Sets: (All)
+Aliases:
+
+Required: True
+Position: 1
+Default value: None
+Accept pipeline input: True (ByValue)
+Accept wildcard characters: False
+```
+
+### -ExcludeDifferent
+
+Indicates that this cmdlet displays only the characteristics of compared objects that are equal. The
+differences between the objects are discarded.
+
+Use **ExcludeDifferent** with **IncludeEqual** to display only the lines that match between the
+**reference** and **difference** objects.
+
+If **ExcludeDifferent** is specified without **IncludeEqual**, there&#x27;s no output.
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -IncludeEqual
+
+**IncludeEqual** displays the matches between the **reference** and **difference** objects.
+
+By default, the output also includes the differences between the **reference** and **difference**
+objects.
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -PassThru
+
+When you use the **PassThru** parameter, `Compare-Object` omits the **PSCustomObject** wrapper
+around the compared objects and returns the differing objects, unchanged.
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Property
+
+Specifies an array of properties of the **reference** and **difference** objects to compare.
+
+The value of the **Property** parameter can be a new calculated property. The calculated property
+can be a scriptblock or a hash table. Valid key-value pairs are:
+
+- Expression - `&lt;string&gt;` or `&lt;scriptblock&gt;`
+
+For more information, see
+[about_Calculated_Properties](../Microsoft.PowerShell.Core/About/about_Calculated_Properties.md).
+
+```yaml
+Type: System.Object[]
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -ReferenceObject
+
+Specifies an array of objects used as a reference for comparison.
+
+```yaml
+Type: System.Management.Automation.PSObject[]
+Parameter Sets: (All)
+Aliases:
+
+Required: True
+Position: 0
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -SyncWindow
+
+Specifies the number of adjacent objects that `Compare-Object` inspects while looking for a match in
+a collection of objects. `Compare-Object` examines adjacent objects when it doesn&#x27;t find the object
+in the same position in a collection. The default value is `[int32]::MaxValue`, which means that
+`Compare-Object` examines the entire object collection.
+
+When working with large collections, the default value might not be efficient but is accurate.
+Specifying a smaller value for **SyncWindow** can increase performance but could have lower
+accuracy.
+
+```yaml
+Type: System.Int32
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: [int32]::MaxValue
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### CommonParameters
+
+This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable,
+-InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose,
+-WarningAction, and -WarningVariable. For more information, see
+[about_CommonParameters](https://go.microsoft.com/fwlink/?LinkID=113216).
+
+## INPUTS
+
+### System.Management.Automation.PSObject
+
+You can send an object down the pipeline to the **DifferenceObject** parameter.
+
+## OUTPUTS
+
+### None
+
+By default, this cmdlet returns no output when the **ReferenceObject** and the **DifferenceObject**
+are the same.
+
+### System.Management.Automation.PSCustomObject
+
+When the objects are different, this cmdlet wraps the differing objects in a **PSCustomObject**
+wrapper with a **SideIndicator** property to reference the differences.
+
+When you use the **PassThru** parameter, the **Type** of the object is not changed but the instance
+of the object returned has an added **NoteProperty** named **SideIndicator**. **SideIndicator**
+shows which input object the output belongs to.
+
+# Compare-Object
+
+## NOTES
+
+Windows PowerShell includes the following aliases for `Compare-Object`:
+
+- `compare`
+- `diff`
+
+When using the **PassThru** parameter, the output displayed in the console may not include the
+**SideIndicator** property. The default format view for the object type output by `Compare-Object`
+does not include the **SideIndicator** property. For more information see [Example 3](#ex3) in this
+article.
+
+## RELATED LINKS
+
+[about_Calculated_Properties](../Microsoft.PowerShell.Core/About/about_Calculated_Properties.md)
+
+[ForEach-Object](../Microsoft.PowerShell.Core/ForEach-Object.md)
+
+[Group-Object](Group-Object.md)
+
+[Measure-Object](Measure-Object.md)
+
+[New-Object](New-Object.md)
+
+[Select-Object](Select-Object.md)
+
+[Sort-Object](Sort-Object.md)
+
+[Tee-Object](Tee-Object.md)
+
+[Where-Object](../Microsoft.PowerShell.Core/Where-Object.md)
+
+[Get-Process](../Microsoft.PowerShell.Management/Get-Process.md)</pre></section>

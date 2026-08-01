@@ -1,0 +1,357 @@
+<!doctype html><meta charset="utf-8"><section class="jp-official"><h1>予定されている仕事への選択をします.</h1>
+<h2>シノプシスは,予定職の求人オプションを入手します.</h2>
+<h2>SYNTAXは,のシンタックスです.</h2>
+<h3>バイト定義 (デフォルト)</h3>
+<pre><code>Get-ScheduledJobOption [-InputObject] &lt;ScheduledJobDefinition&gt; [&lt;CommonParameters&gt;]
+</code></pre>
+<h3>職の定義Id</h3>
+<pre><code>Get-ScheduledJobOption [-Id] &lt;Int32&gt; [&lt;CommonParameters&gt;]
+</code></pre>
+<h3>職名定義</h3>
+<pre><code>Get-ScheduledJobOption [-Name] &lt;String&gt; [&lt;CommonParameters&gt;]
+</code></pre>
+<h2>記述は,</h2>
+<p><code>Get-ScheduledJobOption</code>cmdlet は予定された仕事に関する職種オプションを入手します.このコマンドを使用して,職種を選択を検証したり,他の cmdlets に職種を選択するパイプを配ることができます.</p>
+<p>バイトオプションは独立してディスクに保存されません.それはスケジュール上のバイトの一部です.スケジュール上のバイトのバイトオプションを取得するには,スケジュールされたバイトを指定してください.</p>
+<p>のパラメータを使用します.<code>Get-ScheduledJobOption</code>予定の仕事を特定するcmdlet. 予定の仕事を名前や識別番号で識別したり,返信する  によるものなど,入力したりパイプしたりすることで,予定の仕事を特定できます.<code>Get-ScheduledJob</code>cmdlet, to  に関する<code>Get-ScheduledJobOption</code> .</p>
+<p><code>Get-ScheduledJobOption</code>これは,Windows PowerShellに組み込まれたPSScheduledJobモジュール内の仕事スケジュリング cmdletのコレクションの一つです.</p>
+<p>予定された仕事に関する詳細については,PSScheduledJob モジュール内の話題について参照してください.PSScheduledJob モジュールを輸入して,入力してください: <code>Get-Help about_Scheduled*</code>または [about_Scheduled_Jobs.md]を参照してください.</p>
+<p>このcmdletはWindows PowerShell 3.0で導入されました.</p>
+<h2>例えは</h2>
+<h3>例1:求人オプションを入手する</h3>
+<p>この例では,指定された名前に一致するスケジュールされた仕事の職種が表示されます.</p>
+<pre><code class="language-powershell">Get-ScheduledJobOption -Name &quot;*Backup*&quot;
+</code></pre>
+<h3>例2:すべての求人オプションを入手する</h3>
+<p>この例では,ローカルコンピュータのすべてのスケジュールされた仕事の求人オプションが表示されます.</p>
+<pre><code class="language-powershell">Get-ScheduledJob | Get-ScheduledJobOption
+</code></pre>
+<p>例では,という文字を使用しています.<code>Get-ScheduledJob</code>ローカルコンピュータで予定されている作業を入手するには cmdlet を使用します.パイプラインオペレーター ()<code>|</code>) は予定された仕事を  に送ります.<code>Get-ScheduledJobOption</code>cmdletで,各予定の仕事の求人オプションが表示されます.</p>
+<h3>例3: 選択した求人オプションを入手する</h3>
+<p>この例では,特定の値を持つオブジェクトの求人オプションの検索方法を示しています.</p>
+<pre><code class="language-powershell">Get-ScheduledJob |
+    Get-ScheduledJobOption |
+    Where-Object {$_.RunElevated -and !$_.WakeToRun}
+
+Get-ScheduledJob | 
+    Get-ScheduledJobOption |
+    Where-Object {$_.RunElevated -and !$_.WakeToRun} |
+    ForEach-Object {$_.JobDefinition}
+</code></pre>
+<p>最初のコマンドは,RunElevatedプロパティが$trueと<strong>RunWithoutNetwork</strong>プロパティが$の値を持つ,ジョブオプションを入手します.<code>$false</code>. 出力では選択された <strong>JobOptions</strong> オブジェクトが表示されます.</p>
+<p>2番目のコマンドは,求人オプションがどのスケジュール・ジョブに属しているかを示す方法です.このコマンドはパイプラインオペレーター () を使います.<code>|</code>) に選択した求人オプションを送信する.<code>ForEach-Object</code>cmdletで,各オプションオブジェクトの <strong>JobDefinition</strong>属性を取得します.JobDefinition属性には,発生する仕事オブジェクトが含まれます.</p>
+<h3>例4: 職種を選択して新しい職を創る</h3>
+<p>この例では,  の求人オプションを使用する方法を示しています.<code>Get-ScheduledJobOption</code>新しい予定の仕事に就く.</p>
+<pre><code class="language-powershell">$registerScheduledJobSplat = @{
+    Name = &quot;Archive-Scripts&quot;
+    FilePath = &quot;\\Srv01\Scripts\ArchiveScripts.ps1&quot;
+    ScheduledJobOption = Get-ScheduledJobOption -Name &quot;BackupTestLogs&quot;
+}
+Register-ScheduledJob @registerScheduledJobSplat
+</code></pre>
+<p>最初のコマンドは,  を使います.<code>Get-ScheduledJobOption</code>BackupTestLogs の予定された作業の職種を選択するには,コマンドは,  のオプションを保存します.<code>$Opts</code>変数です.</p>
+<p>第二のコマンドは,使用します.<code>Register-ScheduledJob</code>新しいスケジュールされた仕事を作成するcmdlet. <strong>ScheduledJobOption</strong>パラメータの値は,  のオプションオブジェクトです.<code>$Opts</code>変数です.</p>
+<h3>例5:リモートコンピュータから仕事オプションを取得する</h3>
+<pre><code class="language-powershell">$O = Invoke-Command -ComputerName &quot;Srv01&quot; -ScriptBlock {Get-ScheduledJob -Name &quot;DataDemon&quot; }
+</code></pre>
+<p>このコマンドは,という文字を使用します.<code>Invoke-Command</code>コンピュータのSrv01上で DataDemon のプログラム上のオプションを入手するには cmdlet を入力します.コマンドは,  のオプションを保存します.<code>$O</code>変数です.</p>
+<h2>パラメータは</h2>
+<h3>-Id</h3>
+<p>予定されている仕事の識別番号を指定します. <code>Get-ScheduledJobOption</code>指定された予定職の職種を選択します.</p>
+<p>ローカルコンピュータやリモートコンピュータで予定されている仕事の識別番号を取得するには,  を使ってください.<code>Get-ScheduledJob</code>cmdletです.</p>
+<pre><code class="language-yaml">Type: System.Int32
+Parameter Sets: JobDefinitionId
+Aliases:
+
+Required: True
+Position: 0
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-InputObject</h3>
+<p>予定された仕事について指定します. <strong>ScheduledJob</strong> オブジェクトを含む変数を入力するか, のような <strong>ScheduledJob</strong> オブジェクトを得るコマンドまたは表現を入力します.<code>Get-ScheduledJob</code>また,予定された仕事というオブジェクトを  にパイプすることもできます.<code>Get-ScheduledJobOption</code> .</p>
+<pre><code class="language-yaml">Type: Microsoft.PowerShell.ScheduledJob.ScheduledJobDefinition
+Parameter Sets: JobDefinition
+Aliases:
+
+Required: True
+Position: 0
+Default value: None
+Accept pipeline input: True (ByValue)
+Accept wildcard characters: False
+</code></pre>
+<h3>-名字は</h3>
+<p>予定されている仕事の名前を指定します. <code>Get-ScheduledJobOption</code>指定された予定職の職種を選択します.ワイルドカードはサポートされています.</p>
+<p>ローカルコンピュータやリモートコンピュータで予定されている仕事の名前を入手するには,  を使ってください.<code>Get-ScheduledJob</code>cmdletです.</p>
+<pre><code class="language-yaml">Type: System.String
+Parameter Sets: JobDefinitionName
+Aliases:
+
+Required: True
+Position: 0
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+</code></pre>
+<h3>共通パラメーター</h3>
+<p>このcmdletは,共通パラメータをサポートしています: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable.詳細については, <a href="を参照してください.https://go.microsoft.com/fwlink/?LinkID=113216">about_CommonParameters</a> でした.</p>
+<h2>輸入は</h2>
+<h3>Microsoft.PowerShell.ScheduledJob.ScheduledJobDefinition</h3>
+<p>予定の仕事対象をこのcmdletにパイプすることができます.</p>
+<h2>輸出は</h2>
+<h3>Microsoft.PowerShell.ScheduledJob.ScheduledJobOptions</h3>
+<p>このcmdletは <strong>ScheduledJobOptions</strong>オブジェクトを返します.</p>
+<h2>NOTES  記事ができました.</h2>
+<h2>関連リンク</h2>
+<p><a href="Add-JobTrigger.md">JobTrigger追加</a> </p>
+<p><a href="Disable-JobTrigger.md">Disable-JobTrigger</a> は,現在も使われています.</p>
+<p>[Disable-ScheduledJob.md]は,Disable-ScheduledJob.mdに変更された.</p>
+<p><a href="Enable-JobTrigger.md">Enable-JobTrigger</a> は,仕事への誘因を可能にするため,</p>
+<p><a href="Enable-ScheduledJob.md">Enable-ScheduledJob</a> は,現在も有効な</p>
+<p><a href="Get-JobTrigger.md">Get-JobTrigger</a> </p>
+<p><a href="Get-ScheduledJob.md">Get-ScheduledJob</a> </p>
+<p><a href="Get-ScheduledJobOption.md">Get-ScheduledJobOption</a> は,時間内に設定された仕事です.</p>
+<p><a href="New-JobTrigger.md">New-JobTrigger</a> </p>
+<p><a href="New-ScheduledJobOption.md">New-ScheduledJobOption</a> は,新しい雇用の選択を促しています.</p>
+<p>[登録者・予定職] (登録者・予定職.md)</p>
+<p><a href="Remove-JobTrigger.md">Remove-JobTrigger</a> を削除する</p>
+<p><a href="Set-JobTrigger.md設定">JobTrigger設定</a> </p>
+<p>[セット・スケジュールされたJob.md]</p>
+<p><a href="セット-スケジュールされたJobOption.md">セット-スケジュールされたJobOption</a></p>
+<p>[Unregister-ScheduledJob.md] (Unregister-ScheduledJob.md) は,登録されていない</p></section><section class="en-original"><pre class="source-original"># Get-ScheduledJobOption
+
+## SYNOPSIS
+Gets the job options of scheduled jobs.
+
+## SYNTAX
+
+### JobDefinition (Default)
+
+```
+Get-ScheduledJobOption [-InputObject] &lt;ScheduledJobDefinition&gt; [&lt;CommonParameters&gt;]
+```
+
+### JobDefinitionId
+
+```
+Get-ScheduledJobOption [-Id] &lt;Int32&gt; [&lt;CommonParameters&gt;]
+```
+
+### JobDefinitionName
+
+```
+Get-ScheduledJobOption [-Name] &lt;String&gt; [&lt;CommonParameters&gt;]
+```
+
+## DESCRIPTION
+
+The `Get-ScheduledJobOption` cmdlet gets the job options of scheduled jobs. You can use this command
+to examine the job options or to pipe the job options to other cmdlets.
+
+Job options are not saved to disk independently; they are part of a scheduled job. To get the job
+options of a scheduled job, specify the scheduled job.
+
+Use the parameters of the `Get-ScheduledJobOption` cmdlet to identify the scheduled job. You can
+identify scheduled jobs by their names or identification numbers, or by entering or piping
+**ScheduledJob** objects, such as those that are returned by the `Get-ScheduledJob` cmdlet, to
+`Get-ScheduledJobOption`.
+
+`Get-ScheduledJobOption` is one of a collection of job scheduling cmdlets in the PSScheduledJob
+module that is included in Windows PowerShell.
+
+For more information about Scheduled Jobs, see the About topics in the PSScheduledJob module. Import
+the PSScheduledJob module and then type: `Get-Help about_Scheduled*` or see [about_Scheduled_Jobs](About/about_Scheduled_Jobs.md).
+
+This cmdlet was introduced in Windows PowerShell 3.0.
+
+## EXAMPLES
+
+### Example 1: Get job options
+
+This example gets the job options of scheduled jobs matching a specified name.
+
+```powershell
+Get-ScheduledJobOption -Name &quot;*Backup*&quot;
+```
+
+### Example 2: Get all job options
+
+This example gets the job options of all scheduled jobs on the local computer.
+
+```powershell
+Get-ScheduledJob | Get-ScheduledJobOption
+```
+
+The example uses the `Get-ScheduledJob` cmdlet to get the scheduled jobs on the local computer. A
+pipeline operator (`|`) sends the scheduled jobs to the `Get-ScheduledJobOption` cmdlet, which gets
+the job options of each scheduled job.
+
+### Example 3: Get selected job options
+
+This example shows how to find job options object with particular values.
+
+```powershell
+Get-ScheduledJob |
+    Get-ScheduledJobOption |
+    Where-Object {$_.RunElevated -and !$_.WakeToRun}
+
+Get-ScheduledJob | 
+    Get-ScheduledJobOption |
+    Where-Object {$_.RunElevated -and !$_.WakeToRun} |
+    ForEach-Object {$_.JobDefinition}
+```
+
+The first command gets job options in which the RunElevated property has a value of $true and the
+**RunWithoutNetwork** property has a value of `$false`. The output shows the **JobOptions** object
+that was selected.
+
+The second command shows how to find to which scheduled job the job options belong. This command
+uses a pipeline operator (`|`) to send the selected job options to the `ForEach-Object` cmdlet,
+which gets the **JobDefinition** property of each options object. The JobDefinition property
+contains the originating job object.
+
+### Example 4: Use job options to create a new job
+
+
+This example shows how to use the job options that `Get-ScheduledJobOption` gets in a new scheduled
+job.
+
+```powershell
+$registerScheduledJobSplat = @{
+    Name = &quot;Archive-Scripts&quot;
+    FilePath = &quot;\\Srv01\Scripts\ArchiveScripts.ps1&quot;
+    ScheduledJobOption = Get-ScheduledJobOption -Name &quot;BackupTestLogs&quot;
+}
+Register-ScheduledJob @registerScheduledJobSplat
+```
+
+The first command uses `Get-ScheduledJobOption` to get the jobs options of the BackupTestLogs
+scheduled job. The command saves the options in the `$Opts` variable.
+
+The second command uses `Register-ScheduledJob` cmdlet to create a new scheduled job.
+The value of the **ScheduledJobOption** parameter is the options object in the `$Opts` variable.
+
+### Example 5: Get job options from a remote computer
+
+```powershell
+$O = Invoke-Command -ComputerName &quot;Srv01&quot; -ScriptBlock {Get-ScheduledJob -Name &quot;DataDemon&quot; }
+```
+
+This command uses the `Invoke-Command` cmdlet to get the scheduled job options of the DataDemon job
+on the Srv01 computer. The command saves the options in the `$O` variable.
+
+## PARAMETERS
+
+### -Id
+
+Specifies the identification number of a scheduled job. `Get-ScheduledJobOption` gets the job
+options of the specified scheduled job.
+
+To get the identification numbers of scheduled jobs on the local computer or a remote computer, use
+the `Get-ScheduledJob` cmdlet.
+
+```yaml
+Type: System.Int32
+Parameter Sets: JobDefinitionId
+Aliases:
+
+Required: True
+Position: 0
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -InputObject
+
+Specifies a scheduled job. Enter a variable that contains a **ScheduledJob** object or type a
+command or expression that gets a **ScheduledJob** object, such as a `Get-ScheduledJob` command. You
+can also pipe a **ScheduledJob** object to `Get-ScheduledJobOption`.
+
+```yaml
+Type: Microsoft.PowerShell.ScheduledJob.ScheduledJobDefinition
+Parameter Sets: JobDefinition
+Aliases:
+
+Required: True
+Position: 0
+Default value: None
+Accept pipeline input: True (ByValue)
+Accept wildcard characters: False
+```
+
+### -Name
+
+Specifies the names of scheduled jobs. `Get-ScheduledJobOption` gets the job options of the
+specified scheduled job. Wildcards are supported.
+
+To get the names of scheduled jobs on the local computer or a remote computer, use the
+`Get-ScheduledJob` cmdlet.
+
+```yaml
+Type: System.String
+Parameter Sets: JobDefinitionName
+Aliases:
+
+Required: True
+Position: 0
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### CommonParameters
+
+This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable,
+-InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose,
+-WarningAction, and -WarningVariable. For more information, see
+[about_CommonParameters](https://go.microsoft.com/fwlink/?LinkID=113216).
+
+## INPUTS
+
+### Microsoft.PowerShell.ScheduledJob.ScheduledJobDefinition
+
+You can pipe a scheduled job object to this cmdlet.
+
+## OUTPUTS
+
+### Microsoft.PowerShell.ScheduledJob.ScheduledJobOptions
+
+This cmdlet returns a **ScheduledJobOptions** object.
+
+## NOTES
+
+## RELATED LINKS
+
+[Add-JobTrigger](Add-JobTrigger.md)
+
+[Disable-JobTrigger](Disable-JobTrigger.md)
+
+[Disable-ScheduledJob](Disable-ScheduledJob.md)
+
+[Enable-JobTrigger](Enable-JobTrigger.md)
+
+[Enable-ScheduledJob](Enable-ScheduledJob.md)
+
+[Get-JobTrigger](Get-JobTrigger.md)
+
+[Get-ScheduledJob](Get-ScheduledJob.md)
+
+[Get-ScheduledJobOption](Get-ScheduledJobOption.md)
+
+[New-JobTrigger](New-JobTrigger.md)
+
+[New-ScheduledJobOption](New-ScheduledJobOption.md)
+
+[Register-ScheduledJob](Register-ScheduledJob.md)
+
+[Remove-JobTrigger](Remove-JobTrigger.md)
+
+[Set-JobTrigger](Set-JobTrigger.md)
+
+[Set-ScheduledJob](Set-ScheduledJob.md)
+
+[Set-ScheduledJobOption](Set-ScheduledJobOption.md)
+
+[Unregister-ScheduledJob](Unregister-ScheduledJob.md)</pre></section>

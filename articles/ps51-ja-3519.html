@@ -1,0 +1,1284 @@
+<!doctype html><meta charset="utf-8"><section class="jp-official"><h1>about_Classes_Methodsについて</h1>
+<h2>短編説明</h2>
+<p>PowerShellクラスに方法を定義する方法について説明します.</p>
+<h2>長い説明</h2>
+<p>方法は,クラスが実行できるアクションを定義する. 方法は,入力データを指定するパラメータを採取する. 方法は常に出力タイプを定義する. 方法が出力値を返さない場合は,出力タイプを <strong>Void</strong> にする必要があります. 方法が出力タイプを明示的に定義していない場合は,方法の出力タイプは <strong>Void</strong> です.</p>
+<p>クラスメソッドでは, pipeline に送られてきた物体は,  で指定されたものを除く.<code>return</code>公式声明.コードからパイプラインに偶然出力はない.</p>
+<p>&gt; [!NOTE] &gt; これは,PowerShellの機能が輸出処理方法とは根本的に異なります. &gt; すべてがパイプラインに流れていく.</p>
+<p>クラスメソッドの内部からエラーストリームに書かれた非終結エラーが通過しない.<code>throw</code>終結エラーを発生させました.  を使って<code>Write-*</code>cmdletsでは,まだ PowerShell の出力ストリームにクラスメソッド内で書き込むことができます.cmdlets は,呼び出し範囲内の [優先順位変数][01] を尊重します.しかし,あなたは  を使用することを避けるべきです.<code>Write-*</code>cmdletsをcmdletsとして,この方法が,ただ単に,  を使ってオブジェクトを輸出するだけになるようにします.<code>return</code>声明.</p>
+<p>クラスメソッドは,クラスオブジェクトの現在のインスタンスを参照することができます.<code>$this</code>自動変数として,現在のクラスで定義されたアクセスプロパティおよび他の方法に移動します.<code>$this</code>自動変数は静的方法では利用できません.</p>
+<p>クラスメソッドには [隠された][02]と [静態][03]属性を含む任意の数々の属性があります.</p>
+<h2>シンタックス</h2>
+<p>クラスメソッドは以下の構文を使用します:</p>
+<h3>一行単行語法です</h3>
+<pre><code class="language-Syntax">[[&lt;attribute&gt;]...] [hidden] [static] [&lt;output-type&gt;] &lt;method-name&gt; ([&lt;method-parameters&gt;]) { &lt;body&gt; }
+</code></pre>
+<h3>マルチライン構文です.</h3>
+<pre><code class="language-Syntax">[[&lt;attribute&gt;]...]
+[hidden]
+[static]
+[&lt;output-type&gt;] &lt;method-name&gt; ([&lt;method-parameters&gt;]) {
+  &lt;body&gt;
+}
+</code></pre>
+<h2>例文</h2>
+<h3>例1 - 最小方法定義</h3>
+<p><code>GetVolume()</code><strong>ExampleCube1</strong>クラスの方法では,キューブのボリュームを返します. 輸出型を浮動数として定義し,インスタンスの <strong>Height</strong>, <strong>Length</strong>, <strong>Width</strong> 属性を倍にする結果を返します.</p>
+<pre><code class="language-powershell">class ExampleCube1 {
+    [float]   $Height
+    [float]   $Length
+    [float]   $Width
+
+    [float] GetVolume() { return $this.Height * $this.Length * $this.Width }
+}
+
+$box = [ExampleCube1]@{
+    Height = 2
+    Length = 2
+    Width  = 3
+}
+
+$box.GetVolume()
+</code></pre>
+<pre><code class="language-Output">12
+</code></pre>
+<h3>例2 - パラメータのある方法</h3>
+<p><code>GeWeight()</code>方法では,浮動数入力を立方体密度に入力して,密度に掛ける量として計算された立方体の重さを返します.</p>
+<pre><code class="language-powershell">class ExampleCube2 {
+    [float]   $Height
+    [float]   $Length
+    [float]   $Width
+
+    [float] GetVolume() { return $this.Height * $this.Length * $this.Width }
+    [float] GetWeight([float]$Density) {
+        return $this.GetVolume() * $Density
+    }
+}
+
+$cube = [ExampleCube2]@{
+    Height = 2
+    Length = 2
+    Width  = 3
+}
+
+$cube.GetWeight(2.5)
+</code></pre>
+<pre><code class="language-Output">30
+</code></pre>
+<h3>例3 - 輸出のない方法</h3>
+<p>この例では,  を定義します.<code>Validate()</code>システム.ボイドとして出力型が表示される方法です.この方法は出力量返さない.代わりに,検証が失敗した場合,エラーが発生します.<code>GetVolume()</code>方法呼び出しです.<code>Validate()</code>立方体体積を計算する前に.検証が失敗した場合,計算前に方法が終了します.</p>
+<pre><code class="language-powershell">class ExampleCube3 {
+    [float]   $Height
+    [float]   $Length
+    [float]   $Width
+
+    [float] GetVolume() {
+        $this.Validate()
+
+        return $this.Height * $this.Length * $this.Width
+    }
+
+    [void] Validate() {
+        $InvalidProperties = @()
+        foreach ($Property in @('Height', 'Length', 'Width')) {
+            if ($this.$Property -le 0) {
+                $InvalidProperties += $Property
+            }
+        }
+
+        if ($InvalidProperties.Count -gt 0) {
+            $Message = @(
+                'Invalid cube properties'
+                &quot;('$($InvalidProperties -join &quot;', '&quot;)'):&quot;
+                &quot;Cube dimensions must all be positive numbers.&quot;
+            ) -join ' '
+            throw $Message
+        }
+    }
+}
+
+$Cube = [ExampleCube3]@{ Length = 1 ; Width = -1 }
+$Cube
+
+$Cube.GetVolume()
+</code></pre>
+<pre><code class="language-Output">Height Length Width
+------ ------ -----
+  0.00   1.00 -1.00
+
+Invalid cube properties ('Height', 'Width'): Cube dimensions must all be
+positive numbers.
+At C:\code\classes.examples.ps1:26 char:13
++             throw $Message
++             ~~~~~~~~~~~~~~
+    + CategoryInfo          : OperationStopped: (Invalid cube pr...sitive
+    numbers.:String) [], RuntimeException
+    + FullyQualifiedErrorId : Invalid cube properties ('Height', 'Width')
+   : Cube dimensions must all be positive numbers.
+</code></pre>
+<p>この方法は例外を投げ出します.なぜなら, <strong>Height</strong>と <strong>Width</strong>の属性は無効で,クラスが現在のボリュームを計算するのを妨げます.</p>
+<h1>about_Classes_Methodsについて</h1>
+<h3>例4 - 過積載による静止方法</h3>
+<p><strong>ExampleCube4</strong> クラスでは静止方法が定義されます.<code>GetVolume()</code>最初のオーバーロードには,キューブの大きさに関するパラメータと,入力を検証するかどうかを示す旗が表示されています.</p>
+<p>第二のオーバーロードには数値入力のみが含まれています.最初のオーバーロードを""と呼びます.<code>$Strict</code>     <code>$true</code>第2のオーバーロードは,入力を厳密に検証するかどうかを常に定義する必要がなく,ユーザーを方法に呼び出す方法を提供します.</p>
+<p>クラスも定義します.<code>GetVolume()</code>この方法は,第2の静的過負荷を呼び,インスタンスの   であることを保証します.<code>GetVolume()</code>方法は常に,輸出値を返す前に立方体の次元を検証します.</p>
+<pre><code class="language-powershell">class ExampleCube4 {
+    [float]   $Height
+    [float]   $Length
+    [float]   $Width
+
+    static [float] GetVolume(
+        [float]$Height,
+        [float]$Length,
+        [float]$Width,
+        [boolean]$Strict
+    ) {
+        $Signature = &quot;[ExampleCube4]::GetVolume({0}, {1}, {2}, {3})&quot;
+        $Signature = $Signature -f $Height, $Length, $Width, $Strict
+        Write-Verbose &quot;Called $Signature&quot;
+
+        if ($Strict) {
+            [ValidateScript({$_ -gt 0 })]$Height = $Height
+            [ValidateScript({$_ -gt 0 })]$Length = $Length
+            [ValidateScript({$_ -gt 0 })]$Width  = $Width
+        }
+
+        return $Height * $Length * $Width
+    }
+
+    static [float] GetVolume([float]$Height, [float]$Length, [float]$Width) {
+        $Signature = &quot;[ExampleCube4]::GetVolume($Height, $Length, $Width)&quot;
+        Write-Verbose &quot;Called $Signature&quot;
+
+        return [ExampleCube4]::GetVolume($Height, $Length, $Width, $true)
+    }
+
+    [float] GetVolume() {
+        Write-Verbose &quot;Called `$this.GetVolume()&quot;
+        return [ExampleCube4]::GetVolume(
+            $this.Height,
+            $this.Length,
+            $this.Width
+        )
+    }
+}
+
+$VerbosePreference = 'Continue'
+$Cube = [ExampleCube4]@{ Height = 2 ; Length = 2 }
+$Cube.GetVolume()
+</code></pre>
+<pre><code class="language-Output">VERBOSE: Called $this.GetVolume()
+VERBOSE: Called [ExampleCube4]::GetVolume(2, 2, 0)
+VERBOSE: Called [ExampleCube4]::GetVolume(2, 2, 0, True)
+
+The variable cannot be validated because the value 0 is not a valid value
+for the Width variable.
+At C:\code\classes.examples.ps1:19 char:13
++             [ValidateScript({$_ -gt 0 })]$Width  = $Width
++             ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : MetadataError: (:) [], ValidationMetadataEx
+   ception
+    + FullyQualifiedErrorId : ValidateSetFailure
+</code></pre>
+<p>方法定義の verbose メッセージは,初期呼び出しの方法を示しています.<code>$this.GetVolume()</code>静的方法と呼ばれています.</p>
+<p>静的方法を直接,厳格なパラメータで呼び出す.<code>$false</code>返還する<code>0</code>音量についてです.</p>
+<pre><code class="language-powershell">[ExampleCube4]::GetVolume($Cube.Height, $Cube.Length, $Cube.Width, $false)
+</code></pre>
+<pre><code class="language-Output">VERBOSE: Called [ExampleCube4]::GetVolume(2, 2, 0, False)
+0
+</code></pre>
+<h2>方法署名と過負荷</h2>
+<p>各クラスメソッドには,方法の呼び出しを定義する独自の署名があり,その方法の出力タイプ,名前,パラメータが方法の署名を定義します.</p>
+<p>クラスが同じ名前で複数の方法を定義するときは,その方法の定義は <em>overloads</em> である.方法のオーバーロードには異なるパラメータがなければならない. 方法が同じパラメータを持つ2つの実装を定義することはできません. 輸出タイプが異なる場合でも.</p>
+<p>次のクラスでは2つの方法が定義されています.<code>Shuffle()</code>そして,<code>Deal()</code>         <code>Deal()</code>方法では2つの過負荷を定義し,一つはパラメータなし,もう一つは<strong>Count</strong>パラメータで定義されます.</p>
+<pre><code class="language-powershell">class CardDeck {
+    [string[]]$Cards  = @()
+    hidden [string[]]$Dealt  = @()
+    hidden [string[]]$Suits  = @('Clubs', 'Diamonds', 'Hearts', 'Spades')
+    hidden [string[]]$Values = 2..10 + @('Jack', 'Queen', 'King', 'Ace')
+
+    CardDeck() {
+        foreach($Suit in $this.Suits) {
+            foreach($Value in $this.Values) {
+                $this.Cards += &quot;$Value of $Suit&quot;
+            }
+        }
+        $this.Shuffle()
+    }
+
+    [void] Shuffle() {
+        $this.Cards = $this.Cards + $this.Dealt | Where-Object -FilterScript {
+             -not [string]::IsNullOrEmpty($_)
+        } | Get-Random -Count $this.Cards.Count
+    }
+
+    [string] Deal() {
+        if ($this.Cards.Count -eq 0) { throw &quot;There are no cards left.&quot; }
+
+        $Card        = $this.Cards[0]
+        $this.Cards  = $this.Cards[1..$this.Cards.Count]
+        $this.Dealt += $Card
+
+        return $Card
+    }
+
+    [string[]] Deal([int]$Count) {
+        if ($Count -gt $this.Cards.Count) {
+            throw &quot;There are only $($this.Cards.Count) cards left.&quot;
+        } elseif ($Count -lt 1) {
+            throw &quot;You must deal at least 1 card.&quot;
+        }
+
+        return (1..$Count | ForEach-Object { $this.Deal() })
+    }
+}
+</code></pre>
+<h2>方法出力</h2>
+<p>デフォルトでは,メソッドには出力がない.メソッド署名に <strong>Void</strong>以外の明示的な出力タイプが含まれている場合,メソッドはそのタイプのオブジェクトを返さなければならない.メソッドは,   の場合を除いて出力を発射しない.<code>return</code>キーワードは,明確にオブジェクトを返します.</p>
+<h2>メソッドパラメータ</h2>
+<p>クラスメソッドは,メソッドボディで使う入力パラメータを定義することができる.メソッドパラメータは括弧に囲まれ, kommaで分離される.空き括弧は,メソッドにパラメータが不要であることを示す.</p>
+<p>パラメータは単行列または複数の行で定義できます.次のブロックは方法パラメータの構文を示します.</p>
+<pre><code class="language-Syntax">([[&lt;parameter-type&gt;]]$&lt;parameter-name&gt;[, [[&lt;parameter-type&gt;]]$&lt;parameter-name&gt;])
+</code></pre>
+<pre><code class="language-Syntax">(
+    [[&lt;parameter-type&gt;]]$&lt;parameter-name&gt;[,
+    [[&lt;parameter-type&gt;]]$&lt;parameter-name&gt;]
+)
+</code></pre>
+<p>メソッドのパラメータは強く入力できます.パラメータが入力されていない場合,そのパラメータの任意のオブジェクトをメソッドが受け入れます.パラメータが入力されている場合,メソッドはそのパラメータの値を正しいタイプに変換しようとします.入力が変換できない場合例外を投下します.</p>
+<p>メソッドパラメータはデフォルト値を定義できない.すべてのメソッドパラメータは必須です.</p>
+<p>メソッドパラメータには他の属性がないことがあり,メソッドがメソッドにパラメータを使用する際には,と制限されます.<code>Validate*</code>認証属性についての詳細については,[about_Functions_Advanced_Parameters][04]を参照してください.</p>
+<p>方法パラメータに検証を加えるために,以下のパターンの一つを使用できます.</p>
+<ol>
+<li>必要な検証属性を持つ同じ変数にパラメータを再割り当てること.これは静态方法とインスタンスの方法の両方に有効です.このパターンの例については[例 4][05]を参照してください.<code>Update-TypeData</code> を定義する<code>ScriptMethod</code>直接パラメータ上の検証属性を使用する.これは例の方法のみで動作します.詳細については, [Update-TypeDataで例の方法を定義する][06]セクションを参照してください.</li>
+</ol>
+<h1>about_Classes_Methodsについて</h1>
+<h2>方法における自動変数</h2>
+<p>すべての自動変数はメソッドに含まれていない.次のリストには,PowerShellクラスメソッドで自動変数とそれらを使用するかどうか,どのように使用するかを示す提案が含まれています.リストに含まれていない自動変数はクラスメソッドに利用できません.</p>
+<ul>
+<li>-<code>$?</code>- 普通のアクセス. - <code>$_</code>- 普通のアクセス. - <code>$args</code>- 代わりに,明示されたパラメータ変数を使用する. - <code>$ConsoleFileName</code>- アクセスとして<code>$Script:ConsoleFileName</code>- 代わりに.<code>$Error</code>- 普通のアクセス. - <code>$Event</code>- 普通のアクセス. - <code>$EventArgs</code>- 普通のアクセス. - <code>$EventSubscriber</code>- 普通のアクセス. - <code>$ExecutionContext</code>- アクセスとして<code>$Script:ExecutionContext</code>- 代わりに.<code>$false</code>- 普通のアクセス. - <code>$foreach</code>- 普通のアクセス. - <code>$HOME</code>- アクセスとして<code>$Script:HOME</code>- 代わりに.<code>$Host</code>- アクセスとして<code>$Script:Host</code>- 代わりに.<code>$input</code>- 代わりに,明示されたパラメータ変数を使用する. - <code>$LASTEXITCODE</code>- 普通のアクセス. - <code>$Matches</code>- 普通のアクセス. - <code>$MyInvocation</code>- 普通のアクセス. - <code>$NestedPromptLevel</code>- 普通のアクセス. - <code>$null</code>- 普通のアクセス. - <code>$PID</code>- アクセスとして<code>$Script:PID</code>- 代わりに.<code>$PROFILE</code>- アクセスとして<code>$Script:PROFILE</code>- 代わりに.<code>$PSBoundParameters</code>この変数を使用しないでください.これはcmdletや関数のために使用されています.それをクラスで使用すると,予期せぬ副作用が 발생할 수 있습니다. - <code>$PSCmdlet</code>この変数を使用しないでください.これはcmdletや関数のために使用されています.それをクラスで使用すると,予期せぬ副作用が 발생할 수 있습니다. - <code>$PSCommandPath</code>- 普通のアクセス. - <code>$PSCulture</code>- アクセスとして<code>$Script:PSCulture</code>- 代わりに.<code>$PSEdition</code>- アクセスとして<code>$Script:PSEdition</code>- 代わりに.<code>$PSHOME</code>- アクセスとして<code>$Script:PSHOME</code>- 代わりに.<code>$PSItem</code>- 普通のアクセス. - <code>$PSScriptRoot</code>- 普通のアクセス. - <code>$PSSenderInfo</code>- アクセスとして<code>$Script:PSSenderInfo</code>- 代わりに.<code>$PSUICulture</code>- アクセスとして<code>$Script:PSUICulture</code>- 代わりに.<code>$PSVersionTable</code>- アクセスとして<code>$Script:PSVersionTable</code>- 代わりに.<code>$PWD</code>- 普通のアクセス. - <code>$Sender</code>- 普通のアクセス. - <code>$ShellId</code>- アクセスとして<code>$Script:ShellId</code>- 代わりに.<code>$StackTrace</code>- 普通のアクセス. - <code>$switch</code>- 普通のアクセス. - <code>$this</code>- クラスメソッドでは, <code>$this</code>クラスの現在のインスタンスは常にあります.その方法によってクラスプロパティとメソッドにアクセスできます.静态メソッドでは利用できません. - <code>$true</code>- 普通のアクセスです.</li>
+</ul>
+<p>自動変数に関する詳細については,[about_Automatic_Variables][07]を参照してください.</p>
+<h2>隠された方法</h2>
+<p>クラスメソッドを""で宣言することで隠すことができます.<code>hidden</code>隠されたクラスメソッドは:</p>
+<ul>
+<li>によって返還されたクラスメイトのリストに含まれていない.<code>Get-Member</code>cmdlet. で隠された方法を示すために<code>Get-Member</code>フォースパラメータを使用します. - 完成が隠された方法を定義するクラスで起こらない限りタブ完了またはIntelliSenseに表示されません. - 隠された方法を定義するクラスで完成します. - 公開されたクラスメンバー. 呼び出しと相続することができます. 方法を隠すことはそれをプライベートにはしません. 前記点に説明されている方法のみを隠します.</li>
+</ul>
+<p>&gt; [!NOTE] &gt; 方法に対する過負荷を隠すとき,その方法は,IntelliSense,完成結果,および のデフォルト出力から削除されます.<code>Get-Member</code> .</p>
+<p>について詳しい情報はこちらから<code>hidden</code>キーワード,参照 [about_Hidden][08].</p>
+<h2>静止方法</h2>
+<p>方法を""で宣言することで,クラスの例ではなく,クラス自身に属する方法として定義できます.<code>static</code>ステティッククラスメソッド:</p>
+<ul>
+<li>クラスインスタンテーションに関係なく,常に利用可能である. - クラス全体のインスタンスのすべてで共有されている. - 常に利用可能である. - クラスインスタンスのプロパティにアクセスできない. 静态プロパティのみにアクセスできます. - セッション期間全体にわたってライブです.</li>
+</ul>
+<h1>about_Classes_Methodsについて</h1>
+<h2>派生されたクラスメソッド</h2>
+<p>クラスがベースクラスから派生されたとき,そのベースクラスメソッドとその過負荷を継承します. ベースクラスで定義された任意のメソッド過負荷,隠された方法を含むものは,派生クラスで利用可能です.</p>
+<p>派生クラスでは,クラス定義で定義を変えて,遺伝した方法過負荷を覆すことができる.過負荷を覆すためには,パラメータタイプはベースクラスと同じでなければならない.過負荷の輸出タイプは異なる可能性があります.</p>
+<p>構成者とは異なり,方法は,  を使用することはできません.<code>: base(&lt;parameters&gt;)</code>方法のためのベースクラスオーバーロードを誘発する構文です. 派生クラスにおける再定義されたオーバーロードは,ベースクラスで定義されたオーバーロードを完全に置き換えます.</p>
+<p>次の例では,導致クラスにおける静的方法とインスタンスの行動を示しています.</p>
+<p>ベースクラスは以下のように定義します:</p>
+<ul>
+<li>静的方法<code>Now()</code>現在の時間を返して,<code>DaysAgo()</code>過去の日付を返却するために - インスタンスのプロパティ <strong>TimeStamp</strong> と <code>ToString()</code>この方法により,文字列の表示が返される.これは,文字列でインスタンスが使用されたとき,クラスの名前ではなくデータタイム文字列に変換されることを保証します. - インスタンスメソッド<code>SetTimeStamp()</code>2つのオーバーロードで呼び出されたとき,パラメータなしで呼び出された場合,そのタイムスタンプを現在の時間に設定します.DateTimeで呼び出された場合,その値にTimeStampを設定します.</li>
+</ul>
+<pre><code class="language-powershell">class BaseClass {
+    static [datetime] Now() {
+        return Get-Date
+    }
+    static [datetime] DaysAgo([int]$Count) {
+        return [BaseClass]::Now().AddDays(-$Count)
+    }
+
+    [datetime] $TimeStamp = [BaseClass]::Now()
+
+    [string] ToString() {
+        return $this.TimeStamp.ToString()
+    }
+
+    [void] SetTimeStamp([datetime]$TimeStamp) {
+        $this.TimeStamp = $TimeStamp
+    }
+    [void] SetTimeStamp() {
+        $this.TimeStamp = [BaseClass]::Now()
+    }
+}
+</code></pre>
+<p>次のブロックは <strong>BaseClass</strong>から派生したクラスを定義します:</p>
+<p><strong>DerivedClassA</strong>は,BaseClass<strong>からオーバーリードなしで相続します.<code>DaysAgo()</code>ステティックメソッドで,DateTime</strong>オブジェクトではなく文字列表示を返します.また,この方法は,DateTime<em>オブジェクトの代わりに文字列表示を返します.<code>ToString()</code>タイムスタンプをISO8601日付文字列として返却するインスタンスの方法. - </em><em>DerivedClassC</em>* は,パラメータのない の過負荷を上回ります.<code>SetTimeStamp()</code>標準化のないタイムスタンプを設定することで,現在の日付より10日前に日付を設定します.</p>
+<pre><code class="language-powershell">class DerivedClassA : BaseClass     {}
+class DerivedClassB : BaseClass     {
+    static [string] DaysAgo([int]$Count) {
+        return [BaseClass]::DaysAgo($Count).ToString('yyyy-MM-dd')
+    }
+    [string] ToString() {
+        return $this.TimeStamp.ToString('yyyy-MM-dd')
+    }
+}
+class DerivedClassC : BaseClass {
+    [void] SetTimeStamp() {
+        $this.SetTimeStamp([BaseClass]::Now().AddDays(-10))
+    }
+}
+</code></pre>
+<p>次のブロックでは,静止の出力を示します.<code>Now()</code>定義されたクラスには,方法が一致する.出力は各クラスに同じです. 導かれるクラスには,方法のベースクラス実装が覆われません.</p>
+<pre><code class="language-powershell">&quot;[BaseClass]::Now()     =&gt; $([BaseClass]::Now())&quot;
+&quot;[DerivedClassA]::Now() =&gt; $([DerivedClassA]::Now())&quot;
+&quot;[DerivedClassB]::Now() =&gt; $([DerivedClassB]::Now())&quot;
+&quot;[DerivedClassC]::Now() =&gt; $([DerivedClassC]::Now())&quot;
+</code></pre>
+<pre><code class="language-Output">[BaseClass]::Now()     =&gt; 11/06/2023 09:41:23
+[DerivedClassA]::Now() =&gt; 11/06/2023 09:41:23
+[DerivedClassB]::Now() =&gt; 11/06/2023 09:41:23
+[DerivedClassC]::Now() =&gt; 11/06/2023 09:41:23
+</code></pre>
+<p>次のブロックは""と呼ばれる.<code>DaysAgo()</code>各クラスの静的方法. <strong>DerivedClassB</strong> の出力だけが異なる,それはベース実装をオーバーロードしているからです.</p>
+<pre><code class="language-powershell">&quot;[BaseClass]::DaysAgo(3)     =&gt; $([BaseClass]::DaysAgo(3))&quot;
+&quot;[DerivedClassA]::DaysAgo(3) =&gt; $([DerivedClassA]::DaysAgo(3))&quot;
+&quot;[DerivedClassB]::DaysAgo(3) =&gt; $([DerivedClassB]::DaysAgo(3))&quot;
+&quot;[DerivedClassC]::DaysAgo(3) =&gt; $([DerivedClassC]::DaysAgo(3))&quot;
+</code></pre>
+<pre><code class="language-Output">[BaseClass]::DaysAgo(3)     =&gt; 11/03/2023 09:41:38
+[DerivedClassA]::DaysAgo(3) =&gt; 11/03/2023 09:41:38
+[DerivedClassB]::DaysAgo(3) =&gt; 2023-11-03
+[DerivedClassC]::DaysAgo(3) =&gt; 11/03/2023 09:41:38
+</code></pre>
+<p>次のブロックは,各クラスに対して新しいインスタンスの文字列表示を示しています. <strong>DerivedClassB</strong>の表示は,その をオーバーロードするので異なる.<code>ToString()</code>instance method. 実施方法</p>
+<pre><code class="language-powershell">&quot;`$base = [BaseClass]::new()     =&gt; $($base = [BaseClass]::new(); $base)&quot;
+&quot;`$a    = [DerivedClassA]::new() =&gt; $($a = [DerivedClassA]::new(); $a)&quot;
+&quot;`$b    = [DerivedClassB]::new() =&gt; $($b = [DerivedClassB]::new(); $b)&quot;
+&quot;`$c    = [DerivedClassC]::new() =&gt; $($c = [DerivedClassC]::new(); $c)&quot;
+</code></pre>
+<pre><code class="language-Output">$base = [BaseClass]::new()     =&gt; 11/6/2023 9:44:57 AM
+$a    = [DerivedClassA]::new() =&gt; 11/6/2023 9:44:57 AM
+$b    = [DerivedClassB]::new() =&gt; 2023-11-06
+$c    = [DerivedClassC]::new() =&gt; 11/6/2023 9:44:57 AM
+</code></pre>
+<p>次のブロックは""と呼ばれる.<code>SetTimeStamp()</code>各インスタンスのインスタンスの方法が,特定の日付に <strong>TimeStamp</strong> 属性を設定する.各インスタンスは同じ日付を持っています.なぜなら,導致されたクラスのうち,どれ一つも,この方法のためのパラメータ化された過負荷を上回らないからです.</p>
+<pre><code class="language-powershell">[datetime]$Stamp = '2024-10-31'
+&quot;`$base.SetTimeStamp(`$Stamp) =&gt; $($base.SetTimeStamp($Stamp) ; $base)&quot;
+&quot;`$a.SetTimeStamp(`$Stamp)    =&gt; $($a.SetTimeStamp($Stamp); $a)&quot;
+&quot;`$b.SetTimeStamp(`$Stamp)    =&gt; $($b.SetTimeStamp($Stamp); $b)&quot;
+&quot;`$c.SetTimeStamp(`$Stamp)    =&gt; $($c.SetTimeStamp($Stamp); $c)&quot;
+</code></pre>
+<pre><code class="language-Output">$base.SetTimeStamp($Stamp) =&gt; 10/31/2024 12:00:00 AM
+$a.SetTimeStamp($Stamp)    =&gt; 10/31/2024 12:00:00 AM
+$b.SetTimeStamp($Stamp)    =&gt; 2024-10-31
+$c.SetTimeStamp($Stamp)    =&gt; 10/31/2024 12:00:00 AM
+</code></pre>
+<p>最後のブロックの通話は,<code>SetTimeStamp()</code>輸出は, <strong>DerivedClassClass</strong> インスタンスの値は他のインスタンスの10日前に設定されていることを示しています.</p>
+<pre><code class="language-powershell">&quot;`$base.SetTimeStamp() =&gt; $($base.SetTimeStamp() ; $base)&quot;
+&quot;`$a.SetTimeStamp()    =&gt; $($a.SetTimeStamp(); $a)&quot;
+&quot;`$b.SetTimeStamp()    =&gt; $($b.SetTimeStamp(); $b)&quot;
+&quot;`$c.SetTimeStamp()    =&gt; $($c.SetTimeStamp(); $c)&quot;
+</code></pre>
+<pre><code class="language-Output">$base.SetTimeStamp() =&gt; 11/6/2023 9:53:58 AM
+$a.SetTimeStamp()    =&gt; 11/6/2023 9:53:58 AM
+$b.SetTimeStamp()    =&gt; 2023-11-06
+$c.SetTimeStamp()    =&gt; 10/27/2023 9:53:58 AM
+</code></pre>
+<h2>Update-TypeDataでインスタンスのメソッドを定義する</h2>
+<p>クラス定義に直接方法を宣言する以外に,静的構成要素でクラスインスタンスの方法を定義できるのは,  を使ってです.<code>Update-TypeData</code>cmdletです.</p>
+<p>このスニペットをパターンに出発点として使用し,必要なように角括弧でプレスホルダーテキストを置き換える.</p>
+<pre><code class="language-powershell">class &lt;ClassName&gt; {
+    static [hashtable[]] $MemberDefinitions = @(
+        @{
+            MemberName = '&lt;MethodName&gt;'
+            MemberType = 'ScriptMethod'
+            Value      = {
+              param(&lt;method-parameters&gt;)
+
+              &lt;method-body&gt;
+            }
+        }
+    )
+
+    static &lt;ClassName&gt;() {
+        $TypeName = [&lt;ClassName&gt;].Name
+        foreach ($Definition in [&lt;ClassName&gt;]::MemberDefinitions) {
+            Update-TypeData -TypeName $TypeName @Definition
+        }
+    }
+}
+</code></pre>
+<p>&gt; [!TIP] &gt; <code>Add-Member</code>cmdlet は &gt;非静止なコンストラクターでクラスにプロパティとメソッドを追加できますが,cmdlet はコンストラクターが &gt;呼び出されたたびに実行されます.<code>Update-TypeData</code>静態コンストラクタでは,クラスにメンバーを追加するための &gt;コードがセッションで一度のみ実行されるようにします.</p>
+<h1>about_Classes_Methodsについて</h1>
+<h3>標準パラメータ値と検証属性を持つ方法を定義する</h3>
+<p>クラス宣言で直接定義された方法は,方法パラメータにデフォルト値や検証属性を定義することはできません.デフォルト値または検証属性を持つクラスメソッドを定義するには,彼らは<strong>ScriptMethod</strong>メンバーとして定義されなければならない.</p>
+<p>この例では,CardDeck<em> クラスで,  を定義します.<code>Draw()</code></em><em>Count</em>*パラメータの認証属性とデフォルト値の両方を使用するメソッドです.</p>
+<pre><code class="language-powershell">class CookieJar {
+    [int] $Cookies = 12
+
+    static [hashtable[]] $MemberDefinitions = @(
+        @{
+            MemberName = 'Eat'
+            MemberType = 'ScriptMethod'
+            Value      = {
+                param(
+                    [ValidateScript({ $_ -ge 1 -and $_ -le $this.Cookies })]
+                    [int] $Count = 1
+                )
+
+                $this.Cookies -= $Count
+                if ($Count -eq 1) {
+                    &quot;You ate 1 cookie. There are $($this.Cookies) left.&quot;
+                } else {
+                    &quot;You ate $Count cookies. There are $($this.Cookies) left.&quot;
+                }
+            }
+        }
+    )
+
+    static CookieJar() {
+        $TypeName = [CookieJar].Name
+        foreach ($Definition in [CookieJar]::MemberDefinitions) {
+            Update-TypeData -TypeName $TypeName @Definition
+        }
+    }
+}
+
+$Jar = [CookieJar]::new()
+$Jar.Eat(1)
+$Jar.Eat()
+$Jar.Eat(20)
+$Jar.Eat(6)
+</code></pre>
+<pre><code class="language-Output">You ate 1 cookie. There are 11 left.
+
+You ate 1 cookie. There are 10 left.
+
+Exception calling &quot;Eat&quot; with &quot;1&quot; argument(s): &quot;The attribute cannot be
+added because variable Count with value 20 would no longer be valid.&quot;
+At line:1 char:1
++ $Jar.Eat(20)
++ ~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (:) [], MethodInvocationExcep
+   tion
+    + FullyQualifiedErrorId : ScriptMethodRuntimeException
+
+You ate 6 cookies. There are 4 left.
+</code></pre>
+<p>このパターンは検証属性について有効である一方で,例外は誤り誘導であり,属性を追加できないことを指していることに注意してください.パラメータの値を明確にチェックし,代わりに有意義なエラーを提示する方が良いユーザー体験かもしれません.そうすれば,ユーザーがなぜエラーを目にしているかを理解し,それについてどうすべきか理解することができます.</p>
+<h2>制限は限られている.</h2>
+<p>PowerShell クラスメソッドには以下の制限があります.</p>
+<ul>
+<li>メソッドパラメータは,検証属性を含む属性を使用することはできません.</li>
+</ul>
+<p>解消: 検証属性で方法ボディのパラメータを再割り当て,または静的コンストラクタで方法を で定義する.<code>Update-TypeData</code>cmdlet. - メソッドパラメータはデフォルト値を定義できない.パラメータは常に義務付けられています.</p>
+<p>ワークラウンド:静止コンストラクターで方法を定義する<code>Update-TypeData</code>cmdlet. - 方法は,隠された場合でも,常に公開されています. クラスが相続された場合,覆されることがあります.</p>
+<p>解消:何もない. - 方法の過負荷が隠されている場合,その方法の過負荷も隠されているものと扱われます.</p>
+<p>ワークラウンド: どれもありません.</p>
+<h2>また, を参照してください.</h2>
+<ul>
+<li>[about_Automatic_Variables][07] - [about_Classes][09] - [about_Classes_Constructors][10] - [about_Classes_Inheritance][11] - [about_Classes_Properties][12] - [about_Using][13]</li>
+</ul>
+<p>リンク参照定義 --&gt; [01]: about_Preference_Variables.md [02]: #hidden-methods [03]: #static-methods [04]: about_Functions_Advanced_Parameters.md#parameter-and-variable-validation-attributes [05]: #example-4---static-method-with-overloads [06]: #define-instance-automation-methods-with-update-typedata [07]: about_Automatic_Variables.md [08]: about_Hidden.md [09]: about_Classes.md [10]: about_Classes_Construct.md [11]: about_Classes_Inheritance.md [12]: about_Classes.md_Properties.md [13]: about_Uses_Classes.md</p></section><section class="en-original"><pre class="source-original"># about_Classes_Methods
+
+## Short description
+
+Describes how to define methods for PowerShell classes.
+
+## Long description
+
+Methods define the actions that a class can perform. Methods can take
+parameters that specify input data. Methods always define an output type. If a
+method doesn&#x27;t return any output, it must have the **Void** output type. If a
+method doesn&#x27;t explicitly define an output type, the method&#x27;s output type is
+**Void**.
+
+In class methods, no objects get sent to the pipeline except those specified in
+the `return` statement. There&#x27;s no accidental output to the pipeline from the
+code.
+
+&gt; [!NOTE]
+&gt; This is fundamentally different from how PowerShell functions handle output,
+&gt; where everything goes to the pipeline.
+
+Nonterminating errors written to the error stream from inside a class method
+aren&#x27;t passed through. You must use `throw` to surface a terminating error.
+Using the `Write-*` cmdlets, you can still write to PowerShell&#x27;s output streams
+from within a class method. The cmdlets respect the [preference variables][01]
+in the calling scope. However, you should avoid using the `Write-*` cmdlets so
+that the method only outputs objects using the `return` statement.
+
+Class methods can reference the current instance of the class object by using
+the `$this` automatic variable to access properties and other methods defined
+in the current class. The `$this` automatic variable isn&#x27;t available in static
+methods.
+
+Class methods can have any number of attributes, including the [hidden][02] and
+[static][03] attributes.
+
+## Syntax
+
+Class methods use the following syntaxes:
+
+### One-line syntax
+
+```Syntax
+[[&lt;attribute&gt;]...] [hidden] [static] [&lt;output-type&gt;] &lt;method-name&gt; ([&lt;method-parameters&gt;]) { &lt;body&gt; }
+```
+
+### Multiline syntax
+
+```Syntax
+[[&lt;attribute&gt;]...]
+[hidden]
+[static]
+[&lt;output-type&gt;] &lt;method-name&gt; ([&lt;method-parameters&gt;]) {
+  &lt;body&gt;
+}
+```
+
+## Examples
+
+### Example 1 - Minimal method definition
+
+The `GetVolume()` method of the **ExampleCube1** class returns the volume of
+the cube. It defines the output type as a floating number and returns the
+result of multiplying the **Height**, **Length**, and **Width** properties of
+the instance.
+
+```powershell
+class ExampleCube1 {
+    [float]   $Height
+    [float]   $Length
+    [float]   $Width
+
+    [float] GetVolume() { return $this.Height * $this.Length * $this.Width }
+}
+
+$box = [ExampleCube1]@{
+    Height = 2
+    Length = 2
+    Width  = 3
+}
+
+$box.GetVolume()
+```
+
+```Output
+12
+```
+
+### Example 2 - Method with parameters
+
+The `GeWeight()` method takes a floating number input for the density of the
+cube and returns the weight of the cube, calculated as volume multiplied by
+density.
+
+```powershell
+class ExampleCube2 {
+    [float]   $Height
+    [float]   $Length
+    [float]   $Width
+
+    [float] GetVolume() { return $this.Height * $this.Length * $this.Width }
+    [float] GetWeight([float]$Density) {
+        return $this.GetVolume() * $Density
+    }
+}
+
+$cube = [ExampleCube2]@{
+    Height = 2
+    Length = 2
+    Width  = 3
+}
+
+$cube.GetWeight(2.5)
+```
+
+```Output
+30
+```
+
+### Example 3 - Method without output
+
+This example defines the `Validate()` method with the output type as
+**System.Void**. This method returns no output. Instead, if the validation
+fails, it throws an error. The `GetVolume()` method calls `Validate()` before
+calculating the volume of the cube. If validation fails, the method terminates
+before the calculation.
+
+```powershell
+class ExampleCube3 {
+    [float]   $Height
+    [float]   $Length
+    [float]   $Width
+
+    [float] GetVolume() {
+        $this.Validate()
+
+        return $this.Height * $this.Length * $this.Width
+    }
+
+    [void] Validate() {
+        $InvalidProperties = @()
+        foreach ($Property in @(&#x27;Height&#x27;, &#x27;Length&#x27;, &#x27;Width&#x27;)) {
+            if ($this.$Property -le 0) {
+                $InvalidProperties += $Property
+            }
+        }
+
+        if ($InvalidProperties.Count -gt 0) {
+            $Message = @(
+                &#x27;Invalid cube properties&#x27;
+                &quot;(&#x27;$($InvalidProperties -join &quot;&#x27;, &#x27;&quot;)&#x27;):&quot;
+                &quot;Cube dimensions must all be positive numbers.&quot;
+            ) -join &#x27; &#x27;
+            throw $Message
+        }
+    }
+}
+
+$Cube = [ExampleCube3]@{ Length = 1 ; Width = -1 }
+$Cube
+
+$Cube.GetVolume()
+```
+
+```Output
+Height Length Width
+------ ------ -----
+  0.00   1.00 -1.00
+
+Invalid cube properties (&#x27;Height&#x27;, &#x27;Width&#x27;): Cube dimensions must all be
+positive numbers.
+At C:\code\classes.examples.ps1:26 char:13
++             throw $Message
++             ~~~~~~~~~~~~~~
+    + CategoryInfo          : OperationStopped: (Invalid cube pr...sitive
+    numbers.:String) [], RuntimeException
+    + FullyQualifiedErrorId : Invalid cube properties (&#x27;Height&#x27;, &#x27;Width&#x27;)
+   : Cube dimensions must all be positive numbers.
+```
+
+The method throws an exception because the **Height** and **Width** properties
+are invalid, preventing the class from calculating the current volume.
+
+# about_Classes_Methods
+
+### Example 4 - Static method with overloads
+
+The **ExampleCube4** class defines the static method `GetVolume()` with two
+overloads. The first overload has parameters for the dimensions of the cube and
+a flag to indicate whether the method should validate the input.
+
+The second overload only includes the numeric inputs. It calls the first
+overload with `$Strict` as `$true`. The second overload gives users a way to
+call the method without always having to define whether to strictly validate
+the input.
+
+The class also defines `GetVolume()` as an instance (nonstatic) method. This
+method calls the second static overload, ensuring that the instance
+`GetVolume()` method always validates the cube&#x27;s dimensions before returning
+the output value.
+
+```powershell
+class ExampleCube4 {
+    [float]   $Height
+    [float]   $Length
+    [float]   $Width
+
+    static [float] GetVolume(
+        [float]$Height,
+        [float]$Length,
+        [float]$Width,
+        [boolean]$Strict
+    ) {
+        $Signature = &quot;[ExampleCube4]::GetVolume({0}, {1}, {2}, {3})&quot;
+        $Signature = $Signature -f $Height, $Length, $Width, $Strict
+        Write-Verbose &quot;Called $Signature&quot;
+
+        if ($Strict) {
+            [ValidateScript({$_ -gt 0 })]$Height = $Height
+            [ValidateScript({$_ -gt 0 })]$Length = $Length
+            [ValidateScript({$_ -gt 0 })]$Width  = $Width
+        }
+
+        return $Height * $Length * $Width
+    }
+
+    static [float] GetVolume([float]$Height, [float]$Length, [float]$Width) {
+        $Signature = &quot;[ExampleCube4]::GetVolume($Height, $Length, $Width)&quot;
+        Write-Verbose &quot;Called $Signature&quot;
+
+        return [ExampleCube4]::GetVolume($Height, $Length, $Width, $true)
+    }
+
+    [float] GetVolume() {
+        Write-Verbose &quot;Called `$this.GetVolume()&quot;
+        return [ExampleCube4]::GetVolume(
+            $this.Height,
+            $this.Length,
+            $this.Width
+        )
+    }
+}
+
+$VerbosePreference = &#x27;Continue&#x27;
+$Cube = [ExampleCube4]@{ Height = 2 ; Length = 2 }
+$Cube.GetVolume()
+```
+
+```Output
+VERBOSE: Called $this.GetVolume()
+VERBOSE: Called [ExampleCube4]::GetVolume(2, 2, 0)
+VERBOSE: Called [ExampleCube4]::GetVolume(2, 2, 0, True)
+
+The variable cannot be validated because the value 0 is not a valid value
+for the Width variable.
+At C:\code\classes.examples.ps1:19 char:13
++             [ValidateScript({$_ -gt 0 })]$Width  = $Width
++             ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : MetadataError: (:) [], ValidationMetadataEx
+   ception
+    + FullyQualifiedErrorId : ValidateSetFailure
+```
+
+The verbose messages in the method definitions show how the initial call to
+`$this.GetVolume()` calls the static method.
+
+Calling the static method directly with the **Strict** parameter as `$false`
+returns `0` for the volume.
+
+```powershell
+[ExampleCube4]::GetVolume($Cube.Height, $Cube.Length, $Cube.Width, $false)
+```
+
+```Output
+VERBOSE: Called [ExampleCube4]::GetVolume(2, 2, 0, False)
+0
+```
+
+## Method signatures and overloads
+
+Every class method has a unique signature that defines how to call the method.
+The method&#x27;s output type, name, and parameters define the method signature.
+
+When a class defines more than one method with the same name, the definitions
+of that method are _overloads_. Overloads for a method must have different
+parameters. A method can&#x27;t define two implementations with the same parameters,
+even if the output types are different.
+
+The following class defines two methods, `Shuffle()` and `Deal()`. The `Deal()`
+method defines two overloads, one without any parameters and the other with the
+**Count** parameter.
+
+```powershell
+class CardDeck {
+    [string[]]$Cards  = @()
+    hidden [string[]]$Dealt  = @()
+    hidden [string[]]$Suits  = @(&#x27;Clubs&#x27;, &#x27;Diamonds&#x27;, &#x27;Hearts&#x27;, &#x27;Spades&#x27;)
+    hidden [string[]]$Values = 2..10 + @(&#x27;Jack&#x27;, &#x27;Queen&#x27;, &#x27;King&#x27;, &#x27;Ace&#x27;)
+
+    CardDeck() {
+        foreach($Suit in $this.Suits) {
+            foreach($Value in $this.Values) {
+                $this.Cards += &quot;$Value of $Suit&quot;
+            }
+        }
+        $this.Shuffle()
+    }
+
+    [void] Shuffle() {
+        $this.Cards = $this.Cards + $this.Dealt | Where-Object -FilterScript {
+             -not [string]::IsNullOrEmpty($_)
+        } | Get-Random -Count $this.Cards.Count
+    }
+
+    [string] Deal() {
+        if ($this.Cards.Count -eq 0) { throw &quot;There are no cards left.&quot; }
+
+        $Card        = $this.Cards[0]
+        $this.Cards  = $this.Cards[1..$this.Cards.Count]
+        $this.Dealt += $Card
+
+        return $Card
+    }
+
+    [string[]] Deal([int]$Count) {
+        if ($Count -gt $this.Cards.Count) {
+            throw &quot;There are only $($this.Cards.Count) cards left.&quot;
+        } elseif ($Count -lt 1) {
+            throw &quot;You must deal at least 1 card.&quot;
+        }
+
+        return (1..$Count | ForEach-Object { $this.Deal() })
+    }
+}
+```
+
+## Method output
+
+By default, methods don&#x27;t have any output. If a method signature includes an
+explicit output type other than **Void**, the method must return an object of
+that type. Methods don&#x27;t emit any output except when the `return` keyword
+explicitly returns an object.
+
+## Method parameters
+
+Class methods can define input parameters to use in the method body. Method
+parameters are enclosed in parentheses and are separated by commas. Empty
+parentheses indicate that the method requires no parameters.
+
+Parameters can be defined on a single line or multiple lines. The following
+blocks show the syntax for method parameters.
+
+```Syntax
+([[&lt;parameter-type&gt;]]$&lt;parameter-name&gt;[, [[&lt;parameter-type&gt;]]$&lt;parameter-name&gt;])
+```
+
+```Syntax
+(
+    [[&lt;parameter-type&gt;]]$&lt;parameter-name&gt;[,
+    [[&lt;parameter-type&gt;]]$&lt;parameter-name&gt;]
+)
+```
+
+Method parameters can be strongly typed. If a parameter isn&#x27;t typed, the method
+accepts any object for that parameter. If the parameter is typed, the method
+tries to convert the value for that parameter to the correct type, throwing an
+exception if the input can&#x27;t be converted.
+
+Method parameters can&#x27;t define default values. All method parameters are
+mandatory.
+
+Method parameters can&#x27;t have any other attributes. This prevents methods from
+using parameters with the `Validate*` attributes. For more information about
+the validation attributes, see [about_Functions_Advanced_Parameters][04].
+
+You can use one of the following patterns to add validation to method
+parameters:
+
+1. Reassign the parameters to the same variables with the required validation
+   attributes. This works for both static and instance methods. For an example
+   of this pattern, see [Example 4][05].
+1. Use `Update-TypeData` to define a `ScriptMethod` that uses validation
+   attributes on the parameters directly. This only works for instance methods.
+   For more information, see the
+   [Defining instance methods with Update-TypeData][06] section.
+
+# about_Classes_Methods
+
+## Automatic variables in methods
+
+Not all automatic variables are available in methods. The following list
+includes automatic variables and suggestions for whether and how to use them in
+PowerShell class methods. Automatic variables not included in the list aren&#x27;t
+available to class methods.
+
+- `$?` - Access as normal.
+- `$_` - Access as normal.
+- `$args` - Use the explicit parameter variables instead.
+- `$ConsoleFileName` - Access as `$Script:ConsoleFileName` instead.
+- `$Error` - Access as normal.
+- `$Event` - Access as normal.
+- `$EventArgs` - Access as normal.
+- `$EventSubscriber` - Access as normal.
+- `$ExecutionContext` - Access as `$Script:ExecutionContext` instead.
+- `$false` - Access as normal.
+- `$foreach` - Access as normal.
+- `$HOME` - Access as `$Script:HOME` instead.
+- `$Host` - Access as `$Script:Host` instead.
+- `$input` - Use the explicit parameter variables instead.
+- `$LASTEXITCODE` - Access as normal.
+- `$Matches` - Access as normal.
+- `$MyInvocation` - Access as normal.
+- `$NestedPromptLevel` - Access as normal.
+- `$null` - Access as normal.
+- `$PID` - Access as `$Script:PID` instead.
+- `$PROFILE` - Access as `$Script:PROFILE` instead.
+- `$PSBoundParameters` - Don&#x27;t use this variable. It&#x27;s intended for cmdlets and
+  functions. Using it in a class may have unexpected side effects.
+- `$PSCmdlet` - Don&#x27;t use this variable. It&#x27;s intended for cmdlets and
+  functions. Using it in a class may have unexpected side effects.
+- `$PSCommandPath` - Access as normal.
+- `$PSCulture` - Access as `$Script:PSCulture` instead.
+- `$PSEdition` - Access as `$Script:PSEdition` instead.
+- `$PSHOME` - Access as `$Script:PSHOME` instead.
+- `$PSItem` - Access as normal.
+- `$PSScriptRoot` - Access as normal.
+- `$PSSenderInfo` - Access as `$Script:PSSenderInfo` instead.
+- `$PSUICulture` - Access as `$Script:PSUICulture` instead.
+- `$PSVersionTable` - Access as `$Script:PSVersionTable` instead.
+- `$PWD` - Access as normal.
+- `$Sender` - Access as normal.
+- `$ShellId` - Access as `$Script:ShellId` instead.
+- `$StackTrace` - Access as normal.
+- `$switch` - Access as normal.
+- `$this` - Access as normal. In a class method, `$this` is always the current
+  instance of the class. You can access the class properties and methods with
+  it. It&#x27;s not available in static methods.
+- `$true` - Access as normal.
+
+For more information about automatic variables, see
+[about_Automatic_Variables][07].
+
+## Hidden methods
+
+You can hide methods of a class by declaring them with the `hidden` keyword.
+Hidden class methods are:
+
+- Not included in the list of class members returned by the `Get-Member`
+  cmdlet. To show hidden methods with `Get-Member`, use the **Force**
+  parameter.
+- Not displayed in tab completion or IntelliSense unless the completion occurs
+  in the class that defines the hidden method.
+- Public members of the class. They can be called and inherited. Hiding a
+  method doesn&#x27;t make it private. It only hides the method as described in the
+  previous points.
+
+&gt; [!NOTE]
+&gt; When you hide any overload for a method, that method is removed from
+&gt; IntelliSense, completion results, and the default output for `Get-Member`.
+
+For more information about the `hidden` keyword, see [about_Hidden][08].
+
+## Static methods
+
+You can define a method as belonging to the class itself instead of instances
+of the class by declaring the method with the `static` keyword. Static class
+methods:
+
+- Are always available, independent of class instantiation.
+- Are shared across all instances of the class.
+- Are always available.
+- Can&#x27;t access instance properties of the class. They can only access static
+  properties.
+- Live for the entire session span.
+
+# about_Classes_Methods
+
+## Derived class methods
+
+When a class derives from a base class, it inherits the methods of the base
+class and their overloads. Any method overloads defined on the base class,
+including hidden methods, are available on the derived class.
+
+A derived class can override an inherited method overload by redefining it in
+the class definition. To override the overload, the parameter types must be the
+same as for the base class. The output type for the overload can be different.
+
+Unlike constructors, methods can&#x27;t use the `: base(&lt;parameters&gt;)` syntax to
+invoke a base class overload for the method. The redefined overload on the
+derived class completely replaces the overload defined by the base class.
+
+The following example shows the behavior for static and instance methods on
+derived classes.
+
+The base class defines:
+
+- The static methods `Now()` for returning the current time and `DaysAgo()` for
+  returning a date in the past.
+- The instance property **TimeStamp** and a `ToString()` instance method that
+  returns the string representation of that property. This ensures that when an
+  instance is used in a string it converts to the datetime string instead of
+  the class name.
+- The instance method `SetTimeStamp()` with two overloads. When the method is
+  called without parameters, it sets the **TimeStamp** to the current time.
+  When the method is called with a **DateTime**, it sets the **TimeStamp** to
+  that value.
+
+```powershell
+class BaseClass {
+    static [datetime] Now() {
+        return Get-Date
+    }
+    static [datetime] DaysAgo([int]$Count) {
+        return [BaseClass]::Now().AddDays(-$Count)
+    }
+
+    [datetime] $TimeStamp = [BaseClass]::Now()
+
+    [string] ToString() {
+        return $this.TimeStamp.ToString()
+    }
+
+    [void] SetTimeStamp([datetime]$TimeStamp) {
+        $this.TimeStamp = $TimeStamp
+    }
+    [void] SetTimeStamp() {
+        $this.TimeStamp = [BaseClass]::Now()
+    }
+}
+```
+
+The next block defines classes derived from **BaseClass**:
+
+- **DerivedClassA** inherits from **BaseClass** without any overrides.
+- **DerivedClassB** overrides the `DaysAgo()` static method to return a string
+  representation instead of the **DateTime** object. It also overrides the
+  `ToString()` instance method to return the timestamp as an ISO8601 date
+  string.
+- **DerivedClassC** overrides the parameterless overload of the
+  `SetTimeStamp()` method so that setting the timestamp without parameters sets
+  the date to 10 days before the current date.
+
+```powershell
+class DerivedClassA : BaseClass     {}
+class DerivedClassB : BaseClass     {
+    static [string] DaysAgo([int]$Count) {
+        return [BaseClass]::DaysAgo($Count).ToString(&#x27;yyyy-MM-dd&#x27;)
+    }
+    [string] ToString() {
+        return $this.TimeStamp.ToString(&#x27;yyyy-MM-dd&#x27;)
+    }
+}
+class DerivedClassC : BaseClass {
+    [void] SetTimeStamp() {
+        $this.SetTimeStamp([BaseClass]::Now().AddDays(-10))
+    }
+}
+```
+
+The following block shows the output of the static `Now()` method for the
+defined classes. The output is the same for every class, because the derived
+classes don&#x27;t override the base class implementation of the method.
+
+```powershell
+&quot;[BaseClass]::Now()     =&gt; $([BaseClass]::Now())&quot;
+&quot;[DerivedClassA]::Now() =&gt; $([DerivedClassA]::Now())&quot;
+&quot;[DerivedClassB]::Now() =&gt; $([DerivedClassB]::Now())&quot;
+&quot;[DerivedClassC]::Now() =&gt; $([DerivedClassC]::Now())&quot;
+```
+
+```Output
+[BaseClass]::Now()     =&gt; 11/06/2023 09:41:23
+[DerivedClassA]::Now() =&gt; 11/06/2023 09:41:23
+[DerivedClassB]::Now() =&gt; 11/06/2023 09:41:23
+[DerivedClassC]::Now() =&gt; 11/06/2023 09:41:23
+```
+
+The next block calls the `DaysAgo()` static method of each class. Only the
+output for **DerivedClassB** is different, because it overrode the base
+implementation.
+
+```powershell
+&quot;[BaseClass]::DaysAgo(3)     =&gt; $([BaseClass]::DaysAgo(3))&quot;
+&quot;[DerivedClassA]::DaysAgo(3) =&gt; $([DerivedClassA]::DaysAgo(3))&quot;
+&quot;[DerivedClassB]::DaysAgo(3) =&gt; $([DerivedClassB]::DaysAgo(3))&quot;
+&quot;[DerivedClassC]::DaysAgo(3) =&gt; $([DerivedClassC]::DaysAgo(3))&quot;
+```
+
+```Output
+[BaseClass]::DaysAgo(3)     =&gt; 11/03/2023 09:41:38
+[DerivedClassA]::DaysAgo(3) =&gt; 11/03/2023 09:41:38
+[DerivedClassB]::DaysAgo(3) =&gt; 2023-11-03
+[DerivedClassC]::DaysAgo(3) =&gt; 11/03/2023 09:41:38
+```
+
+The following block shows the string presentation of a new instance for each
+class. The representation for **DerivedClassB** is different because it
+overrode the `ToString()` instance method.
+
+```powershell
+&quot;`$base = [BaseClass]::new()     =&gt; $($base = [BaseClass]::new(); $base)&quot;
+&quot;`$a    = [DerivedClassA]::new() =&gt; $($a = [DerivedClassA]::new(); $a)&quot;
+&quot;`$b    = [DerivedClassB]::new() =&gt; $($b = [DerivedClassB]::new(); $b)&quot;
+&quot;`$c    = [DerivedClassC]::new() =&gt; $($c = [DerivedClassC]::new(); $c)&quot;
+```
+
+```Output
+$base = [BaseClass]::new()     =&gt; 11/6/2023 9:44:57 AM
+$a    = [DerivedClassA]::new() =&gt; 11/6/2023 9:44:57 AM
+$b    = [DerivedClassB]::new() =&gt; 2023-11-06
+$c    = [DerivedClassC]::new() =&gt; 11/6/2023 9:44:57 AM
+```
+
+The next block calls the `SetTimeStamp()` instance method for each instance,
+setting the **TimeStamp** property to a specific date. Each instance has the
+same date, because none of the derived classes override the parameterized
+overload for the method.
+
+```powershell
+[datetime]$Stamp = &#x27;2024-10-31&#x27;
+&quot;`$base.SetTimeStamp(`$Stamp) =&gt; $($base.SetTimeStamp($Stamp) ; $base)&quot;
+&quot;`$a.SetTimeStamp(`$Stamp)    =&gt; $($a.SetTimeStamp($Stamp); $a)&quot;
+&quot;`$b.SetTimeStamp(`$Stamp)    =&gt; $($b.SetTimeStamp($Stamp); $b)&quot;
+&quot;`$c.SetTimeStamp(`$Stamp)    =&gt; $($c.SetTimeStamp($Stamp); $c)&quot;
+```
+
+```Output
+$base.SetTimeStamp($Stamp) =&gt; 10/31/2024 12:00:00 AM
+$a.SetTimeStamp($Stamp)    =&gt; 10/31/2024 12:00:00 AM
+$b.SetTimeStamp($Stamp)    =&gt; 2024-10-31
+$c.SetTimeStamp($Stamp)    =&gt; 10/31/2024 12:00:00 AM
+```
+
+The last block calls `SetTimeStamp()` without any parameters. The output shows
+that the value for the **DerivedClassC** instance is set to 10 days before the
+others.
+
+```powershell
+&quot;`$base.SetTimeStamp() =&gt; $($base.SetTimeStamp() ; $base)&quot;
+&quot;`$a.SetTimeStamp()    =&gt; $($a.SetTimeStamp(); $a)&quot;
+&quot;`$b.SetTimeStamp()    =&gt; $($b.SetTimeStamp(); $b)&quot;
+&quot;`$c.SetTimeStamp()    =&gt; $($c.SetTimeStamp(); $c)&quot;
+```
+
+```Output
+$base.SetTimeStamp() =&gt; 11/6/2023 9:53:58 AM
+$a.SetTimeStamp()    =&gt; 11/6/2023 9:53:58 AM
+$b.SetTimeStamp()    =&gt; 2023-11-06
+$c.SetTimeStamp()    =&gt; 10/27/2023 9:53:58 AM
+```
+
+## Define instance methods with Update-TypeData
+
+Beyond declaring methods directly in the class definition, you can define
+methods for instances of a class in the static constructor using the
+`Update-TypeData` cmdlet.
+
+Use this snippet as a starting point for the pattern. Replace the placeholder
+text in angle brackets as needed.
+
+```powershell
+class &lt;ClassName&gt; {
+    static [hashtable[]] $MemberDefinitions = @(
+        @{
+            MemberName = &#x27;&lt;MethodName&gt;&#x27;
+            MemberType = &#x27;ScriptMethod&#x27;
+            Value      = {
+              param(&lt;method-parameters&gt;)
+
+              &lt;method-body&gt;
+            }
+        }
+    )
+
+    static &lt;ClassName&gt;() {
+        $TypeName = [&lt;ClassName&gt;].Name
+        foreach ($Definition in [&lt;ClassName&gt;]::MemberDefinitions) {
+            Update-TypeData -TypeName $TypeName @Definition
+        }
+    }
+}
+```
+
+&gt; [!TIP]
+&gt; The `Add-Member` cmdlet can add properties and methods to a class in
+&gt; non-static constructors, but the cmdlet runs every time the constructor is
+&gt; called. Using `Update-TypeData` in the static constructor ensures that the
+&gt; code for adding the members to the class only needs to run once in a session.
+
+# about_Classes_Methods
+
+### Defining methods with default parameter values and validation attributes
+
+Methods defined directly in a class declaration can&#x27;t define default values or
+validation attributes on the method parameters. To define class methods with
+default values or validation attributes, they must be defined as
+**ScriptMethod** members.
+
+In this example, the **CardDeck** class defines a `Draw()` method that uses
+both a validation attribute and a default value for the **Count** parameter.
+
+```powershell
+class CookieJar {
+    [int] $Cookies = 12
+
+    static [hashtable[]] $MemberDefinitions = @(
+        @{
+            MemberName = &#x27;Eat&#x27;
+            MemberType = &#x27;ScriptMethod&#x27;
+            Value      = {
+                param(
+                    [ValidateScript({ $_ -ge 1 -and $_ -le $this.Cookies })]
+                    [int] $Count = 1
+                )
+
+                $this.Cookies -= $Count
+                if ($Count -eq 1) {
+                    &quot;You ate 1 cookie. There are $($this.Cookies) left.&quot;
+                } else {
+                    &quot;You ate $Count cookies. There are $($this.Cookies) left.&quot;
+                }
+            }
+        }
+    )
+
+    static CookieJar() {
+        $TypeName = [CookieJar].Name
+        foreach ($Definition in [CookieJar]::MemberDefinitions) {
+            Update-TypeData -TypeName $TypeName @Definition
+        }
+    }
+}
+
+$Jar = [CookieJar]::new()
+$Jar.Eat(1)
+$Jar.Eat()
+$Jar.Eat(20)
+$Jar.Eat(6)
+```
+
+```Output
+You ate 1 cookie. There are 11 left.
+
+You ate 1 cookie. There are 10 left.
+
+Exception calling &quot;Eat&quot; with &quot;1&quot; argument(s): &quot;The attribute cannot be
+added because variable Count with value 20 would no longer be valid.&quot;
+At line:1 char:1
++ $Jar.Eat(20)
++ ~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (:) [], MethodInvocationExcep
+   tion
+    + FullyQualifiedErrorId : ScriptMethodRuntimeException
+
+You ate 6 cookies. There are 4 left.
+```
+
+&gt; [!NOTE]
+&gt; While this pattern works for validation attributes, notice that the exception
+&gt; is misleading, referencing an inability to add an attribute. It might be a
+&gt; better user experience to explicitly check the value for the parameter and
+&gt; raise a meaningful error instead. That way, users can understand why they&#x27;re
+&gt; seeing the error and what to do about it.
+
+## Limitations
+
+PowerShell class methods have the following limitations:
+
+- Method parameters can&#x27;t use any attributes, including validation attributes.
+
+  Workaround: Reassign the parameters in the method body with the validation
+  attribute or define the method in the static constructor with the
+  `Update-TypeData` cmdlet.
+- Method parameters can&#x27;t define default values. The parameters are always
+  mandatory.
+
+  Workaround: Define the method in the static constructor with the
+  `Update-TypeData` cmdlet.
+- Methods are always public, even when they&#x27;re hidden. They can be overridden
+  when the class is inherited.
+
+  Workaround: None.
+- If any overload of a method is hidden, every overload for that method is
+  treated as hidden too.
+
+  Workaround: None.
+
+## See also
+
+- [about_Automatic_Variables][07]
+- [about_Classes][09]
+- [about_Classes_Constructors][10]
+- [about_Classes_Inheritance][11]
+- [about_Classes_Properties][12]
+- [about_Using][13]
+
+&lt;!-- Link reference definitions --&gt;
+[01]: about_Preference_Variables.md
+[02]: #hidden-methods
+[03]: #static-methods
+[04]: about_Functions_Advanced_Parameters.md#parameter-and-variable-validation-attributes
+[05]: #example-4---static-method-with-overloads
+[06]: #define-instance-methods-with-update-typedata
+[07]: about_Automatic_Variables.md
+[08]: about_Hidden.md
+[09]: about_Classes.md
+[10]: about_Classes_Constructors.md
+[11]: about_Classes_Inheritance.md
+[12]: about_Classes_Properties.md
+[13]: about_Using.md</pre></section>

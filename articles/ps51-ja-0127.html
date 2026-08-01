@@ -1,0 +1,439 @@
+<!doctype html><meta charset="utf-8"><section class="jp-official"><h1>Set-ADClaimTransformLinkの設定を表示する</h1>
+<h2>SYNOPSISは,アクティブディレクトリで1つまたは複数のクロスフォレスト信頼関係にクレーム変換を適用します.</h2>
+<h2>SYNTAXは,のシンタックスです.</h2>
+<pre><code>Set-ADClaimTransformLink [-WhatIf] [-Confirm] [-AuthType &lt;ADAuthType&gt;] [-Credential &lt;PSCredential&gt;]
+ [-Identity] &lt;ADTrust&gt; [-PassThru] [-Policy] &lt;ADClaimTransformPolicy&gt; [-Server &lt;String&gt;]
+ -TrustRole &lt;ADTrustRole&gt; [&lt;CommonParameters&gt;]
+</code></pre>
+<h2>記述 <strong>Set-ADClaimTransformLink</strong> cmdletは,アクティブディレクトリ内の1つまたは複数のクロスフォレスト信頼関係にクレーム変換を適用するために使用できます.</h2>
+<h2>例えは</h2>
+<h3>例1: アクティブ・ディレクトリで,クレーム変換ポリシーをクロスフォレスト信頼関係に設定する```</h3>
+<p>PS C:&gt; New-ADClaimTransformPolicy -Identity DenyAllPolicy -DenyAll
+PS C:&gt; Set-ADClaimTransformLink "corp.contoso.com" -Policy DenyAllPolicy -TrustRole Trusted
+PS C:&gt; Set-ADClaimTransformLink "corp.contoso.com" -Policy DenyAllPolicy -TrustRole Trusting</p>
+<pre><code>
+このコマンドは,信頼 corp.contoso.comへの請求変容ポリシーDenyAllPolicyを適用します.このドメインが信頼のドメインとして機能する際には,このルールが適用されます.実際,このルールは,信頼のパートナーからこのドメインに入ってくる請求と,このドメインから信頼のパートナーに向かって流れる請求の両方に適用されます.
+
+指定された変換ルールは,送信または受信するすべての請求を否定しているため,このドメインは,他のドメイン,信頼パートナーから送信または受信するすべての請求を否定します.
+
+### 例2: アクティブ・ディレクトリで,クレーム変換ポリシーをクロスフォレスト信頼関係に設定する```
+PS C:\&gt; New-ADClaimTransformPolicy -Identity AllowAllExceptCompanyAndDepartmentPolicy -AllowAllExcept Company,Department
+PS C:\&gt; Get-ADTrust &quot;corp.contoso.com&quot; | Set-ADClaimTransformLink -Policy AllowAllExceptCompanyAndDepartmentPolicy -TrustRole Trusted
+</code></pre>
+<p>このコマンドは,信頼 corp.contoso.comへの請求変換ポリシー AllowAllExceptCompanyAndDepartmentPolicyを適用します.このルールが信頼内の信頼ドメインとして機能するドメインに適用されます.実際,このルールが信頼パートナーに向かってこのドメインから流れる請求に適用されます.</p>
+<p>指定された変換規則は,会社と部門を除くすべての請求を送信または受信することを許可しているため,このドメインは,他のドメインである信頼パートナーに2つの請求を除くすべての請求を送信することを許可します.</p>
+<h3>例3: アクティブ・ディレクトリで,クレーム変換ポリシーをクロスフォレスト信頼関係に設定する```</h3>
+<p>PS C:&gt; New-ADClaimTransformPolicy -Identity HumanResourcesToHrPolicy -Rule 'C1:[Type=="ad://ext/Department:88ce6e1cc00e9524", Value=="Human Resources", ValueType=="string"] =&gt; issue(Type=C1.Type, Value="HR", ValueType=C1.ValueType);'; 
+PS C:&gt; Set-ADClaimTransformLink -Identity "corp.contoso.com" -Policy HumanResourcesToHrPolicy -TrustRole Trusting</p>
+<pre><code>
+このコマンドは,人資源ToHrPolicyへの請求変換ポリシーを,信託 corp.contoso.com に適用します.このルールが,このドメインが信託内の信頼ドメインとして機能する場合には適用されます.実際,このルールは,信頼パートナーからこのドメインに入ってくる請求に適用されます.
+
+指定された変換ルールは,請求のAd://ext/Department:88ce6e1cc00e9524での人材資源をHRに変換するので,このドメインは,他のドメイン,信頼パートナーから受け取った請求値を,Human ResourcesからHRに変換します.
+
+## パラメータは
+
+### -AuthType は,使用する認証方法を指定します.このパラメータの受け入れ可能な値は:です.
+
+- 交渉するまたは0 - 基本または1
+
+デフォルト認証方法は,交渉です.
+
+基本認証方法には,セキュアソケットレイヤ (SSL) 接続が必要となります.
+
+```yaml
+Type: ADAuthType
+Parameter Sets: (All)
+Aliases: 
+Accepted values: Negotiate, Basic
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>- 確認は,cmdletを実行する前に確認を提示します.</h3>
+<pre><code class="language-yaml">Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: cf
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-Credential この作業を実行するために使用するユーザーアカウントの認証を指定します.当時はログインしているユーザーに,Cmdlet がWindows PowerShell プロバイダードライブのアクティブディレクトリ モジュールから実行されている場合を除き,デフォルトで使用するユーザーアカウントの認証です.</h3>
+<p>このパラメータを指定するには,ユーザー名,例えば User1 または Domain01\User01 を入力するか,PSCredential** オブジェクトを指定することもできます.このパラメータのユーザー名を指定すると,cmdlet はパスワードを提示します.</p>
+<p>また,スクリプトを使用して <strong>PSCredential</strong> オブジェクトを作成したり, <strong>Get-Credential</strong> cmdlet を使用したりできます.その後, <strong>PSCredential</strong> オブジェクトに <em>Credential</em> パラメータを設定できます.</p>
+<p>実行する認証がタスクを実行するためのディレクトリレベルの許可がない場合,Windows PowerShell用のアクティブディレクトリモジュールでは終了エラーが返されます.</p>
+<pre><code class="language-yaml">Type: PSCredential
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-Identity Active Directoryグループオブジェクトを括弧で識別する方法は,以下の値のうちの1つを提供することで指定されます.括弧の識別子は,属性に対する軽量ディレクトリアクセスプロトコル (LDAP) の表示名です.このパラメータの受け入れ可能な値は:</h3>
+<p>特徴的な名前 -  GUID (objectGUID) - </p>
+<p>このパラメータは,このオブジェクトをパイプラインを通過させることもできます.または,このパラメータをオブジェクトインスタンスの設定でもできます.</p>
+<pre><code class="language-yaml">Type: ADTrust
+Parameter Sets: (All)
+Aliases: 
+
+Required: True
+Position: 0
+Default value: None
+Accept pipeline input: True (ByValue)
+Accept wildcard characters: False
+</code></pre>
+<h3>-PassThru は,あなたが取り組んでいるアイテムを表すオブジェクトを返します.デフォルトでは,このcmdlet は出力を生成しません.</h3>
+<pre><code class="language-yaml">Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>ポリシー ローズ・トランスフォーメーションポリシーをクロスフォレスト信頼関係に適用する方針を指定します.このパラメータはパイプライン入力を受けません.</h3>
+<pre><code class="language-yaml">Type: ADClaimTransformPolicy
+Parameter Sets: (All)
+Aliases: 
+
+Required: True
+Position: 1
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h1>Set-ADClaimTransformLinkの設定を表示する</h1>
+<h3>-Serverは,対応するドメイン名またはディレクトリサーバーに以下の値のうちの1つを提供することで,接続するアクティブディレクトリ ドメインサービスインスタンスを指定します.サービスは以下のいずれかかもしれません.</h3>
+<p>次の方法の一つで,アクティブディレクトリ ドメインサービスインスタンスを指定してください.</p>
+<p>ドメイン名値:</p>
+<ul>
+<li>完全資格ドメイン名 - NetBIOS名</li>
+</ul>
+<p>ディレクトリサーバーの値: </p>
+<ul>
+<li>完全資格のあるディレクトリサーバー名 - NetBIOS名 - 完全資格のあるディレクトリサーバー名とポート</li>
+</ul>
+<p>このパラメータのデフォルト値は,次の方法のうちの1つによって,列挙された順序で決定されます:</p>
+<p>パイプラインを通過したオブジェクトから <em>Server</em> 値を利用することで - Active Directory Domain Services Windows PowerShell プロバイダードライブに関連したサーバー情報を利用することで,当ドライブでcmdlet が実行される場合 - Windows PowerShell を実行しているコンピュータのドメインを使用して -</p>
+<pre><code class="language-yaml">Type: String
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-TrustRole は,リンクの種類をリストとして信頼の役割を指定します. 請求の変換が適用される信頼関係におけるどのリンクを指定するために使用されます. このパラメータの受け入れ可能な値は:</h3>
+<ul>
+<li>信頼する - 信頼する</li>
+</ul>
+<pre><code class="language-yaml">Type: ADTrustRole
+Parameter Sets: (All)
+Aliases: 
+Accepted values: Trusted, Trusting
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-WhatIf が実行されればどうなるか示します.</h3>
+<pre><code class="language-yaml">Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: wi
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>共通パラメータ このcmdletは共通パラメータをサポートしています: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable.詳細については, <a href="を参照してください.https://go.microsoft.com/fwlink/?LinkID=113216">about_CommonParameters</a> でした.</h3>
+<h2>輸入は</h2>
+<h3>Microsoft.ActiveDirectory.Management.ADTrust 信頼オブジェクトは, <em>Identity</em> パラメータによって受信されます.</h3>
+<h2>輸出は</h2>
+<h3>Microsoftのいずれも.ActiveDirectory.Management.ADTrust</h3>
+<h2>NOTES  記事ができました.</h2>
+<h2>関連リンク</h2>
+<p><a href="./Clear-ADClaimTransformLink.md">Clear-ADClaimTransformLink</a> </p>
+<p><a href="./activedirectory.md">AD DS Administration Cmdlets in Windows PowerShell</a> を表示する</p></section><section class="en-original"><pre class="source-original"># Set-ADClaimTransformLink
+
+## SYNOPSIS
+Applies a claims transformation to one or more cross-forest trust relationships in Active Directory.
+
+## SYNTAX
+
+```
+Set-ADClaimTransformLink [-WhatIf] [-Confirm] [-AuthType &lt;ADAuthType&gt;] [-Credential &lt;PSCredential&gt;]
+ [-Identity] &lt;ADTrust&gt; [-PassThru] [-Policy] &lt;ADClaimTransformPolicy&gt; [-Server &lt;String&gt;]
+ -TrustRole &lt;ADTrustRole&gt; [&lt;CommonParameters&gt;]
+```
+
+## DESCRIPTION
+The **Set-ADClaimTransformLink** cmdlet can be used to apply a claims transformation to one or more cross-forest trust relationships in Active Directory.
+
+## EXAMPLES
+
+### Example 1: Set a claims transformation policy to a cross-forest trusted relationship in Active Directory
+```
+PS C:\&gt; New-ADClaimTransformPolicy -Identity DenyAllPolicy -DenyAll
+PS C:\&gt; Set-ADClaimTransformLink &quot;corp.contoso.com&quot; -Policy DenyAllPolicy -TrustRole Trusted
+PS C:\&gt; Set-ADClaimTransformLink &quot;corp.contoso.com&quot; -Policy DenyAllPolicy -TrustRole Trusting
+```
+
+This command applies the claims transformation policy DenyAllPolicy to the trust corp.contoso.com.
+The rule is applied to where this domain acts as both the trusted and trusting domain in the trust.
+Effectively, the rule is applied to both claims coming in to this domain from its trust partner, and claims flowing out of this domain towards its trust partner.
+
+Since the specified transformation rule denies all claims to be sent or received, this domain will now deny all claims from being sent to or received from the other domain, the trust partner.
+
+### Example 2: Set a claims transformation policy to a cross-forest trusted relationship in Active Directory
+```
+PS C:\&gt; New-ADClaimTransformPolicy -Identity AllowAllExceptCompanyAndDepartmentPolicy -AllowAllExcept Company,Department
+PS C:\&gt; Get-ADTrust &quot;corp.contoso.com&quot; | Set-ADClaimTransformLink -Policy AllowAllExceptCompanyAndDepartmentPolicy -TrustRole Trusted
+```
+
+This command applies the claims transformation policy AllowAllExceptCompanyAndDepartmentPolicy to the trust corp.contoso.com.
+The rule is applied to where this domain acts as the trusted domain in the trust.
+Effectively, the rule is applied to claims flowing out of this domain towards its trust partner.
+
+Since the specified transformation rule allows all claims to be sent or received except Company and Department, this domain will now allow all claims except the two from being sent to the other domain, the trust partner.
+
+### Example 3: Set a claims transformation policy to a cross-forest trusted relationship in Active Directory
+```
+PS C:\&gt; New-ADClaimTransformPolicy -Identity HumanResourcesToHrPolicy -Rule &#x27;C1:[Type==&quot;ad://ext/Department:88ce6e1cc00e9524&quot;, Value==&quot;Human Resources&quot;, ValueType==&quot;string&quot;] =&gt; issue(Type=C1.Type, Value=&quot;HR&quot;, ValueType=C1.ValueType);&#x27;; 
+PS C:\&gt; Set-ADClaimTransformLink -Identity &quot;corp.contoso.com&quot; -Policy HumanResourcesToHrPolicy -TrustRole Trusting
+```
+
+This command applies the claims transformation policy HumanResourcesToHrPolicy to the trust corp.contoso.com.
+The rule is applied to where this domain acts as the trusting domain in the trust.
+Effectively, the rule is applied to claims coming in to this domain from its trust partner.
+
+Since the specified transformation rule transforms the value Human Resources into HR in the claim ad://ext/Department:88ce6e1cc00e9524, this domain will now transform the claim value received from the other domain, the trust partner, from Human Resources to HR.
+
+## PARAMETERS
+
+### -AuthType
+Specifies the authentication method to use.
+The acceptable values for this parameter are:
+
+- Negotiate or 0
+- Basic or 1
+
+The default authentication method is Negotiate.
+
+A Secure Sockets Layer (SSL) connection is required for the Basic authentication method.
+
+```yaml
+Type: ADAuthType
+Parameter Sets: (All)
+Aliases: 
+Accepted values: Negotiate, Basic
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Confirm
+Prompts you for confirmation before running the cmdlet.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: cf
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Credential
+Specifies the user account credentials to use to perform this task.
+The default credentials are the credentials of the currently logged on user unless the cmdlet is run from an Active Directory module for Windows PowerShell provider drive.
+If the cmdlet is run from such a provider drive, the account associated with the drive is the default.
+
+To specify this parameter, you can type a user name, such as User1 or Domain01\User01 or you can specify a **PSCredential** object.
+If you specify a user name for this parameter, the cmdlet prompts for a password.
+
+You can also create a **PSCredential** object by using a script or by using the **Get-Credential** cmdlet.
+You can then set the *Credential* parameter to the **PSCredential** object.
+
+If the acting credentials do not have directory-level permission to perform the task, Active Directory module for Windows PowerShell returns a terminating error.
+
+```yaml
+Type: PSCredential
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Identity
+Specifies an Active Directory group object by providing one of the following values.
+The identifier in parentheses is the Lightweight Directory Access Protocol (LDAP) display name for the attribute.
+The acceptable values for this parameter are:
+
+- A distinguished name
+- A GUID (objectGUID)
+
+This parameter can also get this object through the pipeline or you can set this parameter to an object instance.
+
+```yaml
+Type: ADTrust
+Parameter Sets: (All)
+Aliases: 
+
+Required: True
+Position: 0
+Default value: None
+Accept pipeline input: True (ByValue)
+Accept wildcard characters: False
+```
+
+### -PassThru
+Returns an object representing the item with which you are working.
+By default, this cmdlet does not generate any output.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Policy
+Specifies the claims transformation policy to apply to the cross-forest trust relationship.
+This parameter does not receive pipeline input.
+
+```yaml
+Type: ADClaimTransformPolicy
+Parameter Sets: (All)
+Aliases: 
+
+Required: True
+Position: 1
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+# Set-ADClaimTransformLink
+
+### -Server
+Specifies the Active Directory Domain Services instance to connect to, by providing one of the following values for a corresponding domain name or directory server.
+The service may be any of the following:  Active Directory Lightweight Domain Services, Active Directory Domain Services or Active Directory snapshot instance.
+
+Specify the Active Directory Domain Services instance in one of the following ways:  
+
+Domain name values:
+
+- Fully qualified domain name
+- NetBIOS name
+
+Directory server values: 
+
+- Fully qualified directory server name
+- NetBIOS name
+- Fully qualified directory server name and port
+
+The default value for this parameter is determined by one of the following methods in the order that they are listed:
+
+- By using the *Server* value from objects passed through the pipeline
+- By using the server information associated with the Active Directory Domain Services Windows PowerShell provider drive, when the cmdlet runs in that drive
+- By using the domain of the computer running Windows PowerShell
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -TrustRole
+Specifies a trust role, as an enumeration of the link types.
+Used to specify which links on the trust relationships that the claims transformation apply to.
+The acceptable values for this parameter are:
+
+- Trusted
+- Trusting
+
+```yaml
+Type: ADTrustRole
+Parameter Sets: (All)
+Aliases: 
+Accepted values: Trusted, Trusting
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -WhatIf
+Shows what would happen if the cmdlet runs.
+The cmdlet is not run.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: wi
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### CommonParameters
+This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable. For more information, see [about_CommonParameters](https://go.microsoft.com/fwlink/?LinkID=113216).
+
+## INPUTS
+
+### Microsoft.ActiveDirectory.Management.ADTrust
+A trust object is received by the *Identity* parameter.
+
+## OUTPUTS
+
+### None or Microsoft.ActiveDirectory.Management.ADTrust
+
+## NOTES
+
+## RELATED LINKS
+
+[Clear-ADClaimTransformLink](./Clear-ADClaimTransformLink.md)
+
+[AD DS Administration Cmdlets in Windows PowerShell](./activedirectory.md)</pre></section>

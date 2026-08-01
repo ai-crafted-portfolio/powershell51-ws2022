@@ -1,0 +1,939 @@
+<!doctype html><meta charset="utf-8"><section class="jp-official"><h1>セットADグループ</h1>
+<h2>SYNOPSIS は Active Directory グループを修正する.</h2>
+<h2>SYNTAXは,のシンタックスです.</h2>
+<h3>アイデンティティ```</h3>
+<p>Set-ADGroup [-WhatIf] [-Confirm] [-Add <Hashtable>] [-AuthType <ADAuthType>] [-Clear <String[]>]
+ [-Credential <PSCredential>] [-Description <String>] [-DisplayName <String>]
+ [-GroupCategory <ADGroupCategory>] [-GroupScope <ADGroupScope>] [-HomePage <String>] [-Identity] <ADGroup>
+ [-ManagedBy <ADPrincipal>] [-Partition <String>] [-PassThru] [-Remove <Hashtable>] [-Replace <Hashtable>]
+ [-SamAccountName <String>] [-Server <String>] [<CommonParameters>]</p>
+<pre><code>
+### 文脈の例です.```
+Set-ADGroup [-WhatIf] [-Confirm] [-AuthType &lt;ADAuthType&gt;] [-Credential &lt;PSCredential&gt;] -Instance &lt;ADGroup&gt;
+ [-PassThru] [-Server &lt;String&gt;] [&lt;CommonParameters&gt;]
+</code></pre>
+<h2>記述 <strong>Set-ADGroup</strong> cmdlet は,アクティブディレクトリグループの属性を修正する.あなたは,cmdlet パラメータを使用して一般的に使用されるプロパティ値を修正することができます.cmdlet パラメータに関連付けられていないプロパティ値は, <em>Add</em>, <em>Replace</em>, <em>Clear</em>, <em>Remove</em> パラメータを使用して変更することができます.</h2>
+<p><em>Identity</em> パラメータは,変更するアクティブディレクトリグループを指定します. グループをその名,GUID,セキュリティ識別子,またはセキュリティアカウント管理者 (SAM) 口座名によって識別できます. また, <em>Identity</em> パラメタをオブジェクト変数に設定できます. 例えば <code>$&lt;localGroupObject&gt;</code>グループオブジェクトをパイプラインを通過して <em>Identity</em> パラメータに転送することもできます.例えば,グループオブジェクトを入手するために <strong>Get-ADGroup</strong> cmdlet を使用し,パイプラインを通過して <strong>Set-ADGroup</strong> cmdlet に転送することもできます.</p>
+<p><em>インスタンスの</em>パラメータは,オブジェクトのコピーに変更を加えたときにグループオブジェクトを更新する方法を提供します.変更されたアクティブディレクトリグループオブジェクトのコピーに <em>インスタンスの</em>パラメータを設定すると, <strong>Set-ADGroup</strong> cmdlet は元のグループオブジェクトに同じ変更を行います.変更されるオブジェクトのコピーを取得するには, <strong>Get-ADGroup</strong> cmdlet を使用してください. <em>インスタンスの</em>パラメータを使用する際には, <em>Identity</em> パラメータは許可されません. <em>Instance</em> パラメータについての詳細については, <em>Instance</em> パラメータの説明を参照してください.</p>
+<h2>例えは</h2>
+<h3>例1: グループに属性設定する```</h3>
+<p>PS C:&gt; Set-ADGroup -Server localhost:60000 -Identity "CN=AccessControl,DC=AppNC" -Description "Access Group" -Passthru</p>
+<p>DistinguishedName : CN=AccessControl,DC=AppNC
+GroupCategory     : Security
+GroupScope        : DomainLocal
+Name              : AccessControl
+ObjectClass       : group
+ObjectGUID        : d65f5e8f-36da-4390-9840-8b9fde6282fc
+SID               : S-1-510474493-936115905-2782881406-1264922549-3814061485-1557022459</p>
+<pre><code>
+このコマンドは,アクティブディレクトリアプリケーションモード (ADAM) インスタンスのアクセスグループへのAccessControlというグループの **Description**属性を設定します.
+
+### 例2: フィルタリングされたグループに関する記述を設定します.```
+PS C:\&gt; Get-ADGroup -Filter 'name -like &quot;Access*&quot;' | Set-ADGroup -Description &quot;Access Group&quot;
+</code></pre>
+<p>このコマンドは,パイプライン操作符を使用して,Access から始まる名前を持つすべてのグループにおける <strong>Description</strong> 属性を変更します.</p>
+<h3>例3: インスタンスを指定することによってプロパティを設定する```</h3>
+<p>PS C:&gt; $Group = Get-ADGroup -Server localhost:60000 -Identity "CN=AccessControl,DC=AppNC"
+PS C:&gt; $Group.Description = "Access Group"
+PS C:&gt; Set-ADGroup -Instance $Group -Passthru</p>
+<p>DistinguishedName : CN=AccessControl,DC=AppNC
+GroupCategory     : Security
+GroupScope        : DomainLocal
+Name              : AccessControl
+ObjectClass       : group
+ObjectGUID        : d65f5e8f-36da-4390-9840-8b9fde6282fc
+SID               : S-1-510474493-936115905-2782881406-1264922549-3814061485-1557022459</p>
+<pre><code>
+この例では, *インスタンスの*パラメータを使用して,AccessControlグループに **Description**属性を設定します.
+
+## パラメータは
+
+### -Add は,オブジェクト属性に追加する値を指定します.このパラメータを使用して,cmdlet パラメータを使用して変更できない属性に1つまたは複数の値を追加します.オブジェクト属性を変更するには,ライトウェイトディレクトリ アクセス プロトコル (LDAP) ディスプレイ名を使用する必要があります. 逗号別列の値リストと,半角を用いることで複数の属性を別々に指定することによって,複数の値を指定できます.このパラメータのフォーマットは:
+
+`-Add @{Attribute1LDAPDisplayName=value1, value2, ...;   Attribute2LDAPDisplayName=value1, value2, ...; AttributeNLDAPDisplayName=value1, value2, ...}`
+
+*追加*, *交換*, *クリア*, *削除* パラメータを組み合わせると,操作は次の順に行われます.
+
+**削除** - **追加** - **交換** - **クリア** - **
+
+```yaml
+Type: Hashtable
+Parameter Sets: Identity
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-AuthType は,使用する認証方法を指定します.このパラメータの受け入れ可能な値は:です.</h3>
+<ul>
+<li>交渉するまたは0 - 基本または1</li>
+</ul>
+<p>デフォルト認証方法は,交渉です.</p>
+<p>基本認証方法には,セキュアソケットレイヤ (SSL) 接続が必要となります.</p>
+<pre><code class="language-yaml">Type: ADAuthType
+Parameter Sets: (All)
+Aliases: 
+Accepted values: Negotiate, Basic
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-Clear は,ディレクトリでクリアされたオブジェクトプロパティのアレイを指定します.このパラメータを使用して,cmdletパラメータを使用して変更できないプロパティの1つまたは複数の値をクリアします.オブジェクトプロパティを変更するには,LDAP表示名を使用する必要があります.コマ分離リストを指定することによって,複数のプロパティを変更できます.このパラメータのフォーマットは:</h3>
+<p><code>-Clear Attribute1LDAPDisplayName, Attribute2LDAPDisplayName</code></p>
+<p><em>追加</em>, <em>交換</em>, <em>クリア</em>, <em>削除</em> パラメータを組み合わせると,操作は次の順に行われます.</p>
+<p><strong>削除</strong> - <strong>追加</strong> - <strong>交換</strong> - <strong>クリア</strong> - **</p>
+<pre><code class="language-yaml">Type: String[]
+Parameter Sets: Identity
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>- 確認は,cmdletを実行する前に確認を提示します.</h3>
+<pre><code class="language-yaml">Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: cf
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-Credential この作業を実行するために使用するユーザーアカウントの認証を指定します.当時はログインしているユーザーに,Cmdlet がWindows PowerShell プロバイダードライブのアクティブディレクトリ モジュールから実行されている場合を除き,デフォルトで使用する認証は,当時にログインしているユーザーに属します.</h3>
+<p>このパラメータを指定するには,ユーザー名,例えば User1 または Domain01\User01 を入力するか,PSCredential** オブジェクトを指定することもできます.このパラメータのユーザー名を指定すると,cmdlet はパスワードを提示します.</p>
+<p>また,スクリプトを使用して <strong>PSCredential</strong> オブジェクトを作成したり, <strong>Get-Credential</strong> cmdlet を使用したりできます.その後, <strong>PSCredential</strong> オブジェクトに <em>Credential</em> パラメータを設定できます.</p>
+<p>実行する認証がタスクを実行するためのディレクトリレベルの許可がない場合,Windows PowerShell用のアクティブディレクトリモジュールでは終了エラーが返されます.</p>
+<pre><code class="language-yaml">Type: PSCredential
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h1>セットADグループ</h1>
+<h3>-Description 対象の記述を指定する.このパラメータは,対象の <strong>Description</strong> 属性の値を設定する.この属性のLightweight Directory Access Protocol (LDAP) ディスプレイ名 (<strong>ldapDisplayName</strong>) は説明です.</h3>
+<pre><code class="language-yaml">Type: String
+Parameter Sets: Identity
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-DisplayName 対象の表示名を指定する.このパラメータは,オブジェクトの <strong>DisplayName</strong> 属性を設定する.この属性のLDAP表示名称 (<strong>ldapDisplayName</strong>) は displayName.</h3>
+<pre><code class="language-yaml">Type: String
+Parameter Sets: Identity
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-GroupCategory グループカテゴリを指定する.このパラメータの受け入れられる値は:</h3>
+<p>配送または0 - セキュリティまたは1</p>
+<p>このパラメータは,グループの <strong>GroupCategory</strong>属性を設定します.このパラメータ値は他のグループ値と組み合わせると, groupType というLDAP表示名 (<strong>ldapDisplayName</strong>) 属性を設定します.</p>
+<pre><code class="language-yaml">Type: ADGroupCategory
+Parameter Sets: Identity
+Aliases: 
+Accepted values: Distribution, Security
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-GroupScope は,グループのグループ範囲を指定します.このパラメータの受け入れ可能な値は:です.</h3>
+<p>域名ローカルまたは0 - グローバルまたは1 - ユニバーサルまたは2</p>
+<p>このパラメータは,グループオブジェクトの <strong>GroupScope</strong>属性を指定された値に設定します.この属性のLDAP表示名は groupTypeです.</p>
+<pre><code class="language-yaml">Type: ADGroupScope
+Parameter Sets: Identity
+Aliases: 
+Accepted values: DomainLocal, Global, Universal
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-HomePage 対象のホームページのURLを指定します.このパラメータは,アクティブディレクトリオブジェクトの <strong>homePage</strong>属性を設定します.この属性のLDAP表示名 (<strong>ldapDisplayName</strong>) はwWWHomePageです.</h3>
+<pre><code class="language-yaml">Type: String
+Parameter Sets: Identity
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-Identity は,以下の値のうちの1つを提供することで,アクティブディレクトリグループオブジェクトを指定します.括弧の識別子は,属性のLDAP表示名です.このパラメータの受け入れ可能な値は:です.</h3>
+<p>特徴ある名前 - GUID (objectGUID) - セキュリティ識別子 (objectSid) - SAMアカウント名 (sAMAccountName)</p>
+<p>cmdlet は,オブジェクトを見つけるためにデフォルトの命名コンテキストまたはパーティションを探します.もし2つ以上のオブジェクトが見つかったら,cmdlet は,終了しないエラーを返します.</p>
+<p>このパラメータは,このオブジェクトをパイプラインを通過させることもできます.または,このパラメータをオブジェクトインスタンスの設定でもできます.</p>
+<pre><code class="language-yaml">Type: ADGroup
+Parameter Sets: Identity
+Aliases: 
+
+Required: True
+Position: 0
+Default value: None
+Accept pipeline input: True (ByValue)
+Accept wildcard characters: False
+</code></pre>
+<h3>-インスタンスは,実際の Active Directory グループオブジェクトを更新するために使用するグループオブジェクトの変更されたコピーを指定します.このパラメータを使用すると,オブジェクトの変更されたコピーに変更されたものは,対応する Active Directory オブジェクトにも変更されます.cmdletは変更されたオブジェクトのプロパティのみを更新します.</h3>
+<p><em>インスタンスの</em>パラメータは,集体オブジェクトが<strong>Get-ADGroup</strong> cmdletを使用して取得された場合にのみ更新できます. <em>インスタンスの</em>パラメータを指定すると,オブジェクトに属性設定する他のパラメータを指定することはできません.</p>
+<pre><code class="language-yaml">Type: ADGroup
+Parameter Sets: Instance
+Aliases: 
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-ManagedBy は,以下のプロパティ値のうちの1つを提供することでオブジェクトを管理するユーザーまたはグループを指定します.注:括弧の識別子は,プロパティのLDAP表示名です.このパラメータの受け入れ可能な値は:です.</h3>
+<p>特徴ある名前 - GUID (objectGUID) - セキュリティ識別子 (objectSid) - SAMアカウント名 (sAMAccountName)</p>
+<p>このパラメータは, managedBy の LDAP ディスプレイ名で,アクティブディレクトリ属性を設定します.</p>
+<pre><code class="language-yaml">Type: ADPrincipal
+Parameter Sets: Identity
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-Partition Active Directory のパーティションの名前の指定.この名前の指定は,現在のディレクトリサーバーの名前設定のいずれかである必要があります. cmdlet はこのパーティションで検索して, <em>Identity</em> パラメータで定義されたオブジェクトを見つける.</h3>
+<p>多くの場合,デフォルト値が指定されていない場合, <em>Partition</em> パラメータにデフォルト値が使用されます.デフォルト値の決定のためのルールが下記に記載されています.最初にリストされたルールが最初に評価され,デフォルト値が決定されると,他のルールが評価されないことに注意してください.</p>
+<p>アクティブディレクトリ ドメインサービス (AD DS) 環境では,以下の場合, <em>パーティション</em> のデフォルト値は設定されます.</p>
+<ul>
+<li><em>Identity</em> パラメータが別名に設定されている場合, <em>Partition</em> のデフォルト値は自動的にこの別名から生成されます. - Active Directory プロバイダードライブからcmdletsを実行している場合は, <em>Partition</em> のデフォルト値は自動的にドライブ内の現在のパスから生成されます. - 前例のいずれも適用されない場合, <em>Partition</em> のデフォルト値は目標ドメインのデフォルトパーティションまたは命名コンテキストに設定されます.</li>
+</ul>
+<p>Active Directory Lightweight Directory Services (AD LDS) の環境では,以下の場合, <em>Partition</em> のデフォルト値は設定されます.</p>
+<p><em>Identity</em> パラメータが指定された場合,この指定された名前から自動的に <em>Partition</em> のデフォルト値は生成されます. - Active Directory プロバイダードライブから cmdlets を実行している場合は,ドライブ内の現在のパスから自動的に <em>Partition</em> のデフォルト値は生成されます. - ターゲット AD LDS インスタンスのデフォルトの命名コンテキストがある場合, <em>Partition</em> のデフォルト値はデフォルトの命名コンテキストに設定されます. AD LDS 環境のデフォルトの命名コンテキストを指定するには,AD LDS のための <strong>msDS If-defaultNamingContext</strong> 属性を設定します. - 前回のインスタンスのいずれも適用されません.ion*パラメータはデフォルト値を取らない.</p>
+<pre><code class="language-yaml">Type: String
+Parameter Sets: Identity
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-PassThru は,あなたが取り組んでいるアイテムを表すオブジェクトを返します.デフォルトでは,このcmdlet は出力を生成しません.</h3>
+<pre><code class="language-yaml">Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h1>セットADグループ</h1>
+<h3>-Remove は,cmdlet がオブジェクト属性の値を削除することを指定します.このパラメータを使用して,cmdlet パラメータを使用して変更できない属性の1つまたは複数の値を削除します.オブジェクト属性を削除するには,LDAP ディスプレイ名を使用する必要があります.半角別列リストを指定することによって,1以上の属性を削除できます.このパラメータのフォーマットは:</h3>
+<p><code>-Remove @{Attribute1LDAPDisplayName=value[];   Attribute2LDAPDisplayName=value[]}</code></p>
+<p><em>追加</em>, <em>交換</em>, <em>クリア</em>, <em>削除</em> パラメータを組み合わせると,操作は次の順に実行されます.</p>
+<p><strong>削除</strong> - <strong>追加</strong> - <strong>交換</strong> - <strong>クリア</strong> - **</p>
+<pre><code class="language-yaml">Type: Hashtable
+Parameter Sets: Identity
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-Cmdletパラメータを使用して変更できない属性の1つまたは複数の値を置き換えるためにこのパラメータを使用します.オブジェクト属性を変更するには,LDAP表示名を使用する必要があります. 逗号別値リストを指定することによって,複数の属性値を指定し,半角を用いることで複数の属性を分離します. このパラメータのフォーマットは:</h3>
+<p><code>-Replace @{Attribute1LDAPDisplayName=value1, value2, ...;   Attribute2LDAPDisplayName=value1, value2, ...; AttributeNLDAPDisplayName=value1, value2, ...}</code></p>
+<p><em>追加</em>, <em>削除</em>, <em>交換</em>, <em>クリア</em> パラメータを一緒に使用すると,操作は次の順に実行されます.</p>
+<p><strong>削除</strong> - <strong>追加</strong> - <strong>交換</strong> - <strong>クリア</strong> - **</p>
+<pre><code class="language-yaml">Type: Hashtable
+Parameter Sets: Identity
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-SamAccountNameは,ユーザー,グループ,コンピュータ,またはサービスアカウントのセキュリティアカウント管理者 (SAM) アカウント名を指定します.説明の最大長さは256文字です.古いオペレーティングシステムと互換性があるため,20文字以下のSAMアカウント名を作成してください.このパラメータは,アカウントオブジェクトの <strong>SAMAccountName</strong>を設定します.このプロパティのLDAP表示名称 (<strong>ldapDisplayName</strong>) は,sAMAccountNameです.</h3>
+<p>注: 与えられた文字列の値は $ (ドルマーク) 文字で終わらない場合は,システムが必要に応じて1つ追加します.</p>
+<pre><code class="language-yaml">Type: String
+Parameter Sets: Identity
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-Serverは,対応するドメイン名またはディレクトリサーバーに以下の値のいずれかを提供することによって,接続するアクティブディレクトリ ドメインサービス (AD DS) インスタンスを指定します.サービスは,以下のいずれかである可能性があります:アクティブディレクトリ 軽量ドメインサービス (AD LDS),AD DS,またはアクティブディレクトリ スナップショットインスタンスの.</h3>
+<p>次の方法の一つでAD DSインスタンスを指定してください.</p>
+<p>ドメイン名値:</p>
+<ul>
+<li>完全資格ドメイン名 - NetBIOS名</li>
+</ul>
+<p>ディレクトリサーバーの値: </p>
+<ul>
+<li>完全資格のあるディレクトリサーバー名 - NetBIOS名 - 完全資格のあるディレクトリサーバー名とポート</li>
+</ul>
+<p>このパラメータのデフォルト値は,次の方法のうちの1つによって,列挙された順序で決定されます:</p>
+<ul>
+<li>パイプラインを通過したオブジェクトから<strong>Server</strong>の値を利用する - AD DS Windows PowerShellプロバイダードライブに関連したサーバー情報を利用する - そのドライブでcmdletが実行される場合 - Windows PowerShellを実行しているコンピュータのドメインを使用して</li>
+</ul>
+<pre><code class="language-yaml">Type: String
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-WhatIf が実行されればどうなるか示します.</h3>
+<pre><code class="language-yaml">Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: wi
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>共通パラメータ このcmdletは共通パラメータをサポートしています: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable.詳細については, <a href="を参照してください.https://go.microsoft.com/fwlink/?LinkID=113216">about_CommonParameters</a> でした.</h3>
+<h2>輸入は</h2>
+<h3>Microsoft.ActiveDirectory.Management.ADGroup では,グループオブジェクトは, <em>Identity</em> パラメータで受信されます.</h3>
+<p><strong>Get-ADGroup</strong> cmdletを使用して取得し,変更されたグループオブジェクトは, <em>Instance</em> パラメータで受信されます.</p>
+<h2>輸出は</h2>
+<h3>None.ActiveDirectory.Management.ADGroup は, <em>PassThru</em> パラメータが指定されたときに変更されたグループオブジェクトを返します.デフォルトでは,このcmdlet は出力を生成しません.</h3>
+<h2>注 * このcmdlet は Active Directory のスナップショットで動作しません. * このcmdlet は読み込みのみのドメインコントローラで動作しません.</h2>
+<h2>関連リンク</h2>
+<p><a href="./Add-ADGroupMember.md">Add-ADGroupMember</a> </p>
+<p><a href="./Add-ADPrincipalGroupMembership.md">Add-ADPrincipalGroupMembership</a> </p>
+<p><a href="./Get-ADGroup.md">Get-ADGroup</a> </p>
+<p><a href="./Get-ADGroupMember.md">Get-ADGroupMember</a> について</p>
+<p><a href="./Get-ADPrincipalGroupMembership.md">Get-ADPrincipalGroupMembership</a> は,本件を表示する際に,</p>
+<p><a href="./New-ADGroup.md">New-ADGroup</a> </p>
+<p><a href="./Remove-ADGroup.md">Remove-ADGroup</a> を削除する</p>
+<p>[Remove-ADGroupMember.md] 削除する</p>
+<p><a href="./Remove-ADPrincipalGroupMembership.md">Remove-ADPrincipalGroupMembership</a> </p></section><section class="en-original"><pre class="source-original"># Set-ADGroup
+
+## SYNOPSIS
+Modifies an Active Directory group.
+
+## SYNTAX
+
+### Identity
+```
+Set-ADGroup [-WhatIf] [-Confirm] [-Add &lt;Hashtable&gt;] [-AuthType &lt;ADAuthType&gt;] [-Clear &lt;String[]&gt;]
+ [-Credential &lt;PSCredential&gt;] [-Description &lt;String&gt;] [-DisplayName &lt;String&gt;]
+ [-GroupCategory &lt;ADGroupCategory&gt;] [-GroupScope &lt;ADGroupScope&gt;] [-HomePage &lt;String&gt;] [-Identity] &lt;ADGroup&gt;
+ [-ManagedBy &lt;ADPrincipal&gt;] [-Partition &lt;String&gt;] [-PassThru] [-Remove &lt;Hashtable&gt;] [-Replace &lt;Hashtable&gt;]
+ [-SamAccountName &lt;String&gt;] [-Server &lt;String&gt;] [&lt;CommonParameters&gt;]
+```
+
+### Instance
+```
+Set-ADGroup [-WhatIf] [-Confirm] [-AuthType &lt;ADAuthType&gt;] [-Credential &lt;PSCredential&gt;] -Instance &lt;ADGroup&gt;
+ [-PassThru] [-Server &lt;String&gt;] [&lt;CommonParameters&gt;]
+```
+
+## DESCRIPTION
+The **Set-ADGroup** cmdlet modifies the properties of an Active Directory group.
+You can modify commonly used property values by using the cmdlet parameters.
+Property values that are not associated with cmdlet parameters can be modified by using the *Add*, *Replace*, *Clear*, and *Remove* parameters.
+
+The *Identity* parameter specifies the Active Directory group to modify.
+You can identify a group by its distinguished name, GUID, security identifier, or Security Account Manager (SAM) account name.
+You can also set the *Identity* parameter to an object variable such as `$&lt;localGroupObject&gt;`, or you can pass a group object through the pipeline to the *Identity* parameter.
+For example, you can use the **Get-ADGroup** cmdlet to get a group object and then pass the object through the pipeline to the **Set-ADGroup** cmdlet.
+
+The *Instance* parameter provides a way to update a group object by applying the changes made to a copy of the object.
+When you set the *Instance* parameter to a copy of an Active Directory group object that has been modified, the **Set-ADGroup** cmdlet makes the same changes to the original group object.
+To get a copy of the object to modify, use the **Get-ADGroup** cmdlet.
+The *Identity* parameter is not allowed when you use the *Instance* parameter.
+For more information about the *Instance* parameter, see the *Instance* parameter description.
+
+## EXAMPLES
+
+### Example 1: Set a property for a group
+```
+PS C:\&gt; Set-ADGroup -Server localhost:60000 -Identity &quot;CN=AccessControl,DC=AppNC&quot; -Description &quot;Access Group&quot; -Passthru
+
+DistinguishedName : CN=AccessControl,DC=AppNC
+GroupCategory     : Security
+GroupScope        : DomainLocal
+Name              : AccessControl
+ObjectClass       : group
+ObjectGUID        : d65f5e8f-36da-4390-9840-8b9fde6282fc
+SID               : S-1-510474493-936115905-2782881406-1264922549-3814061485-1557022459
+```
+
+This command sets the **Description** property of the group named AccessControl to Access Group on an Active Directory Application Mode (ADAM) instance.
+
+### Example 2: Set the description for filtered groups
+```
+PS C:\&gt; Get-ADGroup -Filter &#x27;name -like &quot;Access*&quot;&#x27; | Set-ADGroup -Description &quot;Access Group&quot;
+```
+
+This command modifies the **Description** property on all groups that have a name that starts with Access by using the pipeline operator.
+
+### Example 3: Set a property by specifying an instance
+```
+PS C:\&gt; $Group = Get-ADGroup -Server localhost:60000 -Identity &quot;CN=AccessControl,DC=AppNC&quot;
+PS C:\&gt; $Group.Description = &quot;Access Group&quot;
+PS C:\&gt; Set-ADGroup -Instance $Group -Passthru
+
+DistinguishedName : CN=AccessControl,DC=AppNC
+GroupCategory     : Security
+GroupScope        : DomainLocal
+Name              : AccessControl
+ObjectClass       : group
+ObjectGUID        : d65f5e8f-36da-4390-9840-8b9fde6282fc
+SID               : S-1-510474493-936115905-2782881406-1264922549-3814061485-1557022459
+```
+
+This example sets the **Description** property on the AccessControl group by using the *Instance* parameter.
+
+## PARAMETERS
+
+### -Add
+Specifies values to add to an object property.
+Use this parameter to add one or more values to a property that cannot be modified using a cmdlet parameter.
+To modify an object property, you must use the Lightweight Directory Access Protocol (LDAP) display name.
+You can specify multiple values to a property by specifying a comma-separated list of values and more than one property by separating them using a semicolon.
+The format for this parameter is:
+
+`-Add @{Attribute1LDAPDisplayName=value1, value2, ...;   Attribute2LDAPDisplayName=value1, value2, ...; AttributeNLDAPDisplayName=value1, value2, ...}`
+
+When you use the *Add*, *Replace*, *Clear*, and *Remove* parameters together, the operations are performed in the following order:
+
+- **Remove**
+- **Add**
+- **Replace**
+- **Clear**
+
+```yaml
+Type: Hashtable
+Parameter Sets: Identity
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -AuthType
+Specifies the authentication method to use.
+The acceptable values for this parameter are:
+
+- Negotiate or 0
+- Basic or 1
+
+The default authentication method is Negotiate.
+
+A Secure Sockets Layer (SSL) connection is required for the Basic authentication method.
+
+```yaml
+Type: ADAuthType
+Parameter Sets: (All)
+Aliases: 
+Accepted values: Negotiate, Basic
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Clear
+Specifies an array of object properties that are cleared in the directory.
+Use this parameter to clear one or more values of a property that cannot be modified using a cmdlet parameter.
+To modify an object property, you must use the LDAP display name.
+You can modify more than one property by specifying a comma-separated list.
+The format for this parameter is:
+
+`-Clear Attribute1LDAPDisplayName, Attribute2LDAPDisplayName`
+
+When you use the *Add*, *Replace*, *Clear*, and *Remove* parameters together, the operations are performed in the following order:
+
+- **Remove**
+- **Add**
+- **Replace**
+- **Clear**
+
+```yaml
+Type: String[]
+Parameter Sets: Identity
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Confirm
+Prompts you for confirmation before running the cmdlet.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: cf
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Credential
+Specifies the user account credentials to use to perform this task.
+The default credentials are the credentials of the currently logged on user unless the cmdlet is run from an Active Directory module for Windows PowerShell provider drive.
+If the cmdlet is run from such a provider drive, the account associated with the drive is the default.
+
+To specify this parameter, you can type a user name, such as User1 or Domain01\User01 or you can specify a **PSCredential** object.
+If you specify a user name for this parameter, the cmdlet prompts for a password.
+
+You can also create a **PSCredential** object by using a script or by using the **Get-Credential** cmdlet.
+You can then set the *Credential* parameter to the **PSCredential** object.
+
+If the acting credentials do not have directory-level permission to perform the task, Active Directory module for Windows PowerShell returns a terminating error.
+
+```yaml
+Type: PSCredential
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+# Set-ADGroup
+
+### -Description
+Specifies a description of the object.
+This parameter sets the value of the **Description** property for the object.
+The Lightweight Directory Access Protocol (LDAP) display name (**ldapDisplayName**) for this property is description.
+
+```yaml
+Type: String
+Parameter Sets: Identity
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -DisplayName
+Specifies the display name of the object.
+This parameter sets the **DisplayName** property of the object.
+The LDAP display name (**ldapDisplayName**) for this property is displayName.
+
+```yaml
+Type: String
+Parameter Sets: Identity
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -GroupCategory
+Specifies the category of the group.
+The acceptable values for this parameter are:
+
+- Distribution or 0
+- Security or 1
+
+This parameter sets the **GroupCategory** property of the group.
+This parameter value combined with other group values sets the LDAP display name (**ldapDisplayName**) attribute named groupType.
+
+```yaml
+Type: ADGroupCategory
+Parameter Sets: Identity
+Aliases: 
+Accepted values: Distribution, Security
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -GroupScope
+Specifies the group scope of the group.
+The acceptable values for this parameter are:
+
+- DomainLocal or 0
+- Global or 1
+- Universal or 2
+
+This parameter sets the **GroupScope** property of a group object to the specified value.
+The LDAP display name of this property is groupType.
+
+```yaml
+Type: ADGroupScope
+Parameter Sets: Identity
+Aliases: 
+Accepted values: DomainLocal, Global, Universal
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -HomePage
+Specifies the URL of the home page of the object.
+This parameter sets the **homePage** property of an Active Directory object.
+The LDAP display name (**ldapDisplayName**) for this property is wWWHomePage.
+
+```yaml
+Type: String
+Parameter Sets: Identity
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Identity
+Specifies an Active Directory group object by providing one of the following values.
+The identifier in parentheses is the LDAP display name for the attribute.
+The acceptable values for this parameter are:
+
+- A distinguished name
+- A GUID (objectGUID) 
+- A security identifier (objectSid) 
+- A SAM account name (sAMAccountName)
+
+The cmdlet searches the default naming context or partition to find the object.
+If two or more objects are found, the cmdlet returns a non-terminating error.
+
+This parameter can also get this object through the pipeline or you can set this parameter to an object instance.
+
+```yaml
+Type: ADGroup
+Parameter Sets: Identity
+Aliases: 
+
+Required: True
+Position: 0
+Default value: None
+Accept pipeline input: True (ByValue)
+Accept wildcard characters: False
+```
+
+### -Instance
+Specifies a modified copy of a group object to use to update the actual Active Directory group object.
+When this parameter is used, any modifications made to the modified copy of the object are also made to the corresponding Active Directory object.
+The cmdlet only updates the object properties that have changed.
+
+The *Instance* parameter can only update group objects that have been retrieved by using the **Get-ADGroup** cmdlet.
+When you specify the *Instance* parameter, you cannot specify other parameters that set properties on the object.
+
+```yaml
+Type: ADGroup
+Parameter Sets: Instance
+Aliases: 
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -ManagedBy
+Specifies the user or group that manages the object by providing one of the following property values.
+Note: The identifier in parentheses is the LDAP display name for the property.
+The acceptable values for this parameter are:
+
+- A distinguished name
+- A GUID (objectGUID) 
+- A security identifier (objectSid) 
+- SAM account name (sAMAccountName)
+
+This parameter sets the Active Directory attribute with an LDAP display name of managedBy.
+
+```yaml
+Type: ADPrincipal
+Parameter Sets: Identity
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Partition
+Specifies the distinguished name of an Active Directory partition.
+The distinguished name must be one of the naming contexts on the current directory server.
+The cmdlet searches this partition to find the object defined by the *Identity* parameter.
+
+In many cases, a default value is used for the *Partition* parameter if no value is specified.
+The rules for determining the default value are given below.
+Note that rules listed first are evaluated first and once a default value can be determined, no further rules are evaluated.
+
+In Active Directory Domain Services (AD DS) environments, a default value for *Partition* is set in the following cases: 
+
+- If the *Identity* parameter is set to a distinguished name, the default value of *Partition* is automatically generated from this distinguished name.
+- If running cmdlets from an Active Directory provider drive, the default value of *Partition* is automatically generated from the current path in the drive. 
+- If none of the previous cases apply, the default value of *Partition* is set to the default partition or naming context of the target domain.
+
+In Active Directory Lightweight Directory Services (AD LDS) environments, a default value for *Partition* is set in the following cases:
+
+- If the *Identity* parameter is set to a distinguished name, the default value of *Partition* is automatically generated from this distinguished name. 
+- If running cmdlets from an Active Directory provider drive, the default value of *Partition* is automatically generated from the current path in the drive. 
+- If the target AD LDS instance has a default naming context, the default value of *Partition* is set to the default naming context.
+To specify a default naming context for an AD LDS environment, set the **msDS-defaultNamingContext** property of the Active Directory directory service agent object (**nTDSDSA**) for the AD LDS instance. 
+- If none of the previous cases apply, the *Partition* parameter does not take a default value.
+
+```yaml
+Type: String
+Parameter Sets: Identity
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -PassThru
+Returns an object representing the item with which you are working.
+By default, this cmdlet does not generate any output.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+# Set-ADGroup
+
+### -Remove
+Specifies that the cmdlet remove values of an object property.
+Use this parameter to remove one or more values of a property that cannot be modified using a cmdlet parameter.
+To remove an object property, you must use the LDAP display name.
+You can remove more than one property by specifying a semicolon-separated list.
+The format for this parameter is:
+
+`-Remove @{Attribute1LDAPDisplayName=value[];   Attribute2LDAPDisplayName=value[]}`
+
+When you use the *Add*, *Replace*, *Clear*, and *Remove* parameters together, the operations will be performed in the following order:
+
+- **Remove**
+- **Add**
+- **Replace**
+- **Clear**
+
+```yaml
+Type: Hashtable
+Parameter Sets: Identity
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Replace
+Specifies values for an object property that will replace the current values.
+Use this parameter to replace one or more values of a property that cannot be modified using a cmdlet parameter.
+To modify an object property, you must use the LDAP display name.
+You can specify multiple values to a property by specifying a comma-separated list of values, and more than one property by separating them using a semicolon.
+The format for this parameter is:
+
+`-Replace @{Attribute1LDAPDisplayName=value1, value2, ...;   Attribute2LDAPDisplayName=value1, value2, ...; AttributeNLDAPDisplayName=value1, value2, ...}`
+
+When you use the *Add*, *Remove*, *Replace*, and *Clear* parameters together, the operations will be performed in the following order:
+
+- **Remove**
+- **Add**
+- **Replace**
+- **Clear**
+
+```yaml
+Type: Hashtable
+Parameter Sets: Identity
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -SamAccountName
+Specifies the Security Account Manager (SAM) account name of the user, group, computer, or service account.
+The maximum length of the description is 256 characters.
+To be compatible with older operating systems, create a SAM account name that is 20 characters or less.
+This parameter sets the **SAMAccountName** for an account object.
+The LDAP display name (**ldapDisplayName**) for this property is sAMAccountName.
+
+Note: If the string value provided is not terminated with a $ (dollar sign) character, the system adds one if necessary.
+
+```yaml
+Type: String
+Parameter Sets: Identity
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Server
+Specifies the Active Directory Domain Services (AD DS) instance to connect to, by providing one of the following values for a corresponding domain name or directory server.
+The service may be any of the following: Active Directory Lightweight Domain Services (AD LDS), AD DS, or Active Directory snapshot instance.
+
+Specify the AD DS instance in one of the following ways:  
+
+Domain name values:
+
+- Fully qualified domain name
+- NetBIOS name
+
+Directory server values:  
+
+- Fully qualified directory server name
+- NetBIOS name
+- Fully qualified directory server name and port
+
+The default value for this parameter is determined by one of the following methods in the order that they are listed:
+
+- By using the **Server** value from objects passed through the pipeline
+- By using the server information associated with the AD DS Windows PowerShell provider drive, when the cmdlet runs in that drive
+- By using the domain of the computer running Windows PowerShell
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -WhatIf
+Shows what would happen if the cmdlet runs.
+The cmdlet is not run.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: wi
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### CommonParameters
+This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable. For more information, see [about_CommonParameters](https://go.microsoft.com/fwlink/?LinkID=113216).
+
+## INPUTS
+
+### None or Microsoft.ActiveDirectory.Management.ADGroup
+A group object is received by the *Identity* parameter.
+
+A group object that was retrieved by using the **Get-ADGroup** cmdlet and then modified is received by the *Instance* parameter.
+
+## OUTPUTS
+
+### None or Microsoft.ActiveDirectory.Management.ADGroup
+Returns the modified group object when the *PassThru* parameter is specified.
+By default, this cmdlet does not generate any output.
+
+## NOTES
+* This cmdlet does not work with an Active Directory snapshot.
+* This cmdlet does not work with a read-only domain controller.
+
+## RELATED LINKS
+
+[Add-ADGroupMember](./Add-ADGroupMember.md)
+
+[Add-ADPrincipalGroupMembership](./Add-ADPrincipalGroupMembership.md)
+
+[Get-ADGroup](./Get-ADGroup.md)
+
+[Get-ADGroupMember](./Get-ADGroupMember.md)
+
+[Get-ADPrincipalGroupMembership](./Get-ADPrincipalGroupMembership.md)
+
+[New-ADGroup](./New-ADGroup.md)
+
+[Remove-ADGroup](./Remove-ADGroup.md)
+
+[Remove-ADGroupMember](./Remove-ADGroupMember.md)
+
+[Remove-ADPrincipalGroupMembership](./Remove-ADPrincipalGroupMembership.md)</pre></section>

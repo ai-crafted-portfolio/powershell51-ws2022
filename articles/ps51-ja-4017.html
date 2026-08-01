@@ -1,0 +1,876 @@
+<!doctype html><meta charset="utf-8"><section class="jp-official"><h1>about_ActivityCommonParametersについて</h1>
+<h2>短編説明</h2>
+<p>Windows PowerShell Workflowが活動に追加するパラメータを記述します.</p>
+<h2>長い説明</h2>
+<p>Windows PowerShell Workflow では,PSActivity** のベースクラスから派生した活動に活動共通パラメータを追加します.このカテゴリーには  が含まれています.<code>inlinescript</code>活動として実装される Windows PowerShell cmdlets,例えば <code>Get-Process</code>そして,<code>Get-WinEvent</code> .</p>
+<p>活動共通パラメータは,  で有効ではありません.<code>Suspend-Workflow</code>そして,<code>Checkpoint-Workflow</code>動作が実行され,Windows PowerShell Workflowが自動的に実行するcmdletや表現に追加されない.<code>inlinescript</code>スクリプトブロックまたは類似の活動.活動共通パラメータは, で利用できます.<code>inlinescript</code>活動ですが,命令ではできません.<code>inlinescript</code>脚本ブロック.</p>
+<p>活動共通パラメータのいくつかは,ワークフロー共通パラメータまたはWindows PowerShell共通パラメータである.他の活動共通パラメータは,活動に特有のものである.</p>
+<p>ワークフローの共通パラメータに関する情報については, [about_WorkflowCommonParameters.md] を参照してください. Windows PowerShellの共通パラメータに関する情報については, [about_CommonParameters] を参照してください.</p>
+<h3>活動共通パラメータのリスト</h3>
+<pre><code>AppendOutput                      PSDebug
+Debug                             PSDisableSerialization
+DisplayName                       PSDisableSerializationPreference
+ErrorAction                       PSError
+Input                             PSPersist
+MergeErrorToOutput                PSPort
+PSActionRetryCount                PSProgress
+PSActionRetryIntervalSec          PSProgressMessage
+PSActionRunningTimeoutSec         PSRemotingBehavior
+PSApplicationName                 PSRequiredModules
+PSAuthentication                  PSSessionOption
+PSCertificateThumbprint           PSUseSSL
+PSComputerName                    PSVerbose
+PSConfigurationName               PSWarning
+PSConnectionRetryCount            Result
+PSConnectionRetryIntervalSec      UseDefaultInput
+PSConnectionURI                   Verbose
+PSCredential                      WarningAction
+</code></pre>
+<h1>about_ActivityCommonParametersについて</h1>
+<h3>パラメーターの記述</h3>
+<p>このセクションでは,活動共通パラメータを記述します.</p>
+<h4>AppendOutput \&lt;Boolean\&gt;</h4>
+<p>の値が表示されます.<code>$true</code>変数の値に活動出力を追加する. の値.<code>$false</code>変数に値を割り当てると,変数値が代わる.</p>
+<p>例えば,次のコマンドは,  のサービスオブジェクトにプロセスオブジェクトを追加します.<code>$x</code>変数です.</p>
+<pre><code class="language-powershell">workflow Test-Workflow {
+    $x = Get-Service
+    $x = Get-Process -AppendOutput $true
+}
+</code></pre>
+<p>このパラメータはXAMLベースのワークフローのために設計されています.スクリプトワークフローでは,また  を使用できます.<code>+=</code>代数値に輸出を加えるために割り当て操作符を配置する.次の例で示されているように.</p>
+<pre><code class="language-powershell">workflow Test-Workflow {
+    $x = Get-Service
+    $x += Get-Process
+}
+</code></pre>
+<h4>デバッグ \&lt;SwitchParameter\&gt;</h4>
+<p>命令によって実行された操作についてのプログラマーレベルの詳細を表示します.Debug**パラメータは, の値を覆します.<code>$DebugPreference</code>このパラメータは,コマンドがデバッグメッセージを生成する場合にのみ有効です.このパラメータは,Windows PowerShellの共通のパラメータでもあります.</p>
+<h4>名前 \&lt;String\&gt;</h4>
+<p>作業のフレンドリーな名前指定します.作業の流れが実行される間, <strong>DisplayName</strong>の値は進捗バーに表示され,ワークフローの仕事の <strong>Progress</strong>の値に表示されます.また,コマンドに <strong>PSProgressMessage</strong>のパラメータが含まれると,進捗バーのコンテンツが に表示されます.<code>&lt;DisplayName&gt;:&lt;PSProgressMessage&gt;</code>形式.</p>
+<h4>エラーアクション \&lt;アクションプレファレンス\&gt;</h4>
+<p>命令から非終結エラーに反応する方法を決定します. 終結エラーには影響はありません. このパラメータは命令が非終結エラーを生成する場合にのみ動作します. 例えば,  のエラーです.<code>Write-Error</code>cmdlet. <strong>ErrorAction</strong> パラメータは,値の値を覆す.<code>$ErrorActionPreference</code>このパラメータは Windows PowerShell の共通のパラメータでもある.</p>
+<p>有効な値は:</p>
+<ul>
+<li>
+<p>-<code>Continue</code>. エラーメッセージが表示され,コマンドを実行し続けます. <code>Continue</code>はデフォルト値です.</p>
+</li>
+<li>
+<p>-<code>Ignore</code>誤差メッセージを削除し,コマンドを実行し続けます.<code>SilentlyContinue</code>     <code>Ignore</code>にエラーメッセージを追加していない.<code>$Error</code>自動変数である.<code>Ignore</code>value is introduced in Windows PowerShell 3.0. は,Windows PowerShell 3.0 で導入された値です.</p>
+</li>
+<li>
+<p>-<code>Inquire</code>エラーメッセージが表示され,実行を継続する前に確認を提示します.この値はめったに使用されません.</p>
+</li>
+<li>
+<p>-<code>Suspend</code>作業流の作業を自動的に停止し,さらなる調査が可能になります.調査の後,作業流が再開できます.</p>
+</li>
+<li>
+<p>-<code>SilentlyContinue</code>.エラーメッセージを削除し,コマンドを実行し続けます.</p>
+</li>
+<li>
+<p>-<code>Stop</code>.エラーメッセージが表示され,コマンドを実行停止します.</p>
+</li>
+</ul>
+<h4>入力 \&lt;Object[]\&gt;</h4>
+<p>活動に物体を集めて送信する.これは,活動に物体を一回ずつ配送する代替手段である.</p>
+<h4>合併エラーToOutput \&lt;Boolean\&gt;</h4>
+<p>の値が表示されます.<code>$true</code>輸出ストリームにエラーを追加します. の値です.<code>$false</code>効果がない.このパラメータを""で使う.<code>parallel</code>そして,<code>foreach -Parallel</code>単一のコレクションで複数の並行コマンドからエラーと出力を収集するためのキーワードです.</p>
+<h4>PSActionRetryCount \&lt;Int32\&gt;</h4>
+<p>最初の試みが失敗した場合,繰り返し実行しようとします.<code>0</code>復習しない.</p>
+<h4>PSARetryIntervalSec \&lt;Int32\&gt;</h4>
+<p>秒でアクションリトリー間の間隔を決定します.<code>0</code>このパラメータは,コマンドで <strong>PSActionRetryCount</strong> パラメータも使用された場合にのみ有効です.</p>
+<h4>PSActionRunningTimeoutSec \&lt;Int32\&gt;</h4>
+<p>対象コンピュータで動作がどれくらい実行できるかを決定します.タイムアウトが終了する前に動作が完了しない場合は,Windows PowerShell Workflow が終了エラーを生成し,影響を受けたターゲットコンピュータの作業流を処理するのを停止します.</p>
+<h4>PSAllowRedirection \&lt;ブール人\&gt;</h4>
+<p>の値が付いている.<code>$true</code>ターゲットコンピュータへの接続をリダイレクトすることができます.<code>$false</code>この活動共通パラメータは,ワークフロー共通パラメータでもある.</p>
+<p><strong>PSConnectionURI</strong> パラメータを使用すると,リモート宛先は別のURIにリダイレクトするための指示を返せます.デフォルトでは,Windows PowerShell は接続をリダイレクトしませんが, の値を持つ <strong>PSAllowRedirection</strong> パラメータを使用できます.<code>$true</code>接続をターゲットコンピュータに転送できるようにします.</p>
+<p>また,接続がリダイレクトされる頻度を制限することもできます. の <strong>MaximumConnectionRedirectionCount</strong> 属性を設定することで.<code>$PSSessionOption</code>選択変数,またはセッションを作成するcmdletの <strong>SessionOption</strong>パラメータの値の <strong>MaximumConnectionRedirectionCount</strong>属性.デフォルト値は です.<code>5</code> .</p>
+<h4>PSApplicationName \&lt;String\&gt;</h4>
+<p>ターゲットコンピュータに接続するために使用される接続 URI のアプリケーション名段を指定します.コマンドで <strong>ConnectionURI</strong> パラメータを使用していない場合,このパラメータを使用してアプリケーション名を指定します.このアクティビティ共通パラメータはワークフロー共通パラメータでもあります.</p>
+<p>デフォルト値は, の値です.<code>$PSSessionApplicationName</code>ターゲットコンピュータの優先順位変数.この優先順位変数が定義されていない場合,デフォルト値は WSMANです.この値はほとんどの用途に適しています.詳細については, [about_Preference_Variables] (../../Microsoft.PowerShell.Core/About/about_Preference_Variables.md) を参照してください.</p>
+<p>WinRMサービスは,アプリケーション名を使用して,接続要求に応用するリスナーを選択します.このパラメータの値は,リモートコンピュータのリスナーの <strong>URLPrefix</strong>属性の値と一致する必要があります.</p>
+<h4>PSA認証 \&lt;AuthenticationMechanism\&gt;</h4>
+<p>ターゲットコンピュータに接続する際にユーザーの認証を認証するために使用するメカニズムを指定します.有効値は です.<code>Default</code>     <code>Basic</code>     <code>CredSSP</code>     <code>Digest</code>     <code>Kerberos</code>     <code>Negotiate</code>そして,<code>NegotiateWithImplicitCredential</code>デフォルト値は です.<code>Default</code>この活動共通パラメータは,ワークフロー共通パラメータでもある.</p>
+<p>このパラメータの値についての情報については,PowerShell SDKの <strong>System.Management.Automation.Runspaces.AuthenticationMechanism</strong> リストの説明を参照してください.</p>
+<p>&gt; [!WARNING] &gt; クレデントセキュリティサービスプロバイダー (CredSSP) 認証,その中でユーザーの認証は,認証されるための遠隔コンピュータに転送される.これは,遠隔ネットワーク共有へのアクセスなどの複数のリソースで認証を必要とするコマンドに設計されています.このメカニズムは,遠隔操作のセキュリティリスクを増加します.もし遠隔コンピュータが"侵害された場合,その送信された認証は,ネットワークセッションを制御するために使用できます.</p>
+<h4>PSCertificateThumbprint \&lt;String\&gt;</h4>
+<p>この動作を行う許可を有するユーザーアカウントのデジタル公開鍵証明書 (X509) を指定します.証明書の証明書の指紋を入力します.この活動共通パラメータは,ワークフロー共通パラメータでもあります.</p>
+<p>証明書はクライアント証明書ベースの認証に使用されます.彼らはローカルユーザーアカウントにのみマッピングできます.彼らはドメインアカウントと動作しません.</p>
+<p>証明書を取得するには,Windows PowerShell のcmdlets (xref:Microsoft.PowerShell.Management.Get-Item) または [Get-ChildItem]を使用してください.<code>Cert:</code>ドライブです.</p>
+<h4>PSComputerName \&lt;String[]\&gt;</h4>
+<h1>about_ActivityCommonParametersについて</h1>
+<p>対象コンピュータで動作するものを指定します.デフォルトはローカルコンピュータです.この活動共通パラメータは,ワークフロー共通パラメータでもあります.</p>
+<p>逗号別列のリストに,コンピュータの NETBIOS 名前,IP アドレス,または,コンピュータの完全資格ドメイン名を入力します.<code>localhost</code>ポイント () を点 () したり,<code>.</code>) でした.</p>
+<p><strong>PSComputerName</strong>パラメータの値にローカルコンピュータを入れたい場合は,管理者として実行する**オプションでWindows PowerShellを開く.</p>
+<p>このパラメータがコマンドから省略された場合,またはその値は です.<code>$null</code>文字列または空き文字列,ワークフローのターゲットはローカルコンピュータであり,コマンドを実行するためにWindows PowerShell リモートを使用しません.</p>
+<p><strong>ComputerName</strong>パラメータの値にIPアドレスを使려면,コマンドには <strong>PSCredential</strong>パラメータが含まれなければならない.また,コンピュータはHTTPS輸送のために設定されなければならない.または,リモートコンピュータのIPアドレスは,ローカルコンピュータのWinRM TrustedHostsリストに含まれなければならない.信頼されたホストリストにコンピュータの名前を追加するための指示については, [about_Remote_Troubleshooting]の"コンピュータを信頼されたホストリストにどのように追加するか"を参照してください.</p>
+<h4>PSConfigurationName \&lt;String\&gt;</h4>
+<p>ターゲットコンピュータでセッションを作成するために使用されるセッション設定を指定します.ターゲットコンピュータ (ワークフローを実行しているコンピュータではなく) にセッション設定の名前を入力します.デフォルトは <strong>Microsoft.PowerShell.Workflow</strong>です.この活動共通のパラメータは,ワークフローの共通のパラメータでもあります.</p>
+<h4>PSConnectionRetryCount \&lt;UInt\&gt;</h4>
+<p>最初の接続未遂が失敗した場合,各ターゲットコンピュータに接続する最大限の試みを指定します. 1 から 4,294,967,295 (<strong>UInt.MaxValue</strong>) の間の番号を入力します.デフォルト値は,ゼロ () です.<code>0</code>),再試行未遂を表しています.この活動共通パラメータは,ワークフロー共通パラメータでもあります.</p>
+<h4>PSConnectionRetryIntervalSec \&lt;UInt\&gt;</h4>
+<p>接続リトライの間の遅延を秒で指定します.デフォルト値はゼロ () です.<code>0</code>このパラメータは,PSConnectionRetryCount**の値が少なくとも1である場合にのみ有効である.この活動共通パラメータは,ワークフロー共通パラメータでもある.</p>
+<h4>PSConnectionURI \&lt;System.Uri\&gt;</h4>
+<p>ターゲットコンピュータ上の活動のための接続エンドポイントを定義する統一リソース識別子 (URI) を指定します.URIは完全に合格する必要があります.この活動共通のパラメータは,ワークフロー共通のパラメータでもあります.</p>
+<p>この文字列のフォーマットは以下の通りです.</p>
+<pre><code>&lt;Transport&gt;://&lt;ComputerName&gt;:&lt;Port&gt;/&lt;ApplicationName&gt;
+</code></pre>
+<p>デフォルト値は です.<code>http://localhost:5985/WSMAN</code> .</p>
+<p><strong>PSConnectionURI</strong>を指定していない場合は <strong>PSUSSL</strong>, <strong>PSComputerName</strong>, <strong>PSPort</strong>, <strong>PSApplicationName</strong>のパラメータを使用して <strong>PSConnectionURI</strong>の値を指定することができます.</p>
+<p>URIの輸送セグメントの有効値は,<code>HTTP</code>そして,<code>HTTPS</code>交通部段で接続URIを指定してもポートを指定しない場合は,セッションが標準ポートで作成されます.<code>80</code>HTTP と  のための HTTP と  のための HTTP と  のための HTTP と  のための HTTP と 呼ばれる HTTP と 呼ばれる HTTP と 呼ばれる HTTP と 呼ばれる HTTP と 呼ばれる HTTP と 呼ばれる HTTP と 呼ばれる HTTP と 呼ばれる HTTP と 呼ばれる HTTP と 呼ばれる HTTP と 呼ばれる HTTP と 呼ばれる HTTP と 呼ばれる HTTP と 呼ばれる HTTP と 呼ばれる HTTP と 呼ばれる HTTP と 呼ばれる HTTP と 呼ばれる HTTP と 呼ばれる と 呼ばれる HTTP と 呼ばれる と 呼ばれる と 呼ばれる と 呼ばれる と 呼ばれる と 呼ばれる と 呼ばれる と はあります.<code>443</code>HTTPSのデフォルトポートを Windows PowerShell リモートで使用するには,ポートを指定します.<code>5985</code>HTTP または  のための HTTP を入力します.<code>5986</code>HTTPSの利用を図る.</p>
+<h4>PSCredential \&lt;PSCredential\&gt;</h4>
+<p>対象コンピュータでアクティビティを実行する許可を有するユーザーアカウントを指定します.デフォルトは現在のユーザーです.このパラメータはコマンドに <strong>PSComputerName</strong>パラメータが含まれている場合にのみ有効です.このアクティビティ共通パラメータはワークフロー共通パラメータでもあります.</p>
+<p>ユーザー名,例えば を入力してください.<code>User01</code>    <code>Domain01\User01</code>の定義のような <strong>PSCredential</strong>オブジェクトを含む変数を入力するか,<code>Get-Credential</code>cmdlet が返されます.ユーザー名のみ入力すると,パスワードが提示されます.</p>
+<h4>PSDebug \&lt;PSDataCollection[DebugRecord]\&gt;</h4>
+<p>作業の流れの関数の <strong>Debug</strong> 属性の値に,デバッグメッセージをコンソールに書き込むのではなく,指定したデバッグレコードコレクションに活動からのデバッグメッセージを追加します.同じデバッグレコードコレクションオブジェクトに複数の活動からのデバッグメッセージを追加できます.</p>
+<p>この活動共通パラメータを使用するには,  を使います.<code>New-Object</code>cmdlet で <strong>PSDataCollection</strong> オブジェクトを <strong>DebugRecord</strong> のタイプで作成し,そのオブジェクトを変数に保存します.次に,次の例で示したように,その変数を1つまたは複数の活動の <strong>PSDebug</strong> パラメータの値として使用します.</p>
+<pre><code class="language-powershell">workflow Test-Workflow {
+    $debugCollection = New-Object -Type `
+    System.Management.Automation.PSDataCollection[System.Management.Automation.DebugRecord]
+    inlinescript {\Server01\Share01\Get-AssetData.ps1} -PSDebug $debugCollection -Debug $true
+    inlinescript {\Server01\Share01\Set-AssetData.ps1} -PSDebug $debugCollection -Debug $true
+    if ($debugCollection -like &quot;Missing&quot;) { ...}
+}
+</code></pre>
+<h4>PSDisableSerialization \&lt;ブール系\&gt;</h4>
+<p>作業流に"ライブ" (シリアライズされていない) オブジェクトを返却するアクティビティを指します.結果として生成されるオブジェクトには方法と性質がありますが,チェックポイントが取られたときに保存することはできません.</p>
+<h4>PSDisableSerializationPreference \&lt;ブール系\&gt;</h4>
+<p><strong>PSDisableSerialization</strong>のパラメータの相当は,活動だけでなく,ワークフロー全体に適用します.このパラメータを追加することは一般的に推奨されません.なぜなら,オブジェクトをシリア化しないワークフローは,再開または持続することはできません.</p>
+<p>有効な値は:</p>
+<ul>
+<li>
+<p>(デフォルト) 省略され,また活動に <strong>PSDisableSerialization</strong> パラメータを追加していない場合,オブジェクトはシリアライズされます.</p>
+</li>
+<li>
+<p>-<code>$true</code>ワークフロー内のすべての活動を"ライブ" (シリアライズされていない) オブジェクトに戻すように指針します.結果のオブジェクトには方法と性質がありますが,チェックポイントが取られたときに保存することはできません. - <code>$false</code>. ワークフローオブジェクトはシリアライズされます.</p>
+</li>
+</ul>
+<h4>PSError \&lt;PSDataCollection[ErrorRecord]\&gt;</h4>
+<p>作業の流れのプロパティの値やコンソールにエラーメッセージを書く代わりに,指定したエラーレコードコレクションに活動からのエラーメッセージを追加します.複数の活動からのエラーメッセージを同じエラーレコードコレクションオブジェクトに追加できます.</p>
+<p>この活動共通パラメータを使用するには,  を使います.<code>New-Object</code>cmdlet で <strong>PSDataCollection</strong> オブジェクトを <strong>ErrorRecord</strong> のタイプで作成し,そのオブジェクトを変数に保存します.次に,次の例で示したように,その変数を1つまたは複数の活動の <strong>PSError</strong> パラメータの値として使用します.</p>
+<pre><code class="language-powershell">workflow Test-Workflow {
+   $typeName = &quot;System.Management.Automation.PSDataCollection&quot;
+   $typeName += '[System.Management.Automation.ErrorRecord]'
+   $ec = New-Object $typeName
+   inlinescript {\Server01\Share01\Get-AssetData.ps1} -PSError $ec
+   inlinescript {\Server01\Share01\Set-AssetData.ps1} -PSError $ec
+   if ($ec.Count -gt 2) {
+      # Do Some Work.
+   }
+}
+</code></pre>
+<h4>PSPersist \&lt;ブルリアン\&gt;</h4>
+<p>チェックポイントは,作業過程で指定されたチェックポイントに加えて,このチェックポイントも,ワークフローの共通パラメータでもあります.</p>
+<p>"チェックポイント"または"持続点"とは,ワークフローが実行中に収録されるワークフロー状態とデータの瞬時に収録され,ディスク上の持続保存に保存されます.Windows PowerShell Workflowは,作業を再起動するのではなく,最後の持続点から停止または中断されたワークフローを再開するために保存されたデータを使用します.</p>
+<p>有効な値は:</p>
+<p>(デフォルト) このパラメータを省略すると,チェックポイントは追加されません.</p>
+<h1>about_ActivityCommonParametersについて</h1>
+<p>ワークフローの設定に基づいて取られている.</p>
+<ul>
+<li>
+<p>-<code>$true</code>作業が完了した後,チェックポイントを設定します.このチェックポイントは,ワークフローで指定されたチェックポイントに加えてあります.</p>
+</li>
+<li>
+<p>-<code>$false</code>チェックポイントは追加されず,チェックポイントはワークフローで指定された場合にのみ取られる.</p>
+</li>
+</ul>
+<h4>PSPort \&lt;Int32\&gt;</h4>
+<p>ターゲットコンピュータのネットワークポートを指定します.デフォルトポートは です.<code>5985</code>(HTTPのWinRMポート) と59`86 (HTTPSのWinRMポート) のいずれも,この活動共通パラメータは,ワークフロー共通パラメータでもある.</p>
+<p>必須でない限り <strong>PSPort</strong> パラメータを使用しないでください.コマンドに設定されているポートは,コマンドが実行されるすべてのコンピュータまたはセッションに適用されます.代替ポート設定は,コマンドがすべてのコンピュータで実行されないようにすることがあります.代替ポートを使用する前に,遠隔コンピュータの WinRM リスナーをそのポートで聴くように設定する必要があります.</p>
+<h4>PSProgress \&lt;PSDataCollection[ProgressRecord]\&gt;</h4>
+<p>作業流のプログレスメッセージをコンソールに書き込むか,ワークフローのプロパティ <strong>Progress</strong>の値に書き込むのではなく,指定したプログレスレコードコレクションに活動からの進捗メッセージを追加します.同じプログレスレコードコレクションオブジェクトに複数の活動からの進捗メッセージを追加できます.</p>
+<h4>PSProgressMessage \&lt;String\&gt;</h4>
+<p>作業のフレンドリーな説明を指定します. <strong>PSProgressMessage</strong>の値は,ワークフローが実行される間に進行欄に表示されます. <strong>DisplayName</strong>もコマンドに含まれると,進行欄のコンテンツは, で表示されます.<code>&lt;DisplayName&gt;:&lt;PSProgressMessage&gt;</code>形式.</p>
+<p>このパラメータは,特に,  の活動を特定するのに有用です.<code>foreach -Parallel</code>このメッセージがなければ,すべての平行部門の活動は同じ名前で識別されます.</p>
+<h4>PSRemotingBehavior \&lt;RemotingBehavior\&gt; 遠隔行動について</h4>
+<p>対象コンピュータで実行されるときにリモート管理の仕方を指定します.PowerShellはデフォルトです.</p>
+<p>有効な値は以下の通りです.</p>
+<ul>
+<li>
+<p>-<code>None</code>: 遠隔コンピュータでは動作しません.</p>
+</li>
+<li>
+<p>-<code>PowerShell</code>: Windows PowerShell リモートで実行する場合は,ターゲットコンピュータで動作します.</p>
+</li>
+<li>
+<p>-<code>Custom</code>この活動は独自のリモート型をサポートしています.この値は,活動として実装されているcmdletが<strong>RemotingCapability</strong>属性の値を <strong>SupportedByCommand</strong> に設定すると有効です.コマンドには<strong>ComputerName</strong>パラメータが含まれます.</p>
+</li>
+</ul>
+<h4>PSRequiredModules \&lt;String[]\&gt;</h4>
+<p>コマンドを実行する前に指定されたモジュールを輸入します.モジュール名を入力します.モジュールがターゲットコンピュータにインストールする必要があります.</p>
+<p><strong>PSModulePath</strong>環境変数で指定されたパスでインストールされたモジュールが,モジュール内のコマンドを初めて使用すると自動的に輸入されます.このパラメータを使用して <strong>PSModulePath</strong> の場所にないモジュールを輸入します.</p>
+<p>ワークフローの各活動は,それぞれのセッションで実行されるので,<code>Import-Module</code>プログラムが実行するセッションにのみモジュールを輸入する.他の動作が実行されるセッションにモジュールを輸入しない.</p>
+<h4>PSSessionOption \&lt;PSSessionOption\&gt;</h4>
+<p>ターゲットコンピュータにセッションの先端オプションを設定します.PSSessionOption**オブジェクトを入力します.例えば,あなたが  を使って作成したオブジェクトです.<code>New-PSSessionOption</code>cmdlet.この活動共通パラメータは,ワークフロー共通パラメータでもある.</p>
+<p>セッションオプションのデフォルト値は, の値によって決定されます.<code>$PSSessionOption</code>設定されている場合の優先順位変数です.そうでなければ,セッションはセッション設定で指定された値を使用します.</p>
+<p>デフォルト値を含むセッションオプションの説明については,New-PSSessionOption cmdletのヘルプトピックを参照してください.</p>
+<p>について詳しい情報はこちらから<code>$PSSessionOption</code>優先順位変数については, [about_Preference_Variables] ((../..//Microsoft.PowerShell.Core/About/about_Preference_Variables.md) を参照してください.</p>
+<h4>PSUSSL \&lt;ブール人\&gt;</h4>
+<p>の値が付いている.<code>$true</code>ターゲットコンピュータに接続するために,Secure Sockets Layer (SSL) プロトコルを使用します.デフォルトでは,SSLは使用されません. の値です.<code>$false</code>この活動共通パラメータは,ワークフロー共通パラメータでもある.</p>
+<p>WS-Managementはネットワーク上で送信されるすべての Windows PowerShell コンテンツを暗号化します. <strong>UseSSL</strong> は HTTP の代わりに HTTPS でデータを送信する追加の保護です.このパラメータを使用しますが,コマンドに使用されているポートで SSL が利用できない場合は,コマンドが失敗します.</p>
+<h4>PSVerbose \&lt;PSDataCollection[VerboseRecord]\&gt;</h4>
+<p>作業の動詞メッセージをコンソールに書き込むか,ワークフローのプロパティの <strong>Verbose</strong> の値に書き込むのではなく,指定された動詞レコードコレクションに活動からの動詞メッセージを追加します.同じ動詞レコードコレクションオブジェクトに複数の活動からの動詞メッセージを追加できます.</p>
+<h4>PSWarning \&lt;PSDataCollection[WarningRecord]\&gt;</h4>
+<p>作業の流れの関数値に警告メッセージを書くことなく,指定した警告記録コレクションに活動からの警告メッセージを追加します.同じ警告記録収集オブジェクトに複数の活動からの警告メッセージを追加できます.</p>
+<h4>結果</h4>
+<p>このパラメータは,XAMLワークフローでのみ有効です.</p>
+<h4>UseDefaultInput \&lt;Boolean\&gt;</h4>
+<p>値別アクティビティへの入力としてすべてのワークフロー入力を受け入れます.</p>
+<p>例えば,は<code>Get-Process</code>次のワークフローのサンプルでの活動では,ワークフローに転送される入力を得るために,活動共通パラメータを<strong>UseDefaultInput</strong>を使用します.入力でワークフローを実行すると,その入力が活動によって使用されます.</p>
+<pre><code class="language-powershell">workflow Test-Workflow {
+    Get-Service -UseDefaultInput $true
+}
+
+PS C:&gt; Test-Workflow -InputObject WinRm
+</code></pre>
+<pre><code class="language-output">Status   Name        DisplayName                            PSComputerName
+------   ----        -----------                            --------------
+Running  winrm       Windows Remote Management (WS-Manag... localhost
+</code></pre>
+<h4>Verbose \&lt;SwitchParameter\&gt;</h4>
+<p>コマンドで実行された操作についての詳細な情報を表示します.この情報は,トラスまたはトランザクションログの情報に似ている. <strong>Verbose</strong>パラメータは, の値を過失します.<code>$VerbosePreference</code>このパラメータは,コマンドがverboseメッセージを生成するときにのみ動作します.このパラメータは,またWindows PowerShellの共通のパラメータです.</p>
+<h4>警告アクション \&lt;アクション優先度\&gt;</h4>
+<p>活動が警告にどのように反応するか判断します. <code>Continue</code><strong>WarningAction</strong> パラメータは, の値をオーバーリードします.<code>$WarningPreference</code>このパラメータは,コマンドが警告メッセージを生成するときにのみ動作します.このパラメータは,Windows PowerShellの共通のパラメータでもあります.</p>
+<p>有効な値:</p>
+<ul>
+<li>
+<p>-<code>SilentlyContinue</code>.警告メッセージを削除し,コマンドを実行し続けます.</p>
+</li>
+<li>
+<p>-<code>Continue</code>. 警告メッセージが表示され,コマンドを実行し続けます. <code>Continue</code>はデフォルト値です.</p>
+</li>
+<li>
+<p>-<code>Inquire</code>警告メッセージが表示され,実行を継続する前に確認を提示します.この値はめったに使用されません.</p>
+</li>
+<li>
+<p>-<code>Stop</code>.警告メッセージが表示され,コマンドを実行するのを停止します.</p>
+</li>
+</ul>
+<p>&gt; [!NOTE] &gt; 警告アクションのパラメータは,値を覆すものではない.<code>$WarningAction</code>設定の変数がコマンド &gt; で使用され,スクリプトまたは関数を実行する際の優先順位変数です.</p>
+<h1>about_ActivityCommonParametersについて</h1>
+<h3>例えは</h3>
+<p>活動共通パラメータは極めて有用です.例えば,特定の活動をターゲットコンピュータのサブセットのみで実行するために <strong>PSComputerName</strong>パラメータを使用できます.</p>
+<p>あるいは,特定の活動に対するリトリー値を調整するために <strong>PSConnectionRetryCount</strong> と <strong>PSConnectionRetryIntervalSec</strong> パラメータを使用する可能性があります.</p>
+<p>次の例では,PSComputerName*活動共通のパラメータを使用して,  を実行する方法を示しています.<code>Get-EventLog</code>コンピュータでのみ活動する.特定の領域です.</p>
+<pre><code class="language-powershell">workflow Test-Workflow {
+    $UserDomain = Get-Content -Path '.\UserComputers.txt'
+    $Log = (Get-EventLog -LogName &quot;Windows PowerShell&quot; `
+      -PSComputerName $UserDomain)
+
+    if ($Log) {
+        # Do Work Here.
+    }
+}
+</code></pre>
+<h2>また,参照してください</h2>
+<p>[about_Workflows] ((about_workflows.md) - [about_WorkflowCommonParameters] ((about_WorkflowCommonParameters.md) -</p></section><section class="en-original"><pre class="source-original"># about_ActivityCommonParameters
+
+## Short description
+
+Describes the parameters that Windows PowerShell Workflow adds to activities.
+
+## Long description
+
+Windows PowerShell Workflow adds the activity common parameters to activities
+that are derived from the **PSActivity** base class. This category includes the
+`inlinescript` activity and Windows PowerShell cmdlets that are implemented as
+activities, such as `Get-Process` and `Get-WinEvent`.
+
+The activity common parameters are not valid on the `Suspend-Workflow` and
+`Checkpoint-Workflow` activities and they are not added to cmdlets or
+expressions that Windows PowerShell Workflow automatically runs in an
+`inlinescript` script block or similar activity. The activity common
+parameters are available on the `inlinescript` activity, but not on commands
+in the `inlinescript` script block.
+
+Several of the activity common parameters are also workflow common parameters
+or Windows PowerShell common parameters. Other activity common parameters are
+unique to activities.
+
+For information about the workflow common parameters, see
+[about_WorkflowCommonParameters](about_WorkflowCommonParameters.md). For
+information about the Windows PowerShell common parameters, see
+[about_CommonParameters](../../Microsoft.PowerShell.Core/About/about_CommonParameters.md).
+
+### LIST OF ACTIVITY COMMON PARAMETERS
+
+```
+AppendOutput                      PSDebug
+Debug                             PSDisableSerialization
+DisplayName                       PSDisableSerializationPreference
+ErrorAction                       PSError
+Input                             PSPersist
+MergeErrorToOutput                PSPort
+PSActionRetryCount                PSProgress
+PSActionRetryIntervalSec          PSProgressMessage
+PSActionRunningTimeoutSec         PSRemotingBehavior
+PSApplicationName                 PSRequiredModules
+PSAuthentication                  PSSessionOption
+PSCertificateThumbprint           PSUseSSL
+PSComputerName                    PSVerbose
+PSConfigurationName               PSWarning
+PSConnectionRetryCount            Result
+PSConnectionRetryIntervalSec      UseDefaultInput
+PSConnectionURI                   Verbose
+PSCredential                      WarningAction
+```
+
+# about_ActivityCommonParameters
+
+### PARAMETER DESCRIPTIONS
+
+This section describes the activity common parameters.
+
+#### AppendOutput \&lt;Boolean\&gt;
+
+A value of `$true` adds the output of the activity to the value of the variable.
+A value of `$false` has no effect. By default, assigning a value to a variable
+replaces the variable value.
+
+For example, the following commands add a process object to the service object
+in the `$x` variable.
+
+```powershell
+workflow Test-Workflow {
+    $x = Get-Service
+    $x = Get-Process -AppendOutput $true
+}
+```
+
+This parameter is designed for XAML-based workflows. In script workflows, you
+can also use the `+=` assignment operator to add output to the value of a
+variable, as shown in the following example.
+
+```powershell
+workflow Test-Workflow {
+    $x = Get-Service
+    $x += Get-Process
+}
+```
+
+#### Debug \&lt;SwitchParameter\&gt;
+
+Displays programmer-level detail about the operation performed by the command.
+The **Debug** parameter overrides the value of the `$DebugPreference` variable
+for the current command. This parameter works only when the command generates
+debugging messages. This parameter is also a Windows PowerShell common
+parameter.
+
+#### DisplayName \&lt;String\&gt;
+
+Specifies a friendly name for the activity. The **DisplayName** value appears in
+the progress bar while the workflow runs and in the value of the **Progress**
+property of the workflow job. When the **PSProgressMessage** parameter is also
+included in the command, the progress bar content appears in
+`&lt;DisplayName&gt;:&lt;PSProgressMessage&gt;` format.
+
+#### ErrorAction \&lt;ActionPreference\&gt;
+
+Determines how the activity responds to a non-terminating error from the
+command. It has no effect on termination errors. This parameter works only when
+the command generates a non-terminating error, such as those from the
+`Write-Error` cmdlet. The **ErrorAction** parameter overrides the value of the
+`$ErrorActionPreference` variable for the current command. This parameter is
+also a Windows PowerShell common parameter.
+
+Valid values:
+
+- `Continue`. Displays the error message and continues executing the command.
+  `Continue` is the default value.
+
+- `Ignore`. Suppresses the error message and continues executing the command.
+  Unlike `SilentlyContinue`, `Ignore` does not add the error message to the
+  `$Error` automatic variable. The `Ignore` value is introduced in Windows
+  PowerShell 3.0.
+
+- `Inquire`. Displays the error message and prompts you for confirmation before
+  continuing execution. This value is rarely used.
+
+- `Suspend`. Automatically suspends a workflow job to allow for further
+  investigation. After investigation, the workflow can be resumed.
+
+- `SilentlyContinue`. Suppresses the error message and continues executing the
+  command.
+
+- `Stop`. Displays the error message and stops executing the command.
+
+#### Input \&lt;Object[]\&gt;
+
+Submits a collection of objects to an activity. This is an alternative to
+piping objects to the activity one at a time.
+
+#### MergeErrorToOutput \&lt;Boolean\&gt;
+
+A value of `$true` adds errors to the output stream. A value of `$false` has
+no effect. Use this parameter with the `parallel` and `foreach -Parallel`
+keywords to collect errors and output from multiple parallel commands
+in a single collection.
+
+#### PSActionRetryCount \&lt;Int32\&gt;
+
+Tries repeatedly to run the activity if the first attempt fails. The default
+value, `0`, does not retry.
+
+#### PSActionRetryIntervalSec \&lt;Int32\&gt;
+
+Determines the interval between action retries in seconds. The default value,
+`0`, retries the action immediately. This parameter is valid only when the
+**PSActionRetryCount** parameter is also used in the command.
+
+#### PSActionRunningTimeoutSec \&lt;Int32\&gt;
+
+Determines how long the activity can run on each target computer. If the
+activity does not complete before the timeout expires, Windows PowerShell
+Workflow generates a terminating error and stops processing the workflow on the
+affected target computer.
+
+#### PSAllowRedirection \&lt;Boolean\&gt;
+
+A value of `$true` allows redirection of the connection to the target computers.
+A value of `$false` has no effect. This activity common parameter is also a
+workflow common parameter.
+
+When you use the **PSConnectionURI** parameter, the remote destination can return
+an instruction to redirect to a different URI. By default, Windows PowerShell
+does not redirect connections, but you can use the **PSAllowRedirection** parameter
+with a value of `$true` to allow redirection of the connection to the target
+computer.
+
+You can also limit the number of times that the connection is redirected by
+setting the **MaximumConnectionRedirectionCount** property of the
+`$PSSessionOption` preference variable, or the
+**MaximumConnectionRedirectionCount** property of the value of the
+**SessionOption** parameter of cmdlets that create a session. The default value
+is `5`.
+
+#### PSApplicationName \&lt;String\&gt;
+
+Specifies the application name segment of the connection URI that is used to
+connect to the target computers. Use this parameter to specify the application
+name when you are not using the **ConnectionURI** parameter in the command. This
+activity common parameter is also a workflow common parameter.
+
+The default value is the value of the `$PSSessionApplicationName` preference
+variable on the target computer. If this preference variable is not defined,
+the default value is WSMAN. This value is appropriate for most uses. For more
+information, see
+[about_Preference_Variables](../../Microsoft.PowerShell.Core/About/about_Preference_Variables.md).
+
+The WinRM service uses the application name to select a listener to service the
+connection request. The value of this parameter should match the value of the
+**URLPrefix** property of a listener on the remote computer.
+
+#### PSAuthentication \&lt;AuthenticationMechanism\&gt;
+
+Specifies the mechanism that is used to authenticate the user&#x27;s credentials when
+connecting to the target computers. Valid values are `Default`, `Basic`,
+`CredSSP`, `Digest`, `Kerberos`, `Negotiate`, and
+`NegotiateWithImplicitCredential`. The default value is `Default`. This activity
+common parameter is also a workflow common parameter.
+
+For information about the values of this parameter, see the description of the
+**System.Management.Automation.Runspaces.AuthenticationMechanism** enumeration in
+the PowerShell SDK.
+
+&gt; [!WARNING]
+&gt; Credential Security Service Provider (CredSSP) authentication, in
+&gt; which the user&#x27;s credentials are passed to a remote computer to be
+&gt; authenticated, is designed for commands that require authentication on more
+&gt; than one resource, such as accessing a remote network share. This mechanism
+&gt; increases the security risk of the remote operation. If the remote computer is
+&gt; compromised, the credentials that are passed to it can be used to control the
+&gt; network session.
+
+#### PSCertificateThumbprint \&lt;String\&gt;
+
+Specifies the digital public key certificate (X509) of a user account that has
+permission to perform this action. Enter the certificate thumbprint of the
+certificate. This activity common parameter is also a workflow common
+parameter.
+
+Certificates are used in client certificate-based authentication. They can only
+be mapped to local user accounts; they do not work with domain accounts.
+
+To get a certificate, use the [Get-Item](xref:Microsoft.PowerShell.Management.Get-Item)
+or [Get-ChildItem](xref:Microsoft.PowerShell.Management.Get-ChildItem)
+cmdlets in the Windows PowerShell `Cert:` drive.
+
+#### PSComputerName \&lt;String[]\&gt;
+
+# about_ActivityCommonParameters
+
+Specifies the target computers on which the activity run. The default is the
+local computer. This activity common parameter is also a workflow common
+parameter.
+
+Type the NETBIOS name, IP address, or fully-qualified domain name of one or
+more computers in a comma-separated list. To specify the local computer, type
+the computer name, `localhost`, or a dot (`.`).
+
+To include the local computer in the value of the **PSComputerName** parameter,
+open Windows PowerShell with the **Run as administrator** option.
+
+If this parameter is omitted from the command, or it value is `$null` or an
+empty string, the workflow target is the local computer and Windows PowerShell
+remoting is not used to run the command.
+
+To use an IP address in the value of the **ComputerName** parameter, the command
+must include the **PSCredential** parameter. Also, the computer must be
+configured for HTTPS transport or the IP address of the remote computer must be
+included in the WinRM TrustedHosts list on the local computer. For instructions
+for adding a computer name to the TrustedHosts list, see &quot;How to Add a Computer
+to the Trusted Host List&quot; in
+[about_Remote_Troubleshooting](../../Microsoft.PowerShell.Core/About/about_Remote_Troubleshooting.md).
+
+#### PSConfigurationName \&lt;String\&gt;
+
+Specifies the session configurations that are used to create sessions on the
+target computers. Enter the name of a session configuration on the target
+computers (not on the computer that is running the workflow). The default is
+**Microsoft.PowerShell.Workflow**. This activity common parameter is also a
+workflow common parameter.
+
+#### PSConnectionRetryCount \&lt;UInt\&gt;
+
+Specifies the maximum number of attempts to connect to each target computer if
+the first connection attempt fails. Enter a number between 1 and 4,294,967,295
+(**UInt.MaxValue**). The default value, zero (`0`), represents no retry
+attempts. This activity common parameter is also a workflow common parameter.
+
+#### PSConnectionRetryIntervalSec \&lt;UInt\&gt;
+
+Specifies the delay between connection retry attempts in seconds. The default
+value is zero (`0`). This parameter is valid only when the value of
+**PSConnectionRetryCount** is at least 1. This activity common parameter is also
+a workflow common parameter.
+
+#### PSConnectionURI \&lt;System.Uri\&gt;
+
+Specifies a Uniform Resource Identifier (URI) that defines the connection
+endpoint for the activity on the target computer. The URI must be fully
+qualified. This activity common parameter is also a workflow common parameter.
+
+The format of this string is as follows:
+
+```
+&lt;Transport&gt;://&lt;ComputerName&gt;:&lt;Port&gt;/&lt;ApplicationName&gt;
+```
+
+The default value is `http://localhost:5985/WSMAN`.
+
+If you do not specify a **PSConnectionURI**, you can use the **PSUseSSL**,
+**PSComputerName**, **PSPort**, and **PSApplicationName** parameters to specify
+the **PSConnectionURI** values.
+
+Valid values for the Transport segment of the URI are `HTTP` and `HTTPS`. If you
+specify a connection URI with a Transport segment, but do not specify a port,
+the session is created with standards ports: `80` for HTTP and `443` for HTTPS.
+To use the default ports for Windows PowerShell remoting, specify port `5985`
+for HTTP or `5986` for HTTPS.
+
+#### PSCredential \&lt;PSCredential\&gt;
+
+Specifies a user account that has permission to run the activity on the target
+computer. The default is the current user. This parameter is valid only when the
+**PSComputerName** parameter is included in the command. This activity common
+parameter is also a workflow common parameter.
+
+Type a user name, such as `User01` or `Domain01\User01`, or enter a variable
+that contains a **PSCredential** object, such as one that the `Get-Credential`
+cmdlet returns. If you enter only a user name, you are prompted for a
+password.
+
+#### PSDebug \&lt;PSDataCollection[DebugRecord]\&gt;
+
+Adds debug messages from the activity to the specified debug record collection,
+instead of writing the debug messages to the console or to the value of the
+**Debug** property of the workflow job. You can add debug messages from multiple
+activities to the same debug record collection object.
+
+To use this activity common parameter, use the `New-Object` cmdlet to create a
+**PSDataCollection** object with a type of **DebugRecord** and save the object
+in a variable. Then, use the variable as the value of the **PSDebug** parameter
+of one or more activities, as shown in the following example.
+
+```powershell
+workflow Test-Workflow {
+    $debugCollection = New-Object -Type `
+    System.Management.Automation.PSDataCollection[System.Management.Automation.DebugRecord]
+    inlinescript {\Server01\Share01\Get-AssetData.ps1} -PSDebug $debugCollection -Debug $true
+    inlinescript {\Server01\Share01\Set-AssetData.ps1} -PSDebug $debugCollection -Debug $true
+    if ($debugCollection -like &quot;Missing&quot;) { ...}
+}
+```
+
+#### PSDisableSerialization \&lt;Boolean\&gt;
+
+Directs the activity to return &quot;live&quot; (not serialized) objects to the workflow.
+The resulting objects have methods, as well as properties, but they cannot be
+saved when a checkpoint is taken.
+
+#### PSDisableSerializationPreference \&lt;Boolean\&gt;
+
+Applies the equivalent of the **PSDisableSerialization** parameter to the entire
+workflow, not just the activity. Adding this parameter is generally not
+recommended, because a workflow that doesn&#x27;t serialize its objects cannot be
+resumed or persisted.
+
+Valid values:
+
+- (Default) If omitted, and you have also not added the
+  **PSDisableSerialization** parameter to an activity, objects are serialized.
+
+- `$true`. Directs all activities within a workflow to return
+  &quot;live&quot; (not serialized) objects. The resulting objects have methods, as well
+  as properties, but they cannot be saved when a checkpoint is taken.
+- `$false`. Workflow objects are serialized.
+
+#### PSError \&lt;PSDataCollection[ErrorRecord]\&gt;
+
+Adds error messages from the activity to the specified error record collection,
+instead of writing the error messages to the console or to the value of the
+**Error** property of the workflow job. You can add error messages from multiple
+activities to the same error record collection object.
+
+To use this activity common parameter, use the `New-Object` cmdlet to create a
+**PSDataCollection** object with a type of **ErrorRecord** and save the object
+in a variable. Then, use the variable as the value of the **PSError** parameter
+of one or more activities, as shown in the following example.
+
+```powershell
+workflow Test-Workflow {
+   $typeName = &quot;System.Management.Automation.PSDataCollection&quot;
+   $typeName += &#x27;[System.Management.Automation.ErrorRecord]&#x27;
+   $ec = New-Object $typeName
+   inlinescript {\Server01\Share01\Get-AssetData.ps1} -PSError $ec
+   inlinescript {\Server01\Share01\Set-AssetData.ps1} -PSError $ec
+   if ($ec.Count -gt 2) {
+      # Do Some Work.
+   }
+}
+```
+
+#### PSPersist \&lt;Boolean\&gt;
+
+Takes a checkpoint after the activity. This checkpoint is in addition to any
+checkpoints that are specified in the workflow. This activity common parameter
+is also a workflow common parameter.
+
+A &quot;checkpoint&quot; or &quot;persistence point&quot; is a snapshot of the workflow state and
+data that is captured while the workflow runs and is saved to a persistence
+store on disk. Windows PowerShell Workflow uses the saved data to resume a
+suspended or interrupted workflow from the last persistence point, rather than
+to restart the workflow.
+
+Valid values:
+
+- (Default) If you omit this parameter, no checkpoints are added. Checkpoints
+
+# about_ActivityCommonParameters
+
+are taken based on the settings for the workflow.
+
+- `$true`. Takes a checkpoint after the activity completes. This checkpoint is
+  in addition to any checkpoints that are specified in the workflow.
+
+- `$false`. No checkpoints are added. Checkpoints are taken only when specified
+  in the workflow.
+
+#### PSPort \&lt;Int32\&gt;
+
+Specifies the network port on the target computers. The default ports are `5985`
+(the WinRM port for HTTP) and 59`86 (the WinRM port for HTTPS). This activity
+common parameter is also a workflow common parameter.
+
+Do not use the **PSPort** parameter unless you must. The port set in the command
+applies to all computers or sessions on which the command runs. An alternate
+port setting might prevent the command from running on all computers. Before
+using an alternate port, you must configure the WinRM listener on the remote
+computer to listen at that port.
+
+#### PSProgress \&lt;PSDataCollection[ProgressRecord]\&gt;
+
+Adds progress messages from the activity to the specified progress record
+collection, instead of writing the progress messages to the console or to the
+value of the **Progress** property of the workflow job. You can add progress
+messages from multiple activities to the same progress record collection
+object.
+
+#### PSProgressMessage \&lt;String\&gt;
+
+Specifies a friendly description of the activity. The **PSProgressMessage** value
+appears in the progress bar while the workflow runs. When the **DisplayName** is
+also included in the command, the progress bar content appears in
+`&lt;DisplayName&gt;:&lt;PSProgressMessage&gt;` format.
+
+This parameter is particularly useful for identifying activities in a
+`foreach -Parallel` script block. Without this message, activities in all
+parallel branches are identified by the same name.
+
+#### PSRemotingBehavior \&lt;RemotingBehavior\&gt;
+
+Specifies how remoting is managed when the activity is run on target computers.
+PowerShell is the default.
+
+Valid values are:
+
+- `None`: The activity is not run on remote computers.
+
+- `PowerShell`: Windows PowerShell remoting is used to run the activity on
+  target computers.
+
+- `Custom`: The activity supports its own type of remoting. This value is valid
+  when the cmdlet that is being implemented as an activity sets the value of
+  the **RemotingCapability** attribute to **SupportedByCommand** and the command
+  includes the **ComputerName** parameter.
+
+#### PSRequiredModules \&lt;String[]\&gt;
+
+Imports the specified modules before running the command. Enter the module
+names. The modules must be installed on the target computer.
+
+Modules that are installed in a path specified in the **PSModulePath**
+environment variable are automatically imported on first use of any command in
+the module. Use this parameter to import modules that are not in a
+**PSModulePath** location.
+
+Because each activity in a workflow runs in its own session, an `Import-Module`
+command imports a module only into the session in which it runs. It does not
+import the module into sessions in which other activities run.
+
+#### PSSessionOption \&lt;PSSessionOption\&gt;
+
+Sets advanced options for the sessions to the target computers. Enter a
+**PSSessionOption** object, such as one that you create by using the
+`New-PSSessionOption` cmdlet. This activity common parameter is also a workflow
+common parameter.
+
+The default values for the session options are determined by the value of the
+`$PSSessionOption` preference variable, if it is set. Otherwise, the session
+uses the values specified in the session configuration.
+
+For a description of the session options, including the default values, see the
+help topic for the New-PSSessionOption cmdlet
+[New-PSSessionOption](xref:Microsoft.PowerShell.Core.New-PSSessionOption).
+
+For more information about the `$PSSessionOption` preference variable, see
+[about_Preference_Variables](../../Microsoft.PowerShell.Core/About/about_Preference_Variables.md).
+
+#### PSUseSSL \&lt;Boolean\&gt;
+
+A value of `$true` uses the Secure Sockets Layer (SSL) protocol to establish a
+connection to the target computer. By default, SSL is not used. A value of
+`$false` has no effect. This activity common parameter is also a workflow common
+parameter.
+
+WS-Management encrypts all Windows PowerShell content transmitted over the
+network. **UseSSL** is an additional protection that sends the data across an
+HTTPS, instead of HTTP. If you use this parameter, but SSL is not available on
+the port used for the command, the command fails.
+
+#### PSVerbose \&lt;PSDataCollection[VerboseRecord]\&gt;
+
+Adds verbose messages from the activity to the specified verbose record
+collection, instead of writing the verbose messages to the console or to the
+value of the **Verbose** property of the workflow job. You can add verbose
+messages from multiple activities to the same verbose record collection object.
+
+#### PSWarning \&lt;PSDataCollection[WarningRecord]\&gt;
+
+Adds warning messages from the activity to the specified warning record
+collection, instead of writing the warning messages to the console or to the
+value of the **Warning** property of the workflow job. You can add warning
+messages from multiple activities to the same warning record collection object.
+
+#### Result
+
+This parameter is valid only in XAML workflows.
+
+#### UseDefaultInput \&lt;Boolean\&gt;
+
+Accepts all workflow input as input to the activity by value.
+
+For example, the `Get-Process` activity in the following sample workflow uses
+the **UseDefaultInput** activity common parameter to get input that is passed to
+the workflow. When you run the workflow with input, that input is used by the
+activity.
+
+```powershell
+workflow Test-Workflow {
+    Get-Service -UseDefaultInput $true
+}
+
+PS C:&gt; Test-Workflow -InputObject WinRm
+```
+
+```output
+Status   Name        DisplayName                            PSComputerName
+------   ----        -----------                            --------------
+Running  winrm       Windows Remote Management (WS-Manag... localhost
+```
+
+#### Verbose \&lt;SwitchParameter\&gt;
+
+Displays detailed information about the operation performed by the command. This
+information resembles the information in a trace or in a transaction log. The
+**Verbose** parameter overrides the value of the `$VerbosePreference` variable
+for the current command. This parameter works only when the command generates a
+verbose message. This parameter is also a Windows PowerShell common parameter.
+
+#### WarningAction \&lt;ActionPreference\&gt;
+
+Determines how the activity responds to a warning. `Continue` is the default
+value. The **WarningAction** parameter overrides the value of the
+`$WarningPreference` variable for the current command. This parameter works only
+when the command generates a warning message. This parameter is also a Windows
+PowerShell common parameter.
+
+Valid Values:
+
+- `SilentlyContinue`. Suppresses the warning message and continues executing the
+  command.
+
+- `Continue`. Displays the warning message and continues executing the command.
+  `Continue` is the default value.
+
+- `Inquire`. Displays the warning message and prompts you for confirmation before
+  continuing execution. This value is rarely used.
+
+- `Stop`. Displays the warning message and stops executing the command.
+
+&gt; [!NOTE]
+&gt; The **WarningAction** parameter does not override the value of the
+&gt; `$WarningAction` preference variable when the parameter is used in a command
+&gt; to run a script or function.
+
+# about_ActivityCommonParameters
+
+### EXAMPLES
+
+The activity common parameters are extremely useful. For example, you can use
+the **PSComputerName** parameter to run particular activities on only a subset
+of the target computers.
+
+Or, you might use the **PSConnectionRetryCount** and
+**PSConnectionRetryIntervalSec** parameters to adjust the retry values for
+particular activities.
+
+The following example shows how to use the **PSComputerName** activity common
+parameters to run a `Get-EventLog` activity only on computers it a particular
+domain.
+
+```powershell
+workflow Test-Workflow {
+    $UserDomain = Get-Content -Path &#x27;.\UserComputers.txt&#x27;
+    $Log = (Get-EventLog -LogName &quot;Windows PowerShell&quot; `
+      -PSComputerName $UserDomain)
+
+    if ($Log) {
+        # Do Work Here.
+    }
+}
+```
+
+## See Also
+
+- [about_Workflows](about_workflows.md)
+- [about_WorkflowCommonParameters](about_WorkflowCommonParameters.md)</pre></section>

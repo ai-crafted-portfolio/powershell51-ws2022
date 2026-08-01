@@ -1,0 +1,886 @@
+<!doctype html><meta charset="utf-8"><section class="jp-official"><h1>セットSRPパートナーシップ</h1>
+<h2>シンプシス (SYNOPSIS) は,2つの複製グループ間の複製パートナーシップを修正する.</h2>
+<h2>SYNTAXは,のシンタックスです.</h2>
+<h3>AddVolumes (デフォルト)</h3>
+<pre><code>Set-SRPartnership [[-SourceComputerName] &lt;String&gt;] [-SourceRGName] &lt;String&gt;
+ [-SourceAddVolumePartnership] &lt;String[]&gt; [-DestinationComputerName] &lt;String&gt;
+ [-DestinationRGName] &lt;String&gt; [-DestinationAddVolumePartnership] &lt;String[]&gt; [-Seeded] [-Force]
+ [-CimSession &lt;CimSession[]&gt;] [-ThrottleLimit &lt;Int32&gt;] [-AsJob] [-WhatIf] [-Confirm]
+ [&lt;CommonParameters&gt;]
+</code></pre>
+<h3>ModifySettings を変更する</h3>
+<pre><code>Set-SRPartnership [[-SourceComputerName] &lt;String&gt;] [-SourceRGName] &lt;String&gt;
+ [-DestinationComputerName] &lt;String&gt; [-DestinationRGName] &lt;String&gt;
+ [[-ReplicationMode] &lt;ReplicationMode&gt;] [[-LogSizeInBytes] &lt;UInt64&gt;] [[-AsyncRPO] &lt;UInt32&gt;]
+ [[-Encryption] &lt;Boolean&gt;] [[-Compression] &lt;Boolean&gt;] [-CimSession &lt;CimSession[]&gt;]
+ [-ThrottleLimit &lt;Int32&gt;] [-AsJob] [-WhatIf] [-Confirm] [&lt;CommonParameters&gt;]
+</code></pre>
+<h3>提携を修正する</h3>
+<pre><code>Set-SRPartnership [-SourceRGName] &lt;String&gt; [-DestinationComputerName] &lt;String&gt;
+ [-DestinationRGName] &lt;String&gt; [-Force] [[-NewSourceComputerName] &lt;String&gt;]
+ [-CimSession &lt;CimSession[]&gt;] [-ThrottleLimit &lt;Int32&gt;] [-AsJob] [-WhatIf] [-Confirm]
+ [&lt;CommonParameters&gt;]
+</code></pre>
+<h2>記述は,</h2>
+<p><code>Set-SRPartnership</code>cmdlet は,既存の2つの複製グループ間の複製パートナーシップを修正する.このcmdlet を使用して複製されたボリュームを追加できます.また,ソースボリュームを目的ボリュームに変える複製の方向を変更できます.</p>
+<p>&gt; [!NOTE] &gt; <strong>Compression</strong>パラメータは,Azure Stack HCI バージョン22H2でのみ使用できます.https://azure.microsoft.com/updates/public-preview-azure-stack-hci-version-22h2/) または後期, &gt;およびWindows Server Datacenter: Azure Edition を開始して2022-09 Microsoft の累積更新 &gt; x64 ベースのシステムのためのサーバーオペレーティングシステムバージョン 21H2 &gt; (<a href="https://support.microsoft.com/help/5017381">KB5017381</a>) を含む.</p>
+<h2>例えは</h2>
+<h3>例1:逆転複製方向</h3>
+<pre><code class="language-powershell">$Parameters = @{
+    NewSourceComputerName = 'SR-SRV06'
+    SourceRGName = 'ReplicationGroup02'
+    DestinationComputerName = 'SR-SRV05'
+    DestinationRGName = 'ReplicationGroup01'
+    Confirm = $False
+}
+Set-SRPartnership @Parameters
+</code></pre>
+<p>この例では,ユーザー確認なしに複製方向を変更します.例えば,災害復旧事件が起きた後です.以前のソース複製グループに""という名前があります.<code>ReplicationGroup01</code>前のソースサーバーに<code>SR-SRV05</code>の新しい目的地となる.<code>ReplicationGroup02</code>   <code>SR-SRV06</code>複製は今逆行した. 読み書きを試みるアプリケーションやユーザーを, に対して指示しなければならない.<code>SR-SRV05</code> に<code>SR-SRV06</code> .</p>
+<p>この例では,パラメータ値を から転送するためにスプラッティングを使用します.<code>$Parameters</code>[Splatting] (/powershell/module/microsoft.powershell.core/about/about_splatting) に関する詳細をご覧ください.</p>
+<h3>例2:ログのサイズを変更する</h3>
+<pre><code class="language-powershell">$Parameters = @{
+    SourceComputerName = 'SR-SRV05'
+    SourceRGName = 'ReplicationGroup01'
+    DestinationComputerName = 'SR-SRV06'
+    DestinationRGName = 'ReplicationGroup02'
+    LogSizeInBytes = '32GB'
+}
+Set-SRPartnership @Parameters
+Get-SRPartnership | Get-SRGroup
+</code></pre>
+<p>例では,ログを8GBのデフォルトサイズから32GBに変更し, とのパートナーシップのために<code>SR-SRV05</code>そして,<code>SR-SRV06</code> .</p>
+<h3>例3:アシンクロンモードへの変更</h3>
+<pre><code class="language-powershell">$Parameters = @{
+    SourceComputerName = 'SR-SRV05'
+    SourceRGName = 'ReplicationGroup01'
+    ReplicationMode = 'Asynchronous'
+    DestinationComputerName = 'SR-SRV06'
+    DestinationRGName = 'ReplicationGroup02'
+}
+Set-SRPartnership @Parameters
+</code></pre>
+<p>この例では,複製モードが同期から非同期に変更されます.両複製グループに適用される設定によって警告が生成されます.</p>
+<h3>例4:変更後にレプリカを表示する</h3>
+<pre><code class="language-powershell">$Parameters = @{
+    SourceComputerName = 'SR-SRV05'
+    SourceRGName = 'ReplicationGroup01'
+    SourceAddVolumePartnership = 'F:','G:'
+    DestinationComputerName = 'SR-SRV06'
+    DestinationRGName = 'ReplicationGroup02'
+    DestinationAddVolumePartnership = 'F:','G:'
+}
+Set-SRPartnership @Parameters
+(Get-SRGroup).replicas 
+</code></pre>
+<p>最初のコマンドは, という名のサーバーのパートナーシップを変更します.<code>SR-SRV05</code>そして,<code>SR-SRV06</code>.第2コマンドは,現在のコンピュータのすべての複製グループを  を使って取得します.<code>Get-SRGroup</code>cmdlet. コマンドではすべてのレプリカが表示されます.</p>
+<h2>パラメータは</h2>
+<h3>- バイトとして</h3>
+<p>このパラメータを使用して,完成するのに時間がかかるコマンドを実行します.</p>
+<pre><code class="language-yaml">Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-AsyncRPO</h3>
+<p>源と目的地間のデータが異なることが可能な最大限の時間差を指定します.これはリリカバリーポイント目標です.デフォルト値は30秒です.</p>
+<p>この時間が過ぎた後,ソースサーバーは Health Service にクラスタについて警告します.このサーバは Storage Replica Admin イベントログチャンネルでイベント1239をログインします.RPO時間が設定された時間よりも低い場合は,イベント1240がログインされます.この値を変更するとモニタリングとログインが変更されます.レプリカやInput/Outputに影響しません.</p>
+<pre><code class="language-yaml">Type: UInt32
+Parameter Sets: ModifySettings
+Aliases: RPO
+
+Required: False
+Position: 51
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-CimSession でした</h3>
+<p>遠隔セッションまたは遠隔コンピュータでcmdletを実行します.コンピュータ名またはセッションオブジェクトを入力します.例えば,[New-CimSession] (/powershell/module/cimcmdlets/new-cimsession) または [Get-CimSession] ((/powershell/module/cimcmdlets/get-ciminstance) cmdletの出力です.デフォルトは,ローカルコンピュータの現在のセッションです.</p>
+<pre><code class="language-yaml">Type: CimSession[]
+Parameter Sets: (All)
+Aliases: Session
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-圧縮</h3>
+<p>このパートナーシップの接続は,データ転送のためにSMB圧縮を使用すべきであることを示しています.</p>
+<p>このパラメータは[Azure Stack HCI バージョン22H2]にのみ適用されます.https://azure.microsoft.com/updates/public-preview-azure-stack-hci-version-22h2/) または後期,およびWindows Server Datacenter: Azure Edition を開始し,Microsoft サーバーオペレーティング システムバージョン21H2 の2022-09 の累積更新から開始するX64 ベースのシステム (<a href="https://support.microsoft.com/help/5017381">KB5017381</a>) を含む.</p>
+<pre><code class="language-yaml">Type: Boolean
+Parameter Sets: ModifySettings
+Aliases: CMP
+
+Required: False
+Position: 53
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-DestinationAddVolumePartnership 〜目的地・容量・パートナーシップ</h3>
+<p>既存の複製グループに追加するドライブ文字やパーティションのマウントポイントパスを表示する.すでに複製グループに追加されたパスを指定することはできません.</p>
+<p>このリストは順番付けられている. 巻の順序は複製の順序を決定する.詳細については, の<strong>DestinationVolumeName</strong>パラメータを参照してください.<code>New-SRPartnership</code>cmdletです.</p>
+<p>異なるドライブ文字やマウントポイント経路を複製することを推奨しません.この慣行は,故障が発生した後,保存された設定によりアプリケーションの故障を引き起こす可能性があります.</p>
+<pre><code class="language-yaml">Type: String[]
+Parameter Sets: AddVolumes
+Aliases: DAV
+
+Required: True
+Position: 6
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+</code></pre>
+<h1>セットSRPパートナーシップ</h1>
+<h3>-DestinationComputerName</h3>
+<p>目的地のコンピュータの単一の複製ホストコンピュータのNetBIOS名または完全資格ドメイン名 (FQDN) を指定します.</p>
+<pre><code class="language-yaml">Type: String
+Parameter Sets: (All)
+Aliases: DCN
+
+Required: True
+Position: 3
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+</code></pre>
+<h3>-DestinationRGName</h3>
+<p>目的地複製グループの名前を指定します.</p>
+<pre><code class="language-yaml">Type: String
+Parameter Sets: (All)
+Aliases: DGN
+
+Required: True
+Position: 5
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+</code></pre>
+<h3>-暗号化</h3>
+<p>このパートナーシップの接続はSMB AES-128-GCMを使用して暗号化されるべきであることを示しています.暗号化を有効にするには,中途半端の傍受または読み取りからストレージレプリカブロック転送を保護できます.暗号化を有効にするには,複製を減少させ,入力/輸出パフォーマンスを書き出すことができます.</p>
+<pre><code class="language-yaml">Type: Boolean
+Parameter Sets: ModifySettings
+Aliases: ENC
+
+Required: False
+Position: 52
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-フォース</h3>
+<p>ユーザの確認を要求せずにコマンドを実行するように強制します.</p>
+<pre><code class="language-yaml">Type: SwitchParameter
+Parameter Sets: AddVolumes, ModifyPartnership
+Aliases: F
+
+Required: False
+Position: 100
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-LogSizeInBytes でした</h3>
+<p>複製グループ内の各サーバーのログファイルの総サイズを表示する.この複製グループに関連したボリュームの最小サイズは512MB.Windows PowerShellのバイト変換機能,例えば4GBまたは3200MBを使用して値を指定できます.小さすぎる値は,コンピュータ間の中断後,複製性能の低下や回復時間の増加を引き起こす可能性があります.</p>
+<pre><code class="language-yaml">Type: UInt64
+Parameter Sets: ModifySettings
+Aliases: LS
+
+Required: False
+Position: 50
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+</code></pre>
+<h3>-NewSourceComputerName</h3>
+<p>このパラメータは,ソースコンピュータとソース複製グループに対する複製の方向を変更します.変更された場合,複製は現在のソースから発生し,新しいソースに移行します.</p>
+<p>この操作はデータへのアクセスを混乱させる可能性が高い.いずれの巻も書き込み可能でない時期があり,クライアントとアプリケーションは以前書き込み可能だったソースボリュームにアクセスする可能性があります.また,アプリケーションを再構成し,DFS Namespacesなどの技術を使用してユーザーをこの新しい場所に再配置する必要があります.データ損失を避けるために,非同期的に複製された巻を切り替える際に,まずユーザーとアプリケーションデータが静かであることを確認する必要があります.</p>
+<pre><code class="language-yaml">Type: String
+Parameter Sets: ModifyPartnership
+Aliases: NSCN
+
+Required: False
+Position: 0
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+</code></pre>
+<h3>-ReplicationMode</h3>
+<p>このソースと目的のペアで望ましい複製モードを指定します.このパラメータの受け入れ可能な値は:です.</p>
+<ul>
+<li>同期モードは,すべての書き込みが目的地サーバーにコミットし,ソースサーバーにコミットすることを要求し,コンピュータ間のデータ完整性を保証します. - 同期モードは,サーバーを待たずにソースサーバーに書き込み,高遅延の地理ネットワークで複製を可能にします.</li>
+</ul>
+<p>デフォルト値は同期です.デフォルトの同期復元ポイントアラート時間は30秒です.このcmdletを使用して変更できます.アラート時間は複製行動に影響しません.報告のみです.</p>
+<pre><code class="language-yaml">Type: ReplicationMode
+Parameter Sets: ModifySettings
+Aliases: RM
+Accepted values: Synchronous, Asynchronous
+
+Required: False
+Position: 8
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-Seeded</h3>
+<p>シーードデータは,主に空きブロック,最近のバックアップを復元する,またはクローンされたディスクのコピーを目的地サーバーに送信するなどの,高度な類似性を持つソースサーバーからのデータのコピーとして定義されます.</p>
+<p>種植は,分割鏡や以前複製されたドライブなどの前のコピーを使用する場合,または,最近初始化されたドライブ,新しくフォーマットされたボリュームなどの保存がほとんど空きで常に空いている場合,または,バックアップ復元または完全なデータツリーコピー,または非常に大きなファイルのコピーから来たデータで,種植は,何らかの効果があります.</p>
+<p>種植は,いくつかのランダムな場所から他のランダムな場所へ多くの小さなファイルをコピーするときに最も効果的ではありません.Storage Replicaは,ログを包む長い停電の後,複製を再起動すると自動的に種植を使用します.</p>
+<pre><code class="language-yaml">Type: SwitchParameter
+Parameter Sets: AddVolumes
+Aliases: S
+
+Required: False
+Position: 9
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-SourceAddVolumePartnership について</h3>
+<p>既存の複製グループに追加するドライブ文字やパーティションのマウントポイントパスを表示する.すでに複製グループに追加されたパスを指定することはできません.</p>
+<p>これは順序列のリストです. 巻物の順序は複製の順序を決定します.詳細については, の<strong>DestinationVolumeName</strong>パラメータを参照してください.<code>New-SRPartnership</code>cmdletです.</p>
+<pre><code class="language-yaml">Type: String[]
+Parameter Sets: AddVolumes
+Aliases: SAV
+
+Required: True
+Position: 2
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+</code></pre>
+<h3>-SourceComputerName</h3>
+<p>単一の複製ホストコンピュータを指定する.ソースコンピュータのNetBIOS名またはFQDN. デフォルト値はローカルコンピュータです.</p>
+<pre><code class="language-yaml">Type: String
+Parameter Sets: AddVolumes
+Aliases: SCN
+
+Required: False
+Position: 0
+Default value: None
+Accept pipeline input: True (ByValue)
+Accept wildcard characters: False
+</code></pre>
+<pre><code class="language-yaml">Type: String
+Parameter Sets: ModifySettings
+Aliases: SCN
+
+Required: False
+Position: 0
+Default value: None
+Accept pipeline input: True (ByValue)
+Accept wildcard characters: False
+</code></pre>
+<h3>-SourceRGName</h3>
+<p>ソース複製グループの名前を指定します.</p>
+<pre><code class="language-yaml">Type: String
+Parameter Sets: (All)
+Aliases: SGN
+
+Required: True
+Position: 1
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+</code></pre>
+<h3>-ThrottleLimit</h3>
+<p>cmdletを実行するために設定できる最大限の同時操作数を指定します.このパラメータを省略した場合,または の値が省略された場合.<code>0</code>入力すると,Windows PowerShell® は,コンピュータ上で実行されている CIM cmdlets の数に基づいて cmdlet の最適な加速度制限を計算します.加速度制限は,セッションやコンピュータにではなく,現在の cmdlet にのみ適用されます.</p>
+<pre><code class="language-yaml">Type: Int32
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-確認する</h3>
+<p>cmdletを実行する前に確認を提示します.</p>
+<pre><code class="language-yaml">Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: cf
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h1>セットSRPパートナーシップ</h1>
+<h3>-WhatIf</h3>
+<p>cmdletが実行されなければどうなるかを示しています.</p>
+<pre><code class="language-yaml">Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: wi
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>共通パラメーター</h3>
+<p>このcmdletは,共通パラメータである: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction,および -WarningVariableをサポートしています.詳細については, [about_CommonParameters] (/powershell/module/microsoft.powershell.core/about/about_about_commonparameters) を参照してください.</p>
+<h2>輸入は</h2>
+<h3>System.String でした.</h3>
+<h3>System.UInt64 を表示しています.</h3>
+<h2>輸出は</h2>
+<h3>System.Object について</h3>
+<h2>NOTES  記事ができました.</h2>
+<h2>関連リンク</h2>
+<p><a href="Get-SRGroup.md">Get-SRGroup</a> について</p>
+<p><a href="Get-SRPpartnership.md">Get-SRPpartnership</a> は,このサイトで公開されています.</p>
+<p>[New-SRPpartnership] (新SRPpartnership.md) について</p>
+<p><a href="Remove-SRPpartnership.mdを削除">SRPパートナーシップを削除</a></p></section><section class="en-original"><pre class="source-original"># Set-SRPartnership
+
+## SYNOPSIS
+Modifies a replication partnership between two replication groups.
+
+## SYNTAX
+
+### AddVolumes (Default)
+
+```
+Set-SRPartnership [[-SourceComputerName] &lt;String&gt;] [-SourceRGName] &lt;String&gt;
+ [-SourceAddVolumePartnership] &lt;String[]&gt; [-DestinationComputerName] &lt;String&gt;
+ [-DestinationRGName] &lt;String&gt; [-DestinationAddVolumePartnership] &lt;String[]&gt; [-Seeded] [-Force]
+ [-CimSession &lt;CimSession[]&gt;] [-ThrottleLimit &lt;Int32&gt;] [-AsJob] [-WhatIf] [-Confirm]
+ [&lt;CommonParameters&gt;]
+```
+
+### ModifySettings
+
+```
+Set-SRPartnership [[-SourceComputerName] &lt;String&gt;] [-SourceRGName] &lt;String&gt;
+ [-DestinationComputerName] &lt;String&gt; [-DestinationRGName] &lt;String&gt;
+ [[-ReplicationMode] &lt;ReplicationMode&gt;] [[-LogSizeInBytes] &lt;UInt64&gt;] [[-AsyncRPO] &lt;UInt32&gt;]
+ [[-Encryption] &lt;Boolean&gt;] [[-Compression] &lt;Boolean&gt;] [-CimSession &lt;CimSession[]&gt;]
+ [-ThrottleLimit &lt;Int32&gt;] [-AsJob] [-WhatIf] [-Confirm] [&lt;CommonParameters&gt;]
+```
+
+### ModifyPartnership
+
+```
+Set-SRPartnership [-SourceRGName] &lt;String&gt; [-DestinationComputerName] &lt;String&gt;
+ [-DestinationRGName] &lt;String&gt; [-Force] [[-NewSourceComputerName] &lt;String&gt;]
+ [-CimSession &lt;CimSession[]&gt;] [-ThrottleLimit &lt;Int32&gt;] [-AsJob] [-WhatIf] [-Confirm]
+ [&lt;CommonParameters&gt;]
+```
+
+## DESCRIPTION
+
+The `Set-SRPartnership` cmdlet modifies a replication partnership between two existing replication
+groups. You can use this cmdlet to add replicated volumes. You can also change the direction of
+replication which makes a source volume into a destination volume.
+
+&gt; [!NOTE]
+&gt; The **Compression** parameter is only available in
+&gt; [Azure Stack HCI version 22H2](https://azure.microsoft.com/updates/public-preview-azure-stack-hci-version-22h2/) or later,
+&gt; and Windows Server Datacenter: Azure Edition beginning with the 2022-09 Cumulative Update for Microsoft
+&gt; server operating system version 21H2 for x64-based Systems
+&gt; ([KB5017381](https://support.microsoft.com/help/5017381)).
+
+## EXAMPLES
+
+### Example 1: Reverse replication direction
+
+```powershell
+$Parameters = @{
+    NewSourceComputerName = &#x27;SR-SRV06&#x27;
+    SourceRGName = &#x27;ReplicationGroup02&#x27;
+    DestinationComputerName = &#x27;SR-SRV05&#x27;
+    DestinationRGName = &#x27;ReplicationGroup01&#x27;
+    Confirm = $False
+}
+Set-SRPartnership @Parameters
+```
+
+This example changes the replication direction without user confirmation, for example after a
+disaster recovery event has occurred. The previous source replication group named
+`ReplicationGroup01` on previous source server `SR-SRV05` becomes the new destination for
+`ReplicationGroup02` on `SR-SRV06`. Replication is now reversed. You must direct any applications
+or users attempting to read or write against `SR-SRV05` to `SR-SRV06`.
+
+This example uses splatting to pass parameter values from the `$Parameters` variable to the command.
+Learn more about [Splatting](/powershell/module/microsoft.powershell.core/about/about_splatting).
+
+### Example 2: Change size of log
+
+```powershell
+$Parameters = @{
+    SourceComputerName = &#x27;SR-SRV05&#x27;
+    SourceRGName = &#x27;ReplicationGroup01&#x27;
+    DestinationComputerName = &#x27;SR-SRV06&#x27;
+    DestinationRGName = &#x27;ReplicationGroup02&#x27;
+    LogSizeInBytes = &#x27;32GB&#x27;
+}
+Set-SRPartnership @Parameters
+Get-SRPartnership | Get-SRGroup
+```
+
+The example changes the log from its default size of 8GB to 32GB, for the partnership between
+`SR-SRV05` and `SR-SRV06`.
+
+### Example 3: Change to asynchronous mode
+
+```powershell
+$Parameters = @{
+    SourceComputerName = &#x27;SR-SRV05&#x27;
+    SourceRGName = &#x27;ReplicationGroup01&#x27;
+    ReplicationMode = &#x27;Asynchronous&#x27;
+    DestinationComputerName = &#x27;SR-SRV06&#x27;
+    DestinationRGName = &#x27;ReplicationGroup02&#x27;
+}
+Set-SRPartnership @Parameters
+```
+
+This example changes the replication mode from synchronous to asynchronous. A warning will be
+generated by the setting being applied to both replication groups.
+
+### Example 4: Display replicas after a change
+
+```powershell
+$Parameters = @{
+    SourceComputerName = &#x27;SR-SRV05&#x27;
+    SourceRGName = &#x27;ReplicationGroup01&#x27;
+    SourceAddVolumePartnership = &#x27;F:&#x27;,&#x27;G:&#x27;
+    DestinationComputerName = &#x27;SR-SRV06&#x27;
+    DestinationRGName = &#x27;ReplicationGroup02&#x27;
+    DestinationAddVolumePartnership = &#x27;F:&#x27;,&#x27;G:&#x27;
+}
+Set-SRPartnership @Parameters
+(Get-SRGroup).replicas 
+```
+
+The first command changes the partnership for the servers named `SR-SRV05` and `SR-SRV06`.The second
+command gets all replication groups for the current computer by using the `Get-SRGroup` cmdlet. The
+command displays all the replicas.
+
+## PARAMETERS
+
+### -AsJob
+
+Runs the cmdlet as a background job. Use this parameter to run commands that take a long time to
+complete.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -AsyncRPO
+
+Specifies the maximum difference in time that data for an asynchronous partnership can be different
+between source and destination. This is a Recovery Point Objective. The default value is 30 seconds.
+
+After this time is exceeded, the source server alerts the Health Service on clusters. It logs event
+1239 in the Storage Replica Admin event log channel. If the RPO time is lower than the configured
+time, event 1240 is logged. Changing this value modifies monitoring and logging. It does not affect
+replication or Input/Output.
+
+```yaml
+Type: UInt32
+Parameter Sets: ModifySettings
+Aliases: RPO
+
+Required: False
+Position: 51
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -CimSession
+
+Runs the cmdlet in a remote session or on a remote computer. Enter a computer name or a session
+object, such as the output of a [New-CimSession](/powershell/module/cimcmdlets/new-cimsession)
+or [Get-CimSession](/powershell/module/cimcmdlets/get-ciminstance) cmdlet. The default is the
+current session on the local computer.
+
+```yaml
+Type: CimSession[]
+Parameter Sets: (All)
+Aliases: Session
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Compression
+
+Indicates that the connections in this partnership should use SMB compression for data transfer.
+
+This parameter only applies to
+[Azure Stack HCI version 22H2](https://azure.microsoft.com/updates/public-preview-azure-stack-hci-version-22h2/)
+or later, and Windows Server Datacenter: Azure Edition beginning with the 2022-09 Cumulative
+Update for Microsoft server operating system version 21H2 for x64-based Systems
+([KB5017381](https://support.microsoft.com/help/5017381)).
+
+```yaml
+Type: Boolean
+Parameter Sets: ModifySettings
+Aliases: CMP
+
+Required: False
+Position: 53
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -DestinationAddVolumePartnership
+
+Specifies an array of drive letters or mount point paths of partitions to add to the existing
+replication group. You cannot specify paths already added to the replication group.
+
+This list is ordered. The order of volumes determines the order of replication. For more
+information, see the **DestinationVolumeName** parameter of the `New-SRPartnership` cmdlet.
+
+We do not recommend replicating different drive letters or mount point paths.
+The practice can cause application failures because of stored settings after a failover occurs.
+
+```yaml
+Type: String[]
+Parameter Sets: AddVolumes
+Aliases: DAV
+
+Required: True
+Position: 6
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+# Set-SRPartnership
+
+### -DestinationComputerName
+
+Specifies a single replica host computer NetBIOS name or fully qualified domain name (FQDN) of the
+destination computer.
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases: DCN
+
+Required: True
+Position: 3
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -DestinationRGName
+
+Specifies the name of the destination replication group.
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases: DGN
+
+Required: True
+Position: 5
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -Encryption
+
+Indicates that the connections on this partnership should be encrypted by using SMB AES-128-GCM.
+Enabling encryption can protect Storage Replica block transfers from man-in-the-middle interception
+or reading. Enabling encryption can decrease replication and write Input/Output performance.
+
+```yaml
+Type: Boolean
+Parameter Sets: ModifySettings
+Aliases: ENC
+
+Required: False
+Position: 52
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Force
+
+Forces the command to run without asking for user confirmation.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: AddVolumes, ModifyPartnership
+Aliases: F
+
+Required: False
+Position: 100
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -LogSizeInBytes
+
+Specifies the aggregate size of log files on each server in the replication group for the volumes
+that are associated with this replication group. The minimum size 512MB. You can specify a value by
+using the Windows PowerShell byte conversion capability, such as 4GB or 3200MB. A value that is too
+small may cause decreased replication performance or increased recovery time after an interruption
+between computers.
+
+```yaml
+Type: UInt64
+Parameter Sets: ModifySettings
+Aliases: LS
+
+Required: False
+Position: 50
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -NewSourceComputerName
+
+Specifies the new source of replication. This parameter changes the direction of replication for the
+source computer and the source replication group. When changed, replication stops originating on the
+current source and moves to the new source.
+
+This operation is very likely to disrupt access to data. There is a time when neither volumes are
+writable and when clients and applications might still access the previously writable source volume.
+You may also have to reconfigure applications and repoint users to this new location, using
+technologies such as DFS Namespaces. When switching asynchronously-replicated volumes, to avoid data
+loss, you must first make sure that user and application data is quiescent.
+
+```yaml
+Type: String
+Parameter Sets: ModifyPartnership
+Aliases: NSCN
+
+Required: False
+Position: 0
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -ReplicationMode
+
+Specifies the desired mode of replication for this source and destination pair. The acceptable
+values for this parameter are:
+
+- Synchronous or 1. The synchronous mode requires all writes to commit on the destination server and
+  commit on the source server, which guarantees data integrity between computers.
+- Asynchronous or 2. The asynchronous mode writes to the source server without waiting for the
+  server, which allows for replication over high latency, geographic networks.
+
+The default value is synchronous. The default asynchronous recovery point alert time is 30 seconds.
+You can modify it by using this cmdlet. The alert time has no effect on replication behavior, only
+on reporting.
+
+```yaml
+Type: ReplicationMode
+Parameter Sets: ModifySettings
+Aliases: RM
+Accepted values: Synchronous, Asynchronous
+
+Required: False
+Position: 8
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Seeded
+
+Indicates that the destination server contains a seeded copy of the data from the source server.
+Seeded data is defined as a copy of data from the source server that has a high similarity, such as
+mostly empty blocks, restoring a recent backup, or shipping cloned copies of disks to the
+destination server.
+
+Seeding is most effective when using a previous copy of the storage, such as a split mirror or
+previously replicated drives, or when the storage is mostly empty and was always empty, such as a
+recently initialized drive with a newly formatted volume. Seeding is somewhat effective with data
+that came from a backup restore or a complete tree copy of data or from copies of very large files.
+
+Seeding is least effective when copying many small files from some random locations to some other
+random locations. Storage Replica automatically uses seeding when it restarts replication after a
+long outage that wrapped the logs.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: AddVolumes
+Aliases: S
+
+Required: False
+Position: 9
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -SourceAddVolumePartnership
+
+Specifies an array of drive letters or mount point paths of partitions to add to the existing
+replication group. You cannot specify paths already added to the replication group.
+
+This is an ordered list. The order of volumes determines the order of replication. For more
+information, see the **DestinationVolumeName** parameter of the `New-SRPartnership` cmdlet.
+
+```yaml
+Type: String[]
+Parameter Sets: AddVolumes
+Aliases: SAV
+
+Required: True
+Position: 2
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -SourceComputerName
+
+Specifies a single replica host computer NetBIOS name or FQDN of the source computer. The default
+value is the local computer.
+
+```yaml
+Type: String
+Parameter Sets: AddVolumes
+Aliases: SCN
+
+Required: False
+Position: 0
+Default value: None
+Accept pipeline input: True (ByValue)
+Accept wildcard characters: False
+```
+
+```yaml
+Type: String
+Parameter Sets: ModifySettings
+Aliases: SCN
+
+Required: False
+Position: 0
+Default value: None
+Accept pipeline input: True (ByValue)
+Accept wildcard characters: False
+```
+
+### -SourceRGName
+
+Specifies the name of the source replication group.
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases: SGN
+
+Required: True
+Position: 1
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -ThrottleLimit
+
+Specifies the maximum number of concurrent operations that can be established to run the cmdlet. If
+this parameter is omitted or a value of `0` is entered, then Windows PowerShell® calculates an
+optimum throttle limit for the cmdlet based on the number of CIM cmdlets that are running on the
+computer. The throttle limit applies only to the current cmdlet, not to the session or to the
+computer.
+
+```yaml
+Type: Int32
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Confirm
+
+Prompts you for confirmation before running the cmdlet.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: cf
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+# Set-SRPartnership
+
+### -WhatIf
+
+Shows what would happen if the cmdlet runs. The cmdlet is not run.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: wi
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### CommonParameters
+
+This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable,
+-InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose,
+-WarningAction, and -WarningVariable. For more information, see
+[about_CommonParameters](/powershell/module/microsoft.powershell.core/about/about_commonparameters).
+
+## INPUTS
+
+### System.String
+
+### System.UInt64
+
+## OUTPUTS
+
+### System.Object
+
+## NOTES
+
+## RELATED LINKS
+
+[Get-SRGroup](Get-SRGroup.md)
+
+[Get-SRPartnership](Get-SRPartnership.md)
+
+[New-SRPartnership](New-SRPartnership.md)
+
+[Remove-SRPartnership](Remove-SRPartnership.md)</pre></section>

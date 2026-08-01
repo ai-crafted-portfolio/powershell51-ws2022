@@ -1,0 +1,360 @@
+<!doctype html><meta charset="utf-8"><section class="jp-official"><h1>Set-NlbClusterPortRuleNodeWeight 設定する</h1>
+<h2>SYNOPSISは,特定のNLBノードに対してポートルールのロード重さを設定します.</h2>
+<h2>SYNTAXは,のシンタックスです.</h2>
+<h3>ノンパイプライン (デフォルト) ```</h3>
+<p>Set-NlbClusterPortRuleNodeWeight [-HostName <String>] -InterfaceName <String> -IP <IPAddress> [-Port] <UInt32>
+ [-Equal] [-LoadWeight <Int32>] [<CommonParameters>]</p>
+<pre><code>
+### パイプラインです.```
+Set-NlbClusterPortRuleNodeWeight -InputObject &lt;PortRule[]&gt; [-Equal] [-LoadWeight &lt;Int32&gt;] [&lt;CommonParameters&gt;]
+</code></pre>
+<h2><strong>Set-NlbClusterPortRuleNodeWeight</strong> cmdlet は,特定の Network Load Balancing (NLB) ノードのためのポートルールのロード重量を設定します.ロード重量は,マルチホストフィルタリングモードに適用されます.マルチホストフィルタリングモードを使用する場合,ロード重量は,このノードが関連ポートルールのために処理すべき負荷バランスのとれたネットワークトラフィックの相対的な量を指定します.許容整数値は0 (ゼロ) から100 (0).ホストがネットワークトラフィックを処理するのを防ぐために,ロード重量を0 (ゼロ) に設定します.各ノードが処理する実際のロード重量は,クラスター全体におけるすべての重量の合計で割り切られたローカルロード重量として計算されます.ights は, cluster の各ノードに対して <em>LoadWeight</em> パラメータを使用して指定できます.または,すべてのノードが <em>LoadWeight</em> パラメータではなく <em>Equal</em> パラメータを使用してネットワークの負荷を平等に分配するように指定できます.</h2>
+<p>この操作により,すべてのクラスターノードの構成を変更します.その結果,NLBクラスターはすべてのノードで構成変更が適用され,一貫した状態が達成されることを保証するために,すべてのノードで融合プロセスを再起動します.すべてのクラスターノードが融合プロセスを完了し,再帰状態に戻るまで,NLBクラスター上の追加操作は開始されません.</p>
+<p>ps_nlbc_checkstate_remark </p>
+<h2>例えは</h2>
+<h3>例1: すべてのポートルールに対する重量をすべてのノードへの負荷重量に等しく設定します.```</h3>
+<p>PS C:&gt;Get-NlbClusterNode | Get-NlbClusterPortRule | Set-NlbClusterPortRuleNodeWeight -Equal
+IPAddress State     Start     End       Protocol  Mode      Affinity  Timeout 
+--------- -----     -----     ---       --------  ----      --------  ------- 
+All       Enabled   0         65535     Both      Multiple  Single    0</p>
+<pre><code>
+このコマンドは,すべてのポートルールに重量を設定し,すべてのノードに負荷重量を等しくします.これは複数のホストを使用するポートルールに適用されます.希望の効果を達成するために,これはすべてのクラスターノードに設定する必要があります.
+
+### 例2:指定されたポートルールの重さをすべてのノードで負荷重量に等しく設定します.```
+PS C:\&gt;Get-NlbClusterNode | Get-NlbClusterPortRule -Port 80 | Set-NlbClusterPortRuleNodeWeight -Equal
+IPAddress State     Start     End       Protocol  Mode      Affinity  Timeout 
+--------- -----     -----     ---       --------  ----      --------  ------- 
+All       Enabled   0         65535     Both      Multiple  Single    0 
+All       Enabled   0         65535     Both      Multiple  Single    0
+</code></pre>
+<p>このコマンドでは,指定されたポートルールに対する重量がすべてのノードに対する負荷重量に等しいように設定されます.これは複数のホストを使用するポートルールに適用されます.希望の効果を達成するために,これはすべてのクラスターノードに設定する必要があります.</p>
+<h3>例3: クラスターノードで指定されたポートルールの重さを等しく設定します.```</h3>
+<p>PS C:&gt;Get-NlbClusterNode -NodeName "Node001" | Get-NlbClusterPortRule -Port 80 | Set-NlbClusterPortRuleNodeWeight -LoadWeight 25 | Format-List "*"</p>
+<p>Cluster          : cluster1 
+NodeName         : node1 
+VirtualIPAddress : 255.255.255.255 
+StartPort        : 0 
+EndPort          : 65535 
+Affinity         : Single 
+FilteringMode    : Multiple 
+Protocol         : Both 
+EqualLoad        : True 
+LoadWeight       : 25 
+PortState        : Enabled 
+Priority         : 
+Timeout          : 0</p>
+<pre><code>
+このコマンドは,Node001 と呼ばれるノード上の指定されたポートルールに対する重量を25に設定します.これは,複数のホストを使用するポートルールに適用されます.各ノードに重量設定する必要があります.
+
+## パラメータは
+
+### -Equal は,cmdlet でポートルール重量をクラスターノードでEqual に設定すると表示します.これはすべてのノードがネットワークロードを平等に分配することを指定します.このパラメータは,ポートルールフィルタリングモードが複数ホストである場合にのみ適用されます.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: E
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-HostName このcmdletが実行されるクラスターホストの名前を指定します.このパラメータを省略した場合,または値が  の値である場合.<code>.</code>入力され,その場合,ローカルクラスタが想定されます.</h3>
+<pre><code class="language-yaml">Type: String
+Parameter Sets: NonPipeline
+Aliases: Host, HN, H
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-IP は,このcmdletが負荷重量を設定するクラスターポートルールのためのIPアドレスを指定します.</h3>
+<pre><code class="language-yaml">Type: IPAddress
+Parameter Sets: NonPipeline
+Aliases: 
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-InputObject このcmdletが負荷重量を設定するクラスターポートルール数列を指定します.これはポートルールフィルタリングモードが複数ホストである場合にのみ適用されます.</h3>
+<pre><code class="language-yaml">Type: PortRule[]
+Parameter Sets: Pipeline
+Aliases: 
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName, ByValue)
+Accept wildcard characters: False
+</code></pre>
+<h3>-InterfaceName NLBが結びついているインターフェースを指定します.これはこのcmdletが実行されているクラスターのインターフェイスです.</h3>
+<pre><code class="language-yaml">Type: String
+Parameter Sets: NonPipeline
+Aliases: Interface, IN, I
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-LoadWeight このノードで使うポートルールが負荷重さを指定する.これはポートルールフィルタリングモードが複数ホストである場合にのみ適用される.このパラメータの受け入れ可能な値は:0から100.</h3>
+<pre><code class="language-yaml">Type: Int32
+Parameter Sets: (All)
+Aliases: W
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-ポートは,このcmdletがノードロード重量を設定するポートルール内のポート番号を指定します.このパラメータの受け入れ可能な値は:0〜65535です.</h3>
+<pre><code class="language-yaml">Type: UInt32
+Parameter Sets: NonPipeline
+Aliases: P
+
+Required: True
+Position: 0
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>共通パラメータ このcmdletは共通パラメータをサポートしています: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable.詳細については, <a href="を参照してください.https://go.microsoft.com/fwlink/?LinkID=113216">about_CommonParameters</a> でした.</h3>
+<h2>輸入は</h2>
+<h3>Microsoft.NetworkLoadBalancingClusters.PowerShell.PortRule</h3>
+<h2>輸出は</h2>
+<h3>Microsoft.NetworkLoadBalancingClusters.PowerShell.PortRule</h3>
+<h2>NOTES  記事ができました.</h2>
+<h2>関連リンク</h2>
+<p><a href="./Add-NlbClusterPortRule.md">Add-NlbClusterPortRule</a> </p>
+<p><a href="./Get-NlbClusterPortRule.md">Get-NlbClusterPortRule</a> を表示する</p>
+<p><a href="./Set-NlbClusterPortRule.md">Set-NlbClusterPortRule</a> を表示する</p>
+<p><a href="./Set-NlbClusterPortRuleNodeHandlingPriority.md">Set-NlbClusterPortRuleNodeHandlingPriority</a> </p></section><section class="en-original"><pre class="source-original"># Set-NlbClusterPortRuleNodeWeight
+
+## SYNOPSIS
+Sets the load weight of a port rule for a specific NLB node.
+
+## SYNTAX
+
+### NonPipeline (Default)
+```
+Set-NlbClusterPortRuleNodeWeight [-HostName &lt;String&gt;] -InterfaceName &lt;String&gt; -IP &lt;IPAddress&gt; [-Port] &lt;UInt32&gt;
+ [-Equal] [-LoadWeight &lt;Int32&gt;] [&lt;CommonParameters&gt;]
+```
+
+### Pipeline
+```
+Set-NlbClusterPortRuleNodeWeight -InputObject &lt;PortRule[]&gt; [-Equal] [-LoadWeight &lt;Int32&gt;] [&lt;CommonParameters&gt;]
+```
+
+## DESCRIPTION
+The **Set-NlbClusterPortRuleNodeWeight** cmdlet sets the load weight of a port rule for a specific Network Load Balancing (NLB) node.
+The load weight applies only for the Multiple hosts filtering mode.
+When using the Multiple hosts filtering mode, the load weight specifies the relative amount of load-balanced network traffic that this node should handle for the associated port rule.
+Allowed integer values range from 0 (zero) to 100.
+To prevent a host from handling any network traffic, set the load weight to 0 (zero).
+The actual fraction of traffic handled by each node is computed as the local load weight divided by the sum of all load weights across the cluster.
+Different load weights can be specified for each node in the cluster using the *LoadWeight* parameter.
+Or, all nodes can be specified to distribute the network load equally by using the *Equal* parameter instead of the *LoadWeight* parameter.
+
+This operation changes the configuration on all cluster nodes.
+As a result, the NLB cluster restarts the convergence process on all nodes to guarantee that configuration changes have been applied on all nodes and that a consistent state is reached.
+Any additional operations on the NLB cluster is not initiated until all cluster nodes have completed the convergence process and are back to the converged state.
+
+ps_nlbc_checkstate_remark
+
+## EXAMPLES
+
+### Example 1: Set the weight for all port rules equal to the load weight on all nodes
+```
+PS C:\&gt;Get-NlbClusterNode | Get-NlbClusterPortRule | Set-NlbClusterPortRuleNodeWeight -Equal
+IPAddress State     Start     End       Protocol  Mode      Affinity  Timeout 
+--------- -----     -----     ---       --------  ----      --------  ------- 
+All       Enabled   0         65535     Both      Multiple  Single    0
+```
+
+This command sets the weight for all port rules to equal the load weight on all nodes.
+This is applicable for port rules using the Multiple hosts.
+Note that this has to be set on all cluster nodes to achieve the desired effect.
+
+### Example 2: Set the weight for the specified port rule equal to the load weight on all nodes
+```
+PS C:\&gt;Get-NlbClusterNode | Get-NlbClusterPortRule -Port 80 | Set-NlbClusterPortRuleNodeWeight -Equal
+IPAddress State     Start     End       Protocol  Mode      Affinity  Timeout 
+--------- -----     -----     ---       --------  ----      --------  ------- 
+All       Enabled   0         65535     Both      Multiple  Single    0 
+All       Enabled   0         65535     Both      Multiple  Single    0
+```
+
+This command sets the weight for the specified port rule to equal the load weight on all nodes.
+This is applicable for port rules using the Multiple hosts.
+Note that this has to be set on all cluster nodes to achieve the desired effect.
+
+### Example 3: Set the weight for the specified port rule equal on a cluster node
+```
+PS C:\&gt;Get-NlbClusterNode -NodeName &quot;Node001&quot; | Get-NlbClusterPortRule -Port 80 | Set-NlbClusterPortRuleNodeWeight -LoadWeight 25 | Format-List &quot;*&quot;
+
+Cluster          : cluster1 
+NodeName         : node1 
+VirtualIPAddress : 255.255.255.255 
+StartPort        : 0 
+EndPort          : 65535 
+Affinity         : Single 
+FilteringMode    : Multiple 
+Protocol         : Both 
+EqualLoad        : True 
+LoadWeight       : 25 
+PortState        : Enabled 
+Priority         : 
+Timeout          : 0
+```
+
+This command sets the weight for the specified port rule on the node named Node001 to 25.
+This is applicable for port rules using the Multiple hosts.
+Weights have to be set on each node.
+
+## PARAMETERS
+
+### -Equal
+Indicates that the cmdlet sets the port rule weight to Equal on the cluster node.
+This specifies that all nodes distribute the network load equally.
+This parameter is only applicable when the port rule filtering mode is Multiple hosts.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: E
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -HostName
+Specifies the name of the cluster host against which this cmdlet is run.
+If this parameter is omitted or a value of `.` is entered, then the local cluster is assumed.
+
+```yaml
+Type: String
+Parameter Sets: NonPipeline
+Aliases: Host, HN, H
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -IP
+Specifies the IP address for the cluster port rule on which this cmdlet sets the load weight.
+
+```yaml
+Type: IPAddress
+Parameter Sets: NonPipeline
+Aliases: 
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -InputObject
+Specifies an array of cluster port rules on which this cmdlet sets the load weight.
+This is only applicable when the port rule filtering mode is Multiple hosts.
+
+```yaml
+Type: PortRule[]
+Parameter Sets: Pipeline
+Aliases: 
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName, ByValue)
+Accept wildcard characters: False
+```
+
+### -InterfaceName
+Specifies the interface to which NLB is bound.
+This is the interface of the cluster against which this cmdlet is run.
+
+```yaml
+Type: String
+Parameter Sets: NonPipeline
+Aliases: Interface, IN, I
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -LoadWeight
+Specifies the load weight for the given port rule to use for this node.
+This is only applicable when the port rule filtering mode is Multiple hosts.
+The acceptable values for this parameter are: 0 through 100.
+
+```yaml
+Type: Int32
+Parameter Sets: (All)
+Aliases: W
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Port
+Specifies a port number within the port rule on which this cmdlet sets the node load weight.
+The acceptable values for this parameter are: 0 through 65535.
+
+```yaml
+Type: UInt32
+Parameter Sets: NonPipeline
+Aliases: P
+
+Required: True
+Position: 0
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### CommonParameters
+This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable. For more information, see [about_CommonParameters](https://go.microsoft.com/fwlink/?LinkID=113216).
+
+## INPUTS
+
+### Microsoft.NetworkLoadBalancingClusters.PowerShell.PortRule
+
+## OUTPUTS
+
+### Microsoft.NetworkLoadBalancingClusters.PowerShell.PortRule
+
+## NOTES
+
+## RELATED LINKS
+
+[Add-NlbClusterPortRule](./Add-NlbClusterPortRule.md)
+
+[Get-NlbClusterPortRule](./Get-NlbClusterPortRule.md)
+
+[Set-NlbClusterPortRule](./Set-NlbClusterPortRule.md)
+
+[Set-NlbClusterPortRuleNodeHandlingPriority](./Set-NlbClusterPortRuleNodeHandlingPriority.md)</pre></section>

@@ -1,0 +1,445 @@
+<!doctype html><meta charset="utf-8"><section class="jp-official"><h1>セット・ストライクモード</h1>
+<h2>SYNOPSISは,表現,スクリプト,スクリプトブロックにおけるコーディングルールを確立し,執行します.</h2>
+<h2>SYNTAXは,のシンタックスです.</h2>
+<h3>(デフォルト版)</h3>
+<pre><code>Set-StrictMode -Version &lt;Version&gt; [&lt;CommonParameters&gt;]
+</code></pre>
+<h3>消える</h3>
+<pre><code>Set-StrictMode [-Off] [&lt;CommonParameters&gt;]
+</code></pre>
+<h2>記述は,</h2>
+<p><code>Set-StrictMode</code>cmdlet は,現在の範囲とすべての子供範囲のための厳格モードを設定し,オンとオフにします.厳格モードがオンになったとき,PowerShell は表現,スクリプト,またはスクリプトブロックのコンテンツが基本的なベストプラクティスのコーディングルールを違反すると終了エラーを生成します.</p>
+<p>実行するコードングルを決定するために <strong>Version</strong>パラメータを使用します.</p>
+<p><code>Set-PSDebug -Strict</code>cmdlet は,グローバル・スコープの厳格モードをオンにします. <code>Set-StrictMode</code>現在の範囲とその子範囲のみに影響します.その後,グローバル範囲から継承された設定を覆すためにスクリプトまたは関数で使用できます.</p>
+<p>いつ<code>Set-StrictMode</code>PowerShell がオフになっている場合,以下の動作が表れます.</p>
+<ul>
+<li>初期化されていない変数は,値が  となるものと仮定します.<code>0</code>(ゼロ) または <code>$null</code>, 種類によって異なります - 非存在性属性への参照返信<code>$null</code>- 不適切な関数構文の結果はエラー条件によって異なります - アレアで無効なインデックスを使用して値を回収しようとすると,返済されます <code>$null</code></li>
+</ul>
+<h2>例えは</h2>
+<h3>例1:バージョン 1.0として厳格なモードをオンにする.</h3>
+<pre><code class="language-powershell">
+# Strict mode is off by default.
+$a -gt 5
+</code></pre>
+<pre><code class="language-Output">False
+</code></pre>
+<pre><code class="language-powershell">Set-StrictMode -Version 1.0
+$a -gt 5
+</code></pre>
+<pre><code class="language-Output">The variable $a cannot be retrieved because it has not been set yet.
+
+At line:1 char:3
++ $a &lt;&lt;&lt;&lt;  -gt 5
++ CategoryInfo          : InvalidOperation: (a:Token) [], RuntimeException
++ FullyQualifiedErrorId : VariableIsUndefined
+</code></pre>
+<p>厳格なモードでバージョンに設定された.<code>1.0</code>, は初期化されていない変数を参照しようと試みるので失敗します.</p>
+<h3>例2:バージョン2.0として厳格なモードをオンにします.</h3>
+<pre><code class="language-powershell">
+# Strict mode is off by default.
+function add ($a, $b) {
+    '$a = ' + $a
+    '$b = ' + $b
+    '$a+$b = ' + ($a + $b)
+}
+add 3 4
+</code></pre>
+<pre><code class="language-Output">$a = 3
+$b = 4
+$a+$b = 7
+</code></pre>
+<pre><code class="language-powershell">add(3,4)
+</code></pre>
+<pre><code class="language-Output">$a = 3 4
+$b =
+$a+$b = 3 4
+</code></pre>
+<pre><code class="language-powershell">Set-StrictMode -Version 2.0
+add(3,4)
+</code></pre>
+<pre><code class="language-Output">The function or command was called like a method. Parameters should be separated by spaces,
+as described in 'Get-Help about_Parameter.'
+At line:1 char:4
++ add &lt;&lt;&lt;&lt; (3,4)
++ CategoryInfo          : InvalidOperation: (:) [], RuntimeException
++ FullyQualifiedErrorId : StrictModeFunctionCallWithParens
+</code></pre>
+<pre><code class="language-powershell">Set-StrictMode -Off
+$string = &quot;This is a string.&quot;
+$null -eq $string.Month
+</code></pre>
+<pre><code class="language-Output">True
+</code></pre>
+<pre><code class="language-powershell">Set-StrictMode -Version 2.0
+$string = &quot;This is a string.&quot;
+$null -eq $string.Month
+</code></pre>
+<pre><code class="language-Output">Property 'Month' cannot be found on this object; make sure it exists.
+At line:1 char:9
++ $string. &lt;&lt;&lt;&lt; month
++ CategoryInfo          : InvalidOperation: (.:OperatorToken) [], RuntimeException
++ FullyQualifiedErrorId : PropertyNotFoundStrict
+</code></pre>
+<p>このコマンドは,厳格モードをオンにし,バージョンに設定します.<code>2.0</code>その結果,PowerShellは,関数呼び出しまたは参照未初期化変数または存在しない属性に対して括弧と kommaを使用する方法構文を使用した場合にエラーを返します.</p>
+<p>サンプル出力はバージョンの効果を示しています.<code>2.0</code>厳格なモードです.</p>
+<p>版なしのバージョンです.<code>2.0</code>厳格なモードで, <code>(3,4)</code>値は,何も追加されていない単一の数列オブジェクトとして解釈されます.バージョンでは,<code>2.0</code>厳格モードでは,二つの値を提出する誤った構文として正しく解釈されています.</p>
+<p>版なしのバージョンです.<code>2.0</code>文字列の存在しない <strong>月</strong> 属性への参照は,回帰するだけになります.<code>$null</code>バージョンの付属性がある.<code>2.0</code>参照エラーとして正しく解釈されています.</p>
+<h3>例3:バージョン3.0として厳格なモードをオンにする</h3>
+<p>厳格モードが <strong>Off</strong> に設定された場合,無効または制限外のインデックスの結果は null 値を返します.</p>
+<pre><code class="language-powershell">
+# Strict mode is off by default.
+$a = @(1)
+$null -eq $a[2]
+$null -eq $a['abc']
+</code></pre>
+<pre><code class="language-Output">True
+True
+</code></pre>
+<pre><code class="language-powershell">Set-StrictMode -Version 3.0
+$a = @(1)
+$null -eq $a[2]
+$null -eq $a['abc']
+</code></pre>
+<pre><code class="language-Output">Index was outside the bounds of the array.
+At line:1 char:1
++ $null -eq $a[2]
++ ~~~~~~~~~~~~~~~
+    + CategoryInfo          : OperationStopped: (:) [], IndexOutOfRangeException
+    + FullyQualifiedErrorId : System.IndexOutOfRangeException
+
+Cannot convert value &quot;abc&quot; to type &quot;System.Int32&quot;. Error: &quot;Input string was not in a correct format.&quot;
+At line:1 char:1
++ $null -eq $a['abc']
++ ~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidArgument: (:) [], RuntimeException
+    + FullyQualifiedErrorId : InvalidCastFromStringToInteger
+</code></pre>
+<p>厳格なモードでバージョンに設定された.<code>3</code>以上の,無効または限界外のインデックスがエラーを引き起こす.</p>
+<h2>パラメータは</h2>
+<h3>-オフ</h3>
+<p>このcmdletは,現在の範囲とすべての子供範囲の厳格モードをオフにすることを示します.</p>
+<pre><code class="language-yaml">Type: System.Management.Automation.SwitchParameter
+Parameter Sets: Off
+Aliases:
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-Version</h3>
+<p>厳格モードでエラーを引き起こす条件を指定します.このパラメータは有効な PowerShell バージョン番号をすべて受け入れます. 以上の任意の番号です.<code>3</code>として扱われている.<code>Latest</code>付出された値は文字列である必要があります.<code>Latest</code>文字列を<strong>System.Version</strong>タイプに変換できる.バージョンは,有効な PowerShell リリースバージョンに一致しなければならない.</p>
+<p>このパラメータの有効値は,以下の通りです.</p>
+<ul>
+<li>-<code>1.0</code>- 文字列の初期化されていない変数を除く,未初期化された変数を参照することを禁止します. - <code>2.0</code>- 初期化されていない変数への参照を禁止する.これは文字列の初期化されていない変数を含む. - 対象の存在しない属性への参照を禁止する. - 呼び方方法のための構文を使用する関数呼び出しを禁止する. - <code>3.0</code>- 初期化されていない変数への参照を禁止する.これは文字列の初期化されていない変数を含む. - 対象の存在しない属性への参照を禁止する. - 呼び方方法のための構文を使用する関数呼び出しを禁止する. - 境界外または解決できないアレンジインデックスを禁止する. - <code>Latest</code>最新バージョンは最も厳格である.この値を利用して,スクリプトが最も厳格なバージョンを使用していることを確認してください.PowerShellに新しいバージョンが追加された場合でも.</li>
+</ul>
+<p>&gt; [!CAUTION] &gt;  を使って<code>Latest</code>脚本では,決定的な意味がない.<code>Latest</code>&gt; PowerShell の新しいリリースで変更することができます.PowerShell の古いバージョンのために書かれたスクリプトで, &gt;  を使います.<code>Set-StrictMode -Version Latest</code>PowerShell の新しいバージョンで実行された場合,より制限的なルールが適用されます.</p>
+<pre><code class="language-yaml">Type: System.Version
+Parameter Sets: Version
+Aliases: v
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>共通パラメーター</h3>
+<p>このcmdletは,共通パラメータをサポートしています: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable.詳細については, <a href="を参照してください.https://go.microsoft.com/fwlink/?LinkID=113216">about_CommonParameters</a> でした.</p>
+<h2>輸入は</h2>
+<h3>どれもない</h3>
+<p>このcmdletに物体をパイプすることはできません.</p>
+<h2>輸出は</h2>
+<h3>どれもない</h3>
+<p>このcmdletは出力返さない.</p>
+<h1>セット・ストライクモード</h1>
+<h2>NOTES  記事ができました.</h2>
+<p><strong>Version</strong>パラメータは,より大きな値を受け入れている.<code>3.0</code>以上のものには追加ルールが定められていない.<code>3.0</code> .</p>
+<p><code>Set-StrictMode</code>PowerShellでスケープについて詳しくは,<a href="about/about_Scopes.md">about_Scopes</a> を参照してください.</p>
+<h2>関連リンク</h2>
+<p><a href="Set-PSDebug.md">Set-PSDebug</a> </p></section><section class="en-original"><pre class="source-original"># Set-StrictMode
+
+## SYNOPSIS
+Establishes and enforces coding rules in expressions, scripts, and scriptblocks.
+
+## SYNTAX
+
+### Version (Default)
+
+```
+Set-StrictMode -Version &lt;Version&gt; [&lt;CommonParameters&gt;]
+```
+
+### Off
+
+```
+Set-StrictMode [-Off] [&lt;CommonParameters&gt;]
+```
+
+## DESCRIPTION
+
+The `Set-StrictMode` cmdlet configures strict mode for the current scope and all child scopes, and
+turns it on and off. When strict mode is on, PowerShell generates a terminating error when the
+content of an expression, script, or scriptblock violates basic best-practice coding rules.
+
+Use the **Version** parameter to determine the coding rules to enforce.
+
+`Set-PSDebug -Strict` cmdlet turns on strict mode for the global scope. `Set-StrictMode` affects
+only the current scope and its child scopes. Then, you can use it in a script or function to
+override the setting inherited from the global scope.
+
+When `Set-StrictMode` is off, PowerShell has the following behaviors:
+
+- Uninitialized variables are assumed to have a value of `0` (zero) or `$null`, depending on type
+- References to non-existent properties return `$null`
+- Results of improper function syntax vary with the error conditions
+- Attempting to retrieve a value using an invalid index in an array returns `$null`
+
+## EXAMPLES
+
+### Example 1: Turn on strict mode as version 1.0
+
+```powershell
+
+# Strict mode is off by default.
+$a -gt 5
+```
+
+```Output
+False
+```
+
+```powershell
+Set-StrictMode -Version 1.0
+$a -gt 5
+```
+
+```Output
+The variable $a cannot be retrieved because it has not been set yet.
+
+At line:1 char:3
++ $a &lt;&lt;&lt;&lt;  -gt 5
++ CategoryInfo          : InvalidOperation: (a:Token) [], RuntimeException
++ FullyQualifiedErrorId : VariableIsUndefined
+```
+
+With strict mode set to version `1.0`, attempts to reference variables that aren&#x27;t initialized fail.
+
+### Example 2: Turn on strict mode as version 2.0
+
+```powershell
+
+# Strict mode is off by default.
+function add ($a, $b) {
+    &#x27;$a = &#x27; + $a
+    &#x27;$b = &#x27; + $b
+    &#x27;$a+$b = &#x27; + ($a + $b)
+}
+add 3 4
+```
+
+```Output
+$a = 3
+$b = 4
+$a+$b = 7
+```
+
+```powershell
+add(3,4)
+```
+
+```Output
+$a = 3 4
+$b =
+$a+$b = 3 4
+```
+
+```powershell
+Set-StrictMode -Version 2.0
+add(3,4)
+```
+
+```Output
+The function or command was called like a method. Parameters should be separated by spaces,
+as described in &#x27;Get-Help about_Parameter.&#x27;
+At line:1 char:4
++ add &lt;&lt;&lt;&lt; (3,4)
++ CategoryInfo          : InvalidOperation: (:) [], RuntimeException
++ FullyQualifiedErrorId : StrictModeFunctionCallWithParens
+```
+
+```powershell
+Set-StrictMode -Off
+$string = &quot;This is a string.&quot;
+$null -eq $string.Month
+```
+
+```Output
+True
+```
+
+```powershell
+Set-StrictMode -Version 2.0
+$string = &quot;This is a string.&quot;
+$null -eq $string.Month
+```
+
+```Output
+Property &#x27;Month&#x27; cannot be found on this object; make sure it exists.
+At line:1 char:9
++ $string. &lt;&lt;&lt;&lt; month
++ CategoryInfo          : InvalidOperation: (.:OperatorToken) [], RuntimeException
++ FullyQualifiedErrorId : PropertyNotFoundStrict
+```
+
+This command turns strict mode on and sets it to version `2.0`. As a result, PowerShell returns an
+error if you use method syntax, which uses parentheses and commas, for a function call or reference
+uninitialized variables or non-existent properties.
+
+The sample output shows the effect of version `2.0` strict mode.
+
+Without version `2.0` strict mode, the `(3,4)` value is interpreted as a single array object to
+which nothing is added. With version `2.0` strict mode, it&#x27;s correctly interpreted as faulty
+syntax for submitting two values.
+
+Without version `2.0`, the reference to the non-existent **Month** property of a string returns only
+`$null`. With version `2.0`, it&#x27;s interpreted correctly as a reference error.
+
+### Example 3: Turn on strict mode as version 3.0
+
+With strict mode set to **Off**, invalid or out of bounds indexes result return null values.
+
+```powershell
+
+# Strict mode is off by default.
+$a = @(1)
+$null -eq $a[2]
+$null -eq $a[&#x27;abc&#x27;]
+```
+
+```Output
+True
+True
+```
+
+```powershell
+Set-StrictMode -Version 3.0
+$a = @(1)
+$null -eq $a[2]
+$null -eq $a[&#x27;abc&#x27;]
+```
+
+```Output
+Index was outside the bounds of the array.
+At line:1 char:1
++ $null -eq $a[2]
++ ~~~~~~~~~~~~~~~
+    + CategoryInfo          : OperationStopped: (:) [], IndexOutOfRangeException
+    + FullyQualifiedErrorId : System.IndexOutOfRangeException
+
+Cannot convert value &quot;abc&quot; to type &quot;System.Int32&quot;. Error: &quot;Input string was not in a correct format.&quot;
+At line:1 char:1
++ $null -eq $a[&#x27;abc&#x27;]
++ ~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidArgument: (:) [], RuntimeException
+    + FullyQualifiedErrorId : InvalidCastFromStringToInteger
+```
+
+With strict mode set to version `3` or higher, invalid or out of bounds indexes result in errors.
+
+## PARAMETERS
+
+### -Off
+
+Indicates that this cmdlet turns strict mode off for the current scope and all child scopes.
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: Off
+Aliases:
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Version
+
+Specifies the conditions that cause an error in strict mode. This parameter accepts any valid
+PowerShell version number. Any number higher than `3` is treated as `Latest`. The value supplied
+must be the string `Latest` or a string that can be converted to a **System.Version** type. The
+version must match a valid release version of PowerShell.
+
+The effective values for this parameter are:
+
+- `1.0`
+  - Prohibits references to uninitialized variables, except for uninitialized variables in strings.
+- `2.0`
+  - Prohibits references to uninitialized variables. This includes uninitialized variables in
+    strings.
+  - Prohibits references to non-existent properties of an object.
+  - Prohibits function calls that use the syntax for calling methods.
+- `3.0`
+  - Prohibits references to uninitialized variables. This includes uninitialized variables in
+    strings.
+  - Prohibits references to non-existent properties of an object.
+  - Prohibits function calls that use the syntax for calling methods.
+  - Prohibit out of bounds or unresolvable array indexes.
+- `Latest`
+  - Selects the latest version available. The latest version is the most strict. Use this value to
+    make sure that scripts use the strictest available version, even when new versions are added to
+    PowerShell.
+
+&gt; [!CAUTION]
+&gt; Using `Latest` for **Version** in scripts isn&#x27;t deterministic. The meaning of `Latest` can change
+&gt; in new releases of PowerShell. A script written for an older version of PowerShell that uses
+&gt; `Set-StrictMode -Version Latest` is subject to more restrictive rules when run in a newer version
+&gt; of PowerShell.
+
+```yaml
+Type: System.Version
+Parameter Sets: Version
+Aliases: v
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### CommonParameters
+
+This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable,
+-InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose,
+-WarningAction, and -WarningVariable. For more information, see
+[about_CommonParameters](https://go.microsoft.com/fwlink/?LinkID=113216).
+
+## INPUTS
+
+### None
+
+You can&#x27;t pipe objects to this cmdlet.
+
+## OUTPUTS
+
+### None
+
+This cmdlet returns no output.
+
+# Set-StrictMode
+
+## NOTES
+
+While the **Version** parameter accepts values greater than `3.0`, there are no additional rules
+defined for anything higher than `3.0`.
+
+`Set-StrictMode` is effective only in the scope it&#x27;s set in and in its child scopes. For more
+information about scopes in PowerShell, see [about_Scopes](about/about_Scopes.md).
+
+## RELATED LINKS
+
+[Set-PSDebug](Set-PSDebug.md)</pre></section>

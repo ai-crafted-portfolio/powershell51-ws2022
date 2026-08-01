@@ -1,0 +1,1052 @@
+<!doctype html><meta charset="utf-8"><section class="jp-official"><h1>について_Hash_Tables</h1>
+<h2>短編説明</h2>
+<p>PowerShellでハッシュタブルを作成し,使用し,並べていく方法を説明します.</p>
+<h2>長い説明</h2>
+<p>ハッシュテーブル,辞書または関連数列としても知られるのは,一つまたは複数のキー値ペアを保存するコンパクトデータ構造です.例えば,ハッシュテーブルには,IPアドレスがキーであり,コンピュータ名は値である IPアドレスが含まれる場合,またはその逆.</p>
+<p>PowerShellでは,ハッシュテーブルはそれぞれ""です.<code>[System.Collections.Hashtable]</code>オージェクト.PowerShellでHashtable オブジェクトの特性と方法を使用できます.</p>
+<p>PowerShell 3.0 から始めると,あなたは  を使用することができます.<code>[ordered]</code>タイプ加速器を作成する<code>[System.Collections.Specialized.OrderedDictionary]</code>PowerShellでオブジェクト.</p>
+<p>順序付けされた辞書は,ハッシュテーブルとは異なるので,キーは常にリストの順に表示されます.ハッシュテーブル内のキーの一番は決定的ではありません.</p>
+<p>ハッシュタブルのキーと値は,また .NETオブジェクトである.それらはしばしば文字列または整数である.しかし,任意のオブジェクトタイプを持つことができる.また,鍵の値が別のハッシュタブルであるハッシュタブルを巣に設置することもできます.</p>
+<p>ハッシュタブルは,データを検索し,回収するのに効率的なため,頻繁に使用されています.リストを保存し,PowerShellで計算されたプロパティを作成するためにハッシュタブルを使用できます.<code>ConvertFrom-StringData</code>cmdlet は構造化された文字列データをハッシュテーブルに変換します.</p>
+<h2>シンタックス</h2>
+<p>ハッシュテーブルの構文は以下の通りです.</p>
+<pre><code class="language-powershell">@{ &lt;name&gt; = &lt;value&gt;; [&lt;name&gt; = &lt;value&gt; ] ...}
+</code></pre>
+<p>順序付け辞書の構文は以下の通りです.</p>
+<pre><code class="language-powershell">[ordered]@{ &lt;name&gt; = &lt;value&gt;; [&lt;name&gt; = &lt;value&gt; ] ...}
+</code></pre>
+<p><code>[ordered]</code>PowerShell 3.0でアクセレータが導入されました.</p>
+<p>ハッシュテーブルを作成するには,以下のガイドラインに従ってください.</p>
+<ul>
+<li>ハッシュテーブルを"at"サイン () で開始する<code>@</code>- ハッシュテーブルをブレーキに閉じ込め ()<code>{}</code>- ハッシュテーブルの内容に1つまたは複数のキー値ペアを入力します. - 平等符号を使用します ()<code>=</code>) を使って,それぞれの鍵をその値から分離します. - 半角符号 () を使って ()<code>;</code>) またはキー値ペアを分離するための行断裂. - 空間を含む鍵は,引用元に囲まれなければならない. 値は有効なPowerShell表現である必要があります. 文字列は,スペースを含まない場合でも,引用元に表示されなければなりません. - ハッシュテーブルを管理するには,変数に保存してください. - 順序式ハッシュテーブルを変数に割り当てるとき, を配置してください.<code>[ordered]</code>文字前のタイプ<code>@</code>シンボル.変数の名前前に置くと,コマンドが失敗します.</li>
+</ul>
+<p>ハッシュテーブルを使用するように,順序化された辞書も使用できます.いずれのタイプもハッシュテーブルまたは辞書 (<strong>iDictionary</strong>) タイプオブジェクトを取るパラメータの値として使用できます.</p>
+<h2>ハッシュタブルやオーダーされた辞書を作成する</h2>
+<p>次のハッシュテーブルと順序式辞書例を考えてみましょう.</p>
+<pre><code class="language-powershell">$hash = @{
+    1       = 'one'
+    2       = 'two'
+    'three' = 3
+}
+$hash
+</code></pre>
+<pre><code class="language-Output">Name                           Value
+----                           -----
+three                          3
+2                              two
+1                              one
+</code></pre>
+<p>ご覧の通り,ハッシュテーブル内のキー-値ペアは定義された順に表示されていません.</p>
+<p>順序付け辞書を作成する最も簡単な方法は,  を使うことになります.<code>[ordered]</code>属性.属性を直前に置く.<code>@</code>シンボルです.</p>
+<pre><code class="language-powershell">$dictionary = [ordered]@{
+    1       = 'one'
+    2       = 'two'
+    'three' = 3
+}
+$dictionary
+</code></pre>
+<pre><code class="language-Output">Name                           Value
+----                           -----
+1                              one
+2                              two
+three                          3
+</code></pre>
+<p>ハッシュタブルとは異なり,順序化された辞書はキー値の順序を維持します.</p>
+<h3>ハッシュタブルやオーダーされた辞書を変換する</h3>
+<p>は使えない.<code>[ordered]</code>ハッシュテーブルを変換またはキャストするために加速器を入力します.変数の名前の前に注文された属性を置くと,コマンドは以下のエラーメッセージで失敗します.</p>
+<pre><code class="language-powershell">[ordered]$orderedHash = @{}
+ParserError:
+Line |
+   1 |  [ordered]$orderedHash = @{}
+     |  ~~~~~~~~~~~~~~
+     | The ordered attribute can be specified only on a hash literal node.
+</code></pre>
+<p>表現を修正するには, [ordered]属性を移動します.</p>
+<pre><code class="language-powershell">$orderedHash = [ordered]@{}
+</code></pre>
+<p>ハッシュテーブルに順序のある辞書を投げ込むことができますが,メンバーの順序を保証することはできません.</p>
+<pre><code class="language-powershell">[hashtable]$newHash = [ordered]@{
+    Number = 1
+    Shape = &quot;Square&quot;
+    Color = &quot;Blue&quot;
+}
+$newHash
+</code></pre>
+<pre><code class="language-Output">Name                           Value
+----                           -----
+Color                          Blue
+Shape                          Square
+Number                         1
+</code></pre>
+<h2>ハッシュテーブルと辞書属性について</h2>
+<p>ハッシュタブルとオーダーされた辞書にはいくつかの性質があります.<code>$hash</code>そして,<code>$dictionary</code>前例で定義された変数です.</p>
+<pre><code class="language-powershell">$hash | Get-Member -MemberType Properties, ParameterizedProperty
+</code></pre>
+<pre><code class="language-Output">   TypeName: System.Collections.Hashtable
+
+Name           MemberType            Definition
+----           ----------            ----------
+Item           ParameterizedProperty System.Object Item(System.Object key) {get;set;}
+Count          Property              int Count {get;}
+IsFixedSize    Property              bool IsFixedSize {get;}
+IsReadOnly     Property              bool IsReadOnly {get;}
+IsSynchronized Property              bool IsSynchronized {get;}
+Keys           Property              System.Collections.ICollection Keys {get;}
+SyncRoot       Property              System.Object SyncRoot {get;}
+Values         Property              System.Collections.ICollection Values {get;}
+</code></pre>
+<pre><code class="language-powershell">$dictionary | Get-Member -MemberType Properties, ParameterizedProperty
+</code></pre>
+<pre><code class="language-Output">   TypeName: System.Collections.Specialized.OrderedDictionary
+
+Name           MemberType            Definition
+----           ----------            ----------
+Item           ParameterizedProperty System.Object Item(int index) {get;set;},
+                                     System.Object Item(System.Object key) {get;set;}
+Count          Property              int Count {get;}
+IsFixedSize    Property              bool IsFixedSize {get;}
+IsReadOnly     Property              bool IsReadOnly {get;}
+IsSynchronized Property              bool IsSynchronized {get;}
+Keys           Property              System.Collections.ICollection Keys {get;}
+SyncRoot       Property              System.Object SyncRoot {get;}
+Values         Property              System.Collections.ICollection Values {get;}
+</code></pre>
+<p>最も使われている属性は <strong>Count</strong>, <strong>Keys</strong>, <strong>Values</strong>, <strong>Item</strong>です.</p>
+<ul>
+<li>
+<p>対象のキー・値ペアの数を表示する <strong>Count</strong>属性.</p>
+</li>
+<li>
+<p><strong>Keys</strong>属性は,ハッシュテーブルまたは辞書内のキー名集です.</p>
+<p>```powershell
+  PS&gt; $hash.Keys
+  three
+  2
+  1</p>
+</li>
+</ul>
+<p>PS&gt; $dictionary.Keys
+  1
+  2
+  three
+  ```</p>
+<ul>
+<li>
+<p><strong>Values</strong>属性は,ハッシュテーブルまたは辞書内の値の集合です.</p>
+<p>```powershell
+  PS&gt; $hash.Values
+  3
+  two
+  one</p>
+</li>
+</ul>
+<p>PS&gt; $dictionary.Values
+  one
+  two
+  3
+  ```</p>
+<ul>
+<li><strong>Item</strong>属性は,指定した項目の値を返すパラメータ化された属性です.ハッシュタブルは,パラメータ化された属性のパラメータとしてキーを使用し,辞書ではデフォルトでインデックスを使用します.この違いは各タイプの値へのアクセスに影響します.</li>
+</ul>
+<h1>について_Hash_Tables</h1>
+<h2>アクセスする値</h2>
+<p>ハッシュテーブルまたは辞書内の値をアクセスするには,二つの一般的な方法があります.メンバー符号またはアレイインデックス符号.</p>
+<p><strong>メンバー符号</strong> - 鍵名を使ってオブジェクトのメンバー属性として値にアクセスできます.例えば:</p>
+<pre><code>```powershell
+</code></pre>
+<p>PS&gt; $hash.1
+  one</p>
+<p>PS&gt; $dictionary.2
+  two
+  ```</p>
+<p><strong>Array index notation</strong> - 値は,インデックス符号を使用してアクセスできます.PowerShellは,その符号をオブジェクトのパラメータ化された属性 <strong>Item</strong> に呼び出すように変換します.</p>
+<p>ハッシュテーブルでインデックス符号を使用すると,括弧の内にある値はキー名である.キーが文字列値である場合は,引用文でキー名を付加してください.例えば:</p>
+<pre><code>```powershell
+</code></pre>
+<p>PS&gt; $hash['three']
+  3</p>
+<p>PS&gt; $hash[2]
+  two
+  ```</p>
+<p>この例では,キー値が <code>2</code>値集のインデックスではなく,キー-値ペアの鍵の値です. 値集のインデックスで証明できます.</p>
+<pre><code>```powershell
+</code></pre>
+<p>PS&gt; ([array]$hash.Values)[2]
+  one
+  ```</p>
+<p>辞書でインデックス符号を使用すると,括弧の内部の値はそのタイプに基づいて解釈されます.値が整数である場合は,値集のインデックスとして扱われます.値が整数でない場合は,キー名として扱われます.例えば:</p>
+<pre><code>```powershell
+</code></pre>
+<p>PS&gt; $dictionary[1]
+  two
+  PS&gt; ([array]$dictionary.Values)[1]
+  two
+  PS&gt; $dictionary[[Object]1]
+  one
+  PS&gt; $dictionary['three']
+  3
+  ```</p>
+<p>この例では,アレイ値が <code>[1]</code> を使って値集のインデックスです.<code>Item(int index)</code>パラメータ化されたプロパティオーバーロード. アレイ値<code>[[Object]1]</code> を使って,indexではなくキー値である.<code>Item(System.Object key)</code>オーバーロード.</p>
+<p>&gt; [!NOTE] &gt; キー値が整数である場合,この行動は混乱する可能性があります.可能な限り,辞書で整数キー値を使用することを避けるべきです.</p>
+<h3>資産名衝突の管理について</h3>
+<p>キー名が<strong>HashTable</strong> のプロパティ名と衝突した場合,そのプロパティにアクセスするには <strong>psbase</strong> [内在メンバー][01] を使用できます.例えば,キー名は である場合<code>keys</code>そして,ハッシュタブルキーが集まったコレクションを返したい場合は,この構文を使用してください.</p>
+<pre><code class="language-powershell">$hashtable.psbase.Keys
+</code></pre>
+<p>この要件は,システム・コレクション・IDictionaryのインターフェースを実装する他のタイプに適用されます.例えば,オーダーされたディクショナリーです.</p>
+<h2>キーと値にわたって繰り返す</h2>
+<p>ハッシュテーブル内のキーを繰り返し,複数の方法で値を処理できます.このセクションの例はそれぞれ同じ出力を持っています.  を繰り返します.<code>$hash</code>ここで定義された変数:</p>
+<pre><code class="language-powershell">$hash = [ordered]@{Number = 1; Shape = &quot;Square&quot;; Color = &quot;Blue&quot;}
+</code></pre>
+<p>&gt; [!注] &gt;これらの例では,<code>$hash</code>この例は標準&gt;ハッシュタブルでは同じ動作しますが,出力の順序は予測できません.</p>
+<p>各例では,各キーとその値に対してメッセージが返されます.</p>
+<pre><code class="language-output">The value of 'Number' is: 1
+The value of 'Shape' is: Square
+The value of 'Color' is: Blue
+</code></pre>
+<p>この例では,という文字を使用しています.<code>foreach</code>キーをブロックして繰り返す.</p>
+<pre><code class="language-powershell">foreach ($Key in $hash.Keys) {
+    &quot;The value of '$Key' is: $($hash[$Key])&quot;
+}
+</code></pre>
+<p>この例では,利用する.<code>ForEach-Object</code>キーを繰り返すようにします.</p>
+<pre><code class="language-powershell">$hash.Keys | ForEach-Object {
+    &quot;The value of '$_' is: $($hash[$_])&quot;
+}
+</code></pre>
+<p>この例では,という文字を使用しています.<code>GetEnumerator()</code>キー・バリューペアをパイプラインを通して送る方法<code>ForEach-Object</code> .</p>
+<pre><code class="language-powershell">$hash.GetEnumerator() | ForEach-Object {
+    &quot;The value of '$($_.Key)' is: $($_.Value)&quot;
+}
+</code></pre>
+<p>この例では,という文字を使用しています.<code>GetEnumerator()</code>そして,<code>ForEach()</code>各キー値ペアを繰り返す方法.</p>
+<pre><code class="language-powershell">$hash.GetEnumerator().ForEach({&quot;The value of '$($_.Key)' is: $($_.Value)&quot;})
+</code></pre>
+<h2>キーと値を追加し削除する</h2>
+<p>通常,ハッシュテーブルを作成する際には,定義にキー値ペアを含みます.しかし,ハッシュテーブルからいつでもキー値ペアを追加して削除することができます.次の例では空きハッシュテーブルを作成します.</p>
+<pre><code class="language-powershell">$hash = @{}
+</code></pre>
+<p>アレア符号を用いてキー値ペアを追加できます.例えば,次の例では,  を追加します.<code>Time</code>の値を持つ鍵です.<code>Now</code>ハッシュテーブルへ.</p>
+<pre><code class="language-powershell">$hash[&quot;Time&quot;] = &quot;Now&quot;
+</code></pre>
+<p>また,ハッシュテーブルにキーと値を追加することもできます.<code>Add()</code>システム・コレクション・ハッシュタブル・オブジェクトの方法.<code>Add()</code>方法は次の構文を持っています:</p>
+<pre><code class="language-powershell">Add(Key, Value)
+</code></pre>
+<p>例えば, a を追加するには,<code>Time</code>の値を持つ鍵です.<code>Now</code>ハッシュテーブルに,次の記述形式を使用します.</p>
+<pre><code class="language-powershell">$hash.Add(&quot;Time&quot;, &quot;Now&quot;)
+</code></pre>
+<p>そして,追加操作符 () を使ってハッシュテーブルにキーと値を追加することができます.<code>+</code>) は既存のハッシュテーブルにハッシュテーブルを追加します.例えば,次の記述は,  を追加します.<code>Time</code>の値を持つ鍵です.<code>Now</code>のハッシュテーブルへ<code>$hash</code>変数です.</p>
+<pre><code class="language-powershell">$hash = $hash + @{Time=&quot;Now&quot;}
+</code></pre>
+<p>また,変数に保存されている値を追加することもできます.</p>
+<pre><code class="language-powershell">$t = &quot;Today&quot;
+$now = (Get-Date)
+
+$hash.Add($t, $now)
+</code></pre>
+<p>ハッシュテーブルからキー値ペアを削除するには,引算操作符を使用することはできませんが,  を使用できます.<code>Remove()</code>ハッシュタブルオブジェクトの方法.<code>Remove</code>方法は次の構文を持っています:</p>
+<pre><code>$object.Remove(&lt;key&gt;)
+</code></pre>
+<p>次の例では,を削除します.<code>Time</code>から鍵値ペア<code>$hash</code> .</p>
+<pre><code class="language-powershell">$hash.Remove(&quot;Time&quot;)
+</code></pre>
+<h1>について_Hash_Tables</h1>
+<h2>ハッシュタブルにおけるオブジェクトタイプ</h2>
+<p>ハッシュテーブル内のキーと値は,任意の .NETオブジェクトタイプを持つことができ,単一のハッシュテーブルには複数のタイプのキーと値は含まれる.</p>
+<p>次の記述は,プロセス名文字列とプロセスオブジェクト値のハッシュテーブルを作成し,そのデータを に保存します.<code>$p</code>変数です.</p>
+<pre><code class="language-powershell">$p = @{
+    &quot;PowerShell&quot; = (Get-Process powershell)
+    &quot;Notepad&quot; = (Get-Process notepad)
+}
+</code></pre>
+<p>でハッシュテーブルを表示できます.<code>$p</code>キー名属性を使って値を表示します.</p>
+<pre><code class="language-powershell">PS&gt; $p
+
+Name                           Value
+----                           -----
+PowerShell                     System.Diagnostics.Process (PowerShell)
+Notepad                        System.Diagnostics.Process (notepad)
+
+PS&gt; $p.PowerShell
+
+Handles  NPM(K)    PM(K)      WS(K) VM(M)   CPU(s)     Id ProcessName
+-------  ------    -----      ----- -----   ------     -- -----------
+    441      24    54196      54012   571     5.10   1788 PowerShell
+
+PS&gt; $p.Keys | ForEach-Object {$p.$_.Handles}
+441
+251
+</code></pre>
+<p>ハッシュテーブルのキーは何でも .NET型になることができます.次の記述は,ハッシュテーブルにキー値ペアを追加します.<code>$p</code>鍵は,WinRMサービスを代表する <strong>Service</strong>オブジェクトであり,値はサービスの現在の状態です.</p>
+<pre><code class="language-powershell">$p = $p + @{
+    (Get-Service WinRM) = ((Get-Service WinRM).Status)
+}
+</code></pre>
+<p>ハッシュテーブル内の他のペアで使用する方法と同じ方法で新しいキー値ペアを表示しアクセスできます.</p>
+<pre><code class="language-powershell">PS&gt; $p
+
+Name                           Value
+----                           -----
+PowerShell                     System.Diagnostics.Process (powershell)
+Notepad                        System.Diagnostics.Process (Notepad)
+WinRM                          Running
+
+PS&gt; $p.Keys
+PowerShell
+Notepad
+
+Status   Name               DisplayName
+------   ----               -----------
+Running  winrm              Windows Remote Management (WS-Manag...
+
+PS&gt; $p.Keys | ForEach-Object {$_.Name}
+WinRM
+</code></pre>
+<p>ハッシュテーブルにあるキーと値は,ハッシュテーブルオブジェクトにもなる可能性があります.次の記述は,ハッシュテーブルにキー値ペアを追加します.<code>$p</code>キーが文字列である Hash2で,値が3つのキー値ペアを持つハッシュテーブルである変数です.</p>
+<pre><code class="language-powershell">$p = $p + @{
+    &quot;Hash2&quot;= @{a=1; b=2; c=3}
+}
+</code></pre>
+<p>同じ方法を使って新しい値を表示し,アクセスできます.</p>
+<pre><code class="language-powershell">PS&gt; $p
+
+Name                           Value
+----                           -----
+PowerShell                     System.Diagnostics.Process (powershell)
+Notepad                        System.Diagnostics.Process (Notepad)
+WinRM                          Running
+Hash2                          {c, b, a}
+
+PS&gt; $p.Hash2
+
+Name                           Value
+----                           -----
+c                              3
+b                              2
+a                              1
+
+PS&gt; $p.Hash2.b
+2
+</code></pre>
+<h2>キーと値の排序について</h2>
+<p>ハッシュテーブル内のアイテムは本質的に順序不明である.キー・値ペアが表示されるたびに異なる順に表示されます.</p>
+<p>ハッシュテーブルを並べることはできませんが,その場合は  を使えます.<code>GetEnumerator()</code>ハッシュテーブルのメソッドでキーと値を数え,次に""を使用します.<code>Sort-Object</code>cmdlet で表示されるために,リストされた値を分類します.</p>
+<p>例えば,次のコマンドは,ハッシュテーブルのキーと値をリストにします.<code>$p</code>変数を並べてキーをアルファベット順に並べます.</p>
+<pre><code class="language-powershell">PS&gt; $p.GetEnumerator() | Sort-Object -Property Key
+
+Name                           Value
+----                           -----
+Hash2                          {c, b, a}
+Notepad                        System.Diagnostics.Process (Notepad)
+PowerShell                     System.Diagnostics.Process (powershell)
+WinRM                          Running
+</code></pre>
+<p>次のコマンドは,ハッシュ値を下回順で並べるために同じ手順を使用します.</p>
+<pre><code class="language-powershell">PS&gt; $p.GetEnumerator() | Sort-Object -Property Value -Descending
+
+Name                           Value
+----                           -----
+PowerShell                     System.Diagnostics.Process (powershell)
+Notepad                        System.Diagnostics.Process (Notepad)
+Hash2                          {c, b, a}
+WinRM                          Running
+</code></pre>
+<h2>ハッシュタブルからオブジェクトを作成する</h2>
+<p>PowerShell 3.0 から,プロパティとプロパティ値のハッシュテーブルからオブジェクトを作成できます.</p>
+<p>構文は以下の通りです.</p>
+<pre><code class="language-powershell">[&lt;class-name&gt;]@{
+  &lt;property-name&gt;=&lt;property-value&gt;
+  &lt;property-name&gt;=&lt;property-value&gt;
+}
+</code></pre>
+<p>この方法は,パラメータを持たないコンストラクタを持つクラスに対してのみ有効である.オブジェクトの属性は公開で設定可能である必要があります.</p>
+<p>詳細については[about_Object_Creation][02] を参照してください.</p>
+<h2>ストリングデータから変換する</h2>
+<p><code>ConvertFrom-StringData</code>cmdlet は,キー値ペアの文字列またはここ文字列をハッシュテーブルに変換します.<code>ConvertFrom-StringData</code>脚本のデータセクションで安全にcmdlet を入力し,それを使用することができます.<code>Import-LocalizedData</code>cmdlet は,現在のユーザーのユーザーインターフェース (UI) 文化でユーザーメッセージが表示される.</p>
+<p>ハッシュテーブル内の値に引用符が含まれる場合,Here-strings は特に有用です.Here-strings に関する詳細については,[about_Quoting_Rules][03]を参照してください.</p>
+<p>次の例では,前例のユーザーメッセージの"Here-string"を作成する方法と,使用方法を示しています.<code>ConvertFrom-StringData</code>文字列からハッシュテーブルに変換する.</p>
+<p>次のコマンドは,キー値ペアの"Here-string"を作成し,それを""に保存します.<code>$string</code>変数です.</p>
+<pre><code class="language-powershell">$string = @&quot;
+Msg1 = Type &quot;Windows&quot;.
+Msg2 = She said, &quot;Hello, World.&quot;
+Msg3 = Enter an alias (or &quot;nickname&quot;).
+&quot;@
+</code></pre>
+<p>このコマンドは,という文字を使用します.<code>ConvertFrom-StringData</code>here-string をハッシュテーブルに変換するには cmdlet を使用します.</p>
+<pre><code class="language-powershell">ConvertFrom-StringData $string
+
+Name                           Value
+----                           -----
+Msg3                           Enter an alias (or &quot;nickname&quot;).
+Msg2                           She said, &quot;Hello, World.&quot;
+Msg1                           Type &quot;Windows&quot;.
+</code></pre>
+<p>ストリングに関する詳細については,[about_Quoting_Rules][03]を参照してください.</p>
+<h2>また, を参照してください.</h2>
+<p>[about_Arrays][04] - [about_Intrinsic_Members][01] - [about_Object_Creation][02] - [about_Quoting_Rules][03] - [about_Script_Internationalization][05] - [Import-LocalizedData][06] - [ConvertFrom-StringData][07] - [System.Collections.Hashtable][08]</p>
+<p>&lt;!--リンク参照 --&gt; [01]: about_Intrinsic_Members.md [02]: about_Object_Creation.md [03]: about_Quoting_Rules.md [04]: about_Arrays.md [05]: about_Script_Internationalization.md [06]: xref:Microsoft.PowerShell.Utility.Import-LocalizedData [07]: xref:Microsoft.PowerShell.Utility.ConvertFrom-StringData [08]: /dotnet/api/system.collections.hashtable</p></section><section class="en-original"><pre class="source-original"># about_Hash_Tables
+
+## Short description
+
+Describes how to create, use, and sort hashtables in PowerShell.
+
+## Long description
+
+A hashtable, also known as a dictionary or associative array, is a compact data
+structure that stores one or more key-value pairs. For example, a hashtable
+might contain a series of IP addresses and computer names, where the IP
+addresses are the keys and the computer names are the values, or vice versa.
+
+In PowerShell, each hashtable is a `[System.Collections.Hashtable]` object. You
+can use the properties and methods of **Hashtable** objects in PowerShell.
+
+Beginning in PowerShell 3.0, you can use the `[ordered]` type accelerator to
+create an `[System.Collections.Specialized.OrderedDictionary]` object in
+PowerShell.
+
+Ordered dictionaries differ from hashtables in that the keys always appear in
+the order in which you list them. The order of keys in a hashtable isn&#x27;t
+deterministic.
+
+The keys and value in hashtables are also .NET objects. They&#x27;re most often
+strings or integers, but they can have any object type. You can also create
+nested hashtables, in which the value of a key is another hashtable.
+
+Hashtables are frequently used because they&#x27;re efficient for finding and
+retrieving data. You can use hashtables to store lists and to create calculated
+properties in PowerShell. And, the `ConvertFrom-StringData` cmdlet converts
+structured string data to a hashtable.
+
+## Syntax
+
+The syntax of a hashtable is as follows:
+
+```powershell
+@{ &lt;name&gt; = &lt;value&gt;; [&lt;name&gt; = &lt;value&gt; ] ...}
+```
+
+The syntax of an ordered dictionary is as follows:
+
+```powershell
+[ordered]@{ &lt;name&gt; = &lt;value&gt;; [&lt;name&gt; = &lt;value&gt; ] ...}
+```
+
+The `[ordered]` type accelerator was introduced in PowerShell 3.0.
+
+To create a hashtable, follow these guidelines:
+
+- Begin the hashtable with an at sign (`@`).
+- Enclose the hashtable in braces (`{}`).
+- Enter one or more key-value pairs for the content of the hashtable.
+- Use an equal sign (`=`) to separate each key from its value.
+- Use a semicolon (`;`) or a line break to separate the key-value pairs.
+- Keys that contain spaces must be enclosed in quotation marks. Values must be
+  valid PowerShell expressions. Strings must appear in quotation marks, even if
+  they don&#x27;t include spaces.
+- To manage the hashtable, save it in a variable.
+- When assigning an ordered hashtable to a variable, place the `[ordered]` type
+  before the `@` symbol. If you place it before the variable name, the command
+  fails.
+
+You can use ordered dictionaries in the same way that you use hashtables.
+Either type can be used as the value of parameters that take a hashtable or
+dictionary (**iDictionary**) type objects.
+
+## Creating hashtables and ordered dictionaries
+
+Consider the following hashtable and ordered dictionary examples:
+
+```powershell
+$hash = @{
+    1       = &#x27;one&#x27;
+    2       = &#x27;two&#x27;
+    &#x27;three&#x27; = 3
+}
+$hash
+```
+
+```Output
+Name                           Value
+----                           -----
+three                          3
+2                              two
+1                              one
+```
+
+As you can see, the key-value pairs in a hashtable aren&#x27;t presented in the
+order that they were defined.
+
+The easiest way to create an ordered dictionary is to use the `[ordered]`
+attribute. Place the attribute immediately before the `@` symbol.
+
+```powershell
+$dictionary = [ordered]@{
+    1       = &#x27;one&#x27;
+    2       = &#x27;two&#x27;
+    &#x27;three&#x27; = 3
+}
+$dictionary
+```
+
+```Output
+Name                           Value
+----                           -----
+1                              one
+2                              two
+three                          3
+```
+
+Unlike hashtables, ordered dictionaries maintain the order of the key-value.
+
+### Converting hashtables and ordered dictionaries
+
+You can&#x27;t use the `[ordered]` type accelerator to convert or cast a hashtable.
+If you place the ordered attribute before the variable name, the command fails
+with the following error message.
+
+```powershell
+[ordered]$orderedHash = @{}
+ParserError:
+Line |
+   1 |  [ordered]$orderedHash = @{}
+     |  ~~~~~~~~~~~~~~
+     | The ordered attribute can be specified only on a hash literal node.
+```
+
+To correct the expression, move the [ordered] attribute.
+
+```powershell
+$orderedHash = [ordered]@{}
+```
+
+You can cast an ordered dictionary to a hashtable, but you can&#x27;t guarantee the
+order of the members.
+
+```powershell
+[hashtable]$newHash = [ordered]@{
+    Number = 1
+    Shape = &quot;Square&quot;
+    Color = &quot;Blue&quot;
+}
+$newHash
+```
+
+```Output
+Name                           Value
+----                           -----
+Color                          Blue
+Shape                          Square
+Number                         1
+```
+
+## Hashtable and dictionary properties
+
+Hashtables and ordered dictionaries share several properties. Consider the
+`$hash` and `$dictionary` variables defined in the previous examples.
+
+```powershell
+$hash | Get-Member -MemberType Properties, ParameterizedProperty
+```
+
+```Output
+   TypeName: System.Collections.Hashtable
+
+Name           MemberType            Definition
+----           ----------            ----------
+Item           ParameterizedProperty System.Object Item(System.Object key) {get;set;}
+Count          Property              int Count {get;}
+IsFixedSize    Property              bool IsFixedSize {get;}
+IsReadOnly     Property              bool IsReadOnly {get;}
+IsSynchronized Property              bool IsSynchronized {get;}
+Keys           Property              System.Collections.ICollection Keys {get;}
+SyncRoot       Property              System.Object SyncRoot {get;}
+Values         Property              System.Collections.ICollection Values {get;}
+```
+
+```powershell
+$dictionary | Get-Member -MemberType Properties, ParameterizedProperty
+```
+
+```Output
+   TypeName: System.Collections.Specialized.OrderedDictionary
+
+Name           MemberType            Definition
+----           ----------            ----------
+Item           ParameterizedProperty System.Object Item(int index) {get;set;},
+                                     System.Object Item(System.Object key) {get;set;}
+Count          Property              int Count {get;}
+IsFixedSize    Property              bool IsFixedSize {get;}
+IsReadOnly     Property              bool IsReadOnly {get;}
+IsSynchronized Property              bool IsSynchronized {get;}
+Keys           Property              System.Collections.ICollection Keys {get;}
+SyncRoot       Property              System.Object SyncRoot {get;}
+Values         Property              System.Collections.ICollection Values {get;}
+```
+
+The most-used properties are **Count**, **Keys**, **Values**, and **Item**.
+
+- The **Count** property that indicates the number of key-value pairs in the
+  object.
+
+- The **Keys** property is a collection of the key names in the hashtable or
+  dictionary.
+
+  ```powershell
+  PS&gt; $hash.Keys
+  three
+  2
+  1
+
+  PS&gt; $dictionary.Keys
+  1
+  2
+  three
+  ```
+
+- The **Values** property is a collection of the values in the hashtable or
+  dictionary.
+
+  ```powershell
+  PS&gt; $hash.Values
+  3
+  two
+  one
+
+  PS&gt; $dictionary.Values
+  one
+  two
+  3
+  ```
+
+- The **Item** property is a parameterized property that returns the value of
+  the item that you specify. Hashtables use the key as the parameter to the
+  parameterized property, while dictionaries use the index by default. This
+  difference affects how you access the values for each type.
+
+# about_Hash_Tables
+
+## Accessing values
+
+There are two common ways to access the values in a hashtable or dictionary:
+member notation or array index notation.
+
+- **Member notation** - Values can be accessed by using the key name as a
+  member property of the object. For example:
+
+  ```powershell
+  PS&gt; $hash.1
+  one
+
+  PS&gt; $dictionary.2
+  two
+  ```
+
+- **Array index notation** - Values can be accessed by using index notation.
+  PowerShell converts that notation into a call to **Item** parameterized
+  property of the object.
+
+  When you use index notation with hashtables, the value inside of the brackets
+  is the key name. If the key is a string value, enclose the key name in
+  quotes. For example:
+
+  ```powershell
+  PS&gt; $hash[&#x27;three&#x27;]
+  3
+
+  PS&gt; $hash[2]
+  two
+  ```
+
+  In this example, the key value `2` isn&#x27;t an index into the collection of
+  values. It&#x27;s the value of the key in the key-value pair. You can prove this
+  by indexing into the collection of values.
+
+  ```powershell
+  PS&gt; ([array]$hash.Values)[2]
+  one
+  ```
+
+  When you use index notation with dictionaries, the value inside of the
+  brackets is interpreted based on its type. If the value is an integer, it&#x27;s
+  treated as an index into the collection of values. If the value isn&#x27;t an
+  integer, it&#x27;s treated as the key name. For example:
+
+  ```powershell
+  PS&gt; $dictionary[1]
+  two
+  PS&gt; ([array]$dictionary.Values)[1]
+  two
+  PS&gt; $dictionary[[Object]1]
+  one
+  PS&gt; $dictionary[&#x27;three&#x27;]
+  3
+  ```
+
+  In this example, the array value `[1]` is an index into the collection of
+  values using the `Item(int index)` parameterized property overload. The array
+  value `[[Object]1]` isn&#x27;t an index but a key value using the
+  `Item(System.Object key)` overload.
+
+  &gt; [!NOTE]
+  &gt; This behavior can be confusing when the key value is an integer. When
+  &gt; possible, you should avoid using integer key values in dictionaries.
+
+### Handling property name collisions
+
+If the key name collides with one of the property names of the **HashTable**
+type, you can use the **psbase** [intrinsic member][01] to access those
+properties. For example, if the key name is `keys` and you want to return the
+collection of the **HashTable** keys, use this syntax:
+
+```powershell
+$hashtable.psbase.Keys
+```
+
+This requirement applies for other types that implement the
+**System.Collections.IDictionary** interface, like **OrderedDictionary**.
+
+## Iterating over keys and values
+
+You can iterate over the keys in a hashtable to process the values in several
+ways. Each of the examples in this section has identical output. They iterate
+over the `$hash` variable defined here:
+
+```powershell
+$hash = [ordered]@{Number = 1; Shape = &quot;Square&quot;; Color = &quot;Blue&quot;}
+```
+
+&gt; [!NOTE]
+&gt; In these examples, `$hash` is defined as an ordered dictionary to ensure the
+&gt; output is always in the same order. These examples work the same for standard
+&gt; hashtables, but the order of the output isn&#x27;t predictable.
+
+Each example returns a message for every key and its value:
+
+```output
+The value of &#x27;Number&#x27; is: 1
+The value of &#x27;Shape&#x27; is: Square
+The value of &#x27;Color&#x27; is: Blue
+```
+
+This example uses a `foreach` block to iterate over the keys.
+
+```powershell
+foreach ($Key in $hash.Keys) {
+    &quot;The value of &#x27;$Key&#x27; is: $($hash[$Key])&quot;
+}
+```
+
+This example uses `ForEach-Object` to iterate over the keys.
+
+```powershell
+$hash.Keys | ForEach-Object {
+    &quot;The value of &#x27;$_&#x27; is: $($hash[$_])&quot;
+}
+```
+
+This example uses the `GetEnumerator()` method to send each key-value pair
+through the pipeline to `ForEach-Object`.
+
+```powershell
+$hash.GetEnumerator() | ForEach-Object {
+    &quot;The value of &#x27;$($_.Key)&#x27; is: $($_.Value)&quot;
+}
+```
+
+This example uses the `GetEnumerator()` and `ForEach()` methods to iterate over
+each key-value pair.
+
+```powershell
+$hash.GetEnumerator().ForEach({&quot;The value of &#x27;$($_.Key)&#x27; is: $($_.Value)&quot;})
+```
+
+## Adding and removing keys and values
+
+Typically, when you create a hashtable you include the key-value pairs in the
+definition. However, you can add and remove key-value pairs from a hashtable at
+any time. The following example creates an empty hashtable.
+
+```powershell
+$hash = @{}
+```
+
+You can add key-value pairs using array notation. For example, the following
+example adds a `Time` key with a value of `Now` to the hashtable.
+
+```powershell
+$hash[&quot;Time&quot;] = &quot;Now&quot;
+```
+
+You can also add keys and values to a hashtable using the `Add()` method of the
+**System.Collections.Hashtable** object. The `Add()` method has the following
+syntax:
+
+```powershell
+Add(Key, Value)
+```
+
+For example, to add a `Time` key with a value of `Now` to the hashtable, use
+the following statement format.
+
+```powershell
+$hash.Add(&quot;Time&quot;, &quot;Now&quot;)
+```
+
+And, you can add keys and values to a hashtable using the addition operator
+(`+`) to add a hashtable to an existing hashtable. For example, the following
+statement adds a `Time` key with a value of `Now` to the hashtable in the
+`$hash` variable.
+
+```powershell
+$hash = $hash + @{Time=&quot;Now&quot;}
+```
+
+You can also add values that are stored in variables.
+
+```powershell
+$t = &quot;Today&quot;
+$now = (Get-Date)
+
+$hash.Add($t, $now)
+```
+
+You can&#x27;t use a subtraction operator to remove a key-value pair from a
+hashtable, but you can use the `Remove()` method of the hashtable object. The
+`Remove` method has the following syntax:
+
+```
+$object.Remove(&lt;key&gt;)
+```
+
+The following example removes the `Time` key-value pair from `$hash`.
+
+```powershell
+$hash.Remove(&quot;Time&quot;)
+```
+
+# about_Hash_Tables
+
+## Object types in hashtables
+
+The keys and values in a hashtable can have any .NET object type, and a single
+hashtable can have keys and values of multiple types.
+
+The following statement creates a hashtable of process name strings and process
+object values and saves it in the `$p` variable.
+
+```powershell
+$p = @{
+    &quot;PowerShell&quot; = (Get-Process powershell)
+    &quot;Notepad&quot; = (Get-Process notepad)
+}
+```
+
+You can display the hashtable in `$p` and use the key-name properties to
+display the values.
+
+```powershell
+PS&gt; $p
+
+Name                           Value
+----                           -----
+PowerShell                     System.Diagnostics.Process (PowerShell)
+Notepad                        System.Diagnostics.Process (notepad)
+
+PS&gt; $p.PowerShell
+
+Handles  NPM(K)    PM(K)      WS(K) VM(M)   CPU(s)     Id ProcessName
+-------  ------    -----      ----- -----   ------     -- -----------
+    441      24    54196      54012   571     5.10   1788 PowerShell
+
+PS&gt; $p.Keys | ForEach-Object {$p.$_.Handles}
+441
+251
+```
+
+The keys in a hashtable can be any .NET type. The following statement adds a
+key-value pair to the hashtable in the `$p` variable. The key is a **Service**
+object that represents the WinRM service, and the value is the current status
+of the service.
+
+```powershell
+$p = $p + @{
+    (Get-Service WinRM) = ((Get-Service WinRM).Status)
+}
+```
+
+You can display and access the new key-value pair using the same methods that
+you use for other pairs in the hashtable.
+
+```powershell
+PS&gt; $p
+
+Name                           Value
+----                           -----
+PowerShell                     System.Diagnostics.Process (powershell)
+Notepad                        System.Diagnostics.Process (Notepad)
+WinRM                          Running
+
+PS&gt; $p.Keys
+PowerShell
+Notepad
+
+Status   Name               DisplayName
+------   ----               -----------
+Running  winrm              Windows Remote Management (WS-Manag...
+
+PS&gt; $p.Keys | ForEach-Object {$_.Name}
+WinRM
+```
+
+The keys and values in a hashtable can also be Hashtable objects. The following
+statement adds key-value pair to the hashtable in the `$p` variable in which
+the key is a string, Hash2, and the value is a hashtable with three key-value
+pairs.
+
+```powershell
+$p = $p + @{
+    &quot;Hash2&quot;= @{a=1; b=2; c=3}
+}
+```
+
+You can display and access the new values using the same methods.
+
+```powershell
+PS&gt; $p
+
+Name                           Value
+----                           -----
+PowerShell                     System.Diagnostics.Process (powershell)
+Notepad                        System.Diagnostics.Process (Notepad)
+WinRM                          Running
+Hash2                          {c, b, a}
+
+PS&gt; $p.Hash2
+
+Name                           Value
+----                           -----
+c                              3
+b                              2
+a                              1
+
+PS&gt; $p.Hash2.b
+2
+```
+
+## Sorting keys and values
+
+The items in a hashtable are intrinsically unordered. The key-value pairs might
+appear in a different order each time that you display them.
+
+Although you can&#x27;t sort a hashtable, you can use the `GetEnumerator()` method
+of hashtables to enumerate the keys and values, and then use the `Sort-Object`
+cmdlet to sort the enumerated values for display.
+
+For example, the following commands enumerate the keys and values in the
+hashtable in the `$p` variable and then sort the keys in alphabetical order.
+
+```powershell
+PS&gt; $p.GetEnumerator() | Sort-Object -Property Key
+
+Name                           Value
+----                           -----
+Hash2                          {c, b, a}
+Notepad                        System.Diagnostics.Process (Notepad)
+PowerShell                     System.Diagnostics.Process (powershell)
+WinRM                          Running
+```
+
+The following command uses the same procedure to sort the hash values in
+descending order.
+
+```powershell
+PS&gt; $p.GetEnumerator() | Sort-Object -Property Value -Descending
+
+Name                           Value
+----                           -----
+PowerShell                     System.Diagnostics.Process (powershell)
+Notepad                        System.Diagnostics.Process (Notepad)
+Hash2                          {c, b, a}
+WinRM                          Running
+```
+
+## Creating objects from hashtables
+
+Beginning in PowerShell 3.0, you can create an object from a hashtable of
+properties and property values.
+
+The syntax is as follows:
+
+```powershell
+[&lt;class-name&gt;]@{
+  &lt;property-name&gt;=&lt;property-value&gt;
+  &lt;property-name&gt;=&lt;property-value&gt;
+}
+```
+
+This method works only for classes that have a constructor that has no
+parameters. The object properties must be public and settable.
+
+For more information, see [about_Object_Creation][02].
+
+## ConvertFrom-StringData
+
+The `ConvertFrom-StringData` cmdlet converts a string or a here-string of
+key-value pairs into a hashtable. You can use the `ConvertFrom-StringData`
+cmdlet safely in the Data section of a script, and you can use it with the
+`Import-LocalizedData` cmdlet to display user messages in the user-interface
+(UI) culture of the current user.
+
+Here-strings are especially useful when the values in the hashtable include
+quotation marks. For more information about here-strings, see
+[about_Quoting_Rules][03].
+
+The following example shows how to create a here-string of the user messages in
+the previous example and how to use `ConvertFrom-StringData` to convert them
+from a string into a hashtable.
+
+The following command creates a here-string of the key-value pairs and then
+saves it in the `$string` variable.
+
+```powershell
+$string = @&quot;
+Msg1 = Type &quot;Windows&quot;.
+Msg2 = She said, &quot;Hello, World.&quot;
+Msg3 = Enter an alias (or &quot;nickname&quot;).
+&quot;@
+```
+
+This command uses the `ConvertFrom-StringData` cmdlet to convert the
+here-string into a hashtable.
+
+```powershell
+ConvertFrom-StringData $string
+
+Name                           Value
+----                           -----
+Msg3                           Enter an alias (or &quot;nickname&quot;).
+Msg2                           She said, &quot;Hello, World.&quot;
+Msg1                           Type &quot;Windows&quot;.
+```
+
+For more information about here-strings, see [about_Quoting_Rules][03].
+
+## See also
+
+- [about_Arrays][04]
+- [about_Intrinsic_Members][01]
+- [about_Object_Creation][02]
+- [about_Quoting_Rules][03]
+- [about_Script_Internationalization][05]
+- [Import-LocalizedData][06]
+- [ConvertFrom-StringData][07]
+- [System.Collections.Hashtable][08]
+
+&lt;!-- link references --&gt;
+[01]: about_Intrinsic_Members.md
+[02]: about_Object_Creation.md
+[03]: about_Quoting_Rules.md
+[04]: about_Arrays.md
+[05]: about_Script_Internationalization.md
+[06]: xref:Microsoft.PowerShell.Utility.Import-LocalizedData
+[07]: xref:Microsoft.PowerShell.Utility.ConvertFrom-StringData
+[08]: /dotnet/api/system.collections.hashtable</pre></section>

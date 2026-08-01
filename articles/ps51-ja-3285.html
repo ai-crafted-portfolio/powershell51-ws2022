@@ -1,0 +1,554 @@
+<!doctype html><meta charset="utf-8"><section class="jp-official"><h1>Set-OdbcDsn を設定する</h1>
+<h2>SYNOPSIS は,既存の ODBC DSN のプロパティを設定します.</h2>
+<h2>SYNTAXは,のシンタックスです.</h2>
+<h3>InputObject (デフォルト) ```</h3>
+<p>Set-OdbcDsn [-PassThru] [-SetPropertyValue <String[]>] [-RemovePropertyValue <String[]>]
+ [-InputObject] <CimInstance[]> [-CimSession <CimSession[]>] [-ThrottleLimit <Int32>] [-AsJob] [-WhatIf]
+ [-Confirm] [<CommonParameters>]</p>
+<pre><code>
+### 名前 ```
+Set-OdbcDsn [-PassThru] [-SetPropertyValue &lt;String[]&gt;] [-RemovePropertyValue &lt;String[]&gt;] [-Name] &lt;String&gt;
+ [-DriverName &lt;String&gt;] [-Platform &lt;String&gt;] -DsnType &lt;String&gt; [-CimSession &lt;CimSession[]&gt;]
+ [-ThrottleLimit &lt;Int32&gt;] [-AsJob] [-WhatIf] [-Confirm] [&lt;CommonParameters&gt;]
+</code></pre>
+<h2>記述 <strong>Set-OdbcDsn</strong> cmdlet は,既存のオープンデータベース接続 (ODBC) のデータソース名 (DSN) のプロパティを構成しています. <em>SetPropertyValue</em> パラメータを使用して追加または変更するプロパティを指定します. <em>RemovePropertyValue</em> パラメータを使用して削除するプロパティを指定します.</h2>
+<p>新しい DSNを追加するには,Add-OdbcDsn cmdlet を使用してください.</p>
+<p>ODBC,データソース名,ドライバーに関する詳細については, [Microsoft Open Database Connectivity (ODBC) ] () を参照してください.https://msdn.microsoft.com/en-us/library/ms710252.aspx), <a href="https://msdn.microsoft.com/en-us/library/ms711688.aspx">データソース</a>,そして <a href="https://msdn.microsoft.com/en-us/library/ms715383.aspx">ドライバー</a> をMicrosoft開発者ネットワークで公開しています.</p>
+<h2>例えは</h2>
+<h3>例1:指定されたデータベースを使用するために64ビットODBC DSNを変更します.```</h3>
+<p>PS C:&gt; Set-OdbcDsn -Name "MyPayroll" -DsnType "System" -Platform "64-bit" -SetPropertyValue "Database=Payroll"</p>
+<pre><code>
+このコマンドは,MyPayrollという64ビット ODBCシステム DSNを変更して,Payrollというデータベースを使用します.この例はSQL Serverドライバーのために設計されています.
+
+### 例2:指定されたデータベースを使用するためにネイティブプラットフォーム ODBC DSN を変更します.```
+PS C:\&gt; Set-OdbcDsn -Name &quot;MyPayroll&quot; -DsnType &quot;System&quot; -SetPropertyValue &quot;Database=Payroll&quot;
+</code></pre>
+<p>このコマンドは,MyPayrollというネイティブプラットフォーム ODBC System DSN を変更して,Payroll というデータベースを使用します.この例は前の例に似ているが,その上で <em>Platform</em> パラメータが指定されていない.したがって,ネイティブプラットフォームで DSN を設定します.</p>
+<h3>例3:ユーザーDSNを変更して,Windows認証と指定されたデータベースを使用します.```</h3>
+<p>PS C:&gt; Set-OdbcDsn -Name "MyPayroll" -DsnType "User" -Platform "32-bit" -RemovePropertyValue @("UID", "PWD") -SetPropertyValue @("Trusted_Connection=Yes", "Database=Payroll")</p>
+<pre><code>
+このコマンドは,MyPayrollという指定された32ビット ODBCユーザー DSNを,SQL Server Authentication を使用してWindows Authentication を使用する状態から変更します.この例はSQL Server ドライバーのために設計されています.また,コマンドは,データベースキーのためのペイロルの値を指定します.
+
+### 例4:指定DSNを変更して指定されたデータベースファイルを使用します.```
+PS C:\&gt; Set-OdbcDsn -Name &quot;*Payroll*&quot; -DsnType &quot;All&quot; -Platform &quot;All&quot; -DriverName &quot;Microsoft Access Driver (*.mdb, *.accdb)&quot; -SetPropertyValue 'Dbq=C:\payroll.accdb'
+</code></pre>
+<p>このコマンドは,ペイロルを含む名前を持つ両方のプラットフォームのすべての ODBCユーザー DSN とシステム DSN を変更し,データベースファイル C:\payroll.accdb. を使用するためにMicrosoft Access Driver (<em>.mdb, </em>.accdb) というドライバを使用しています.</p>
+<h3>例5: 文字列から始まる名前を持つドライバーを使用するすべての DSN を移行します.```</h3>
+<p>PS C:&gt; Get-OdbcDsn -DriverName "SQL Server*" -DsnType "All" -Platform "All" | Where-Object{ ($_.Attribute["Server"] -eq "oldServer") } | Set-OdbcDsn -SetPropertyValue "Server=newServer"</p>
+<pre><code>
+このコマンドは,SQL Serverから始まる名前を持つドライバーを使用するすべてのユーザーDSNとシステムDSNのために,oldServerをnewServerに移行します.
+
+### 例 6:指定されたデータベースを使用するために64ビットODBCシステムDSNを変更します.```
+PS C:\&gt; $sysDsn = Set-OdbcDsn -Name &quot;MyPayroll&quot; -DsnType &quot;System&quot; -Platform &quot;All&quot; -SetPropertyValue &quot;Database=Payroll&quot; -PassThru
+</code></pre>
+<p>このコマンドは,MyPayrollという64ビット ODBCシステム DSNを変更して,Payrollというデータベースを使用し,結果を$sysDsn変数に保存します.このコマンドには <em>PassThru</em>パラメータが含まれます. <em>PassThru</em>なしで,cmdletは何も返さない.</p>
+<h3>例7: 変数を使って文字列から始まる名前を持つドライバーを使用するDSNを移行します ```</h3>
+<p>PS C:&gt; $DsnArray = Get-OdbcDsn -DriverName "SQL Server*" | Where-Object{ ($_.Attribute["Server"] -eq "oldServer") }
+PS C:&gt; Set-OdbcDsn -InputObject $DsnArray -SetPropertyValue "Server=newServer"</p>
+<pre><code>
+最初のコマンドは,Get-OdbcDsn cmdlet を使用して,SQL Server から始まる名前を持ち, **Server**属性に対する oldServer の値を表示する各ドライバを入手します.コマンドは $DsnArray 変数で結果を保存します.
+
+2番目のコマンドは **Server**の値を新しい値に設定します.
+
+## パラメータは
+
+### -AsJobは,背景作業としてcmdletを実行する.このパラメータを使用して,完了するのに時間がかかるコマンドを実行します.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-CimSession は,リモートセッションまたはリモートコンピュータでcmdletを実行します.コンピュータ名またはセッションオブジェクトを入力します.例えば,[New-CimSession]の出力です.https://go.microsoft.com/fwlink/p/?LinkId=227967) または [Get-CimSession]https://go.microsoft.com/fwlink/p/?LinkId=227966標準的には,ローカルコンピュータの現在のセッションです.</h3>
+<pre><code class="language-yaml">Type: CimSession[]
+Parameter Sets: (All)
+Aliases: Session
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>- 確認は,cmdletを実行する前に確認を提示します.</h3>
+<pre><code class="language-yaml">Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: cf
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-DriverName ドライバーの名前を指定します.このcmdletは,このパラメータで指定されたドライバーを使用する ODBC DSN を修正します.ワイルドカード文字を使用できます.このパラメータを指定していない場合は,このcmdletはすべてのドライバーの DSN を修正します.</h3>
+<pre><code class="language-yaml">Type: String
+Parameter Sets: Name
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+</code></pre>
+<h3>-DsnType ODBC DSNの種類を指定する.このcmdletは,このパラメータで指定されたタイプの DSNを修正する.このパラメータの受け入れ可能な値は:</h3>
+<p>ユーザー - システム - すべて - </p>
+<pre><code class="language-yaml">Type: String
+Parameter Sets: Name
+Aliases: 
+Accepted values: User, System, All
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+</code></pre>
+<h3>-InputObject パイプラインコマンドで使用される入力オブジェクトを指定します.</h3>
+<pre><code class="language-yaml">Type: CimInstance[]
+Parameter Sets: InputObject
+Aliases: Dsn
+
+Required: True
+Position: 0
+Default value: None
+Accept pipeline input: True (ByValue)
+Accept wildcard characters: False
+</code></pre>
+<h3>-Name ODBC DSNの名前を指定します.このcmdletはこのパラメータで指定された DSNを修正します.ワイルドカード文字を使用して1以上の ODBC DSNを指定することができます.</h3>
+<pre><code class="language-yaml">Type: String
+Parameter Sets: Name
+Aliases: DsnName
+
+Required: True
+Position: 0
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+</code></pre>
+<h1>Set-OdbcDsn を設定する</h1>
+<h3>-PassThru は,あなたが取り組んでいるアイテムを表すオブジェクトを返します.デフォルトでは,このcmdlet は出力を生成しません.</h3>
+<pre><code class="language-yaml">Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-Platform プラットフォームアーキテクチャを指定する.このcmdletは,このパラメータで指定されたアーキテクチャに属するODBC DSNを修正する.このパラメータの受け入れられる値は:</h3>
+<p>32ビット - 64ビット - すべて - </p>
+<p>デフォルト値は32ビットプロセスで32ビットです.デフォルト値は64ビットプロセスで64ビットです.このcmdletをリモート CIMセッションで実行すると,このパラメータはリモートコンピュータのプラットフォームアーキテクチャを指します.</p>
+<pre><code class="language-yaml">Type: String
+Parameter Sets: Name
+Aliases: 
+Accepted values: 32-bit, 64-bit, All
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+</code></pre>
+<h3>-RemovePropertyValue 削除するプロパティ値の配列を指定します.このcmdlet は,このパラメータが指定したプロパティ値をODBC DSNから削除します.削除するキー配列を指定します.</h3>
+<pre><code class="language-yaml">Type: String[]
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+</code></pre>
+<h3>-SetPropertyValue 属性値の配列を指定する.このcmdletは,このパラメータがODBC DSNに指定する属性を変更する. 形式 \&lt;key\&gt;=\&lt;value\&gt; の文字列の配列を指定する.</h3>
+<pre><code class="language-yaml">Type: String[]
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+</code></pre>
+<h3>-ThrottleLimit は,cmdletを実行するために設定できる最大限の同時操作数を指定します.このパラメータを省略した場合,または値が  の値である場合.<code>0</code>入力すると,Windows PowerShell® は,コンピュータ上で実行されている CIM cmdlets の数に基づいて cmdlet の最適な加速度制限を計算します.加速度制限は,セッションやコンピュータにではなく,現在の cmdlet にのみ適用されます.</h3>
+<pre><code class="language-yaml">Type: Int32
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-WhatIf が実行されればどうなるか示します.</h3>
+<pre><code class="language-yaml">Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: wi
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>共通パラメータ このcmdletは共通パラメータをサポートしています: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable.詳細については, <a href="を参照してください.https://go.microsoft.com/fwlink/?LinkID=113216">about_CommonParameters</a> でした.</h3>
+<h2>輸入は</h2>
+<h2>輸出は</h2>
+<h3>Microsoft.Management.Infrastructure.CimInstance#MSFT_OdbcDsn[]</h3>
+<h2>NOTES  記事ができました.</h2>
+<h2>関連リンク</h2>
+<p><a href="./Add-OdbcDsn.md">Add-OdbcDsn</a> </p>
+<p><a href="./Get-OdbcDsn.md">Get-OdbcDsn</a> </p>
+<p><a href="./Remove-OdbcDsn.md">Remove-OdbcDsn</a> </p></section><section class="en-original"><pre class="source-original"># Set-OdbcDsn
+
+## SYNOPSIS
+Configures properties for existing ODBC DSNs.
+
+## SYNTAX
+
+### InputObject (Default)
+```
+Set-OdbcDsn [-PassThru] [-SetPropertyValue &lt;String[]&gt;] [-RemovePropertyValue &lt;String[]&gt;]
+ [-InputObject] &lt;CimInstance[]&gt; [-CimSession &lt;CimSession[]&gt;] [-ThrottleLimit &lt;Int32&gt;] [-AsJob] [-WhatIf]
+ [-Confirm] [&lt;CommonParameters&gt;]
+```
+
+### Name
+```
+Set-OdbcDsn [-PassThru] [-SetPropertyValue &lt;String[]&gt;] [-RemovePropertyValue &lt;String[]&gt;] [-Name] &lt;String&gt;
+ [-DriverName &lt;String&gt;] [-Platform &lt;String&gt;] -DsnType &lt;String&gt; [-CimSession &lt;CimSession[]&gt;]
+ [-ThrottleLimit &lt;Int32&gt;] [-AsJob] [-WhatIf] [-Confirm] [&lt;CommonParameters&gt;]
+```
+
+## DESCRIPTION
+The **Set-OdbcDsn** cmdlet configures the properties for existing Open Database Connectivity (ODBC) data source names (DSNs).
+Specify properties to add or modify by using the *SetPropertyValue* parameter.
+Specify properties to remove by using the *RemovePropertyValue* parameter.
+
+Use the Add-OdbcDsn cmdlet to add a new DSN.
+
+For more information about ODBC, data source names, and drivers, see [Microsoft Open Database Connectivity (ODBC)](https://msdn.microsoft.com/en-us/library/ms710252.aspx), [Data Sources](https://msdn.microsoft.com/en-us/library/ms711688.aspx), and [Drivers](https://msdn.microsoft.com/en-us/library/ms715383.aspx) on the Microsoft Developer Network.
+
+## EXAMPLES
+
+### Example 1: Change a 64-bit ODBC DSN to use a specified database
+```
+PS C:\&gt; Set-OdbcDsn -Name &quot;MyPayroll&quot; -DsnType &quot;System&quot; -Platform &quot;64-bit&quot; -SetPropertyValue &quot;Database=Payroll&quot;
+```
+
+This command changes the 64-bit ODBC System DSN named MyPayroll to use a database named Payroll.
+This example is designed for SQL Server drivers.
+
+### Example 2: Change a native platform ODBC DSN to use a specified database
+```
+PS C:\&gt; Set-OdbcDsn -Name &quot;MyPayroll&quot; -DsnType &quot;System&quot; -SetPropertyValue &quot;Database=Payroll&quot;
+```
+
+This command changes the native platform ODBC System DSN named MyPayroll to use a database named Payroll.
+This example resembles the previous example, but it does not specify the *Platform* parameter.Therefore, configures a DSN on the native platform.
+
+### Example 3: Change a User DSN to use Windows Authentication and a specified database
+```
+PS C:\&gt; Set-OdbcDsn -Name &quot;MyPayroll&quot; -DsnType &quot;User&quot; -Platform &quot;32-bit&quot; -RemovePropertyValue @(&quot;UID&quot;, &quot;PWD&quot;) -SetPropertyValue @(&quot;Trusted_Connection=Yes&quot;, &quot;Database=Payroll&quot;)
+```
+
+This command changes the specified 32-bit ODBC User DSN named MyPayroll from using SQL Server Authentication to using Windows Authentication.
+This example is designed for SQL Server drivers.
+Also, the command specifies a value of Payroll for the Database key.
+
+### Example 4: Change specified DSNs to use a specified database file
+```
+PS C:\&gt; Set-OdbcDsn -Name &quot;*Payroll*&quot; -DsnType &quot;All&quot; -Platform &quot;All&quot; -DriverName &quot;Microsoft Access Driver (*.mdb, *.accdb)&quot; -SetPropertyValue &#x27;Dbq=C:\payroll.accdb&#x27;
+```
+
+This command changes all ODBC User DSNs and System DSNs on both platforms with names that contain Payroll and that use a driver named Microsoft Access Driver (*.mdb, *.accdb) to use the database file C:\payroll.accdb.
+
+### Example 5: Migrate all DSNs that use a driver with name that starts with a string
+```
+PS C:\&gt; Get-OdbcDsn -DriverName &quot;SQL Server*&quot; -DsnType &quot;All&quot; -Platform &quot;All&quot; | Where-Object{ ($_.Attribute[&quot;Server&quot;] -eq &quot;oldServer&quot;) } | Set-OdbcDsn -SetPropertyValue &quot;Server=newServer&quot;
+```
+
+This command migrates the oldServer to newServer for all User DSNs and System DSNs that use a driver that has a name that starts with SQL Server.
+
+### Example 6: Change a 64-bit ODBC System DSN to use a specified database
+```
+PS C:\&gt; $sysDsn = Set-OdbcDsn -Name &quot;MyPayroll&quot; -DsnType &quot;System&quot; -Platform &quot;All&quot; -SetPropertyValue &quot;Database=Payroll&quot; -PassThru
+```
+
+This command changes the 64-bit ODBC System DSN named MyPayroll to use a database named Payroll, and then stores the result in the $sysDsn variable.
+The command includes the *PassThru* parameter.
+Without *PassThru*, the cmdlet does not return anything.
+
+### Example 7: Migrates DSNs that use a driver with name that starts with a string by using a variable
+```
+PS C:\&gt; $DsnArray = Get-OdbcDsn -DriverName &quot;SQL Server*&quot; | Where-Object{ ($_.Attribute[&quot;Server&quot;] -eq &quot;oldServer&quot;) }
+PS C:\&gt; Set-OdbcDsn -InputObject $DsnArray -SetPropertyValue &quot;Server=newServer&quot;
+```
+
+The first command uses the Get-OdbcDsn cmdlet to get each driver that has a name that starts with SQL Server and has a value of oldServer for the **Server** attribute.
+The command stores the results in the $DsnArray variable.
+
+The second command sets the value for **Server** to a new value.
+
+## PARAMETERS
+
+### -AsJob
+Runs the cmdlet as a background job. Use this parameter to run commands that take a long time to complete.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -CimSession
+Runs the cmdlet in a remote session or on a remote computer.
+Enter a computer name or a session object, such as the output of a [New-CimSession](https://go.microsoft.com/fwlink/p/?LinkId=227967) or [Get-CimSession](https://go.microsoft.com/fwlink/p/?LinkId=227966) cmdlet.
+The default is the current session on the local computer.
+
+```yaml
+Type: CimSession[]
+Parameter Sets: (All)
+Aliases: Session
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Confirm
+Prompts you for confirmation before running the cmdlet.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: cf
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -DriverName
+Specifies the name of a driver.
+This cmdlet modifies the ODBC DSN that uses the driver that this parameter specifies.
+You can use wildcard characters.
+If you do not specify this parameter, this cmdlet modifies DSNs for all drivers.
+
+```yaml
+Type: String
+Parameter Sets: Name
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -DsnType
+Specifies the type of an ODBC DSN.
+This cmdlet modifies a DSN of the type that this parameter specifies.
+The acceptable values for this parameter are:
+
+- User
+- System
+- All
+
+```yaml
+Type: String
+Parameter Sets: Name
+Aliases: 
+Accepted values: User, System, All
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -InputObject
+Specifies the input object that is used in a pipeline command.
+
+```yaml
+Type: CimInstance[]
+Parameter Sets: InputObject
+Aliases: Dsn
+
+Required: True
+Position: 0
+Default value: None
+Accept pipeline input: True (ByValue)
+Accept wildcard characters: False
+```
+
+### -Name
+Specifies the name of an ODBC DSN.
+This cmdlet modifies the DSN that this parameter specifies.
+You can use wildcard characters to specify more than one ODBC DSN.
+
+```yaml
+Type: String
+Parameter Sets: Name
+Aliases: DsnName
+
+Required: True
+Position: 0
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+# Set-OdbcDsn
+
+### -PassThru
+Returns an object representing the item with which you are working.
+By default, this cmdlet does not generate any output.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Platform
+Specifies the platform architecture.
+This cmdlet modifies the ODBC DSN that belongs to the architecture that this parameter specifies.
+The acceptable values for this parameter are:
+
+- 32-bit
+- 64-bit
+- All
+
+The default value is 32-bit on a 32-bit process.
+The default value is 64-bit on a 64-bit process.
+If you run this cmdlet in a remote CIM session, this parameter refers to the platform architecture on the remote computer.
+
+```yaml
+Type: String
+Parameter Sets: Name
+Aliases: 
+Accepted values: 32-bit, 64-bit, All
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -RemovePropertyValue
+Specifies an array of property values to remove.
+This cmdlet removes the property values that this parameter specifies from the ODBC DSN.
+Specify an array of keys to remove.
+
+```yaml
+Type: String[]
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -SetPropertyValue
+Specifies an array of property values.
+This cmdlet modifies the properties that this parameter specifies for the ODBC DSN.
+Specify array of strings of the form \&lt;key\&gt;=\&lt;value\&gt;.
+
+```yaml
+Type: String[]
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -ThrottleLimit
+Specifies the maximum number of concurrent operations that can be established to run the cmdlet.
+If this parameter is omitted or a value of `0` is entered, then Windows PowerShell® calculates an optimum throttle limit for the cmdlet based on the number of CIM cmdlets that are running on the computer.
+The throttle limit applies only to the current cmdlet, not to the session or to the computer.
+
+```yaml
+Type: Int32
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -WhatIf
+Shows what would happen if the cmdlet runs.
+The cmdlet is not run.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: wi
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### CommonParameters
+This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable. For more information, see [about_CommonParameters](https://go.microsoft.com/fwlink/?LinkID=113216).
+
+## INPUTS
+
+## OUTPUTS
+
+### Microsoft.Management.Infrastructure.CimInstance#MSFT_OdbcDsn[]
+
+## NOTES
+
+## RELATED LINKS
+
+[Add-OdbcDsn](./Add-OdbcDsn.md)
+
+[Get-OdbcDsn](./Get-OdbcDsn.md)
+
+[Remove-OdbcDsn](./Remove-OdbcDsn.md)</pre></section>

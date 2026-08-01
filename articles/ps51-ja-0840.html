@@ -1,0 +1,918 @@
+<!doctype html><meta charset="utf-8"><section class="jp-official"><h1>Set-DhcpServerv4Policies 設定する</h1>
+<h2>SYNOPSIS は,サーバーレベルまたは指定範囲レベルでポリシーの性質を設定します.</h2>
+<h2>SYNTAXは,のシンタックスです.</h2>
+<pre><code>Set-DhcpServerv4Policy [-ComputerName &lt;String&gt;] [-Description &lt;String&gt;] [-Name] &lt;String&gt;
+ [[-ScopeId] &lt;IPAddress&gt;] [-Enabled &lt;Boolean&gt;] [-MacAddress &lt;String[]&gt;] [-Fqdn &lt;String[]&gt;]
+ [-UserClass &lt;String[]&gt;] [-SubscriberId &lt;String[]&gt;] [-NewName &lt;String&gt;] [-ClientId &lt;String[]&gt;] [-PassThru]
+ [-LeaseDuration &lt;TimeSpan&gt;] [-ProcessingOrder &lt;UInt16&gt;] [-RelayAgent &lt;String[]&gt;] [-RemoteId &lt;String[]&gt;]
+ [-CircuitId &lt;String[]&gt;] [-Condition &lt;String&gt;] [-VendorClass &lt;String[]&gt;] [-CimSession &lt;CimSession[]&gt;]
+ [-ThrottleLimit &lt;Int32&gt;] [-AsJob] [-WhatIf] [-Confirm] [&lt;CommonParameters&gt;]
+</code></pre>
+<h2>記述 <strong>Set-DhcpServerv4Policy</strong> cmdlet は,既存のポリシーの属性をサーバーレベルまたは指定範囲レベルに設定します. <em>CircuitId</em>, <em>ClientId</em>, <em>Fqdn</em>, <em>MACAddress</em>, <em>RelayAgent</em>, <em>RemoteId</em>, <em>SubscriberId</em>, <em>UserClass</em>,または <em>VendorClass</em> パラメータが指定されている場合,ポリシーの条件が変更され,この cmdlet は次のように振る舞います.</h2>
+<p><em>VendorClass</em>パラメータが指定され,変更されているポリシーには既に <em>VendorClass</em>パラメータ値の条件がある場合は,既存の <em>VendorClass</em>パラメータ値が削除され,新しい <em>VendorClass</em>パラメータ値が追加されます.</p>
+<p>しかし,変更されているポリシーに <em>MacAddress</em> パラメータ値の条件がある場合, <em>MacAddress</em> パラメータ値は変更されず,論理的に (ORꞌd) または (ANDꞌd) が結合され, (VendorClass* ベースの条件と) 異なる場合がある.</p>
+<p>同様のことは,条件で使用されている <em>CircuitId</em>, <em>ClientId</em>, <em>Fqdn</em>, <em>MACAddress</em>, <em>RelayAgent</em>, <em>RemoteId</em>, <em>SubscriberId</em>, <em>UserClass</em>,または <em>VendorClass</em> のいずれかのパラメータに適用されます.</p>
+<h2>例えは</h2>
+<h3>例1: サーバーレベルポリシーを変更する```</h3>
+<p>PS C:&gt; Set-DhcpServerv4Policy -ComputerName "dhcpserver.contoso.com" -Name "DevicesPolicy" -NewName TabletPolicy -Description "policy for tablet devices" -ProcessingOrder 4 -Enabled $False</p>
+<pre><code>
+この例では,サーバーレベルのポリシーを DevicesPolicy に TabletPolicy と改名し,説明文字列を設定し,ポリシーを無効にし,処理順序を4に設定します.
+
+### 例2:サーバーレベルポリシーの条件を変更する```
+PS C:\&gt; Set-DhcpServerv4Policy -Name &quot;PhysicalMachinesPolicy&quot; -Condition OR -MacAddress NE,00155D*,000569*
+</code></pre>
+<p>この例では,Hyper-Vでないクライアントのサーバーレベルポリシーの条件を変更します.ポリシーには既存の MAC アドレスベースの条件があった場合,同じ条件がこのcmdletで指定された条件に置き換えられます.しかし,ポリシーには他のフィールドに基づく条件があった場合,例えば <em>VendorClass</em>, <em>UserClass</em>, <em>ClientId</em>,または <em>RelayAgent</em> パラメータ,これらのパラメータは保持され,論理的に組み合わせ (ORꞌd) 新たに追加された MAC アドレスベースの条件とします.</p>
+<h3>例3:Hyper-Vでないクライアントのサーバーレベルポリシーの条件を変更する```</h3>
+<p>PS C:&gt; Set-DhcpServerv4Policy -Name "PhysicalMachinesPolicy" -Condition OR -MacAddress NE,00155D<em>,000569</em> -VendorClass ""</p>
+<pre><code>
+この例では,Hyper-V ではないクライアントのサーバーレベルポリシーの条件を変更します.このポリシーには既存の MAC アドレスベースの条件,ベンダークラスベースのポリシー,または両方があった場合,条件はこのcmdletで指定された条件に置き換えられます.
+
+### 例4:サーバーレベルポリシーにレンズ期間を設定します.```
+PS C:\&gt; Set-DhcpServerv4Policy -Name &quot;TabletPolicy&quot; -ComputerName &quot;dhcpserver.contoso.com&quot; -LeaseDuration 10
+</code></pre>
+<p>この例では,タブレットポリシーのサーバーレベルポリシーのレンズ期間を指定されたコンピュータの10日に設定します.</p>
+<h2>パラメータは</h2>
+<h3>-AsJobは,バックグラウンドワークとしてcmdletを実行します.このパラメータを使用して,完了するのに時間がかかるコマンドを実行します.cmdletはすぐに,作業を表すオブジェクトを返します.その後コマンドプロンプトが表示されます.作業が完了する間にセッションで作業を続けることができます.作業を管理するには,  を使用します.<code>*-Job</code>職の結果を入手するには, [Receive-Job] (cmdlets) を使ってください.https://go.microsoft.com/fwlink/?LinkID=113372Windows PowerShell® の背景の仕事に関する詳細については, [about_Jobs] を参照してください.https://go.microsoft.com/fwlink/?LinkID=113251) でした.</h3>
+<pre><code class="language-yaml">Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-CimSession は,リモートセッションまたはリモートコンピュータでcmdletを実行します.コンピュータ名またはセッションオブジェクトを入力します.例えば,[New-CimSession]の出力です.https://go.microsoft.com/fwlink/p/?LinkId=227967) または [Get-CimSession]https://go.microsoft.com/fwlink/p/?LinkId=227966標準的には,ローカルコンピュータの現在のセッションです.</h3>
+<pre><code class="language-yaml">Type: CimSession[]
+Parameter Sets: (All)
+Aliases: Session
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-CircuitId は,使用する比較機と,回路識別子 (ID) サブオプションを比較する値を指定します.最初の要素は比較機,EQまたはNEであり,単一の値が付随します.値の最後の文字が星座であれば,次元の文字は比較用のワイルドカード文字として扱われます.値要素の最初の文字が星座であれば,前の文字は比較用のワイルドカード文字として扱われます.</h3>
+<p>この値に EQまたは NEという別の比較値が続くことが可能で,その後に別の値が続く.</p>
+<p>値の入力形式は,ヒヒーン分離または無関係に六位数文字列です.</p>
+<pre><code class="language-yaml">Type: String[]
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+</code></pre>
+<h3>-ClientId は,使用する比較機とクライアント識別子を比較する値を指定します.最初の要素は比較機,EQまたはNEであり,その後に一連の値が付きます.値の最後の文字が星座であれば,次文字は比較用のワイルドカード文字として扱われます.値要素の最初の文字が星座であれば,前の文字は比較用のワイルドカード文字として扱われます.</h3>
+<p>値に EQ, NEという別の比較値が続くことができ,その後に別の値が続く.</p>
+<p>入力形式は,ハイフーン分離があるか否かのある六位数文字列である.出力形式は,ハイフーン分離がある六位数文字列である.</p>
+<p>EQオペレータに続く値は,論理的に組み合わせた複数の主張 (ORꞌd) として扱われます.</p>
+<p>NE オペレーターに従う値は,論理的に異なる複数の主張 (ANDꞌd) として扱われます.</p>
+<p>形式の例は: <code>EQ, 00-11-22-33-44-55, AA-BB-CC-DD-EE*</code> .</p>
+<pre><code class="language-yaml">Type: String[]
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+</code></pre>
+<h3>-ComputerName ダイナミック ホスト構成プロトコル (DHCP) サーバサービスを実行しているターゲットコンピュータのDNS名,またはIPv4またはIPv6アドレスを指定します.</h3>
+<pre><code class="language-yaml">Type: String
+Parameter Sets: (All)
+Aliases: Cn
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h1>Set-DhcpServerv4Policies 設定する</h1>
+<h3>-条件 複数の条件が指定された場合,条件間の論理運算子を指定します.このパラメータの受け入れ可能な値は:ANDまたはORです.</h3>
+<pre><code class="language-yaml">Type: String
+Parameter Sets: (All)
+Aliases: 
+Accepted values: And, Or
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+</code></pre>
+<h3>- 確認は,cmdletを実行する前に確認を提示します.</h3>
+<pre><code class="language-yaml">Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: cf
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-Description ポリシーに設定する説明を指定します.</h3>
+<pre><code class="language-yaml">Type: String
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+</code></pre>
+<h3>-Enabled は,ポリシーの有効状態を指定します.</h3>
+<pre><code class="language-yaml">Type: Boolean
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+</code></pre>
+<h3>-Fqdn は,クライアントリクエストで使用する比較器と完全資格ドメイン名 (FQDN) を比較する値を指定します.最初の要素は比較器,EQ,NE,Isl,またはInslであり,次元の要素は値です.比較器 Island Inslでは,空白値を使用します.値の最後の文字が星座であれば,次元の文字は比較用のワイルドカード文字として扱われます.値要素の最初の文字が星座であれば,前の文字は比較用のワイルドカード文字として扱われます.</h3>
+<p>また,値に EQまたは NEという別の比較値が続くことが可能で,それには別の値セットが続く.</p>
+<p>入力形式は文字列である.部分的なマッチを示すために,フォローワイルドカード文字が存在することができる.</p>
+<p>EQオペレータを次ぐ値は,論理的に結合された複数の主張 (OR'd) として扱われます.</p>
+<p>NE オペレーターの次のような値は,論理的に異なる複数の主張 (AND'd) として扱われます.</p>
+<pre><code class="language-yaml">Type: String[]
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+</code></pre>
+<h3>-リース期間 保険に合致する顧客にレンズ契約の期間を指定します.</h3>
+<pre><code class="language-yaml">Type: TimeSpan
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+</code></pre>
+<h3>-MacAddress ユーザの使用する比較機とクライアントの要求における MAC アドレスを比較する値を指定します.最初の要素は比較機,EQまたはNEであり,その後に一連の値が表示されます.値の最後の文字が星座であれば,次元の文字は比較用のワイルドカード文字として扱われます.値要素の最初の文字が星座であれば,前の文字は比較用のワイルドカード文字として扱われます.</h3>
+<p>値に EQ, NEという別の比較値が続くことができ,その後に別の値が続く.</p>
+<p>入力形式は,ハイフーン分離があるか否かのある六十文字列である.部分的なマッチを示すために,後尾ワイルドカード文字を使用することができる.出力形式は,ハイフーン分離がある六十文字列である.</p>
+<p>EQオペレータに続く値は,論理的に組み合わせた複数の主張 (ORꞌd) として扱われます.</p>
+<p>NE オペレーターに従う値は,論理的に異なる複数の主張 (ANDꞌd) として扱われます.</p>
+<p>形式の例は: <code>00-1F-3B-7C-B7-89, 00-1F-3B-7C-B7-*, 001F3B7CB789</code> .</p>
+<pre><code class="language-yaml">Type: String[]
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+</code></pre>
+<h3>-Name 変更されるポリシーの名前を指定します.</h3>
+<pre><code class="language-yaml">Type: String
+Parameter Sets: (All)
+Aliases: 
+
+Required: True
+Position: 1
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+</code></pre>
+<h3>-NewName ポリシーに設定する新しい名前を指定します.</h3>
+<pre><code class="language-yaml">Type: String
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-PassThru は,あなたが取り組んでいるアイテムを表すオブジェクトを返します.デフォルトでは,このcmdlet は出力を生成しません.</h3>
+<pre><code class="language-yaml">Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-ProcessingOrder このポリシーに関する命令は,DHCPサーバーサービスまたはDSCCPサーバーサービス内の他のポリシーに対して指定されます.DSCCPサーバーサービスは設定されたポリシーを使用してクライアントの要求を評価しながら,指定順にポリシーを処理します.</h3>
+<pre><code class="language-yaml">Type: UInt16
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+</code></pre>
+<h3>-RelayAgent 使用する比較機と,リレーエージェント情報を比較する値を指定します.最初の要素は比較機,EQまたはNEであり,その後に一連の値が付きます.値の最後の文字が星座であれば,次文字は比較用のワイルドカード文字として扱われます.値要素の最初の文字が星座であれば,前の文字は比較用のワイルドカード文字として扱われます.</h3>
+<p>値に EQ, NEという別の比較値が続くことができ,その後に別の値が続く.</p>
+<p>入力形式は,ハイフーン分離があるかないかのある六桁の文字列です.</p>
+<pre><code class="language-yaml">Type: String[]
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+</code></pre>
+<h3>-RemoteId は,使用する比較機と,リモートIDサブオプションを比較する値を指定します.最初の要素は比較機,EQまたはNEであり,その後に単一の値が表示されます.値の最後の文字が星座であれば,次元の文字は比較用のワイルドカード文字として扱われます.値要素の最初の文字が星座であれば,前の文字は比較用のワイルドカード文字として扱われます.</h3>
+<p>また,この値に EQまたは NEという別の比較値が続くこともあり,その後に別の値が続くこともあります.</p>
+<p>値の入力形式は,ヒヒーン分離または無関係に六位数文字列です.</p>
+<pre><code class="language-yaml">Type: String[]
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+</code></pre>
+<h3>-ScopeId は,ポリシーを含む範囲のIPv4アドレス形式の範囲IDを指定します.このパラメータが指定されていない場合は,サーバーレベルのポリシーが変更されます.</h3>
+<pre><code class="language-yaml">Type: IPAddress
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: 2
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+</code></pre>
+<h1>Set-DhcpServerv4Policies 設定する</h1>
+<h3>-SubscriberId は使用する比較符と,サブオプションのサブサブサブサブライダー ID を比較する値を指定します.最初の要素は比較符,EQまたはNE,そして単一の値が付随します.値の最後の文字が星座であれば,次元の文字は比較用のワイルドカード文字として扱われます.値要素の最初の文字が星座であれば,前の文字は比較用のワイルドカード文字として扱われます.</h3>
+<p>また,この値に EQまたは NEという別の比較値が続くこともあり,その後に別の値が続くこともあります.</p>
+<p>入力形式は,ハイフーン分離があるかないかのある六桁の文字列です.</p>
+<pre><code class="language-yaml">Type: String[]
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+</code></pre>
+<h3>-ThrottleLimit は,cmdletを実行するために設定できる最大限の同時操作数を指定します.このパラメータを省略した場合,または値が  の値である場合.<code>0</code>入力すると,Windows PowerShell® は,コンピュータ上で実行されている CIM cmdlets の数に基づいて cmdlet の最適な加速度制限を計算します.加速度制限は,セッションやコンピュータにではなく,現在の cmdlet にのみ適用されます.</h3>
+<pre><code class="language-yaml">Type: Int32
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-UserClass ユーザクラス 要求でユーザクラスフィールドを比較する比較符とユーザクラス値を指定します.最初に指定される要素は比較符,EQまたはNEであり,その後にセット値が表示されます.値の最後の文字が星座であれば,次文字は比較用ワイルドカード文字として扱われます.値要素の最初の文字が星座であれば,前の文字は比較用ワイルドカード文字として扱われます.</h3>
+<p>値に EQ, NEという別の比較値が続くことができ,その後に別の値が続く.</p>
+<p>指定される値は,DHCPサーバーサービスで既に存在しているユーザークラス名である必要があります.</p>
+<p>値のフォーマットは,で始まる六桁の文字列でなければならない.<code>0x</code> .</p>
+<p>EQオペレータを次ぐ値は,論理的に組み合わせた複数の主張 (ORꞌd) として扱われます.</p>
+<p>NE オペレーターに続く値は,論理的に異なる複数の主張 (ANDꞌd) として扱われます.</p>
+<pre><code class="language-yaml">Type: String[]
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+</code></pre>
+<h3>-VendorClass 顧客要求のベンダークラスフィールドを比較する比較機とベンダークラス値を指定します.最初の要素は比較機,EQまたはNEで,一連の値が付随します.値の最後の文字が星座であれば,次元の文字は比較用のワイルドカード文字として扱われます.値要素の最初の文字が星座であれば,前の文字は比較用のワイルドカード文字として扱われます.</h3>
+<p>値に続くのは別の比較値であるEQまたはNEで,次の値が続く.</p>
+<p>指定される値は,DHCPサーバーサービスで既に存在しているベンダークラス名である必要があります.</p>
+<p>値のフォーマットは,で始まる六桁の文字列でなければならない.<code>0x</code> .</p>
+<p>EQオペレータを次ぐ値は,論理的に組み合わせた複数の主張 (ORꞌd) として扱われます.</p>
+<p>NE オペレーターに続く値は,論理的に異なる複数の主張 (ANDꞌd) として扱われます.</p>
+<pre><code class="language-yaml">Type: String[]
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+</code></pre>
+<h3>-WhatIf が実行されればどうなるか示します.</h3>
+<pre><code class="language-yaml">Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: wi
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>共通パラメータ このcmdletは共通パラメータをサポートしています: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable.詳細については, <a href="を参照してください.https://go.microsoft.com/fwlink/?LinkID=113216">about_CommonParameters</a> でした.</h3>
+<h2>輸入は</h2>
+<h3>Microsoft.Management.Infrastructure.CimInstance#root/Microsoft/Windows/DHCP/DhcpServerv4 ポリシー <code>Microsoft.Management.Infrastructure.CimInstance</code>Windows Management Instrumentation (WMI) のオブジェクトを表示する包装クラスです.ポンドサインの後に行進するパス () は,<code>#</code>) は,元々のWMIオブジェクトの名前空間とクラス名を提供します.</h3>
+<h3>Microsoft.Management.Infrastructure.CimInstance#root/Microsoft/Windows/DHCP/DhcpServerv4Scope 試聴する<code>Microsoft.Management.Infrastructure.CimInstance</code>Windows Management Instrumentation (WMI) のオブジェクトを表示する包装クラスです.ポンドサインの後に行進するパス () は,<code>#</code>) は,元々のWMIオブジェクトの名前空間とクラス名を提供します.</h3>
+<h2>輸出は</h2>
+<h3>Microsoft.Management.Infrastructure.CimInstance#root/Microsoft/Windows/DHCP/DhcpServerv4 ポリシー <code>Microsoft.Management.Infrastructure.CimInstance</code>Windows Management Instrumentation (WMI) のオブジェクトを表示する包装クラスです.ポンドサインの後に行進するパス () は,<code>#</code>) は,元々のWMIオブジェクトの名前空間とクラス名を提供します.</h3>
+<h2>NOTES  記事ができました.</h2>
+<h2>関連リンク</h2>
+<p>[DhcpServerv4Policies.md] ((./Add-DhcpServerv4Policies.md) を追加する</p>
+<p><a href="./Add-DhcpServerv4PoliticsIPRange.md">DhcpServerv4PoliticsIPRange</a> を追加する</p>
+<p><a href="./Get-DhcpServerv4Policy.md">Get-DhcpServerv4Policy</a> </p>
+<p><a href="./Get-DhcpServerv4PolicyIPRange.md">Get-DhcpServerv4PolicyIPRange</a> について</p>
+<p><a href="./Remove-DhcpServerv4Policy.md">DhcpServerv4Policies</a> を削除する</p>
+<p><a href="./Remove-DhcpServerv4PoliticsIPRange.md">Remove-DhcpServerv4PoliticsIPRange</a> を削除する</p></section><section class="en-original"><pre class="source-original"># Set-DhcpServerv4Policy
+
+## SYNOPSIS
+Sets the properties of a policy at the server level or at the specified scope level.
+
+## SYNTAX
+
+```
+Set-DhcpServerv4Policy [-ComputerName &lt;String&gt;] [-Description &lt;String&gt;] [-Name] &lt;String&gt;
+ [[-ScopeId] &lt;IPAddress&gt;] [-Enabled &lt;Boolean&gt;] [-MacAddress &lt;String[]&gt;] [-Fqdn &lt;String[]&gt;]
+ [-UserClass &lt;String[]&gt;] [-SubscriberId &lt;String[]&gt;] [-NewName &lt;String&gt;] [-ClientId &lt;String[]&gt;] [-PassThru]
+ [-LeaseDuration &lt;TimeSpan&gt;] [-ProcessingOrder &lt;UInt16&gt;] [-RelayAgent &lt;String[]&gt;] [-RemoteId &lt;String[]&gt;]
+ [-CircuitId &lt;String[]&gt;] [-Condition &lt;String&gt;] [-VendorClass &lt;String[]&gt;] [-CimSession &lt;CimSession[]&gt;]
+ [-ThrottleLimit &lt;Int32&gt;] [-AsJob] [-WhatIf] [-Confirm] [&lt;CommonParameters&gt;]
+```
+
+## DESCRIPTION
+The **Set-DhcpServerv4Policy** cmdlet sets the properties of an existing policy either at the server level or at the specified scope level.
+If the *CircuitId*, *ClientId*, *Fqdn*, *MACAddress*, *RelayAgent*, *RemoteId*, *SubscriberId*, *UserClass*, or *VendorClass* parameter is specified, the conditions of the policy are being changed and this cmdlet behaves as follows:
+
+If the *VendorClass* parameter is specified and the policy being modified already has conditions for the *VendorClass* parameter value, the existing *VendorClass* parameter value is removed and the new *VendorClass* parameter value is added.
+
+However, if the policy being modified has conditions for the *MacAddress* parameter value, the *MacAddress* parameter value is not changed and is logically combined (ORꞌd) or differenced (ANDꞌd) with the *VendorClass*-based conditions.
+
+The same applies to any of the *CircuitId*, *ClientId*, *Fqdn*, *MACAddress*, *RelayAgent*, *RemoteId*, *SubscriberId*, *UserClass*, or *VendorClass* parameters that are used in the conditions.
+
+## EXAMPLES
+
+### Example 1: Modify a server level policy
+```
+PS C:\&gt; Set-DhcpServerv4Policy -ComputerName &quot;dhcpserver.contoso.com&quot; -Name &quot;DevicesPolicy&quot; -NewName TabletPolicy -Description &quot;policy for tablet devices&quot; -ProcessingOrder 4 -Enabled $False
+```
+
+This example renames the server level policy named DevicesPolicy to TabletPolicy, sets a description string, disables the policy, and sets the processing order to 4.
+
+### Example 2: Modify the conditions of the server level policy
+```
+PS C:\&gt; Set-DhcpServerv4Policy -Name &quot;PhysicalMachinesPolicy&quot; -Condition OR -MacAddress NE,00155D*,000569*
+```
+
+This example modifies the conditions of the server level policy for non-Hyper-V clients.
+If the policy had an existing MAC address based condition, the same condition is replaced with the condition specified in this cmdlet.
+However, if the policy had conditions based on other fields, such as the *VendorClass*, *UserClass*, *ClientId*, or *RelayAgent* parameters, those is retained and logically combined (ORꞌd) with the newly added MAC address based condition.
+
+### Example 3: Modify the conditions of the server level policy for non-Hyper-V clients
+```
+PS C:\&gt; Set-DhcpServerv4Policy -Name &quot;PhysicalMachinesPolicy&quot; -Condition OR -MacAddress NE,00155D*,000569* -VendorClass &quot;&quot;
+```
+
+This example modifies the conditions of the server level policy for non-Hyper-V clients.
+If the policy had an existing MAC address based condition, a vendor class based policy, or both, the conditions are replaced with the condition specified in this cmdlet.
+
+### Example 4: Sets lease duration for a server level policy
+```
+PS C:\&gt; Set-DhcpServerv4Policy -Name &quot;TabletPolicy&quot; -ComputerName &quot;dhcpserver.contoso.com&quot; -LeaseDuration 10
+```
+
+This example sets the lease duration for the server level policy named TabletPolicy to 10 days for the specified computer.
+
+## PARAMETERS
+
+### -AsJob
+Runs the cmdlet as a background job.
+Use this parameter to run commands that take a long time to complete. 
+The cmdlet immediately returns an object that represents the job and then displays the command prompt.
+You can continue to work in the session while the job completes.
+To manage the job, use the `*-Job` cmdlets.
+To get the job results, use the [Receive-Job](https://go.microsoft.com/fwlink/?LinkID=113372) cmdlet. 
+For more information about Windows PowerShell® background jobs, see [about_Jobs](https://go.microsoft.com/fwlink/?LinkID=113251).
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -CimSession
+Runs the cmdlet in a remote session or on a remote computer.
+Enter a computer name or a session object, such as the output of a [New-CimSession](https://go.microsoft.com/fwlink/p/?LinkId=227967) or [Get-CimSession](https://go.microsoft.com/fwlink/p/?LinkId=227966) cmdlet.
+The default is the current session on the local computer.
+
+```yaml
+Type: CimSession[]
+Parameter Sets: (All)
+Aliases: Session
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -CircuitId
+Specifies the comparator to use and the values with which to compare the circuit identifier (ID) sub-option.
+The first element is the comparator, EQ or NE, followed by a single value.
+If the last character in a value is an asterisk, the subsequent characters are treated as wildcard characters for the comparison.
+If the first character in a value-element is an asterisk, the preceding characters are treated as wildcard characters for comparison.
+
+The value can be followed by another comparator, EQ or NE, which is followed by another value.
+
+The input format for the value is a hexadecimal string with or without hyphen separation.
+
+```yaml
+Type: String[]
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -ClientId
+Specifies the comparator to use and the values with which to compare the client identifier.
+The first element is the comparator, EQ or NE, followed by a set of values.
+If the last character in a value is an asterisk, the subsequent characters are treated as wildcard characters for the comparison.
+If the first character in a value-element is an asterisk, the preceding characters are treated as wildcard characters for comparison.
+
+The values can be followed by another comparator, EQ or NE, which is followed by another set of values.
+
+The input format is a hexadecimal string with or without hyphen separation.
+The output format is a hexadecimal string with hyphen separation.
+
+The values following the EQ operator is treated as multiple assertions which are logically combined (ORꞌd).
+
+The values following the NE operator is treated as multiple assertions which are logically differenced (ANDꞌd).
+
+An example of the format is: `EQ, 00-11-22-33-44-55, AA-BB-CC-DD-EE*`.
+
+```yaml
+Type: String[]
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -ComputerName
+Specifies the DNS name, or IPv4 or IPv6 address, of the target computer running the Dynamic Host Configuration Protocol (DHCP) server service.
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases: Cn
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+# Set-DhcpServerv4Policy
+
+### -Condition
+Specifies the logical operator between the conditions when multiple conditions are specified.
+The acceptable values for this parameter are: AND or OR.
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases: 
+Accepted values: And, Or
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -Confirm
+Prompts you for confirmation before running the cmdlet.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: cf
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Description
+Specifies the description to set on the policy.
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -Enabled
+Specifies the enabled state for the policy.
+
+```yaml
+Type: Boolean
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -Fqdn
+Specifies the comparator to use and the values with which to compare the fully qualified domain name (FQDN) in the client request.
+The first element is the comparator, EQ, NE, Isl, or Insl and the subsequent elements are values.
+For the comparators Island Insl, use a blank value.
+If the last character in a value is an asterisk, the subsequent characters are treated as wildcard characters for the comparison.
+If the first character in a value-element is an asterisk, the preceding characters are treated as wildcard characters for comparison.
+
+The values can again be followed by another comparator, EQ or NE, which is followed by another set of values.
+
+The input format is a string.
+A trailing wildcard character can be present to indicate partial match.
+
+The values following the EQ operator are treated as multiple assertions which are logically combined (OR&#x27;d).
+
+The values following the NE operator are treated as multiple assertions which are logically differenced (AND&#x27;d).
+
+```yaml
+Type: String[]
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -LeaseDuration
+Specifies the duration of the lease for clients that match the policy.
+
+```yaml
+Type: TimeSpan
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -MacAddress
+Specifies the comparator to use and the values with which to compare the MAC Address in the client request.
+The first element is the comparator, EQ or NE, followed by a set of values.
+If the last character in a value is an asterisk, the subsequent characters are treated as wildcard characters for the comparison.
+If the first character in a value-element is an asterisk, the preceding characters are treated as wildcard characters for comparison.
+
+The values can be followed by another comparator, EQ or NE, which is followed by another set of values.
+
+The input format is a hexadecimal string with or without hyphen separation.
+A trailing wildcard character can be used to indicate partial match.
+The output format is a hexadecimal string with hyphen separation.
+
+The values following the EQ operator is treated as multiple assertions which are logically combined (ORꞌd).
+
+The values following the NE operator is treated as multiple assertions which are logically differenced (ANDꞌd).
+
+An example of the format is: `00-1F-3B-7C-B7-89, 00-1F-3B-7C-B7-*, 001F3B7CB789`.
+
+```yaml
+Type: String[]
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -Name
+Specifies the name of the policy being modified.
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases: 
+
+Required: True
+Position: 1
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -NewName
+Specifies the new name to set for the policy.
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -PassThru
+Returns an object representing the item with which you are working.
+By default, this cmdlet does not generate any output.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -ProcessingOrder
+Specifies the order for this policy with regard to other policies in the scope or DHCP server service.
+The DHCP server service processes the policies in the specified order while evaluating client requests using the configured policies.
+
+```yaml
+Type: UInt16
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -RelayAgent
+Specifies the comparator to use and the values with which to compare the relay agent information.
+The first element is the comparator, EQ or NE, followed by a set of values.
+If the last character in a value is an asterisk, the subsequent characters are treated as wildcard characters for the comparison.
+If the first character in a value-element is an asterisk, the preceding characters are treated as wildcard characters for comparison.
+
+The values can be followed by another comparator, EQ or NE, which is followed by another set of values.
+
+The input format is a hexadecimal string with or without hyphen separation.
+
+```yaml
+Type: String[]
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -RemoteId
+Specifies the comparator to use and the values with which to compare the remote ID suboption.
+The first element is the comparator, EQ or NE, followed by a single value.
+If the last character in a value is an asterisk, the subsequent characters are treated as wildcard characters for the comparison.
+If the first character in a value-element is an asterisk, the preceding characters are treated as wildcard characters for comparison.
+
+The value can again be followed by another comparator, EQ or NE, which is followed by another value.
+
+The input format for the value is a hexadecimal string with or without hyphen separation.
+
+```yaml
+Type: String[]
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -ScopeId
+Specifies the scope ID, in IPv4 address format, of the scope which contains the policy.
+If this parameter is not specified, the server level policy is modified.
+
+```yaml
+Type: IPAddress
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: 2
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+# Set-DhcpServerv4Policy
+
+### -SubscriberId
+Specifies the comparator to use and the values with which to compare the subscriber ID suboption.
+The first element is the comparator, EQ or NE, and followed by a single value.
+If the last character in a value is an asterisk, the subsequent characters are treated as wildcard characters for the comparison.
+If the first character in a value-element is an asterisk, the preceding characters are treated as wildcard characters for comparison.
+
+The value can again be followed by another comparator, EQ or NE, which is followed by another value.
+
+The input format is a hexadecimal string with or without hyphen separation.
+
+```yaml
+Type: String[]
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -ThrottleLimit
+Specifies the maximum number of concurrent operations that can be established to run the cmdlet.
+If this parameter is omitted or a value of `0` is entered, then Windows PowerShell® calculates an optimum throttle limit for the cmdlet based on the number of CIM cmdlets that are running on the computer.
+The throttle limit applies only to the current cmdlet, not to the session or to the computer.
+
+```yaml
+Type: Int32
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -UserClass
+Specifies the comparator to use and the user class values with which to compare the user class field in the client request.
+The first element to be specified is the comparator, EQ or NE, and followed by a set values.
+If the last character in a value is an asterisk, the subsequent characters are treated as wildcard characters for the comparison.
+If the first character in a value-element is an asterisk, the preceding characters are treated as wildcard characters for comparison.
+
+The values can be followed by another comparator, EQ or NE, which is followed by another set of values.
+
+The values to be specified must be the user class names that already exist on the DHCP server service.
+
+The format of the value should be a hexadecimal string starting with `0x`.
+
+The values following the EQ operator are treated as multiple assertions which are logically combined (ORꞌd).
+
+The values following the NE operator are treated as multiple assertions which are logically differenced (ANDꞌd).
+
+```yaml
+Type: String[]
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -VendorClass
+Specifies the comparator to use and the vendor class values with which to compare the vendor class field in the client request.
+The first element is the comparator, EQ or NE, followed by a set of values.
+If the last character in a value is an asterisk, the subsequent characters are treated as wildcard characters for the comparison.
+If the first character in a value-element is an asterisk, the preceding characters are treated as wildcard characters for comparison.
+
+The values can be followed by another comparator.
+EQ or NE, which is followed by another set of values.
+
+The values to be specified must be the vendor class names that already exist on the DHCP server service.
+
+The format of the value should be a hexadecimal string starting with `0x`.
+
+The values following the EQ operator are treated as multiple assertions which are logically combined (ORꞌd).
+
+The values following the NE operator are treated as multiple assertions which are logically differenced (ANDꞌd).
+
+```yaml
+Type: String[]
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -WhatIf
+Shows what would happen if the cmdlet runs.
+The cmdlet is not run.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: wi
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### CommonParameters
+This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable. For more information, see [about_CommonParameters](https://go.microsoft.com/fwlink/?LinkID=113216).
+
+## INPUTS
+
+### Microsoft.Management.Infrastructure.CimInstance#root/Microsoft/Windows/DHCP/DhcpServerv4Policy
+The `Microsoft.Management.Infrastructure.CimInstance` object is a wrapper class that displays Windows Management Instrumentation (WMI) objects.
+The path after the pound sign (`#`) provides the namespace and class name for the underlying WMI object.
+
+### Microsoft.Management.Infrastructure.CimInstance#root/Microsoft/Windows/DHCP/DhcpServerv4Scope
+The `Microsoft.Management.Infrastructure.CimInstance` object is a wrapper class that displays Windows Management Instrumentation (WMI) objects.
+The path after the pound sign (`#`) provides the namespace and class name for the underlying WMI object.
+
+## OUTPUTS
+
+### Microsoft.Management.Infrastructure.CimInstance#root/Microsoft/Windows/DHCP/DhcpServerv4Policy
+The `Microsoft.Management.Infrastructure.CimInstance` object is a wrapper class that displays Windows Management Instrumentation (WMI) objects.
+The path after the pound sign (`#`) provides the namespace and class name for the underlying WMI object.
+
+## NOTES
+
+## RELATED LINKS
+
+[Add-DhcpServerv4Policy](./Add-DhcpServerv4Policy.md)
+
+[Add-DhcpServerv4PolicyIPRange](./Add-DhcpServerv4PolicyIPRange.md)
+
+[Get-DhcpServerv4Policy](./Get-DhcpServerv4Policy.md)
+
+[Get-DhcpServerv4PolicyIPRange](./Get-DhcpServerv4PolicyIPRange.md)
+
+[Remove-DhcpServerv4Policy](./Remove-DhcpServerv4Policy.md)
+
+[Remove-DhcpServerv4PolicyIPRange](./Remove-DhcpServerv4PolicyIPRange.md)</pre></section>

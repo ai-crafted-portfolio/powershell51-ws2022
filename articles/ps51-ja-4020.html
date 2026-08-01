@@ -1,0 +1,227 @@
+<!doctype html><meta charset="utf-8"><section class="jp-official"><h1>about_InlineScriptについて</h1>
+<h2>短編説明</h2>
+<p>を記述する.<code>inlinescript</code>ワークフローでPowerShellコマンドを実行する活動です.</p>
+<h2>長い説明</h2>
+<p><code>inlinescript</code>共有されたPowerShellセッションのワークフローでアクティビティが実行されるコマンドです. <code>inlinescript</code>ワークフローでしか有効ではありません.</p>
+<h2>シンタックス</h2>
+<pre><code>inlinescript {&lt;script block&gt;} &lt;ActivityCommonParameters&gt;
+</code></pre>
+<h2>詳細な説明</h2>
+<p><code>inlinescript</code>共有されたPowerShellセッションでアクティビティコマンドを実行します. ワークフローに組み込むことができ,データ共有のコマンドとワークフローで有効でないコマンドを実行できます.</p>
+<p><code>inlinescript</code>スクリプトブロックには,有効なPowerShellコマンドと表現はすべて含まれます.<code>inlinescript</code>同じセッションで実行されるスクリプトブロックは,輸入されたモジュールや変数の値を含むすべての状態とデータを共有します.</p>
+<p>を入れることができます.<code>inlinescript</code>ループや制御ステートメント,または の内部を含むワークフローまたはネードワークフローのどこでも活動します.<code>parallel</code>    <code>sequence</code>脚本ブロック.</p>
+<p><code>inlinescript</code>活動には <strong>PSPersist</strong>を含む活動共通のパラメータがありますが,命令と表現は,  の表情で表示されます.<code>inlinescript</code>スクリプトブロックにはチェックポイントや持続性,ワークフローや活動共通パラメータなどのワークフロー機能がない.詳細については, [about_ActivityCommonParameters] (about_ActivityCommonParameters.md) を参照してください.</p>
+<h2>InlineScript 変数について</h2>
+<p>デフォルトでは,ワークフローで定義されている変数は,  のコマンドに表示されない.<code>inlinescript</code>脚本ブロック. ワークフロー変数を   に可視化するために.<code>inlinescript</code> を使って,<code>Using:</code>範囲変更者. <code>Using:</code>範囲変更者は,  の各変数に対して一度のみ必要である.<code>inlinescript</code> .</p>
+<p>について詳しい情報はこちらから<code>Using:</code>範囲修正符を参照してください [about_Remote_Variables] ((../..//Microsoft.PowerShell.Core/About/about_Remote_Variables.md).</p>
+<p>次の例では,のが<code>Using:</code>範囲変更者は,  の値を設定します.<code>$a</code> のコマンドに利用可能なトップレベルのワークフロー変数です.<code>inlinescript</code>脚本ブロック.</p>
+<pre><code class="language-powershell">workflow Test-Workflow {
+  $a = 3
+
+  ## Without $Using, the $a workflow variable isn't visible
+  ## in inline script.
+  inlinescript {&quot;Inline A0 = $a&quot;}
+
+  ## $Using imports the variable and its current value.
+  inlinescript {&quot;Inline A1 = $Using:a&quot;}
+}
+
+Test-Workflow
+</code></pre>
+<pre><code class="language-output">Inline A0 =
+Inline A1 = 3
+</code></pre>
+<h2>InlineScriptの変数を返却する</h2>
+<p><code>inlinescript</code>コマンドは,ワークフロー範囲から輸入された変数の値を変更できますが,変更はワークフロー範囲で表示されません.表示するには,次の例で示したように,変更された値をワークフロー範囲に返してください.</p>
+<pre><code class="language-powershell">workflow Test-Workflow {
+  $a = 3
+
+  ##  Changes to the inlinescript variable value don't
+  ##  change the workflow variable.
+  inlinescript {
+    $a = $Using:a+1;
+    &quot;Inline A = $a&quot;
+  }
+  &quot;Workflow A = $a&quot;
+
+  ##  To change the variable in workflow scope, return the
+  ##  new value.
+  $a = inlinescript {$b = $Using:a+1; $b}
+  &quot;Workflow New A = $a&quot;
+}
+
+Test-Workflow
+</code></pre>
+<pre><code class="language-output">Inline A = 4
+Workflow A = 3
+Workflow New A = 4
+</code></pre>
+<p>&gt; [!NOTE] &gt; と表現した声明<code>Using:</code>範囲変更者は,  の変数 &gt; の使用前に表示されるべきです.<code>inlinescript</code>脚本ブロック.</p>
+<h2>プロセス中の実行です.</h2>
+<p>信頼性を向上させるために,  のコマンドは<code>inlinescript</code>脚本ブロックは,作業流が実行されるプロセスから分離して,独自のプロセスで実行され,その出力をワークフロープロセスに返します.</p>
+<p>PowerShell を動かすように指示する<code>inlinescript</code>ワークフローのプロセスにおける活動に,削除する<code>inlinescript</code>セッション設定の <strong>OutOfProcessActivity</strong> 属性から得られる値,例えば,  を使って<code>New-PSWorkflowExecutionOption</code>cmdletです.</p>
+<h3>例</h3>
+<p><code>inlinescript</code>次のワークフローにはPowerShellで有効だがワークフローでは有効でないコマンドが含まれます.例えば, <code>New-Object</code><strong>ComObject</strong>パラメータを表示するcmdlet.</p>
+<pre><code class="language-powershell">workflow Test-Workflow {
+  $ie = inlinescript {
+    $ie = New-Object -ComObject InternetExplorer.Application -Property @{navigate2=&quot;www.microsoft.com&quot;}
+
+    $ie.Visible = $true
+  }
+
+  $ie
+}
+
+Test-Workflow
+</code></pre>
+<h2>また, を参照してください.</h2>
+<p>[about_ActivityCommonParameters] (md) - [about_ActivityCommonParameters.md) - [about_Remote_Variables] (md) - [about_ActivityCommonParameters.md) - [about_ActivityRemote_Variables] (md) - [power_shell/scripting/components/workflows-guidepower) - [power_workflowCommonParameters.md] - [about_WorkflowCommonParameters.md] - [PSWorkflow] - [xref:PSWorkflow) cmdlets - [Workflow Guide] (power/previous-versions/shell/scripting/components/workflows-guidepower) - [Writing a PowerShell workflow] / [previous-versions/shell/scripting/windows/a-shell-flow-de-work-power] - [power-shell-shell-work-power] - [previous-versions/de-work-work-work-shell-work-shell-work-shell-shell-shell-shell-shell-shell-shell-shell-shell-shell-shell-shell-shell-shell-shell-shell-shell-shell-shell-shell-shell-shell-shell-shell-shell-shell-shell-shell-shell-shell-shell-shell-shell-shell-shell-shell-shell-shell-shell-shell-shell-shell-shell-shell-shell-shell-shell] - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -</p></section><section class="en-original"><pre class="source-original"># about_InlineScript
+
+## Short description
+
+Describes the `inlinescript` activity, that runs PowerShell commands in a
+workflow.
+
+## Long description
+
+The `inlinescript` activity runs commands in a shared PowerShell session&#x27;s
+workflow. `inlinescript` is only valid in workflows.
+
+## Syntax
+
+```
+inlinescript {&lt;script block&gt;} &lt;ActivityCommonParameters&gt;
+```
+
+## Detailed description
+
+The `inlinescript` activity runs commands in a shared PowerShell session. You
+can include it in a workflow to run commands that share data and commands that
+aren&#x27;t otherwise valid in a workflow.
+
+The `inlinescript` script block can include all valid PowerShell commands and
+expressions. Because the commands and expressions in an `inlinescript` script
+block run in the same session, they share all state and data, including
+imported modules and the values of variables.
+
+You can place an `inlinescript` activity anywhere in a workflow or nested
+workflow, including inside a loop or control statement or a `parallel` or
+`sequence` script block.
+
+The `inlinescript` activity has the activity common parameters, including
+**PSPersist**. However, the commands and expressions in an `inlinescript`
+script block don&#x27;t have the workflow features such as checkpointing, or
+persistence, and workflow or activity common parameters. For more information,
+see [about_ActivityCommonParameters](about_ActivityCommonParameters.md).
+
+## InlineScript Variables
+
+By default, the variables that are defined in a workflow aren&#x27;t visible to the
+commands in the `inlinescript` script block. To make workflow variables visible
+to the `inlinescript`, use the `Using:` scope modifier. The `Using:` scope
+modifier is required only once for each variable in the `inlinescript`.
+
+For more information about the `Using:` scope modifier, see
+[about_Remote_Variables](../../Microsoft.PowerShell.Core/About/about_Remote_Variables.md).
+
+The following example shows that the `Using:` scope modifier makes the value of
+the `$a` top-level workflow variable available to the commands in the
+`inlinescript` script block.
+
+```powershell
+workflow Test-Workflow {
+  $a = 3
+
+  ## Without $Using, the $a workflow variable isn&#x27;t visible
+  ## in inline script.
+  inlinescript {&quot;Inline A0 = $a&quot;}
+
+  ## $Using imports the variable and its current value.
+  inlinescript {&quot;Inline A1 = $Using:a&quot;}
+}
+
+Test-Workflow
+```
+
+```output
+Inline A0 =
+Inline A1 = 3
+```
+
+## Returning variables in InlineScript
+
+`inlinescript` commands can change the value of the variable that was imported
+from workflow scope, but the changes aren&#x27;t visible in workflow scope. To make
+them visible, return the changed value to the workflow scope, as shown in the
+following example.
+
+```powershell
+workflow Test-Workflow {
+  $a = 3
+
+  ##  Changes to the inlinescript variable value don&#x27;t
+  ##  change the workflow variable.
+  inlinescript {
+    $a = $Using:a+1;
+    &quot;Inline A = $a&quot;
+  }
+  &quot;Workflow A = $a&quot;
+
+  ##  To change the variable in workflow scope, return the
+  ##  new value.
+  $a = inlinescript {$b = $Using:a+1; $b}
+  &quot;Workflow New A = $a&quot;
+}
+
+Test-Workflow
+```
+
+```output
+Inline A = 4
+Workflow A = 3
+Workflow New A = 4
+```
+
+&gt; [!NOTE]
+&gt; A statement with the `Using:` scope modifier should appear before any use of
+&gt; the variable in the `inlinescript` script block.
+
+## Running in-process
+
+To improve reliability, the commands in the `inlinescript` script block run in
+their own process, separate from the process in which the workflow runs, and
+then return their output to the workflow process.
+
+To direct PowerShell to run the `inlinescript` activity in the workflow
+process, remove the `inlinescript` value from the **OutOfProcessActivity**
+property of the session configuration, such as by using the
+`New-PSWorkflowExecutionOption` cmdlet.
+
+### Example
+
+The `inlinescript` in the following workflow includes commands that are valid
+in PowerShell but aren&#x27;t valid in workflows. For example, the `New-Object`
+cmdlet with the **ComObject** parameter.
+
+```powershell
+workflow Test-Workflow {
+  $ie = inlinescript {
+    $ie = New-Object -ComObject InternetExplorer.Application -Property @{navigate2=&quot;www.microsoft.com&quot;}
+
+    $ie.Visible = $true
+  }
+
+  $ie
+}
+
+Test-Workflow
+```
+
+## See also
+
+- [about_ActivityCommonParameters](about_ActivityCommonParameters.md)
+- [about_Remote_Variables](../../Microsoft.PowerShell.Core/About/about_Remote_Variables.md)
+- [about_WorkflowCommonParameters](about_WorkflowCommonParameters.md)
+- [PSWorkflow](xref:PSWorkflow) cmdlets
+- [Workflows Guide](/previous-versions/powershell/scripting/components/workflows-guide)
+- [Writing a Windows PowerShell Workflow](/previous-versions/powershell/scripting/developer/workflow/writing-a-windows-powershell-workflow)</pre></section>

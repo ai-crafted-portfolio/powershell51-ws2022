@@ -1,0 +1,232 @@
+<!doctype html><meta charset="utf-8"><section class="jp-official"><h1>about_Windows_PowerShell_5.1について</h1>
+<h2>短編説明</h2>
+<p>Windows PowerShell 5.1 に含まれている新しい機能について説明します.</p>
+<h2>長い説明</h2>
+<p>Windows PowerShell 5.1には,使用を拡大し,使いやすさを向上させ,Windowsベースの環境をより簡単に,包括的に管理できるようにする重要な新しい機能が含まれています.</p>
+<p>Windows PowerShell 5.1 は後向対応です.Windows PowerShell 4.0 ,Windows PowerShell 3.0 ,Windows PowerShell 2.0 に設計されたCmdlets,プロバイダー,モジュール,スナップイン,スクリプト,機能,プロフィールなど,Windows PowerShell 5.1 で変更なく動作します.</p>
+<ul>
+<li>新しいcmdlets:ローカルユーザーとグループ<code>Get-ComputerInfo</code>- PowerShellGetの改善には,署名されたモジュールとJEAモジュールを強制し,JEAモジュールをインストールする - PackageManagementはコンテナ,CBSセットアップ,EXEベースのセットアップ,CABパッケージのサポートを追加しました - DSCとPowerShellクラスへのデバッグ改善 - Pull Serverからカタログ署名されたモジュールとPowerShellGet cmdletsを使用するときに実行を含むセキュリティ強化 - 数々のユーザー要求と問題への応答</li>
+</ul>
+<p>Windows PowerShell 5.1 は,Windows Server 2016版以降,Windows 10版以降のクライアントバージョンでデフォルトでインストールされています.</p>
+<p>Windows PowerShell 5.1 に変更について, [Windows PowerShell の新しいこと]で読むこともできます.</p>
+<h3>PowerShell Editionsは</h3>
+<p>バージョン5.1からスタートして,PowerShellは異なるバージョンで提供され,異なる機能セットとプラットフォーム互換性を表示しています.</p>
+<p><strong>Desktop Edition:</strong> .NET Frameworkで構築され,Windowsの全脚印版 (Server Core,Windows Desktop) で実行されているPowerShellのバージョンをターゲットとするスクリプトとモジュールと互換性を提供します. - <strong>Core Edition:</strong> .NET Coreで構築され,Nano Server,Windows IoTなどのWindowsの減脚印版で実行されているPowerShellのバージョンをターゲットとするスクリプトとモジュールと互換性を提供します.</p>
+<p>PowerShell Editions を利用する方法を詳しく知る</p>
+<p>[$PSVersionTableを使用してPowerShellの実行版を決定する][04] - [PSEditionのパラメータを使用した CompatiblePSEditionsによるモジュール取得結果をフィルタする][05] - [PowerShellの互換性のあるバージョンで実行されない限りスクリプト実行を防止する][03] - [特定のPowerShellバージョンにモジュールが互換性であることを宣言する][02]</p>
+<h3>カタログ Cmdlets</h3>
+<p>[Microsoft.PowerShell.Security][10]モジュールに2つの新しいcmdletが追加されました.これらのcmdletはWindowsカタログファイルを生成し検証します.</p>
+<h4>New-FileCatalog について</h4>
+<p><code>New-FileCatalog</code>このカタログファイルには,指定された経路ですべてのファイルにハッシュが含まれています.ユーザーは,そのフォルダを代表する対応するカタログファイルとともに,フォルダのセットを配布できます.この情報は,カタログ作成以来,フォルダに変更があったかどうかを検証するのに役立ちます.</p>
+<pre><code class="language-Syntax">New-FileCatalog [-CatalogFilePath] &lt;string&gt; [[-Path] &lt;string[]&gt;]
+ [-CatalogVersion &lt;int&gt;] [-WhatIf] [-Confirm] [&lt;CommonParameters&gt;]
+</code></pre>
+<p>バージョン1はファイルハッシュを作成するために SHA1 ハッシュアルゴリズムを使用し, バージョン2は SHA256 を使用します.</p>
+<p>カタログファイルの整体性を確認するために ()<code>Pester.cat</code>上記例では[Set-AuthenticodeSignature][07] cmdlet を使用してサインします.</p>
+<h4>テストファイルカタログ</h4>
+<p><code>Test-FileCatalog</code>フォルダの集合を表すカタログを検証します.</p>
+<pre><code class="language-Syntax">Test-FileCatalog [-Detailed] [-FilesToSkip &lt;String[]&gt;]
+ [-CatalogFilePath] &lt;String&gt; [[-Path] &lt;String[]&gt;]
+ [-WhatIf] [-Confirm] [&lt;CommonParameters&gt;]
+</code></pre>
+<p>このcmdletは <em>catalog</em> でのすべてのファイルハッシュとその相対的な経路を <em>disk</em> のファイルと比較します.ファイルハッシュと経路の間の不一致を検出すると,状態を  と返します.<code>ValidationFailed</code>ユーザーは<strong>Detailed</strong>パラメータを使用してこの情報をすべて取得できます.また, <strong>Signature</strong>属性におけるカタログの署名状態も表示します.これは,カタログファイル上の[Get-AuthenticodeSignature][06] cmdlet を呼び出すに相当します.また,ユーザは <strong>FilesToSkip</strong>パラメータを使用して検証中に任意のファイルをスキップすることができます.</p>
+<h3>モジュール分析 キャッシュ</h3>
+<p>WMF 5.1 からスタートして,PowerShellは,輸出するコマンドなどのモジュールに関するデータをキャッシュするために使用されるファイルを支配します.</p>
+<p>デフォルトでは,このキャッシュはファイルに保存されます.<code>${env:LOCALAPPDATA}\Microsoft\Windows\PowerShell\ModuleAnalysisCache</code>.キャッシュは通常,コマンドを検索する際に起動時に読み取られ,モジュールが輸入された後,何らかの背景スレッドに書き込まれます.</p>
+<p>預設カッシュのデフォルト位置を変更するには,  を設定します.<code>$env:PSModuleAnalysisCachePath</code>PowerShell を起動する前に環境変数.この環境変数への変更は子プロセスにのみ影響する.この値は,PowerShell がファイルを作成し書き込む許可を有する完全なパス (ファイル名を含む) を指定する必要があります.ファイルキャッシュを無効にするために,この値を無効な位置に設定してください.例えば:</p>
+<pre><code class="language-powershell">$Env:PSModuleAnalysisCachePath = 'nul'
+</code></pre>
+<p>PowerShell がパスに書き込むことができない場合は,エラーが返されませんが,トラサーを使用してエラー報告が表示されます.</p>
+<pre><code class="language-powershell">Trace-Command -PSHost -Name Modules -Expression {
+  Import-Module Microsoft.PowerShell.Management -Force
+}
+</code></pre>
+<p>キャッシュを書き出すとき,PowerShellは不要なキャッシュを避けるために,もはや存在しないモジュールをチェックします.以下の設定を使用してチェックを無効にすることができます:</p>
+<pre><code class="language-powershell">$Env:PSDisableModuleAnalysisCacheCleanup = 1
+</code></pre>
+<p>この環境変数を設定すると,現在のプロセスですぐに効力が出ます.</p>
+<h3>モデルのバージョンを指定する</h3>
+<p>WMF 5.1では, <code>using module</code>PowerShellで他のモジュール関連構造と同じように振る舞う.以前,特定のモジュールバージョンを指定することはできなかった.複数のバージョンが存在していた場合,エラーが発生しました.</p>
+<p>WMF 5.1では,</p>
+<ul>
+<li>[ModuleSpecification Constructor (Hashtable) ][01]を使用できます.このハッシュテーブルは,  の格式と同じです.<code>Get-Module -FullyQualifiedName</code> .</li>
+</ul>
+<p>例: <code>using module @{ModuleName = 'PSReadLine'; RequiredVersion = '1.1'}</code></p>
+<ul>
+<li>
+<ul>
+<li>モジュールに複数のバージョンがある場合,PowerShellは,同じ解像度論理を使用します**<code>Import-Module</code>誤差を返さない.</li>
+</ul>
+</li>
+</ul>
+<h3>感染症の改善について</h3>
+<p>WMF 5.1はPester v3.4.0で発送されます.このバージョンについての詳細については,GitHubのリポジトリの [CHANGELOG][11] を参照してください.</p>
+<p>リンク参照 --&gt; [01]: /dotnet/api/microsoft.powershell.commands.modulespecification.-ctor [02]: /powershell/gallery/concepts/module-psedition-support [03]: /powershell/gallery/concepts/script-psedition-support [04]: /powershell/module/microsoft.shell.core/about/about/about_about_automatic_variables [05]: /powershell/module/microsoft.powershell.core/get-module [06]: /powershell/module/microsshell.powershodes.security/powerget-authenticodesignature [07]: /shell/module/windows/windows/windows/windows/windows/windows/windows/windows/windows/windows/windows/windows/windows/windows/windows/windows/windows/windows/w/w/w/w/w/w/w/w/w/w/w/w/w/w/w/w/w/w/w/w/w/w/w/w/w/w/w/w/w/w/w/w/w/w/w/w/w/w/w/w/w/w/w/w/w/w/w/w/w/w/w/w/w/w/w/w/w/w/w/w/w/w/w/w/w/w/w/w/w/w/w/w/w/w/w/w/w/w/w/w/w/w/w/w/w/w/w/w/w/w/w/w/w/w/w/w/w/w/w/w/w/w/w/w/w/w/w/w/w/w/w/w/w/w/w/w/w/w/w/w/w/w/w/w/w/w/w/w/w/w/whttps://github.com/pester/Pester/blob/main/docs/CHANGELOG.md</p></section><section class="en-original"><pre class="source-original"># about_Windows_PowerShell_5.1
+
+## Short description
+
+Describes new features that are included in Windows PowerShell 5.1.
+
+## Long description
+
+Windows PowerShell 5.1 includes significant new features that extend its use,
+improve its usability, and allow you to control and manage Windows-based
+environments more easily and comprehensively.
+
+Windows PowerShell 5.1 is backward-compatible. Cmdlets, providers, modules,
+snap-ins, scripts, functions, and profiles that were designed for Windows
+PowerShell 4.0, Windows PowerShell 3.0, and Windows PowerShell 2.0 generally
+work in Windows PowerShell 5.1 without changes.
+
+- New cmdlets: local users and groups; `Get-ComputerInfo`
+- PowerShellGet improvements include enforcing signed modules, and installing
+  JEA modules
+- PackageManagement added support for Containers, CBS Setup, EXE-based setup,
+  CAB packages
+- Debugging improvements for DSC and PowerShell classes
+- Security enhancements including enforcement of catalog-signed modules coming
+  from the Pull Server and when using PowerShellGet cmdlets
+- Responses to a number of user requests and issues
+
+Windows PowerShell 5.1 is installed by default on Windows Server version 2016
+and higher and Windows client version 10 and higher.
+
+You can also read about changes to Windows PowerShell 5.1 in
+[What&#x27;s New in Windows PowerShell][08].
+
+### PowerShell Editions
+
+Starting with version 5.1, PowerShell is available in different editions which
+denote varying feature sets and platform compatibility.
+
+- **Desktop Edition:** Built on .NET Framework and provides compatibility with
+  scripts and modules targeting versions of PowerShell running on full footprint
+  editions of Windows such as Server Core and Windows Desktop.
+- **Core Edition:** Built on .NET Core and provides compatibility with scripts
+  and modules targeting versions of PowerShell running on reduced footprint
+  editions of Windows such as Nano Server and Windows IoT.
+
+Learn more about using PowerShell Editions
+
+- [Determine running edition of PowerShell using $PSVersionTable][04]
+- [Filter Get-Module results by CompatiblePSEditions using PSEdition parameter][05]
+- [Prevent script execution unless run on a compatible edition of PowerShell][03]
+- [Declare a module&#x27;s compatibility to specific PowerShell versions][02]
+
+### Catalog Cmdlets
+
+Two new cmdlets have been added in the [Microsoft.PowerShell.Security][10]
+module. These cmdlets generate and validate Windows catalog files.
+
+#### New-FileCatalog
+
+`New-FileCatalog` creates a Windows catalog file for set of folders and files.
+This catalog file contains hashes for all files in specified paths. Users can
+distribute the set of folders along with corresponding catalog file
+representing those folders. This information is useful to validate whether any
+changes have been made to the folders since catalog creation time.
+
+```Syntax
+New-FileCatalog [-CatalogFilePath] &lt;string&gt; [[-Path] &lt;string[]&gt;]
+ [-CatalogVersion &lt;int&gt;] [-WhatIf] [-Confirm] [&lt;CommonParameters&gt;]
+```
+
+Catalog versions 1 and 2 are supported. Version 1 uses the SHA1 hashing
+algorithm to create file hashes; version 2 uses SHA256. You should use catalog
+version 2.
+
+To verify the integrity of catalog file (`Pester.cat` in above example), sign
+it using [Set-AuthenticodeSignature][07] cmdlet.
+
+#### Test-FileCatalog
+
+`Test-FileCatalog` validates the catalog representing a set of folders.
+
+```Syntax
+Test-FileCatalog [-Detailed] [-FilesToSkip &lt;String[]&gt;]
+ [-CatalogFilePath] &lt;String&gt; [[-Path] &lt;String[]&gt;]
+ [-WhatIf] [-Confirm] [&lt;CommonParameters&gt;]
+```
+
+This cmdlet compares all file hashes and their relative paths found in a
+_catalog_ with files on _disk_. If it detects any mismatch between file hashes
+and paths it returns the status as `ValidationFailed`. Users can retrieve all
+this information using the **Detailed** parameter. It also displays signing
+status of catalog in **Signature** property, which is equivalent to calling
+[Get-AuthenticodeSignature][06] cmdlet on the catalog file. Users can also skip
+any file during validation using the **FilesToSkip** parameter.
+
+### Module Analysis Cache
+
+Starting with WMF 5.1, PowerShell provides control over the file that&#x27;s used
+to cache data about a module, such as the commands it exports.
+
+By default, this cache is stored in the file
+`${env:LOCALAPPDATA}\Microsoft\Windows\PowerShell\ModuleAnalysisCache`. The
+cache is typically read at startup while searching for a command and is written
+on a background thread sometime after a module is imported.
+
+To change the default location of the cache, set the
+`$env:PSModuleAnalysisCachePath` environment variable before starting
+PowerShell. Changes to this environment variable only affect child processes.
+The value should name a full path (including filename) that PowerShell has
+permission to create and write files. To disable the file cache, set this value
+to an invalid location, for example:
+
+```powershell
+$Env:PSModuleAnalysisCachePath = &#x27;nul&#x27;
+```
+
+This sets the path to an invalid device. If PowerShell can&#x27;t write to the path,
+no error is returned, but you can see error reporting using a tracer:
+
+```powershell
+Trace-Command -PSHost -Name Modules -Expression {
+  Import-Module Microsoft.PowerShell.Management -Force
+}
+```
+
+When writing out the cache, PowerShell checks for modules that no longer exist
+to avoid an unnecessarily large cache. You can disable the checks using the
+following setting:
+
+```powershell
+$Env:PSDisableModuleAnalysisCacheCleanup = 1
+```
+
+Setting this environment variable takes effect immediately in the current
+process.
+
+### Specifying module version
+
+In WMF 5.1, `using module` behaves the same way as other module-related
+constructions in PowerShell. Previously, you had no way to specify a particular
+module version. If there were multiple versions present, this resulted in an
+error.
+
+In WMF 5.1:
+
+- You can use [ModuleSpecification Constructor (Hashtable)][01]. This hash
+  table has the same format as `Get-Module -FullyQualifiedName`.
+
+  Example: `using module @{ModuleName = &#x27;PSReadLine&#x27;; RequiredVersion = &#x27;1.1&#x27;}`
+
+- If there are multiple versions of the module, PowerShell uses the **same
+  resolution logic** as `Import-Module` and doesn&#x27;t return an error.
+
+### Improvements to Pester
+
+WMF 5.1 ships with Pester v3.4.0. For more information about this version, see
+the [CHANGELOG][11] in the GitHub repository.
+
+&lt;!-- link references --&gt;
+[01]: /dotnet/api/microsoft.powershell.commands.modulespecification.-ctor
+[02]: /powershell/gallery/concepts/module-psedition-support
+[03]: /powershell/gallery/concepts/script-psedition-support
+[04]: /powershell/module/microsoft.powershell.core/about/about_automatic_variables
+[05]: /powershell/module/microsoft.powershell.core/get-module
+[06]: /powershell/module/microsoft.powershell.security/get-authenticodesignature
+[07]: /powershell/module/microsoft.powershell.security/set-authenticodesignature
+[08]: /powershell/scripting/windows-powershell/whats-new/what-s-new-in-windows-powershell-50
+[10]: /previous-versions/windows/powershell-scripting/hh847877(v=wps.640)
+[11]: https://github.com/pester/Pester/blob/main/docs/CHANGELOG.md</pre></section>

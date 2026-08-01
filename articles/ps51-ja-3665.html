@@ -1,0 +1,765 @@
+<!doctype html><meta charset="utf-8"><section class="jp-official"><h1>ForEach-Object について</h1>
+<h2>SYNOPSIS 入力オブジェクトの集合の各項目の操作を実行します.</h2>
+<h2>SYNTAXは,のシンタックスです.</h2>
+<h3>ScriptBlockSet (デフォルト)</h3>
+<pre><code>ForEach-Object [-InputObject &lt;PSObject&gt;] [-Begin &lt;ScriptBlock&gt;] [-Process] &lt;ScriptBlock[]&gt;
+ [-End &lt;ScriptBlock&gt;] [-RemainingScripts &lt;ScriptBlock[]&gt;] [-WhatIf] [-Confirm] [&lt;CommonParameters&gt;]
+</code></pre>
+<h3>プロパティ&amp;メソッドセット</h3>
+<pre><code>ForEach-Object [-InputObject &lt;PSObject&gt;] [-MemberName] &lt;String&gt; [-ArgumentList &lt;Object[]&gt;] [-WhatIf]
+ [-Confirm] [&lt;CommonParameters&gt;]
+</code></pre>
+<h2>記述は,</h2>
+<p><code>ForEach-Object</code>cmdlet は入力オブジェクトの集合の各項目に操作を実行します.入力オブジェクトは cmdlet にパイプされ,または <strong>InputObject</strong> パラメータを使用して指定できます.</p>
+<p>Windows PowerShell 3.0からスタートすると,ビルドを2つの方法で構築できます.<code>ForEach-Object</code>命令です.</p>
+<p><strong>Scriptblock の構文</strong>.操作を指定するには,スクリプトブロックを使用できます.スクリプトブロック内で,  - を使ってください.<code>$_</code>脚本ブロックは <strong>プロセス</strong>パラメータの値です.脚本ブロックには PowerShell 脚本の任意の変数が含まれます.</p>
+<p>例えば,次のコマンドは,コンピュータ上の各プロセスの <strong>ProcessName</strong> 属性の値を得る.</p>
+<pre><code>`Get-Process | ForEach-Object {$_.ProcessName}`
+
+`ForEach-Object` をサポートしている.`begin`     `process`そして,そして,`end`blocks as described in [about_Functions] ([[about/about_functions.md#piping-objects-to-functions]]で説明されているように).
+</code></pre>
+<p>&gt; [!NOTE] &gt; スクリプトブロックは,呼び手の範囲内で実行されます.したがって,ブロックは,その範囲内の変数にアクセスし,cmdletが完了した後,その範囲内に持続する新しい変数を作成できます.</p>
+<p>簡略化された構文を使用すると,パイプライン内のオブジェクトのプロパティまたは方法名を指定します.<code>ForEach-Object</code> pipeline の各オブジェクトのプロパティまたはメソッドの値を返します.</p>
+<p>例えば,次のコマンドは,コンピュータ上の各プロセスの <strong>ProcessName</strong> 属性の値も得ます.</p>
+<pre><code>`Get-Process | ForEach-Object ProcessName`
+</code></pre>
+<p>簡略化された構文はWindows PowerShell 3.0で導入されました.詳細については, [about_Simplified_Syntax] (About/about_Simplified_Syntax.md) を参照してください.</p>
+<h2>例えは</h2>
+<h3>例1:数列に整数を分割する</h3>
+<p>この例では,3つの整数の数列を324で割り切って,それぞれを224に割ります.</p>
+<pre><code class="language-powershell">30000, 56798, 12432 | ForEach-Object -Process {$_/1024}
+</code></pre>
+<pre><code class="language-Output">29.296875
+55.466796875
+12.140625
+</code></pre>
+<h3>例2: ディレクトリ内のすべてのファイルの長さを調べる</h3>
+<p>この例では,PowerShellインストールディレクトリ内のファイルとディレクトリを処理します.<code>$PSHOME</code> .</p>
+<pre><code class="language-powershell">Get-ChildItem $PSHOME | ForEach-Object -Process {
+    if (!$_.PSIsContainer) {$_.Name; $_.Length / 1024; &quot; &quot; }
+}
+</code></pre>
+<p>もしオブジェクトがディレクトリでない場合,スクリプトブロックはファイルの名前を取得し,その <strong>Length</strong> 属性の値を1024 に分割し,次のエントリから区切るためにスペース (" ") を追加します.cmdlet は,オブジェクトがディレクトリかどうかを判断するために <strong>PSIsContainer</strong> 属性を使用します.</p>
+<h3>例3:最新のシステムイベントで操作する</h3>
+<p>この例では,システムイベントログからテキストファイルに最新の 1000 件を書き込みます.現在の時間は,イベント処理前のとき,その後に表示されます.</p>
+<pre><code class="language-powershell">Get-EventLog -LogName System -Newest 1000 |
+    ForEach-Object -Begin {Get-Date} -Process {
+        Out-File -FilePath Events.txt -Append -InputObject $_.Message
+    } -End {Get-Date}
+</code></pre>
+<p><code>Get-EventLog</code>システムイベントログから1000件の最近のイベントを入手し,それをパイプで""へ送ります.<code>ForEach-Object</code>cmdlet. <strong>Begin</strong>パラメータは現在の日付と時間を表示します.次に, <strong>Process</strong>パラメータは を使用します.<code>Out-File</code>cmdlet は events.txt と呼ばれるテキストファイルを作成し,そのファイル内の各イベントのメッセージ属性を保存します.最後に,処理が完了した後, <strong>End</strong> パラメータが日付と時間を表示するために使用されます.</p>
+<h3>例4:レジストリキーの値を変更する</h3>
+<p>この例では,RemotePath**登録エントリーの値を変更し,すべてのサブキーに変更します.<code>HKCU:\Network</code>文字の重文字のキーです.</p>
+<pre><code class="language-powershell">Get-ItemProperty -Path HKCU:\Network\* |
+  ForEach-Object {
+    Set-ItemProperty -Path $_.PSPath -Name RemotePath -Value $_.RemotePath.ToUpper()
+  }
+</code></pre>
+<p>このフォーマットを使用してレジストリエントリ値の形式または内容を変更できます.</p>
+<p><strong>ネットワーク</strong>キー内の各サブキーが,ログオン時に再接続するマッピングされたネットワークドライブを表しています. <strong>リモートパース</strong>エントリは,接続されたドライブのUNC経路を含んでいます.例えば,マッピングした をマッピングした場合,<code>E:</code>運転する.<code>\\Server\Share</code> で作成された <strong>E</strong>サブキーです.<code>HKCU:\Network</code><strong>RemotePath</strong>登録値が  に設定された場合<code>\\Server\Share</code> .</p>
+<p>コマンドは""を用いています.<code>Get-ItemProperty</code>cmdlet で,ネットワークキーと  のサブキーをすべて取得できます.<code>Set-ItemProperty</code>キーごとにRemotePath のレジストリエントリの値を変更するcmdletです.<code>Set-ItemProperty</code>パスは,レジストリキーの <strong>PSPath</strong> 属性の値である.これはレジストリキーを表す Microsoft .NET Framework オブジェクトの属性であり,レジストリエントリではありません.コマンドは,RemotePath<strong> 値の </strong>ToUpper()<strong> 方法を使用します.これは文字列 </strong>REG_SZ**です.</p>
+<pre><code>                                                                              Because Because          Because    Because   Because     Because   Because    Because   Because  Because   Because   Because  Because   Because  Because  Because  Because  Because  Because   Because  Because   Because   Because  Because       Because   Because       Because                              Because                                                                                                                                                                                                                `Set-ItemProperty`鍵の性質を変化させ,鍵の性質を変化させ,鍵を変化させ,鍵を変化させ,鍵を変化させ,鍵を変化させ,鍵を変化させ,鍵を変化させ,鍵を変化させ,鍵を変化させ,鍵を変化させ,鍵を変化させ,鍵を変化させ,鍵を変化させ,鍵を変化させ,鍵を変化させ,鍵を変化させ,鍵を変化させ,鍵を変化させ,鍵を変化させ,鍵を変化させ,鍵を変化させ,鍵を変化させ,鍵を変化させ,鍵を変化させ,鍵を変化させ,鍵を変化させ,鍵を変化させ,鍵を変化させ,鍵を変化させ,鍵を変化させ,鍵を変化させ,鍵を変化させ,鍵を変化させ,鍵を変化させ,鍵を変化させ,鍵を変化させ,鍵を変化させ,鍵を変化させ,鍵を変化させ,鍵を変化させ,鍵を変化させ,鍵を変化させ,鍵を変化させ,鍵を`ForEach-Object`資産にアクセスするにはcmdlet が必要です.
+</code></pre>
+<h3>例5:$null自動変数を使用します.</h3>
+<p>この例では,パイプを配る効果を示しています.<code>$null</code>自動変数から自動変数へ<code>ForEach-Object</code>cmdletです.</p>
+<pre><code class="language-powershell">1, 2, $null, 4 | ForEach-Object {&quot;Hello&quot;}
+</code></pre>
+<pre><code class="language-Output">Hello
+Hello
+Hello
+Hello
+</code></pre>
+<p>PowerShellが処理しているため<code>$null</code>明らかに場所保持者として,<code>ForEach-Object</code>cmdlet は,  の値を生成します.<code>$null</code>管道で送られてきた他の物体でも同様です.</p>
+<h3>例 6: 資産値を取得する</h3>
+<p>この例では,すべてのインストールされたPowerShellモジュールに含まれる <strong>Path</strong>の値が, の<strong>MemberName</strong>パラメータを使用して得られます.<code>ForEach-Object</code>cmdletです.</p>
+<pre><code class="language-powershell">Get-Module -ListAvailable | ForEach-Object -MemberName Path
+Get-Module -ListAvailable | foreach Path
+</code></pre>
+<p>2番目のコマンドは,最初のコマンドに等しい.<code>Foreach</code>のののの<code>ForEach-Object</code>cmdlet と,選択的である<strong>MemberName</strong> パラメータの名前を省略します.</p>
+<p><code>ForEach-Object</code>cmdlet は,形式のcmdletsや の違いとして,型を変更せずに値を得るため,プロパティ値を得るのに役立ちます.<code>Select-Object</code>cmdletで,プロパティ値タイプを変更します.</p>
+<h1>ForEach-Object について</h1>
+<h3>例7: モジュール名をコンポーネント名に分割する</h3>
+<p>この例では,ドット別なモジュール名前の2つのモジュール名を構成要素名に分割する3つの方法を示しています.コマンドは stringの <strong>Split</strong>方法と呼ばれています.この3つのコマンドは異なる構文を使用しますが,それらは等価で交換可能です.すべての3つのケースで出力は同じです.</p>
+<pre><code class="language-powershell">&quot;Microsoft.PowerShell.Core&quot;, &quot;Microsoft.PowerShell.Host&quot; |
+    ForEach-Object {$_.Split(&quot;.&quot;)}
+&quot;Microsoft.PowerShell.Core&quot;, &quot;Microsoft.PowerShell.Host&quot; |
+    ForEach-Object -MemberName Split -ArgumentList &quot;.&quot;
+&quot;Microsoft.PowerShell.Core&quot;, &quot;Microsoft.PowerShell.Host&quot; |
+    foreach Split &quot;.&quot;
+</code></pre>
+<pre><code class="language-Output">Microsoft
+PowerShell
+Core
+Microsoft
+PowerShell
+Host
+</code></pre>
+<p>最初のコマンドは,スクリプトブロックと現在のオブジェクトオペレーターを含む伝統的な構文を使用します.<code>$_</code>. ポイント構文を使用して方法を指定し,括弧で делиミター引数を封じる.</p>
+<p>第二コマンドでは,MemberName<strong>パラメータを使用して,Split</strong>方法と,ArgumentList**パラメータを使用して,ドット () を識別します.<code>.</code>) を分割境界線として定義する.</p>
+<p>第三のコマンドは,  を使っています.<code>foreach</code>のののの<code>ForEach-Object</code>cmdlet と,選択的である<strong>MemberName</strong> と<strong>ArgumentList</strong> パラメータの名前を省略します.</p>
+<h3>例8:ForEach-Object を2つのスクリプトブロックで使用する</h3>
+<p>この例では,位置的に2つのスクリプトブロックを通過します.すべてのスクリプトブロックは<strong>プロセス</strong>パラメータに結合します.しかし,それらは<strong>Begin</strong>と<strong>プロセス</strong>パラメータに通過したかのように扱われます.</p>
+<pre><code class="language-powershell">1..2 | ForEach-Object { 'begin' } { 'process' }
+</code></pre>
+<pre><code class="language-Output">begin
+process
+process
+</code></pre>
+<h3>例 9: 2つ以上のスクリプトブロックを持つForEach-Objectを使用する</h3>
+<p>この例では,四つのスクリプトブロックをポジショナリー通り過ぎます.すべてのスクリプトブロックは<strong>プロセス</strong>パラメータに結合します.しかし,それらは<strong>Begin</strong>,<strong>プロセス</strong>,<strong>エンド</strong>パラメータに過ぎたかのように扱われます.</p>
+<pre><code class="language-powershell">1..2 | ForEach-Object { 'begin' } { 'process A' }  { 'process B' } { 'end' }
+</code></pre>
+<pre><code class="language-Output">begin
+process A
+process B
+process A
+process B
+end
+</code></pre>
+<p>&gt; [!NOTE] &gt; 最初のスクリプトブロックは常に  にマッピングされます.<code>begin</code>ブロックは,最後のブロックが &gt;  にマッピングされます.<code>end</code>中間ブロックは2つのブロックをマップして, に映し出されます.<code>process</code>ブロックです.</p>
+<h3>例10:パイプラインアイテムごとに複数のスクリプトブロックを実行します.</h3>
+<p>前例では,プロセスパラメータを使用して通過した複数のスクリプトブロックが <strong>Begin</strong>と <strong>End</strong>パラメータにマッピングされる.このマッピングを避けるためには, <strong>Begin</strong>と <strong>End</strong>パラメータに明示された値を指定する必要があります.</p>
+<pre><code class="language-powershell">1..2 | ForEach-Object -Begin $null -Process { 'one' }, { 'two' }, { 'three' } -End $null
+</code></pre>
+<pre><code class="language-Output">one
+two
+three
+one
+two
+three
+</code></pre>
+<h2>パラメータは</h2>
+<h3>-ArgumentList</h3>
+<p>方法呼び出しに数列の議論を指定します.ArgumentListの行動についての詳細については, [about_Splatting] (about/about_Splatting.md#splatting-with-arrays) を参照してください.</p>
+<p>このパラメータはWindows PowerShell 3.0で導入されました.</p>
+<pre><code class="language-yaml">Type: System.Object[]
+Parameter Sets: PropertyAndMethodSet
+Aliases: Args
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>- スタートする</h3>
+<p>このcmdletが入力オブジェクトを処理する前に実行されるスクリプトブロックを指定します.このスクリプトブロックは,パイプライン全体で一度のみ実行されます.  についての詳細については,<code>begin</code>ブロックを参照してください [about_Functions] ([[about/about_functions.md#piping-objects-to-functions]]).</p>
+<pre><code class="language-yaml">Type: System.Management.Automation.ScriptBlock
+Parameter Sets: ScriptBlockSet
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-End</h3>
+<p>このcmdletがすべての入力オブジェクトを処理した後実行されるスクリプトブロックを指定します.このスクリプトブロックは,パイプライン全体で一度のみ実行されます.  についての詳細については,<code>end</code>ブロックを参照してください [about_Functions] ([[about/about_functions.md#piping-objects-to-functions]]).</p>
+<pre><code class="language-yaml">Type: System.Management.Automation.ScriptBlock
+Parameter Sets: ScriptBlockSet
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-InputObject</h3>
+<p>入力オブジェクトを指定します. <code>ForEach-Object</code>各入力オブジェクトでスクリプトブロックまたは操作式を実行します.オブジェクトを含む変数を入力するか,オブジェクトを入手するコマンドまたは表情を入力します.</p>
+<p>と入力Object<strong>パラメータを使用すると<code>ForEach-Object</code>命令結果をパイプして instead にする代わりに,<code>ForEach-Object</code>値が集合である場合でも,これは true である.<code>-InputObject (Get-Process)</code>. </strong>InputObject**は,数列やオブジェクト集合から個々の属性を返却することはできませんので,使用すると推奨します.<code>ForEach-Object</code>定義された属性における特定の値を持つオブジェクトに対して,オブジェクトの集合で操作を行うには,使用する<code>ForEach-Object</code>このテーマの例で示されているように,パイプラインに.</p>
+<pre><code class="language-yaml">Type: System.Management.Automation.PSObject
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByValue)
+Accept wildcard characters: False
+</code></pre>
+<h3>-メンバー名</h3>
+<p>メンバーのプロパティの名前を指定し,呼び出すメンバーのメソッドを指定します.メンバーは静的メンバーではなくインスタンスのメンバーでなければなりません.</p>
+<p>ワイルドカード文字は許されているが,生成された文字列がユニーク値に解消された場合にのみ有効である.例えば,実行する場合は <code>Get-Process | foreach -MemberName *Name</code>ワイルドカードパターンは1人以上のメンバーと一致し,コマンドが失敗する原因になります.</p>
+<p>このパラメータはWindows PowerShell 3.0で導入されました.</p>
+<pre><code class="language-yaml">Type: System.String
+Parameter Sets: PropertyAndMethodSet
+Aliases:
+
+Required: True
+Position: 0
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: True
+</code></pre>
+<h3>-プロセス</h3>
+<p>入力オブジェクトごとに実行される操作を指定します.このスクリプトブロックはパイプライン内のすべてのオブジェクトで実行されます. に関する詳細については,<code>process</code>ブロックを参照してください [about_Functions] ([[about/about_functions.md#piping-objects-to-functions]]).</p>
+<p><strong>プロセス</strong>パラメータに複数のスクリプトブロックを指定すると,最初のスクリプトブロックは常に  にマッピングされます.<code>begin</code>ブロックが2つだけなら,その2つ目のブロックは にマッピングされます.<code>process</code>もし3つ以上のスクリプトブロックがあるなら,最初のスクリプトブロックは常に""にマッピングされます.<code>begin</code>ブロックは,最後のブロックが  にマッピングされます.<code>end</code>ブロックを映し出し,中ブロックは""に映し出されます.<code>process</code>ブロックです.</p>
+<pre><code class="language-yaml">Type: System.Management.Automation.ScriptBlock[]
+Parameter Sets: ScriptBlockSet
+Aliases:
+
+Required: True
+Position: 0
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-残る脚本</h3>
+<p><strong>プロセス</strong>パラメータで取り入れられていないすべてのスクリプトブロックを指定します.</p>
+<p>このパラメータはWindows PowerShell 3.0で導入されました.</p>
+<pre><code class="language-yaml">Type: System.Management.Automation.ScriptBlock[]
+Parameter Sets: ScriptBlockSet
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-確認する</h3>
+<p>cmdletを実行する前に確認を提示します.</p>
+<pre><code class="language-yaml">Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases: cf
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h1>ForEach-Object について</h1>
+<h3>-WhatIf</h3>
+<p>実行されないcmdletが実行されればどうなるかを示しています.</p>
+<pre><code class="language-yaml">Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases: wi
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>共通パラメーター</h3>
+<p>このcmdletは,共通パラメータをサポートしています: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable.詳細については, <a href="を参照してください.https://go.microsoft.com/fwlink/?LinkID=113216">about_CommonParameters</a> でした.</p>
+<h2>輸入は</h2>
+<h3>システム管理自動化PSObject</h3>
+<p>このcmdletに任意のオブジェクトをパイプすることができます.</p>
+<h2>輸出は</h2>
+<h3>システム管理自動化PSObject</h3>
+<p>このcmdletは,入力によって決定されるオブジェクトを返します.</p>
+<h2>NOTES  記事ができました.</h2>
+<p>Windows PowerShell では,次のアライスがあります.<code>ForEach-Object</code>:</p>
+<ul>
+<li>-<code>%</code> - -<code>foreach</code></li>
+</ul>
+<p><code>ForEach-Object</code>cmdlet は,cmdlet と似ています.<code>foreach</code>命令は,入力をパイプして  にできない.<code>foreach</code>声明について詳しい情報は,<code>foreach</code>[about_Foreach]の声明を参照してください.</p>
+<p>PowerShell 4.0で起動すると,<code>Where</code>そして,<code>ForEach</code>集合で使用するための方法が追加されました.これらの新しい方法については,ここで [about_Arrays] (http://about/about_Arrays.md) をご覧ください.</p>
+<h2>関連リンク</h2>
+<p><a href="../Microsoft.PowerShell.Utility/Compare-Object.md">Compare-Object</a> について</p>
+<p><a href="Where-Object.md">Where-Object</a> </p>
+<p><a href="../Microsoft.PowerShell.Utility/Group-Object.md">Group-Object</a> について</p>
+<p><a href="../Microsoft.PowerShell.Utility/Measure-Object.md">Measure-Object</a> について</p>
+<p><a href="../Microsoft.PowerShell.Utility/New-Object.md">New-Object</a> について</p>
+<p><a href="../Microsoft.PowerShell.Utility/Select-Object.md">選択対象</a></p>
+<p><a href="../Microsoft.PowerShell.Utility/Sort-Object.md">Sort-Object</a> について</p>
+<p><a href="../Microsoft.PowerShell.Utility/Tee-Object.md">Tee-Object</a> について</p></section><section class="en-original"><pre class="source-original"># ForEach-Object
+
+## SYNOPSIS
+Performs an operation against each item in a collection of input objects.
+
+## SYNTAX
+
+### ScriptBlockSet (Default)
+
+```
+ForEach-Object [-InputObject &lt;PSObject&gt;] [-Begin &lt;ScriptBlock&gt;] [-Process] &lt;ScriptBlock[]&gt;
+ [-End &lt;ScriptBlock&gt;] [-RemainingScripts &lt;ScriptBlock[]&gt;] [-WhatIf] [-Confirm] [&lt;CommonParameters&gt;]
+```
+
+### PropertyAndMethodSet
+
+```
+ForEach-Object [-InputObject &lt;PSObject&gt;] [-MemberName] &lt;String&gt; [-ArgumentList &lt;Object[]&gt;] [-WhatIf]
+ [-Confirm] [&lt;CommonParameters&gt;]
+```
+
+## DESCRIPTION
+
+The `ForEach-Object` cmdlet performs an operation on each item in a collection of input objects. The
+input objects can be piped to the cmdlet or specified using the **InputObject** parameter.
+
+Starting in Windows PowerShell 3.0, there are two different ways to construct a `ForEach-Object`
+command.
+
+- **Scriptblock syntax**. You can use a scriptblock to specify the operation. Within the
+  scriptblock, use the `$_` variable to represent the current object. The scriptblock is the value
+  of the **Process** parameter. The scriptblock can contain any PowerShell script.
+
+  For example, the following command gets the value of the **ProcessName** property of each process
+  on the computer.
+
+  `Get-Process | ForEach-Object {$_.ProcessName}`
+
+  `ForEach-Object` supports the `begin`, `process`, and `end` blocks as described in
+  [about_Functions](about/about_functions.md#piping-objects-to-functions).
+
+  &gt; [!NOTE]
+  &gt; The scriptblocks run in the caller&#x27;s scope. Therefore, the blocks have access to variables in
+  &gt; that scope and can create new variables that persist in that scope after the cmdlet completes.
+
+- **Simplified syntax**. Using the simplified syntax, you specify a property or method name of the
+  object in the pipeline. `ForEach-Object` returns the value of the property or method for each
+  object in the pipeline.
+
+  For example, the following command also gets the value of the **ProcessName** property of each
+  process on the computer.
+
+  `Get-Process | ForEach-Object ProcessName`
+
+  The simplified syntax was introduced in Windows PowerShell 3.0. For more information, see
+  [about_Simplified_Syntax](About/about_Simplified_Syntax.md).
+
+## EXAMPLES
+
+### Example 1: Divide integers in an array
+
+This example takes an array of three integers and divides each one of them by 1024.
+
+```powershell
+30000, 56798, 12432 | ForEach-Object -Process {$_/1024}
+```
+
+```Output
+29.296875
+55.466796875
+12.140625
+```
+
+### Example 2: Get the length of all the files in a directory
+
+This example processes the files and directories in the PowerShell installation directory `$PSHOME`.
+
+```powershell
+Get-ChildItem $PSHOME | ForEach-Object -Process {
+    if (!$_.PSIsContainer) {$_.Name; $_.Length / 1024; &quot; &quot; }
+}
+```
+
+If the object isn&#x27;t a directory, the scriptblock gets the name of the file, divides the value of
+its **Length** property by 1024, and adds a space (&quot; &quot;) to separate it from the next entry. The
+cmdlet uses the **PSIsContainer** property to determine whether an object is a directory.
+
+### Example 3: Operate on the most recent System events
+
+This example writes the 1000 most recent events from the System event log to a text file. The
+current time is displayed before and after processing the events.
+
+```powershell
+Get-EventLog -LogName System -Newest 1000 |
+    ForEach-Object -Begin {Get-Date} -Process {
+        Out-File -FilePath Events.txt -Append -InputObject $_.Message
+    } -End {Get-Date}
+```
+
+`Get-EventLog` gets the 1000 most recent events from the System event log and pipes them to the
+`ForEach-Object` cmdlet. The **Begin** parameter displays the current date and time. Next, the
+**Process** parameter uses the `Out-File` cmdlet to create a text file that&#x27;s named events.txt and
+stores the message property of each of the events in that file. Last, the **End** parameter is used
+to display the date and time after all the processing has completed.
+
+### Example 4: Change the value of a Registry key
+
+This example changes the value of the **RemotePath** registry entry in all the subkeys under the
+`HKCU:\Network` key to uppercase text.
+
+```powershell
+Get-ItemProperty -Path HKCU:\Network\* |
+  ForEach-Object {
+    Set-ItemProperty -Path $_.PSPath -Name RemotePath -Value $_.RemotePath.ToUpper()
+  }
+```
+
+You can use this format to change the form or content of a registry entry value.
+
+Each subkey in the **Network** key represents a mapped network drive that reconnects at sign on. The
+**RemotePath** entry contains the UNC path of the connected drive. For example, if you map the `E:`
+drive to `\\Server\Share`, an **E** subkey is created in `HKCU:\Network` with the **RemotePath**
+registry value set to `\\Server\Share`.
+
+The command uses the `Get-ItemProperty` cmdlet to get all the subkeys of the **Network** key and the
+`Set-ItemProperty` cmdlet to change the value of the **RemotePath** registry entry in each key. In
+the `Set-ItemProperty` command, the path is the value of the **PSPath** property of the registry
+key. This is a property of the Microsoft .NET Framework object that represents the registry key, not
+a registry entry. The command uses the **ToUpper()** method of the **RemotePath** value, which is a
+string **REG_SZ**.
+
+Because `Set-ItemProperty` is changing the property of each key, the `ForEach-Object` cmdlet is
+required to access the property.
+
+### Example 5: Use the $null automatic variable
+
+This example shows the effect of piping the `$null` automatic variable to the `ForEach-Object`
+cmdlet.
+
+```powershell
+1, 2, $null, 4 | ForEach-Object {&quot;Hello&quot;}
+```
+
+```Output
+Hello
+Hello
+Hello
+Hello
+```
+
+Because PowerShell treats `$null` as an explicit placeholder, the `ForEach-Object` cmdlet generates
+a value for `$null` as it does for other objects piped to it.
+
+### Example 6: Get property values
+
+This example gets the value of the **Path** property of all installed PowerShell modules using
+the **MemberName** parameter of the `ForEach-Object` cmdlet.
+
+```powershell
+Get-Module -ListAvailable | ForEach-Object -MemberName Path
+Get-Module -ListAvailable | foreach Path
+```
+
+The second command is equivalent to the first. It uses the `Foreach` alias of the `ForEach-Object`
+cmdlet and omits the name of the **MemberName** parameter, which is optional.
+
+The `ForEach-Object` cmdlet is useful for getting property values, because it gets the value without
+changing the type, unlike the **Format** cmdlets or the `Select-Object` cmdlet, which change the
+property value type.
+
+# ForEach-Object
+
+### Example 7: Split module names into component names
+
+This example shows three ways to split two dot-separated module names into their component names.
+The commands call the **Split** method of strings. The three commands use different syntax, but they
+are equivalent and interchangeable. The output is the same for all three cases.
+
+```powershell
+&quot;Microsoft.PowerShell.Core&quot;, &quot;Microsoft.PowerShell.Host&quot; |
+    ForEach-Object {$_.Split(&quot;.&quot;)}
+&quot;Microsoft.PowerShell.Core&quot;, &quot;Microsoft.PowerShell.Host&quot; |
+    ForEach-Object -MemberName Split -ArgumentList &quot;.&quot;
+&quot;Microsoft.PowerShell.Core&quot;, &quot;Microsoft.PowerShell.Host&quot; |
+    foreach Split &quot;.&quot;
+```
+
+```Output
+Microsoft
+PowerShell
+Core
+Microsoft
+PowerShell
+Host
+```
+
+The first command uses the traditional syntax, which includes a scriptblock and the current object
+operator `$_`. It uses the dot syntax to specify the method and parentheses to enclose the delimiter
+argument.
+
+The second command uses the **MemberName** parameter to specify the **Split** method and the
+**ArgumentList** parameter to identify the dot (`.`) as the split delimiter.
+
+The third command uses the `foreach` alias of the `ForEach-Object` cmdlet and omits the names of
+the **MemberName** and **ArgumentList** parameters, which are optional.
+
+### Example 8: Using ForEach-Object with two scriptblocks
+
+In this example, we pass two scriptblocks positionally. All the scriptblocks bind to the
+**Process** parameter. However, they&#x27;re treated as if they had been passed to the **Begin** and
+**Process** parameters.
+
+```powershell
+1..2 | ForEach-Object { &#x27;begin&#x27; } { &#x27;process&#x27; }
+```
+
+```Output
+begin
+process
+process
+```
+
+### Example 9: Using ForEach-Object with more than two scriptblocks
+
+In this example, we pass four scriptblocks positionally. All the scriptblocks bind to the
+**Process** parameter. However, they&#x27;re treated as if they had been passed to the **Begin**,
+**Process**, and **End** parameters.
+
+```powershell
+1..2 | ForEach-Object { &#x27;begin&#x27; } { &#x27;process A&#x27; }  { &#x27;process B&#x27; } { &#x27;end&#x27; }
+```
+
+```Output
+begin
+process A
+process B
+process A
+process B
+end
+```
+
+&gt; [!NOTE]
+&gt; The first scriptblock is always mapped to the `begin` block, the last block is mapped to the
+&gt; `end` block, and the two middle blocks are mapped to the `process` block.
+
+### Example 10: Run multiple scriptblocks for each pipeline item
+
+As shown in the previous example, multiple scriptblocks passed using the **Process** parameter get
+mapped to the **Begin** and **End** parameters. To avoid this mapping, you must provide explicit
+values for the **Begin** and **End** parameters.
+
+```powershell
+1..2 | ForEach-Object -Begin $null -Process { &#x27;one&#x27; }, { &#x27;two&#x27; }, { &#x27;three&#x27; } -End $null
+```
+
+```Output
+one
+two
+three
+one
+two
+three
+```
+
+## PARAMETERS
+
+### -ArgumentList
+
+Specifies an array of arguments to a method call. For more information about the behavior of
+**ArgumentList**, see [about_Splatting](about/about_Splatting.md#splatting-with-arrays).
+
+This parameter was introduced in Windows PowerShell 3.0.
+
+```yaml
+Type: System.Object[]
+Parameter Sets: PropertyAndMethodSet
+Aliases: Args
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Begin
+
+Specifies a scriptblock that runs before this cmdlet processes any input objects. This scriptblock
+is only run once for the entire pipeline. For more information about the `begin` block, see
+[about_Functions](about/about_functions.md#piping-objects-to-functions).
+
+```yaml
+Type: System.Management.Automation.ScriptBlock
+Parameter Sets: ScriptBlockSet
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -End
+
+Specifies a scriptblock that runs after this cmdlet processes all input objects. This scriptblock
+is only run once for the entire pipeline. For more information about the `end` block, see
+[about_Functions](about/about_functions.md#piping-objects-to-functions).
+
+```yaml
+Type: System.Management.Automation.ScriptBlock
+Parameter Sets: ScriptBlockSet
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -InputObject
+
+Specifies the input objects. `ForEach-Object` runs the scriptblock or operation statement on each
+input object. Enter a variable that contains the objects, or type a command or expression that gets
+the objects.
+
+When you use the **InputObject** parameter with `ForEach-Object`, instead of piping command results
+to `ForEach-Object`, the **InputObject** value is treated as a single object. This is true even if
+the value is a collection that&#x27;s the result of a command, such as `-InputObject (Get-Process)`.
+Because **InputObject** can&#x27;t return individual properties from an array or collection of objects,
+we recommend that if you use `ForEach-Object` to perform operations on a collection of objects for
+those objects that have specific values in defined properties, you use `ForEach-Object` in the
+pipeline, as shown in the examples in this topic.
+
+```yaml
+Type: System.Management.Automation.PSObject
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByValue)
+Accept wildcard characters: False
+```
+
+### -MemberName
+
+Specifies the name of the member property to get or the member method to call. The members must be
+instance members, not static members.
+
+Wildcard characters are permitted, but work only if the resulting string resolves to a unique value.
+For example, if you run `Get-Process | foreach -MemberName *Name`, the wildcard pattern matches more
+than one member causing the command to fail.
+
+This parameter was introduced in Windows PowerShell 3.0.
+
+```yaml
+Type: System.String
+Parameter Sets: PropertyAndMethodSet
+Aliases:
+
+Required: True
+Position: 0
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: True
+```
+
+### -Process
+
+Specifies the operation that&#x27;s performed on each input object. This scriptblock is run for every
+object in the pipeline. For more information about the `process` block, see
+[about_Functions](about/about_functions.md#piping-objects-to-functions).
+
+When you provide multiple scriptblocks to the **Process** parameter, the first scriptblock is
+always mapped to the `begin` block. If there are only two scriptblocks, the second block is mapped
+to the `process` block. If there are three or more scriptblocks, first scriptblock is always
+mapped to the `begin` block, the last block is mapped to the `end` block, and the middle blocks are
+mapped to the `process` block.
+
+```yaml
+Type: System.Management.Automation.ScriptBlock[]
+Parameter Sets: ScriptBlockSet
+Aliases:
+
+Required: True
+Position: 0
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -RemainingScripts
+
+Specifies all scriptblocks that aren&#x27;t taken by the **Process** parameter.
+
+This parameter was introduced in Windows PowerShell 3.0.
+
+```yaml
+Type: System.Management.Automation.ScriptBlock[]
+Parameter Sets: ScriptBlockSet
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Confirm
+
+Prompts you for confirmation before running the cmdlet.
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases: cf
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+# ForEach-Object
+
+### -WhatIf
+
+Shows what would happen if the cmdlet runs. The cmdlet isn&#x27;t run.
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases: wi
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### CommonParameters
+
+This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable,
+-InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose,
+-WarningAction, and -WarningVariable. For more information, see
+[about_CommonParameters](https://go.microsoft.com/fwlink/?LinkID=113216).
+
+## INPUTS
+
+### System.Management.Automation.PSObject
+
+You can pipe any object to this cmdlet.
+
+## OUTPUTS
+
+### System.Management.Automation.PSObject
+
+This cmdlet returns objects that are determined by the input.
+
+## NOTES
+
+Windows PowerShell includes the following aliases for `ForEach-Object`:
+
+  - `%`
+  - `foreach`
+
+The `ForEach-Object` cmdlet works much like the `foreach` statement, except that you cannot pipe
+input to a `foreach` statement. For more information about the `foreach` statement, see
+[about_Foreach](./About/about_Foreach.md).
+
+Starting in PowerShell 4.0, `Where` and `ForEach` methods were added for use with collections. You
+can read more about these new methods here [about_Arrays](./About/about_Arrays.md)
+
+## RELATED LINKS
+
+[Compare-Object](../Microsoft.PowerShell.Utility/Compare-Object.md)
+
+[Where-Object](Where-Object.md)
+
+[Group-Object](../Microsoft.PowerShell.Utility/Group-Object.md)
+
+[Measure-Object](../Microsoft.PowerShell.Utility/Measure-Object.md)
+
+[New-Object](../Microsoft.PowerShell.Utility/New-Object.md)
+
+[Select-Object](../Microsoft.PowerShell.Utility/Select-Object.md)
+
+[Sort-Object](../Microsoft.PowerShell.Utility/Sort-Object.md)
+
+[Tee-Object](../Microsoft.PowerShell.Utility/Tee-Object.md)</pre></section>

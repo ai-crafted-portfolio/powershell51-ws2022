@@ -1,0 +1,661 @@
+<!doctype html><meta charset="utf-8"><section class="jp-official"><h1>レジスタ・シンインディケーションイベント</h1>
+<h2>SYNOPSIS はフィルター式またはクエリ式を用いて指示を登録します.</h2>
+<h2>SYNTAXは,のシンタックスです.</h2>
+<h3>クラス名コンピュータセット (デフォルト)</h3>
+<pre><code>Register-CimIndicationEvent [-Namespace &lt;String&gt;] [-ClassName] &lt;String&gt;
+ [-OperationTimeoutSec &lt;UInt32&gt;] [-ComputerName &lt;String&gt;] [[-SourceIdentifier] &lt;String&gt;]
+ [[-Action] &lt;ScriptBlock&gt;] [-MessageData &lt;PSObject&gt;] [-SupportEvent] [-Forward]
+ [-MaxTriggerCount &lt;Int32&gt;] [&lt;CommonParameters&gt;]
+</code></pre>
+<h3>クラス名SessionSet</h3>
+<pre><code>Register-CimIndicationEvent [-Namespace &lt;String&gt;] [-ClassName] &lt;String&gt;
+ [-OperationTimeoutSec &lt;UInt32&gt;] -CimSession &lt;CimSession&gt; [[-SourceIdentifier] &lt;String&gt;]
+ [[-Action] &lt;ScriptBlock&gt;] [-MessageData &lt;PSObject&gt;] [-SupportEvent] [-Forward]
+ [-MaxTriggerCount &lt;Int32&gt;] [&lt;CommonParameters&gt;]
+</code></pre>
+<h3>QueryExpressionSessionSet は,</h3>
+<pre><code>Register-CimIndicationEvent [-Namespace &lt;String&gt;] [-Query] &lt;String&gt;
+ [-QueryDialect &lt;String&gt;] [-OperationTimeoutSec &lt;UInt32&gt;] -CimSession &lt;CimSession&gt;
+ [[-SourceIdentifier] &lt;String&gt;] [[-Action] &lt;ScriptBlock&gt;] [-MessageData &lt;PSObject&gt;]
+ [-SupportEvent] [-Forward] [-MaxTriggerCount &lt;Int32&gt;] [&lt;CommonParameters&gt;]
+</code></pre>
+<h3>QueryExpressionComputerSet について</h3>
+<pre><code>Register-CimIndicationEvent [-Namespace &lt;String&gt;] [-Query] &lt;String&gt;
+ [-QueryDialect &lt;String&gt;] [-OperationTimeoutSec &lt;UInt32&gt;] [-ComputerName &lt;String&gt;]
+ [[-SourceIdentifier] &lt;String&gt;] [[-Action] &lt;ScriptBlock&gt;] [-MessageData &lt;PSObject&gt;]
+ [-SupportEvent] [-Forward] [-MaxTriggerCount &lt;Int32&gt;] [&lt;CommonParameters&gt;]
+</code></pre>
+<h2>記述は,</h2>
+<p><code>Register-CimIndicationEvent</code>cmdlet は,指示クラス名またはクエリ表現を使用して指示に登録します. <strong>SourceIdentifier</strong> パラメータを使用して,登録に名前を与える.</p>
+<p>このcmdletは,EventSubscription**オブジェクトを返します.このオブジェクトを使用して,サブスクリプションをキャンセルできます.</p>
+<h2>例えは</h2>
+<h3>例1: クラスによって生成されるイベントを登録する</h3>
+<p>この例は, <strong>Win32_ProcessStartTrace</strong> というクラスによって生成されるイベントを登録します.このクラスでは,プロセスが起動するたびにイベントが発生します.</p>
+<pre><code class="language-powershell">$event = @{
+    ClassName = 'Win32_ProcessStartTrace'
+    SourceIdentifier = 'ProcessStarted'
+}
+Register-CimIndicationEvent @event
+Get-Event -SourceIdentifier &quot;ProcessStarted&quot;
+</code></pre>
+<p><code>Get-Event</code>cmdlet は <strong>ProcessStarted</strong>  abone でイベントを入手する.詳細については, [Get-Event] (../Microsoft.PowerShell.Utility/Get-Event.md) を参照してください.</p>
+<p>&gt; [!NOTE] &gt;この例では, PowerShell を管理者として実行する必要があります.</p>
+<h3>例2: 事件をクエリを使って記録する</h3>
+<p>この例では,Win32_LocalTime**というクラスのインスタンスの変更が起きたとき,生成されたイベントに登録するクエリを使用します.</p>
+<pre><code class="language-powershell">$query = &quot;SELECT * FROM CIM_InstModification WHERE TargetInstance ISA 'Win32_LocalTime'&quot;
+Register-CimIndicationEvent -Query $query -SourceIdentifier &quot;Timer&quot;
+</code></pre>
+<h3>例3:イベントが来る時にスクリプトを実行します.</h3>
+<p>この例では,イベントに対してアクションを使用する方法を示しています.<code>$action</code> を使っている <strong>Action</strong> の脚本ブロックが保持されています.<code>$Event</code>CIMから受信されたイベントへのアクセス変数です.</p>
+<pre><code class="language-powershell">$action = {
+  $name = $Event.SourceEventArgs.NewEvent.ProcessName
+  $id = $Event.SourceEventArgs.NewEvent.ProcessId
+  Write-Host -Object &quot;New Process Started : Name = $name ID = $id&quot;
+}
+$event = @{
+    ClassName = 'Win32_ProcessStartTrace'
+    SourceIdentifier = 'ProcessStarted'
+    Action = $action
+}
+Register-CimIndicationEvent @event
+</code></pre>
+<p>詳細については, [Win32_ProcessStartTrace] (/previous-versions/windows/desktop/krnlprov/win32-processstarttrace) を参照してください.</p>
+<h3>例4: 遠隔コンピュータでイベントを記録する</h3>
+<p>この例では,遠隔コンピュータのイベントを登録している <strong>Server01</strong>という名前です.CIMサーバーから受信されたイベントは,現在のPowerShellセッションにおけるイベントキューに保存され,ローカルの を実行します.<code>Get-Event</code>事件を復元するために.</p>
+<pre><code class="language-powershell">$event = @{
+    ClassName = 'Win32_ProcessStartTrace'
+    SourceIdentifier = 'ProcessStarted'
+    ComputerName = 'Server01'
+}
+Register-CimIndicationEvent @event
+Get-Event -SourceIdentifier &quot;ProcessStarted&quot;
+</code></pre>
+<h2>パラメータは</h2>
+<h3>-アクション</h3>
+<p>このパラメータで指定されたコマンドは,イベントのキューにイベントを送る代わりに,イベントが挙げる時に実行されます.コマンドを括弧に収め ()<code>{}</code>) を脚本ブロックを作成する.</p>
+<p><strong>Action</strong>で指定されたスクリプトブロックには, が含まれる可能性があります.<code>$Event</code>     <code>$EventSubscriber</code>     <code>$Sender</code>     <code>$SourceEventArgs</code>そして,そして,<code>$SourceArgs</code>自動変数については,イベントに関する情報を <strong>Action</strong>脚本ブロックに提供します.詳細については, [自動変数について] (Microsoft.PowerShell.Core/About/about_Automatic_Variables.md) をご覧ください.</p>
+<pre><code class="language-yaml">Type: System.Management.Automation.ScriptBlock
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: 1
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-CimSession でした</h3>
+<p>指定されたCIMセッションを使用してコマンドを実行します.CIMセッションを含む変数,またはCIMセッションを作成または取得するコマンドを入力してください.例えば, <code>New-CimSession</code>     <code>Get-CimSession</code>cmdlets.詳細については, [about_CimSession.md] を参照してください.</p>
+<pre><code class="language-yaml">Type: Microsoft.Management.Infrastructure.CimSession
+Parameter Sets: ClassNameSessionSet, QueryExpressionSessionSet
+Aliases:
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-クラス名</h3>
+<p>クラスのリストを閲覧するには,タブの完成を使用してブラウザをすることができます.PowersShellは,地元のWMIサーバーからクラスリストを取得し,クラス名リストを提供します.</p>
+<pre><code class="language-yaml">Type: System.String
+Parameter Sets: ClassNameComputerSet, ClassNameSessionSet
+Aliases:
+
+Required: True
+Position: 0
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-コンピュータ名</h3>
+<p>CIM操作を実行したいコンピュータの名前を指定します.完全に資格のあるドメイン名 (FQDN),NetBIOS名,またはIPアドレスを指定できます.</p>
+<p>このパラメータを指定した場合,CMDletは WsMan プロトコルを使用して指定されたコンピュータに一時的なセッションを作成します.このパラメータを指定していない場合は,CMDletはコンポーネントオブジェクトモデル (COM) を使用してローカルシステムで操作を実行します.</p>
+<p>同じコンピュータで複数の操作が実行されている場合,より優れたパフォーマンスのためにCIMセッションを使用して接続してください.</p>
+<pre><code class="language-yaml">Type: System.String
+Parameter Sets: ClassNameComputerSet, QueryExpressionComputerSet
+Aliases: CN, ServerName
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-前へ</h3>
+<p>登録のイベントがローカルコンピュータのセッションに転送されることを示します.このパラメータを使用して,リモートコンピュータまたはリモートセッションでイベントを登録するときに使用します.</p>
+<pre><code class="language-yaml">Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h1>レジスタ・シンインディケーションイベント</h1>
+<h3>- マックストリガーカウンタ</h3>
+<p>指定された時間間に開始された後,サブスクリプションが自動で登録されないことを示すパラメータです.値がゼロに等しいか未満であれば,登録されていないイベントが開始される数回には制限はありません.</p>
+<pre><code class="language-yaml">Type: System.Int32
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-MessageData</h3>
+<p>このイベントのサブスクリプションに関連付けられる追加データを指定します.このパラメータの値は,このサブスクリプションに関連付けられたすべてのイベントの <strong>MessageData</strong> 属性に表示されます.</p>
+<pre><code class="language-yaml">Type: System.Management.Automation.PSObject
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-ネームスペース</h3>
+<p>CIM操作のネームスペースを指定します.デフォルトネームスペースは <strong>root/CIMV2</strong>です.タブの完成を使用してネームスペースのリストを閲覧できます.なぜなら,PowerShellはネームスペースのリストを地元の WMIサーバから入手し,ネームスペースのリストを提供します.</p>
+<pre><code class="language-yaml">Type: System.String
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-OperationTimeoutSec</h3>
+<p>コンピュータからの応答を待機する時間を指定します.デフォルトでは,このパラメータの値は0です.つまり,cmdletはサーバーのデフォルトタイムアウト値を使用します.</p>
+<p><strong>OperationTimeoutSec</strong>パラメータが3分間の強力な接続リテリータイムアウトよりも小さい値に設定されている場合,クライアントが再接続する前にサーバー上の操作が終了するので, <strong>OperationTimeoutSec</strong>パラメータの値よりも長いネットワーク障害が回復できない.</p>
+<pre><code class="language-yaml">Type: System.UInt32
+Parameter Sets: (All)
+Aliases: OT
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-Query</h3>
+<p>CIMサーバーで実行するクエリを指定します.指定された値は二重引用を含んでいる場合<code>"</code>単一の引用文を引用する<code>'</code>逆襲を起こすか?<code>\</code>指定された値はWQL LIKE オペレーターを使用している場合は,次の文字を括弧に囲んで,次の文字から逃れなければなりません.<code>[]</code>:% <code>%</code>強調する<code>_</code>                                                                                                                                   <code>[</code> .</p>
+<pre><code class="language-yaml">Type: System.String
+Parameter Sets: QueryExpressionSessionSet, QueryExpressionComputerSet
+Aliases:
+
+Required: True
+Position: 0
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-QueryDialect</h3>
+<p><strong>Query</strong>パラメータに使用されるクエリ言語を指定します.このパラメータの受け入れ可能な値は: <strong>WQL</strong>または <strong>CQL</strong>です.デフォルト値は <strong>WQL</strong>です.</p>
+<pre><code class="language-yaml">Type: System.String
+Parameter Sets: QueryExpressionSessionSet, QueryExpressionComputerSet
+Aliases:
+
+Required: False
+Position: Named
+Default value: WQL
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-SourceIdentifier について</h3>
+<p>サブスクリプションの名前指定します.指定した名前は,現在のセッションでユニークでなければなりません.デフォルト値はPowerShellによって割り当てられる GUIDです.この値は,サブスクリプションオブジェクトの <strong>SourceIdentifier</strong>属性およびこのサブスクリプションに関連したすべてのイベントオブジェクトの値に表示されます.</p>
+<pre><code class="language-yaml">Type: System.String
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: 1
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-SupportEvent サポートイベント</h3>
+<p>このパラメータを使用すると,現在のサブスクリプションはより複雑なイベント登録メカニズムの一部であり,独立して発見されるべきではない場合です.</p>
+<pre><code class="language-yaml">Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>共通パラメーター</h3>
+<p>このcmdletは,共通パラメータをサポートしています: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable.詳細については, <a href="を参照してください.https://go.microsoft.com/fwlink/?LinkID=113216">about_CommonParameters</a> でした.</p>
+<h2>輸入は</h2>
+<h3>どれもない</h3>
+<p>このcmdletに物体をパイプすることはできません.</p>
+<h2>輸出は</h2>
+<h3>System.Object について</h3>
+<p>このcmdletは <strong>EventSubscription</strong>オブジェクトを返します.</p>
+<h2>NOTES  記事ができました.</h2>
+<h2>関連リンク</h2>
+<p><a href="../Microsoft.Powershell.Utility/Get-Event.md">Get-Event</a> </p>
+<p><a href="../Microsoft.Powershell.Utility/Remove-Event.md">Remove-Event</a> について</p>
+<p><a href="../Microsoft.Powershell.Utility/Unregister-Event.md">Unregister-Event</a> について</p>
+<p><a href="../Microsoft.Powershell.Utility/Write-Host.md">Write-Host</a> </p>
+<p><a href="Get-CimSession.md">Get-CimSession</a> </p>
+<p><a href="New-CimSession.md">New-CimSession</a> </p>
+<p><a href="../Microsoft.PowerShell.Core/About/about_WQL.md">about_WQL</a> </p></section><section class="en-original"><pre class="source-original"># Register-CimIndicationEvent
+
+## SYNOPSIS
+Subscribes to indications using a filter expression or a query expression.
+
+## SYNTAX
+
+### ClassNameComputerSet (Default)
+
+```
+Register-CimIndicationEvent [-Namespace &lt;String&gt;] [-ClassName] &lt;String&gt;
+ [-OperationTimeoutSec &lt;UInt32&gt;] [-ComputerName &lt;String&gt;] [[-SourceIdentifier] &lt;String&gt;]
+ [[-Action] &lt;ScriptBlock&gt;] [-MessageData &lt;PSObject&gt;] [-SupportEvent] [-Forward]
+ [-MaxTriggerCount &lt;Int32&gt;] [&lt;CommonParameters&gt;]
+```
+
+### ClassNameSessionSet
+
+```
+Register-CimIndicationEvent [-Namespace &lt;String&gt;] [-ClassName] &lt;String&gt;
+ [-OperationTimeoutSec &lt;UInt32&gt;] -CimSession &lt;CimSession&gt; [[-SourceIdentifier] &lt;String&gt;]
+ [[-Action] &lt;ScriptBlock&gt;] [-MessageData &lt;PSObject&gt;] [-SupportEvent] [-Forward]
+ [-MaxTriggerCount &lt;Int32&gt;] [&lt;CommonParameters&gt;]
+```
+
+### QueryExpressionSessionSet
+
+```
+Register-CimIndicationEvent [-Namespace &lt;String&gt;] [-Query] &lt;String&gt;
+ [-QueryDialect &lt;String&gt;] [-OperationTimeoutSec &lt;UInt32&gt;] -CimSession &lt;CimSession&gt;
+ [[-SourceIdentifier] &lt;String&gt;] [[-Action] &lt;ScriptBlock&gt;] [-MessageData &lt;PSObject&gt;]
+ [-SupportEvent] [-Forward] [-MaxTriggerCount &lt;Int32&gt;] [&lt;CommonParameters&gt;]
+```
+
+### QueryExpressionComputerSet
+
+```
+Register-CimIndicationEvent [-Namespace &lt;String&gt;] [-Query] &lt;String&gt;
+ [-QueryDialect &lt;String&gt;] [-OperationTimeoutSec &lt;UInt32&gt;] [-ComputerName &lt;String&gt;]
+ [[-SourceIdentifier] &lt;String&gt;] [[-Action] &lt;ScriptBlock&gt;] [-MessageData &lt;PSObject&gt;]
+ [-SupportEvent] [-Forward] [-MaxTriggerCount &lt;Int32&gt;] [&lt;CommonParameters&gt;]
+```
+
+## DESCRIPTION
+
+The `Register-CimIndicationEvent` cmdlet subscribes to indications using an indication class name or
+a query expression. Use the **SourceIdentifier** parameter give a name to the subscription.
+
+This cmdlet returns an **EventSubscription** object. You can use this object to cancel the
+subscription.
+
+## EXAMPLES
+
+### Example 1: Register the events generated by a class
+
+This example subscribes to the events generated by the class named **Win32_ProcessStartTrace**. This
+class raises an event whenever a process starts.
+
+```powershell
+$event = @{
+    ClassName = &#x27;Win32_ProcessStartTrace&#x27;
+    SourceIdentifier = &#x27;ProcessStarted&#x27;
+}
+Register-CimIndicationEvent @event
+Get-Event -SourceIdentifier &quot;ProcessStarted&quot;
+```
+
+The `Get-Event` cmdlet gets the events with **ProcessStarted** subscription. For more information,
+see [Get-Event](../Microsoft.PowerShell.Utility/Get-Event.md).
+
+&gt; [!NOTE]
+&gt; For this example, you must run PowerShell as an Administrator.
+
+### Example 2: Register the events using a query
+
+This example uses a query to subscribe to an event generated whenever there is a change in
+the instance of a class named **Win32_LocalTime**.
+
+```powershell
+$query = &quot;SELECT * FROM CIM_InstModification WHERE TargetInstance ISA &#x27;Win32_LocalTime&#x27;&quot;
+Register-CimIndicationEvent -Query $query -SourceIdentifier &quot;Timer&quot;
+```
+
+### Example 3: Run a script when the event arrives
+
+This example shows how to use an action in response to an event. The variable `$action` holds the
+scriptblock for **Action**, which uses the `$Event` variable to access the event received from CIM.
+
+```powershell
+$action = {
+  $name = $Event.SourceEventArgs.NewEvent.ProcessName
+  $id = $Event.SourceEventArgs.NewEvent.ProcessId
+  Write-Host -Object &quot;New Process Started : Name = $name ID = $id&quot;
+}
+$event = @{
+    ClassName = &#x27;Win32_ProcessStartTrace&#x27;
+    SourceIdentifier = &#x27;ProcessStarted&#x27;
+    Action = $action
+}
+Register-CimIndicationEvent @event
+```
+
+For more information, see
+[Win32_ProcessStartTrace](/previous-versions/windows/desktop/krnlprov/win32-processstarttrace).
+
+### Example 4: Register the events on a remote computer
+
+This example subscribes to events on a remote computer named **Server01**. Events received from the
+CIM server are stored in the event queue in the current PowerShell session and then runs a local
+`Get-Event` to retrieve the events.
+
+```powershell
+$event = @{
+    ClassName = &#x27;Win32_ProcessStartTrace&#x27;
+    SourceIdentifier = &#x27;ProcessStarted&#x27;
+    ComputerName = &#x27;Server01&#x27;
+}
+Register-CimIndicationEvent @event
+Get-Event -SourceIdentifier &quot;ProcessStarted&quot;
+```
+
+## PARAMETERS
+
+### -Action
+
+Specifies the commands that handle the events. The commands specified by this parameter run when an
+event is raised, instead of sending the event to the event queue. Enclose the commands in braces
+(`{}`) to create a scriptblock.
+
+The scriptblock specified with **Action** can include the `$Event`, `$EventSubscriber`, `$Sender`,
+`$SourceEventArgs`, and `$SourceArgs` automatic variables, which provide information about the event
+to the **Action** scriptblock. For more information, see
+[About Automatic Variables](../Microsoft.PowerShell.Core/About/about_Automatic_Variables.md).
+
+```yaml
+Type: System.Management.Automation.ScriptBlock
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: 1
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -CimSession
+
+Runs the command using the specified CIM session. Enter a variable that contains the CIM session, or
+a command that creates or gets the CIM session, such as the `New-CimSession` or `Get-CimSession`
+cmdlets. For more information, see
+[about_CimSession](../Microsoft.PowerShell.Core/About/about_CimSession.md).
+
+```yaml
+Type: Microsoft.Management.Infrastructure.CimSession
+Parameter Sets: ClassNameSessionSet, QueryExpressionSessionSet
+Aliases:
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -ClassName
+
+Specifies the indication class to which you are subscribing. You can use tab completion to browse
+the list of classes, because PowerShell gets a list of classes from the local WMI server to provide
+a list of class names.
+
+```yaml
+Type: System.String
+Parameter Sets: ClassNameComputerSet, ClassNameSessionSet
+Aliases:
+
+Required: True
+Position: 0
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -ComputerName
+
+Specifies the name of the computer on which you want to run the CIM operation. You can specify a
+fully qualified domain name (FQDN), a NetBIOS name, or an IP address.
+
+If you specify this parameter, the cmdlet creates a temporary session to the specified computer
+using the WsMan protocol. If you do not specify this parameter, the cmdlet performs operation on the
+local system using Component Object Model (COM).
+
+If multiple operations are being performed on the same computer, connect using a CIM session for
+better performance.
+
+```yaml
+Type: System.String
+Parameter Sets: ClassNameComputerSet, QueryExpressionComputerSet
+Aliases: CN, ServerName
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Forward
+
+Indicates that events for the subscription are forwarded to the session on the local computer. Use
+this parameter when you are registering for events on a remote computer or in a remote session.
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+# Register-CimIndicationEvent
+
+### -MaxTriggerCount
+
+Parameter to indicate that the subscriber should be auto-unregistered after being triggered for
+specified times. If the value is equal or less than zero, there is no limit on the number of times
+the event can be triggered without being unregistered.
+
+```yaml
+Type: System.Int32
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -MessageData
+
+Specifies any additional data to associate with this event subscription. The value of this parameter
+appears in the **MessageData** property of all the events associated with this subscription.
+
+```yaml
+Type: System.Management.Automation.PSObject
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Namespace
+
+Specifies the namespace for the CIM operation. The default namespace is **root/CIMV2**. You can use
+tab completion to browse the list of namespaces, because PowerShell gets a list of namespaces from
+the local WMI server to provide the list of namespaces.
+
+```yaml
+Type: System.String
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -OperationTimeoutSec
+
+Specifies the amount of time that the cmdlet waits for a response from the computer. By default, the
+value of this parameter is 0, which means that the cmdlet uses the default timeout value for the
+server.
+
+If the **OperationTimeoutSec** parameter is set to a value less than the robust connection retry
+timeout of 3 minutes, network failures that last more than the value of the **OperationTimeoutSec**
+parameter are not recoverable, because the operation on the server times out before the client can
+reconnect.
+
+```yaml
+Type: System.UInt32
+Parameter Sets: (All)
+Aliases: OT
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Query
+
+Specifies a query to run on the CIM server. If the value specified contains double quotes `&quot;`,
+single quotes `&#x27;`, or a backslash `\`, you must escape those characters by prefixing them with the
+backslash character. If the value specified uses the WQL LIKE operator, then you must escape the
+following characters by enclosing them in square brackets `[]`: percent `%`, underscore `_`, or
+opening square bracket `[`.
+
+```yaml
+Type: System.String
+Parameter Sets: QueryExpressionSessionSet, QueryExpressionComputerSet
+Aliases:
+
+Required: True
+Position: 0
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -QueryDialect
+
+Specifies the query language used for the **Query** parameter. The acceptable values for this
+parameter are: **WQL** or **CQL**. The default value is **WQL**.
+
+```yaml
+Type: System.String
+Parameter Sets: QueryExpressionSessionSet, QueryExpressionComputerSet
+Aliases:
+
+Required: False
+Position: Named
+Default value: WQL
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -SourceIdentifier
+
+Specifies a name for the subscription. The name that you specify must be unique in the current
+session. The default value is a GUID that PowerShell assigns. This value appears in the value of the
+**SourceIdentifier** property of the subscriber object and of all event objects associated with this
+subscription.
+
+```yaml
+Type: System.String
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: 1
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -SupportEvent
+
+Indicates that the event subscription is hidden. Use this parameter when the current subscription is
+part of a more complex event registration mechanism and it should not be discovered independently.
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### CommonParameters
+
+This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable,
+-InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose,
+-WarningAction, and -WarningVariable. For more information, see
+[about_CommonParameters](https://go.microsoft.com/fwlink/?LinkID=113216).
+
+## INPUTS
+
+### None
+
+You can&#x27;t pipe objects to this cmdlet.
+
+## OUTPUTS
+
+### System.Object
+
+This cmdlet returns an **EventSubscription** object.
+
+## NOTES
+
+## RELATED LINKS
+
+[Get-Event](../Microsoft.Powershell.Utility/Get-Event.md)
+
+[Remove-Event](../Microsoft.Powershell.Utility/Remove-Event.md)
+
+[Unregister-Event](../Microsoft.Powershell.Utility/Unregister-Event.md)
+
+[Write-Host](../Microsoft.Powershell.Utility/Write-Host.md)
+
+[Get-CimSession](Get-CimSession.md)
+
+[New-CimSession](New-CimSession.md)
+
+[about_WQL](../Microsoft.PowerShell.Core/About/about_WQL.md)</pre></section>

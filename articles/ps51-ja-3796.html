@@ -1,0 +1,554 @@
+<!doctype html><meta charset="utf-8"><section class="jp-official"><h1>名前変更 アイテム</h1>
+<h2>SYNOPSIS PowerShell プロバイダー名空間のアイテムの名前変更.</h2>
+<h2>SYNTAXは,のシンタックスです.</h2>
+<h3>ByPath (デフォルト)</h3>
+<pre><code>Rename-Item [-Path] &lt;String&gt; [-NewName] &lt;String&gt; [-Force] [-PassThru]
+ [-Credential &lt;PSCredential&gt;]  [-WhatIf] [-Confirm] [-UseTransaction]
+ [&lt;CommonParameters&gt;]
+</code></pre>
+<h3>ByLiteralPath について</h3>
+<pre><code>Rename-Item -LiteralPath &lt;String&gt; [-NewName] &lt;String&gt; [-Force] [-PassThru]
+ [-Credential &lt;PSCredential&gt;] [-WhatIf] [-Confirm] [-UseTransaction]
+ [&lt;CommonParameters&gt;]
+</code></pre>
+<h2>記述は,</h2>
+<p><code>Rename-Item</code>cmdlet は指定された項目の名前を変更します.この cmdlet は,変更される項目の内容に影響しません.</p>
+<p>は使えない.<code>Rename-Item</code>項目を移動させ,新しい名前とともにパス指定など,項目を移動させ,名前変更するには,  を使います.<code>Move-Item</code>cmdletです.</p>
+<p>は使えない.<code>Rename-Item</code>既存の項目を置き換えるために,例えば,名前変更など,<code>log_new.txt</code> に<code>log_current.txt</code> いつ いつ<code>log_current.txt</code>既存の項目を置き換えるには,すでに存在している項目を使用します.<code>Move-Item</code>フォースパラメータを表示するcmdlet.</p>
+<h2>例えは</h2>
+<h3>例1: ファイル名変更</h3>
+<p>このコマンドはファイルに名前を変えて <code>daily_file.txt</code> に<code>monday_file.txt</code> .</p>
+<pre><code class="language-powershell">Rename-Item -Path &quot;C:\logfiles\daily_file.txt&quot; -NewName &quot;monday_file.txt&quot;
+</code></pre>
+<h3>例2:項目を改名して移動する</h3>
+<p>は使えない.<code>Rename-Item</code>特定の項目を改名し,移動する.特に,パスが <strong>Path</strong> パラメータで指定されたパスと同一でない限り, <strong>NewName</strong> パラメータの値のためのパスを提供することはできません.そうでなければ,新しい名前のみが許されます.</p>
+<pre><code class="language-powershell">Rename-Item -Path &quot;project.txt&quot; -NewName &quot;D:\archive\old-project.txt&quot;
+</code></pre>
+<pre><code class="language-Output">Rename-Item : can't rename because the target specified represents a path or device name.
+At line:1 char:12
++ Rename-Item &lt;&lt;&lt;&lt;  -Path project.txt -NewName D:\archive\old-project.txt
++ CategoryInfo          : InvalidArgument: (:) [Rename-Item], PS&gt;  Move-Item -Path &quot;project.txt&quot; -De
+stination &quot;D:\archive\old-project.txt&quot;
+</code></pre>
+<p>この例では,  の名前を変えてみました.<code>project.txt</code>現在のディレクトリでファイルを  に書き込む.<code>old-project.txt</code>の内側にある<code>D:\Archive</code>導出で表示されたエラーが結果になります.</p>
+<p>を使って<code>Move-Item</code>cmdletではなく.</p>
+<h3>例3:レジストリキーに名前変更</h3>
+<p>この例では,レジストリキーが <strong>広告</strong>から <strong>マーケティング</strong>に改名されます.コマンドが完了すると,鍵が改名されますが,鍵内のレジストリエントリは変わっていません.</p>
+<pre><code class="language-powershell">Rename-Item -Path &quot;HKLM:\Software\MyCompany\Advertising&quot; -NewName &quot;Marketing&quot;
+</code></pre>
+<h3>例4:複数のファイルに名前変更</h3>
+<p>この例では,すべての  の名前を変えて命名します.<code>*.txt</code>ファイルは現在のディレクトリで,  にファイルを送信します.<code>*.log</code> .</p>
+<pre><code class="language-powershell">Get-ChildItem *.txt
+</code></pre>
+<pre><code class="language-Output">    Directory: C:\temp\files
+
+Mode                LastWriteTime         Length Name
+----                -------------         ------ ----
+-a----        10/3/2019   7:47 AM           2918 Friday.TXT
+-a----        10/3/2019   7:46 AM           2918 Monday.Txt
+-a----        10/3/2019   7:47 AM           2918 Wednesday.txt
+</code></pre>
+<pre><code class="language-powershell">Get-ChildItem *.txt | Rename-Item -NewName { $_.Name -replace '.txt','.log' }
+Get-ChildItem *.log
+</code></pre>
+<pre><code class="language-Output">    Directory: C:\temp\files
+
+Mode                LastWriteTime         Length Name
+----                -------------         ------ ----
+-a----        10/3/2019   7:47 AM           2918 Friday.log
+-a----        10/3/2019   7:46 AM           2918 Monday.log
+-a----        10/3/2019   7:47 AM           2918 Wednesday.log
+</code></pre>
+<p><code>Get-ChildItem</code>cmdlet は,現在のフォルダに,すべてのファイルが,  を含むファイルを入手します.<code>.txt</code>ファイル拡張子を入力すると,パイプをそれらを送ってきます.<code>Rename-Item</code><strong>NewName</strong>の値は,値が <strong>NewName</strong>パラメータに提出される前に実行されるスクリプトブロックです.</p>
+<p>脚本ブロックでは,  が表示されます.<code>$_</code>自動変数は,パイプラインを通るコマンドに触れるたびに各ファイルオブジェクトを表します.スクリプトブロックは,  を使います.<code>-replace</code>各ファイルのファイル拡張子を""で置き換える操作符を<code>.log</code> を使ってマッチングを注意してください.<code>-replace</code>オペレーターはケースセンシティブではありません.</p>
+<h2>パラメータは</h2>
+<h3>- 信用証</h3>
+<p>&gt; [!NOTE] &gt;このパラメータはPowerShellをインストールしたプロバイダーによってサポートされていません.他のユーザーを偽装したり,このcmdletを実行する際に認証を高めるとき,使用 &gt; <a href="../Microsoft.PowerShell.Core/Invoke-Command.md">Invoke-Command</a>.</p>
+<pre><code class="language-yaml">Type: System.Management.Automation.PSCredential
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: Current user
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+</code></pre>
+<h3>-フォース</h3>
+<p>cmdlet は,隠されたファイル,読みのみのファイル,読みのみのアライスまたは変数などの変更できないアイテムを名前変更するように強制します. cmdlet は常時アライスまたは変数を変更することはできません.実装はプロバイダーによって異なる.詳細については, [about_Providers] を参照してください.</p>
+<p><strong>Force</strong>パラメータを使用しても,cmdletはセキュリティ制限を覆したり, <strong>NewName</strong>で指定された目的名で既存のアイテムを置き換えることもできません.</p>
+<pre><code class="language-yaml">Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-リテラルパース</h3>
+<p>単一の引用符で締め付けます.単一の引用符はPowerShellに,文字をエスケープシーケンスのように解釈しないように伝えます.</p>
+<p>詳細については, [about_Quoting_Rules] (Microsoft.Powershell.Core/About/about_Quoting_Rules.md) を参照してください.</p>
+<pre><code class="language-yaml">Type: System.String
+Parameter Sets: ByLiteralPath
+Aliases: PSPath, LP
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+</code></pre>
+<h3>-新名</h3>
+<p>項目の新しい名前を指定します. 名前だけ入力してください. 経路と名前ではなく. 経路と名前ではありません. 経路が<strong>Path</strong>パラメータで指定された経路とは異なる経路を入力した場合, <code>Rename-Item</code>商品の名前変更と移動するには,  を使います.<code>Move-Item</code> .</p>
+<p><strong>NewName</strong>パラメータの値でワイルドカード文字を使用することはできません.複数のファイルに名前指定するには,  を使ってください.<code>-replace</code>公式表現で操作する.  について詳しくはこちらからご覧ください.<code>-replace</code>オペレーター,参照 [about_Comparison_Operators] (../Microsoft.PowerShell.Core/About/about_Comparison_Operators.md).</p>
+<pre><code class="language-yaml">Type: System.String
+Parameter Sets: (All)
+Aliases:
+
+Required: True
+Position: 1
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+</code></pre>
+<h3>-PassThru でした.</h3>
+<p>pipeline にその項目を表示するオブジェクトを返します.デフォルトでは,このcmdlet は出力を生成しません.</p>
+<pre><code class="language-yaml">Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>- 歩道</h3>
+<p>名前変更する項目の経路を指定します.</p>
+<pre><code class="language-yaml">Type: System.String
+Parameter Sets: ByPath
+Aliases:
+
+Required: True
+Position: 0
+Default value: None
+Accept pipeline input: True (ByPropertyName, ByValue)
+Accept wildcard characters: False
+</code></pre>
+<h1>名前変更 アイテム</h1>
+<h3>-UseTransaction 取引を活用する</h3>
+<p>アクティブトランザクションのコマンドが含まれています.このパラメータは,トランザクションが進行中の場合にのみ有効です.詳細については, [about_Transactions.md]を参照してください.</p>
+<pre><code class="language-yaml">Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases: usetx
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-確認</h3>
+<p>cmdletを実行する前に確認を提示します.</p>
+<pre><code class="language-yaml">Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases: cf
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-WhatIf</h3>
+<p>cmdletが実行されなければどうなるかを示しています.</p>
+<pre><code class="language-yaml">Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases: wi
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>共通パラメーター</h3>
+<p>このcmdletは,共通パラメータをサポートしています: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable.詳細については, <a href="を参照してください.https://go.microsoft.com/fwlink/?LinkID=113216">about_CommonParameters</a> でした.</p>
+<h2>輸入は</h2>
+<h3>System.String でした.</h3>
+<p>このcmdletへの経路を含む文字列をパイプすることができます.</p>
+<h2>輸出は</h2>
+<h3>どれもない</h3>
+<p>デフォルトでは,このcmdletは出力返さない.</p>
+<h3>システム管理自動化PSObject</h3>
+<p><strong>PassThru</strong>パラメータを使用すると,このcmdletは,改名されたアイテムを表すオブジェクトを返します.</p>
+<h2>NOTES  記事ができました.</h2>
+<p>Windows PowerShell では,次のアライスがあります.<code>Rename-Item</code>:</p>
+<ul>
+<li>-<code>ren</code> - -<code>rni</code></li>
+</ul>
+<p><code>Rename-Item</code>セッションで利用可能なプロバイダをリストするには,入力してください.<code>Get-PSProvider</code>.詳細については, [about_Providers.md] (.../Microsoft.PowerShell.Core/About/about_Providers.md) を参照してください.</p>
+<h2>関連リンク</h2>
+<p><a href="Clear-Item.md">Clear-Item</a> </p>
+<p><a href="Copy-Item.md">Copy-Item</a> </p>
+<p><a href="Get-ChildItem.md">Get-ChildItem</a> </p>
+<p><a href="Get-Item.md">Get-Item</a> </p>
+<p><a href="Invoke-Item.md">Invoke-Item</a> </p>
+<p><a href="Move-Item.md">Move-Item</a> </p>
+<p><a href="New-Item.md">New-Item</a> </p>
+<p><a href="Remove-Item.md">Remove-Item</a> </p>
+<p><a href="Rename-ItemProperty.md">Rename-ItemProperty</a> </p>
+<p><a href="Set-Item.md">Set-Item</a> </p>
+<p><a href="../Microsoft.PowerShell.Core/About/about_Providers.md">about_Providers</a> について</p></section><section class="en-original"><pre class="source-original"># Rename-Item
+
+## SYNOPSIS
+Renames an item in a PowerShell provider namespace.
+
+## SYNTAX
+
+### ByPath (Default)
+
+```
+Rename-Item [-Path] &lt;String&gt; [-NewName] &lt;String&gt; [-Force] [-PassThru]
+ [-Credential &lt;PSCredential&gt;]  [-WhatIf] [-Confirm] [-UseTransaction]
+ [&lt;CommonParameters&gt;]
+```
+
+### ByLiteralPath
+
+```
+Rename-Item -LiteralPath &lt;String&gt; [-NewName] &lt;String&gt; [-Force] [-PassThru]
+ [-Credential &lt;PSCredential&gt;] [-WhatIf] [-Confirm] [-UseTransaction]
+ [&lt;CommonParameters&gt;]
+```
+
+## DESCRIPTION
+
+The `Rename-Item` cmdlet changes the name of a specified item. This cmdlet does not affect the
+content of the item being renamed.
+
+You can&#x27;t use `Rename-Item` to move an item, such as by specifying a path together with the new
+name. To move and rename an item, use the `Move-Item` cmdlet.
+
+You can&#x27;t use `Rename-Item` to replace an existing item, such as renaming `log_new.txt` to
+`log_current.txt` when `log_current.txt` already exists. To replace an existing item, use the
+`Move-Item` cmdlet with the **Force** parameter.
+
+## EXAMPLES
+
+### Example 1: Rename a file
+
+This command renames the file `daily_file.txt` to `monday_file.txt`.
+
+```powershell
+Rename-Item -Path &quot;C:\logfiles\daily_file.txt&quot; -NewName &quot;monday_file.txt&quot;
+```
+
+### Example 2: Rename and move an item
+
+You can&#x27;t use `Rename-Item` to both rename and move an item. Specifically, you can&#x27;t supply a path
+for the value of the **NewName** parameter, unless the path is identical to the path specified in
+the **Path** parameter. Otherwise, only a new name is permitted.
+
+```powershell
+Rename-Item -Path &quot;project.txt&quot; -NewName &quot;D:\archive\old-project.txt&quot;
+```
+
+```Output
+Rename-Item : can&#x27;t rename because the target specified represents a path or device name.
+At line:1 char:12
++ Rename-Item &lt;&lt;&lt;&lt;  -Path project.txt -NewName D:\archive\old-project.txt
++ CategoryInfo          : InvalidArgument: (:) [Rename-Item], PS&gt;  Move-Item -Path &quot;project.txt&quot; -De
+stination &quot;D:\archive\old-project.txt&quot;
+```
+
+This example attempts to rename the `project.txt` file in the current directory to `old-project.txt`
+in the `D:\Archive` directory. The result is the error shown in the output.
+
+Use the `Move-Item` cmdlet, instead.
+
+### Example 3: Rename a registry key
+
+This example renames a registry key from **Advertising** to **Marketing**. When the command is
+complete, the key is renamed, but the registry entries in the key are unchanged.
+
+```powershell
+Rename-Item -Path &quot;HKLM:\Software\MyCompany\Advertising&quot; -NewName &quot;Marketing&quot;
+```
+
+### Example 4: Rename multiple files
+
+This example renames all the `*.txt` files in the current directory to `*.log`.
+
+```powershell
+Get-ChildItem *.txt
+```
+
+```Output
+    Directory: C:\temp\files
+
+Mode                LastWriteTime         Length Name
+----                -------------         ------ ----
+-a----        10/3/2019   7:47 AM           2918 Friday.TXT
+-a----        10/3/2019   7:46 AM           2918 Monday.Txt
+-a----        10/3/2019   7:47 AM           2918 Wednesday.txt
+```
+
+```powershell
+Get-ChildItem *.txt | Rename-Item -NewName { $_.Name -replace &#x27;.txt&#x27;,&#x27;.log&#x27; }
+Get-ChildItem *.log
+```
+
+```Output
+    Directory: C:\temp\files
+
+Mode                LastWriteTime         Length Name
+----                -------------         ------ ----
+-a----        10/3/2019   7:47 AM           2918 Friday.log
+-a----        10/3/2019   7:46 AM           2918 Monday.log
+-a----        10/3/2019   7:47 AM           2918 Wednesday.log
+```
+
+The `Get-ChildItem` cmdlet gets all the files in the current folder that have a `.txt` file
+extension then pipes them to `Rename-Item`. The value of **NewName** is a scriptblock that runs
+before the value is submitted to the **NewName** parameter.
+
+In the scriptblock, the `$_` automatic variable represents each file object as it comes to the
+command through the pipeline. The scriptblock uses the `-replace` operator to replace the file
+extension of each file with `.log`. Notice that matching using the `-replace` operator is not case
+sensitive.
+
+## PARAMETERS
+
+### -Credential
+
+&gt; [!NOTE]
+&gt; This parameter is not supported by any providers installed with PowerShell. To impersonate another
+&gt; user, or elevate your credentials when running this cmdlet, use
+&gt; [Invoke-Command](../Microsoft.PowerShell.Core/Invoke-Command.md).
+
+```yaml
+Type: System.Management.Automation.PSCredential
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: Current user
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -Force
+
+Forces the cmdlet to rename items that can&#x27;t otherwise be changed, such as hidden or read-only files
+or read-only aliases or variables. The cmdlet can&#x27;t change constant aliases or variables.
+Implementation varies from provider to provider. For more information, see
+[about_Providers](../Microsoft.PowerShell.Core/About/about_Providers.md).
+
+Even using the **Force** parameter, the cmdlet can&#x27;t override security restrictions or replace an
+existing item at the destination name specified by **NewName**.
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -LiteralPath
+
+Specifies a path to one or more locations. The value of **LiteralPath** is used exactly as it is
+typed. No characters are interpreted as wildcards. If the path includes escape characters, enclose
+it in single quotation marks. Single quotation marks tell PowerShell not to interpret any characters
+as escape sequences.
+
+For more information, see
+[about_Quoting_Rules](../Microsoft.Powershell.Core/About/about_Quoting_Rules.md).
+
+```yaml
+Type: System.String
+Parameter Sets: ByLiteralPath
+Aliases: PSPath, LP
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -NewName
+
+Specifies the new name of the item. Enter only a name, not a path and name. If you enter a path that
+differs from the path that is specified in the **Path** parameter, `Rename-Item` generates an error.
+To rename and move an item, use `Move-Item`.
+
+You can&#x27;t use wildcard characters in the value of the **NewName** parameter. To specify a name for
+multiple files, use the `-replace` operator in a regular expression. For more information about the
+`-replace` operator, see
+[about_Comparison_Operators](../Microsoft.PowerShell.Core/About/about_Comparison_Operators.md).
+
+```yaml
+Type: System.String
+Parameter Sets: (All)
+Aliases:
+
+Required: True
+Position: 1
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -PassThru
+
+Returns an object that represents the item to the pipeline. By default, this cmdlet does not
+generate any output.
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Path
+
+Specifies the path of the item to rename.
+
+```yaml
+Type: System.String
+Parameter Sets: ByPath
+Aliases:
+
+Required: True
+Position: 0
+Default value: None
+Accept pipeline input: True (ByPropertyName, ByValue)
+Accept wildcard characters: False
+```
+
+# Rename-Item
+
+### -UseTransaction
+
+Includes the command in the active transaction. This parameter is valid only when a transaction is
+in progress. For more information, see
+[about_Transactions](../Microsoft.PowerShell.Core/About/about_Transactions.md).
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases: usetx
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Confirm
+
+Prompts you for confirmation before running the cmdlet.
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases: cf
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -WhatIf
+
+Shows what would happen if the cmdlet runs.
+The cmdlet is not run.
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases: wi
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### CommonParameters
+
+This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable,
+-InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose,
+-WarningAction, and -WarningVariable. For more information, see
+[about_CommonParameters](https://go.microsoft.com/fwlink/?LinkID=113216).
+
+## INPUTS
+
+### System.String
+
+You can pipe a string that contains a path to this cmdlet.
+
+## OUTPUTS
+
+### None
+
+By default, this cmdlet returns no output.
+
+### System.Management.Automation.PSObject
+
+When you use the **PassThru** parameter, this cmdlet returns an object representing the renamed
+item.
+
+## NOTES
+
+Windows PowerShell includes the following aliases for `Rename-Item`:
+
+- `ren`
+- `rni`
+
+`Rename-Item` is designed to work with the data exposed by any provider. To list the providers
+available in your session, type `Get-PSProvider`. For more information, see
+[about_Providers](../Microsoft.PowerShell.Core/About/about_Providers.md).
+
+## RELATED LINKS
+
+[Clear-Item](Clear-Item.md)
+
+[Copy-Item](Copy-Item.md)
+
+[Get-ChildItem](Get-ChildItem.md)
+
+[Get-Item](Get-Item.md)
+
+[Invoke-Item](Invoke-Item.md)
+
+[Move-Item](Move-Item.md)
+
+[New-Item](New-Item.md)
+
+[Remove-Item](Remove-Item.md)
+
+[Rename-ItemProperty](Rename-ItemProperty.md)
+
+[Set-Item](Set-Item.md)
+
+[about_Providers](../Microsoft.PowerShell.Core/About/about_Providers.md)</pre></section>

@@ -1,0 +1,864 @@
+<!doctype html><meta charset="utf-8"><section class="jp-official"><h1>輸出PSセッション</h1>
+<h2>シノプシスです.</h2>
+<p>別のセッションからコマンドを輸出し,PowerShell モジュールに保存します.</p>
+<h2>SYNTAXは,のシンタックスです.</h2>
+<pre><code>Export-PSSession [-Session] &lt;PSSession&gt; [-OutputModule] &lt;string&gt; [[-CommandName] &lt;string[]&gt;]
+ [[-FormatTypeName] &lt;string[]&gt;] [-Force] [-Encoding &lt;string&gt;] [-AllowClobber]
+ [-ArgumentList &lt;Object[]&gt;] [-CommandType &lt;CommandTypes&gt;] [-Module &lt;string[]&gt;]
+ [-FullyQualifiedModule &lt;ModuleSpecification[]&gt;] [-Certificate &lt;X509Certificate2&gt;]
+ [&lt;CommonParameters&gt;]
+</code></pre>
+<h2>記述は,</h2>
+<p><code>Export-PSSession</code>cmdlet は,ローカルまたはリモートコンピュータの別の PowerShell セッション (PSSession) から,cmdlets,機能,偽名,その他のコマンドタイプを取得し,PowerShell モジュールに保存します.現在のセッションにモジュールからのコマンドを追加するには,  を使ってください.<code>Import-Module</code>cmdletです.</p>
+<p>違って,<code>Import-PSSession</code>命令を他のPSSセッションから現在のセッションに輸入する.<code>Export-PSSession</code>コマンドは現在のセッションに輸入されていないので,モジュールにコマンドを保存します.</p>
+<p>命令を輸出するには,  を使います.<code>New-PSSession</code>輸出したいコマンドを表示するPSSessionを作成するには cmdlet を使用します.<code>Export-PSSession</code>cmdlet でコマンドを輸出する.</p>
+<p>コマンド名衝突を防ぐために,デフォルトで"  "を設定します.<code>Export-PSSession</code>現在のセッションで存在するコマンドを除くすべてのコマンドを輸出する.コマンド名**を用い,輸出するコマンドを指定できます.</p>
+<p><code>Export-PSSession</code>cmdlet は PowerShell の暗黙のリモート機能を使用しています.当時のセッションにコマンドを輸入すると,元セッションまたは発生するコンピュータの類似のセッションで暗黙に実行されます.</p>
+<h2>例えは</h2>
+<h3>例1:PSSessionからコマンドを輸出する</h3>
+<p>この例では,ローカルコンピュータから Server01 コンピュータに新しい PSSession を作成します.現在のセッションに存在するコマンドを除き,すべてのコマンドはローカルコンピュータの Server01 というモジュールに輸出されます.輸出にはコマンドのフォーマットデータが含まれます.</p>
+<pre><code class="language-powershell">$S = New-PSSession -ComputerName Server01
+Export-PSSession -Session $S -OutputModule Server01
+</code></pre>
+<p><code>New-PSSession</code>命令は Server01 コンピュータで PSSession を作成します.PSSession は  ファイルに保存されます.<code>$S</code>変数です.<code>Export-PSSession</code>コマンドは, を輸出します.<code>$S</code>変数のコマンドとフォーマットデータを Server01 モジュールに変換します.</p>
+<h3>例2: Get and Set コマンドを輸出する</h3>
+<p>この例では,すべての を輸出しています.<code>Get</code>そして,<code>Set</code>サーバーからのコマンドです.</p>
+<pre><code class="language-powershell">$credential = Get-Credential -UserName 'exchangeadmin01@contoso.com' -Message 'Enter Exchange credentials'
+$newSession = @{
+    ConnectionUri  = 'https://exchange.microsoft.com/mailbox'
+    Credential     = $credential
+    Authentication = 'Negotiate'
+}
+$S = New-PSSession @newSession
+
+$exportSession = @{
+    Session = $S
+    Module = 'exch*'
+    CommandName = 'Get-*', 'Set-*'
+    FormatTypeName = '*'
+    OutputModule = &quot;$PSHOME\Modules\Exchange&quot;
+    Encoding = 'ascii'
+}
+
+Export-PSSession @exportSession
+</code></pre>
+<p>これらのコマンドは,輸出する  を輸出します.<code>Get</code>そして,<code>Set</code>リモートコンピュータのMicrosoft Exchange Serverのスナップインから,Exchange モジュールへのコマンドを,<code>$PSHOME\Modules</code>コンピュータのディレクトリ. モジュールを  に配置する.<code>$PSHOME\Modules</code>ディレクトリでは,コンピュータのすべてのユーザーにアクセスできます.</p>
+<h3>例3: リモートコンピュータからコマンドを輸出する</h3>
+<p>この例では,リモートコンピュータのPSSessionからCMDを輸出し,ローカルコンピュータのモジュールに保存します.モジュールからのCMDは,当時のセッションに追加され,利用できます.</p>
+<pre><code class="language-powershell">$credential = Get-Credential -UserName 'Server01\User01' -Message 'Enter credentials for Server01'
+$newSession = @{
+    ComputerName = 'Server01'
+    Credential   = $credential
+}
+$S = New-PSSession @newSession
+
+$exportSession = @{
+    Session = $S
+    OutputModule = 'TestCmdlets'
+    Type = 'Cmdlet'
+    CommandName = '*test*'
+    FormatTypeName = '*'
+}
+Export-PSSession @exportSession
+
+Remove-PSSession $S
+Import-Module TestCmdlets
+Get-Help Test*
+Test-Files
+</code></pre>
+<p><code>New-PSSession</code>命令は Server01 コンピュータでPSSセッションを作成し,それを  コンピュータに保存します.<code>$S</code>変数です.<code>Export-PSSession</code>テストから始まる名前を持つcmdletsを,PSSessionから に輸出します.<code>$S</code>ローカルコンピュータのTestCmdlets モジュールに移動します.</p>
+<p><code>Remove-PSSession</code>cmdlet は PSSession を  で削除します.<code>$S</code>このコマンドは,セッションから輸入されたコマンドを使用するために,PSSession がアクティブである必要はありません.<code>Import-Module</code>cmdlet は,TestCmdlets モジュール内の cmdlets を現在のセッションに追加します.このコマンドは,いつでも任意のセッションで実行できます.</p>
+<p><code>Get-Help</code>cmdlet は,テストから始まる名前を持つ cmdlet のための支援を得ます.モジュール内のコマンドが現在のセッションに追加された後,あなたは  を使用できます.<code>Get-Help</code>そして,<code>Get-Command</code>輸入されたコマンドについて学ぶためのcmdletsです.<code>Test-Files</code>cmdlet は Server01 のコンピュータから輸出され,セッションに追加されました.<code>Test-Files</code>cmdlet はコマンドが輸入されたコンピュータのリモートセッションで実行されます.PowerShell は,TestCmdlets モジュールに保存されている情報からセッションを作成します.</p>
+<h3>例4:現在のセッションで輸出とクラバーコマンドを</h3>
+<p>この例では,変数に保存されているコマンドを現在のセッションに輸出します.</p>
+<pre><code class="language-powershell">Export-PSSession -Session $S -AllowClobber -OutputModule AllCommands
+</code></pre>
+<p>このこと <code>Export-PSSession</code>命令は,PSSESSIONからすべてのコマンドとフォーマットデータを輸出します.<code>$S</code><strong>AllowClobber</strong>パラメータには,現在のセッションのコマンドと同じ名前を持つコマンドが含まれています.</p>
+<h3>例5: 閉ざされたPSSセッションからコマンドを輸出する</h3>
+<p>この例では,輸出されたコマンドを作成したPSSessionが閉ざされたときに,特別なオプションで輸出されたコマンドを実行する方法を示しています.</p>
+<p>モジュールが輸入されたときに元のリモートセッションが閉鎖された場合,モジュールが元のコンピュータに接続する任意の開かれたリモートセッションを使用します.元のコンピュータに現在のセッションがない場合,モジュールがセッションを再起動します.</p>
+<p>リモートセッションで特別なオプションを持つ輸出コマンドを実行するには,モジュールを輸入する前に,それらのオプションでリモートセッションを作成する必要があります.<code>New-PSSession</code>※セッションオプションのパラメータを表示するcmdlet</p>
+<pre><code class="language-powershell">$Options = New-PSSessionOption -NoMachineProfile
+$S = New-PSSession -ComputerName Server01 -SessionOption $Options
+Export-PSSession -Session $S -OutputModule Server01
+Remove-PSSession $S
+New-PSSession -ComputerName Server01 -SessionOption $Options
+Import-Module Server01
+</code></pre>
+<p><code>New-PSSessionOption</code>cmdlet は <strong>PSSessionOption</strong> オブジェクトを作成し,そのオブジェクトを  に保存します.<code>$Options</code>変数です.<code>New-PSSession</code>Server01 コンピュータでPSSession を作成するコマンドです. <strong>SessionOption</strong> パラメータは,  に保存されているオブジェクトを使用します.<code>$Options</code>セッションは,  に保存されます.<code>$S</code>変数です.</p>
+<p><code>Export-PSSession</code>cmdlet は PSSession から  にコマンドを輸出します.<code>$S</code>Server01 モジュールへ.<code>Remove-PSSession</code>cmdlet は,PSSession を  の ページから削除します.<code>$S</code>変数です.</p>
+<p><code>New-PSSession</code>cmdlet は Server01 コンピュータに接続する新しい PSSession を作成します. <strong>SessionOption</strong> パラメータは,  に保存されているオブジェクトを使用します.<code>$Options</code>           <code>Import-Module</code>cmdlet は Server01 モジュールからコマンドを輸入する.モジュール内のコマンドは Server01 コンピュータの PSSession で実行されます.</p>
+<h2>パラメータは</h2>
+<h1>輸出PSセッション</h1>
+<h3>- アロコバを許す</h3>
+<p>指定されたコマンドを輸出する,たとえ当時のセッションのコマンドと同じ名前であっても.</p>
+<p>現在のセッションでコマンドと同じ名前でコマンドを輸出した場合,輸出されたコマンドは元のコマンドを隠すか置き換える.詳細については,[about_Command_Precedence] (Microsoft.PowerShell.Core/About/about_Command_Precedence.md) を参照してください.</p>
+<pre><code class="language-yaml">Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-ArgumentList</h3>
+<p>指定された参数 (パラメータ値) を使用した結果,コマンドの変数を輸出します.</p>
+<p>例えば,  の変異品を輸出する場合は<code>Get-Item</code>証明書 (Cert:) ドライブでのコマンドは,PSSession の PSSession で,<code>$S</code>タイプ,タイプ <code>Export-PSSession -Session $S -Command Get-Item -ArgumentList Cert:</code> .</p>
+<pre><code class="language-yaml">Type: System.Object[]
+Parameter Sets: (All)
+Aliases: Args
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-証明書</h3>
+<p>フォーマットファイル (*.Format.ps1xml) やスクリプトモジュールファイル () を署名するために使用されるクライアント証明書を指定します.<code>.psm1</code>) を,そのモジュールで<code>Export-PSSession</code>証明書を含む変数,または証明書を取得するコマンドまたは表現を入力します.</p>
+<p>証明書を見つけるには,  を使ってください.<code>Get-PfxCertificate</code>cmdlet または使用する<code>Get-ChildItem</code>証明書 (Cert:) ドライブでcmdlet.証明書が有効でないか十分な権限がない場合,コマンドが失敗します.</p>
+<pre><code class="language-yaml">Type: System.Security.Cryptography.X509Certificates.X509Certificate2
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-CommandName</h3>
+<p>指定された名前や名前パターンのコマンドのみを輸出する.ワイルドカードは許可されています. <strong>CommandName</strong>またはそのニックネーム, <strong>Name</strong>を使用します.</p>
+<p>デフォルトでは, <code>Export-PSSession</code>PSSessionからすべてのコマンドを輸出する.現在のセッションのコマンドと同じ名前を持つコマンドを除く.これは,コマンドが現在のセッションのコマンドで隠され,または置き換えられるのを防ぐ.他のコマンドを隠したり,置き換えたりするコマンドでさえ,すべてのコマンドを輸出するには <strong>AllowClobber</strong>パラメータを使用します.</p>
+<p><strong>CommandName</strong>パラメータを使用すると,コマンドのフォーマットファイルは, <strong>FormatTypeName</strong>パラメータを使用しない限り輸出されません.同様に, <strong>FormatTypeName</strong>パラメータを使用すると,コマンドは, <strong>CommandName</strong>パラメータを使用しない限り輸出されません.</p>
+<pre><code class="language-yaml">Type: System.String[]
+Parameter Sets: (All)
+Aliases: Name
+
+Required: False
+Position: 2
+Default value: All commands in the session.
+Accept pipeline input: False
+Accept wildcard characters: True
+</code></pre>
+<h3>-CommandType</h3>
+<p>指定されたコマンドオブジェクトの種類のみを輸出します. <strong>CommandType</strong>またはそのニックネーム, <strong>Type</strong> を使います.</p>
+<p>このパラメータの受け入れられる値は以下の通りです.</p>
+<ul>
+<li>-<code>Alias</code>: 現在のセッションですべてのPowerShellのニックネーム. - <code>All</code>: すべてのコマンドタイプ. これは,の等価である.<code>Get-Command -Name *</code>- <code>Application</code>: パワーシェル以外のすべてのファイルは,PATH環境変数 () でリストされているパスでファイルが PowerShell で表示される.<code>$Env:PATH</code>), .txt, .exe,および .dllファイルを含む. - <code>Cmdlet</code>: 現在のセッションのcmdlets.Cmdletはデフォルトです. - <code>Configuration</code>: PowerShellの設定.詳細については, [about_Session_Configurations] (../Microsoft.PowerShell.Core/About/about_Session_Configurations.md) を参照してください. - <code>ExternalScript</code>すべてのものは:<code>.ps1</code>PATH環境変数に記載されているパス内のファイル ()<code>$Env:PATH</code>- ) でした.<code>Filter</code>そして,<code>Function</code>: PowerShell のすべての機能. - <code>Script</code>現在のセッションでアクセス可能なスクリプトファイル. - <code>Workflow</code>PowerShell のワークフロー.詳細については, [about_Workflows] (/powershell/module/PSWorkflow/About/about_Workflows) を参照してください.</li>
+</ul>
+<p>これらの値はフラグベースの数えとして定義されます.このパラメータを使用して複数のフラグを設定するために複数の値を組み合わせることができます.これらの値は,値の配列として<strong>CommandType</strong>パラメータに転送され,またはそれらの値の逗号分離文字列として転送されます. cmdlet は二進式-OR操作を使用して値を組み合わせます.マレイとして値を転送することは最も簡単なオプションであり,値のタブ完了を使用することもできます.</p>
+<pre><code class="language-yaml">Type: System.Management.Automation.CommandTypes
+Parameter Sets: (All)
+Aliases: Type
+Accepted values: Alias, All, Application, Cmdlet, Configuration, ExternalScript, Filter, Function, Script, Workflow
+
+Required: False
+Position: Named
+Default value: All commands in the session.
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-エンコーディング</h3>
+<p>ターゲットファイルにコードが指定される.デフォルト値は です.<code>UTF8</code> .</p>
+<p>このパラメータの受け入れられる値は以下の通りです.</p>
+<ul>
+<li>-<code>ASCII</code>: ASCII (7ビット) キャラクターセットを使用します. - <code>BigEndianUnicode</code>: big-endian byte 順序でUTF-16を使用する. - <code>Default</code>;システムのアクティブコードページに対応するエンコーディングを使用します. - <code>OEM</code>: 現在のシステムOEMコードページに対応するコード化を使用します. - <code>Unicode</code>: UTF-16 を小エンディアンバイト順で使用する. - <code>UTF7</code>: UTF-7 を使用します.<code>UTF8</code>: UTF-8 を使用します.<code>UTF32</code>: little-endian byte 順序でUTF-32 を使用します.</li>
+</ul>
+<pre><code class="language-yaml">Type: System.String
+Parameter Sets: (All)
+Aliases:
+Accepted values: ASCII, BigEndianUnicode, Default, OEM, Unicode, UTF7, UTF8, UTF32
+
+Required: False
+Position: Named
+Default value: UTF8
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-フォース</h3>
+<p>ファイルに読み込みのみ属性がある場合でも,既存の1つまたは複数の出力ファイルをオーバーライブします.</p>
+<pre><code class="language-yaml">Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-FormatTypeName</h3>
+<p>フォーマット指示をMicrosoft .NET Framework の指定されたタイプのみに輸出します.タイプ名を入力します.デフォルトでは, <code>Export-PSSession</code><strong>System.Management.Automation</strong>名空にないすべての .NET Framework タイプのフォーマット指示を輸出します.</p>
+<p>このパラメータの値は,返信するタイプの名前である必要があります.<code>Get-FormatData</code>命令が輸入されているセッションのコマンドです.リモートセッションのフォーマットデータをすべて入手するには,命令を入力します.<code>*</code> .</p>
+<p><strong>FormatTypeName</strong>パラメータを使用すると,コマンドネーム**パラメータを使用しない限り,コマンドは輸出されません.</p>
+<p><strong>CommandName</strong>パラメータを使用すると,コマンドのフォーマットファイルは, <strong>FormatTypeName</strong>パラメータを使用しない限り,輸出されません.</p>
+<pre><code class="language-yaml">Type: System.String[]
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: 3
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h1>輸出PSセッション</h1>
+<h3>-FullyQualifiedModule 完全合格のモジュール</h3>
+<p>値は,モジュール名,完全なモジュール仕様,またはモジュールファイルへのパスである可能性があります.</p>
+<p>値がパスである場合,パスには完全に資格があり,相対性がある.相対的なパスには,使用式を含むスクリプトに比べて解決される.</p>
+<p>値が名前またはモジュール仕様である場合,PowerShellは指定されたモジュールについて <strong>PSModulePath</strong> を検索します.</p>
+<p>モジュール仕様とは,次のキーを持つハッシュテーブルです.</p>
+<ul>
+<li>-<code>ModuleName</code>- <strong>Required</strong> モジュール名前の指定をします. - <code>GUID</code>- ** オプション ** モジュールのGUIDを指定します. - また,以下の3つのキーのうち少なくとも1つを指定する必要があります. - <code>ModuleVersion</code>- モデルの最小の受け入れ可能なバージョンを指定します. - <code>MaximumVersion</code>- モジュールの一番の受け入れられるバージョンを指定します. - <code>RequiredVersion</code>- 模組の正確なバージョンを指定します.これは他のバージョンキーで使用できません.</li>
+</ul>
+<p><strong>Module</strong>のパラメータと同じコマンドで<strong>FullyQualifiedModule</strong>のパラメータを指定することはできません.両パラメータは相互に除外されています.</p>
+<pre><code class="language-yaml">Type: Microsoft.PowerShell.Commands.ModuleSpecification[]
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-モジュール</h3>
+<p>PowerShellの指定されたスナップインとモジュール内のコマンドのみを輸出します.スナップインとモジュール名を入力します.ワイルドカードは許可されていません.</p>
+<p>詳細については,参照してください.<code>Import-Module</code>そして [PSSnapinsについて] (Microsoft.PowerShell.Core/About/about_PSSnapins.md).</p>
+<pre><code class="language-yaml">Type: System.String[]
+Parameter Sets: (All)
+Aliases: PSSnapin
+
+Required: False
+Position: Named
+Default value: All commands in the session.
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-OutputModule</h3>
+<p>によって作成されたモジュールにオプションのパスと名前を指定します.<code>Export-PSSession</code>デフォルトパスは です.<code>$HOME\Documents\WindowsPowerShell\Modules</code>このパラメータは必須です.</p>
+<p>モデルのサブディレクトリまたはそのファイルのうちのいずれかを表示した場合,<code>Export-PSSession</code>既存のファイルをオーバーライティングするには, <strong>Force</strong> パラメータを使用します.</p>
+<pre><code class="language-yaml">Type: System.String
+Parameter Sets: (All)
+Aliases: PSPath, ModuleName
+
+Required: True
+Position: 1
+Default value: $HOME\Documents\WindowsPowerShell\Modules
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-セッション</h3>
+<p>命令が輸出されるPSSessionを指定します.セッションオブジェクトを含む変数またはセッションオブジェクトを得るコマンドを入力します.例えば, <code>Get-PSSession</code>このパラメータは必須です.</p>
+<pre><code class="language-yaml">Type: System.Management.Automation.Runspaces.PSSession
+Parameter Sets: (All)
+Aliases:
+
+Required: True
+Position: 0
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>共通パラメーター</h3>
+<p>このcmdletは,共通パラメータをサポートしています: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable.詳細については, <a href="を参照してください.https://go.microsoft.com/fwlink/?LinkID=113216">about_CommonParameters</a> でした.</p>
+<h2>輸入は</h2>
+<h3>どれもない</h3>
+<p>このcmdletに物体をパイプすることはできません.</p>
+<h2>輸出は</h2>
+<h3>System.IO.FileInfo について</h3>
+<p>このcmdletは,作成したモジュールを含むファイルの一覧を返します.</p>
+<h2>NOTES  記事ができました.</h2>
+<p>Windows PowerShell では,次のアライスがあります.<code>Export-PSSession</code>:</p>
+<ul>
+<li>-<code>epsn</code></li>
+</ul>
+<p><code>Export-PSSession</code>このcmdletを使用するには,コンピュータはリモート処理に設定されている必要があります.詳細については, [about_Remote_Requirements.md]を参照してください.</p>
+<p>You cannot use  は使用できない.<code>Export-PSSession</code>PowerShell プロバイダーに輸出する.</p>
+<p>輸出されたコマンドは,輸出されたPSSセッションで暗示的に実行されます.コマンドをリモートで実行する詳細は,PowerShellによって完全に処理されます.現地コマンドを実行するように,輸出されたコマンドを実行することができます.</p>
+<p><code>Export-ModuleMember</code>輸出するモジュールでPSSsessionに関する情報を記録し保存します.モジュールを輸入する際にコマンドが輸出されたPSSsessionが閉ざされ,同じコンピュータにPSSsessionがアクティブでない場合,モジュール内のコマンドはPSSESSIONを再現しようとします.PSSESSIONを再現しようと試みる場合は失敗します.輸出されたコマンドは実行されません.</p>
+<p>セッション情報<code>Export-ModuleMember</code>モデルのキャプチャとセーブには,セッションオプションが含まれていません.例えば,あなたが指定したセッションオプションは,   で指定されます.<code>$PSSessionOption</code>選択変数または,セッションオプションのパラメータを用いることで,<code>New-PSSession</code>     <code>Enter-PSSession</code>       <code>Invoke-Command</code>cmdlets. モデルのインポート時に元のPSSession が閉ざされた場合,モジュールはそのコンピュータに別のPSSession を使用します.ある場合. 輸入されたコマンドが正しく設定されたセッションで実行できるようにするには,モジュールをインポートする前に,あなたが望むオプションを持つPSSession を作成してください.</p>
+<p>輸出するコマンドを見つけるには, <code>Export-PSSession</code>は利用しています.<code>Invoke-Command</code>cmdlet を実行するには,<code>Get-Command</code>PSSession のコマンドで,コマンドのフォーマットデータを入手し保存するには,  を使います.<code>Get-FormatData</code>そして,<code>Export-FormatData</code>からエラーメッセージが表示される可能性があります.<code>Invoke-Command</code>     <code>Get-Command</code>     <code>Get-FormatData</code>そして,そして,<code>Export-FormatData</code>を走らせるときに<code>Export-PSSession</code>また,命令も<code>Export-PSSession</code> を含むセッションからコマンドを輸出することはできません.<code>Get-Command</code>     <code>Get-FormatData</code>     <code>Select-Object</code>そして,そして,<code>Get-Help</code>cmdlets.</p>
+<p><code>Export-PSSession</code>は利用しています.<code>Write-Progress</code>命令が実行されている間に,進捗バーが表示されます.</p>
+<p>エクスポートされたコマンドは他のリモートコマンドと同じ制限を持っています.例えばNotepadのようなユーザーインターフェイスでプログラムを起動することができません.</p>
+<p>PowerShell プロフィールがPSSessionsで実行されないため,プロフィールがセッションに追加するコマンドは,  に利用できない.<code>Export-PSSession</code>プロフィールからコマンドを輸出するには,  を使います.<code>Invoke-Command</code>命令を輸出する前に,PSSession のプロフィールを手動で実行するコマンドです.</p>
+<p>を構成するモジュール<code>Export-PSSession</code>作成するコマンドはフォーマットデータを輸入していない場合でも,フォーマットファイルを含む可能性があります.コマンドがフォーマットデータを輸入していない場合,作成されたフォーマットファイルはフォーマットデータを含まないでしょう.</p>
+<h2>関連リンク</h2>
+<p><a href="../Microsoft.PowerShell.Core/About/about_Command_Precedence.md">about_Command_Precedence</a> について</p>
+<p><a href="../Microsoft.PowerShell.Core/About/about_PSSessions.md">about_PSSessions</a> について</p>
+<p><a href="../Microsoft.PowerShell.Core/About/about_PSSnapins.md">PSSnapinsについて</a></p>
+<p><a href="../Microsoft.PowerShell.Core/About/about_Remote_Requirements.md">about_Remote_Requirements</a> について</p>
+<p><a href="../Microsoft.PowerShell.Core/インポートモジュール.md">インポートモジュール</a></p>
+<p><a href="Import-PSSession.mdインポート">PSSessionインポート</a></p>
+<p><a href="../Microsoft.PowerShell.Core/Invoke-Command.md">Invoke-Command</a> について</p>
+<p><a href="../Microsoft.PowerShell.Core/New-PSSession.md">New-PSSession</a> </p>
+<p><a href="../Microsoft.PowerShell.Core/New-PSSessionOption.md">New-PSSessionOption</a> </p>
+<p><a href="../Microsoft.PowerShell.Core/Remove-PSSession.mdを削除する">PSSession</a></p></section><section class="en-original"><pre class="source-original"># Export-PSSession
+
+## SYNOPSIS
+
+Exports commands from another session and saves them in a PowerShell module.
+
+## SYNTAX
+
+```
+Export-PSSession [-Session] &lt;PSSession&gt; [-OutputModule] &lt;string&gt; [[-CommandName] &lt;string[]&gt;]
+ [[-FormatTypeName] &lt;string[]&gt;] [-Force] [-Encoding &lt;string&gt;] [-AllowClobber]
+ [-ArgumentList &lt;Object[]&gt;] [-CommandType &lt;CommandTypes&gt;] [-Module &lt;string[]&gt;]
+ [-FullyQualifiedModule &lt;ModuleSpecification[]&gt;] [-Certificate &lt;X509Certificate2&gt;]
+ [&lt;CommonParameters&gt;]
+```
+
+## DESCRIPTION
+
+The `Export-PSSession` cmdlet gets cmdlets, functions, aliases, and other command types from
+another PowerShell session (PSSession) on a local or remote computer and saves them in a PowerShell
+module. To add the commands from the module to the current session, use the `Import-Module` cmdlet.
+
+Unlike `Import-PSSession`, which imports commands from another PSSession into the current session,
+`Export-PSSession` saves the commands in a module. The commands are not imported into the current
+session.
+
+To export commands, use the `New-PSSession` cmdlet to create a PSSession that has the commands that
+you want to export. Then use the `Export-PSSession` cmdlet to export the commands.
+
+To prevent command name conflicts, the default for `Export-PSSession` is to export all commands,
+except for commands that exist in the current session. You can use the **CommandName** parameter to
+specify the commands to export.
+
+The `Export-PSSession` cmdlet uses the implicit remoting feature of PowerShell. When you import
+commands into the current session, they run implicitly in the original session or in a similar
+session on the originating computer.
+
+## EXAMPLES
+
+### Example 1: Export commands from a PSSession
+
+This example creates a new PSSession from the local computer to the Server01 computer. All of the
+commands, except those that exist in the current session, are exported to the module named Server01
+on the local computer. The export includes the formatting data for the commands.
+
+```powershell
+$S = New-PSSession -ComputerName Server01
+Export-PSSession -Session $S -OutputModule Server01
+```
+
+The `New-PSSession` command creates a PSSession on the Server01 computer. The PSSession is stored
+in the `$S` variable. The `Export-PSSession` command exports the `$S` variable&#x27;s commands and
+formatting data into the Server01 module.
+
+### Example 2: Export the Get and Set commands
+
+This example exports all of the `Get` and `Set` commands from a server.
+
+```powershell
+$credential = Get-Credential -UserName &#x27;exchangeadmin01@contoso.com&#x27; -Message &#x27;Enter Exchange credentials&#x27;
+$newSession = @{
+    ConnectionUri  = &#x27;https://exchange.microsoft.com/mailbox&#x27;
+    Credential     = $credential
+    Authentication = &#x27;Negotiate&#x27;
+}
+$S = New-PSSession @newSession
+
+$exportSession = @{
+    Session = $S
+    Module = &#x27;exch*&#x27;
+    CommandName = &#x27;Get-*&#x27;, &#x27;Set-*&#x27;
+    FormatTypeName = &#x27;*&#x27;
+    OutputModule = &quot;$PSHOME\Modules\Exchange&quot;
+    Encoding = &#x27;ascii&#x27;
+}
+
+Export-PSSession @exportSession
+```
+
+These commands export the `Get` and `Set` commands from a Microsoft Exchange Server snap-in on a
+remote computer to an Exchange module in the `$PSHOME\Modules` directory on the local computer.
+Placing the module in the `$PSHOME\Modules` directory makes it accessible to all users of the
+computer.
+
+### Example 3: Export commands from a remote computer
+
+This example exports cmdlets from a PSSession on a remote computer and saves them in a module on
+the local computer. The cmdlets from the module are added to the current session so that they can
+be used.
+
+```powershell
+$credential = Get-Credential -UserName &#x27;Server01\User01&#x27; -Message &#x27;Enter credentials for Server01&#x27;
+$newSession = @{
+    ComputerName = &#x27;Server01&#x27;
+    Credential   = $credential
+}
+$S = New-PSSession @newSession
+
+$exportSession = @{
+    Session = $S
+    OutputModule = &#x27;TestCmdlets&#x27;
+    Type = &#x27;Cmdlet&#x27;
+    CommandName = &#x27;*test*&#x27;
+    FormatTypeName = &#x27;*&#x27;
+}
+Export-PSSession @exportSession
+
+Remove-PSSession $S
+Import-Module TestCmdlets
+Get-Help Test*
+Test-Files
+```
+
+The `New-PSSession` command creates a PSSession on the Server01 computer and saves it in the `$S`
+variable. The `Export-PSSession` command exports the cmdlets whose names begin with Test from the
+PSSession in `$S` to the TestCmdlets module on the local computer.
+
+The `Remove-PSSession` cmdlet deletes the PSSession in `$S` from the current session. This command
+shows that the PSSession need not be active to use the commands that were imported from the
+session. The `Import-Module` cmdlet adds the cmdlets in the TestCmdlets module to the current
+session. The command can be run in any session at any time.
+
+The `Get-Help` cmdlet gets help for cmdlets whose names begin with Test. After the commands in a
+module are added to the current session, you can use the `Get-Help` and `Get-Command` cmdlets to
+learn about the imported commands. The `Test-Files` cmdlet was exported from the Server01 computer
+and added to the session. The `Test-Files` cmdlet runs in a remote session on the computer from
+which the command was imported. PowerShell creates a session from information that is stored in the
+TestCmdlets module.
+
+### Example 4: Export and clobber commands in the current session
+
+This example exports commands that are stored in a variable into the current session.
+
+```powershell
+Export-PSSession -Session $S -AllowClobber -OutputModule AllCommands
+```
+
+This `Export-PSSession` command exports all commands and all formatting data from the PSSession in
+the `$S` variable into the current session. The **AllowClobber** parameter includes commands with
+the same names as commands in the current session.
+
+### Example 5: Export commands from a closed PSSession
+
+This example shows how to run the exported commands with special options when the PSSession that
+created the exported commands is closed.
+
+If the original remote session is closed when a module is imported, the module will use any open
+remote session that connects to the originating computer. If there is no current session to the
+originating computer, the module will reestablish a session.
+
+To run exported commands with special options in a remote session, you must create a remote session
+with those options before you import the module. Use the `New-PSSession` cmdlet with the
+**SessionOption** parameter
+
+```powershell
+$Options = New-PSSessionOption -NoMachineProfile
+$S = New-PSSession -ComputerName Server01 -SessionOption $Options
+Export-PSSession -Session $S -OutputModule Server01
+Remove-PSSession $S
+New-PSSession -ComputerName Server01 -SessionOption $Options
+Import-Module Server01
+```
+
+The `New-PSSessionOption` cmdlet creates a **PSSessionOption** object, and it saves the object in
+the `$Options` variable. The `New-PSSession` command creates a PSSession on the Server01 computer.
+The **SessionOption** parameter uses the object stored in `$Options`. The session is stored in the
+`$S` variable.
+
+The `Export-PSSession` cmdlet exports commands from the PSSession in `$S` to the Server01 module.
+The `Remove-PSSession` cmdlet deletes the PSSession in the `$S` variable.
+
+The `New-PSSession` cmdlet creates a new PSSession that connects to the Server01 computer. The
+**SessionOption** parameter uses the object stored in `$Options`. The `Import-Module` cmdlet
+imports the commands from the Server01 module. The commands in the module are run in the PSSession
+on the Server01 computer.
+
+## PARAMETERS
+
+# Export-PSSession
+
+### -AllowClobber
+
+Exports the specified commands, even if they have the same names as commands in the current
+session.
+
+If you export a command with the same name as a command in the current session, the exported
+command hides or replaces the original commands. For more information, see
+[about_Command_Precedence](../Microsoft.PowerShell.Core/About/about_Command_Precedence.md).
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -ArgumentList
+
+Exports the variant of the command that results from using the specified arguments (parameter
+values).
+
+For example, to export the variant of the `Get-Item` command in the certificate (Cert:) drive in
+the PSSession in `$S`, type `Export-PSSession -Session $S -Command Get-Item -ArgumentList Cert:`.
+
+```yaml
+Type: System.Object[]
+Parameter Sets: (All)
+Aliases: Args
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Certificate
+
+Specifies the client certificate that is used to sign the format files (*.Format.ps1xml) or script
+module files (`.psm1`) in the module that `Export-PSSession` creates. Enter a variable that contains
+a certificate or a command or expression that gets the certificate.
+
+To find a certificate, use the `Get-PfxCertificate` cmdlet or use the `Get-ChildItem` cmdlet in the
+Certificate (Cert:) drive. If the certificate is not valid or does not have sufficient authority,
+the command fails.
+
+```yaml
+Type: System.Security.Cryptography.X509Certificates.X509Certificate2
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -CommandName
+
+Exports only the commands with the specified names or name patterns. Wildcards are permitted. Use
+**CommandName** or its alias, **Name**.
+
+By default, `Export-PSSession` exports all commands from the PSSession except for commands that
+have the same names as commands in the current session. This prevents commands from being hidden or
+replaced by commands in the current session. To export all commands, even those that hide or
+replace other commands, use the **AllowClobber** parameter.
+
+If you use the **CommandName** parameter, the formatting files for the commands are not exported
+unless you use the **FormatTypeName** parameter. Similarly, if you use the **FormatTypeName**
+parameter, no commands are exported unless you use the **CommandName** parameter.
+
+```yaml
+Type: System.String[]
+Parameter Sets: (All)
+Aliases: Name
+
+Required: False
+Position: 2
+Default value: All commands in the session.
+Accept pipeline input: False
+Accept wildcard characters: True
+```
+
+### -CommandType
+
+Exports only the specified types of command objects. Use **CommandType** or its alias, **Type**.
+
+The acceptable values for this parameter are as follows:
+
+- `Alias`: All PowerShell aliases in the current session.
+- `All`: All command types. It is the equivalent of `Get-Command -Name *`.
+- `Application`: All files other than PowerShell files in paths listed in the PATH environment
+  variable (`$Env:PATH`), including .txt, .exe, and .dll files.
+- `Cmdlet`: The cmdlets in the current session. Cmdlet is the default.
+- `Configuration`: A PowerShell configuration. For more information, see
+  [about_Session_Configurations](../Microsoft.PowerShell.Core/About/about_Session_Configurations.md).
+- `ExternalScript`: All `.ps1` files in the paths listed in the PATH environment variable
+  (`$Env:PATH`).
+- `Filter` and `Function`: All PowerShell functions.
+- `Script` Script files accessible in the current session.
+- `Workflow` A PowerShell workflow. For more information, see
+  [about_Workflows](/powershell/module/PSWorkflow/About/about_Workflows).
+
+These values are defined as a flag-based enumeration. You can combine multiple values together to
+set multiple flags using this parameter. The values can be passed to the **CommandType** parameter
+as an array of values or as a comma-separated string of those values. The cmdlet will combine the
+values using a binary-OR operation. Passing values as an array is the simplest option and also
+allows you to use tab-completion on the values.
+
+```yaml
+Type: System.Management.Automation.CommandTypes
+Parameter Sets: (All)
+Aliases: Type
+Accepted values: Alias, All, Application, Cmdlet, Configuration, ExternalScript, Filter, Function, Script, Workflow
+
+Required: False
+Position: Named
+Default value: All commands in the session.
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Encoding
+
+Specifies the type of encoding for the target file. The default value is `UTF8`.
+
+The acceptable values for this parameter are as follows:
+
+- `ASCII`: Uses ASCII (7-bit) character set.
+- `BigEndianUnicode`: Uses UTF-16 with the big-endian byte order.
+- `Default`; Uses the encoding that corresponds to the system&#x27;s active code page.
+- `OEM`: Uses the encoding that corresponds to the system&#x27;s current OEM code page.
+- `Unicode`: Uses UTF-16 with the little-endian byte order.
+- `UTF7`: Uses UTF-7.
+- `UTF8`: Uses UTF-8.
+- `UTF32`: Uses UTF-32 with the little-endian byte order.
+
+```yaml
+Type: System.String
+Parameter Sets: (All)
+Aliases:
+Accepted values: ASCII, BigEndianUnicode, Default, OEM, Unicode, UTF7, UTF8, UTF32
+
+Required: False
+Position: Named
+Default value: UTF8
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Force
+
+Overwrites one or more existing output files, even if the file has the read-only attribute.
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -FormatTypeName
+
+Exports formatting instructions only for the specified Microsoft .NET Framework types. Enter the
+type names. By default, `Export-PSSession` exports formatting instructions for all .NET Framework
+types that are not in the **System.Management.Automation** namespace.
+
+The value of this parameter must be the name of a type that is returned by a `Get-FormatData`
+command in the session from which the commands are being imported. To get all of the formatting
+data in the remote session, type `*`.
+
+If you use the **FormatTypeName** parameter, no commands are exported unless you use the
+**CommandName** parameter.
+
+If you use the **CommandName** parameter, the formatting files for the commands are not exported
+unless you use the **FormatTypeName** parameter.
+
+```yaml
+Type: System.String[]
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: 3
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+# Export-PSSession
+
+### -FullyQualifiedModule
+
+The value can be a module name, a full module specification, or a path to a module file.
+
+When the value is a path, the path can be fully qualified or relative. A relative path is resolved
+relative to the script that contains the using statement.
+
+When the value is a name or module specification, PowerShell searches the **PSModulePath** for the
+specified module.
+
+A module specification is a hashtable that has the following keys.
+
+- `ModuleName` - **Required** Specifies the module name.
+- `GUID` - **Optional** Specifies the GUID of the module.
+- It&#x27;s also **Required** to specify at least one of the three below keys.
+  - `ModuleVersion` - Specifies a minimum acceptable version of the module.
+  - `MaximumVersion` - Specifies the maximum acceptable version of the module.
+  - `RequiredVersion` - Specifies an exact, required version of the module. This can&#x27;t be used with
+    the other Version keys.
+
+You can&#x27;t specify the **FullyQualifiedModule** parameter in the same command as a **Module**
+parameter. the two parameters are mutually exclusive.
+
+```yaml
+Type: Microsoft.PowerShell.Commands.ModuleSpecification[]
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Module
+
+Exports only the commands in the specified PowerShell snap-ins and modules. Enter the snap-in and
+module names. Wildcards are not permitted.
+
+For more information, see `Import-Module` and
+[about_PSSnapins](../Microsoft.PowerShell.Core/About/about_PSSnapins.md).
+
+```yaml
+Type: System.String[]
+Parameter Sets: (All)
+Aliases: PSSnapin
+
+Required: False
+Position: Named
+Default value: All commands in the session.
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -OutputModule
+
+Specifies an optional path and name for the module created by `Export-PSSession`. The default path
+is `$HOME\Documents\WindowsPowerShell\Modules`. This parameter is required.
+
+If the module subdirectory or any of the files that `Export-PSSession` creates already exist, the
+command fails. To overwrite existing files, use the **Force** parameter.
+
+```yaml
+Type: System.String
+Parameter Sets: (All)
+Aliases: PSPath, ModuleName
+
+Required: True
+Position: 1
+Default value: $HOME\Documents\WindowsPowerShell\Modules
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Session
+
+Specifies the PSSession from which the commands are exported. Enter a variable that contains a
+session object or a command that gets a session object, such as a `Get-PSSession` command. This
+parameter is required.
+
+```yaml
+Type: System.Management.Automation.Runspaces.PSSession
+Parameter Sets: (All)
+Aliases:
+
+Required: True
+Position: 0
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### CommonParameters
+
+This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable,
+-InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose,
+-WarningAction, and -WarningVariable. For more information, see
+[about_CommonParameters](https://go.microsoft.com/fwlink/?LinkID=113216).
+
+## INPUTS
+
+### None
+
+You can&#x27;t pipe objects to this cmdlet.
+
+## OUTPUTS
+
+### System.IO.FileInfo
+
+This cmdlet returns a list of files that comprise the module that it created.
+
+## NOTES
+
+Windows PowerShell includes the following aliases for `Export-PSSession`:
+
+- `epsn`
+
+`Export-PSSession` relies on the PowerShell remoting infrastructure. To use this cmdlet, the
+computer must be configured for remoting. For more information, see
+[about_Remote_Requirements](../Microsoft.PowerShell.Core/About/about_Remote_Requirements.md).
+
+You cannot use `Export-PSSession` to export a PowerShell provider.
+
+Exported commands run implicitly in the PSSession from which they were exported. The details of
+running the commands remotely are handled entirely by PowerShell. You can run the exported commands
+just as you would run local commands.
+
+`Export-ModuleMember` captures and saves information about the PSSession in the module that it
+exports. If the PSSession from which the commands were exported is closed when you import the
+module, and there are no active PSSessions to the same computer, the commands in the module attempt
+to recreate the PSSession. If attempts to recreate the PSSession fail, the exported commands will
+not run.
+
+The session information that `Export-ModuleMember` captures and saves in the module does not
+include session options, such as those that you specify in the `$PSSessionOption` preference
+variable or by using the **SessionOption** parameter of the `New-PSSession`, `Enter-PSSession`, or
+`Invoke-Command` cmdlets. If the original PSSession is closed when you import the module, the
+module will use another PSSession to the same computer, if one is available. To enable the imported
+commands to run in a correctly configured session, create a PSSession with the options that you
+want before you import the module.
+
+To find the commands to export, `Export-PSSession` uses the `Invoke-Command` cmdlet to run a
+`Get-Command` command in the PSSession. To get and save formatting data for the commands, it uses
+the `Get-FormatData` and `Export-FormatData` cmdlets. You might see error messages from
+`Invoke-Command`, `Get-Command`, `Get-FormatData`, and `Export-FormatData` when you run an
+`Export-PSSession` command. Also, `Export-PSSession` cannot export commands from a session that
+does not include the `Get-Command`, `Get-FormatData`, `Select-Object`, and `Get-Help` cmdlets.
+
+`Export-PSSession` uses the `Write-Progress` cmdlet to display the progress of the command. You
+might see the progress bar while the command is running.
+
+Exported commands have the same limitations as other remote commands, including the inability to
+start a program with a user interface, such as Notepad.
+
+Because PowerShell profiles are not run in PSSessions, the commands that a profile adds to a
+session are not available to `Export-PSSession`. To export commands from a profile, use an
+`Invoke-Command` command to run the profile in the PSSession manually before exporting commands.
+
+The module that `Export-PSSession` creates might include a formatting file, even if the command
+does not import formatting data. If the command does not import formatting data, any formatting
+files that are created will not contain formatting data.
+
+## RELATED LINKS
+
+[about_Command_Precedence](../Microsoft.PowerShell.Core/About/about_Command_Precedence.md)
+
+[about_PSSessions](../Microsoft.PowerShell.Core/About/about_PSSessions.md)
+
+[about_PSSnapins](../Microsoft.PowerShell.Core/About/about_PSSnapins.md)
+
+[about_Remote_Requirements](../Microsoft.PowerShell.Core/About/about_Remote_Requirements.md)
+
+[Import-Module](../Microsoft.PowerShell.Core/Import-Module.md)
+
+[Import-PSSession](Import-PSSession.md)
+
+[Invoke-Command](../Microsoft.PowerShell.Core/Invoke-Command.md)
+
+[New-PSSession](../Microsoft.PowerShell.Core/New-PSSession.md)
+
+[New-PSSessionOption](../Microsoft.PowerShell.Core/New-PSSessionOption.md)
+
+[Remove-PSSession](../Microsoft.PowerShell.Core/Remove-PSSession.md)</pre></section>

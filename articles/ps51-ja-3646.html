@@ -1,0 +1,294 @@
+<!doctype html><meta charset="utf-8"><section class="jp-official"><h1>について_WMI_Cmdlets</h1>
+<h2>短編説明</h2>
+<p>Windows Management Instrumentation (WMI) と Windows PowerShellに関する背景情報を提供します.</p>
+<h2>長い説明</h2>
+<p>このトピックでは,WMI技術,Windows PowerShell用のWMI cmdlets,WMIベースのリモート,WMI加速器,WMIトラブルシューティングに関する情報を提供しています.このトピックでは,WMIに関するより多くの情報へのリンクも提供されています.</p>
+<h3>WMIについて</h3>
+<p>Windows 管理機器 (WMI) は,Web ベースのエンタープライズ管理 (WBEM) のMicrosoftの実装です.これは,企業環境における管理情報へのアクセスのための標準技術を開発するための業界イニシアチブです.WMI はシステム,アプリケーション,ネットワーク,デバイス,およびその他の管理されたコンポーネントを表示するために,通用情報モデル (CIM) 業界標準を使用しています.CIMは分散管理作業部署 (DMTF) によって開発され,維持されています.WMI を使用してローカルおよびリモートコンピュータの両方を管理することができます.例えば,以下のようにするためにWMI を使用できます:</p>
+<ul>
+<li>リモートコンピュータでプロセスを起動する. - リモートでコンピュータを再起動する. - ローカルまたはリモートコンピュータにインストールされているアプリケーションのリストを取得する. - ローカルまたはリモートコンピュータでWindowsイベントログをクエリする.</li>
+</ul>
+<h3>Windows PowerShellのWMI cmdletsを表示する</h3>
+<p>Windows PowerShellでは,Windows PowerShellでデフォルトで利用可能なcmdletのセットを通じてWMI機能を実装します.これらのcmdletを使用して,ローカルおよびリモートコンピュータを管理するために必要なエンドツーエンドタスクを完了することができます.</p>
+<p>以下のWMIcmdletsは含まれています.</p>
+<p>ダウンロードの仕方 (Cmdlet) 記述 取得 (Get-WmiObject) 取得 (Gets) 可能なクラスや情報について 呼び出し (Calls) 方法 (WMI) を取得 (Gets) します 登録 (Register) を行う (WmiEvent) 活動 (Subscribe) を取得 (Remove) します WmiObject (Delete) を削除 (Delete) します 設定 (Set) WmiInstance (Creates) または WMIクラス (C) のインスタンスを変更します</p>
+<h3>サンプルコマンド</h3>
+<p>次のコマンドは,ローカルコンピュータのBIOS情報を表示します.</p>
+<pre><code class="language-powershell">C:\PS&gt; Get-WmiObject Win32_BIOS | Format-List *
+</code></pre>
+<p>次のコマンドは3つのリモートコンピュータの WinRM サービスに関する情報を表示します.</p>
+<pre><code class="language-powershell">$wql = &quot;select * from Win32_Service where name='WinRM'&quot;
+Get-WmiObject -Query $wql -ComputerName server01, server01, server03
+</code></pre>
+<p>次の複雑なコマンドは,プログラムのすべてのインスタンスを退出します.</p>
+<pre><code class="language-powershell">C:\PS&gt; notepad.exe
+C:\PS&gt; $wql = &quot;select * from Win32_Process where name='notepad.exe'&quot;
+C:\PS&gt; $np = Get-WmiObject -Query $wql
+C:\PS&gt; $np | Remove-WmiObject
+</code></pre>
+<h3>WMIベースのリモッティング</h3>
+<p>WMIを通じてローカルシステムを管理する能力が有用である一方で,WMIを強力な管理ツールにするのは,リモート機能である.WMIはMicrosoftの分散構成要素オブジェクトモデル (DCOM) を利用してシステムに接続し管理する.DCOM接続を許可するために一部のシステムを設定する必要があります.ファイアウォール設定とロックダウンされたDCOM権限により,システムをリモート管理するWMIの能力をブロックできます.</p>
+<h3>WMI型加速器</h3>
+<p>Windows PowerShellにはWMI型加速器が含まれています.これらのWMI型加速器 (ショートカット) は,非タイプ加速器のアプローチよりもWMIオブジェクトへの直接アクセスが可能になります.</p>
+<p>次のタイプの加速器はWMIでサポートされています:</p>
+<p><code>[wmisearcher]</code>- WMIオブジェクトの検索のショートカット.</p>
+<p><code>[wmiclass]</code>- クラス内の静態性と方法へのアクセスのためのショートカット.</p>
+<p><code>[wmi]</code>- クラスの一例を入手するためのショートカットです.</p>
+<p><code>[wmisearcher]</code> の加速器のタイプです.<code>ManagementObjectSearcher</code>ストリングコンストラクタで検索を作成できるので, を操作できます.<code>Get()</code>オン.</p>
+<p>例えば:</p>
+<pre><code class="language-powershell">PS&gt; $s = [wmisearcher]'Select * from Win32_Process where HandleCount &gt; 1000'
+PS&gt; $s.Get() | sort HandleCount | ft HandleCount, __PATH, Name -Auto
+
+Count  __PATH                                              Name
+-----  ------                                              ----
+1105   \\SERVER01\root\cimv2:Win32_Process.Handle=&quot;3724&quot;   PowerShell...
+1132   \\SERVER01\root\cimv2:Win32_Process.Handle=&quot;1388&quot;   winlogon.exe
+1495   \\SERVER01\root\cimv2:Win32_Process.Handle=&quot;2852&quot;   iexplore.exe
+1699   \\SERVER01\root\cimv2:Win32_Process.Handle=&quot;1204&quot;   OUTLOOK.EXE
+1719   \\SERVER01\root\cimv2:Win32_Process.Handle=&quot;1912&quot;   iexplore.exe
+2579   \\SERVER01\root\cimv2:Win32_Process.Handle=&quot;1768&quot;   svchost.exe
+</code></pre>
+<p><code>[wmiclass]</code> の加速器のタイプです.<code>ManagementClass</code>. これは,ローカルまたは絶対的な WMI パートを WMI クラスに移動させ,そのクラスに結合したオブジェクトを返却する文字列コンストラクタを持っています.</p>
+<p>例えば:</p>
+<pre><code class="language-powershell">PS&gt; $c = [wmiclass]&quot;root\CIMV2:Win32_Process&quot;
+PS&gt; $c |fl *
+Name             : Win32_Process
+__GENUS          : 1
+__CLASS          : Win32_Process
+__SUPERCLASS     : CIM_Process
+__DYNASTY        : CIM_ManagedSystemElement
+__RELPATH        : Win32_Process
+__PROPERTY_COUNT : 45
+__DERIVATION     : {CIM_Process, CIM_LogicalElement,
+                   CIM_ManagedSystemElement}
+__SERVER         : SERVER01
+__NAMESPACE      : ROOT\cimv2
+__PATH           : \\SERVER01\ROOT\cimv2:Win32_Process
+</code></pre>
+<p><code>[wmi]</code> の加速器のタイプです.<code>ManagementObject</code>. これは,ローカルまたは絶対的な WMI パスを WMI インスタンスのものへと運び,そのインスタンスのものにつながったオブジェクトを返します.</p>
+<p>例えば:</p>
+<pre><code class="language-powershell">PS&gt; $p = [wmi]'\\SERVER01\root\CIMV2:Win32_Process.Handle=&quot;1204&quot;'
+PS&gt; $p.Name
+OUTLOOK.EXE
+</code></pre>
+<h3>WMIのトラブルシューティングです.</h3>
+<p>以下は,リモートコンピュータに接続しようとすると最も一般的な問題です.</p>
+<p>課題1: リモートコンピュータはオンラインではありません.</p>
+<p>コンピュータがオフラインであれば,WMIを使用して接続できない.以下のエラーメッセージが受信される可能性があります.</p>
+<pre><code>Remote server machine does not exist or is unavailable
+</code></pre>
+<p>このエラーメッセージが受信された場合,コンピュータがオンラインであることを確認し,リモートコンピュータをピンしてみてください.</p>
+<p>問題2位:リモートコンピュータにローカル管理者権限がない.</p>
+<p>WMIを遠隔で利用するには,遠隔コンピュータにローカル管理者権限がある必要があります.そうでなければ,そのコンピュータへのアクセスが拒否されます.</p>
+<p>名前空間セキュリティを確認するには:</p>
+<p>1.スタートをクリックし,右クリックして私のコンピュータをクリックし,管理をクリックします. 2.コンピュータ管理では,サービスとアプリケーションを拡張する,右クリックしてWMI制御をクリックし,プロパティをクリックします. 3.WMI制御プロパティのダイアログボックスでは,セキュリティタブをクリックします.</p>
+<p>問題3 ファイアウォールがリモートコンピュータへのアクセスをブロックしている</p>
+<p>WMIはネットワークを横断するためにDCOM (Distributed COM) とRPC (Remote Procedure Call) プロトコルを使用します.デフォルトでは,多くのファイアウォールはDCOMとRPCトラフィックをブロックします.ファイアウォールはこれらのプロトコルをブロックしている場合は,接続が失敗します.例えば,Microsoft Windows XP Service Pack 2のWindows FirewallはDCOMとWMIを含む未聞ネットワークトラフィックを自動的にブロックするように設定されています.デフォルト設定では,Windows Firewallは受信するWMI要求を拒否し,以下のエラーメッセージを受け取ります.</p>
+<pre><code>Remote server machine does not exist or is unavailable
+</code></pre>
+<h1>について_WMI_Cmdlets</h1>
+<h2>また, を参照してください.</h2>
+<p><a href="xref:Microsoft.PowerShell.Management.Register-WmiEvent">Register-WmiEvent</a> - [Set-WmiInstance] - [xref:Microsoft.PowerShell.Management.Set-WmiInstance) - [Invoke-WmiMethod] - [xref:Microsoft.PowerShell.Management.Invoke-WmiMethod) - [Get-WmiObject] - [xref:Microsoft.PowerShell.Management.Get-WmiObject) - [Remove-WmiInstance] - [xref:Microsoft.PowerShell.Management.Remove-WmiObject] - [About WMI] /windows/windows/windows/windows/windows/windows/wdk/wdk/wdk/w/w/w/w/w/w/w/w/w/w/w/w/w/w/w/w/w/w/w/w/w/w/w/w/w/w/w/w/w/w/w/w/w/w/w/w/w/w/w/w/w/w/w/w/w/w/w/w/w/w/w/w/w/w/w/w/w/w/w/w/w/w/w/w/w/w/w/w/w/w/w/w/w/w/w/w/w/w/w/w/w/w/w/w/w/w/w/w/w/w/w/w/w/w/w/w/w/w/w/w/w/w/w/w/w/w/w/w/w/w/w/w/w/w/w/w/w/w/w/w/w/w/w/w/w/w/w/w/w/w/w/w/w/w/w/w/w/w/w/w/w/w/w/w/w/w/w/w/w/w/w/w/w/w/w/w/</p></section><section class="en-original"><pre class="source-original"># about_WMI_Cmdlets
+
+## Short description
+
+Provides background information about Windows Management Instrumentation (WMI)
+and Windows PowerShell.
+
+## Long description
+
+This topic provides information about WMI technology, the WMI cmdlets for
+Windows PowerShell, WMI-based remoting, WMI accelerators, and WMI
+troubleshooting. This topic also provides links to more information about WMI.
+
+### About WMI
+
+Windows Management Instrumentation (WMI) is the Microsoft implementation of
+Web-Based Enterprise Management (WBEM), which is an industry initiative to
+develop a standard technology for accessing management information in an
+enterprise environment. WMI uses the Common Information Model (CIM) industry
+standard to represent systems, applications, networks, devices, and other
+managed components. CIM is developed and maintained by the Distributed
+Management Task Force (DMTF). You can use WMI to manage both local and remote
+computers. For example, you can use WMI to do the following:
+
+- Start a process on a remote computer.
+- Restart a computer remotely.
+- Get a list of the applications that are installed on a local or remote
+  computer.
+- Query the Windows event logs on a local or remote computer.
+
+### The WMI cmdlets for Windows PowerShell
+
+Windows PowerShell implements WMI functionality through a set of cmdlets that
+are available in Windows PowerShell by default. You can use these cmdlets to
+complete the end-to-end tasks necessary to manage local and remote computers.
+
+The following WMI cmdlets are included.
+
+|Cmdlet           |Description                                   |
+|-----------------|----------------------------------------------|
+|Get-WmiObject    |Gets instances of WMI classes or information  |
+|                 |about the available classes.                  |
+|Invoke-WmiMethod |Calls WMI methods.                            |
+|Register-WmiEvent|Subscribes to a WMI event.                    |
+|Remove-WmiObject |Deletes WMI classes and instances.            |
+|Set-WmiInstance  |Creates or modifies instances of WMI classes. |
+
+### Sample commands
+
+The following command displays the BIOS information for the local computer.
+
+```powershell
+C:\PS&gt; Get-WmiObject Win32_BIOS | Format-List *
+```
+
+The following command displays information about the WinRM service for three
+remote computers.
+
+```powershell
+$wql = &quot;select * from Win32_Service where name=&#x27;WinRM&#x27;&quot;
+Get-WmiObject -Query $wql -ComputerName server01, server01, server03
+```
+
+The following more complex command exits all instances of a program.
+
+```powershell
+C:\PS&gt; notepad.exe
+C:\PS&gt; $wql = &quot;select * from Win32_Process where name=&#x27;notepad.exe&#x27;&quot;
+C:\PS&gt; $np = Get-WmiObject -Query $wql
+C:\PS&gt; $np | Remove-WmiObject
+```
+
+### WMI-based remoting
+
+While the ability to manage a local system through WMI is useful, it is the
+remoting capabilities that make WMI a powerful administrative tool. WMI uses
+Microsoft&#x27;s Distributed Component Object Model (DCOM) to connect to and manage
+systems. You might have to configure some systems to allow DCOM connections.
+Firewall settings and locked-down DCOM permissions can block WMI&#x27;s ability to
+remotely manage systems.
+
+### WMI type accelerators
+
+Windows PowerShell includes WMI type accelerators. These WMI type accelerators
+(shortcuts) allow more direct access to a WMI objects than a non-type
+accelerator approach would allow.
+
+The following type accelerators are supported with WMI:
+
+`[wmisearcher]` - A shortcut for searching for WMI objects.
+
+`[wmiclass]` - A shortcut for accessing the static properties and methods of a class.
+
+`[wmi]` - A shortcut for getting a single instance of a class.
+
+`[wmisearcher]` is a type accelerator for a `ManagementObjectSearcher`. It can
+take a string constructor to create a searcher that you can then do a `Get()`
+on.
+
+For example:
+
+```powershell
+PS&gt; $s = [wmisearcher]&#x27;Select * from Win32_Process where HandleCount &gt; 1000&#x27;
+PS&gt; $s.Get() | sort HandleCount | ft HandleCount, __PATH, Name -Auto
+
+Count  __PATH                                              Name
+-----  ------                                              ----
+1105   \\SERVER01\root\cimv2:Win32_Process.Handle=&quot;3724&quot;   PowerShell...
+1132   \\SERVER01\root\cimv2:Win32_Process.Handle=&quot;1388&quot;   winlogon.exe
+1495   \\SERVER01\root\cimv2:Win32_Process.Handle=&quot;2852&quot;   iexplore.exe
+1699   \\SERVER01\root\cimv2:Win32_Process.Handle=&quot;1204&quot;   OUTLOOK.EXE
+1719   \\SERVER01\root\cimv2:Win32_Process.Handle=&quot;1912&quot;   iexplore.exe
+2579   \\SERVER01\root\cimv2:Win32_Process.Handle=&quot;1768&quot;   svchost.exe
+```
+
+`[wmiclass]` is a type accelerator for `ManagementClass`. This has a string
+constructor that takes a local or absolute WMI path to a WMI class and returns
+an object that is bound to that class.
+
+For example:
+
+```powershell
+PS&gt; $c = [wmiclass]&quot;root\CIMV2:Win32_Process&quot;
+PS&gt; $c |fl *
+Name             : Win32_Process
+__GENUS          : 1
+__CLASS          : Win32_Process
+__SUPERCLASS     : CIM_Process
+__DYNASTY        : CIM_ManagedSystemElement
+__RELPATH        : Win32_Process
+__PROPERTY_COUNT : 45
+__DERIVATION     : {CIM_Process, CIM_LogicalElement,
+                   CIM_ManagedSystemElement}
+__SERVER         : SERVER01
+__NAMESPACE      : ROOT\cimv2
+__PATH           : \\SERVER01\ROOT\cimv2:Win32_Process
+```
+
+`[wmi]` is a type accelerator for `ManagementObject`. This has a string
+constructor that takes a local or absolute WMI path to a WMI instance and
+returns an object that is bound to that instance.
+
+For example:
+
+```powershell
+PS&gt; $p = [wmi]&#x27;\\SERVER01\root\CIMV2:Win32_Process.Handle=&quot;1204&quot;&#x27;
+PS&gt; $p.Name
+OUTLOOK.EXE
+```
+
+### WMI troubleshooting
+
+The following problems are the most common problems that might occur when you
+try to connect to a remote computer.
+
+Problem 1: The remote computer is not online.
+
+If a computer is offline, you will not be able to connect to it by using WMI.
+You may receive the following error message:
+
+```
+Remote server machine does not exist or is unavailable
+```
+
+If you receive this error message, verify that the computer is online. Try to
+ping the remote computer.
+
+Problem 2: You do not have local administrator rights on the remote computer.
+
+To use WMI remotely, you must have local administrator rights on the remote
+computer. If you do not, access to that computer will be denied.
+
+To verify namespace security:
+
+1. Click Start, right-click My Computer, and then click Manage.
+2. In Computer Management, expand Services and Applications, right-click WMI
+   Control, and then click Properties.
+3. In the WMI Control Properties dialog box, click  the Security tab.
+
+Problem 3: A firewall is blocking access to the remote computer.
+
+WMI uses the DCOM (Distributed COM) and RPC (Remote Procedure Call) protocols
+to traverse the network. By default, many firewalls block DCOM and RPC
+traffic. If your firewall is blocking these protocols, your connection will
+fail. For example, Windows Firewall in Microsoft Windows XP Service Pack 2 is
+configured to automatically block all unsolicited network traffic, including
+DCOM and WMI. In its default configuration, Windows Firewall rejects an
+incoming WMI request, and you receive the following error message:
+
+```
+Remote server machine does not exist or is unavailable
+```
+
+# about_WMI_Cmdlets
+
+## See also
+
+- [Register-WmiEvent](xref:Microsoft.PowerShell.Management.Register-WmiEvent)
+- [Set-WmiInstance](xref:Microsoft.PowerShell.Management.Set-WmiInstance)
+- [Invoke-WmiMethod](xref:Microsoft.PowerShell.Management.Invoke-WmiMethod)
+- [Get-WmiObject](xref:Microsoft.PowerShell.Management.Get-WmiObject)
+- [Remove-WmiObject](xref:Microsoft.PowerShell.Management.Remove-WmiObject)
+- [About WMI](/windows/win32/wmisdk/about-wmi)
+- [WMI Troubleshooting](/windows/win32/wmisdk/wmi-troubleshooting)</pre></section>

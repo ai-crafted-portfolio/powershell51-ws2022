@@ -1,0 +1,861 @@
+<!doctype html><meta charset="utf-8"><section class="jp-official"><h1>誤り_処理について</h1>
+<h2>短編説明</h2>
+<p>PowerShellのエラーの種類と,それらを処理するメカニズムを記述します.</p>
+<h2>長い説明</h2>
+<p>PowerShellで3つのエラーカテゴリを区別する:</p>
+<ul>
+<li>文末の誤り - 文末の誤り - 脚本末の誤り</li>
+</ul>
+<p>違いを理解することは,信頼できるスクリプトやモジュールを書くのに不可欠です.各カテゴリには異なるデフォルト行動があり,異なる処理技術が必要だからです.</p>
+<p>さらに,外部 (ネイティブ) プログラムも出口コードを通じて故障を報告し,PowerShellが独自のエラーシステムから別々に追跡する.</p>
+<h2>誤差の種類</h2>
+<h3>終末性でないエラーです.</h3>
+<p>終止しないエラーが問題が発生したと報告するが,パイプラインを停止しない.コマンドは次の入力オブジェクトを処理し続けます.終止しないエラーは:によって生成されます.</p>
+<ul>
+<li>
+<ul>
+<li><code>Write-Error</code>cmdlet - のcmdlet<code>$PSCmdlet.WriteError()</code>進階関数における方法 - 単一の入力オブジェクトで復元可能な失敗を遭遇するCmdlets</li>
+</ul>
+</li>
+</ul>
+<p>デフォルトでは,PowerShell でエラーメッセージが表示され,実行が続きます.</p>
+<pre><code class="language-powershell">
+# Non-terminating error: the pipeline continues after the failure
+'file1.txt', 'noSuchFile.txt', 'file3.txt' | ForEach-Object {
+    Get-Content $_ -ErrorAction Continue
+}
+</code></pre>
+<p>この例では,<code>Get-Content</code>終末性エラーが報告されました.<code>noSuchFile.txt</code>そして,処理を続けます.<code>file3.txt</code> .</p>
+<p>終止しないエラーが触発しない<code>catch</code>    <code>trap</code>デフォルトで.</p>
+<h3>声明終結のエラー</h3>
+<p>ステートメントを終了するエラーは,現在のステートメント (パイプライン) を実行するのを止め,スクリプト内の次のステートメントで実行が続きます.ステートメントを終了するエラーは,以下によって生成されます:</p>
+<ul>
+<li>
+<ul>
+<li><code>$PSCmdlet.ThrowTerminatingError()</code>進んだ関数とコンパイルされたcmdletsのメソッド - などのエンジンエラー<code>CommandNotFoundException</code>(存在しないコマンドを呼び出す) と<code>ParameterBindingException</code>(無効パラメータ引数) - .NET 方法が例外を投げかける呼び出し,例えば <code>[int]::Parse('abc')</code></li>
+</ul>
+</li>
+</ul>
+<pre><code class="language-powershell">
+# Statement-terminating error: Get-Item fails, but the next statement runs
+Get-Item -Path 'C:\NoSuchFile.txt'
+Write-Output 'This still runs'
+</code></pre>
+<p>声明を終了するエラーは, によって捕らえることができる.<code>try/catch</code>そして,<code>trap</code> .</p>
+<p>&gt; [!NOTE] &gt; <code>.ThrowTerminatingError()</code>は相談しない.<code>-ErrorAction</code>&gt; (パラメータを除く場合)<code>Break</code>值がデバッグに入力される).しかし, &gt; <code>$ErrorActionPreference</code><em>does</em> は,エンジン内の声明レベルハンドラーを通じて声明を終了するエラーに適用されます.例えば, &gt; <code>$ErrorActionPreference = 'SilentlyContinue'</code>文本が次の文本で続行するように,文本終結エラーを削除することができます.<code>-ErrorAction</code>詳細については,見てください &gt; [$ErrorActionPreference asymmetry][05].</p>
+<h3>脚本終結のエラー</h3>
+<p>スクリプトを終了させるエラーが,コールスタック全体を解き放つ.エラーが""に捕まえる限り,実行は完全に停止します.<code>try/catch</code>ブロックまたはブロック<code>trap</code>脚本終結エラーは,以下によって生成されます:</p>
+<ul>
+<li>
+<ul>
+<li><code>throw</code>キーワード解析エラー (脚本がコンパイルされないようにする文法エラー) - キーワード解析エラーが終了しない <strong>escalated</strong> by <code>-ErrorAction Stop</code>     <code>$ErrorActionPreference = 'Stop'</code>詳細については, [エスカレーションの仕組み] を参照してください. - 特定の重要なエンジン故障</li>
+</ul>
+</li>
+</ul>
+<pre><code class="language-powershell">
+# Script-terminating error: throw unwinds the call stack
+function Test-Throw {
+    throw 'Critical failure'
+    Write-Output 'This never runs'
+}
+
+Test-Throw
+Write-Output 'This never runs either (unless caught)'
+</code></pre>
+<p><code>throw</code>キーワードは,デフォルトで脚本終結エラーを生成します.しかし,<code>$ErrorActionPreference</code><em>can</em> suppress  を押すことができます.<code>throw</code>に設定されたとき<code>SilentlyContinue</code>     <code>Ignore</code>で高度な関数を呼び出すとき.<code>-ErrorAction SilentlyContinue</code>設定は,スコープローカルに変換されます.<code>$ErrorActionPreference</code>値も抑制するので,その値も抑制します.<code>throw</code>その機能の内部にある.</p>
+<p>&gt; [!NOTE] &gt; とさえも<code>$ErrorActionPreference = 'Ignore'</code> ,a <code>throw</code>that's suppressed &gt; still は,  のエントリを記録しています.<code>$Error</code>           <code>Ignore</code>value only prevents  値だけが防止する<code>$Error</code>&gt;非終結性エラーの記録.</p>
+<p>発音終了の誤差は,すべての脚本とその呼び出し者 (callers) を停止します.両方とも, によって捕らえることができます.<code>try/catch</code> .</p>
+<h3>プログラム外部のエラー</h3>
+<p>外部 (ネイティブ) プログラムがPowerShellのエラーシステムに直接参加しないため,非ゼロの出口コードでエラーを報告する.<code>$LASTEXITCODE</code>自動変数です.</p>
+<pre><code class="language-powershell">git clone https://example.com/nonexistent.git 2&gt;$null
+if ($LASTEXITCODE -ne 0) {
+    Write-Error &quot;git failed with exit code $LASTEXITCODE&quot;
+}
+</code></pre>
+<p>デフォルトでは,ネイティブプログラムからゼロでない出口コード:</p>
+<ul>
+<li>セット<code>$?</code> に<code>$false</code>- 発生しないか?<code>ErrorRecord</code>     <code>$Error</code>- 触発機は触発機は触発機は触発機は触発機は触発機は触発機は触発機は触発機は触発機は触発機は触発機は触発機は触発機は触発機は触発機は触発機は触発機は触発機は触発機は触発機は触発機は触発機は触発機は触発機は触発機は触発機は触発機は触発機は触発機は触発機は触発機は触発機は触発機は触発機は触発機は触発しない<code>catch</code>    <code>trap</code></li>
+</ul>
+<p>PowerShell 7.3 で実験的な優先順位変数を追加しました.<code>$PSNativeCommandUseErrorActionPreference</code>安定した機能となった7.4で,この変数を  に設定すると,<code>$true</code>メッセージは特定の出口コード (a ) を表示する <strong>non-terminating error</strong> を発信するため,ゼロでない出口コードが出出出されます.<code>NativeCommandExitException</code>このエラーは尊重します.<code>$ErrorActionPreference</code>設定して,  に設定します.<code>Stop</code>誤差をスクリプトを終了させる誤差に促し,誤差を捕まえる可能性があります.<code>try</code>  / / / / / / / / / / /<code>catch</code> .</p>
+<h2>エラーステート変数</h2>
+<p>PowerShellでは,現在のエラー状態を反映する複数の自動変数を保持しています.</p>
+<h3><code>$?</code></h3>
+<p>含有する内容です.<code>$true</code>最後の操作が成功し,<code>$false</code>誤り (非終結または終結) を発生させた場合.ネイティブコマンドでは,<code>$?</code>出口コードに基づいて設定されます: <code>$true</code>出口コードの表示について<code>0</code>     <code>$false</code>違うと.</p>
+<pre><code class="language-powershell">Get-Item -Path 'C:\NoSuchFile.txt' 2&gt;$null
+$?  # False
+</code></pre>
+<h3><code>$Error</code></h3>
+<p><code>ArrayList</code>記録したエラーが最近,最も最近のエラーがインデックスで記録されている.<code>0</code>リストは, まで持っています.<code>$MaximumErrorCount</code>エントリー (デフォルト256) </p>
+<p>終了するエラーはすべて,  に追加されます.<code>$Error</code>. 終結エラーのため, <code>Ignore</code>画面を削除するが,それでもエラーを記録する.<code>$Error</code>終止しないものはすべて  に追加されます.<code>$Error</code>    否か<code>-ErrorAction Ignore</code>終止しないエラーで使用され,表示と記録の両方を防ぐ.</p>
+<h3><code>$LASTEXITCODE</code></h3>
+<p>実行した最後のネイティブプログラムの出口コードが含まれています. の値です.<code>0</code>慣習的に成功を表示する.ゼロ以外の任意の値は失敗を表示する.この変数はPowerShellのcmdletエラーの影響を受けていない.</p>
+<h2>制御エラー行動</h2>
+<h1>誤り_処理について</h1>
+<h3><code>-ErrorAction</code>共通のパラメータ</h3>
+<p><code>-ErrorAction</code>共通パラメータが覆われている.<code>$ErrorActionPreference</code>PowerShellがそのコマンドから発生する<strong>非終結</strong>エラーにどのように反応するか制御する.</p>
+<p>価値の行動や行動が重要だ.<code>Continue</code>誤りを表示して (デフォルト) を継続します.<code>SilentlyContinue</code>◎表示を抑制し,追加する<code>$Error</code>続けてください.<code>Ignore</code>画面を押して,追加しないようにする.<code>$Error</code>◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎<code>Stop</code>終結エラーにエスカレートする (エスカレートがどのように機能するか参照)<code>Inquire</code>ユーザに決定を促す.<code>Break</code>解消器を入力します.</p>
+<p><code>-ErrorAction</code>によって発生するエラーの行動を変更しない.<code>$PSCmdlet.ThrowTerminatingError()</code>これらのエラーは,呼び手の好みに関係なく,常に声明を終了します.</p>
+<h3><code>$ErrorActionPreference</code>変数変数</h3>
+<p><code>$ErrorActionPreference</code>優先順位変数は,現在の範囲と子供範囲のすべてのコマンドに適用されます.  と同じ値を受け入れます.<code>-ErrorAction</code> .</p>
+<pre><code class="language-powershell">$ErrorActionPreference = 'Stop'
+
+# All non-terminating errors in this scope now become terminating
+Write-Error 'This now throws'   # Generates ActionPreferenceStopException
+</code></pre>
+<p>いつ<code>-ErrorAction</code>命令で指定されているので,優先順位を  に優先します.<code>$ErrorActionPreference</code>その命令のために.</p>
+<h3>拡大はどのように機能する?</h3>
+<p>いつ<code>-ErrorAction Stop</code>    <code>$ErrorActionPreference = 'Stop'</code>実際,PowerShellで,次のメカニズムを使用して,非終結エラーを終結エラーに変換します:</p>
+<p>1.cmdletが呼びかける<code>WriteError()</code>1.エンジンで有効性をチェックします <code>ErrorAction</code>1. 優先順位が であるため.<code>Stop</code>引擎が動いていると,エンジンが動いていると,エンジンが動いていると,エンジンが動いていると,エンジンが動いていると,エンジンが動いていると,エンジンが動いていると,エンジンが動いていると,エンジンが動いていると,エンジンが動いていると,エンジンが動いていると,エンジンが動いていると,エンジンが動いていると,エンジンが動いていると,エンジンが動いていると,エンジンが動いていると,エンジンが動いていると,エンジンが動いていると,エンジンが動いていると,エンジンが動いていると,エンジンが動いていると,エンジンが動いていると,エンジンが動いていると,エンジンが動いていると,エンジンが動いていると,エンジンが動いていると,エンジンが動いていると,エンジンが動いていると,エンジンが動いていると,エンジンが動いていると,エンジンが動いていると,エンジンが動いていると,エンジンが動いていると,エンジンが動いていると,エンジンが動いていると,エンジンが動いていると,エンジンが動いていると,エンジンが動いていると,エンジンが動いていると,エンジンが動いていると,<code>ActionPreferenceStopException</code>元のエラー記録を巻く. 1. によって捕まった場合<code>catch</code>初期エラー情報は,  を通してアクセスできます.<code>$_.Exception.ErrorRecord</code> .</p>
+<p>エスカレートエラーの範囲は,文脈に依存します.</p>
+<ul>
+<li>未先端のスクリプト,機能,スクリプトブロックで設定する<code>$ErrorActionPreference = 'Stop'</code>誤りはコールスタックに広がる. - <strong>Advanced</strong>機能とスクリプトブロック (の場合は) で.<code>[CmdletBinding()]</code>),エラーは <strong>statement-terminating</strong> に残る.実行は,呼び出しの後次の声明で続きます. - Passing <code>-ErrorAction Stop</code>進階関数への設定は,設定の効果と同じです.<code>$ErrorActionPreference = 'Stop'</code>内部にあるからです.<code>-ErrorAction</code>範囲のローカルに翻訳します.<code>$ErrorActionPreference</code>値.</li>
+</ul>
+<h3>エスカレーションの例</h3>
+<ul>
+<li>
+<p>非先進:脚本終結 ('after' does NOT print)</p>
+<p><code>powershell
+  &amp; {
+  param()
+  $ErrorActionPreference = 'Stop'
+  1/0  # Divide by zero error
+  } 2&gt;$null
+  'after'</code></p>
+</li>
+<li>
+<p>先進:声明を終結する ('after' DOES print)</p>
+<p><code>powershell
+  &amp; {
+  [CmdletBinding()]
+  param()
+  $ErrorActionPreference = 'Stop'
+  1/0  # Divide by zero error
+  } 2&gt;$null
+  'after'</code></p>
+</li>
+</ul>
+<p>なし -<code>-ErrorAction Stop</code>: non-terminating, catch does not run</p>
+<pre><code>```powershell
+</code></pre>
+<p>try {
+      Write-Error 'This is non-terminating'
+      Write-Output 'Execution continues'
+  } catch {
+      Write-Output "Caught: $_"   # Not reached
+  }
+  ```</p>
+<ul>
+<li>
+<p>と -<code>-ErrorAction Stop</code>: 拡大して終了する</p>
+<p><code>powershell
+  try {
+  Write-Error 'This becomes terminating' -ErrorAction Stop
+  } catch {
+  Write-Output "Caught: $_"   # Reached
+  }</code></p>
+</li>
+</ul>
+<p>拡大したエラーは,元の例外タイプによって捉えられる.エンジンはその  を解き放つ.<code>ActionPreferenceStopException</code>基本の例外を特定するには:</p>
+<pre><code class="language-powershell">try {
+    Get-Item -Path 'C:\NoSuchFile.txt' -ErrorAction Stop
+} catch [System.Management.Automation.ItemNotFoundException] {
+    Write-Output &quot;File not found: $($_.Exception.Message)&quot;
+}
+</code></pre>
+<h3><code>$ErrorActionPreference</code>失称性</h3>
+<p><code>-ErrorAction</code>参数とパラメータを<code>$ErrorActionPreference</code>終結エラーに対して異なる行動をとる.この不対称性を理解することは重要です:</p>
+<ul>
+<li>
+<p>-<code>-ErrorAction</code>終了しないエラーにしか影響しません.<code>$PSCmdlet.ThrowTerminatingError()</code> , <code>-ErrorAction</code>パラメータは無視されます (を除く).<code>Break</code>誤差は常に投げ出されます.</p>
+</li>
+<li>
+<p>-<code>$ErrorActionPreference</code><strong>both</strong> non-terminating and statement-terminating errorsを影響する.エンジン内の声明レベルエラーハンドラーは,<code>$ErrorActionPreference</code>(このではない)<code>-ErrorAction</code>値が であるときに,ステートメントを終了するエラーを削除できます.<code>SilentlyContinue</code>    <code>Ignore</code> .</p>
+</li>
+</ul>
+<pre><code class="language-powershell">function Test-Asymmetry {
+    [CmdletBinding()]
+    param()
+    $er = [System.Management.Automation.ErrorRecord]::new(
+        [System.InvalidOperationException]::new('test error'),
+        'TestError',
+        [System.Management.Automation.ErrorCategory]::InvalidOperation,
+        $null
+    )
+    $PSCmdlet.ThrowTerminatingError($er)
+}
+
+# -ErrorAction SilentlyContinue does NOT suppress the error:
+Test-Asymmetry -ErrorAction SilentlyContinue   # Error is still thrown
+
+# $ErrorActionPreference DOES suppress the error:
+$ErrorActionPreference = 'SilentlyContinue'
+Test-Asymmetry   # Error is silently suppressed, script continues
+$ErrorActionPreference = 'Continue'
+</code></pre>
+<p>&gt; [!IMPORTANT] &gt; <code>$ErrorActionPreference</code>&gt;  を持っているエラーを削除することはできません.<code>SuppressPromptInInterpreter</code> に設定する<code>true</code>これらの場合は常に,優先順位変数に関係なく &gt; 拡散します.このタイプのエラーの例には,以下が含まれます: &gt; &gt; - <code>ActionPreferenceStopException</code>から<code>-ErrorAction Stop</code>拡張 &gt; - PowerShell クラスメソッド内のエラー &gt; - <code>PipelineStoppedException</code></p>
+<h2>誤りを処理する</h2>
+<h3><code>try/catch/finally</code></h3>
+<p>活用する<code>try/catch/finally</code>ステートメント終了およびスクリプト終了のエラーを処理する. 内でエラーが発生すると,<code>try</code>ブロック,PowerShellで一致する検索をします.<code>catch</code>ブロックです.<code>finally</code>ブロックは常に実行されますが,エラーが発生したかどうかにかかわらず.</p>
+<pre><code class="language-powershell">try {
+    $result = Get-Content -Path 'data.txt' -ErrorAction Stop
+}
+catch [System.Management.Automation.ItemNotFoundException] {
+    Write-Warning 'Data file not found, using defaults.'
+    $result = 'default'
+}
+catch {
+    Write-Warning &quot;Unexpected error: $_&quot;
+}
+finally {
+    Write-Verbose 'Cleanup complete.' -Verbose
+}
+</code></pre>
+<p>内部で<code>try</code>エンジンは内部フラグを設定し,終了しないエラーを引き起こし, によって悪化する.<code>-ErrorAction Stop</code>    <code>$ErrorActionPreference = 'Stop'</code>に伝達する.<code>catch</code>これは,特殊なケースではなく,デザインされた行動です.</p>
+<p>完全な構文の詳細については,[about_Try_Catch_Finally][12] を参照してください.</p>
+<h1>誤り_処理について</h1>
+<h3><code>trap</code></h3>
+<p><code>trap</code>範囲レベルでの終了エラーを処理する声明です. 範囲内のどこでもエラーが発生すると,  は 範囲の終了時に  を処理します.<code>trap</code>ブロックランです.</p>
+<ul>
+<li><strong>Default</strong> (ノー )<code>break</code>    <code>continue</code>):エラーが表示され,エラーの原因となった言葉の後,次の記述で実行が続きます. - <strong><code>continue</code></strong> in the trap: エラーメッセージを削除し,次の文で再開します. - <strong><code>break</code></strong> 罠:エラーは親の範囲に広がります.</li>
+</ul>
+<pre><code class="language-powershell">trap [System.Management.Automation.CommandNotFoundException] {
+    Write-Warning &quot;Command not found: $($_.TargetObject)&quot;
+    continue
+}
+
+NonsenseCommand   # Trap fires, execution continues
+Write-Output 'This runs because the trap used continue'
+</code></pre>
+<p>完全な構文の詳細については,[about_Trap][11]. を参照してください.</p>
+<h2>機能やスクリプトのエラーを報告する</h2>
+<p>機能やスクリプトを書くときは,故障の重度の相応しいエラー報告メカニズムを選択してください.</p>
+<h3>非終結 - 使用する<code>Write-Error</code></h3>
+<p>活用する<code>Write-Error</code>機能が他の入力処理を継続できる時です.これは複数のオブジェクトを処理し,個々のアイテムで失敗を起こすパイプライン機能に適しています.</p>
+<pre><code class="language-powershell">function Test-Path-Safe {
+    [CmdletBinding()]
+    param([Parameter(ValueFromPipeline)][string]$Path)
+    process {
+        if (-not (Test-Path $Path)) {
+            Write-Error &quot;Path not found: $Path&quot;
+            return
+        }
+        $Path
+    }
+}
+</code></pre>
+<p>&gt; [!NOTE] &gt; 高度な機能 (を持つもの) において.<code>[CmdletBinding()]</code>), use &gt; <code>$PSCmdlet.WriteError()</code>ではなく<code>Write-Error</code>確保するために,<code>$?</code>&gt; は正常に設定されている.<code>$false</code>呼び出し者の範囲内にある.<code>Write-Error</code>cmdlet &gt; は常に設定されない<code>$?</code>正しくなっちゃった.</p>
+<h3>声明を終結する - 使用する<code>$PSCmdlet.ThrowTerminatingError()</code></h3>
+<p>活用する<code>$PSCmdlet.ThrowTerminatingError()</code>機能が継続できない場合,呼び出し者が故障を処理する方法について決定しなければならない.これは高度な機能での推奨方法です.</p>
+<pre><code class="language-powershell">function Get-Config {
+  [CmdletBinding()]
+  param([string]$Path)
+
+  if (-not (Test-Path $Path)) {
+    $er = [System.Management.Automation.ErrorRecord]::new(
+      [System.IO.FileNotFoundException]::new(&quot;Config file not found: $Path&quot;),
+      'ConfigNotFound',
+      [System.Management.Automation.ErrorCategory]::ObjectNotFound,
+      $Path
+    )
+    $PSCmdlet.ThrowTerminatingError($er)
+  }
+
+  Get-Content $Path | ConvertFrom-Json
+}
+</code></pre>
+<p>誤差が関数から離れると,呼び手はデフォルトで非終結エラーとして処理します.呼び手はそれを  で加算することができます.<code>-ErrorAction Stop</code> .</p>
+<h3>スクリプト終結 - 使用する<code>throw</code></h3>
+<p>活用する<code>throw</code>復元が不可能で,脚本全体が停止するときに.</p>
+<pre><code class="language-powershell">$config = Get-Content 'config.json' -ErrorAction SilentlyContinue |
+    ConvertFrom-Json
+
+if (-not $config) {
+    throw 'Cannot proceed without a valid configuration file.'
+}
+</code></pre>
+<h3>どの仕組みを使うか</h3>
+<ul>
+<li>
+<ul>
+<li>いくつかの入力が失敗する複数の入力処理を行うとき,使用する<code>Write-Error</code>    <code>$PSCmdlet.WriteError()</code>- 機能が継続できない場合は,  を使ってください.<code>$PSCmdlet.ThrowTerminatingError()</code>呼び出し者がそれをどう処理するか決めるようにします. - 脚本全体がすぐに停止しなければならなければ,使用する<code>throw</code> .</li>
+</ul>
+</li>
+</ul>
+<h2>誤差タイプの概要</h2>
+<p>次の表では,PowerShellの異なるエラータイプの特性と行動を概要する.</p>
+<h3>終止しないエラーです.</h3>
+<p>[非終結エラー][02]は, によって生成される可能性があります.<code>Write-Error</code>    <code>$PSCmdlet.WriteError()</code> .</p>
+<p>影響範囲の範囲は,パイプラインが継続中です.<code>catch</code>捕まったのは,不 (エスカレートしない限り)<code>trap</code>増強しない限り (No (except escalated) 追加<code>$Error</code>◎Yes (ただし,<code>Ignore</code>セット (セット) についてです.<code>$?</code> に<code>$false</code>影響を受けたのは,<code>-ErrorAction</code>影響を受けたのは,<code>$ErrorActionPreference</code>◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎</p>
+<h3>声明終結エラー</h3>
+<p>[Statement-terminating errors][04]は, によって生成される可能性があります.<code>ThrowTerminatingError()</code>エンジンエラー, .NET方法例外,または<code>-ErrorAction Stop</code>先進的な文脈で.</p>
+<p>Attribute 記述 影響範囲 状況の説明は停止し,脚本が続きます<code>catch</code>捕まったのは,<code>trap</code>追加された Yes to 追加された<code>$Error</code>セットはYes セットです.<code>$?</code> に<code>$false</code>影響を受けたのは,<code>-ErrorAction</code>◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎<code>Break</code>影響を受けたのは,<code>$ErrorActionPreference</code>削除できるのはYesです.</p>
+<h3>脚本終結エラー</h3>
+<p>[スクリプトを終了するエラー]は, によって生成される可能性があります.<code>throw</code>解析エラー,または<code>-ErrorAction Stop</code>低技術的な文脈で.</p>
+<p>影響範囲の範囲 呼び出しスタックが浮き沈み,捕獲された.<code>catch</code>捕まったのは,<code>trap</code>追加された Yes to 追加された<code>$Error</code>セットはYes セットです.<code>$?</code> に<code>$false</code>影響を受けたのは,<code>-ErrorAction</code>影響を受けた人はいない<code>$ErrorActionPreference</code>ページの"つ.<code>throw</code>影響を受けたのは,Yes (can suppress)<code>$ErrorActionPreference</code>状況によって異なります.</p>
+<h2>また, を参照してください.</h2>
+<ul>
+<li>[about_Automatic_Variables][06] - [about_CommonParameters][07] - [about_Preference_Variables][09] - [about_Output_Streams][08] - [about_Throw][10] - [about_Trap][11] - [about_Try_Catch_Finally][12]</li>
+</ul>
+<p>リンク参照 --&gt; [01]: #how-escalation-works [02]: #non-terminating-errors [03]: #script-terminating-errors [04]: #statement-terminating-errors [05]: #the-erroractionpreference-asymmetry [06]: about_Automatic_Variables.md [07]: about_Try_Catch_Finally.md: about_Output_Streams.md [09]: about_Preference_Variables.md [10]: about_Throw.md [11]: about_Trap.md [12]: about_Try_Catch_Finally.md</p></section><section class="en-original"><pre class="source-original"># about_Error_Handling
+
+## Short description
+
+Describes the types of errors in PowerShell and the mechanisms for handling
+them.
+
+## Long description
+
+PowerShell distinguishes three categories of errors:
+
+- Non-terminating errors
+- Statement-terminating errors
+- Script-terminating errors
+
+Understanding the distinction is essential for writing reliable scripts and
+modules, because each category has different default behavior and requires
+different handling techniques.
+
+Additionally, external (native) programs report failure through exit codes,
+which PowerShell tracks separately from its own error system.
+
+## Types of errors
+
+### Non-terminating errors
+
+A non-terminating error reports a problem but doesn&#x27;t stop the pipeline. The
+command continues processing subsequent input objects. Non-terminating errors
+are generated by:
+
+- The `Write-Error` cmdlet
+- The `$PSCmdlet.WriteError()` method in advanced functions
+- Cmdlets that encounter recoverable failures on individual input objects
+
+By default, PowerShell displays the error message and continues execution.
+
+```powershell
+
+# Non-terminating error: the pipeline continues after the failure
+&#x27;file1.txt&#x27;, &#x27;noSuchFile.txt&#x27;, &#x27;file3.txt&#x27; | ForEach-Object {
+    Get-Content $_ -ErrorAction Continue
+}
+```
+
+In this example, `Get-Content` reports a non-terminating error for
+`noSuchFile.txt` and then continues processing `file3.txt`.
+
+Non-terminating errors do **not** trigger `catch` or `trap` by default.
+
+### Statement-terminating errors
+
+A statement-terminating error stops the current statement (pipeline) from
+running, but execution continues at the next statement in the script.
+Statement-terminating errors are generated by:
+
+- The `$PSCmdlet.ThrowTerminatingError()` method in advanced functions and
+  compiled cmdlets
+- Engine errors such as `CommandNotFoundException` (calling a command that
+  doesn&#x27;t exist) and `ParameterBindingException` (invalid parameter arguments)
+- .NET method calls that throw exceptions, such as `[int]::Parse(&#x27;abc&#x27;)`
+
+```powershell
+
+# Statement-terminating error: Get-Item fails, but the next statement runs
+Get-Item -Path &#x27;C:\NoSuchFile.txt&#x27;
+Write-Output &#x27;This still runs&#x27;
+```
+
+Statement-terminating errors can be caught by `try/catch` and `trap`.
+
+&gt; [!NOTE]
+&gt; `.ThrowTerminatingError()` doesn&#x27;t consult the `-ErrorAction` parameter
+&gt; (except for the `Break` value, which enters the debugger). However,
+&gt; `$ErrorActionPreference` _does_ apply to statement-terminating errors
+&gt; through the engine&#x27;s statement-level handler. For example,
+&gt; `$ErrorActionPreference = &#x27;SilentlyContinue&#x27;` can suppress a
+&gt; statement-terminating error so that the script continues at the next
+&gt; statement. The `-ErrorAction` parameter can&#x27;t do this. For details, see
+&gt; [The $ErrorActionPreference asymmetry][05].
+
+### Script-terminating errors
+
+A script-terminating error unwinds the entire call stack. Execution stops
+completely unless the error is caught by a `try/catch` block or `trap`
+statement. Script-terminating errors are generated by:
+
+- The `throw` keyword
+- Parse errors (syntax errors that prevent the script from being compiled)
+- Non-terminating errors **escalated** by `-ErrorAction Stop` or
+  `$ErrorActionPreference = &#x27;Stop&#x27;` in non-advanced contexts. For more
+  information, see [How escalation works][01].
+- Certain critical engine failures
+
+```powershell
+
+# Script-terminating error: throw unwinds the call stack
+function Test-Throw {
+    throw &#x27;Critical failure&#x27;
+    Write-Output &#x27;This never runs&#x27;
+}
+
+Test-Throw
+Write-Output &#x27;This never runs either (unless caught)&#x27;
+```
+
+The `throw` keyword generates a script-terminating error by default. However,
+`$ErrorActionPreference` _can_ suppress `throw` when set to `SilentlyContinue`
+or `Ignore`. When calling an advanced function with
+`-ErrorAction SilentlyContinue`, the parameter translates to a scope-local
+`$ErrorActionPreference` value, so it also suppresses `throw` inside that
+function.
+
+&gt; [!NOTE]
+&gt; Even with `$ErrorActionPreference = &#x27;Ignore&#x27;`, a `throw` that&#x27;s suppressed
+&gt; still records an entry in `$Error`. The `Ignore` value only prevents `$Error`
+&gt; recording for **non-terminating** errors.
+
+&gt; [!IMPORTANT]
+&gt; The terms _statement-terminating_ and _script-terminating_ describe the scope
+&gt; of impact, not the severity of the error. A statement-terminating error stops
+&gt; one statement. A script-terminating error stops the entire script and its
+&gt; callers. Both can be caught by `try/catch`.
+
+### External program errors
+
+External (native) programs don&#x27;t participate in PowerShell&#x27;s error system
+directly. They report failure through a non-zero exit code, which PowerShell
+stores in the `$LASTEXITCODE` automatic variable.
+
+```powershell
+git clone https://example.com/nonexistent.git 2&gt;$null
+if ($LASTEXITCODE -ne 0) {
+    Write-Error &quot;git failed with exit code $LASTEXITCODE&quot;
+}
+```
+
+By default, a non-zero exit code from a native program:
+
+- Sets `$?` to `$false`
+- Does **not** generate an `ErrorRecord` in `$Error`
+- Does **not** trigger `catch` or `trap`
+
+PowerShell 7.3 added the experimental preference variable
+`$PSNativeCommandUseErrorActionPreference`, which became a stable feature in
+7.4. When you set this variable to `$true`, it causes a non-zero exit code to
+emit a **non-terminating error** whose message states the specific exit code (a
+`NativeCommandExitException`). This error respects `$ErrorActionPreference`, so
+setting it to `Stop` promotes the error to a script-terminating error that can
+be caught with `try`/`catch`.
+
+## Error state variables
+
+PowerShell maintains several automatic variables that reflect the current error
+state.
+
+### `$?`
+
+Contains `$true` if the last operation succeeded and `$false` if it produced
+any error (non-terminating or terminating). For native commands, `$?` is set
+based on the exit code: `$true` for exit code `0`, `$false` otherwise.
+
+```powershell
+Get-Item -Path &#x27;C:\NoSuchFile.txt&#x27; 2&gt;$null
+$?  # False
+```
+
+### `$Error`
+
+An `ArrayList` that stores the most recent error records, with the most recent
+error at index `0`. The list holds up to `$MaximumErrorCount` entries (default
+256).
+
+All terminating errors are added to `$Error`. For terminating errors, `Ignore`
+suppresses display but still records the error in `$Error`. All non-terminating
+are added to `$Error` unless `-ErrorAction Ignore` is used on non-terminating
+errors, which prevents both display and recording.
+
+### `$LASTEXITCODE`
+
+Contains the exit code of the last native program that ran. A value of `0`
+conventionally indicates success. Any non-zero value indicates failure. This
+variable isn&#x27;t affected by PowerShell cmdlet errors.
+
+## Control error behavior
+
+# about_Error_Handling
+
+### The `-ErrorAction` common parameter
+
+The `-ErrorAction` common parameter overrides `$ErrorActionPreference` for a
+single command. It controls how PowerShell responds to **non-terminating**
+errors from that command.
+
+|       Value        |                               Behavior                               |
+| ------------------ | -------------------------------------------------------------------- |
+| `Continue`         | Display the error and continue (default)                             |
+| `SilentlyContinue` | Suppress display, add to `$Error`, continue                          |
+| `Ignore`           | Suppress display and don&#x27;t add to `$Error`                           |
+| `Stop`             | **Escalate** to a terminating error (see [How escalation works][01]) |
+| `Inquire`          | Prompt the user for a decision                                       |
+| `Break`            | Enter the debugger                                                   |
+
+`-ErrorAction` doesn&#x27;t change the behavior of errors generated by
+`$PSCmdlet.ThrowTerminatingError()`. Those errors are always
+statement-terminating regardless of the caller&#x27;s preference.
+
+### The `$ErrorActionPreference `variable
+
+The `$ErrorActionPreference` preference variable applies to all commands in the
+current scope and child scopes. It accepts the same values as `-ErrorAction`.
+
+```powershell
+$ErrorActionPreference = &#x27;Stop&#x27;
+
+# All non-terminating errors in this scope now become terminating
+Write-Error &#x27;This now throws&#x27;   # Generates ActionPreferenceStopException
+```
+
+When `-ErrorAction` is specified on a command, it takes precedence over
+`$ErrorActionPreference` for that command.
+
+### How escalation works
+
+When `-ErrorAction Stop` or `$ErrorActionPreference = &#x27;Stop&#x27;` is in effect,
+PowerShell converts non-terminating errors into terminating errors using the
+following mechanism:
+
+1. A cmdlet calls `WriteError()` internally to emit a non-terminating error.
+1. The engine checks the effective `ErrorAction` preference for the command.
+1. Because the preference is `Stop`, the engine creates an
+   `ActionPreferenceStopException` that wraps the original error record.
+1. If caught by `catch`, the original error information is accessible through
+   `$_.Exception.ErrorRecord`.
+
+The scope of the escalated error depends on context:
+
+- In **non-advanced** scripts, functions, or script blocks, setting
+  `$ErrorActionPreference = &#x27;Stop&#x27;` escalates to a **script-terminating**
+  error. The error propagates up the call stack.
+- In **advanced** functions and script blocks (those with `[CmdletBinding()]`),
+  the error remains **statement-terminating**. Execution continues at the next
+  statement after the call.
+- Passing `-ErrorAction Stop` to an advanced function has the same effect as
+  setting `$ErrorActionPreference = &#x27;Stop&#x27;` inside it, because `-ErrorAction`
+  translates to a scope-local `$ErrorActionPreference` value.
+
+### Escalation examples
+
+- NON-advanced: script-terminating (&#x27;after&#x27; does NOT print)
+
+  ```powershell
+  &amp; {
+      param()
+      $ErrorActionPreference = &#x27;Stop&#x27;
+      1/0  # Divide by zero error
+  } 2&gt;$null
+  &#x27;after&#x27;
+  ```
+
+- ADVANCED: statement-terminating (&#x27;after&#x27; DOES print)
+
+  ```powershell
+  &amp; {
+      [CmdletBinding()]
+      param()
+      $ErrorActionPreference = &#x27;Stop&#x27;
+      1/0  # Divide by zero error
+  } 2&gt;$null
+  &#x27;after&#x27;
+  ```
+
+- Without `-ErrorAction Stop`: non-terminating, catch doesn&#x27;t run
+
+  ```powershell
+  try {
+      Write-Error &#x27;This is non-terminating&#x27;
+      Write-Output &#x27;Execution continues&#x27;
+  } catch {
+      Write-Output &quot;Caught: $_&quot;   # Not reached
+  }
+  ```
+
+- With `-ErrorAction Stop`: escalated to terminating
+
+  ```powershell
+  try {
+      Write-Error &#x27;This becomes terminating&#x27; -ErrorAction Stop
+  } catch {
+      Write-Output &quot;Caught: $_&quot;   # Reached
+  }
+  ```
+
+Escalated errors can be caught by their original exception type. The engine
+unwraps the `ActionPreferenceStopException` to find the underlying exception:
+
+```powershell
+try {
+    Get-Item -Path &#x27;C:\NoSuchFile.txt&#x27; -ErrorAction Stop
+} catch [System.Management.Automation.ItemNotFoundException] {
+    Write-Output &quot;File not found: $($_.Exception.Message)&quot;
+}
+```
+
+### The `$ErrorActionPreference` asymmetry
+
+The `-ErrorAction` parameter and the `$ErrorActionPreference` variable behave
+differently with terminating errors. It&#x27;s important to understand this
+asymmetry:
+
+- `-ErrorAction` only affects **non-terminating** errors. When a cmdlet calls
+  `$PSCmdlet.ThrowTerminatingError()`, the `-ErrorAction` parameter is ignored
+  (except for `Break`, which enters the debugger). The error is always thrown.
+
+- `$ErrorActionPreference` affects **both** non-terminating and
+  statement-terminating errors. The engine&#x27;s statement-level error handler
+  reads `$ErrorActionPreference` (not the `-ErrorAction` parameter) and can
+  suppress a statement-terminating error when the value is `SilentlyContinue`
+  or `Ignore`.
+
+```powershell
+function Test-Asymmetry {
+    [CmdletBinding()]
+    param()
+    $er = [System.Management.Automation.ErrorRecord]::new(
+        [System.InvalidOperationException]::new(&#x27;test error&#x27;),
+        &#x27;TestError&#x27;,
+        [System.Management.Automation.ErrorCategory]::InvalidOperation,
+        $null
+    )
+    $PSCmdlet.ThrowTerminatingError($er)
+}
+
+# -ErrorAction SilentlyContinue does NOT suppress the error:
+Test-Asymmetry -ErrorAction SilentlyContinue   # Error is still thrown
+
+# $ErrorActionPreference DOES suppress the error:
+$ErrorActionPreference = &#x27;SilentlyContinue&#x27;
+Test-Asymmetry   # Error is silently suppressed, script continues
+$ErrorActionPreference = &#x27;Continue&#x27;
+```
+
+&gt; [!IMPORTANT]
+&gt; `$ErrorActionPreference` can&#x27;t suppress errors that have
+&gt; `SuppressPromptInInterpreter` set to `true`. These always propagate
+&gt; regardless of the preference variable. Examples of this type of error
+&gt; include:
+&gt;
+&gt; - `ActionPreferenceStopException` from `-ErrorAction Stop` escalation
+&gt; - Errors inside PowerShell class methods
+&gt; - `PipelineStoppedException`
+
+## Handle errors
+
+### `try/catch/finally`
+
+Use `try/catch/finally` to handle statement-terminating and script-terminating
+errors. When an error occurs inside a `try` block, PowerShell searches for a
+matching `catch` block. The `finally` block always runs, whether or not an
+error occurred.
+
+```powershell
+try {
+    $result = Get-Content -Path &#x27;data.txt&#x27; -ErrorAction Stop
+}
+catch [System.Management.Automation.ItemNotFoundException] {
+    Write-Warning &#x27;Data file not found, using defaults.&#x27;
+    $result = &#x27;default&#x27;
+}
+catch {
+    Write-Warning &quot;Unexpected error: $_&quot;
+}
+finally {
+    Write-Verbose &#x27;Cleanup complete.&#x27; -Verbose
+}
+```
+
+Inside a `try` block, the engine sets an internal flag that causes non-
+terminating errors escalated by `-ErrorAction Stop` or
+`$ErrorActionPreference = &#x27;Stop&#x27;` to propagate to the `catch` block. This
+is designed behavior, not a special case.
+
+For full syntax details, see [about_Try_Catch_Finally][12].
+
+# about_Error_Handling
+
+### `trap`
+
+The `trap` statement handles terminating errors at the scope level. When an
+error occurs anywhere in the enclosing scope, the `trap` block runs.
+
+- **Default** (no `break` or `continue`): The error is displayed and execution
+  continues at the next statement after the one that caused the error.
+- **`continue`** in the trap: Suppresses the error message and resumes at the
+  next statement.
+- **`break`** in the trap: The error propagates to the parent scope.
+
+```powershell
+trap [System.Management.Automation.CommandNotFoundException] {
+    Write-Warning &quot;Command not found: $($_.TargetObject)&quot;
+    continue
+}
+
+NonsenseCommand   # Trap fires, execution continues
+Write-Output &#x27;This runs because the trap used continue&#x27;
+```
+
+For full syntax details, see [about_Trap][11].
+
+## Reporting errors in functions and scripts
+
+When writing functions and scripts, choose the error-reporting mechanism that
+matches the severity of the failure.
+
+### Non-terminating - use `Write-Error`
+
+Use `Write-Error` when the function can continue processing other input. This
+is appropriate for pipeline functions that process multiple objects and
+encounter failures on individual items.
+
+```powershell
+function Test-Path-Safe {
+    [CmdletBinding()]
+    param([Parameter(ValueFromPipeline)][string]$Path)
+    process {
+        if (-not (Test-Path $Path)) {
+            Write-Error &quot;Path not found: $Path&quot;
+            return
+        }
+        $Path
+    }
+}
+```
+
+&gt; [!NOTE]
+&gt; In advanced functions (those with `[CmdletBinding()]`), use
+&gt; `$PSCmdlet.WriteError()` instead of `Write-Error` to ensure that `$?` is
+&gt; properly set to `$false` in the caller&#x27;s scope. The `Write-Error` cmdlet
+&gt; doesn&#x27;t always set `$?` correctly.
+
+### Statement-terminating - use `$PSCmdlet.ThrowTerminatingError()`
+
+Use `$PSCmdlet.ThrowTerminatingError()` when the function can&#x27;t continue at all
+but the caller should decide how to handle the failure. This is the recommended
+approach in advanced functions.
+
+```powershell
+function Get-Config {
+  [CmdletBinding()]
+  param([string]$Path)
+
+  if (-not (Test-Path $Path)) {
+    $er = [System.Management.Automation.ErrorRecord]::new(
+      [System.IO.FileNotFoundException]::new(&quot;Config file not found: $Path&quot;),
+      &#x27;ConfigNotFound&#x27;,
+      [System.Management.Automation.ErrorCategory]::ObjectNotFound,
+      $Path
+    )
+    $PSCmdlet.ThrowTerminatingError($er)
+  }
+
+  Get-Content $Path | ConvertFrom-Json
+}
+```
+
+After the error leaves the function, the caller treats it as a non-terminating
+error by default. The caller can escalate it with `-ErrorAction Stop`.
+
+### Script-terminating - use `throw`
+
+Use `throw` when recovery isn&#x27;t possible and the entire script should stop.
+
+```powershell
+$config = Get-Content &#x27;config.json&#x27; -ErrorAction SilentlyContinue |
+    ConvertFrom-Json
+
+if (-not $config) {
+    throw &#x27;Cannot proceed without a valid configuration file.&#x27;
+}
+```
+
+### Which mechanism to use
+
+- When processing multiple inputs where some may fail, use `Write-Error` or
+  `$PSCmdlet.WriteError()`.
+- If the function can&#x27;t continue, use `$PSCmdlet.ThrowTerminatingError()` and
+  let the caller decide how to handle it.
+- If the entire script must stop immediately, use `throw`.
+
+## Summary of error types
+
+The following tables summarize the properties and behaviors of the different
+error types in PowerShell.
+
+### Non-terminating error
+
+[Non-terminating errors][02] can be generated by `Write-Error` or
+`$PSCmdlet.WriteError()`.
+
+|              Attribute               |           Description           |
+| ------------------------------------ | ------------------------------- |
+| Scope of impact                      | Pipeline continues              |
+| Caught by `catch`                    | No (unless escalated)           |
+| Caught by `trap`                     | No (unless escalated)           |
+| Added to `$Error`                    | Yes (unless `Ignore`)           |
+| Sets `$?` to `$false`                | Yes                             |
+| Affected by `-ErrorAction`           | Yes                             |
+| Affected by `$ErrorActionPreference` | Yes                             |
+
+### Statement-terminating error
+
+[Statement-terminating errors][04] can be generated by
+`ThrowTerminatingError()`, engine errors, .NET method exceptions, or
+`-ErrorAction Stop` in advanced contexts.
+
+|              Attribute               |                Description                |
+| ------------------------------------ | ----------------------------------------- |
+| Scope of impact                      | Current statement stops; script continues |
+| Caught by `catch`                    | Yes                                       |
+| Caught by `trap`                     | Yes                                       |
+| Added to `$Error`                    | Yes                                       |
+| Sets `$?` to `$false`                | Yes                                       |
+| Affected by `-ErrorAction`           | No (`Break` only)                         |
+| Affected by `$ErrorActionPreference` | Yes (can suppress)                        |
+
+### Script-terminating error
+
+[Script-terminating errors][03] can be generated by `throw`, parse errors, or
+`-ErrorAction Stop` in non-advanced contexts.
+
+|              Attribute               |          Description          |
+| ------------------------------------ | ----------------------------- |
+| Scope of impact                      | Call stack unwinds            |
+| Caught by `catch`                    | Yes                           |
+| Caught by `trap`                     | Yes                           |
+| Added to `$Error`                    | Yes                           |
+| Sets `$?` to `$false`                | Yes                           |
+| Affected by `-ErrorAction`           | No                            |
+| Affected by `$ErrorActionPreference` | `throw`: Yes (can suppress)   |
+| Affected by `$ErrorActionPreference` | Escalated: depends on context |
+
+## See also
+
+- [about_Automatic_Variables][06]
+- [about_CommonParameters][07]
+- [about_Preference_Variables][09]
+- [about_Output_Streams][08]
+- [about_Throw][10]
+- [about_Trap][11]
+- [about_Try_Catch_Finally][12]
+
+&lt;!-- Link references --&gt;
+[01]: #how-escalation-works
+[02]: #non-terminating-errors
+[03]: #script-terminating-errors
+[04]: #statement-terminating-errors
+[05]: #the-erroractionpreference-asymmetry
+[06]: about_Automatic_Variables.md
+[07]: about_CommonParameters.md
+[08]: about_Output_Streams.md
+[09]: about_Preference_Variables.md
+[10]: about_Throw.md
+[11]: about_Trap.md
+[12]: about_Try_Catch_Finally.md</pre></section>

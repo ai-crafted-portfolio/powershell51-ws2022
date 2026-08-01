@@ -1,0 +1,316 @@
+<!doctype html><meta charset="utf-8"><section class="jp-official"><h1>about_Eventlogsについて</h1>
+<h2>簡略説明 この記事では,PowerShellが Windows Event ログにイベントをログインする方法を説明します.</h2>
+<h2>長い説明</h2>
+<p>Windows PowerShellでWindowsイベントログを作成し,Windows PowerShellイベントを記録する"Windows PowerShell"という名前で作成します.イベントビューヤーでこのログを表示したり,イベントを表示するcmdletsを使用して,例えば  を参照してください.<code>Get-EventLog</code>cmdlet.デフォルトでは,Windows PowerShell エンジンのイベントとプロバイダのイベントがイベントログに記録されますが,イベントログの優先順位変数を使ってイベントログをカスタマイズできます.例えば,Windows PowerShell コマンドに関するイベントを追加できます.</p>
+<p>Windows PowerShell イベントログは,プログラムエンジン起動と停止,Windows PowerShell プロバイダーを開始と停止などの Windows PowerShell オペレーションの詳細を記録する.また,Windows PowerShell コマンドの詳細を記録することもできます.</p>
+<h2>Windows PowerShell イベントログを表示する</h2>
+<p>Windows PowerShell イベントログをイベントビューアで表示するか,イベントビューアで表示する場合は,<code>Get-EventLog</code>そして,<code>Get-WmiObject</code>cmdlets.Windows PowerShell ログの内容を表示するには,以下のように入力してください:</p>
+<pre><code class="language-powershell">Get-EventLog -LogName &quot;Windows PowerShell&quot;
+</code></pre>
+<p>出来事とその性質を調べるには,  を使って<code>Sort-Object</code>cmdlet,その <code>Group-Object</code>cmdlet と,そのcmdlet においてのcmdlet は,<code>Format</code>(動詞は,動詞の )<code>Format</code>cmdlets).</p>
+<p>例えば,イベントIDによってグループ化されたログのイベントを表示するには,次のタイプを入力してください:</p>
+<pre><code class="language-powershell">Get-EventLog &quot;Windows PowerShell&quot; | Format-Table -GroupBy EventID
+</code></pre>
+<p>あるいは,タイプ:</p>
+<pre><code class="language-powershell">Get-EventLog &quot;Windows PowerShell&quot; |
+  Sort-Object EventID |
+  Group-Object EventID
+</code></pre>
+<p>すべてのクラシックイベントログを表示するには,以下のように入力してください:</p>
+<pre><code class="language-powershell">Get-EventLog -List
+</code></pre>
+<p>号も使えます.<code>Get-WmiObject</code>cmdlet で,イベントログを検証するためにイベント関連Windows Management Instrumentation (WMI) クラスを使用します.例えば,イベントログファイルのすべてのプロパティを表示するには,入力してください:</p>
+<pre><code class="language-powershell">Get-WmiObject Win32_NTEventlogFile |
+  where LogFileName -EQ &quot;Windows PowerShell&quot; |
+  Format-List -Property *
+</code></pre>
+<p>Win32 イベント関連WMIクラスを見つけるには,次のタイプを入力してください.</p>
+<pre><code class="language-powershell">Get-WmiObject -List | where Name -Like &quot;Win32*Event*&quot;
+</code></pre>
+<p>詳細については, [Get-EventLog][05]と [Get-WmiObject][06] を参照してください.</p>
+<h2>Windows PowerShell イベントログのイベントを選択する</h2>
+<p>イベントログの優先順位変数を用い,Windows PowerShell イベントログにどのイベントが記録されているかを判断できます.</p>
+<p>イベントログの優先順位変数6つがあり,ログ付けの3つの構成要素それぞれに2つの変数がある.エンジン (Windows PowerShellプログラム),プロバイダー,コマンド.<code>LifecycleEvent</code>普通の開始および停止イベントを記録する変数を記録する.<code>Health</code>変化のエラーイベントをログします.</p>
+<p>次の表は,イベントログの優先順位変数をリストしています.</p>
+<p>変数説明は変数で説明される.<code>$LogEngineLifecycleEvent</code>PowerShellの開始と停止を記録します.<code>$LogEngineHealthEvent</code>PowerShell プログラムエラーをログインする<code>$LogProviderLifecycleEvent</code>パーシェルプロバイダの開始と停止を記録します.<code>$LogProviderHealthEvent</code>PowerShell プロバイダーエラーをログインする.<code>$LogCommandLifecycleEvent</code>命令の開始と完了を記録します.<code>$LogCommandHealthEvent</code>命令エラーをログにします.</p>
+<p>(Windows PowerShell プロバイダーに関する情報については[about_Providers][01]]を参照してください.)</p>
+<p>デフォルトでは,以下のイベントタイプのみが有効になります:</p>
+<ul>
+<li>-<code>$LogEngineLifecycleEvent</code> - -<code>$LogEngineHealthEvent</code> - -<code>$LogProviderLifecycleEvent</code> - -<code>$LogProviderHealthEvent</code></li>
+</ul>
+<p>イベントタイプを有効にするには,そのイベントタイプの優先順位変数を  に設定します.<code>$true</code>例えば,コマンドライフサイクルイベントを有効にするには,次のタイプを入力します.</p>
+<pre><code class="language-powershell">$LogCommandLifecycleEvent
+</code></pre>
+<p>あるいは,タイプ:</p>
+<pre><code class="language-powershell">$LogCommandLifecycleEvent = $true
+</code></pre>
+<p>イベントタイプを無効にするには,そのイベントタイプの優先順位変数を  に設定します.<code>$false</code>例えば,コマンドライフサイクルイベントを無効にするには,次のタイプを入力してください.</p>
+<pre><code class="language-powershell">$LogProviderLifecycleEvent = $false
+</code></pre>
+<p>Windows PowerShell エンジンが起動し,コアプロバイダが起動したことを示しているイベントを除き,あらゆるイベントを無効にすることができます.これらのイベントは,Windows PowerShell プロフィールが実行され,ホストプログラムはコマンドを受け入れる準備ができなくなる前に生成されます.</p>
+<p>変数設定は,現在のWindows PowerShellセッションのみに適用されます.すべてのWindows PowerShellセッションに適用するには,Windows PowerShell プロフィールに追加してください.</p>
+<h2>ログインモジュールイベント</h2>
+<p>Windows PowerShell 3.0 から,Windows PowerShell モジュールおよびスナップインのcmdletsと機能の実行イベントを記録し,モジュールおよびスナップインのプロパティを  に設定することで実行イベントを記録できます.<code>$true</code>.Windows PowerShell 2.0では,この機能はスナップインのみで利用できます.</p>
+<p>当時のLogPipelineExecutionDetails**のプロパティ値は<code>$true</code>,Windows PowerShellは,セッション中のcmdletと関数実行イベントをWindows PowerShellログインイベントビューアに書き込む.この設定は,現在のセッションでのみ有効です.</p>
+<p>モデルのcmdletと関数の実行イベントのログを有効にするには,次のコマンド列を使用します.</p>
+<pre><code class="language-powershell">Import-Module Microsoft.PowerShell.Archive
+$m = Get-Module Microsoft.PowerShell.Archive
+$m.LogPipelineExecutionDetails = $true
+</code></pre>
+<p>快速入力でcmdletsの実行イベントをログインできるようにするには,次のコマンド順序を使用します.</p>
+<pre><code class="language-powershell">$m = Get-PSSnapin Microsoft.PowerShell.Core
+$m.LogPipelineExecutionDetails = $true
+</code></pre>
+<p>ログを無効にするには,同じコマンドシーケンスを使用して,プロパティ値を  に設定します.<code>$false</code> .</p>
+<p>また,モジュールログインを有効にしたり,無効にしたりするために,グループポリシー設定を ** オンモジュールログインを操作する** を使えます.ポリシー値はモジュールとスナップインの名前の一覧を含みます.ワイルドカードがサポートされています.</p>
+<p><strong>Module Loggingをオンにすると,モジュールに設定される場合,モジュールのLogPipelineExecutionDetails</strong>属性の値は です.<code>$true</code>すべてのセッションで変更できません.</p>
+<p>"Turn On Module Logging"グループポリシー設定は,以下のグループポリシーパスに位置しています.</p>
+<pre><code>Computer Configuration\
+  Administrative Templates\
+    Windows Components\
+     Windows PowerShell
+
+User Configuration\
+  Administrative Templates\
+    Windows Components\
+      Windows PowerShell
+</code></pre>
+<p>ユーザー設定ポリシーは,コンピュータ設定ポリシーに優先しており,両方のポリシーは,モジュールとスナップインのログパイプラインエクスプレクションデテイルのプロパティの値よりも優先しています.</p>
+<p>このグループポリシー設定についての詳細については,[about_Group_Policy_Settings][03]を参照してください.</p>
+<h2>セキュリティと監査についてです.</h2>
+<p>Windows PowerShell イベントログは,活動を示すように設計され,トラブルシューティングのための運用詳細を提供しています.</p>
+<p>しかし,ほとんどのWindowsベースのアプリケーションイベントログと同様に,Windows PowerShellイベントログは安全に設計されていない.セキュリティ監査や機密または所有情報記録に使用されるべきではありません.</p>
+<p>イベントログは,ユーザーによって読み取れ,理解できるように設計されています.ユーザーはログから読み書きすることができます.悪意のあるユーザーは,ローカルまたはリモートコンピュータでイベントログを読み,偽データを記録し,その活動がログインするのを防ぐことができます.</p>
+<h2>筆記</h2>
+<p>モジュール作家の著者は,そのモジュールにログ付け機能を追加することができます.詳細については, [Windows PowerShell Moduleの書き込み]を参照してください.</p>
+<h1>about_Eventlogsについて</h1>
+<h2>また, を参照してください.</h2>
+<p>[about_Group_Policy_Settings][03] - [about_Preference_Variables][04] - [Get-EventLog][05] - [Get-WmiObject][06] -</p>
+<p>&lt;!--リンク参照 --&gt; [01]: about_Providers.md [02]: /powershell/scripting/developer/module/writing-a-windows-powershell-module [03]: about_Group_Policy_Settings.md [04]: about_Preference_Variables.md [05]: xref:Microsoft.PowerShell.Management.Get-EventLog [06]: xref:Microsoft.PowerShell.Management.Get-WmiObject</p></section><section class="en-original"><pre class="source-original"># about_Eventlogs
+
+## Short description
+This article describes how PowerShell logs events to the Windows Event log.
+
+## Long description
+
+Windows PowerShell creates a Windows event log that&#x27;s named &quot;Windows
+PowerShell&quot; to record Windows PowerShell events. You can view this log in Event
+Viewer or by using cmdlets that get events, such as the `Get-EventLog` cmdlet.
+By default, Windows PowerShell engine and provider events are recorded in the
+event log, but you can use the event log preference variables to customize the
+event log. For example, you can add events about Windows PowerShell commands.
+
+The Windows PowerShell event log records details of Windows PowerShell
+operations, such as starting and stopping the program engine and starting and
+stopping the Windows PowerShell providers. You can also log details about
+Windows PowerShell commands.
+
+## Viewing the Windows PowerShell event log
+
+You can view the Windows PowerShell event log in Event Viewer or by using the
+`Get-EventLog` and `Get-WmiObject` cmdlets. To view the contents of the Windows
+PowerShell log, type:
+
+```powershell
+Get-EventLog -LogName &quot;Windows PowerShell&quot;
+```
+
+To examine the events and their properties, use the `Sort-Object` cmdlet, the
+`Group-Object` cmdlet, and the cmdlets that contain the `Format` verb (the
+`Format` cmdlets).
+
+For example, to view the events in the log grouped by the event ID, type:
+
+```powershell
+Get-EventLog &quot;Windows PowerShell&quot; | Format-Table -GroupBy EventID
+```
+
+Or, type:
+
+```powershell
+Get-EventLog &quot;Windows PowerShell&quot; |
+  Sort-Object EventID |
+  Group-Object EventID
+```
+
+To view all the classic event logs, type:
+
+```powershell
+Get-EventLog -List
+```
+
+You can also use the `Get-WmiObject` cmdlet to use the event-related Windows
+Management Instrumentation (WMI) classes to examine the event log. For example,
+to view all the properties of the event log file, type:
+
+```powershell
+Get-WmiObject Win32_NTEventlogFile |
+  where LogFileName -EQ &quot;Windows PowerShell&quot; |
+  Format-List -Property *
+```
+
+To find the Win32 event-related WMI classes, type:
+
+```powershell
+Get-WmiObject -List | where Name -Like &quot;Win32*Event*&quot;
+```
+
+For more information, see [Get-EventLog][05] and [Get-WmiObject][06].
+
+## Selecting events for the Windows PowerShell event log
+
+You can use the event log preference variables to determine which events are
+recorded in the Windows PowerShell event log.
+
+There are six event log preference variables; two variables for each of the
+three logging components: the engine (the Windows PowerShell program), the
+providers, and the commands. The `LifecycleEvent` variables log normal starting
+and stopping events. The `Health` variables log error events.
+
+The following table lists the event log preference variables.
+
+|           Variable           |                   Description                   |
+| ---------------------------- | ----------------------------------------------- |
+| `$LogEngineLifecycleEvent`   | Logs the start and stop of PowerShell           |
+| `$LogEngineHealthEvent`      | Logs PowerShell program errors                  |
+| `$LogProviderLifecycleEvent` | Logs the start and stop of PowerShell providers |
+| `$LogProviderHealthEvent`    | Logs PowerShell provider errors                 |
+| `$LogCommandLifecycleEvent`  | Logs the starting and completion of commands    |
+| `$LogCommandHealthEvent`     | Logs command errors                             |
+
+(For information about Windows PowerShell providers, see
+[about_Providers][01].)
+
+By default, only the following event types are enabled:
+
+- `$LogEngineLifecycleEvent`
+- `$LogEngineHealthEvent`
+- `$LogProviderLifecycleEvent`
+- `$LogProviderHealthEvent`
+
+To enable an event type, set the preference variable for that event type to
+`$true`. For example, to enable command life-cycle events, type:
+
+```powershell
+$LogCommandLifecycleEvent
+```
+
+Or, type:
+
+```powershell
+$LogCommandLifecycleEvent = $true
+```
+
+To disable an event type, set the preference variable for that event type to
+`$false`. For example, to disable command life-cycle events, type:
+
+```powershell
+$LogProviderLifecycleEvent = $false
+```
+
+You can disable any event, except for the events that indicate that the Windows
+PowerShell engine and the core providers started. These events generate before
+the Windows PowerShell profiles run and before the host program is ready to
+accept commands.
+
+The variable settings apply only for the current Windows PowerShell session. To
+apply them to all Windows PowerShell sessions, add them to your Windows
+PowerShell profile.
+
+## Logging module events
+
+Beginning in Windows PowerShell 3.0, you can record execution events for the
+cmdlets and functions in Windows PowerShell modules and snap-ins by setting the
+**LogPipelineExecutionDetails** property of modules and snap-ins to `$true`. In
+Windows PowerShell 2.0, this feature is available only for snap-ins.
+
+When the **LogPipelineExecutionDetails** property value is `$true`, Windows
+PowerShell writes cmdlet and function execution events in the session to the
+Windows PowerShell log in Event Viewer. The setting is effective only in the
+current session.
+
+To enable logging of execution events of cmdlets and functions in a module, use
+the following command sequence.
+
+```powershell
+Import-Module Microsoft.PowerShell.Archive
+$m = Get-Module Microsoft.PowerShell.Archive
+$m.LogPipelineExecutionDetails = $true
+```
+
+To enable logging of execution events of cmdlets in a snap-in, use the
+following command sequence.
+
+```powershell
+$m = Get-PSSnapin Microsoft.PowerShell.Core
+$m.LogPipelineExecutionDetails = $true
+```
+
+To disable logging, use the same command sequence to set the property value to
+`$false`.
+
+You can also use the **Turn on Module Logging** Group Policy setting to enable
+and disable module and snap-in logging. The policy value includes a list of
+module and snap-in names. Wildcards are supported.
+
+When **Turn on Module Logging** is set for a module, the value of the
+**LogPipelineExecutionDetails** property of the module is `$true` in all
+sessions and it can&#x27;t be changed.
+
+The &quot;Turn On Module Logging&quot; group policy setting is located in the following
+Group Policy paths:
+
+```
+Computer Configuration\
+  Administrative Templates\
+    Windows Components\
+     Windows PowerShell
+
+User Configuration\
+  Administrative Templates\
+    Windows Components\
+      Windows PowerShell
+```
+
+The User Configuration policy takes precedence over the Computer Configuration
+policy, and both policies take preference over the value of the
+LogPipelineExecutionDetails property of modules and snap-ins.
+
+For more information about this Group Policy setting, see
+[about_Group_Policy_Settings][03].
+
+## Security and auditing
+
+The Windows PowerShell event log is designed to indicate activity and to
+provide operational details for troubleshooting.
+
+However, like most Windows-based application event logs, the Windows PowerShell
+event log isn&#x27;t designed to be secure. It shouldn&#x27;t be used to audit security
+or to record confidential or proprietary information.
+
+Event logs are designed to be read and understood by users. Users can read from
+and write to the log. A malicious user could read an event log on a local or
+remote computer, record false data, and then prevent the logging of their
+activities.
+
+## Notes
+
+Authors of module authors can add logging features to their modules. For more
+information, see [Writing a Windows PowerShell Module][02].
+
+# about_Eventlogs
+
+## See also
+
+- [about_Group_Policy_Settings][03]
+- [about_Preference_Variables][04]
+- [Get-EventLog][05]
+- [Get-WmiObject][06]
+
+&lt;!-- link references --&gt;
+[01]: about_Providers.md
+[02]: /powershell/scripting/developer/module/writing-a-windows-powershell-module
+[03]: about_Group_Policy_Settings.md
+[04]: about_Preference_Variables.md
+[05]: xref:Microsoft.PowerShell.Management.Get-EventLog
+[06]: xref:Microsoft.PowerShell.Management.Get-WmiObject</pre></section>

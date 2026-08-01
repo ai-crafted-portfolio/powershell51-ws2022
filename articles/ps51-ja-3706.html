@@ -1,0 +1,711 @@
+<!doctype html><meta charset="utf-8"><section class="jp-official"><h1>職を中止する</h1>
+<h2>SYNOPSISは,一時的にワークフローの仕事を停止します.</h2>
+<h2>SYNTAXは,のシンタックスです.</h2>
+<h3>SessionIdParameterSet (デフォルト) を設定する</h3>
+<pre><code>Suspend-Job [-Force] [-Wait] [-Id] &lt;Int32[]&gt; [-WhatIf] [-Confirm] [&lt;CommonParameters&gt;]
+</code></pre>
+<h3>JobParameterSetは</h3>
+<pre><code>Suspend-Job [-Job] &lt;Job[]&gt; [-Force] [-Wait] [-WhatIf] [-Confirm] [&lt;CommonParameters&gt;]
+</code></pre>
+<h3>名前パラメーターセット</h3>
+<pre><code>Suspend-Job [-Force] [-Wait] [-Name] &lt;String[]&gt; [-WhatIf] [-Confirm] [&lt;CommonParameters&gt;]
+</code></pre>
+<h3>InstanceIdParameterSet 設定は</h3>
+<pre><code>Suspend-Job [-Force] [-Wait] [-InstanceId] &lt;Guid[]&gt; [-WhatIf] [-Confirm] [&lt;CommonParameters&gt;]
+</code></pre>
+<h3>フィルターパラメーターセット</h3>
+<pre><code>Suspend-Job [-Force] [-Wait] [-Filter] &lt;Hashtable&gt; [-WhatIf] [-Confirm] [&lt;CommonParameters&gt;]
+</code></pre>
+<h3>StateParameterSet は</h3>
+<pre><code>Suspend-Job [-Force] [-Wait] [-State] &lt;JobState&gt; [-WhatIf] [-Confirm] [&lt;CommonParameters&gt;]
+</code></pre>
+<h2>記述は,</h2>
+<p><code>Suspend-Job</code>cmdlet はワークフローの仕事を一時的に停止する.Suspend は,ワークフローの仕事を一時的に中断または停止するという意味です.この cmdlet は,ワークフローを実行しているユーザーにワークフローを一時的に停止することを可能にします.それは,Suspend-Workflowを補完します.https://go.microsoft.com/fwlink/?LinkId=267141作業を停止するワークフローのコマンドであるアクティビティです.</p>
+<p><code>Suspend-Job</code>cmdlet はワークフローの仕事でしか動作しません.例えば,  を使って起動するような標準的なバックグラウンドの仕事では動作しません.<code>Start-Job</code>cmdletです.</p>
+<p>ワークフローの仕事を特定するには,PSJobTypeName**のプロパティでPSWorkflowJobの値を検索してください.特定のカスタムワークフローのタイプが をサポートしているか判断するには,<code>Suspend-Job</code>cmdlet では,カスタム・ジョブタイプのヘルプトピックを参照してください.</p>
+<p>ワークフローの仕事を中止すると,ワークフローの仕事は次のチェックポイントに実行され,停止し,すぐにワークフローの作業オブジェクトを返します. 仕事を取得する前に停止を完了するまで待つために, の <strong>Wait</strong>パラメータを使用してください.<code>Suspend-Job</code>                                                                                                                                                                                           <code>Wait-Job</code>cmdlet.ワークフローの作業が停止されたとき,その仕事の****の性質の値は停止されます.</p>
+<p>停止はチェックポイントに依存します.現在の作業状態,メタデータ,および出力がチェックポイントに保存され,状態やデータの喪失なしにワークフローの仕事を再開することができます.ワークフローの作業がチェックポイントがない場合,正しく停止することはできません.実行しているワークフローにチェックポイントを追加するには, <strong>PSPersist</strong>ワークフローの共通パラメータを使用します. フォース**パラメータを使用して,即座に任意のワークフローの仕事を停止し,チェックポイントがないワークフローの仕事を停止できます. しかし,その行動は状態とデータの損失を引き起こす可能性があります.</p>
+<p>ワークフローワーク (<strong>PSWorkflowJob</strong>) など,カスタム・ジョブタイプでJob cmdlet を使用する前に,カスタム・ジョブタイプをサポートするモジュールを輸入します.<code>Import-Module</code>cmdlet または,モジュール内の cmdlet を使用する.</p>
+<p>このcmdletはWindows PowerShell 3.0で導入されました.</p>
+<h2>例えは</h2>
+<h3>例1: 名前でワークフローの仕事を中止する</h3>
+<p>この例では,ワークフローの仕事を停止する方法を示しています.</p>
+<p>最初のコマンドで,  が作成されます.<code>Get-SystemLog</code>ワークフローは,  を使っています.<code>CheckPoint-Workflow</code>ワークフローのチェックポイントを定義する活動です.</p>
+<p>第二のコマンドは,すべてのワークフローに共通する <strong>AsJob</strong> パラメータを使用して,  を実行します.<code>Get-SystemLog</code>命令は,ワークフローの共通のパラメータを用い,ワークフローの作業のための友好的な名前を指定します.</p>
+<p>第三のコマンドは,  を使っています.<code>Get-Job</code>を入手するにはcmdletを用意します.<code>LogflowJob</code>ワークフローの仕事.出力では <strong>PSJobTypeName</strong> のプロパティの値は PSWorkflowJob であることが示されています.</p>
+<p>第4コマンドは,という文字を使用します.<code>Suspend-Job</code>を停止するcmdlet<code>LogflowJob</code>チェックポイントまで走って,仕事を中止する.</p>
+<pre><code class="language-powershell">#Sample Workflow
+workflow Get-SystemLog
+{
+    $Events = Get-WinEvent -LogName System
+    CheckPoint-Workflow
+    inlinescript {\\Server01\Scripts\Analyze-SystemEvents.ps1 -Events $Events}
+}
+Get-SystemLog -AsJob -JobName &quot;LogflowJob&quot;
+Get-Job -Name LogflowJob
+</code></pre>
+<pre><code class="language-Output">Id   Name          PSJobTypeName   State       HasMoreData     Location   Command
+--   ----          -------------   -----       -----------     --------   -------
+4    LogflowJob    PSWorkflowJob   Running     True            localhost   Get-SystemLog
+</code></pre>
+<pre><code class="language-powershell">Suspend-Job -Name LogflowJob
+</code></pre>
+<pre><code class="language-Output">Id   Name          PSJobTypeName   State       HasMoreData     Location   Command
+--   ----          -------------   -----       -----------     --------   -------
+4    LogflowJob    PSWorkflowJob   Suspended   True            localhost   Get-SystemLog
+</code></pre>
+<h3>例2:ワークフローの仕事を停止し再開する</h3>
+<p>この例では,ワークフローの仕事を停止し,再開する方法を示しています.</p>
+<p>最初のコマンドは,LogWorkflowJobの仕事を停止します.コマンドはすぐに返されます.出力によって,作業流の仕事は停止されているにもかかわらず,まだ実行されていることが表示されます.</p>
+<p>第二のコマンドは,  を使っています.<code>Get-Job</code>cmdlet で LogWorkflowJob の作業を入手すると,作業流作業が成功して停止されたことを表示します.</p>
+<p>第三のコマンドは,  を使っています.<code>Get-Job</code>cmdlet で LogWorkflowJobの仕事と の仕事を得る.<code>Resume-Job</code>輸出は,ワークフローの作業が成功して再開され,現在実行されていることを示しています.</p>
+<pre><code class="language-powershell">Suspend-Job -Name LogWorkflowJob
+</code></pre>
+<pre><code class="language-Output">Id   Name          PSJobTypeName      State         HasMoreData     Location      Command
+--   ----          -------------      -----         -----------     --------      -------
+67   LogflowJob    PSWorkflowJob      Running       True            localhost     LogWorkflow
+</code></pre>
+<pre><code class="language-powershell">Get-Job -Name LogWorkflowJob
+</code></pre>
+<pre><code class="language-Output">Id   Name          PSJobTypeName      State         HasMoreData     Location      Command
+--   ----          -------------      -----         -----------     --------      -------
+67   LogflowJob    PSWorkflowJob      Suspended     True            localhost     LogWorkflow
+</code></pre>
+<pre><code class="language-powershell">Get-Job -Name LogWorkflowJob | Resume-Job
+</code></pre>
+<pre><code class="language-Output">Id     Name          PSJobTypeName      State       HasMoreData     Location      Command
+--     ----          -------------      -----       -----------     --------      -------
+67     LogflowJob    PSWorkflowJob      Running     True            localhost     LogWorkflow
+</code></pre>
+<h3>例3:リモートコンピュータでワークフローの仕事を停止する</h3>
+<pre><code class="language-powershell">Invoke-Command -ComputerName Srv01 -ScriptBlock {Suspend-Job -Filter @{CustomID=&quot;031589&quot;}
+</code></pre>
+<p>このコマンドは,という文字を使用します.<code>Invoke-Command</code>遠隔コンピュータのSrv01のワークフローワークを停止するcmdletです. <strong>Filter</strong>パラメータの値は,カスタムID値を指定するハッシュテーブルです. この <strong>CustomID</strong>は,仕事メタデータ (<strong>PSPrivateMetadata</strong>) です.</p>
+<h3>例4:ワークフローの作業が停止するのを待って下さい.</h3>
+<pre><code class="language-powershell">Suspend-Job VersionCheck -Wait
+</code></pre>
+<pre><code class="language-Output">Id     Name          PSJobTypeName      State         HasMoreData     Location      Command
+--     ----          -------------      -----         -----------     --------      -------
+ 5     VersionCheck  PSWorkflowJob      Suspended     True            localhost     LogWorkflow
+</code></pre>
+<p>このコマンドはVersionCheckワークフローの作業を停止します.このコマンドは,ワークフローの作業を停止するまで待つために <strong>Wait</strong>パラメータを使用します.ワークフローの作業が次のチェックポイントに実行され,停止されると,コマンドは終了し,作業オブジェクトを返します.</p>
+<h3>例5:ワークフローの仕事を一時停止させるように強制する</h3>
+<pre><code class="language-powershell">Suspend-Job Maintenance -Force
+</code></pre>
+<p>このコマンドは,メンテナンスワークフローの仕事を強制的に停止します.メンテナンス作業にはチェックポイントはありません.正しく停止することはできません.正しく再開されることもあります.</p>
+<h2>パラメータは</h2>
+<h1>職を中止する</h1>
+<h3>-フィルター</h3>
+<p>このcmdletはすべての条件を満たす作業を停止します.キーが仕事属性であり,値が仕事属性値であるハッシュテーブルを入力します.</p>
+<pre><code class="language-yaml">Type: System.Collections.Hashtable
+Parameter Sets: FilterParameterSet
+Aliases:
+
+Required: True
+Position: 0
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+</code></pre>
+<h3>-フォース</h3>
+<p>このアクションは,状態とデータの損失を引き起こす可能性があります.</p>
+<p>デフォルトでは, <code>Suspend-Job</code>ワークフローの作業が次のチェックポイントまで実行され,その後停止される.このパラメータを使用してチェックポイントがないワークフローの作業を停止することもできます.</p>
+<pre><code class="language-yaml">Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases: F
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-Id</h3>
+<p>このcmdletが停止する職員のIDを指定します.</p>
+<p>IDは,現在のセッションにおける仕事について唯一に識別する整数です.インスタンスのIDよりも覚えやすく,入力が容易ですが,現在のセッションでのみユニークです. 逗号で分離した1つまたは複数のIDを入力できます. 仕事のIDを見つけるには,  を使ってください.<code>Get-Job</code>cmdletです.</p>
+<pre><code class="language-yaml">Type: System.Int32[]
+Parameter Sets: SessionIdParameterSet
+Aliases:
+
+Required: True
+Position: 0
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+</code></pre>
+<h3>-インスタンスの</h3>
+<p>このcmdletが停止する職種IDを指定します.デフォルトはすべての職種です.</p>
+<p>インスタンスのIDは,コンピュータ上の仕事を唯一識別する GUIDです.<code>Get-Job</code> .</p>
+<pre><code class="language-yaml">Type: System.Guid[]
+Parameter Sets: InstanceIdParameterSet
+Aliases:
+
+Required: True
+Position: 0
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+</code></pre>
+<h3>- バイト</h3>
+<p>このcmdletで停止されるワークフローの作業を指定します.ワークフローの作業を含む変数またはワークフローの作業を入手するコマンドを入力します.また,ワークフローの作業をパイプして  に移動することもできます.<code>Suspend-Job</code>cmdletです.</p>
+<pre><code class="language-yaml">Type: System.Management.Automation.Job[]
+Parameter Sets: JobParameterSet
+Aliases:
+
+Required: True
+Position: 0
+Default value: None
+Accept pipeline input: True (ByPropertyName, ByValue)
+Accept wildcard characters: False
+</code></pre>
+<h3>-名字は</h3>
+<p>このcmdletで停止された職員の友好的な名前を指定します. 一かそれ以上のワークフローの職名を入力します.ワイルドカード文字がサポートされています.</p>
+<pre><code class="language-yaml">Type: System.String[]
+Parameter Sets: NameParameterSet
+Aliases:
+
+Required: True
+Position: 0
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+</code></pre>
+<h3>-州</h3>
+<p>指定された状態の作業を停止する.このcmdletは指定された状態の作業のみを停止します.このパラメータの受け入れ可能な値は:です.</p>
+<p>スタートしていない - 走っている - 完了した - 失敗した - 止まった - ブロックされた - 停滞した - 断絶された - 停滞した - 止まった</p>
+<p><code>Suspend-Job</code><strong>Running</strong>状態でのワークフローの仕事をのみ停止します.</p>
+<p>求人情報については, [JobState Enumeration] (/dotnet/api/system.management.automation.jobstate) を参照してください.</p>
+<pre><code class="language-yaml">Type: System.Management.Automation.JobState
+Parameter Sets: StateParameterSet
+Aliases:
+Accepted values: NotStarted, Running, Completed, Failed, Stopped, Blocked, Suspended, Disconnected, Suspending, Stopping, AtBreakpoint
+
+Required: True
+Position: 0
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+</code></pre>
+<h3>- 待って下さい</h3>
+<p>このcmdletは,ワークフローの作業が停止状態になるまでコマンドプロンプトを押すことを示します.<code>Suspend-Job</code>ワークフローの仕事はまだ停止状態ではないとしても,すぐに返されます.</p>
+<p><strong>TheWait</strong>パラメータは,パイプをパイプする等しい.<code>Suspend-Job</code>命令に命令する<code>Wait-Job</code>cmdletです.</p>
+<pre><code class="language-yaml">Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-確認</h3>
+<p>cmdletを実行する前に確認を提示します.</p>
+<pre><code class="language-yaml">Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases: cf
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-WhatIf</h3>
+<p>cmdletが実行されなければどうなるかを示しています.</p>
+<pre><code class="language-yaml">Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases: wi
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>共通パラメーター</h3>
+<p>このcmdletは,共通パラメータをサポートしています: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable.詳細については, <a href="を参照してください.https://go.microsoft.com/fwlink/?LinkID=113216">about_CommonParameters</a> でした.</p>
+<h2>輸入は</h2>
+<h3>システム管理自動化 職務</h3>
+<p>このcmdletにあらゆる種類の仕事を送ることができます.しかし,もし<code>Suspend-Job</code>サポートされていないタイプの作業が完了すると,終了エラーが返されます.</p>
+<h2>輸出は</h2>
+<h3>システム管理自動化 職務</h3>
+<p>このcmdletは,停止した作業を返します.</p>
+<h2>NOTES  記事ができました.</h2>
+<p>Windows PowerShell では,次のアライスがあります.<code>Suspend-Job</code>:</p>
+<ul>
+<li>-<code>sujb</code></li>
+</ul>
+<p>停止した職を保存する仕組みと場所は,職種によって異なります.例えば,停止されたワークフロー職はデフォルトでフラットファイルストアに保存されますが,データベースにも保存できます.</p>
+<p>実行状態でないワークフローの作業を提出した場合,<code>Suspend-Job</code>警告を削除するには,SilentlyContinueの値を持つ <strong>WarningAction</strong>の共通パラメータを使用します.</p>
+<p>仕事を中止するような仕事がない場合,<code>Suspend-Job</code>終結エラーが返されます.</p>
+<p>このcmdletで停止された作業を含む,停止されたワークフローの仕事を探すには, の<strong>状態</strong>パラメータを使用してください.<code>Get-Job</code>cmdlet は,停止状態のワークフローの仕事を取得します.</p>
+<p>一部の作業種には,Windows PowerShellが作業を停止するのを防ぐオプションやプロパティがあります.作業を停止しようとした場合は失敗した場合,作業オプションとプロパティが停止を許可していることを確認してください.</p>
+<h2>関連リンク</h2>
+<p><a href="Get-Job.md">Get-Job</a> を取得する</p>
+<p><a href="Receive-Job.md">Receive-Job</a> でした.</p>
+<p><a href="Remove-Job.md">Remove-Job</a> </p>
+<p><a href="Resume-Job.md">Resume-Job</a> </p>
+<p><a href="Start-Job.md">Start-Job</a> </p>
+<p><a href="Stop-Job.md">Stop-Job</a> </p>
+<p><a href="Suspend-Job.md">Suspend-Job</a> </p>
+<p><a href="Wait-Job.md">Wait-Job</a> </p></section><section class="en-original"><pre class="source-original"># Suspend-Job
+
+## SYNOPSIS
+Temporarily stops workflow jobs.
+
+## SYNTAX
+
+### SessionIdParameterSet (Default)
+
+```
+Suspend-Job [-Force] [-Wait] [-Id] &lt;Int32[]&gt; [-WhatIf] [-Confirm] [&lt;CommonParameters&gt;]
+```
+
+### JobParameterSet
+
+```
+Suspend-Job [-Job] &lt;Job[]&gt; [-Force] [-Wait] [-WhatIf] [-Confirm] [&lt;CommonParameters&gt;]
+```
+
+### NameParameterSet
+
+```
+Suspend-Job [-Force] [-Wait] [-Name] &lt;String[]&gt; [-WhatIf] [-Confirm] [&lt;CommonParameters&gt;]
+```
+
+### InstanceIdParameterSet
+
+```
+Suspend-Job [-Force] [-Wait] [-InstanceId] &lt;Guid[]&gt; [-WhatIf] [-Confirm] [&lt;CommonParameters&gt;]
+```
+
+### FilterParameterSet
+
+```
+Suspend-Job [-Force] [-Wait] [-Filter] &lt;Hashtable&gt; [-WhatIf] [-Confirm] [&lt;CommonParameters&gt;]
+```
+
+### StateParameterSet
+
+```
+Suspend-Job [-Force] [-Wait] [-State] &lt;JobState&gt; [-WhatIf] [-Confirm] [&lt;CommonParameters&gt;]
+```
+
+## DESCRIPTION
+
+The `Suspend-Job` cmdlet suspends workflow jobs. Suspend means to temporarily interrupt or pause a
+workflow job. This cmdlet allows users who are running workflows to suspend the workflow. It
+complements the Suspend-Workflowhttps://go.microsoft.com/fwlink/?LinkId=267141 activity, which is a
+command in the workflow that suspends the workflow.
+
+The `Suspend-Job` cmdlet works only on workflow jobs. It does not work on standard background jobs,
+such as those that are started by using the `Start-Job` cmdlet.
+
+To identify a workflow job, look for a value of PSWorkflowJob in the **PSJobTypeName** property of
+the job. To determine whether a particular custom job type supports the `Suspend-Job` cmdlet, see
+the help topics for the custom job type.
+
+When you suspend a workflow job, the workflow job runs to the next checkpoint, suspends, and
+immediately returns a workflow job object. To wait for the suspension to complete before getting the
+job, use the **Wait** parameter of `Suspend-Job` or the `Wait-Job` cmdlet. When the workflow job is
+suspended, the value of the **State** property of the job is Suspended.
+
+Suspending correctly relies on checkpoints. The current job state, metadata, and output are saved in
+the checkpoint so the workflow job can be resumed without loss of state or data. If the workflow job
+does not have checkpoints, it cannot be suspended correctly. To add checkpoints to a workflow that
+you are running, use the **PSPersist** workflow common parameter. You can use the **Force**
+parameter to suspend any workflow job immediately and to suspend a workflow job that does not have
+checkpoints, but the action could cause loss of state and data.
+
+Before you use a Job cmdlet on a custom job type, such as a workflow job (**PSWorkflowJob**) import
+the module that supports the custom job type, either by using the `Import-Module` cmdlet or using or
+using a cmdlet in the module.
+
+This cmdlet was introduced in Windows PowerShell 3.0.
+
+## EXAMPLES
+
+### Example 1: Suspend a workflow job by name
+
+This example shows how to suspend a workflow job.
+
+The first command creates the `Get-SystemLog` workflow. The workflow uses the `CheckPoint-Workflow`
+activity to define a checkpoint in the workflow.
+
+The second command uses the **AsJob** parameter that is common to all workflows to run the
+`Get-SystemLog` workflow as a background job. The command uses the **JobName** workflow common
+parameter to specify a friendly name for the workflow job.
+
+The third command uses the `Get-Job` cmdlet to get the `LogflowJob` workflow job. The output
+shows that the value of the **PSJobTypeName** property is PSWorkflowJob.
+
+The fourth command uses the `Suspend-Job` cmdlet to suspend the `LogflowJob` job. The job runs to
+the checkpoint and then suspends.
+
+```powershell
+#Sample Workflow
+workflow Get-SystemLog
+{
+    $Events = Get-WinEvent -LogName System
+    CheckPoint-Workflow
+    inlinescript {\\Server01\Scripts\Analyze-SystemEvents.ps1 -Events $Events}
+}
+Get-SystemLog -AsJob -JobName &quot;LogflowJob&quot;
+Get-Job -Name LogflowJob
+```
+
+```Output
+Id   Name          PSJobTypeName   State       HasMoreData     Location   Command
+--   ----          -------------   -----       -----------     --------   -------
+4    LogflowJob    PSWorkflowJob   Running     True            localhost   Get-SystemLog
+```
+
+```powershell
+Suspend-Job -Name LogflowJob
+```
+
+```Output
+Id   Name          PSJobTypeName   State       HasMoreData     Location   Command
+--   ----          -------------   -----       -----------     --------   -------
+4    LogflowJob    PSWorkflowJob   Suspended   True            localhost   Get-SystemLog
+```
+
+### Example 2: Suspend and resume a workflow job
+
+This example shows how to suspend and resume a workflow job.
+
+The first command suspends the LogWorkflowJob job.The command returns immediately. The output shows
+that the workflow job is still running, even though it is being suspended.
+
+The second command uses the `Get-Job` cmdlet to get the LogWorkflowJob job. The output shows that
+the workflow job suspended successfully.
+
+The third command uses the `Get-Job` cmdlet to get the LogWorkflowJob job and the `Resume-Job`
+cmdlet to resume it. The output shows that the workflow job resumed successfully and is now running.
+
+```powershell
+Suspend-Job -Name LogWorkflowJob
+```
+
+```Output
+Id   Name          PSJobTypeName      State         HasMoreData     Location      Command
+--   ----          -------------      -----         -----------     --------      -------
+67   LogflowJob    PSWorkflowJob      Running       True            localhost     LogWorkflow
+```
+
+```powershell
+Get-Job -Name LogWorkflowJob
+```
+
+```Output
+Id   Name          PSJobTypeName      State         HasMoreData     Location      Command
+--   ----          -------------      -----         -----------     --------      -------
+67   LogflowJob    PSWorkflowJob      Suspended     True            localhost     LogWorkflow
+```
+
+```powershell
+Get-Job -Name LogWorkflowJob | Resume-Job
+```
+
+```Output
+Id     Name          PSJobTypeName      State       HasMoreData     Location      Command
+--     ----          -------------      -----       -----------     --------      -------
+67     LogflowJob    PSWorkflowJob      Running     True            localhost     LogWorkflow
+```
+
+### Example 3: Suspend a workflow job on a remote computer
+
+```powershell
+Invoke-Command -ComputerName Srv01 -ScriptBlock {Suspend-Job -Filter @{CustomID=&quot;031589&quot;}
+```
+
+This command uses the `Invoke-Command` cmdlet to suspend a workflow job on the Srv01 remote
+computer. The value of the **Filter** parameter is a hash table that specifies a CustomID value.
+This **CustomID** is job metadata (**PSPrivateMetadata**).
+
+### Example 4: Wait for the workflow job to suspend
+
+```powershell
+Suspend-Job VersionCheck -Wait
+```
+
+```Output
+Id     Name          PSJobTypeName      State         HasMoreData     Location      Command
+--     ----          -------------      -----         -----------     --------      -------
+ 5     VersionCheck  PSWorkflowJob      Suspended     True            localhost     LogWorkflow
+```
+
+This command suspends the VersionCheck workflow job. The command uses the **Wait** parameter to wait
+until the workflow job is suspended. When the workflow job runs to the next checkpoint and is
+suspended, the command finishes and returns the job object.
+
+### Example 5: Force a workflow job to suspend
+
+```powershell
+Suspend-Job Maintenance -Force
+```
+
+This command suspends the Maintenance workflow job forcibly. The Maintenance job does not have
+checkpoints. It cannot be suspended correctly and might not resume correctly.
+
+## PARAMETERS
+
+# Suspend-Job
+
+### -Filter
+
+Specifies a hash table of conditions. This cmdlet suspends jobs that satisfy all of the conditions.
+Enter a hash table where the keys are job properties and the values are job property values.
+
+```yaml
+Type: System.Collections.Hashtable
+Parameter Sets: FilterParameterSet
+Aliases:
+
+Required: True
+Position: 0
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -Force
+
+Suspends the workflow job immediately. This action could cause a loss of state and data.
+
+By default, `Suspend-Job` lets the workflow job run until the next checkpoint and then suspends it.
+You can also use this parameter to suspend workflow jobs that do not have checkpoints.
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases: F
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Id
+
+Specifies the IDs of jobs that this cmdlet suspends.
+
+The ID is an integer that uniquely identifies the job in the current session. It is easier to
+remember and to type than the instance ID, but it is unique only in the current session. You can
+type one or more IDs, separated by commas. To find the ID of a job, use the `Get-Job` cmdlet.
+
+```yaml
+Type: System.Int32[]
+Parameter Sets: SessionIdParameterSet
+Aliases:
+
+Required: True
+Position: 0
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -InstanceId
+
+Specifies the instance IDs of jobs that this cmdlet suspends. The default is all jobs.
+
+An instance ID is a GUID that uniquely identifies the job on the computer. To find the instance ID
+of a job, use `Get-Job`.
+
+```yaml
+Type: System.Guid[]
+Parameter Sets: InstanceIdParameterSet
+Aliases:
+
+Required: True
+Position: 0
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -Job
+
+Specifies the workflow jobs that this cmdlet stops. Enter a variable that contains the workflow jobs
+or a command that gets the workflow jobs. You can also pipe workflow jobs to the `Suspend-Job`
+cmdlet.
+
+```yaml
+Type: System.Management.Automation.Job[]
+Parameter Sets: JobParameterSet
+Aliases:
+
+Required: True
+Position: 0
+Default value: None
+Accept pipeline input: True (ByPropertyName, ByValue)
+Accept wildcard characters: False
+```
+
+### -Name
+
+Specifies friendly names of jobs that this cmdlet suspends. Enter one or more workflow job names.
+Wildcard characters are supported.
+
+```yaml
+Type: System.String[]
+Parameter Sets: NameParameterSet
+Aliases:
+
+Required: True
+Position: 0
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -State
+
+Specifies a job state. This cmdlet stops only jobs in the specified state. The acceptable values for
+this parameter are:
+
+- NotStarted
+- Running
+- Completed
+- Failed
+- Stopped
+- Blocked
+- Suspended
+- Disconnected
+- Suspending
+- Stopping
+
+`Suspend-Job` suspends only workflow jobs in the **Running** state.
+
+For more information about job states, see
+[JobState Enumeration](/dotnet/api/system.management.automation.jobstate).
+
+```yaml
+Type: System.Management.Automation.JobState
+Parameter Sets: StateParameterSet
+Aliases:
+Accepted values: NotStarted, Running, Completed, Failed, Stopped, Blocked, Suspended, Disconnected, Suspending, Stopping, AtBreakpoint
+
+Required: True
+Position: 0
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -Wait
+
+Indicates that this cmdlet suppresses the command prompt until the workflow job is in the suspended
+state. By default, `Suspend-Job` returns immediately, even if the workflow job is not yet in the
+suspended state.
+
+The **Wait** parameter is equivalent to piping a `Suspend-Job` command to the `Wait-Job` cmdlet.
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Confirm
+
+Prompts you for confirmation before running the cmdlet.
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases: cf
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -WhatIf
+
+Shows what would happen if the cmdlet runs. The cmdlet is not run.
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases: wi
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### CommonParameters
+
+This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable,
+-InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose,
+-WarningAction, and -WarningVariable. For more information, see
+[about_CommonParameters](https://go.microsoft.com/fwlink/?LinkID=113216).
+
+## INPUTS
+
+### System.Management.Automation.Job
+
+You can pipe all types of jobs to this cmdlet. However, if `Suspend-Job` gets a job of an
+unsupported type, it returns a terminating error.
+
+## OUTPUTS
+
+### System.Management.Automation.Job
+
+This cmdlet returns the jobs that it suspended.
+
+## NOTES
+
+Windows PowerShell includes the following aliases for `Suspend-Job`:
+
+- `sujb`
+
+The mechanism and location for saving a suspended job might vary depending on the job type. For
+example, suspended workflow jobs are saved in a flat file store by default, but can also be saved in
+a database.
+
+If you submit a workflow job that is not in the Running state, `Suspend-Job` displays a warning
+message. To suppress the warning, use the **WarningAction** common parameter with a value of
+SilentlyContinue.
+
+If a job is not of a type that supports suspending, `Suspend-Job` returns a terminating error.
+
+To find the workflow jobs that are suspended, including those that were suspended by this cmdlet,
+use the **State** parameter of the `Get-Job` cmdlet to get workflow jobs in the Suspended state.
+
+Some job types have options or properties that prevent Windows PowerShell from suspending the job.
+If attempts to suspend the job fail, verify that the job options and properties allow for
+suspending.
+
+## RELATED LINKS
+
+[Get-Job](Get-Job.md)
+
+[Receive-Job](Receive-Job.md)
+
+[Remove-Job](Remove-Job.md)
+
+[Resume-Job](Resume-Job.md)
+
+[Start-Job](Start-Job.md)
+
+[Stop-Job](Stop-Job.md)
+
+[Suspend-Job](Suspend-Job.md)
+
+[Wait-Job](Wait-Job.md)</pre></section>

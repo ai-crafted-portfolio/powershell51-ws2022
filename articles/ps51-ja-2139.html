@@ -1,0 +1,1481 @@
+<!doctype html><meta charset="utf-8"><section class="jp-official"><h1>New-NetIPsecRule について</h1>
+<h2>SYNOPSISは,指定された基準に一致するネットワーク接続のセキュリティ要件を定義するIPsecルールを作成します.</h2>
+<h2>SYNTAXは,のシンタックスです.</h2>
+<pre><code>New-NetIPsecRule [-PolicyStore &lt;String&gt;] [-GPOSession &lt;String&gt;] [-IPsecRuleName &lt;String&gt;] -DisplayName &lt;String&gt;
+ [-Description &lt;String&gt;] [-Group &lt;String&gt;] [-Enabled &lt;Enabled&gt;] [-Profile &lt;Profile&gt;] [-Platform &lt;String[]&gt;]
+ [-Mode &lt;IPsecMode&gt;] [-InboundSecurity &lt;SecurityPolicy&gt;] [-OutboundSecurity &lt;SecurityPolicy&gt;]
+ [-QuickModeCryptoSet &lt;String&gt;] [-Phase1AuthSet &lt;String&gt;] [-Phase2AuthSet &lt;String&gt;] [-KeyModule &lt;KeyModule&gt;]
+ [-AllowWatchKey &lt;Boolean&gt;] [-AllowSetKey &lt;Boolean&gt;] [-LocalTunnelEndpoint &lt;String[]&gt;]
+ [-RemoteTunnelEndpoint &lt;String[]&gt;] [-RemoteTunnelHostname &lt;String&gt;] [-ForwardPathLifetime &lt;UInt32&gt;]
+ [-EncryptedTunnelBypass &lt;Boolean&gt;] [-RequireAuthorization &lt;Boolean&gt;] [-User &lt;String&gt;] [-Machine &lt;String&gt;]
+ [-LocalAddress &lt;String[]&gt;] [-RemoteAddress &lt;String[]&gt;] [-Protocol &lt;String&gt;] [-LocalPort &lt;String[]&gt;]
+ [-RemotePort &lt;String[]&gt;] [-InterfaceAlias &lt;WildcardPattern[]&gt;] [-InterfaceType &lt;InterfaceType&gt;]
+ [-CimSession &lt;CimSession[]&gt;] [-ThrottleLimit &lt;Int32&gt;] [-AsJob] [-WhatIf] [-Confirm] [&lt;CommonParameters&gt;]
+</code></pre>
+<h2>記述 <strong>New-NetIPsecRule</strong> cmdlet は,輸送モードまたはトンネルモード IPsec ルールを作成し,ターゲットコンピュータに追加します.規則が適用されるためには, <em>LocalAddress</em> と <em>RemoteAddress</em> のような条件を指定するために,いくつかのパラメータを使用します.他のパラメータは,接続が確保されるべき方法を指定します.例えば, <em>InboundSecurity</em> と <em>OutboundSecurity</em> のようなパラメータです.すでに存在する規則は,Get-NetIPsecRule と Set-NetIPsecRule cmdlets で管理できます.</h2>
+<p>定番メインモードと速モードのセキュリティ交渉が起こるためには,適切な認証と暗号セットが規則に関連付けられなければなりません.詳細については,New-NetIPsecPhase1AuthSet,New-NetIPsecPhase2AuthSet,およびNew-NetIPsecQuickModeCryptoSet cmdletsを参照してください.</p>
+<p>各認証または暗号セットは,関連するIPsecルールのためのポリシーストアに作成されなければなりません.特定のセットが異なるポリシーストア (GPOs) の複数のIPsecルールに適用されている場合,セットはそれらのストアそれぞれに複製されなければなりません (ポリシーがリンク問題なく更新できるようにします).詳細については,コピー-NetFirewallRule,コピー-NetIPsecMainModeCryptoSet,コピー-NetIPsecMainModeRule,コピー-NetIPsec,コピー-NetIPsec1AuthSet,コピー-NetIPsecPhase2AuthSet,およびコピー-NetIPsecQuickSetcmDletsおよびこのcmdletを参照してください.</p>
+<h2>例えは</h2>
+<h3>例1 ```</h3>
+<p>PS C:&gt;New-NetIPsecRule -DisplayName "Multi DTE" -Name "Multi DTE" -Mode Tunnel -InboundSecurity Require -OutboundSecurity Require -RemoteTunnelEndpoint 2002:9d3b::2, 2002:9d3b::3, 2002:9d3b::4 -RemoteAddress 2002:9d3b::/32 -LocalTunnelEndpoint Any</p>
+<pre><code>
+この例では,多動的トンネルエンドポイントルールを作成します.
+
+### 例2 ```
+PS C:\&gt;New-NetIPsecRule -DisplayName &quot;Domain Isolation Rule&quot; -InboundSecurity Require -OutboundSecurity Request -PolicyStore contoso.com\Domain_Isolation
+</code></pre>
+<p>この例では,ドメイン孤立シナリオで,他のドメインメンバーコンピュータからのみ入力トラフィックが許可される場合,使用できるルールが作成されます.デフォルトのメインモード交渉では,コンピュータとユーザー認証のためにKerberos v5を使用します.</p>
+<h3>例 3 ```</h3>
+<p>PS C:&gt;$qMProposal = New-NetIPsecQuickModeCryptoProposal -Encapsulation ESP -ESPHash SHA1 -Encryption DES3</p>
+<p>PS C:&gt;$qMCryptoSet = New-NetIPsecQuickModeCryptoSet -DisplayName "esp:sha1-des3" -Proposal $qMProposal</p>
+<p>PS C:&gt;New-NetIPSecRule -DisplayName "Tunnel from HQ to Dallas Branch" -Mode Tunnel -LocalAddress 192.168.0.0/16 -RemoteAddress 192.157.0.0/16 -LocalTunnelEndpoint 1.1.1.1 -RemoteTunnelEndpoint 2.2.2.2 -InboundSecurity Require -OutboundSecurity Require -QuickModeCryptoSet $qMCryptoSet.Name</p>
+<pre><code>
+この例では,プライベートネットワークから192.168.0.0/16のIPsecトンネルを作成し,その通信は,公共ネットワークに接続された 1.1.1.1のローカルコンピュータ上のインターフェースを通って,公共ネットワークから2.2の公共インターフェースを通って,第二のコンピュータへ,公共ネットワークから192.157.0.0/16の公共ネットワークを通って,トンネルを通るすべてのトラフィックは,ESP/SHA1を使用して完整性をチェックし,ESP/DES3を使用して暗号化されています.
+
+### 例4 ```
+This cmdlet illustrates how to include both AH and ESP protocols in a single suite.
+PS C:\&gt;$aHandESPQM = New-NetIPsecQuickModeCryptoProposal -Encapsulation AH,ESP -AHHash SHA1 -ESPHash SHA1 -Encryption DES3
+
+
+This cmdlet illustrates how to specify the use of the AH protocol only.
+PS C:\&gt;$aHQM = New-NetipsecQuickModeCryptoProposal -Encapsulation AH -AHHash SHA1 -ESPHash None -Encryption None
+
+
+This cmdlet illustrates how to specify the use of the ESP protocol only, and uses the None keyword to specify not to include an encryption option.
+PS C:\&gt;$eSPQM = New-NetIPsecQuickModeCryptoProposal -Encapsulation ESP -ESPHash SHA1 -Encryption None
+
+
+This cmdlet illustrates how to use the None keyword to specify that ESP is used with an encryption protocol, but with no integrity protocol. This cmdlet also illustrates how to set a custom SA timeout using both time and data amount values.
+PS C:\&gt;$eSPnoAHQM = New-NetIPsecQuickModeCryptoProposal -Encapsulation ESP -ESPHash None -Encryption AES256 -MaxKiloBytes 50000 -MaxMinutes 30
+
+
+
+PS C:\&gt;$qMCryptoSet = New-NetIPsecQuickModeCryptoSet -DisplayName &quot;Custom Quick Mode&quot; -Proposal $aHandESPQM,$aHQM,$eSPQM,$eSPnoAHQM
+
+
+
+PS C:\&gt;New-NetIPsecRule -DisplayName &quot;Domain Isolation Rule&quot; -InboundSecurity Require Request -OutboundSecurity Request -QuickModeCryptoSet $qMCryptoSet.Name
+</code></pre>
+<p>この例では域隔離規則を作成しますが,複数回を構成するカスタム・クイップモード提案を使用します.</p>
+<h2>パラメータは</h2>
+<h3>-AllowSetKey は,IPsec ルールにより,信頼される中介者がキーリング素材を覆すことができることを指定します.このパラメータが True に設定された場合,信頼される中介は IPsec セキュリティ協会 (SA) で使用される暗号化キーリング素材を指示することができます.このパラメータが両端で True に設定された場合,コンピュータは SA 交渉を通じて仲裁を行います.一方が鍵を設定し,反対側が鍵を監視するので,ある端が鍵を設定します.デフォルト値は Falseです.このパラメータは Windows Server 2012 にのみサポートされています.</h3>
+<pre><code class="language-yaml">Type: Boolean
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-AllowWatchKey は,IPsec ルールにより,信頼される中介者がキーリング材料の変更について通知することを許可することを指定します.このパラメータが True に設定された場合,信頼される中介者はIPsec SA に関連した暗号化キーリング材料を回収し,変更の通知を登録することができます.デフォルト値は False です.このパラメータは Windows Server 2012 でのみサポートされています.</h3>
+<pre><code class="language-yaml">Type: Boolean
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-AsJobは,背景作業としてcmdletを実行する.このパラメータを使用して,完了するのに時間がかかるコマンドを実行します.</h3>
+<pre><code class="language-yaml">Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h1>New-NetIPsecRule について</h1>
+<h3>-CimSession は,リモートセッションまたはリモートコンピュータでcmdletを実行します.コンピュータ名またはセッションオブジェクトを入力します.例えば,[New-CimSession]の出力です.https://go.microsoft.com/fwlink/p/?LinkId=227967) または [Get-CimSession]https://go.microsoft.com/fwlink/p/?LinkId=227966標準的には,ローカルコンピュータの現在のセッションです.</h3>
+<pre><code class="language-yaml">Type: CimSession[]
+Parameter Sets: (All)
+Aliases: Session
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>- 確認は,cmdletを実行する前に確認を提示します.</h3>
+<pre><code class="language-yaml">Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: cf
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-Description 表示される記述のファイアウォールルールが一致することを指定します.ワイルドカード文字が受け入れられます.このパラメータはファイアウォールルールに関する情報を提供します.このパラメータはIPsecルールの局所化,ユーザー向け説明を指定します.</h3>
+<pre><code class="language-yaml">Type: String
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-DisplayName 表示される表示名のファイアウォールルールに一致するのみが作成される.ワイルドカード文字が受け入れられる. 作成されるファイアウォールルールの局所化,ユーザー向け名前を指定する. ルールを作成する際にこのパラメータが要求されます. このパラメータ値はローカル依存です. オブジェクトが変更されない場合,このパラメータ値は特定の状況下で変更される可能性があります. 多言語環境でスクリプトを書くときに, <em>IPsecRuleName</em> パラメータを使用する必要があります. デフォルト値はランダムに割り当てられた値です. このパラメータはすべてに設定することはできません.</h3>
+<pre><code class="language-yaml">Type: String
+Parameter Sets: (All)
+Aliases: 
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-Enabled は,指定された状態のマッチングメインモードルールが作成されることを指定します.このパラメータは,ルールオブジェクトが管理的に有効または管理的に無効であることを指定します.このパラメータの受け入れ可能な値は:です.</h3>
+<p>誤り: 規則が現在有効になっていることを指定する. 障害のある規則は,コンピュータの行動を積極的に変更しないが,規則はコンピュータ上でまだ存在しているので,再び有効化できます.</p>
+<pre><code class="language-yaml">Type: Enabled
+Parameter Sets: (All)
+Aliases: 
+Accepted values: True, False
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-EncryptedTunnelBypass 指定された値の IPsec ルールに一致する IPsec が作成されると表示します.このパラメータは,既に IPsec 保護されているトンネル端点に送られたネットワークトラフィックのエンカプセレーション状態を指定します.このパラメータが True に設定されている場合,すでに IPsec 保護されているトンネル端点に送られたネットワークトラフィックが再びエンカプセリングする必要はありません.このオプションは,他の IPsec ルールによって既にエンドツエンド保護されているネットワークトラフィックが他のネットワークトラフィックが使用されている場合のネットワークパフォーマンスを改善できます.デフォルト値は False です.このパラメータは firstref_server_7 および Windows Server 2012 にのみサポートされています.</h3>
+<pre><code class="language-yaml">Type: Boolean
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-ForwardPathLifetime 指定されたパスライフタイム値の IPsec ルールに一致する IPsec ルールが作成されることを指定します.このパラメータは,IPsec ルールのためのセッションキーライフタイムを分数で指定します.このパラメータの受け入れられる値は:78〜172799です.デフォルト値は0分です.このパラメータは Windows Server 2012 でのみサポートされています.GPOを管理するときに,デフォルト設定はNotConfiguredです.このパラメータはケースセンシティブで,NotConfigured はドットノテーションを使用してのみ指定できます.</h3>
+<pre><code class="language-yaml">Type: UInt32
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-GPOSession は,作成するルールを回収するネットワークGPOを指定します.このパラメータは, <em>PolicyStore</em>パラメータと同じ方法で使用されます.Windows PowerShell®でGPOsを修正する際,GPOへの変更ごとに,GPO全体をロードし,変更し,保存する必要があります.忙しいドメインコントローラー (DC) では,これは遅い,資源が多くなる操作です.GPOセッションでは,ドメインGPOをローデルのコンピュータにロードし,そのボッチを保存する前に,すべての変更を行います.これはDCの負荷を軽減し,Windows PowerShell cmdletを加速します.GPOセッションでは,Open-NetGPO cmdlet を使用します.GPOセッションを保存するには,Save-GPO cmdlet を使用します.</h3>
+<pre><code class="language-yaml">Type: String
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-グループ指定は,指定されたグループ関連の IPsecルールに一致するのみが作成されることを指定します.ワイルドカード文字が受け入れられます.このパラメータは, <em>ディスプレイグループ</em>パラメータのソース文字列を指定します. <em>ディスプレイグループ</em>パラメータ値はローケータ可能な文字列である場合,このパラメータには間接文字列が含まれます.ルールグループは,影響によって規則を組織するために使用され,バッチル変更が可能になります. Set-NetIPsecRule cmdlets を使用すると,グループ名はルールまたはセットに指定されている場合,そのグループ内のすべてのルールまたはセットは,すでに同じ変更セットを受け取ります.このパラメータ値を普遍的で世界規模の間接的な @Firewall namAPIで指定することは良い慣例です.e.このcmdletを使用してオブジェクト作成時に <em>DisplayGroup</em> パラメータを指定することはできませんが,点符号とSet-NetIPsecRule cmdletを使用して変更することができます.</h3>
+<pre><code class="language-yaml">Type: String
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-IPsecRuleName Specifies 表示されるのは,指定された名前の一つのメインストールモード暗号セットに一致するのみが作成されることを示します.ワイルドカード文字が受け入れられます.このパラメータは,ポリシーストアで一度に指定された名前を持つルールだけが存在できるという点で,ファイル名と同様に動作します.グループポリシー処理とポリシー合併中に,同じ名前を持つ規則が,複数のストアから合併された規則が,存在するように相互に書き換えられます.ルールが同じ目的を果たす場合,この書き換え行動は望ましいです.例えば,すべてのファイアウォールルールには特定の名前があります.管理者がこれらのルールをGPOにコピーすることができれば,規則はローカル c のローカルバージョンを覆い,規則はローカル c のローカルバージョンを覆い,規則は優先します.GPOs は優先順位を持つことができます.したがって,管理者が高優先順位GPOで同じ名前で異なるまたはより特定のルールを持っている場合,既存の他のルールを覆う.デフォルト値はランダムに割り当てられた値です.メインモード暗号化のデフォルトを覆うために,カスタマイズされたパラメータを指定し,このパラメータ値を設定し,このパラメータを暗号化の新しいデフォルト設定にする.</h3>
+<pre><code class="language-yaml">Type: String
+Parameter Sets: (All)
+Aliases: ID, Name
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+</code></pre>
+<h1>New-NetIPsecRule について</h1>
+<h3>-InboundSecurity は,指定されたグループ関連の IPsec ルールに一致するのみが作成されることを指定します.ワイルドカード文字が受け入れられます.このパラメータは, <em>DisplayGroup</em> パラメータのソース文字列を指定します. <em>DisplayGroup</em> パラメータの値は,ローケナライズ可能な文字列である場合,このパラメータには間接文字列が含まれます.ルールグループが影響によって規則を組織するために使用され,バッチル変更が可能になります. Set-NetIPsecRule cmdlets を使用して,グループ名は,規則またはセットの集合に指定されている場合,そのグループ内のすべての規則またはセットが同じ変更セットを受け取ります.このパラメータの値を,普遍的で世界的に利用可能な間接的な @Firewで指定することは良い慣行です.<em>DisplayGroup</em> パラメータは,このcmdletを使用してオブジェクト作成時に指定することはできませんが,点符号とSet-NetIPsecRule cmdletを使用して変更することができます.</h3>
+<pre><code class="language-yaml">Type: SecurityPolicy
+Parameter Sets: (All)
+Aliases: SecIn
+Accepted values: None, Request, Require
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-InterfaceAlias 通信に適用されるインターフェースのニセ名を指定します.このパラメータでルールを検索することはフィルターオブジェクトを使用してのみ実行できます.詳細についてはGet-NetFirewallInterfaceFilter cmdletを参照してください.</h3>
+<pre><code class="language-yaml">Type: WildcardPattern[]
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-InterfaceType は,このルールで規定されているインターフェースタイプを通じて作成されたネットワーク接続のみがこのルールの要件に準拠することを指定します.このパラメータは,各3つの主要なネットワークタイプに対して異なる認証要件を指定します.このパラメータの受け入れ可能な値は:Any,Wired,Wireless,または RemoteAccessです.デフォルト値はAnyです.このパラメータでルールへのクエリはフィルターオブジェクトを使用してのみ実行できます.詳細についてはGet-NetFirewallInterfaceTypeFilter cmdletを参照してください.</h3>
+<pre><code class="language-yaml">Type: InterfaceType
+Parameter Sets: (All)
+Aliases: 
+Accepted values: Any, Wired, Wireless, RemoteAccess
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-KeyModule 指定されたキーモジュールに一致するIPsecルールが作成されると指定します.このパラメータは,どのキーモジュールで交渉すべきかを指定します.このパラメータの受け入れられる値は:デフォルト,AuthIP,IKEv1またはIKEv2です.</h3>
+<p>デフォルト:キーモジュールが認証方法に基づいて設定されます.Windows 11から,バージョン 24H2およびWindows Server 2025以降,デフォルトはIKEv1とIKEv2の両方に相当し,認証方法が要求する場合にのみAuthIPを設定します.以前のリリースでは,デフォルトはIKEv1とAuthIPの両方に相当します. Windows Server 2008以前のWindowsバージョンを実行しているコンピュータに適用されるためには,必須です. -AuthIP:フェーズ2認証でサポートされています. - IKEv1:プレシェアードキー (PSK),証明書,およびKerberosでサポートされています. 1認証のみでサポートされています. - IKEv2:Kerberos,PSK,またはNTLMでサポートされていません. 1段階認証のみでサポートされています.</p>
+<p>デフォルト値はデフォルトです.特定のキーリングモジュールのみで互換性のある認証と暗号化方法があります.これは特定の相互運用性シナリオのみに意図された非常に高度な設定です.このパラメータ値をオーバーリードすると,許可と暗号設定がキーリングモジュールによってサポートされていない場合,トラフィックが素文で送信される可能性があります.Windows Server 2012以前のバージョンはデフォルト設定のみをサポートしています.</p>
+<pre><code class="language-yaml">Type: KeyModule
+Parameter Sets: (All)
+Aliases: 
+Accepted values: Default, IKEv1, AuthIP, IKEv2
+
+Required: False
+Position: Named
+Default value: Default
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-LocalAddress は,一致するIPアドレスを持つネットワークパケットがこのルールに一致することを指定します.このパラメータ値はIPsecルールの最初のエンドポイントであり,このルール要件の対象となるコンピュータを指定します.このパラメータ値は IPv4または IPv6アドレス,ホスト名,サブネット,範囲,または次のキーワードです:任意.このパラメータの受け入れ可能なフォーマットは: - シングルIPv4アドレス: 1.2.3.4 - シングルIPv6アドレス: fe80::1 - IPv4サブネット (ネットワークビット数:1): 1.2.3.4/24 - IPv6サブネット (ネットワークビット数:1:80::1/48 - IPv4サブネット (ネットワークマスク): 1.2.3.4/255.255.255.805.0 -4 範囲: 1.2.3.4〜 1.2.3.7 - IPv6 範囲: fe: fe::180:9 ルール: fe:80:9 ルール:es はこのパラメータでフィルターオブジェクトを使用するだけで実行できます.詳細についてはGet-NetFirewallAddressFilter cmdletを参照してください.</h3>
+<pre><code class="language-yaml">Type: String[]
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-LocalPort は, IP ポート番号が一致するネットワークパケットがこのルールを一致することを指定します.このパラメータ値はIPsec ルールの最初のエンドポイントです.受け入れられる値はポート,範囲,キーワードであり,プロトコルに依存します. <em>プロトコル</em> パラメータ値は TCP または UDP での場合は,このパラメータの受け入れられる値は: - ポート範囲: 0 から 65535 までの. - ポート番号: 80. - キーワード:任意. <em>プロトコル</em> パラメータ値は ICMPv4 または ICMPv6 での場合は,このパラメータの受け入れられる値は: - ICMP タイプ,コード: 0, 8. - タイプとコードペア: 0 から 255. - キーワード:任意. <em>プロトコル・パラメータが指定されていない場合は,このパラメータの受け入れられる値は: Any, RPC, RPC-EPMap,またはIPHTTPS.IPsecルールでは,ポート範囲は,ルールタイプがDo Not Secureである場合にのみ許可されます.Do Not Secureルールでは, </em>InboundSecurity<em> パラメータが None に設定され, </em>OutboundSecurity* パラメータは None に設定されます.IPHTTPSは Windows Server 2012 でのみサポートされています.このパラメータでルールへのクエリはフィルターオブジェクトを使用してのみ実行できます.詳細についてはGet-NetFirewallPortFilter cmdletを参照してください.</h3>
+<pre><code class="language-yaml">Type: String[]
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-LocalTunnelEndpoint は, <em>LocalAddress</em> パラメータ値に一致するコンピュータから <em>RemoteAddress</em> パラメータ値に一致するコンピュータにトラフィックを送信するコンピュータまたはゲートウェイデバイスのIPアドレスを指定します.このIPアドレスは,このIPアドレスの端から,このRemoteTunnelEndpoint<em> パラメータで識別されたデバイスにセキュア化されています.このパラメータ値は,RemoteTunnelEndpoint</em> パラメータと同じIPアドレスを使用する必要があります.これはIPv4またはIPv6です.このパラメータは,トンネルモードルールにのみ有効で必須です.アドレスキーワードはサポートされていません.Firstref_Anyclient_7,Next_server_7,Windows Server 2012では,この値は適用されます.クライアントコンピュータに適用すると,オプションは,ローカルコンピュータのIPアドレスまたはアドレスタイプに関係なく,トンネルでリモートゲートウェイまたはホストに接続をサポートします.</h3>
+<pre><code class="language-yaml">Type: String[]
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h1>New-NetIPsecRule について</h1>
+<h3>-Machine コンピュータアカウント (SID) のリストで識別されたコンピュータに受信または出荷として認証されたネットワークパケットのみがこの規則に一致することを指定します.このパラメータ値は SDDL 文字列として指定されます.</h3>
+<pre><code class="language-yaml">Type: String
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-ModeはIPsecルールで定義されているIPsecモード接続の種類を指定します.このパラメータの受け入れられる値は: None, Transport, or Tunnelです. デフォルト値は Transportです.</h3>
+<pre><code class="language-yaml">Type: IPsecMode
+Parameter Sets: (All)
+Aliases: 
+Accepted values: None, Tunnel, Transport
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-OutboundSecurity 指定されたセキュリティポリシーの IPsec ルールに一致する設定が作成されます.このパラメータは,出口トラフィックにおけるセキュリティの強化を決定します.このパラメータの受け入れられる値は:</h3>
+<p>認証は要求されず,規則に一致する接続には認証は必要ない.この規則に一致するネットワーク接続を本社コンピュータが認証しようとしないことを指定します.このオプションは,通常,IPsecによって保護されなくても,他のルールに一致するネットワーク接続にIPsec免除を与えるために使用されます. - 要求:この規則に一致する接続に認証が要求されます.本社コンピュータは,この規則に一致する出入ネットワーク接続を本社コンピュータが認証しようとしますが,認証未遂に接続が失敗した場合,接続を許可します. - 要求:認証は con 認証のために必要です.認証が成功しない場合は,出口ネットワークトラフィックが廃棄されます.</p>
+<p>デフォルト値は None. <em>InboundSecurity</em> パラメータも指定された場合,以下の設定が有効です: <em>InboundSecurity</em>/<em>OutboundSecurity</em> = None\None, Request\None, Request\Request, Require\Request, or Require\Require.</p>
+<pre><code class="language-yaml">Type: SecurityPolicy
+Parameter Sets: (All)
+Aliases: SecOut
+Accepted values: None, Request, Require
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-Phase1AuthSet は,作成される特定のフェーズ1認証セットに関連したメインモードルールを取得します.このパラメータは,名前によって,メインモードルールに関連したフェーズ1認証セットを指定します.A <strong>NetIPsecPhase1AuthSet</strong> オブジェクトは,IPsecまたはメインモードルールに関連したフェーズ1認証条件を表します.このパラメータは,コンピュータ認証提案を記述することによってメインモード交渉の方法を設定します.詳細については,New-NetIPsecAuthProposal cmdletを参照してください.</h3>
+<pre><code class="language-yaml">Type: String
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-Phase2AuthSet は,作成される特定のフェーズ2認証セットに関連したIPsec規則を取得します. <strong>NetIPsecPhase2AuthSet</strong> オブジェクトは,IPsecまたはメインモードルールに関連したフェーズ2認証セット条件を表します.このパラメータは,コンピュータ認証の提案を記述することによって,メインモード交渉の方法を設定します.詳細については,Get-NetIPsecPhase2AuthSet cmdletを参照してください.</h3>
+<pre><code class="language-yaml">Type: String
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-Platform は,関連するルールが適用される Windows のどのバージョンを指定する.このパラメータの受け入れ可能な形式は, Major.Minor 形式の番号です.バージョン番号は 6.0 で Vista (firstref_vista) に対応する, 6.1 で Win7 (Windows® 7 または nextref_server_7) に対応する,および 6.2 で Win8 (Windows® 8 または Windows Server 2012) に対応する. + が指定されていない場合は,そのバージョンのみが関連している. + が指定されている場合は,そのバージョンおよび後代が関連している.このパラメータを用いたルールをGet-NetIPsecRule cmdlet で検索することはできません.</h3>
+<pre><code class="language-yaml">Type: String[]
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-PoliciesStore 作成するルールを取り出すためのポリシーストアを指定します.ポリシーストアはファイアウォールとIPsecポリシーのためのコンテナです.このパラメータの受け入れ可能な値は:です.</h3>
+<ul>
+<li>持続性ストア: 時には静態ルールと呼ばれるこのストアには,ローカルコンピュータの持続性ポリシーが含まれています.このポリシーはGPOsからではなく,コンピュータ上で手動またはプログラム的に作成されました (アプリケーションインストール中に).このストアに作成された規則は,アクティブストアに付着し,すぐにコンピュータ上でアクティブ化されます. - アクティブストア:このストアには,現在有効なポリシーが含まれています.これはコンピュータに適用されるすべてのポリシーストアの合計です.これはローカルコンピュータ (コンピュータに適用されるすべてのGPOsの合計) とローカルストア (PersistentStore,静態Windowsサービス硬化 (WSH),および設定の結果となるポリシーセット (RSOP) です.WSH). ---- GPOsもポリシーストアです.コンピュータ GPOsは以下の通り指定できます. ------ <code>-PolicyStore hostname</code>.-- アクティブ・ディレクトリGPOsは以下のとおりで指定できます. ------ <code>-PolicyStore domain.fqdn.com\GPO_Friendly_Namedomain.fqdn.comGPO_Friendly_Name</code>.---- 以下のようなもの. -------- <code>-PolicyStore localhost</code>------   〜<code>-PolicyStore corp.contoso.com\FirewallPolicy</code>-- アクティブディレクトリ GPOs は <strong>New-GPO</strong> cmdlet や Group Policy Management Console を使用して作成できます. - RSOP: この読み込みのみのストアでは,ローカルコンピュータに適用されるすべての GPOs の合計が含まれています. - SystemDefaults: この読み込みのみのストアでは,Windows Server 2012 に搭載されるファイアウォールルールがデフォルト状態に設定されています. - StaticServiceStore: この読み込みのみのストアでは,Windows Server 2012 に搭載されるすべてのサービス制限が含まれています. - WFAS の目的のためにオプションおよび製品依存機能は Windows Server 2012 の一部と考えられています. - ConfigurableServiceStore: この読み書きのみのストアでは,第三者のサービスに追加されるすべてのサービス制限が含まれています.Windows Store アプリケーションコンテナに作成された分離規則は,このポリシーストアに表示されます.デフォルト値はPersistentStoreです.Set-NetIPsecRule cmdletはポリシーストアにオブジェクトを追加するために使用することはできません.作成時に,オブジェクトはコピー-NetIPsecRule cmdletまたはこの cmdletを使用してのみポリシーストアに追加することができます.</li>
+</ul>
+<pre><code class="language-yaml">Type: String
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h1>New-NetIPsecRule について</h1>
+<h3>-Profile は,このルールが割り当てられている1つまたは複数のプロフィールを指定します.このルールが,現時点で有効である特定のプロフィールが指定されたときにのみ,ローカルコンピュータで有効です.この関係は,複数対複数であり,ファイアウォールルールの場合のプロフィールフィールドを変更することによって,間接的にユーザによって変更できます.一度にプロフィールが1つのみ適用されます.このパラメータの受け入れられる値は:Any, Domain, Private, Public, or NotApplicableです.デフォルトはAnyです. 逗号で複数のエントリを分離し,スペースを含まない. キーワードを使用して,プロフィールを ConfigurableServiceStore で Private, Public, Domain として設定します.</h3>
+<pre><code class="language-yaml">Type: Profile
+Parameter Sets: (All)
+Aliases: 
+Accepted values: Any, Domain, Private, Public, NotApplicable
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-プロトコル 対応するIPアドレスを持つネットワークパケットがこのルールを一致するかどうかを指定します.このパラメータはIPsecルールのプロトコルを指定します.このパラメータの受け入れ可能な値は:</h3>
+<p>番号によるプロトコル:0〜255. - 名前によるプロトコル: TCP, UDP, ICMPv4,または ICMPv6. </p>
+<p>ポート番号が port1または port2 を使用して識別されている場合,このパラメータは TCPまたは UDP に設定する必要があります.ICMPv4およびICMPv6 の値は,別の規則のIPsec要件からICMPネットワークトラフィックを免除する規則を作成します.デフォルト値はAnyです.このパラメータでルールへのクエリはフィルターオブジェクトを使用してのみ実行できます.詳細については,Get-NetFirewallPortFilter cmdletを参照してください.</p>
+<pre><code class="language-yaml">Type: String
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-QuickModeCryptoSet 指定された速モード暗号セットの IPsecルールに一致するIPsecルールを取得することを指定します.このパラメータは,IPsecルールの関連付けられる速モード暗号セットを指定します.A <strong>NetIPsecMainModeCryptoSet</strong>オブジェクトは,IPsecルールの関連付けられる速モード暗号条件を表します.このパラメータは,暗号化提案を記述することによって,速モード交渉の方法を設定します.詳細については,New-NetIPsecQuickModeCryptoSet cmdletを参照してください.</h3>
+<pre><code class="language-yaml">Type: String
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>リモートアドレスは,一致するIPアドレスを持つネットワークパケットがこのルールに一致することを指定します.このパラメータ値はIPv4またはIPv6アドレス,サブネット,範囲,またはキーワードです.このパラメータの受け入れられるフォーマットは: -シングルIPv4アドレス: 1.2.3.4 -シングルIPv6アドレス: fe80::1 - IPv4サブネット (ネットワークビットカウントによる): 1.2.3.4/24 - IPv6サブネット (ネットワークビットカウントによる): fe80::1/48 - IPv4サブネット (ネットワークビットカウントによる): fe80::1/48 - IPv4サブネット (ネットワークマスクによる): 1.2.3.4/255.255.255.0 - IPv4範囲: 1.2.3.4〜 1.2.3.7 - IPv6: fe80::1〜 fe80:9 このパラメーターによるルールへの問い合わせは,フィルターオブジェクトのみで行われる.,WINS,DefaultGateway,インターネット,イントラネット,イントラネットRemoteAccess,PlayToDevice.</h3>
+<pre><code class="language-yaml">Type: String[]
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-RemotePort ネットワークパケットが IP ポート番号に一致する IP ポート番号と一致することを指定します.このパラメータ値は IPsec ルールの第2端点です.受け入れられる値はポート,範囲,キーワードであり,プロトコルに依存します.プロトコルが TCP または UDPである場合は,このパラメータの受け入れられる値は以下の通りです. -ポート範囲: 0 から 65535 ポート番号: 80 - キーワード: Any プロトコルが ICMPv4 または ICMPv6 の場合,このパラメータの受け入れられる値は: - ICMP タイプ,コードペア: 0, 8 - タイプとコード: 0 から 255 - キーワード:任意.プロトコルが指定されていない場合,このパラメータの受け入れられる値は: Any, RPC, R-EP,または IPHTTPS. IPHTTPSは WPC 上でのみサポートされています.このパラメータでルールを查询するのは,フィルターオブジェクトを使用するだけで実行できます.詳細についてはGet-NetFirewallPortFilter cmdletを参照してください.</h3>
+<pre><code class="language-yaml">Type: String[]
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-RemoteTunnelEndpoint は, <em>LocalAddress</em> パラメータ値に一致するコンピュータから, <em>RemoteAddress</em> パラメータ値に一致するコンピュータにトラフィックを確保するコンピュータまたはゲートウェイデバイスのIPアドレスを指定します.このIPアドレスは,このIPアドレスの端末に設定されているデバイスに設定されています.このパラメータ値は,IPアドレスの種類と同じで,IPV4またはIPV6で管理されます.アドレスキーワードはサポートされていません.Windows® 7, nextref_server_7およびWindows Server 2012では,この値はAnyでもできます.コンピュータに適用すると,このオプションは,遠隔ゲートウェイまたはホストトンネルへの接続を通じてサポートされます.地元のコンピュータのIPアドレスやアドレスタイプに関係なく.</h3>
+<pre><code class="language-yaml">Type: String[]
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-RemoteTunnelHostname 指定された第2端点トンネルホスト名と一致するIPsecルールが作成されることを指定します.リモートトンネル端点のリストに解決する完全に合格した DNS名前を指定します.このパラメータはWindows Server 2012でのみサポートされています.このパラメータは複数のリモートトンネル端点でのみ使用できます.このパラメータを指定すると,非対称トンネルモードのIPsecルールが作成されない.単一のリモートトンネル端点が指定され,このパラメータが指定され,またはこのパラメータが指定され,このパラメータが設定されたときにルール作成が失敗します.</h3>
+<pre><code class="language-yaml">Type: String
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-RequireAuthorization 指定された値の IPsec ルールに一致する IPsec ルールが作成されると表示します. IPsec ルールに与えられた値を指定します.このパラメータが True に設定されている場合,エンドポイントでは権限の強制が許可されます.このパラメータは nextref_server_7 と Windows Server 2012 にのみサポートされます.</h3>
+<pre><code class="language-yaml">Type: Boolean
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-ThrottleLimit は,cmdletを実行するために設定できる最大限の同時操作数を指定します.このパラメータを省略した場合,または値が  の値である場合.<code>0</code>入力すると,Windows PowerShell® は,コンピュータ上で実行されている CIM cmdlets の数に基づいて cmdlet の最適な加圧制限を計算します.加圧制限は,セッションやコンピュータに適用されないが,現在の cmdlet にのみ適用されます.</h3>
+<pre><code class="language-yaml">Type: Int32
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h1>New-NetIPsecRule について</h1>
+<h3>-User は指定したユーザーアカウントの IPsec ルールに一致する IPsec が作成されると指定します.このパラメータは,ユーザーアカウントのリストで識別されたユーザーに受信または出荷として認証されたネットワークパケットのみがこの規則に一致することを指定します.このパラメータ値は SDDL 文字列として指定されます.</h3>
+<pre><code class="language-yaml">Type: String
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-WhatIf が実行されればどうなるか示します.</h3>
+<pre><code class="language-yaml">Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: wi
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>共通パラメータ このcmdletは共通パラメータをサポートしています: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable.詳細については, <a href="を参照してください.https://go.microsoft.com/fwlink/?LinkID=113216">about_CommonParameters</a> でした.</h3>
+<h2>輸入は</h2>
+<h3>どれもない</h3>
+<h2>輸出は</h2>
+<h3>Microsoft.Management.Infrastructure.CimInstance#root\StandardCimv2\MSFT_NetConSecRule[] ザ <code>Microsoft.Management.Infrastructure.CimInstance</code>Windows Management Instrumentation (WMI) のオブジェクトを表示する包装クラスです.ポンドサインの後に行進するパス () は,<code>#</code>) は,元々のWMIオブジェクトの名前空間とクラス名を提供します.</h3>
+<h2>NOTES  記事ができました.</h2>
+<h2>関連リンク</h2>
+<p><a href="./Get-NetFirewallAddressFilter.md">Get-NetFirewallAddressFilter</a> </p>
+<p><a href="./Get-NetFirewallInterfaceFilter.md">Get-NetFirewallInterfaceFilter</a> は,インターネットでインターネットでインターネットでインターネットでインターネットでインターネットでインターネットでインターネットでインターネットでインターネットでインターネットでインターネットでインターネットでインターネットでインターネットでインターネットでインターネットでインターネットでインターネットでインターネットでインターネットでインターネットでインターネットでインターネットでインターネットでインターネットでインターネットでインターネットでインターネットでインターネットでインターネットでインターネットでインターネットでインターネットでインターネットを活用する方法を模索している.</p>
+<p><a href="./Get-NetFirewallInterfaceTypeFilter.md">Get-NetFirewallInterfaceTypeFilter</a> </p>
+<p><a href="./Get-NetFirewallPortFilter.md">Get-NetFirewallPortFilter</a> </p>
+<p><a href="./Get-NetIPsecRule.md">Get-NetIPsecRule</a> を使用する</p>
+<p><a href="./New-NetIPsecPhase1AuthSet.md">New-NetIPsecPhase1AuthSet</a> について</p>
+<p><a href="./New-NetIPsecPhase2AuthSet.md">New-NetIPsecPhase2AuthSet</a> について</p>
+<p><a href="./New-NetIPsecQuickModeCryptoSet.md">New-NetIPsecQuickModeCryptoSet</a> は,新しいサイトで</p>
+<p><a href="./Open-NetGPO.md">Open-NetGPO</a> </p>
+<p><a href="./Save-NetGPO.md">Save-NetGPO</a> </p>
+<p><a href="./Set-NetIPsecRule.md">Set-NetIPsecRule</a> を表示する</p>
+<p><a href="./New-NetIPsecAuthProposal.md">New-NetIPsecAuthProposal</a> </p>
+<p><a href="./New-NetIPsecQuickModeCryptoProposal.md">New-NetIPsecQuickModeCryptoProposal</a> </p></section><section class="en-original"><pre class="source-original"># New-NetIPsecRule
+
+## SYNOPSIS
+Creates an IPsec rule that defines security requirements for network connections that match the specified criteria.
+
+## SYNTAX
+
+```
+New-NetIPsecRule [-PolicyStore &lt;String&gt;] [-GPOSession &lt;String&gt;] [-IPsecRuleName &lt;String&gt;] -DisplayName &lt;String&gt;
+ [-Description &lt;String&gt;] [-Group &lt;String&gt;] [-Enabled &lt;Enabled&gt;] [-Profile &lt;Profile&gt;] [-Platform &lt;String[]&gt;]
+ [-Mode &lt;IPsecMode&gt;] [-InboundSecurity &lt;SecurityPolicy&gt;] [-OutboundSecurity &lt;SecurityPolicy&gt;]
+ [-QuickModeCryptoSet &lt;String&gt;] [-Phase1AuthSet &lt;String&gt;] [-Phase2AuthSet &lt;String&gt;] [-KeyModule &lt;KeyModule&gt;]
+ [-AllowWatchKey &lt;Boolean&gt;] [-AllowSetKey &lt;Boolean&gt;] [-LocalTunnelEndpoint &lt;String[]&gt;]
+ [-RemoteTunnelEndpoint &lt;String[]&gt;] [-RemoteTunnelHostname &lt;String&gt;] [-ForwardPathLifetime &lt;UInt32&gt;]
+ [-EncryptedTunnelBypass &lt;Boolean&gt;] [-RequireAuthorization &lt;Boolean&gt;] [-User &lt;String&gt;] [-Machine &lt;String&gt;]
+ [-LocalAddress &lt;String[]&gt;] [-RemoteAddress &lt;String[]&gt;] [-Protocol &lt;String&gt;] [-LocalPort &lt;String[]&gt;]
+ [-RemotePort &lt;String[]&gt;] [-InterfaceAlias &lt;WildcardPattern[]&gt;] [-InterfaceType &lt;InterfaceType&gt;]
+ [-CimSession &lt;CimSession[]&gt;] [-ThrottleLimit &lt;Int32&gt;] [-AsJob] [-WhatIf] [-Confirm] [&lt;CommonParameters&gt;]
+```
+
+## DESCRIPTION
+The **New-NetIPsecRule** cmdlet creates a transport-mode or tunnel-mode IPsec rule and adds it to the target computer.
+Some parameters are used to specify the conditions that must be matched for the rule to apply, such as the *LocalAddress* and the *RemoteAddress* parameters.
+Other parameters specify the way that the connection should be secured, such as the *InboundSecurity* and the *OutboundSecurity* parameters.
+Rules that already exist can be managed with the Get-NetIPsecRule and Set-NetIPsecRule cmdlets.
+
+In order for custom main mode and quick mode security negotiations to occur, appropriate authorization and cryptographic sets must be associated with the rule.
+See the New-NetIPsecPhase1AuthSet, New-NetIPsecPhase2AuthSet, and New-NetIPsecQuickModeCryptoSet cmdlets for more information.
+
+Each authentication or cryptographic set must be created in the policy store for the associated IPsec rule.
+If a particular set applies to multiple IPsec rules in different policy stores (GPOs), then the set must be duplicated for each of those stores (so that policies can be updated without linking issues).
+See the Copy-NetFirewallRule, Copy-NetIPsecMainModeCryptoSet, Copy-NetIPsecMainModeRule, Copy-NetIPsecPhase1AuthSet, Copy-NetIPsecPhase2AuthSet, and Copy-NetIPsecQuickModeCryptoSet cmdlets and this cmdlet for more information.
+
+## EXAMPLES
+
+### EXAMPLE 1
+```
+PS C:\&gt;New-NetIPsecRule -DisplayName &quot;Multi DTE&quot; -Name &quot;Multi DTE&quot; -Mode Tunnel -InboundSecurity Require -OutboundSecurity Require -RemoteTunnelEndpoint 2002:9d3b::2, 2002:9d3b::3, 2002:9d3b::4 -RemoteAddress 2002:9d3b::/32 -LocalTunnelEndpoint Any
+```
+
+This example creates a multi dynamic tunnel end point rule.
+
+### EXAMPLE 2
+```
+PS C:\&gt;New-NetIPsecRule -DisplayName &quot;Domain Isolation Rule&quot; -InboundSecurity Require -OutboundSecurity Request -PolicyStore contoso.com\Domain_Isolation
+```
+
+This example creates a rule that could be used in a domain isolation scenario, where incoming traffic is only permitted from other domain member computers.
+The default main mode negotiation uses Kerberos v5 for computer and user authentication.
+
+### EXAMPLE 3
+```
+PS C:\&gt;$qMProposal = New-NetIPsecQuickModeCryptoProposal -Encapsulation ESP -ESPHash SHA1 -Encryption DES3
+
+
+
+PS C:\&gt;$qMCryptoSet = New-NetIPsecQuickModeCryptoSet -DisplayName &quot;esp:sha1-des3&quot; -Proposal $qMProposal
+
+
+
+PS C:\&gt;New-NetIPSecRule -DisplayName &quot;Tunnel from HQ to Dallas Branch&quot; -Mode Tunnel -LocalAddress 192.168.0.0/16 -RemoteAddress 192.157.0.0/16 -LocalTunnelEndpoint 1.1.1.1 -RemoteTunnelEndpoint 2.2.2.2 -InboundSecurity Require -OutboundSecurity Require -QuickModeCryptoSet $qMCryptoSet.Name
+```
+
+This example creates an IPsec tunnel that routes traffic from a private network at 192.168.0.0/16 through an interface on the local computer at 1.1.1.1 attached to a public network to a second computer through a public interface at 2.2.2.2 to another private network at 192.157.0.0/16.
+All traffic through the tunnel is integrity checked using ESP/SHA1, and encrypted using ESP/DES3.
+
+### EXAMPLE 4
+```
+This cmdlet illustrates how to include both AH and ESP protocols in a single suite.
+PS C:\&gt;$aHandESPQM = New-NetIPsecQuickModeCryptoProposal -Encapsulation AH,ESP -AHHash SHA1 -ESPHash SHA1 -Encryption DES3
+
+
+This cmdlet illustrates how to specify the use of the AH protocol only.
+PS C:\&gt;$aHQM = New-NetipsecQuickModeCryptoProposal -Encapsulation AH -AHHash SHA1 -ESPHash None -Encryption None
+
+
+This cmdlet illustrates how to specify the use of the ESP protocol only, and uses the None keyword to specify not to include an encryption option.
+PS C:\&gt;$eSPQM = New-NetIPsecQuickModeCryptoProposal -Encapsulation ESP -ESPHash SHA1 -Encryption None
+
+
+This cmdlet illustrates how to use the None keyword to specify that ESP is used with an encryption protocol, but with no integrity protocol. This cmdlet also illustrates how to set a custom SA timeout using both time and data amount values.
+PS C:\&gt;$eSPnoAHQM = New-NetIPsecQuickModeCryptoProposal -Encapsulation ESP -ESPHash None -Encryption AES256 -MaxKiloBytes 50000 -MaxMinutes 30
+
+
+
+PS C:\&gt;$qMCryptoSet = New-NetIPsecQuickModeCryptoSet -DisplayName &quot;Custom Quick Mode&quot; -Proposal $aHandESPQM,$aHQM,$eSPQM,$eSPnoAHQM
+
+
+
+PS C:\&gt;New-NetIPsecRule -DisplayName &quot;Domain Isolation Rule&quot; -InboundSecurity Require Request -OutboundSecurity Request -QuickModeCryptoSet $qMCryptoSet.Name
+```
+
+This example creates a domain isolation rule, but uses a custom quick mode proposal that includes multiple quick mode suites, separated by commas.
+
+## PARAMETERS
+
+### -AllowSetKey
+Specifies that the IPsec rule allows trusted intermediaries to override keying material.
+When this parameter is set to True, then the trusted intermediaries are allowed to dictate the cryptographic keying material used with an IPsec security association (SA). 
+It is possible that when this parameter is set to True at both ends, the computers will perform arbitration through SA negotiation so that one end sets the key while the other end watches the key. 
+The default value is False. 
+This parameter is only supported on Windows Server® 2012.
+
+```yaml
+Type: Boolean
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -AllowWatchKey
+Specifies that the IPsec rule allows trusted intermediaries to notify of changes in keying material.
+When this parameter is set to True, then the trusted intermediaries are allowed to retrieve the cryptographic keying material associated with an IPsec SA, and to subscribe for notification of changes. 
+The default value is False. 
+This parameter is only supported on Windows Server 2012.
+
+```yaml
+Type: Boolean
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -AsJob
+Runs the cmdlet as a background job. Use this parameter to run commands that take a long time to complete.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+# New-NetIPsecRule
+
+### -CimSession
+Runs the cmdlet in a remote session or on a remote computer.
+Enter a computer name or a session object, such as the output of a [New-CimSession](https://go.microsoft.com/fwlink/p/?LinkId=227967) or [Get-CimSession](https://go.microsoft.com/fwlink/p/?LinkId=227966) cmdlet.
+The default is the current session on the local computer.
+
+```yaml
+Type: CimSession[]
+Parameter Sets: (All)
+Aliases: Session
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Confirm
+Prompts you for confirmation before running the cmdlet.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: cf
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Description
+Specifies that matching firewall rules of the indicated description are created.
+Wildcard characters are accepted. 
+This parameter provides information about the firewall rule.
+This parameter specifies the localized, user-facing description of the IPsec rule.
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -DisplayName
+Specifies that only matching firewall rules of the indicated display name are created.
+Wildcard characters are accepted. 
+Specifies the localized, user-facing name of the firewall rule being created.
+When creating a rule this parameter is required.
+This parameter value is locale-dependent.
+If the object is not modified, this parameter value may change in certain circumstances.
+When writing scripts in multi-lingual environments, the *IPsecRuleName* parameter should be used instead, where the default value is a randomly assigned value.
+This parameter cannot be set to All.
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases: 
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Enabled
+Specifies that matching main mode rules of the indicated state are created. 
+This parameter specifies that the rule object is administratively enabled or administratively disabled.
+The acceptable values for this parameter are:
+
+- True: Specifies the rule is currently enabled. 
+- False: Specifies the rule is currently disabled.
+A disabled rule will not actively modify computer behavior, but the rule still exists on the computer so it can be re-enabled.
+
+```yaml
+Type: Enabled
+Parameter Sets: (All)
+Aliases: 
+Accepted values: True, False
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -EncryptedTunnelBypass
+Indicates that matching IPsec rules of the specified value are created. 
+This parameter specifies the encapsulation state for network traffic sent to a tunnel end point that is already IPsec protected.
+If this parameter is set to True, then the network traffic sent to a tunnel end point that is already IPsec protected does not have to be encapsulated again.
+This option can improve network performance in the case where network traffic that is already end-to-end protected by other IPsec rules. 
+The default value is False. 
+This parameter is only supported on firstref_server_7 and Windows Server 2012.
+
+```yaml
+Type: Boolean
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -ForwardPathLifetime
+Specifies that matching IPsec rules of the specified path lifetime value are created. 
+This parameter specifies the session key lifetime for an IPsec rule, in minutes.
+The acceptable values for this parameter are: 78 through 172799.
+The default value is 0 minutes.
+This parameter is only supported on Windows Server 2012. 
+When managing a GPO, the default setting is NotConfigured.
+This parameter is case sensitive and NotConfigured can only be specified using dot-notation.
+
+```yaml
+Type: UInt32
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -GPOSession
+Specifies the network GPO from which to retrieve the rules to be created. 
+This parameter is used in the same way as the *PolicyStore* parameter.
+When modifying GPOs in Windows PowerShell®, each change to a GPO requires the entire GPO to be loaded, modified, and saved back.
+On a busy Domain Controller (DC), this can be a slow and resource-heavy operation.
+A GPO Session loads a domain GPO onto the local computer and makes all changes in a batch, before saving it back.
+This reduces the load on the DC and speeds up the Windows PowerShell cmdlets.
+To load a GPO Session, use the Open-NetGPO cmdlet.
+To save a GPO Session, use the Save-NetGPO cmdlet.
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Group
+Specifies that only matching IPsec rules of the indicated group association are created.
+Wildcard characters are accepted. 
+This parameter specifies the source string for the *DisplayGroup* parameter.
+If the *DisplayGroup* parameter value is a localizable string, then this parameter contains an indirect string.
+Rule groups can be used to organize rules by influence and allows batch rule modifications.
+Using the Set-NetIPsecRule cmdlets, if the group name is specified for a set of rules or sets, then all of the rules or sets in that group receive the same set of modifications.
+It is good practice to specify this parameter value with a universal and world-ready indirect @FirewallAPI name. 
+The *DisplayGroup* parameter cannot be specified upon object creation using this cmdlet, but can be modified using dot-notation and the Set-NetIPsecRule cmdlet.
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -IPsecRuleName
+Specifies Indicates that only matching main mode cryptographic sets of the indicated name are created.
+Wildcard characters are accepted. 
+This parameter acts just like a file name, in that only one rule with a given name may exist in a policy store at a time.
+During group policy processing and policy merge, rules that have the same name but come from multiple stores being merged, will overwrite one another so that only one exists.
+This overwriting behavior is desirable if the rules serve the same purpose.
+For instance, all of the firewall rules have specific names, so if an administrator can copy these rules to a GPO, and the rules will override the local versions on a local computer.
+GPOs can have precedence.
+So, if an administrator has a different or more specific rule the same name in a higher-precedence GPO, then it overrides other rules that exist. 
+The default value is a randomly assigned value. 
+To override the defaults for main mode encryption, specify the customized parameters and set this parameter value, making this parameter the new default setting for encryption.
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases: ID, Name
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+# New-NetIPsecRule
+
+### -InboundSecurity
+Specifies that only matching IPsec rules of the indicated group association are created.
+Wildcard characters are accepted. 
+This parameter specifies the source string for the *DisplayGroup* parameter.
+If the *DisplayGroup* parameter value is a localizable string, then this parameter contains an indirect string.
+Rule groups can be used to organize rules by influence and allows batch rule modifications.
+Using the Set-NetIPsecRule cmdlets, if the group name is specified for a set of rules or sets, then all of the rules or sets in that group receive the same set of modifications.
+It is good practice to specify this parameter value with a universal and world-ready indirect @FirewallAPI name. 
+The *DisplayGroup* parameter cannot be specified upon object creation using this cmdlet, but can be modified using dot-notation and the Set-NetIPsecRule cmdlet.
+
+```yaml
+Type: SecurityPolicy
+Parameter Sets: (All)
+Aliases: SecIn
+Accepted values: None, Request, Require
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -InterfaceAlias
+Specifies the alias of the interface that applies to the traffic. 
+Querying for rules with this parameter can only be performed using filter objects.
+See the Get-NetFirewallInterfaceFilter cmdlet for more information.
+
+```yaml
+Type: WildcardPattern[]
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -InterfaceType
+Specifies that only network connections made through the indicated interface types are subject to the requirements of this rule.
+This parameter specifies different authentication requirements for each of the three main network types. 
+The acceptable values for this parameter are: Any, Wired, Wireless, or RemoteAccess.
+The default value is Any.
+Querying for rules with this parameter can only be performed using filter objects.
+See the Get-NetFirewallInterfaceTypeFilter cmdlet for more information.
+
+```yaml
+Type: InterfaceType
+Parameter Sets: (All)
+Aliases: 
+Accepted values: Any, Wired, Wireless, RemoteAccess
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -KeyModule
+Specifies that matching IPsec rules of the indicated key module are created. 
+This parameter specifies which keying modules to negotiate. 
+The acceptable values for this parameter are: Default, AuthIP, IKEv1, or IKEv2. 
+
+- Default: KeyModule is set based on the authentication method. As of Windows 11, version 24H2 and Windows Server 2025, the Default is equivalent to both IKEv1 and IKEv2, and only sets AuthIP if the authentication method(s) require it. In previous releases, Default is equivalent to both IKEv1 and AuthIP. Required in order for the rule to be applied to computers running Windows versions prior to Windows Server 2008.
+- AuthIP: Supported with phase 2 authentication. 
+- IKEv1: Supported with pre-shared key (PSK), Certificates, and Kerberos. Supported with phase 1 authentication only.
+- IKEv2: Not supported with Kerberos, PSK, or NTLM. Supported with phase 1 authentication only.
+
+The default value is Default. There are authentication and cryptographic methods that are only compatible with certain keying modules. This is a very advanced setting intended only for specific interoperability scenarios. Overriding this parameter value may result in traffic being sent in plain-text if the authorization and cryptographic settings are not supported by the keying modules. Windows versions prior to Windows Server 2012 only support the Default configuration.
+
+```yaml
+Type: KeyModule
+Parameter Sets: (All)
+Aliases: 
+Accepted values: Default, IKEv1, AuthIP, IKEv2
+
+Required: False
+Position: Named
+Default value: Default
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -LocalAddress
+Specifies that network packets with matching IP addresses match this rule. 
+This parameter value is the first end point of an IPsec rule and specifies the computers that are subject to the requirements of this rule. 
+This parameter value is an IPv4 or IPv6 address, host name, subnet, range, or the following keyword: Any. 
+The acceptable formats for this parameter are: 
+- Single IPv4 Address: 1.2.3.4 
+- Single IPv6 Address: fe80::1 
+- IPv4 Subnet (by network bit count): 1.2.3.4/24 
+- IPv6 Subnet (by network bit count): fe80::1/48 
+- IPv4 Subnet (by network mask): 1.2.3.4/255.255.255.0 
+- IPv4 Range: 1.2.3.4 through 1.2.3.7 
+- IPv6 Range: fe80::1 through fe80::9 
+Querying for rules with this parameter can only be performed using filter objects.
+See the Get-NetFirewallAddressFilter cmdlet for more information.
+
+```yaml
+Type: String[]
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -LocalPort
+Specifies that network packets with matching IP port numbers match this rule.
+This parameter value is the first end point of an IPsec rule. 
+The acceptable value is a port, range, or keyword and depends on the protocol. 
+If the *Protocol* parameter value is TCP or UDP, then the acceptable values for this parameter are: 
+- Port range: 0 through 65535. 
+- Port number: 80. 
+- Keyword: Any. 
+If the *Protocol* parameter value is ICMPv4 or ICMPv6, then the acceptable values for this parameter are: 
+- An ICMP type, code pair: 0, 8. 
+- Type and code: 0 through 255. 
+- Keyword: Any. 
+If the *Protocol* parameter is not specified, then the acceptable values for this parameter are: Any, RPC, RPC-EPMap, or IPHTTPS. 
+Port ranges are only allowed in IPsec rules when the rule type is Do Not Secure.
+Do Not Secure rules are the *InboundSecurity* parameter set to None and the *OutboundSecurity* parameter set to None. 
+IPHTTPS is only supported on Windows Server 2012. 
+Querying for rules with this parameter can only be performed using filter objects.
+See the Get-NetFirewallPortFilter cmdlet for more information.
+
+```yaml
+Type: String[]
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -LocalTunnelEndpoint
+Specifies the IP address of the computer or gateway device that sends traffic from computers that match the *LocalAddress* parameter value to computers that match the *RemoteAddress* parameter value.
+The traffic is being secured from this IP address to the device identified in the *RemoteTunnelEndpoint* parameter.
+This parameter value must use the same type of IP address as the *RemoteTunnelEndpoint* parameter, which is either IPv4 or IPv6. 
+This parameter is required and valid only for tunnel mode rules. 
+Address keywords are not supported. 
+In firstref_client_7, nextref_server_7, and Windows Server 2012, this value can also be Any.
+When applied to a client computer, this option supports connection via a tunnel to a remote gateway or host regardless of the IP address or address type of the local computer.
+
+```yaml
+Type: String[]
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+# New-NetIPsecRule
+
+### -Machine
+Specifies that only network packets that are authenticated as incoming from or outgoing to a computer identified in the list of computer accounts (SID) match this rule.
+This parameter value is specified as an SDDL string.
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Mode
+Specifies the type of IPsec mode connection that the IPsec rule defines. 
+The acceptable values for this parameter are: None, Transport, or Tunnel.
+The default value is Transport.
+
+```yaml
+Type: IPsecMode
+Parameter Sets: (All)
+Aliases: 
+Accepted values: None, Tunnel, Transport
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -OutboundSecurity
+Specifies that matching IPsec rules of the indicated security policy are created. 
+This parameter determines the degree of enforcement for security on outbound traffic. 
+The acceptable values for this parameter are:
+
+- None: No authentication is requested or required for connections that match the rule.
+It specifies that the local computer does not attempt authentication for any network connections that match this rule.
+This option is typically used to grant IPsec exemptions for network connections that do not need to be protected by IPsec, but would otherwise match other rules that could cause the connection to be dropped. 
+- Request: Authentication is requested for connections that match the rule.
+The local computer attempts to authenticate any outbound network connections that match this rule, but allows the connection if the authentication attempt fails. 
+- Require: Authentication is required for connections that match the rule.
+If the authentication is not successful, then the outbound network traffic is discarded.
+
+The default value is None. 
+When the *InboundSecurity* parameter is also specified, the following configurations are valid: 
+*InboundSecurity*/*OutboundSecurity* = None\None, Request\None, Request\Request, Require\Request, or Require\Require.
+
+```yaml
+Type: SecurityPolicy
+Parameter Sets: (All)
+Aliases: SecOut
+Accepted values: None, Request, Require
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Phase1AuthSet
+Gets the main mode rules that are associated with the given phase 1 authentication set to be created. 
+This parameter specifies, by name, the Phase 1 authentication set to be associated with the main mode rule. 
+A **NetIPsecPhase1AuthSet** object represents the phase 1 authentication conditions associated with an IPsec or main mode rule.
+This parameter sets the methods for main mode negotiation by describing the proposals for computer authentication.
+See the New-NetIPsecAuthProposal cmdlet of more information.
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Phase2AuthSet
+Gets the IPsec rules that are associated with the given phase 2 authentication set to be created. 
+A **NetIPsecPhase2AuthSet** object represents the phase 2 authorization set conditions associated with an IPsec or main mode rule.
+This parameter sets the methods for main mode negotiation by describing the proposals for computer authentication.
+See the Get-NetIPsecPhase2AuthSet cmdlet for more information.
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Platform
+Specifies which version of Windows the associated rule applies. 
+The acceptable format for this parameter is a number in the Major.Minor format. 
+The version number of 6.0 corresponds to Vista (firstref_vista), 6.1 corresponds to Win7 (Windows® 7 or nextref_server_7), and 6.2 corresponds to Win8 (Windows® 8 or Windows Server 2012). 
+If + is not specified, then only that version is associated. 
+If + is specified, then that version and later are associated. 
+Querying for rules with this parameter with the Get-NetIPsecRule cmdlet cannot be performed.
+
+```yaml
+Type: String[]
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -PolicyStore
+Specifies the policy store from which to retrieve the rules to be created. 
+A policy store is a container for firewall and IPsec policy. 
+The acceptable values for this parameter are:
+
+- PersistentStore: Sometimes called static rules, this store contains the persistent policy for the local computer.
+This policy is not from GPOs, and has been created manually or programmatically (during application installation) on the computer.
+Rules created in this store are attached to the ActiveStore and activated on the computer immediately. 
+- ActiveStore: This store contains the currently active policy, which is the sum of all policy stores that apply to the computer.
+This is the resultant set of policy (RSOP) for the local computer (the sum of all GPOs that apply to the computer), and the local stores (the PersistentStore, the static Windows service hardening (WSH), and the configurable WSH).
+---- GPOs are also policy stores.
+Computer GPOs can be specified as follows. 
+------ `-PolicyStore hostname`. 
+---- Active Directory GPOs can be specified as follows. 
+------ `-PolicyStore domain.fqdn.com\GPO_Friendly_Namedomain.fqdn.comGPO_Friendly_Name`. 
+------ Such as the following. 
+-------- `-PolicyStore localhost`
+-------- `-PolicyStore corp.contoso.com\FirewallPolicy`
+---- Active Directory GPOs can be created using the **New-GPO** cmdlet or the Group Policy Management Console. 
+- RSOP: This read-only store contains the sum of all GPOs applied to the local computer. 
+- SystemDefaults: This read-only store contains the default state of firewall rules that ship with Windows Server 2012. 
+- StaticServiceStore: This read-only store contains all the service restrictions that ship with Windows Server 2012.
+Optional and product-dependent features are considered part of Windows Server 2012 for the purposes of WFAS. 
+- ConfigurableServiceStore: This read-write store contains all the service restrictions that are added for third-party services.
+In addition, network isolation rules that are created for Windows Store application containers will appear in this policy store. 
+The default value is PersistentStore. 
+The Set-NetIPsecRule cmdlet cannot be used to add an object to a policy store.
+An object can only be added to a policy store at creation time with the Copy-NetIPsecRule cmdlet or with this cmdlet.
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+# New-NetIPsecRule
+
+### -Profile
+Specifies one or more profiles to which the rule is assigned.
+The rule is active on the local computer only when the specified profile is currently active.
+This relationship is many-to-many and can be indirectly modified by the user, by changing the Profiles field on instances of firewall rules.
+Only one profile is applied at a time. 
+The acceptable values for this parameter are: Any, Domain, Private, Public, or NotApplicable.
+The default is Any.
+Separate multiple entries with a comma and do not include any spaces.
+Use the keyword Any to configure the profile as Private, Public, Domain in the ConfigurableServiceStore.
+
+```yaml
+Type: Profile
+Parameter Sets: (All)
+Aliases: 
+Accepted values: Any, Domain, Private, Public, NotApplicable
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Protocol
+Specifies that network packets with matching IP addresses match this rule.
+This parameter specifies the protocol for an IPsec rule. 
+The acceptable values for this parameter are:
+
+- Protocols by number: 0 through 255. 
+- Protocols by name: TCP, UDP, ICMPv4, or ICMPv6. 
+
+If a port number is identified by using port1 or port2, then this parameter must be set to TCP or UDP. 
+The values ICMPv4 and ICMPv6 create a rule that exempts ICMP network traffic from the IPsec requirements of another rule. 
+The default value is Any. 
+Querying for rules with this parameter can only be performed using filter objects.
+See the Get-NetFirewallPortFilter cmdlet for more information.
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -QuickModeCryptoSet
+Specifies that matching IPsec rules of the specified quick mode cryptographic set are retrieved. 
+This parameter specifies the quick mode cryptographic set to be associated with the IPsec rule. 
+A **NetIPsecMainModeCryptoSet** object represents quick mode cryptographic conditions associated with an IPsec rule.
+This parameter sets the methods for quick mode negotiation by describing the proposals for encryption.
+See the New-NetIPsecQuickModeCryptoSet cmdlet for more information.
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -RemoteAddress
+Specifies that network packets with matching IP addresses match this rule.
+This parameter value is an IPv4 or IPv6 address, subnet, range, or keyword. 
+The acceptable formats for this parameter are: 
+- Single IPv4 Address: 1.2.3.4 
+- Single IPv6 Address: fe80::1 
+- IPv4 Subnet (by network bit count): 1.2.3.4/24 
+- IPv6 Subnet (by network bit count): fe80::1/48 
+- IPv4 Subnet (by network mask): 1.2.3.4/255.255.255.0 
+- IPv4 Range: 1.2.3.4 through 1.2.3.7 
+- IPv6 Range: fe80::1 through fe80::9 
+Querying for rules with this parameter can only be performed using filter objects.
+See the Get-NetFirewallAddressFilter cmdlet for more information.
+- Keyword: Any, LocalSubnet, DNS, DHCP, WINS, DefaultGateway, Internet, Intranet, IntranetRemoteAccess, PlayToDevice.
+
+```yaml
+Type: String[]
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -RemotePort
+Specifies that network packets with matching IP port numbers match this rule.
+This parameter value is the second end point of an IPsec rule.
+The acceptable value is a port, range, or keyword and depends on the protocol. 
+If the protocol is TCP or UDP, then the acceptable values for this parameter are: 
+- Port range: 0 through 65535 
+- Port number: 80 
+- Keyword: Any 
+If the protocol is ICMPv4 or ICMPv6, then the acceptable values for this parameter are: 
+- An ICMP type, code pair: 0, 8 
+- Type and code: 0 through 255 
+- Keyword: Any. 
+If a protocol is not specified, then the acceptable values for this parameter are: Any, RPC, RPC-EPMap, or IPHTTPS. 
+IPHTTPS is only supported on Windows Server 2012. 
+Querying for rules with this parameter can only be performed using filter objects.
+See the Get-NetFirewallPortFilter cmdlet for more information.
+
+```yaml
+Type: String[]
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -RemoteTunnelEndpoint
+Specifies the IP address of the computer or gateway device that secures traffic from computers that match the *LocalAddress* parameter value to computers that match the *RemoteAddress* parameter value.
+The traffic is being secured to this IP address to the device identified in the *LocalTunnelEndpoint* parameter.
+This parameter value must use the same type of IP address as the *LocalTunnelEndpoint* parameter, which is either IPv4 or IPv6. 
+Address keywords are not supported. 
+On Windows® 7, nextref_server_7, and Windows Server 2012, this value can also be Any.
+When applied to a client computer, this option supports connection via a tunnel to a remote gateway or host regardless of the IP address or address type of the local computer.
+
+```yaml
+Type: String[]
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -RemoteTunnelHostname
+Specifies that matching IPsec rules of the specified second end point tunnel host name are created. 
+Specifies a fully qualified DNS name that resolves to a list of remote tunnel end points. 
+This parameter is only supported on Windows Server 2012. 
+This parameter can only be used with multiple remote tunnel end points.
+Specifying this parameter prevents a non-asymmetric tunnel mode IPsec rule from being created.
+Rule creation will fail when a single remote tunnel end point and this parameter are specified, or when *RemoteTunnelEndpoint* parameter is set to Any and this parameter is specified.
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -RequireAuthorization
+Indicates that matching IPsec rules of the specified value are created. 
+Specifies the given value for an IPsec rule. 
+If this parameter is set to True, then enforcement of authorization is allowed for end points. 
+This parameter is only supported on nextref_server_7 and Windows Server 2012.
+
+```yaml
+Type: Boolean
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -ThrottleLimit
+Specifies the maximum number of concurrent operations that can be established to run the cmdlet.
+If this parameter is omitted or a value of `0` is entered, then Windows PowerShell® calculates an optimum throttle limit for the cmdlet based on the number of CIM cmdlets that are running on the computer.
+The throttle limit applies only to the current cmdlet, not to the session or to the computer.
+
+```yaml
+Type: Int32
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+# New-NetIPsecRule
+
+### -User
+Specifies that matching IPsec rules of the indicated user accounts are created. 
+This parameter specifies that only network packets that are authenticated as incoming from or outgoing to a user identified in the list of user accounts match this rule.
+This parameter value is specified as an SDDL string.
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -WhatIf
+Shows what would happen if the cmdlet runs.
+The cmdlet is not run.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: wi
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### CommonParameters
+This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable. For more information, see [about_CommonParameters](https://go.microsoft.com/fwlink/?LinkID=113216).
+
+## INPUTS
+
+### None
+
+## OUTPUTS
+
+### Microsoft.Management.Infrastructure.CimInstance#root\StandardCimv2\MSFT_NetConSecRule[]
+The `Microsoft.Management.Infrastructure.CimInstance` object is a wrapper class that displays Windows Management Instrumentation (WMI) objects.
+The path after the pound sign (`#`) provides the namespace and class name for the underlying WMI object.
+
+## NOTES
+
+## RELATED LINKS
+
+[Get-NetFirewallAddressFilter](./Get-NetFirewallAddressFilter.md)
+
+[Get-NetFirewallInterfaceFilter](./Get-NetFirewallInterfaceFilter.md)
+
+[Get-NetFirewallInterfaceTypeFilter](./Get-NetFirewallInterfaceTypeFilter.md)
+
+[Get-NetFirewallPortFilter](./Get-NetFirewallPortFilter.md)
+
+[Get-NetIPsecRule](./Get-NetIPsecRule.md)
+
+[New-NetIPsecPhase1AuthSet](./New-NetIPsecPhase1AuthSet.md)
+
+[New-NetIPsecPhase2AuthSet](./New-NetIPsecPhase2AuthSet.md)
+
+[New-NetIPsecQuickModeCryptoSet](./New-NetIPsecQuickModeCryptoSet.md)
+
+[Open-NetGPO](./Open-NetGPO.md)
+
+[Save-NetGPO](./Save-NetGPO.md)
+
+[Set-NetIPsecRule](./Set-NetIPsecRule.md)
+
+[New-NetIPsecAuthProposal](./New-NetIPsecAuthProposal.md)
+
+[New-NetIPsecQuickModeCryptoProposal](./New-NetIPsecQuickModeCryptoProposal.md)</pre></section>

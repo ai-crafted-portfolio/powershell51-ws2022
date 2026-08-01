@@ -1,0 +1,451 @@
+<!doctype html><meta charset="utf-8"><section class="jp-official"><h1>about_Workflowsについて</h1>
+<h2>短編説明</h2>
+<p>PowerShell Workflow機能の簡潔な紹介を提供しています.</p>
+<h2>長い説明</h2>
+<p>PowerShell Workflowは[Windows Workflow Foundation][05]のメリットをPowerShellに持ち込み,ワークフローを書き,実行できるようにします.</p>
+<p>PowerShell WorkflowはPowerShell 3.0で導入され,モジュールがPowerShell 5.1まで利用可能である.PowerShell Workflowに関する詳細については,[Workflows Guide][07]と[Windows PowerShell Workflowの書き込み][08]を参照してください.</p>
+<h2>ワークフローについてです.</h2>
+<p>ワークフローは,関連活動の順序から構成されるコマンドです.通常,彼らは長時間実行し,数百台のコンピュータからデータを収集し,変更を行い,しばしば異なった環境で実行します.</p>
+<p>ワークフローはWindows Workflow Foundationで使用されている言語であるXAML,またはPowerShell言語で書き換えることができます.ワークフローは通常モジュールに分布され,支援トピックが含まれます.詳細については,[XAML Overview (WPF) ][06]を参照してください.</p>
+<p>ワークフローは,IT環境において重要なものであり,リブートを生き残り,一般的な失敗から自動的に回復できるからです.ワークフロー処理を妨害せずにセッションやワークフローを実行しているコンピュータから切り離し,再接続し,データ損失なしにワークフローを透明に停止し再開することができます.ワークフロー内のすべての活動は記録され,参照のために監査することができます.ワークフローは,仕事として実行され,PowerShellのスケジュールされた仕事機能を使用してスケジュールすることができます.</p>
+<p>ワークフローの状態とデータは,ワークフローの始まりと終わり,およびあなたが指定した点に保存または維持されます.ワークフローの持続ポイントは,データベースのスナップショットやプログラムチェックポイントのように,ワークフローを障害や障害の影響から保護します.ワークフローが障害から回復できない場合は,最後の持続点から継続したデータを利用し,大規模なワークフローを最初から再起動する代わりに,最後の持続点から再開することができます.</p>
+<h2>ワークフローの要件と構成です.</h2>
+<p>PowerShell のワークフローの構成は,以下の要素で構成されています.</p>
+<p>ワークフローを実行するクライアントコンピュータ. - ワークフローセッション, <strong>PSSession</strong>,クライアントコンピュータまたはリモートコンピュータ. - 管理されたノード,ワークフロー活動に影響を受けるターゲットコンピュータ.</p>
+<p>ワークフローセッションは不要ですが,推奨されています. <strong>PSSessions</strong>は PowerShellの強力な回復と断断断セッション機能を利用して断断断作業フローセッションを回復できます.詳細については,[about_Remote_Disconnected_Sessions][03]を参照してください.</p>
+<p>クライアントコンピュータとワークフローセッションが実行されるコンピュータがノード管理が可能なので,すべての役割を果たす単一のコンピュータでワークフローを実行できます.</p>
+<p>ワークフローセッションが実行されるクライアントとコンピュータはPowerShell 3.0を実行している必要があります.Windows Serverオペレーティングシステムの Server Core インストールオプションを含むすべての有資格システムがサポートされています.</p>
+<p>cmdletsを含むワークフローを実行するには,管理されたノードにはWindows PowerShell 2.0またはそれ以降が必要です.管理されたノードには,ワークフローに cmdletsが含まれていない限り,PowerShellは必要ありません.Windows Management Instrumentation (WMI) と Common Information Model (CIM) のコマンドを含むワークフローを,PowerShellを持たないコンピュータで実行できます.</p>
+<h2>ワークフローを入手する方法</h2>
+<p>ワークフローは通常モジュールにパッケージ化されます.ワークフローを含むモジュールをインポートするには,モジュール内の任意のコマンドを使用するか,または  を使用してください.<code>Import-Module</code>模块は,模块内のコマンドを初めて使用すると自動的に輸入されます.</p>
+<p>コンピュータにインストールされているモジュール内のワークフローを検索するには,  を使ってください.<code>Get-Command</code>cmdletのコマンドタイプパラメータです.</p>
+<pre><code class="language-powershell">Get-Command -CommandType Workflow
+</code></pre>
+<h1>about_Workflowsについて</h1>
+<h2>ワークフローを実行する方法</h2>
+<p>ワークフローを実行するには,次の手順を使用します.</p>
+<p>1.管理されたノードがローカルコンピュータである場合,この手順は不要です.そうでなければクライアントコンピュータでは,管理者オプションとして PowerShell with the Run を起動します.</p>
+<pre><code>```powershell
+</code></pre>
+<p>Start-Process PowerShell -Verb RunAs
+   ```</p>
+<p>1.ワークフローセッションを実行するコンピュータや,cmdletsを含むワークフローに影響を及ぼす管理されたノードで,PowerShell リモート処理を有効にします.</p>
+<p>この手順は参加する各コンピュータで一度だけ実行する必要があります.</p>
+<p>この手順は,クライアントコンピュータで作業流が実行される場合,またはPowerShell 3.0を実行している管理されたノードで実行されない限り,クライアントコンピュータでリモート操作を有効にする必要はありません.</p>
+<p>リモート・アウトを有効にするには,  を使ってください.<code>Enable-PSRemoting</code>cmdletです.</p>
+<pre><code>```powershell
+</code></pre>
+<p>Enable-PSRemoting -Force
+   ```</p>
+<p>グループポリシー設定を用いることでリモート設定を有効にすることができます.詳細については,[about_Group_Policy_Settings][02]および[about_Execution_Policies][01]を参照してください.</p>
+<p>1 を使って<code>New-PSWorkflowSession</code>    <code>New-PSSession</code>cmdletsでワークフローセッションを作成します.</p>
+<p><code>New-PSWorkflowSession</code>cmdlet は,目的地のコンピュータの内蔵の <strong>Microsoft.PowerShell.Workflow</strong> セッション設定を使用したセッションを開始します.このセッション設定にはスクリプト,タイプおよびフォーマットファイル,およびワークフローに設計されたオプションが含まれます.</p>
+<p>または,使用する <code>New-PSSession</code>cmdlet. <strong>ConfigurationName</strong> パラメータを使用して <strong>Microsoft.PowerShell.Workflow</strong> セッション設定を指定します.このコマンドは, を使用すると同じです.<code>New-PSWorkflowSession</code>cmdletです.</p>
+<p>代替案としては,  を使うことです.<code>New-PSSession</code>cmdlet. <strong>ConfigurationName</strong> パラメータを使用して <strong>Microsoft.PowerShell.Workflow</strong>セッション設定を指定します.</p>
+<p>コンピュータの上で:</p>
+<pre><code>```powershell
+</code></pre>
+<p>$ws = New-PSWorkflowSession
+   ```</p>
+<p>リモートコンピュータでは:</p>
+<pre><code>```powershell
+</code></pre>
+<p>$newPSWorkflowSessionSplat = @{
+    ComputerName = 'Server01'
+    Credential = 'Domain01\Admin01'
+   }
+   $ws = New-PSWorkflowSession @newPSWorkflowSessionSplat
+   ```</p>
+<p>ワークフローセッションコンピュータの管理者であれば,  を使えます.<code>New-PSWorkflowExecutionOption</code>ワークフローセッション設定のカスタムオプション設定を作成するには cmdlet を使用します.<code>Set-PSSessionConfiguration</code>cmdlet はセッション設定を変更します.</p>
+<pre><code>```powershell
+</code></pre>
+<p>$newPSWorkflowExecutionOptionSplat = @{
+       MaxConnectedSessions = 150
+   }
+   $sto = New-PSWorkflowExecutionOption @newPSWorkflowExecutionOptionSplat
+   $invokeCommandSplat = @{
+       ComputerName = 'Server01'
+       ScriptBlock = {
+         Set-PSSessionConfiguration Microsoft.PowerShell.Workflow -SessionTypeOption $Using:sto
+      }
+   }
+   Invoke-Command @invokeCommandSplat
+   $newPSWorkflowSessionSplat = @{
+      ComputerName = 'Server01'
+      Credential = 'Domain01\Admin01'
+   }
+   $ws = New-PSWorkflowSession @newPSWorkflowSessionSplat
+   ```</p>
+<p>1.ワークフローセッションでワークフローを実行します.管理されたノード,ターゲットコンピュータの名前を指定するには, <strong>PSComputerName</strong>ワークフローの共通パラメータを使用します.</p>
+<p>次の例では,ワークフローを動かすことで,名前の変更ができます.<code>Test-Workflow</code> .</p>
+<p>管理されたノードがワークフローセッションをホストするコンピュータである場合:</p>
+<pre><code>```powershell
+</code></pre>
+<p>Invoke-Command -Session $ws {Test-Workflow}
+   ```</p>
+<p>管理されたノードはリモートコンピュータです.</p>
+<pre><code>```powershell
+</code></pre>
+<p>Invoke-Command -Session $ws{
+   Test-Workflow -PSComputerName Server01, Server02 }
+   ```</p>
+<p>次の例では,  を実行します.<code>Test-Workflow</code>数百台のコンピュータで使用されています.<code>Get-Content</code>cmdlet はテキストファイルからコンピュータ名を取り出し,その名簿を  に保存します.<code>$Servers</code>ローカルコンピュータの変数です.</p>
+<pre><code>`Invoke-Command`は利用しています.`Using:`範囲変更者が  を定義する`$Servers`ローカルセッションの変数について詳しくは,`Using:`範囲修正符,参照 [about_Remote_Variables][04].
+
+```powershell
+</code></pre>
+<p>$Servers = Get-Content Servers.txt
+   Invoke-Command -Session $ws {Test-Workflow -PSComputerName $Using:Servers }
+   ```</p>
+<h2>ワークフローの共通パラメータを使用します</h2>
+<p>パワーシェルはすべてのワークフローにcmdlet共通のパラメータを追加します.たとえワークフローが<strong>CmdletBinding</strong>属性を使っていないとしても.</p>
+<p>例えば,次のワークフローでは,パラメータが定義されていない.しかし,ワークフローを実行すると,それは <strong>CommonParameters</strong>と <strong>WorkflowCommonParameters</strong>の両方を持っている.</p>
+<pre><code class="language-powershell">workflow Test-Workflow {Get-Process}
+Get-Command Test-Workflow -Syntax
+</code></pre>
+<pre><code class="language-powershell">Test-Workflow [&lt;WorkflowCommonParameters&gt;] [&lt;CommonParameters&gt;]
+</code></pre>
+<p>ワークフローの共通パラメータには,ワークフローを実行するために不可欠ないくつかのパラメータが含まれます.例えば,PSComputerName**の共通パラメータは,ワークフローが影響する管理されたノードを指定します.</p>
+<pre><code class="language-powershell">Invoke-Command -Session $ws {
+  Test-Workflow -PSComputerName Server01, Server02
+}
+</code></pre>
+<p><strong>PSPersist</strong>ワークフローの共通パラメータは,ワークフローデータがいつ持続されるかを決定します.これは,持続点を定義していないワークフローに,活動間の持続点を追加できるようにします.</p>
+<pre><code class="language-powershell">Invoke-Command -Session $ws {
+  Test-Workflow -PSComputerName Server01, Server02 -PSPersist:$true
+}
+</code></pre>
+<p>他のワークフローの共通パラメータでは,管理されたノードへのリモート接続の特徴を指定することができます.それらの名前と機能は,リモート・cmdletsのパラメータに似ている.<code>Invoke-Command</code> .</p>
+<pre><code class="language-powershell">Invoke-Command -Session $ws {
+  Test-Workflow -PSComputerName Server01, Server02 -PSPort 443
+}
+</code></pre>
+<p>ワークフローセッションの接続を定義するリモートパラメータを,  から区別するように注意してください.<code>PS-prefixed</code>管理されたノードへの接続を定義するワークフローの共通パラメータです.</p>
+<pre><code class="language-powershell">$newPSSessionSplat = @{
+    ComputerName = 'Server01'
+    ConfigurationName = 'Microsoft.PowerShell.Workflow'
+}
+$ws = New-PSSession @newPSSessionSplat
+
+Invoke-Command -Session $ws {
+  $testWorkflowSplat = @{
+    PSComputerName = 'Server01', 'Server02'
+    PSConfigurationName = 'Microsoft.PowerShell.Workflow'
+  }
+  Test-Workflow @testWorkflowSplat
+}
+</code></pre>
+<p>ワークフローの共通パラメータは,ワークフローに限定されているものもあります.例えば,異なるリモートノードで異なるワークフローの共通パラメータ値を指定できる <strong>PSParameterCollection</strong>パラメータなど.ワークフローの共通パラメータのリストと説明については, [about_WorkflowCommonParameters][09]を参照してください.</p>
+<h1>about_Workflowsについて</h1>
+<h2>また, を参照してください.</h2>
+<ul>
+<li>[Invoke-AsWorkflow][12] - [New-PSSession][10] - [PSWorkflow][11] cmdlets - [Workflows Guide][07] - [Windows PowerShell Workflow] を書き込むこと[08]</li>
+</ul>
+<p>リンク参照 --&gt; [01]: ../../Microsoft.PowerShell.Core/About/about_Execution_Policies.md [02]: ../../Microsoft.PowerShell.Core/About/about_Group_Policy_Settings.md [03]: ../../Microsoft.PowerShell.Core/About/about_Remote_Sessions.md [04]: ../../Microsoft.PowerShell.Core/About/about/about_Remote_Variables.md [05]: /dotnet/frame/windows-workf-foundation [06]: /PowerShell.Core/w/l [07]:previous/new/processor/windows/windows/windows/windows/windows/windows/windowsflow-flow-flow-flow-flow-flow-flow-flow-flow-flow-flow-flow-flow-flow-flow-flow-flow-flow-flow-flow-flow-flow-flow-flow-flow-flow-flow-flow-flow-flow-flow-flow-flow-flow-flow-flow-flow-flow-flow-flow-flow-flow-flow-flow-flow-flow-flow-flow-flow-flow-flow-flow-flow-flow-flow-flow-flow-flow-flow-flow-flow-flow-flow-flow-flow-flow-flow-flow-flow-flow-flow-flow-flow-flow-flow-flow-flow-flow-flow-flow-flow-flow-flow-flow-flow-flow-flow-flow-flow-flow-flow-flow-flow-flow-flow-flow-flow-flow-flow-flow-flow-flow: xref:PSWorkflowUtility.Invoke-AsWorkflow</p></section><section class="en-original"><pre class="source-original"># about_Workflows
+
+## Short description
+
+Provides a brief introduction to the PowerShell Workflow feature.
+
+## Long description
+
+PowerShell Workflow brings the benefits of the
+[Windows Workflow Foundation][05] to PowerShell and enables you to write and
+run workflows.
+
+PowerShell Workflow was introduced in PowerShell 3.0 and the module is
+available up to PowerShell 5.1. For more information about PowerShell Workflow,
+see the [Workflows Guide][07] and [Writing a Windows PowerShell Workflow][08].
+
+## About workflows
+
+Workflows are commands that consist of an ordered sequence of related
+activities. Typically, they run for an extended period of time, gathering data
+from and making changes to hundreds of computers, often in heterogeneous
+environments.
+
+Workflows can be written in XAML, the language used in Windows Workflow
+Foundation, or in the PowerShell language. Workflows are typically packaged in
+modules and include help topics. For more information, see
+[XAML Overview (WPF)][06].
+
+Workflows are critical in an IT environment because they can survive reboots
+and recover automatically from common failures. You can disconnect and
+reconnect from sessions and computers running workflows without interrupting
+workflow processing, and suspend and resume workflows transparently without
+data loss. Each activity in a workflow can be logged and audited for reference.
+Workflows can run as jobs and can be scheduled by using the Scheduled Jobs
+feature of PowerShell.
+
+The state and data in a workflow is saved or persisted at the beginning and end
+of the workflow and at points that you specify. Workflow persistence points
+work like database snapshots or program checkpoints to protect the workflow
+from the effects of interruptions and failures. If the workflow is unable to
+recover from a failure, you can use the persisted data and resume from the last
+persistence point, instead of rerunning an extensive workflow from the
+beginning.
+
+## Workflow requirements and configuration
+
+A PowerShell Workflow configuration consists of the following elements:
+
+- A client computer, which runs the workflow.
+- A workflow session, **PSSession**, on the client computer or on a remote
+  computer.
+- Managed nodes, the target computers that are affected by the workflow
+  activities.
+
+The workflow session isn&#x27;t required, but is recommended. **PSSessions** can
+take advantage of the robust recovery and Disconnected Sessions features of
+PowerShell to recover disconnected workflow sessions. For more information, see
+[about_Remote_Disconnected_Sessions][03]
+
+Because the client computer and the computer on which the workflow session runs
+can be managed nodes, you can run a workflow on a single computer that fulfills
+all roles.
+
+The client computer and the computer on which the workflow session runs must be
+running PowerShell 3.0. All eligible systems are supported, including the
+Server Core installation options of Windows Server operating systems.
+
+To run workflows that include cmdlets, the managed nodes must have Windows
+PowerShell 2.0 or later. Managed nodes don&#x27;t require PowerShell unless the
+workflow includes cmdlets. You can run workflows that include Windows
+Management Instrumentation (WMI) and Common Information Model (CIM) commands on
+computers that don&#x27;t have PowerShell.
+
+## How to get workflows
+
+Workflows are typically packaged in modules. To import the module that includes
+a workflow, use any command in the module or use the `Import-Module` cmdlet.
+Modules are imported automatically on first use of any command in the module.
+
+To find the workflows in modules installed on your computer, use the
+`Get-Command` cmdlet&#x27;s **CommandType** parameter.
+
+```powershell
+Get-Command -CommandType Workflow
+```
+
+# about_Workflows
+
+## How to run workflows
+
+To run a workflow, use the following procedure.
+
+1. When the managed node is the local computer, this step isn&#x27;t required.
+   Otherwise, on the client computer, start PowerShell with the Run as
+   administrator option.
+
+   ```powershell
+   Start-Process PowerShell -Verb RunAs
+   ```
+
+1. Enable PowerShell remoting on the computer that runs the workflow session
+   and on managed nodes affected by workflows that include cmdlets.
+
+   You only need to do this step once on each participating computer.
+
+   This step is required only when running workflows that include cmdlets. You
+   don&#x27;t need to enable remoting on the client computer, unless the workflows
+   session runs on the client computer, or on any managed nodes that are running
+   PowerShell 3.0.
+
+   To enable remoting, use the `Enable-PSRemoting` cmdlet.
+
+   ```powershell
+   Enable-PSRemoting -Force
+   ```
+
+   You can enable remoting by using the **Turn on Script Execution** Group
+   Policy setting. For more information, see [about_Group_Policy_Settings][02]
+   and [about_Execution_Policies][01].
+
+1. Use the `New-PSWorkflowSession` or `New-PSSession` cmdlets to create the
+   workflow session.
+
+   The `New-PSWorkflowSession` cmdlet starts a session that uses the built-in
+   **Microsoft.PowerShell.Workflow** session configuration on the destination
+   computer. This session configuration includes scripts, type and formatting
+   files, and options that are designed for workflows.
+
+   Or, use the `New-PSSession` cmdlet. Use the **ConfigurationName** parameter
+   to specify the **Microsoft.PowerShell.Workflow** session configuration. This
+   command is the same as using the `New-PSWorkflowSession` cmdlet.
+
+   An alternative is to use the `New-PSSession` cmdlet. Use the
+   **ConfigurationName** parameter to specify the
+   **Microsoft.PowerShell.Workflow** session configuration.
+
+   On the local computer:
+
+   ```powershell
+   $ws = New-PSWorkflowSession
+   ```
+
+   On a remote computer:
+
+   ```powershell
+   $newPSWorkflowSessionSplat = @{
+    ComputerName = &#x27;Server01&#x27;
+    Credential = &#x27;Domain01\Admin01&#x27;
+   }
+   $ws = New-PSWorkflowSession @newPSWorkflowSessionSplat
+   ```
+
+   If you are an Administrator on the workflow session computer, you can use
+   the `New-PSWorkflowExecutionOption` cmdlet to create custom option settings
+   for the workflow session configuration. And, use the
+   `Set-PSSessionConfiguration` cmdlet to change the session configuration.
+
+   ```powershell
+   $newPSWorkflowExecutionOptionSplat = @{
+       MaxConnectedSessions = 150
+   }
+   $sto = New-PSWorkflowExecutionOption @newPSWorkflowExecutionOptionSplat
+   $invokeCommandSplat = @{
+       ComputerName = &#x27;Server01&#x27;
+       ScriptBlock = {
+         Set-PSSessionConfiguration Microsoft.PowerShell.Workflow -SessionTypeOption $Using:sto
+      }
+   }
+   Invoke-Command @invokeCommandSplat
+   $newPSWorkflowSessionSplat = @{
+      ComputerName = &#x27;Server01&#x27;
+      Credential = &#x27;Domain01\Admin01&#x27;
+   }
+   $ws = New-PSWorkflowSession @newPSWorkflowSessionSplat
+   ```
+
+1. Run the workflow in the workflow session. To specify the names of the
+   managed nodes, target computers, use the **PSComputerName** workflow common
+   parameter.
+
+   The following examples run the workflow named `Test-Workflow`.
+
+   Where the managed node is the computer that hosts the workflow session:
+
+   ```powershell
+   Invoke-Command -Session $ws {Test-Workflow}
+   ```
+
+   Where the managed nodes are remote computers.
+
+   ```powershell
+   Invoke-Command -Session $ws{
+   Test-Workflow -PSComputerName Server01, Server02 }
+   ```
+
+   The following example runs the `Test-Workflow` on hundreds of computers. The
+   `Get-Content` cmdlet gets the computer names from a text file and saves them
+   in the `$Servers` variable on the local computer.
+
+   `Invoke-Command` uses the `Using:` scope modifier to define the `$Servers`
+   variable in the local session. For more information about the `Using:` scope
+   modifier, see
+   [about_Remote_Variables][04].
+
+   ```powershell
+   $Servers = Get-Content Servers.txt
+   Invoke-Command -Session $ws {Test-Workflow -PSComputerName $Using:Servers }
+   ```
+
+## Using workflow common parameters
+
+The workflow common parameters are a set of parameters that PowerShell adds
+automatically to all workflows. PowerShell adds the cmdlet common parameters to
+all workflows, even if the workflow doesn&#x27;t use the **CmdletBinding**
+attribute.
+
+For example, the following workflow defines no parameters. However, when you
+run the workflow, it has both the **CommonParameters** and
+**WorkflowCommonParameters**.
+
+```powershell
+workflow Test-Workflow {Get-Process}
+Get-Command Test-Workflow -Syntax
+```
+
+```powershell
+Test-Workflow [&lt;WorkflowCommonParameters&gt;] [&lt;CommonParameters&gt;]
+```
+
+The workflow common parameters include several parameters that are essential to
+running workflows. For example, the **PSComputerName** common parameter
+specifies the managed nodes that the workflow affects.
+
+```powershell
+Invoke-Command -Session $ws {
+  Test-Workflow -PSComputerName Server01, Server02
+}
+```
+
+The **PSPersist** workflow common parameter determines when workflow data is
+persisted. It enables you to add persistence point between activities to
+workflows that don&#x27;t define persistence points.
+
+```powershell
+Invoke-Command -Session $ws {
+  Test-Workflow -PSComputerName Server01, Server02 -PSPersist:$true
+}
+```
+
+Other workflow common parameters let you specify the characteristics of the
+remote connection to the managed nodes. Their names and functionality are
+similar to the parameters of remoting cmdlets, including `Invoke-Command`.
+
+```powershell
+Invoke-Command -Session $ws {
+  Test-Workflow -PSComputerName Server01, Server02 -PSPort 443
+}
+```
+
+Take care to distinguish the remoting parameters that define the connection for
+the workflow session from the `PS-prefixed` workflow common parameters that
+define the connection to the managed nodes.
+
+```powershell
+$newPSSessionSplat = @{
+    ComputerName = &#x27;Server01&#x27;
+    ConfigurationName = &#x27;Microsoft.PowerShell.Workflow&#x27;
+}
+$ws = New-PSSession @newPSSessionSplat
+
+Invoke-Command -Session $ws {
+  $testWorkflowSplat = @{
+    PSComputerName = &#x27;Server01&#x27;, &#x27;Server02&#x27;
+    PSConfigurationName = &#x27;Microsoft.PowerShell.Workflow&#x27;
+  }
+  Test-Workflow @testWorkflowSplat
+}
+```
+
+Some workflow common parameters are unique to workflows, such as the
+**PSParameterCollection** parameter that lets you specify different workflow
+common parameter values for different remote nodes. For a list and description
+of the workflow common parameters, see
+[about_WorkflowCommonParameters][09].
+
+# about_Workflows
+
+## See also
+
+- [Invoke-AsWorkflow][12]
+- [New-PSSession][10]
+- [PSWorkflow][11] cmdlets
+- [Workflows Guide][07]
+- [Writing a Windows PowerShell Workflow][08]
+
+&lt;!-- link references --&gt;
+[01]: ../../Microsoft.PowerShell.Core/About/about_Execution_Policies.md
+[02]: ../../Microsoft.PowerShell.Core/About/about_Group_Policy_Settings.md
+[03]: ../../Microsoft.PowerShell.Core/About/about_Remote_Disconnected_Sessions.md
+[04]: ../../Microsoft.PowerShell.Core/About/about_Remote_Variables.md
+[05]: /dotnet/framework/windows-workflow-foundation
+[06]: /dotnet/desktop/wpf/xaml
+[07]: /previous-versions/powershell/scripting/components/workflows-guide
+[08]: /previous-versions/powershell/scripting/developer/workflow/writing-a-windows-powershell-workflow
+[09]: about_WorkflowCommonParameters.md
+[10]: xref:Microsoft.PowerShell.Core.New-PSSession
+[11]: xref:PSWorkflow
+[12]: xref:PSWorkflowUtility.Invoke-AsWorkflow</pre></section>

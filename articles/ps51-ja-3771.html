@@ -1,0 +1,381 @@
+<!doctype html><meta charset="utf-8"><section class="jp-official"><h1>Get-Transaction を取得する</h1>
+<h2>SYNOPSISは現在の (アクティブ) 取引を入手します.</h2>
+<h2>SYNTAXは,のシンタックスです.</h2>
+<pre><code>Get-Transaction [&lt;CommonParameters&gt;]
+</code></pre>
+<h2>記述は,</h2>
+<p><code>Get-Transaction</code>cmdlet は,セッション中の現在のトランザクションを表すオブジェクトが表示されます.</p>
+<p>このcmdletは,一度に1つのトランザクションのみがアクティブであるため,決して1以上のオブジェクトを返さない.もし1つまたは複数の独立したトランザクションを起動した場合 (Start-Transactionの独立パラメータを使用して),最も最近開始されたトランザクションがアクティブであり,そのトランザクションです.<code>Get-Transaction</code>返還する.</p>
+<p>すべてのアクティブトランザクションがリロールされたり,コミットされたりすると,このcmdletでは,セッションで最近アクティブだったトランザクションが表示されます.</p>
+<p>このcmdletは,Windows PowerShellでトランザクション機能をサポートする一連のcmdletの1つです.詳細については, [about_Transactions.md]を参照してください.</p>
+<h2>例えは</h2>
+<h3>例1:現在の取引を入手する</h3>
+<pre><code class="language-powershell">Start-Transaction
+Get-Transaction
+</code></pre>
+<pre><code class="language-Output">RollbackPreference   SubscriberCount   Status
+------------------   ---------------   ------
+Error                1                 Active
+</code></pre>
+<p>このコマンドは,という文字を使用します.<code>Get-Transaction</code>cmdlet で現在のトランザクションを表示します.</p>
+<h3>例2:トランザクションオブジェクトの性質と方法を示す</h3>
+<pre><code class="language-powershell">Get-Transaction | Get-Member
+</code></pre>
+<pre><code class="language-Output">Name               MemberType Definition
+----               ---------- ----------
+Dispose            Method     System.Void Dispose(), System.Void Dispose(Boolean disposing)
+Equals             Method     System.Boolean Equals(Object obj)
+GetHashCode        Method     System.Int32 GetHashCode()
+GetType            Method     System.Type GetType()
+ToString           Method     System.String ToString()
+IsCommitted        Property   System.Boolean IsCommitted {get;}
+IsRolledBack       Property   System.Boolean IsRolledBack {get;}
+RollbackPreference Property   System.Management.Automation.RollbackSeverity RollbackPreference {get;}
+SubscriberCount    Property   System.Int32 SubscriberCount {get;set;}
+</code></pre>
+<p>このコマンドは,という文字を使用します.<code>Get-Member</code>cmdlet は,トランザクションオブジェクトの性質と方法を示す.</p>
+<h3>例3: ロールバックトランザクションのプロパティ値を表示します</h3>
+<pre><code class="language-powershell">Set-Location HKLM:\software
+Start-Transaction
+New-Item MyCompany -UseTransaction
+Undo-Transaction
+Get-Transaction
+</code></pre>
+<pre><code class="language-Output">RollbackPreference   SubscriberCount   Status
+------------------   ---------------   ----------
+Error                0                 RolledBack
+</code></pre>
+<p>このコマンドは,取り戻された取引に対するトランザクションオブジェクトのプロパティ値を表示します.</p>
+<h3>例4: 約束された取引の資産値を表示する</h3>
+<pre><code class="language-powershell">Set-Location HKLM:\software
+Start-Transaction
+New-Item MyCompany -UseTransaction
+Complete-Transaction
+Get-Transaction
+</code></pre>
+<pre><code class="language-Output">RollbackPreference   SubscriberCount   Status
+------------------   ---------------   ---------
+Error                1                 Committed
+</code></pre>
+<p>このコマンドは,取引が実行された取引に対するトランザクションオブジェクトのプロパティ値を表示します.</p>
+<h3>例5:別の取引が進行中である間に取引を開始する</h3>
+<pre><code class="language-powershell">Set-Location HKLM:\software
+Start-Transaction
+New-Item MyCompany -UseTransaction
+Start-Transaction
+New-Item MyCompany2 -UseTransaction
+Get-Transaction
+</code></pre>
+<pre><code class="language-Output">RollbackPreference   SubscriberCount   Status
+------------------   ---------------   ------
+Error                2                 Active
+</code></pre>
+<pre><code class="language-powershell">Complete-Transaction
+Get-Transaction
+</code></pre>
+<pre><code class="language-Output">RollbackPreference   SubscriberCount   Status
+------------------   ---------------   ------
+Error                1                 Active
+</code></pre>
+<pre><code class="language-powershell">Complete-Transaction
+Get-Transaction
+</code></pre>
+<pre><code class="language-Output">RollbackPreference   SubscriberCount   Status
+------------------   ---------------   ---------
+Error                1                 Committed
+</code></pre>
+<p>この例では,別の取引が進行中の間に取引を開始する際に,取引対象に及ぼす影響を示しています.通常,取引を実行するスクリプトに機能が含まれているとき,または別の完全な取引を含むスクリプトに呼びかけるときに,これは起こります.</p>
+<p>唯一の場合,第二の場合は別です.<code>Start-Transaction</code>コマンドには,独立するパラメータが含まれています.<code>Start-Transaction</code>新しい取引を作成するのではなく,元の取引に2番目のサブスクリプションを追加します.</p>
+<p>最初の"人"は<code>Start-Transaction</code>取引を開始するコマンドです. <strong>UseTransaction</strong>パラメータを持つニューアイテムコマンドは取引の一部です.</p>
+<p>一秒間の時間です.<code>Start-Transaction</code>取引にサブスクリプションを追加する.次のコマンドは,<code>New-Item</code>コマンドも取引の一部です.</p>
+<p>最初の"人"は<code>Get-Transaction</code>コマンドは,複数サブスクリプションの取引を示しています.サブスクリプションの数は2であることに注意してください.</p>
+<p>最初のComplete-Transactionコマンドは,取引を約束しないが,サブスクリプション数を1に減らします.</p>
+<p>第二の方は,<code>Complete-Transaction</code>コマンドは取引を約束します.</p>
+<h3>例6: 独立取引を始める一方,別の取引が進行中です.</h3>
+<pre><code class="language-powershell">Set-Location HKLM:\software
+Start-Transaction
+Get-Transaction
+</code></pre>
+<pre><code class="language-Output">RollbackPreference   SubscriberCount   IsRolledBack   IsCommitted
+------------------   ---------------   ------------   -----------
+Error                1                 False          False
+</code></pre>
+<pre><code class="language-powershell">Start-Transaction -Independent
+Get-Transaction
+</code></pre>
+<pre><code class="language-Output">RollbackPreference   SubscriberCount   IsRolledBack   IsCommitted
+------------------   ---------------   ------------   -----------
+Error                1                 False          False
+```    ```powershell
+Complete-Transaction
+Get-Transaction
+Complete-Transaction
+Get-Transaction
+</code></pre>
+<p>この例では,別の取引が進行中の間に独立取引を開始する取引対象に及ぼす影響を示しています.</p>
+<p>最初の"人"は<code>Start-Transaction</code>コマンドは取引を開始します.<code>New-Item</code><strong>UseTransaction</strong>のパラメータを持つコマンドは取引の一部です.</p>
+<p>一秒間の時間です.<code>Start-Transaction</code>取引にサブスクリプションを追加する.次のコマンドは,<code>New-Item</code>コマンドも取引の一部です.</p>
+<p>最初の"人"は<code>Get-Transaction</code>コマンドは,複数サブスクリプションの取引を示します.サブスクリプションの数は2であることを注意してください.</p>
+<p><code>Complete-Transaction</code>コマンドは,サブスクリプション数を1に減らしますが,取引を約束しません.</p>
+<p>第二の方は,<code>Complete-Transaction</code>コマンドは取引を約束します.</p>
+<h2>パラメータは</h2>
+<h3>共通パラメーター</h3>
+<p>このcmdletは,共通パラメータをサポートしています: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable.詳細については, <a href="を参照してください.https://go.microsoft.com/fwlink/?LinkID=113216">about_CommonParameters</a> でした.</p>
+<h2>輸入は</h2>
+<h3>どれもない</h3>
+<p>このcmdletに物体をパイプすることはできません.</p>
+<h2>輸出は</h2>
+<h3>システム管理自動化PSトランザクション</h3>
+<p>このcmdletは,現在のトランザクションを表すオブジェクトを返します.</p>
+<h2>NOTES  記事ができました.</h2>
+<h2>関連リンク</h2>
+<p><a href="Complete-Transaction.md">Complete-Transaction</a> について</p>
+<p><a href="スタートトランザクション.md">スタートトランザクション</a></p>
+<p><a href="Undo-Transaction.md">Undo-Transaction</a> について</p>
+<p><a href="Use-Transaction.md">Use-Transaction</a> </p>
+<p><a href="New-Item.md">New-Item</a> </p></section><section class="en-original"><pre class="source-original"># Get-Transaction
+
+## SYNOPSIS
+Gets the current (active) transaction.
+
+## SYNTAX
+
+```
+Get-Transaction [&lt;CommonParameters&gt;]
+```
+
+## DESCRIPTION
+
+The `Get-Transaction` cmdlet gets an object that represents the current transaction in the session.
+
+This cmdlet never returns more than one object, because only one transaction is active at a time. If
+you start one or more independent transactions (by using the Independent parameter of
+Start-Transaction), the most recently started transaction is active, and that is the transaction
+that `Get-Transaction` returns.
+
+When all active transactions have either been rolled back or committed, this cmdlet shows the
+transaction that was most recently active in the session.
+
+This cmdlet is one of a set of cmdlets that support the transactions feature in Windows PowerShell.
+For more information, see [about_Transactions](../Microsoft.PowerShell.Core/About/about_Transactions.md).
+
+## EXAMPLES
+
+### Example 1: Get the current transaction
+
+```powershell
+Start-Transaction
+Get-Transaction
+```
+
+```Output
+RollbackPreference   SubscriberCount   Status
+------------------   ---------------   ------
+Error                1                 Active
+```
+
+This command uses the `Get-Transaction` cmdlet to get the current transaction.
+
+### Example 2: Show the properties and methods of the transaction object
+
+```powershell
+Get-Transaction | Get-Member
+```
+
+```Output
+Name               MemberType Definition
+----               ---------- ----------
+Dispose            Method     System.Void Dispose(), System.Void Dispose(Boolean disposing)
+Equals             Method     System.Boolean Equals(Object obj)
+GetHashCode        Method     System.Int32 GetHashCode()
+GetType            Method     System.Type GetType()
+ToString           Method     System.String ToString()
+IsCommitted        Property   System.Boolean IsCommitted {get;}
+IsRolledBack       Property   System.Boolean IsRolledBack {get;}
+RollbackPreference Property   System.Management.Automation.RollbackSeverity RollbackPreference {get;}
+SubscriberCount    Property   System.Int32 SubscriberCount {get;set;}
+```
+
+This command uses the `Get-Member` cmdlet to show the properties and methods of the transaction
+object.
+
+### Example 3: Show the property values of a rolled back transaction
+
+```powershell
+Set-Location HKLM:\software
+Start-Transaction
+New-Item MyCompany -UseTransaction
+Undo-Transaction
+Get-Transaction
+```
+
+```Output
+RollbackPreference   SubscriberCount   Status
+------------------   ---------------   ----------
+Error                0                 RolledBack
+```
+
+This command shows the property values of a transaction object for a transaction that has been
+rolled back.
+
+### Example 4: Show the property values of a committed transaction
+
+```powershell
+Set-Location HKLM:\software
+Start-Transaction
+New-Item MyCompany -UseTransaction
+Complete-Transaction
+Get-Transaction
+```
+
+```Output
+RollbackPreference   SubscriberCount   Status
+------------------   ---------------   ---------
+Error                1                 Committed
+```
+
+This command shows the property values of a transaction object for a transaction that has been
+committed.
+
+### Example 5: Start a transaction while another is in progress
+
+```powershell
+Set-Location HKLM:\software
+Start-Transaction
+New-Item MyCompany -UseTransaction
+Start-Transaction
+New-Item MyCompany2 -UseTransaction
+Get-Transaction
+```
+
+```Output
+RollbackPreference   SubscriberCount   Status
+------------------   ---------------   ------
+Error                2                 Active
+```
+
+```powershell
+Complete-Transaction
+Get-Transaction
+```
+
+```Output
+RollbackPreference   SubscriberCount   Status
+------------------   ---------------   ------
+Error                1                 Active
+```
+
+```powershell
+Complete-Transaction
+Get-Transaction
+```
+
+```Output
+RollbackPreference   SubscriberCount   Status
+------------------   ---------------   ---------
+Error                1                 Committed
+```
+
+This example shows the effect on the transaction object of starting a transaction while another
+transaction is in progress. Typically, this happens when a script that runs a transaction includes a
+function or calls a script that contains another complete transaction.
+
+Unless the second `Start-Transaction` command includes the **Independent** parameter,
+`Start-Transaction` does not create a new transaction. Instead, it adds a second subscriber to the
+original transaction.
+
+The first `Start-Transaction` command starts the transaction. A New-Item command with the
+**UseTransaction** parameter is part of the transaction.
+
+A second `Start-Transaction` command adds a subscriber to the transaction. The next `New-Item`
+command is also part of the transaction.
+
+The first `Get-Transaction` command shows the multi-subscriber transaction.
+Notice that the subscriber count is 2.
+
+The first Complete-Transaction command does not commit the transaction, but it reduces the
+subscriber count to 1.
+
+The second `Complete-Transaction` command commits the transaction.
+
+### Example 6: Start an independent transaction while another is in progress
+
+```powershell
+Set-Location HKLM:\software
+Start-Transaction
+Get-Transaction
+```
+
+```Output
+RollbackPreference   SubscriberCount   IsRolledBack   IsCommitted
+------------------   ---------------   ------------   -----------
+Error                1                 False          False
+```
+
+```powershell
+Start-Transaction -Independent
+Get-Transaction
+```
+
+```Output
+RollbackPreference   SubscriberCount   IsRolledBack   IsCommitted
+------------------   ---------------   ------------   -----------
+Error                1                 False          False
+```
+```powershell
+Complete-Transaction
+Get-Transaction
+Complete-Transaction
+Get-Transaction
+```
+
+This example shows the effect on the transaction object of starting an independent transaction while
+another transaction is in progress.
+
+The first `Start-Transaction` command starts the transaction. A `New-Item` command with the
+**UseTransaction** parameter is part of the transaction.
+
+A second `Start-Transaction` command adds a subscriber to the transaction. The next `New-Item`
+command is also part of the transaction.
+
+The first `Get-Transaction` command shows the multi-subscriber transaction. Note that the subscriber
+count is 2.
+
+The `Complete-Transaction` command reduces the subscriber count to 1, but it does not commit the
+transaction.
+
+The second `Complete-Transaction` command commits the transaction.
+
+## PARAMETERS
+
+### CommonParameters
+
+This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable,
+-InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose,
+-WarningAction, and -WarningVariable. For more information, see [about_CommonParameters](https://go.microsoft.com/fwlink/?LinkID=113216).
+
+## INPUTS
+
+### None
+
+You cannot pipe objects to this cmdlet.
+
+## OUTPUTS
+
+### System.Management.Automation.PSTransaction
+
+This cmdlet returns an object that represents the current transaction.
+
+## NOTES
+
+## RELATED LINKS
+
+[Complete-Transaction](Complete-Transaction.md)
+
+[Start-Transaction](Start-Transaction.md)
+
+[Undo-Transaction](Undo-Transaction.md)
+
+[Use-Transaction](Use-Transaction.md)
+
+[New-Item](New-Item.md)</pre></section>

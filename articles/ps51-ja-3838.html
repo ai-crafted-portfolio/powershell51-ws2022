@@ -1,0 +1,306 @@
+<!doctype html><meta charset="utf-8"><section class="jp-official"><h1>Get-AuthenticodeSignature を取得する</h1>
+<h2>SYNOPSISは,ファイルにAuthenticode署名に関する情報を入手します.</h2>
+<h2>SYNTAXは,のシンタックスです.</h2>
+<h3>ByPath (デフォルト)</h3>
+<pre><code>Get-AuthenticodeSignature [-FilePath] &lt;String[]&gt; [&lt;CommonParameters&gt;]
+</code></pre>
+<h3>ByLiteralPath について</h3>
+<pre><code>Get-AuthenticodeSignature -LiteralPath &lt;String[]&gt; [&lt;CommonParameters&gt;]
+</code></pre>
+<h3>ByContent</h3>
+<pre><code>Get-AuthenticodeSignature -SourcePathOrExtension &lt;String[]&gt; -Content &lt;Byte[]&gt;
+ [&lt;CommonParameters&gt;]
+</code></pre>
+<h2>記述は,</h2>
+<p><strong>このcmdletはWindowsプラットフォームでのみ利用できます.</strong></p>
+<p><code>Get-AuthenticodeSignature</code>cmdlet はバイトアレイとしてファイルまたはファイルコンテンツのAuthenticode署名に関する情報を入手します.ファイルがインベッド署名とWindowsカタログ署名の両方であった場合,Windowsカタログ署名が使用されます.ファイルが署名されていない場合は,情報は取り上げられますが,フィールドは空白です.</p>
+<h2>例えは</h2>
+<h3>例1: ファイルにAuthenticode署名を取得する</h3>
+<pre><code class="language-powershell">Get-AuthenticodeSignature -FilePath &quot;C:\Test\NewScript.ps1&quot;
+</code></pre>
+<p>このコマンドは,NewScript.ps1ファイルにAuthenticode署名に関する情報を入手します.このコマンドは,ファイル指定のために <strong>FilePath</strong>パラメータを使用します.</p>
+<h3>例2:複数のファイルにAuthenticode署名を取得する</h3>
+<pre><code class="language-powershell">Get-AuthenticodeSignature test.ps1, test1.ps1, sign-file.ps1, makexml.ps1
+</code></pre>
+<p>このコマンドはコマンドラインでリストされている4つのファイルに対するAuthenticode署名に関する情報を取得します.この例では,オプションの <strong>FilePath</strong>パラメータの名前が省略されます.</p>
+<h3>例3:複数のファイルに有効なAuthenticode署名のみを取得します.</h3>
+<pre><code class="language-powershell">Get-ChildItem $PSHOME\*.* |
+    ForEach-Object {Get-AuthenticodeSignature $_} |
+    Where-Object {$_.Status -eq &quot;Valid&quot;}
+</code></pre>
+<p>このコマンドは,  のすべてのファイルをリストにします.<code>$PSHOME</code>有効なAuthenticode署名を持つディレクトリです.<code>$PSHOME</code>自動変数はPowerShellのインストールディレクトリへのパスポートを含んでいる.</p>
+<p>コマンドは""を用いています.<code>Get-ChildItem</code> のファイルを取得するには cmdlet を使用します.<code>$PSHOME</code>ディレクトリ. ディレクトリを排除するために ** のパターンを使用します (ファイル名に点のないファイルも除外しますが).</p>
+<p>このコマンドはパイプラインオペレーターを使用しています ()<code>|</code>) を使ってファイルを送信します.<code>$PSHOME</code>へ<code>ForEach-Object</code>cmdlet,where  を表示する<code>Get-AuthenticodeSignature</code>ファイルごとに呼び出される.</p>
+<p>の結果について<code>Get-AuthenticodeSignature</code>命令は, a に送信されます.<code>Where-Object</code>命令は,有効な状態の署名オブジェクトのみを選択します.</p>
+<h3>例4:バイトアレイとして指定されたファイルコンテンツのAuthenticode署名を取得します.</h3>
+<pre><code class="language-powershell">$authenticodeSignatureParams = @{
+    Content = (Get-Content foo.ps1 -AsByteStream)
+    SourcePathorExtension = &quot;ps1&quot;
+}
+Get-AuthenticodeSignature @authenticodeSignatureParams
+</code></pre>
+<p>このコマンドは,ファイル内容のAuthenticode署名に関する情報を取得します.この例では,ファイル拡張子はファイル内容とともに指定されます.</p>
+<h2>パラメータは</h2>
+<h3>-コンテンツ</h3>
+<p>Authenticode署名が取得されるバイト数列としてファイルの内容.このパラメータは <strong>SourcePathOrExtension</strong>パラメータで使用されなければならない.PowerShell 7.4以前,ファイルの内容はユニコード (UTF-16LE) 形式でなければならない.</p>
+<pre><code class="language-yaml">Type: System.Byte[]
+Parameter Sets: ByContent
+Aliases:
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+</code></pre>
+<h3>-FilePath</h3>
+<p>調べるファイルへのパス指定します.ワイルドカードは許可されていますが,単一のファイルに導きます.このパラメータの値を指定する際にはコマンドラインで <strong>FilePath</strong>を入力する必要はありません.</p>
+<pre><code class="language-yaml">Type: System.String[]
+Parameter Sets: ByPath
+Aliases:
+
+Required: True
+Position: 0
+Default value: None
+Accept pipeline input: True (ByPropertyName, ByValue)
+Accept wildcard characters: True
+</code></pre>
+<h3>-リテラルパース</h3>
+<p>調べられているファイルへのパス指定します. <strong>FilePath</strong>とは異なり,LiteralPath**パラメータの値は入力されたまま使用されます.文字はワイルドカードとして解釈されません.パスにエスケープ文字が含まれている場合は,単一の引用符で囲み付けます.単一の引用符はPowerShellにエスケープ文字として解釈しないように言います.</p>
+<pre><code class="language-yaml">Type: System.String[]
+Parameter Sets: ByLiteralPath
+Aliases: PSPath
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+</code></pre>
+<h3>-SourcePathOrExtension について</h3>
+<p>Authenticode署名が取得されたコンテンツのファイルまたはファイルタイプへのパス.このパラメータは,ファイルコンテンツがバイトアレイとして通過する <strong>Content</strong>で使用されます.</p>
+<pre><code class="language-yaml">Type: System.String[]
+Parameter Sets: ByContent
+Aliases:
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName, ByValue)
+Accept wildcard characters: False
+</code></pre>
+<h3>共通パラメーター</h3>
+<p>このcmdletは,共通パラメータをサポートしています: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable.詳細については, <a href="を参照してください.https://go.microsoft.com/fwlink/?LinkID=113216">about_CommonParameters</a> でした.</p>
+<h2>輸入は</h2>
+<h3>System.String でした.</h3>
+<p>このcmdletにファイルパスを含む文字列をパイプすることができます.</p>
+<h2>輸出は</h2>
+<h3>システム管理 自動化 署名</h3>
+<p>このcmdletは,受け取るすべての署名に対して署名オブジェクトを返します.</p>
+<h2>NOTES  記事ができました.</h2>
+<p>PowerShellでAuthenticode署名に関する情報については, [about_Signing] (?? / Microsoft.PowerShell.Core/About/about_Signing.md) を参照してください.</p>
+<h2>関連リンク</h2>
+<p><a href="Get-ExecutionPolicy.md">Get-ExecutionPolicy</a> について</p>
+<p><a href="Set-AuthenticodeSignature.md">Set-AuthenticodeSignature</a> について</p>
+<p><a href="Set-ExecutionPolicy.md">Set-ExecutionPolicy</a> </p>
+<p><a href="../Microsoft.PowerShell.Core/About/about_Execution_Policies.md">about_Execution_Policies</a> について</p>
+<p><a href="../Microsoft.PowerShell.Core/About/about_Signing.md">about_Signing</a> について</p></section><section class="en-original"><pre class="source-original"># Get-AuthenticodeSignature
+
+## SYNOPSIS
+Gets information about the Authenticode signature for a file.
+
+## SYNTAX
+
+### ByPath (Default)
+
+```
+Get-AuthenticodeSignature [-FilePath] &lt;String[]&gt; [&lt;CommonParameters&gt;]
+```
+
+### ByLiteralPath
+
+```
+Get-AuthenticodeSignature -LiteralPath &lt;String[]&gt; [&lt;CommonParameters&gt;]
+```
+
+### ByContent
+
+```
+Get-AuthenticodeSignature -SourcePathOrExtension &lt;String[]&gt; -Content &lt;Byte[]&gt;
+ [&lt;CommonParameters&gt;]
+```
+
+## DESCRIPTION
+
+&gt; **This cmdlet is only available on the Windows platform.**
+
+The `Get-AuthenticodeSignature` cmdlet gets information about the Authenticode signature for a file
+or file content as a byte array. If the file is both embedded signed and Windows catalog signed, the
+Windows catalog signature is used. If the file is not signed, the information is retrieved, but the
+fields are blank.
+
+## EXAMPLES
+
+### Example 1: Get the Authenticode signature for a file
+
+```powershell
+Get-AuthenticodeSignature -FilePath &quot;C:\Test\NewScript.ps1&quot;
+```
+
+This command gets information about the Authenticode signature in the NewScript.ps1 file. It uses
+the **FilePath** parameter to specify the file.
+
+### Example 2: Get the Authenticode signature for multiple files
+
+```powershell
+Get-AuthenticodeSignature test.ps1, test1.ps1, sign-file.ps1, makexml.ps1
+```
+
+This command gets information about the Authenticode signature for the four files listed at the
+command line. In this example, the name of the **FilePath** parameter, which is optional, is
+omitted.
+
+### Example 3: Get only valid Authenticode signatures for multiple files
+
+```powershell
+Get-ChildItem $PSHOME\*.* |
+    ForEach-Object {Get-AuthenticodeSignature $_} |
+    Where-Object {$_.Status -eq &quot;Valid&quot;}
+```
+
+This command lists all of the files in the `$PSHOME` directory that have a valid Authenticode
+signature. The `$PSHOME` automatic variable contains the path to the PowerShell installation
+directory.
+
+The command uses the `Get-ChildItem` cmdlet to get the files in the `$PSHOME` directory. It uses a
+pattern of *.* to exclude directories (although it also excludes files without a dot in the
+filename).
+
+The command uses a pipeline operator (`|`) to send the files in `$PSHOME` to the `ForEach-Object`
+cmdlet, where `Get-AuthenticodeSignature` is called for each file.
+
+The results of the `Get-AuthenticodeSignature` command are sent to a `Where-Object` command that
+selects only the signature objects with a status of Valid.
+
+### Example 4: Get the Authenticode signature for a file content specified as byte array
+
+```powershell
+$authenticodeSignatureParams = @{
+    Content = (Get-Content foo.ps1 -AsByteStream)
+    SourcePathorExtension = &quot;ps1&quot;
+}
+Get-AuthenticodeSignature @authenticodeSignatureParams
+```
+
+This command gets information about the Authenticode signature for the content of a file. In this
+example, the file extension is specified along with the content of the file.
+
+## PARAMETERS
+
+### -Content
+
+Contents of a file as a byte array for which the Authenticode signature is retrieved. This parameter
+must be used with **SourcePathOrExtension** parameter. Prior to PowerShell 7.4, the contents of the
+file must be in Unicode (UTF-16LE) format.
+
+```yaml
+Type: System.Byte[]
+Parameter Sets: ByContent
+Aliases:
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -FilePath
+
+Specifies the path to the file to examine. Wildcards are permitted, but they must lead to a single
+file. It is not necessary to type **FilePath** at the command line when you specify a value for this
+parameter.
+
+```yaml
+Type: System.String[]
+Parameter Sets: ByPath
+Aliases:
+
+Required: True
+Position: 0
+Default value: None
+Accept pipeline input: True (ByPropertyName, ByValue)
+Accept wildcard characters: True
+```
+
+### -LiteralPath
+
+Specifies the path to the file being examined. Unlike **FilePath**, the value of the **LiteralPath**
+parameter is used exactly as it is typed. No characters are interpreted as wildcards. If the path
+includes an escape character, enclose it in single quotation marks. Single quotation marks tell
+PowerShell not to interpret any characters as escape characters.
+
+```yaml
+Type: System.String[]
+Parameter Sets: ByLiteralPath
+Aliases: PSPath
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -SourcePathOrExtension
+
+Path to the file or file type of the content for which the Authenticode signature is retrieved. This
+parameter is used with **Content** where file content is passed as a byte array.
+
+```yaml
+Type: System.String[]
+Parameter Sets: ByContent
+Aliases:
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName, ByValue)
+Accept wildcard characters: False
+```
+
+### CommonParameters
+
+This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable,
+-InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose,
+-WarningAction, and -WarningVariable. For more information, see
+[about_CommonParameters](https://go.microsoft.com/fwlink/?LinkID=113216).
+
+## INPUTS
+
+### System.String
+
+You can pipe a string that contains a file path to this cmdlet.
+
+## OUTPUTS
+
+### System.Management.Automation.Signature
+
+This cmdlet returns a signature object for each signature that it gets.
+
+## NOTES
+
+For information about Authenticode signatures in PowerShell, see
+[about_Signing](../Microsoft.PowerShell.Core/About/about_Signing.md).
+
+## RELATED LINKS
+
+[Get-ExecutionPolicy](Get-ExecutionPolicy.md)
+
+[Set-AuthenticodeSignature](Set-AuthenticodeSignature.md)
+
+[Set-ExecutionPolicy](Set-ExecutionPolicy.md)
+
+[about_Execution_Policies](../Microsoft.PowerShell.Core/About/about_Execution_Policies.md)
+
+[about_Signing](../Microsoft.PowerShell.Core/About/about_Signing.md)</pre></section>

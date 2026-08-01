@@ -1,0 +1,2772 @@
+<!doctype html><meta charset="utf-8"><section class="jp-official"><h1>about_Classes_Inheritanceについて</h1>
+<h2>短編説明</h2>
+<p>他のタイプを拡張するクラスを定義する方法について説明します.</p>
+<h2>長い説明</h2>
+<p>PowerShell クラスは <em>inheritance</em> をサポートし,親クラスの行動を再利用したり,拡張したり,変更したりする子クラスを定義できます.メンバーが相続するクラスには <em>base class</em> と呼ばれる.ベースクラスのメンバーを相続するクラスには <em>derived class</em> と呼ばれる.</p>
+<p>PowerShellでは単一の相続のみをサポートします. クラスが単一のクラスからのみ相続することができます. しかし,相続はトランシティブで,一連のタイプの相続階層を定義することができます. 言い換えれば, <strong>D</strong> タイプは <strong>C</strong> から相続することができます. これは <strong>B</strong> から相続します. 基礎クラスのタイプ <strong>A</strong> から相続します. 相続はトランシティブなので, <strong>A</strong> のメンバーは <strong>D</strong> をタイプすることができます.</p>
+<p>派生クラスは,ベースクラスのすべてのメンバーを相続しない.以下のメンバーは,相続されない:</p>
+<p>スタティックコンストラクター (株) は,クラスのスタティックデータを初期化する. クラスの新しいインスタンスを作成するために呼び出すインスタンスのコンストラクター. 各クラスには独自のコンストラクタを定義する必要があります.</p>
+<p>既存のクラスから派生した新しいクラスを作成することで,クラスを拡張することができます.派生されたクラスには,ベースクラスの性質と方法が継承されます. 必要に応じて,ベースクラスのメンバーを追加または覆すことができます.</p>
+<p>クラスもインターフェースから受け継ぐことができるので,契約を定義する.インターフェースから受け継ぐクラスはその契約を実行しなければならない.そうすると,そのインターフェースを実装する他のクラスと同様にクラスも使用可能になります. インターフェイスから受け継ぐクラスがインターフェースを実行しない場合は,PowerShellでクラスに解析エラーが発生します.</p>
+<p>PowerShell の一部のオペレーターは,特定のインターフェースを実装するクラスに依存します.<code>-eq</code>参照等価性を確認するオペレーターは,クラスが <strong>System.IEquatable</strong> インターフェースを実装しない限りのみです.<code>-le</code>     <code>-lt</code>     <code>-ge</code>そして,そして,<code>-gt</code>操作者は,システム.IComparable インターフェースを実装するクラスのみで動作します.</p>
+<p>派生クラスでは,  を使います.<code>:</code>ベースクラスやインターフェースを実装するための構文. 導致されたクラスは常にクラス宣言の中で左辺に位置する必要があります.</p>
+<p>この例では,基本的なPowerShellクラス継承構文が示されています.</p>
+<pre><code class="language-powershell">class Derived : Base {...}
+</code></pre>
+<p>この例では,ベースクラスの後ろに,インターフェース宣言が付いた遺伝子を示しています.</p>
+<pre><code class="language-powershell">class Derived : Base, Interface {...}
+</code></pre>
+<h2>シンタックス</h2>
+<p>クラス・ヘリテンスでは,以下の構文を使用します.</p>
+<h3>単行語の構文です</h3>
+<pre><code class="language-Syntax">class &lt;derived-class-name&gt; : &lt;base-class-or-interface-name&gt;[, &lt;interface-name&gt;...] {
+    &lt;derived-class-body&gt;
+}
+</code></pre>
+<p>例えば:</p>
+<pre><code class="language-powershell">
+# Base class only
+class Derived : Base {...}
+
+# Interface only
+class Derived : System.IComparable {...}
+
+# Base class and interface
+class Derived : Base, System.IComparable {...}
+</code></pre>
+<h3>マルチライン構文です.</h3>
+<pre><code class="language-Syntax">class &lt;derived-class-name&gt; : &lt;base-class-or-interface-name&gt;[,
+    &lt;interface-name&gt;...] {
+    &lt;derived-class-body&gt;
+}
+</code></pre>
+<p>例えば:</p>
+<pre><code class="language-powershell">class Derived : Base,
+                System.IComparable,
+                System.IFormattable,
+                System.IConvertible {
+    # Derived class definition
+}
+</code></pre>
+<h2>例文</h2>
+<h1>about_Classes_Inheritanceについて</h1>
+<h3>例1 - 基層から基層を継承し,覆す</h3>
+<p>次の例では,重複性のあるおよび重複性のない遺伝子の振る舞いを示しています.コードブロックの順序を順序に実行して,その説明を読み取るとします.</p>
+<h4>ベースクラスを定義する</h4>
+<p>最初のコードブロックは, <strong>PublishedWork</strong> をベースクラスとして定義する.このブロックには, <strong>List</strong> と <strong>Artists</strong> という静止性がある.次に,静止性  を定義する.<code>RegisterWork()</code>静的な <strong>リスト</strong> 属性に作品を追加し,アーティストを <strong>アーティスト</strong> 属性に追加する方法は,リストの新しいエントリーごとにメッセージを書くこと.</p>
+<p>このクラスは,出版された作品を記述する3つのインスタンスのプロパティを定義します.最後に,それは,  を定義します.<code>Register()</code>そして,<code>ToString()</code>instance methods. 実施方法</p>
+<pre><code class="language-powershell">class PublishedWork {
+    static [PublishedWork[]] $List    = @()
+    static [string[]]        $Artists = @()
+
+    static [void] RegisterWork([PublishedWork]$Work) {
+        $wName   = $Work.Name
+        $wArtist = $Work.Artist
+        if ($Work -notin [PublishedWork]::List) {
+            Write-Verbose &quot;Adding work '$wName' to works list&quot;
+            [PublishedWork]::List += $Work
+        } else {
+            Write-Verbose &quot;Work '$wName' already registered.&quot;
+        }
+        if ($wArtist -notin [PublishedWork]::Artists) {
+            Write-Verbose &quot;Adding artist '$wArtist' to artists list&quot;
+            [PublishedWork]::Artists += $wArtist
+        } else {
+            Write-Verbose &quot;Artist '$wArtist' already registered.&quot;
+        }
+    }
+
+    static [void] ClearRegistry() {
+        Write-Verbose &quot;Clearing PublishedWork registry&quot;
+        [PublishedWork]::List    = @()
+        [PublishedWork]::Artists = @()
+    }
+
+    [string] $Name
+    [string] $Artist
+    [string] $Category
+
+    [void] Init([string]$WorkType) {
+        if ([string]::IsNullOrEmpty($this.Category)) {
+            $this.Category = &quot;${WorkType}s&quot;
+        }
+    }
+
+    PublishedWork() {
+        $WorkType = $this.GetType().FullName
+        $this.Init($WorkType)
+        Write-Verbose &quot;Defined a published work of type [$WorkType]&quot;
+    }
+
+    PublishedWork([string]$Name, [string]$Artist) {
+        $WorkType    = $this.GetType().FullName
+        $this.Name   = $Name
+        $this.Artist = $Artist
+        $this.Init($WorkType)
+
+        Write-Verbose &quot;Defined '$Name' by $Artist as a published work of type [$WorkType]&quot;
+    }
+
+    PublishedWork([string]$Name, [string]$Artist, [string]$Category) {
+        $WorkType    = $this.GetType().FullName
+        $this.Name   = $Name
+        $this.Artist = $Artist
+        $this.Init($WorkType)
+
+        Write-Verbose &quot;Defined '$Name' by $Artist ($Category) as a published work of type [$WorkType]&quot;
+    }
+
+    [void]   Register() { [PublishedWork]::RegisterWork($this) }
+    [string] ToString() { return &quot;$($this.Name) by $($this.Artist)&quot; }
+}
+</code></pre>
+<h4>オーバーリードなしで派生クラスを定義する</h4>
+<p>最初の派生クラスは <strong>Album</strong>です. これは,いかなる属性や方法も覆いません. ベースクラスには存在しない新しいインスタンスの属性, <strong>Genres</strong> を追加します.</p>
+<pre><code class="language-powershell">class Album : PublishedWork {
+    [string[]] $Genres   = @()
+}
+</code></pre>
+<p>次のコードブロックは,衍生された <strong>Album</strong> クラスの行動を示しています.まず,それは  を設定します.<code>$VerbosePreference</code>クラスメソッドからのメッセージがコンソールに送信されるようにします.このコンソールはクラスの一例を3つ作成し,表に表示し,その後,継承された静止で登録します.<code>RegisterWork()</code>その後,同じ静的メソッドをベースクラスに直接呼び出す.</p>
+<pre><code class="language-powershell">$VerbosePreference = 'Continue'
+$Albums = @(
+    [Album]@{
+        Name   = 'The Dark Side of the Moon'
+        Artist = 'Pink Floyd'
+        Genres = 'Progressive rock', 'Psychedelic rock'
+    }
+    [Album]@{
+        Name   = 'The Wall'
+        Artist = 'Pink Floyd'
+        Genres = 'Progressive rock', 'Art rock'
+    }
+    [Album]@{
+        Name   = '36 Chambers'
+        Artist = 'Wu-Tang Clan'
+        Genres = 'Hip hop'
+    }
+)
+
+$Albums | Format-Table
+$Albums | ForEach-Object { [Album]::RegisterWork($_) }
+$Albums | ForEach-Object { [PublishedWork]::RegisterWork($_) }
+</code></pre>
+<pre><code class="language-Output">VERBOSE: Defined a published work of type [Album]
+VERBOSE: Defined a published work of type [Album]
+VERBOSE: Defined a published work of type [Album]
+
+Genres                               Name                      Artist       Category
+------                               ----                      ------       --------
+{Progressive rock, Psychedelic rock} The Dark Side of the Moon Pink Floyd   Albums
+{Progressive rock, Art rock}         The Wall                  Pink Floyd   Albums
+{Hip hop}                            36 Chambers               Wu-Tang Clan Albums
+
+VERBOSE: Adding work 'The Dark Side of the Moon' to works list
+VERBOSE: Adding artist 'Pink Floyd' to artists list
+VERBOSE: Adding work 'The Wall' to works list
+VERBOSE: Artist 'Pink Floyd' already registered.
+VERBOSE: Adding work '36 Chambers' to works list
+VERBOSE: Adding artist 'Wu-Tang Clan' to artists list
+
+VERBOSE: Work 'The Dark Side of the Moon' already registered.
+VERBOSE: Artist 'Pink Floyd' already registered.
+VERBOSE: Work 'The Wall' already registered.
+VERBOSE: Artist 'Pink Floyd' already registered.
+VERBOSE: Work '36 Chambers' already registered.
+VERBOSE: Artist 'Wu-Tang Clan' already registered.
+</code></pre>
+<p><strong>Album</strong>クラスでは <strong>Category</strong>またはコンストラクタに対して値が定義されていないが,そのプロパティはベースクラスのデフォルトコンストラクタによって定義されたことに注意してください.</p>
+<p>動詞メッセージでは,第二回呼び出しは,  に通じる.<code>RegisterWork()</code>作品やアーティストがすでに登録されていると報告する.最初の電話が  に通ったにもかかわらず.<code>RegisterWork()</code>派生した <strong>Album</strong> クラスでは,ベース <strong>PublishedWork</strong> クラスから継承された静止方法を使用した.その方法により,ベースクラスにおける静止 <strong>List</strong> と <strong>Artist</strong> 属性が更新され,派生されたクラスでは覆われなかった.</p>
+<p>次のコードブロックはレジストリをクリアし,  を呼び出す.<code>Register()</code><strong>Album</strong>オブジェクトのインスタンスの方法.</p>
+<pre><code class="language-powershell">[PublishedWork]::ClearRegistry()
+$Albums.Register()
+</code></pre>
+<pre><code class="language-Output">VERBOSE: Clearing PublishedWork registry
+
+VERBOSE: Adding work 'The Dark Side of the Moon' to works list
+VERBOSE: Adding artist 'Pink Floyd' to artists list
+VERBOSE: Adding work 'The Wall' to works list
+VERBOSE: Artist 'Pink Floyd' already registered.
+VERBOSE: Adding work '36 Chambers' to works list
+VERBOSE: Adding artist 'Wu-Tang Clan' to artists list
+</code></pre>
+<p><strong>Album</strong>オブジェクトのインスタンスの方法は,導体またはベースクラスに静的方法を呼び出すと同じ効果があります.</p>
+<p>次のコードブロックは,ベースクラスと派生クラスに対する静的属性を比較し,両方が同じであることを示しています.</p>
+<pre><code class="language-powershell">[pscustomobject]@{
+    '[PublishedWork]::List'    = [PublishedWork]::List -join &quot;,`n&quot;
+    '[Album]::List'            = [Album]::List -join &quot;,`n&quot;
+    '[PublishedWork]::Artists' = [PublishedWork]::Artists -join &quot;,`n&quot;
+    '[Album]::Artists'         = [Album]::Artists -join &quot;,`n&quot;
+    'IsSame::List'             = (
+        [PublishedWork]::List.Count -eq [Album]::List.Count -and
+        [PublishedWork]::List.ToString() -eq [Album]::List.ToString()
+    )
+    'IsSame::Artists'          = (
+        [PublishedWork]::Artists.Count -eq [Album]::Artists.Count -and
+        [PublishedWork]::Artists.ToString() -eq [Album]::Artists.ToString()
+    )
+} | Format-List
+</code></pre>
+<pre><code class="language-Output">[PublishedWork]::List    : The Dark Side of the Moon by Pink Floyd,
+                           The Wall by Pink Floyd,
+
+# about_Classes_Inheritance
+
+36 Chambers by Wu-Tang Clan
+[Album]::List            : The Dark Side of the Moon by Pink Floyd,
+                           The Wall by Pink Floyd,
+                           36 Chambers by Wu-Tang Clan
+[PublishedWork]::Artists : Pink Floyd,
+                           Wu-Tang Clan
+[Album]::Artists         : Pink Floyd,
+                           Wu-Tang Clan
+IsSame::List             : True
+IsSame::Artists          : True
+</code></pre>
+<h4>オーバーリードで派生クラスを定義する</h4>
+<p>次のコードブロックは,ベース <strong>PublishedWork</strong>クラスから相続する <strong>Illustration</strong>クラスを定義します.新しいクラスでは,標準値の の設定で <strong>Medium</strong> インスタンスのプロパティを定義することによって,ベースクラスを拡張します.<code>Unknown</code> .</p>
+<p>衍生された <strong>Album</strong>クラスとは異なり, <strong>Illustration</strong>は以下の性質と方法を優先しています.</p>
+<p>ステティックな <strong>アーティスト</strong> 属性を覆す.定義は同じですが, <strong>イラストレーション</strong> クラスでは直接宣言します. - 固定した <strong>カテゴリー</strong> インスタンスの属性を覆す.<code>Illustrations</code>- を覆す<code>ToString()</code>図示の文字列表示には,その画像が作成された媒介が含まれているようにインスタンスの方法です.</p>
+<p>クラスも静的を定義します.<code>RegisterIllustration()</code>基礎クラスに最初に呼び出す方法です.<code>RegisterWork()</code>方法と,再定義された ਕਲਾの無修正な <strong>Artists</strong>静態属性にアーティストを追加します.</p>
+<p>最後に,このクラスは3つのコンストラクタをすべて覆す:</p>
+<p>1.デフォルトコンストラクターは,イラストを作成したという文字列のメッセージを除き,空です. 1.次のコンストラクターは,イラストを作成した名前とアーティストの文字列の値を2つ取り上げます. <strong>Name</strong>と <strong>Artist</strong>のプロパティを設定する論理を実行する代わりに,コンストラクターは,ベースクラスから適切なコンストラクタを呼びます. 1.最後のコンストラクターは,イラストの名前,アーティスト,および介質の文字列の値を3つ取り上げます.両方のコンストラクタは,イラストを作成したことを示す文字列のメッセージを書き出します.</p>
+<pre><code class="language-powershell">class Illustration : PublishedWork {
+    static [string[]] $Artists = @()
+
+    static [void] RegisterIllustration([Illustration]$Work) {
+        $wArtist = $Work.Artist
+
+        [PublishedWork]::RegisterWork($Work)
+
+        if ($wArtist -notin [Illustration]::Artists) {
+            Write-Verbose &quot;Adding illustrator '$wArtist' to artists list&quot;
+            [Illustration]::Artists += $wArtist
+        } else {
+            Write-Verbose &quot;Illustrator '$wArtist' already registered.&quot;
+        }
+    }
+
+    [string] $Category = 'Illustrations'
+    [string] $Medium   = 'Unknown'
+
+    [string] ToString() {
+        return &quot;$($this.Name) by $($this.Artist) ($($this.Medium))&quot;
+    }
+
+    Illustration() {
+        Write-Verbose 'Defined an illustration'
+    }
+
+    Illustration([string]$Name, [string]$Artist) : base($Name, $Artist) {
+        Write-Verbose &quot;Defined '$Name' by $Artist ($($this.Medium)) as an illustration&quot;
+    }
+
+    Illustration([string]$Name, [string]$Artist, [string]$Medium) {
+        $this.Name = $Name
+        $this.Artist = $Artist
+        $this.Medium = $Medium
+
+        Write-Verbose &quot;Defined '$Name' by $Artist ($Medium) as an illustration&quot;
+    }
+}
+</code></pre>
+<p>次のコードブロックは,導出された <strong>Illustration</strong> クラスの振る舞いを示しています.このブロックは,そのクラスの3つのインスタンスを作成し,表に表示し,その後,継承された静数で登録します.<code>RegisterWork()</code>方法.その後,同じ静的方法をベースクラスに直接呼び出す.最後に,ベースクラスと派生クラスに対する登録アーティストのリストを示すメッセージを書きます.</p>
+<pre><code class="language-powershell">$Illustrations = @(
+    [Illustration]@{
+        Name   = 'The Funny Thing'
+        Artist = 'Wanda Gág'
+        Medium = 'Lithography'
+    }
+    [Illustration]::new('Millions of Cats', 'Wanda Gág')
+    [Illustration]::new(
+      'The Lion and the Mouse',
+      'Jerry Pinkney',
+      'Watercolor'
+    )
+)
+
+$Illustrations | Format-Table
+$Illustrations | ForEach-Object { [Illustration]::RegisterIllustration($_) }
+$Illustrations | ForEach-Object { [PublishedWork]::RegisterWork($_) }
+&quot;Published work artists: $([PublishedWork]::Artists -join ', ')&quot;
+&quot;Illustration artists: $([Illustration]::Artists -join ', ')&quot;
+</code></pre>
+<pre><code class="language-Output">VERBOSE: Defined a published work of type [Illustration]
+VERBOSE: Defined an illustration
+VERBOSE: Defined 'Millions of Cats' by Wanda Gág as a published work of type [Illustration]
+VERBOSE: Defined 'Millions of Cats' by Wanda Gág (Unknown) as an illustration
+VERBOSE: Defined a published work of type [Illustration]
+VERBOSE: Defined 'The Lion and the Mouse' by Jerry Pinkney (Watercolor) as an illustration
+
+Category      Medium      Name                   Artist
+--------      ------      ----                   ------
+Illustrations Lithography The Funny Thing        Wanda Gág
+Illustrations Unknown     Millions of Cats       Wanda Gág
+Illustrations Watercolor  The Lion and the Mouse Jerry Pinkney
+
+VERBOSE: Adding work 'The Funny Thing' to works list
+VERBOSE: Adding artist 'Wanda Gág' to artists list
+VERBOSE: Adding illustrator 'Wanda Gág' to artists list
+VERBOSE: Adding work 'Millions of Cats' to works list
+VERBOSE: Artist 'Wanda Gág' already registered.
+VERBOSE: Illustrator 'Wanda Gág' already registered.
+VERBOSE: Adding work 'The Lion and the Mouse' to works list
+VERBOSE: Adding artist 'Jerry Pinkney' to artists list
+VERBOSE: Adding illustrator 'Jerry Pinkney' to artists list
+
+VERBOSE: Work 'The Funny Thing' already registered.
+VERBOSE: Artist 'Wanda Gág' already registered.
+VERBOSE: Work 'Millions of Cats' already registered.
+VERBOSE: Artist 'Wanda Gág' already registered.
+VERBOSE: Work 'The Lion and the Mouse' already registered.
+VERBOSE: Artist 'Jerry Pinkney' already registered.
+
+Published work artists: Pink Floyd, Wu-Tang Clan, Wanda Gág, Jerry Pinkney
+
+Illustration artists: Wanda Gág, Jerry Pinkney
+</code></pre>
+<p>文脈を作成した語音メッセージは,以下のことを示しています.</p>
+<ul>
+<li>最初のインスタンスを作成する際に,ベースクラスデフォルトコンストラクタは,デフォルトコンストラクタに先駆け呼ばれた. - 第二インスタンスを作成する際に,明示的に継承されたコンストラクタは,デフォルトクラスコンストラクタに先駆け呼ばれた. - 第三インスタンスを作成する際に,ベースクラスデフォルトコンストラクタは,デフォルトクラスコンストラクタに先駆け呼ばれた.</li>
+</ul>
+<p>からの語音メッセージ<code>RegisterWork()</code>作品やアーティストがすでに登録されていることを示している.<code>RegisterIllustration()</code>という方法と呼ばれています.<code>RegisterWork()</code>内部で方法を行います.</p>
+<p>しかし,ベースクラスと衍生クラスの両方の静態 <strong>アーティスト</strong> 属性の値を比較すると,値は異なる.衍生クラスのための <strong>アーティスト</strong> 属性は,アルバムアーティストではなくイラストレーターのみを含みます.衍生クラスにおける <strong>アーティスト</strong> 属性の再定義は,クラスがベースクラスにおける静態属性を返却することを妨げます.</p>
+<p>最終的なコードブロックは,  を呼びます.<code>ToString()</code>ベースクラスにおける静的な ** List** 属性のエントリに関する方法.</p>
+<pre><code class="language-powershell">[PublishedWork]::List | ForEach-Object -Process { $_.ToString() }
+</code></pre>
+<pre><code class="language-Output">The Dark Side of the Moon by Pink Floyd
+The Wall by Pink Floyd
+36 Chambers by Wu-Tang Clan
+The Funny Thing by Wanda Gág (Lithography)
+Millions of Cats by Wanda Gág (Unknown)
+The Lion and the Mouse by Jerry Pinkney (Watercolor)
+</code></pre>
+<p><strong>Album</strong>の例では,文字列の名前とアーティストのみ返します.</p>
+<h1>about_Classes_Inheritanceについて</h1>
+<p><strong>イラストレーション</strong>の例では,そのクラスが を覆っているため,括弧で介質も含まれていた.<code>ToString()</code>方法.</p>
+<h1>about_Classes_Inheritanceについて</h1>
+<h3>例2 - インターフェイスを実装する</h3>
+<p>次の例では,クラスが1つまたは複数のインターフェースを実装する方法を示しています.この例では,より多くの操作と行動をサポートするために,温度クラスの定義を拡張します.</p>
+<h4>初期クラスの定義</h4>
+<p>インターフェースを実装する前に,温度クラスが2つのプロパティ, ** 度数<strong> と ** 尺度</strong> で定義される.このクラスでは,特定の尺度の度数としてインスタンスを返還するためのコンストラクターと3つのインスタンスの方法を定義します.</p>
+<p>クラスでは,利用可能なスケールを <strong>TemperatureScale</strong>数値で定義します.</p>
+<pre><code class="language-powershell">class Temperature {
+    [float]            $Degrees
+    [TemperatureScale] $Scale
+
+    Temperature() {}
+    Temperature([float] $Degrees)          { $this.Degrees = $Degrees }
+    Temperature([TemperatureScale] $Scale) { $this.Scale = $Scale }
+    Temperature([float] $Degrees, [TemperatureScale] $Scale) {
+        $this.Degrees = $Degrees
+        $this.Scale   = $Scale
+    }
+
+    [float] ToKelvin() {
+        switch ($this.Scale) {
+            Celsius    { return $this.Degrees + 273.15 }
+            Fahrenheit { return ($this.Degrees + 459.67) * 5/9 }
+        }
+        return $this.Degrees
+    }
+    [float] ToCelsius() {
+        switch ($this.Scale) {
+            Fahrenheit { return ($this.Degrees - 32) * 5/9 }
+            Kelvin     { return $this.Degrees - 273.15 }
+        }
+        return $this.Degrees
+    }
+    [float] ToFahrenheit() {
+        switch ($this.Scale) {
+            Celsius    { return $this.Degrees * 9/5 + 32 }
+            Kelvin     { return $this.Degrees * 9/5 - 459.67 }
+        }
+        return $this.Degrees
+    }
+}
+
+enum TemperatureScale {
+    Celsius    = 0
+    Fahrenheit = 1
+    Kelvin     = 2
+}
+</code></pre>
+<p>しかし,この基本実装には,以下の出力例で示されているように,いくつかの制限がある.</p>
+<pre><code class="language-powershell">$Celsius    = [Temperature]::new()
+$Fahrenheit = [Temperature]::new([TemperatureScale]::Fahrenheit)
+$Kelvin     = [Temperature]::new(0, 'Kelvin')
+
+$Celsius, $Fahrenheit, $Kelvin
+
+&quot;The temperatures are: $Celsius, $Fahrenheit, $Kelvin&quot;
+
+[Temperature]::new() -eq $Celsius
+
+$Celsius -gt $Kelvin
+</code></pre>
+<pre><code class="language-Output">Degrees      Scale
+-------      -----
+   0.00    Celsius
+   0.00 Fahrenheit
+   0.00     Kelvin
+
+The temperatures are: Temperature, Temperature, Temperature
+
+False
+
+Cannot compare &quot;Temperature&quot; because it is not IComparable.
+At line:1 char:1
++ $Celsius -gt $Kelvin
++ ~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidOperation: (:) [], RuntimeException
+    + FullyQualifiedErrorId : NotIcomparable
+</code></pre>
+<p>輸出は <strong>Temperature</strong> のインスタンスの表示を示しています:</p>
+<p>文字列として正しく表示されない. 相当性について正しく確認できない. 比較できない.</p>
+<p>この3つの問題は,クラスのためのインターフェースを実装することによって解決できます.</p>
+<h4>IFormattable を実装する</h4>
+<p><strong>Temperature</strong>クラスで実装される最初のインターフェースは <strong>System.IFormattable</strong>です.このインターフェースは,クラスのインスタンスを異なる文字列としてフォーマットできます.インターフェースを実行するには,クラスが <strong>System.IFormattable</strong>から相続し, を定義する必要があります.<code>ToString()</code>instance method. 実施方法</p>
+<p><code>ToString()</code>インスタンスの方法には以下の署名が必要です:</p>
+<pre><code class="language-powershell">[string] ToString(
+    [string]$Format,
+    [System.IFormatProvider]$FormatProvider
+) {
+    # Implementation
+}
+</code></pre>
+<p>インターフェースが要求する署名は[参照文書]で記載されている.</p>
+<p><strong>Temperature</strong>のために,このクラスには以下の3つのフォーマットがサポートされるべきです.<code>C</code>でインスタンスを返して,<code>F</code>摂氏2度で返して,<code>K</code>他の形式では,その方法が <strong>System.FormatException</strong>を投げかける必要があります.</p>
+<pre><code class="language-powershell">[string] ToString(
+    [string]$Format,
+    [System.IFormatProvider]$FormatProvider
+) {
+    # If format isn't specified, use the defined scale.
+    if ([string]::IsNullOrEmpty($Format)) {
+        $Format = switch ($this.Scale) {
+            Celsius    { 'C' }
+            Fahrenheit { 'F' }
+            Kelvin     { 'K' }
+        }
+    }
+    # If format provider isn't specified, use the current culture.
+    if ($null -eq $FormatProvider) {
+        $FormatProvider = [cultureinfo]::CurrentCulture
+    }
+    # Format the temperature.
+    switch ($Format) {
+        'C' {
+            return $this.ToCelsius().ToString('F2', $FormatProvider) + '°C'
+        }
+        'F' {
+            return $this.ToFahrenheit().ToString('F2', $FormatProvider) + '°F'
+        }
+        'K' {
+            return $this.ToKelvin().ToString('F2', $FormatProvider) + '°K'
+        }
+    }
+    # If we get here, the format is invalid.
+    throw [System.FormatException]::new(
+        &quot;Unknown format: '$Format'. Valid Formats are 'C', 'F', and 'K'&quot;
+    )
+}
+</code></pre>
+<p>この実装では,数値度値そのものをフォーマットする際に,この方法は形式のインスタンスのスケールと現在の文化にデフォルトされます.<code>To&lt;Scale&gt;()</code>度を変換する例法,二桁の数字にフォーマットし,適切な度符号を文字列に添付します.</p>
+<p>必要な署名が実装された場合,クラスも格式化されたインスタンスを返却することを容易にするためにオーバーロードを定義することができます.</p>
+<pre><code class="language-powershell">[string] ToString([string]$Format) {
+    return $this.ToString($Format, $null)
+}
+
+[string] ToString() {
+    return $this.ToString($null, $null)
+}
+</code></pre>
+<p>次のコードは <strong>Temperature</strong>の更新された定義を示しています:</p>
+<pre><code class="language-powershell">class Temperature : System.IFormattable {
+    [float]            $Degrees
+    [TemperatureScale] $Scale
+
+    Temperature() {}
+    Temperature([float] $Degrees)          { $this.Degrees = $Degrees }
+    Temperature([TemperatureScale] $Scale) { $this.Scale = $Scale }
+    Temperature([float] $Degrees, [TemperatureScale] $Scale) {
+        $this.Degrees = $Degrees
+        $this.Scale = $Scale
+    }
+
+    [float] ToKelvin() {
+        switch ($this.Scale) {
+            Celsius { return $this.Degrees + 273.15 }
+            Fahrenheit { return ($this.Degrees + 459.67) * 5 / 9 }
+        }
+        return $this.Degrees
+    }
+    [float] ToCelsius() {
+        switch ($this.Scale) {
+            Fahrenheit { return ($this.Degrees - 32) * 5 / 9 }
+            Kelvin { return $this.Degrees - 273.15 }
+        }
+        return $this.Degrees
+    }
+    [float] ToFahrenheit() {
+        switch ($this.Scale) {
+            Celsius { return $this.Degrees * 9 / 5 + 32 }
+            Kelvin { return $this.Degrees * 9 / 5 - 459.67 }
+        }
+        return $this.Degrees
+    }
+
+    [string] ToString(
+        [string]$Format,
+        [System.IFormatProvider]$FormatProvider
+    ) {
+        # If format isn't specified, use the defined scale.
+        if ([string]::IsNullOrEmpty($Format)) {
+            $Format = switch ($this.Scale) {
+                Celsius    { 'C' }
+                Fahrenheit { 'F' }
+                Kelvin     { 'K' }
+            }
+        }
+        # If format provider isn't specified, use the current culture.
+        if ($null -eq $FormatProvider) {
+            $FormatProvider = [cultureinfo]::CurrentCulture
+        }
+        # Format the temperature.
+        switch ($Format) {
+            'C' {
+                return $this.ToCelsius().ToString('F2', $FormatProvider) + '°C'
+            }
+            'F' {
+                return $this.ToFahrenheit().ToString('F2', $FormatProvider) + '°F'
+            }
+            'K' {
+                return $this.ToKelvin().ToString('F2', $FormatProvider) + '°K'
+            }
+        }
+
+# If we get here, the format is invalid.
+        throw [System.FormatException]::new(
+            &quot;Unknown format: '$Format'. Valid Formats are 'C', 'F', and 'K'&quot;
+        )
+    }
+
+    [string] ToString([string]$Format) {
+        return $this.ToString($Format, $null)
+    }
+
+    [string] ToString() {
+        return $this.ToString($null, $null)
+    }
+}
+
+enum TemperatureScale {
+    Celsius    = 0
+    Fahrenheit = 1
+    Kelvin     = 2
+}
+</code></pre>
+<p>方法過負荷の出力値は次のブロックで示されています.</p>
+<pre><code class="language-powershell">$Temp = [Temperature]::new()
+&quot;The temperature is $Temp&quot;
+$Temp.ToString()
+$Temp.ToString('K')
+$Temp.ToString('F', $null)
+</code></pre>
+<pre><code class="language-Output">The temperature is 0.00°C
+
+0.00°C
+
+273.15°K
+
+32.00°F
+</code></pre>
+<h4>IEquatable を実装する</h4>
+<p><strong>Temperature</strong>クラスが読みやすくフォーマットできるので,ユーザはクラス内の2つのインスタンスの等価性を確認する必要があります.このテストをサポートするには,クラスが <strong>System.IEquatable</strong> インターフェースを実装する必要があります.</p>
+<p>インターフェースを実装するには,クラスが <strong>System.IEquatable</strong> から継承し,  を定義する必要があります.<code>Equals()</code> インスタンスの方法.<code>Equals()</code>方法には以下の署名が必要です:</p>
+<pre><code class="language-powershell">[bool] Equals([Object]$Other) {
+    # Implementation
+}
+</code></pre>
+<p>インターフェースが要求する署名は[参照文書]で記載されている[02].</p>
+<p><strong>Temperature</strong>では,クラスには2つのクラスインスタンスの比較のみがサポートされるべきです.他の値またはタイプには, を含む任意の値またはタイプがあります.<code>$null</code>返ってくるべきだとしたら,返ってくるはずです.<code>$false</code>2つの温度を比較する際には,この方法は両値をケルビンに変換すべきです. 温度は異なるスケールでも等価である可能性があるからです.</p>
+<pre><code class="language-powershell">[bool] Equals([Object]$Other) {
+    # If the other object is null, we can't compare it.
+    if ($null -eq $Other) {
+        return $false
+    }
+
+    # If the other object isn't a temperature, we can't compare it.
+    $OtherTemperature = $Other -as [Temperature]
+    if ($null -eq $OtherTemperature) {
+        return $false
+    }
+
+    # Compare the temperatures as Kelvin.
+    return $this.ToKelvin() -eq $OtherTemperature.ToKelvin()
+}
+</code></pre>
+<p>インターフェース方法が実装されたため, <strong>Temperature</strong>の更新された定義は:</p>
+<pre><code class="language-powershell">class Temperature : System.IFormattable, System.IEquatable[Object] {
+    [float]            $Degrees
+    [TemperatureScale] $Scale
+
+    Temperature() {}
+    Temperature([float] $Degrees)          { $this.Degrees = $Degrees }
+    Temperature([TemperatureScale] $Scale) { $this.Scale = $Scale }
+    Temperature([float] $Degrees, [TemperatureScale] $Scale) {
+        $this.Degrees = $Degrees
+        $this.Scale = $Scale
+    }
+
+    [float] ToKelvin() {
+        switch ($this.Scale) {
+            Celsius { return $this.Degrees + 273.15 }
+            Fahrenheit { return ($this.Degrees + 459.67) * 5 / 9 }
+        }
+        return $this.Degrees
+    }
+    [float] ToCelsius() {
+        switch ($this.Scale) {
+            Fahrenheit { return ($this.Degrees - 32) * 5 / 9 }
+            Kelvin { return $this.Degrees - 273.15 }
+        }
+        return $this.Degrees
+    }
+    [float] ToFahrenheit() {
+        switch ($this.Scale) {
+            Celsius { return $this.Degrees * 9 / 5 + 32 }
+            Kelvin { return $this.Degrees * 9 / 5 - 459.67 }
+        }
+        return $this.Degrees
+    }
+
+    [string] ToString(
+        [string]$Format,
+        [System.IFormatProvider]$FormatProvider
+    ) {
+        # If format isn't specified, use the defined scale.
+        if ([string]::IsNullOrEmpty($Format)) {
+            $Format = switch ($this.Scale) {
+                Celsius    { 'C' }
+                Fahrenheit { 'F' }
+                Kelvin     { 'K' }
+            }
+        }
+        # If format provider isn't specified, use the current culture.
+        if ($null -eq $FormatProvider) {
+            $FormatProvider = [cultureinfo]::CurrentCulture
+        }
+        # Format the temperature.
+        switch ($Format) {
+            'C' {
+                return $this.ToCelsius().ToString('F2', $FormatProvider) + '°C'
+            }
+            'F' {
+                return $this.ToFahrenheit().ToString('F2', $FormatProvider) + '°F'
+            }
+            'K' {
+                return $this.ToKelvin().ToString('F2', $FormatProvider) + '°K'
+            }
+        }
+        # If we get here, the format is invalid.
+        throw [System.FormatException]::new(
+            &quot;Unknown format: '$Format'. Valid Formats are 'C', 'F', and 'K'&quot;
+        )
+    }
+
+    [string] ToString([string]$Format) {
+        return $this.ToString($Format, $null)
+    }
+
+    [string] ToString() {
+        return $this.ToString($null, $null)
+    }
+
+    [bool] Equals([Object]$Other) {
+        # If the other object is null, we can't compare it.
+        if ($null -eq $Other) {
+            return $false
+        }
+
+        # If the other object isn't a temperature, we can't compare it.
+        $OtherTemperature = $Other -as [Temperature]
+        if ($null -eq $OtherTemperature) {
+            return $false
+        }
+
+        # Compare the temperatures as Kelvin.
+        return $this.ToKelvin() -eq $OtherTemperature.ToKelvin()
+    }
+}
+
+enum TemperatureScale {
+    Celsius    = 0
+    Fahrenheit = 1
+    Kelvin     = 2
+}
+</code></pre>
+<p>次のブロックは,更新されたクラスがどのように振る舞うかを示しています.</p>
+<pre><code class="language-powershell">$Celsius    = [Temperature]::new()
+$Fahrenheit = [Temperature]::new(32, 'Fahrenheit')
+$Kelvin     = [Temperature]::new([TemperatureScale]::Kelvin)
+
+@&quot;
+Temperatures are: $Celsius, $Fahrenheit, $Kelvin
+`$Celsius.Equals(`$Fahrenheit) = $($Celsius.Equals($Fahrenheit))
+`$Celsius -eq `$Fahrenheit     = $($Celsius -eq $Fahrenheit)
+`$Celsius -ne `$Kelvin         = $($Celsius -ne $Kelvin)
+&quot;@
+</code></pre>
+<pre><code class="language-Output">Temperatures are: 0.00°C, 32.00°F, 0.00°K
+
+$Celsius.Equals($Fahrenheit) = True
+$Celsius -eq $Fahrenheit     = True
+$Celsius -ne $Kelvin         = True
+</code></pre>
+<h4>IComparable を実装する</h4>
+<p><strong>Temperature</strong>クラスで実装される最後のインターフェースは <strong>System.IComparable</strong>です. クラスがこのインターフェースを実装すると,ユーザーは""を使用できます.<code>-lt</code>     <code>-le</code>     <code>-gt</code>そして,<code>-ge</code>クラス内のインスタンスを比較するオペレーターです.</p>
+<p>インターフェースを実装するには,クラスが <strong>System.IComparable</strong> から継承し,  を定義する必要があります.<code>Equals()</code> インスタンスの方法.<code>Equals()</code>方法には以下の署名が必要です:</p>
+<pre><code class="language-powershell">[int] CompareTo([Object]$Other) {
+    # Implementation
+}
+</code></pre>
+<p>インターフェースが要求する署名は[参照文書]で記載されている.</p>
+<p><strong>Temperature</strong>では,クラス内の2つのインスタンスを比較するだけをサポートするべきです. <strong>Degrees</strong>のプロパティの基因型が,異なるスケールで変換されたとしても,浮動点数であるため,この方法は実際の比較のために基因型に依存することができます.</p>
+<pre><code class="language-powershell">[int] CompareTo([Object]$Other) {
+    # If the other object's null, consider this instance &quot;greater than&quot; it
+    if ($null -eq $Other) {
+        return 1
+    }
+    # If the other object isn't a temperature, we can't compare it.
+    $OtherTemperature = $Other -as [Temperature]
+    if ($null -eq $OtherTemperature) {
+        throw [System.ArgumentException]::new(
+            &quot;Object must be of type 'Temperature'.&quot;
+        )
+    }
+    # Compare the temperatures as Kelvin.
+    return $this.ToKelvin().CompareTo($OtherTemperature.ToKelvin())
+}
+</code></pre>
+<p><strong>Temperature</strong>クラス最終定義は:</p>
+<pre><code class="language-powershell">class Temperature : System.IFormattable,
+                    System.IComparable,
+
+# about_Classes_Inheritance
+
+System.IEquatable[Object] {
+    # Instance properties
+    [float]            $Degrees
+    [TemperatureScale] $Scale
+
+    # Constructors
+    Temperature() {}
+    Temperature([float] $Degrees)          { $this.Degrees = $Degrees }
+    Temperature([TemperatureScale] $Scale) { $this.Scale = $Scale }
+    Temperature([float] $Degrees, [TemperatureScale] $Scale) {
+        $this.Degrees = $Degrees
+        $this.Scale = $Scale
+    }
+
+    [float] ToKelvin() {
+        switch ($this.Scale) {
+            Celsius { return $this.Degrees + 273.15 }
+            Fahrenheit { return ($this.Degrees + 459.67) * 5 / 9 }
+        }
+        return $this.Degrees
+    }
+    [float] ToCelsius() {
+        switch ($this.Scale) {
+            Fahrenheit { return ($this.Degrees - 32) * 5 / 9 }
+            Kelvin { return $this.Degrees - 273.15 }
+        }
+        return $this.Degrees
+    }
+    [float] ToFahrenheit() {
+        switch ($this.Scale) {
+            Celsius { return $this.Degrees * 9 / 5 + 32 }
+            Kelvin { return $this.Degrees * 9 / 5 - 459.67 }
+        }
+        return $this.Degrees
+    }
+
+    [string] ToString(
+        [string]$Format,
+        [System.IFormatProvider]$FormatProvider
+    ) {
+        # If format isn't specified, use the defined scale.
+        if ([string]::IsNullOrEmpty($Format)) {
+            $Format = switch ($this.Scale) {
+                Celsius    { 'C' }
+                Fahrenheit { 'F' }
+                Kelvin     { 'K' }
+            }
+        }
+        # If format provider isn't specified, use the current culture.
+        if ($null -eq $FormatProvider) {
+            $FormatProvider = [cultureinfo]::CurrentCulture
+        }
+        # Format the temperature.
+        switch ($Format) {
+            'C' {
+                return $this.ToCelsius().ToString('F2', $FormatProvider) + '°C'
+            }
+            'F' {
+                return $this.ToFahrenheit().ToString('F2', $FormatProvider) + '°F'
+            }
+            'K' {
+                return $this.ToKelvin().ToString('F2', $FormatProvider) + '°K'
+            }
+        }
+        # If we get here, the format is invalid.
+        throw [System.FormatException]::new(
+            &quot;Unknown format: '$Format'. Valid Formats are 'C', 'F', and 'K'&quot;
+        )
+    }
+
+    [string] ToString([string]$Format) {
+        return $this.ToString($Format, $null)
+    }
+
+    [string] ToString() {
+        return $this.ToString($null, $null)
+    }
+
+    [bool] Equals([Object]$Other) {
+        # If the other object is null, we can't compare it.
+        if ($null -eq $Other) {
+            return $false
+        }
+
+        # If the other object isn't a temperature, we can't compare it.
+        $OtherTemperature = $Other -as [Temperature]
+        if ($null -eq $OtherTemperature) {
+            return $false
+        }
+
+        # Compare the temperatures as Kelvin.
+        return $this.ToKelvin() -eq $OtherTemperature.ToKelvin()
+    }
+    [int] CompareTo([Object]$Other) {
+        # If the other object's null, consider this instance &quot;greater than&quot; it
+        if ($null -eq $Other) {
+            return 1
+        }
+        # If the other object isn't a temperature, we can't compare it.
+        $OtherTemperature = $Other -as [Temperature]
+        if ($null -eq $OtherTemperature) {
+            throw [System.ArgumentException]::new(
+                &quot;Object must be of type 'Temperature'.&quot;
+            )
+        }
+        # Compare the temperatures as Kelvin.
+        return $this.ToKelvin().CompareTo($OtherTemperature.ToKelvin())
+    }
+}
+
+enum TemperatureScale {
+    Celsius    = 0
+    Fahrenheit = 1
+    Kelvin     = 2
+}
+</code></pre>
+<p>完全な定義によって,ユーザーは PowerShell で,任意のビルチンタイプのように,クラスのインスタンスをフォーマットして比較することができます.</p>
+<pre><code class="language-powershell">$Celsius    = [Temperature]::new()
+$Fahrenheit = [Temperature]::new(32, 'Fahrenheit')
+$Kelvin     = [Temperature]::new([TemperatureScale]::Kelvin)
+
+@&quot;
+Temperatures are: $Celsius, $Fahrenheit, $Kelvin
+`$Celsius.Equals(`$Fahrenheit)    = $($Celsius.Equals($Fahrenheit))
+`$Celsius.Equals(`$Kelvin)        = $($Celsius.Equals($Kelvin))
+`$Celsius.CompareTo(`$Fahrenheit) = $($Celsius.CompareTo($Fahrenheit))
+`$Celsius.CompareTo(`$Kelvin)     = $($Celsius.CompareTo($Kelvin))
+`$Celsius -lt `$Fahrenheit        = $($Celsius -lt $Fahrenheit)
+`$Celsius -le `$Fahrenheit        = $($Celsius -le $Fahrenheit)
+`$Celsius -eq `$Fahrenheit        = $($Celsius -eq $Fahrenheit)
+`$Celsius -gt `$Kelvin            = $($Celsius -gt $Kelvin)
+&quot;@
+</code></pre>
+<pre><code class="language-Output">Temperatures are: 0.00°C, 32.00°F, 0.00°K
+$Celsius.Equals($Fahrenheit)    = True
+$Celsius.Equals($Kelvin)        = False
+$Celsius.CompareTo($Fahrenheit) = 0
+$Celsius.CompareTo($Kelvin)     = 1
+$Celsius -lt $Fahrenheit        = False
+$Celsius -le $Fahrenheit        = True
+$Celsius -eq $Fahrenheit        = True
+$Celsius -gt $Kelvin            = True
+</code></pre>
+<h1>about_Classes_Inheritanceについて</h1>
+<h3>例3 - 一般的な基層から相続する</h3>
+<p>この例では,タイプパラメータが解析時に既に定義されている限り,一般的なタイプからどのように引き出せるかを示しています.</p>
+<h4>タイプパラメータとして内蔵クラスの使用</h4>
+<p>次のコードブロックを実行します.このブロックは,新しいクラスが,解析時にすでにタイプパラメータが定義されている限り,一般的なタイプからどのように継承できるかを示します.</p>
+<pre><code class="language-powershell">class ExampleStringList : System.Collections.Generic.List[string] {}
+
+$List = [ExampleStringList]::new()
+$List.AddRange([string[]]@('a','b','c'))
+$List.GetType() | Format-List -Property Name, BaseType
+$List
+</code></pre>
+<pre><code class="language-Output">Name     : ExampleStringList
+BaseType : System.Collections.Generic.List`1[System.String]
+
+a
+b
+c
+</code></pre>
+<h4>タイプパラメータとしてカスタムクラスを使用します</h4>
+<p>次のコードブロックは,まず新しいクラス, <strong>ExampleItem</strong> を定義し,単例属性と  を指定します.<code>ToString()</code>次に,その <strong>ExampleItemList</strong> クラスを定義し,その基クラスから <strong>System.Collections.Generic.List</strong> を継承する <strong>ExampleItem</strong> をタイプパラメータとして定義します.</p>
+<p>コードブロック全体をコピーして,単一の記述として実行します.</p>
+<pre><code class="language-powershell">class ExampleItem {
+    [string] $Name
+    [string] ToString() { return $this.Name }
+}
+class ExampleItemList : System.Collections.Generic.List[ExampleItem] {}
+</code></pre>
+<pre><code class="language-Output">An error occurred while creating the pipeline.
+    + CategoryInfo          : NotSpecified: (:) [], ParentContainsErrorRe
+   cordException
+    + FullyQualifiedErrorId : RuntimeException
+</code></pre>
+<p>コードブロック全体を実行すると,エラーが発生します.PowerShellが <strong>ExampleItem</strong> クラスをランタイムに încăryanしていないため.まだ <strong>System.Collections.Generic.List</strong> ベースクラスのタイプパラメータとしてクラス名を使用することはできません.</p>
+<p>次のコードブロックを定義順に実行します.</p>
+<pre><code class="language-powershell">class ExampleItem {
+    [string] $Name
+    [string] ToString() { return $this.Name }
+}
+</code></pre>
+<pre><code class="language-powershell">class ExampleItemList : System.Collections.Generic.List[ExampleItem] {}
+</code></pre>
+<p>今回は,PowerShellでエラーが発生しません.両方のクラスは定義されています.次のコードブロックを実行して新しいクラスの行動を表示します.</p>
+<pre><code class="language-powershell">$List = [ExampleItemList]::new()
+$List.AddRange([ExampleItem[]]@(
+    [ExampleItem]@{ Name = 'Foo' }
+    [ExampleItem]@{ Name = 'Bar' }
+    [ExampleItem]@{ Name = 'Baz' }
+))
+$List.GetType() | Format-List -Property Name, BaseType
+$List
+</code></pre>
+<pre><code class="language-output">Name     : ExampleItemList
+BaseType : System.Collections.Generic.List`1[ExampleItem]
+
+Name
+----
+Foo
+Bar
+Baz
+</code></pre>
+<h4>模組でカスタムタイプパラメータを持つジェネリックを誘導する</h4>
+<p>次のコードブロックでは,タイプパラメータにカスタムタイプを使用する一般的なベースクラスから継承するクラスを定義する方法を示しています.</p>
+<p>次のコードブロックを""として保存します.<code>GenericExample.psd1</code> .</p>
+<pre><code class="language-powershell">@{
+    RootModule        = 'GenericExample.psm1'
+    ModuleVersion     = '0.1.0'
+    GUID              = '2779fa60-0b3b-4236-b592-9060c0661ac2'
+}
+</code></pre>
+<p>次のコードブロックを""として保存します.<code>GenericExample.InventoryItem.psm1</code> .</p>
+<pre><code class="language-powershell">class InventoryItem {
+    [string] $Name
+    [int]    $Count
+
+    InventoryItem() {}
+    InventoryItem([string]$Name) {
+        $this.Name = $Name
+    }
+    InventoryItem([string]$Name, [int]$Count) {
+        $this.Name  = $Name
+        $this.Count = $Count
+    }
+
+    [string] ToString() {
+        return &quot;$($this.Name) ($($this.Count))&quot;
+    }
+}
+</code></pre>
+<p>次のコードブロックを""として保存します.<code>GenericExample.psm1</code> .</p>
+<pre><code class="language-powershell">using namespace System.Collections.Generic
+using module ./GenericExample.InventoryItem.psm1
+
+class Inventory : List[InventoryItem] {}
+
+# Define the types to export with type accelerators.
+$ExportableTypes =@(
+    [InventoryItem]
+    [Inventory]
+)
+
+# Get the internal TypeAccelerators class to use its static methods.
+$TypeAcceleratorsClass = [psobject].Assembly.GetType(
+    'System.Management.Automation.TypeAccelerators'
+)
+
+# Ensure none of the types would clobber an existing type accelerator.
+
+# If a type accelerator with the same name exists, throw an exception.
+$ExistingTypeAccelerators = $TypeAcceleratorsClass::Get
+foreach ($Type in $ExportableTypes) {
+    if ($Type.FullName -in $ExistingTypeAccelerators.Keys) {
+        $Message = @(
+            &quot;Unable to register type accelerator '$($Type.FullName)'&quot;
+            'Accelerator already exists.'
+        ) -join ' - '
+
+        throw [System.Management.Automation.ErrorRecord]::new(
+            [System.InvalidOperationException]::new($Message),
+            'TypeAcceleratorAlreadyExists',
+            [System.Management.Automation.ErrorCategory]::InvalidOperation,
+            $Type.FullName
+        )
+    }
+}
+
+# Add type accelerators for every exportable type.
+foreach ($Type in $ExportableTypes) {
+    $TypeAcceleratorsClass::Add($Type.FullName, $Type)
+}
+
+# Remove type accelerators when the module is removed.
+$MyInvocation.MyCommand.ScriptBlock.Module.OnRemove = {
+    foreach($Type in $ExportableTypes) {
+        $TypeAcceleratorsClass::Remove($Type.FullName)
+    }
+}.GetNewClosure()
+</code></pre>
+<p>&gt; [!TIP] &gt;ルーツモジュールでは,PowerShellのタイプ加速器にカスタムタイプを追加します.このパターンは,モジュールユーザーは,すぐにインテリセンスをアクセスし,カスタムタイプを自動完成させなく,自動完成させることができます.<code>using module</code>&gt; &gt;このパターンについての詳細については,[about_Classes][04] の"Type &gt; Accelerators で輸出する"セクションを参照してください.</p>
+<p>モデルの輸入と輸出を確認します.</p>
+<pre><code class="language-powershell">Import-Module ./GenericExample.psd1
+
+$Inventory = [Inventory]::new()
+$Inventory.GetType() | Format-List -Property Name, BaseType
+
+$Inventory.Add([InventoryItem]::new('Bucket', 2))
+$Inventory.Add([InventoryItem]::new('Mop'))
+$Inventory.Add([InventoryItem]@{ Name = 'Broom' ; Count = 4 })
+$Inventory
+</code></pre>
+<pre><code class="language-Output">Name     : Inventory
+BaseType : System.Collections.Generic.List`1[InventoryItem]
+
+Name   Count
+----   -----
+Bucket     2
+Mop        0
+Broom      4
+</code></pre>
+<p>模块はエラーなくロードされます.なぜなら, <strong>InventoryItem</strong> クラスは <strong>Inventory</strong> クラスの異なる模块ファイルで定義されています.両方のクラスは模块ユーザーに利用できます.</p>
+<h2>基礎階級を継承する</h2>
+<p>クラスが基クラスから相続するときは,基クラスの性質と方法を継承する.基クラス構成要素を直接相続するわけではないが,呼び出すことができる.</p>
+<p>PowerShellではなく .NETでベースクラスが定義されている場合,次のことを注意してください.</p>
+<ul>
+<li>PowerShell クラスはシールされたクラスを継承することはできません. - 一般的なベースクラスを継承する際,一般的なクラスのタイプパラメータは衍生クラスができません. 衍生クラスをタイプパラメータとして使用すると解析エラーが発生します.</li>
+</ul>
+<p>導致クラスで,相続と過優先の仕組みについては[例 1][05]を参照してください.</p>
+<h1>about_Classes_Inheritanceについて</h1>
+<h3>派生したクラスコンストラクター</h3>
+<p>派生クラスでは,ベースクラスの構成要素を直接相続しない.もし,ベースクラスがデフォルトコンストラクタを定義し,派生クラスでは,いかなるコンストラクタも定義しない場合,派生クラスの新しいインスタンスは,ベースクラスデフォルトコンストラクタを使用します.ベースクラスがデフォルトコンストラクタを定義しない場合,派生クラスには少なくとも1つのコンストラクタを明示的に定義する必要があります.</p>
+<p>派生クラス構成員は,ベースクラスから構成要素を で呼び出すことができます.<code>base</code>導致クラスがベースクラスからコンストラクタを明示的に呼び出さない場合,代わりにベースクラスのためのデフォルトコンストラクタを呼び出します.</p>
+<p>既定でないベースコンストラクタを呼び出すために,追加する<code>: base(&lt;parameters&gt;)</code>コンストラクターパラメータの後とボディブロックの前に.</p>
+<pre><code class="language-Syntax">class &lt;derived-class&gt; : &lt;base-class&gt; {
+    &lt;derived-class&gt;(&lt;derived-parameters&gt;) : &lt;base-class&gt;(&lt;base-parameters&gt;) {
+        # initialization code
+    }
+}
+</code></pre>
+<p>基礎クラス構成要素を呼ぶコンストラクタを定義する際には,パラメータは以下のいずれかである:</p>
+<ul>
+<li>派生クラスコンストラクターの任意のパラメータの変数. - 任意の静数値. - 任意の表現で,パラメータタイプの値に評価される.</li>
+</ul>
+<p>[例 1][05] の <strong>Illustration</strong> クラスでは,導体クラスがベースクラスコンストラクタを使用する方法が示されています.</p>
+<h3>派生されたクラスメソッド</h3>
+<p>クラスがベースクラスから派生されたとき,そのベースクラスメソッドとその過負荷を継承します. ベースクラスで定義された任意のメソッド過負荷,隠された方法を含むものは,派生クラスで利用可能です.</p>
+<p>派生クラスでは,クラス定義で定義を変えて,遺伝した方法過負荷を覆すことができる.過負荷を覆すためには,パラメータタイプはベースクラスと同じでなければならない.過負荷の輸出タイプは異なる可能性があります.</p>
+<p>構成者とは異なり,方法は,  を使用することはできません.<code>: base(&lt;parameters&gt;)</code>基クラスオーバーロードを誘発する構文. 導致クラスにおける再定義されたオーバーロードは,基クラスで定義されたオーバーロードを完全に置き換えます. インスタンスの基クラスメソッドをインスタンスのために呼び出すために,インスタンスの変数を () 投げます.<code>$this</code>) を,方法を呼び出す前にベースクラスに移動します.</p>
+<p>次のスニペットでは,派生クラスがベースクラスメソッドに呼びかける方法を示しています.</p>
+<pre><code class="language-powershell">class BaseClass {
+    [bool] IsTrue() { return $true }
+}
+class DerivedClass : BaseClass {
+    [bool] IsTrue()     { return $false }
+    [bool] BaseIsTrue() { return ([BaseClass]$this).IsTrue() }
+}
+
+@&quot;
+[BaseClass]::new().IsTrue()        = $([BaseClass]::new().IsTrue())
+[DerivedClass]::new().IsTrue()     = $([DerivedClass]::new().IsTrue())
+[DerivedClass]::new().BaseIsTrue() = $([DerivedClass]::new().BaseIsTrue())
+&quot;@
+</code></pre>
+<pre><code class="language-Output">[BaseClass]::new().IsTrue()        = True
+[DerivedClass]::new().IsTrue()     = False
+[DerivedClass]::new().BaseIsTrue() = True
+</code></pre>
+<p>導致クラスの遺伝的方法を覆すことができる方法を示す拡張サンプルについては, [例 1][05] の <strong>Illustration</strong> クラスを参照してください.</p>
+<h3>派生階級の性質</h3>
+<p>クラスがベースクラスから派生されたとき,その基クラスに属する属性を継承します. ベースクラスで定義されたすべての属性,隠された属性を含むものは,派生クラスで利用可能です.</p>
+<p>派生クラスでは,派生クラス定義で再定義することで,相続財産を覆すことができる.派生クラス上の属性は,再定義されたタイプと,任意のデフォルト値を使用する. もし,相続財産が既定値を定義し,再定義された属性はそうしないなら,相続財産は既定値を持たない.</p>
+<p>導致クラスが静的属性に優位性を与えない場合,導致クラスを通じて静的属性にアクセスすることは,基の属性へのアクセスとなります.導致クラスで属性値を変更すると,基の属性上の値を変更します.静的属性に優位性を与えない他の導致クラスも,基の属性上の属性上の属性値を利用します.その属性に優位性を与えないクラスで継承された静的属性の値を更新すると,同じ基の属性から導致されたクラスに対して意図しない影響が生じることがあります.</p>
+<p>[例 1][05]では,基クラス属性を継承し,拡張し,覆す衍生クラスがどのように行われているかを示しています.</p>
+<h3>汎用品から生じる</h3>
+<p>クラスがジェネリックから派生する場合は,PowerShellが派生したクラスを解析する前に,タイプパラメータが既に定義されなければなりません.ジェネリックのタイプパラメータが同じファイルまたはコードブロックで定義された PowerShell クラスまたはエンマレーションである場合は,PowerShell がエラーを発生します.</p>
+<p>標準型ベースクラスからクラスを引くために,タイプパラメータとしてカスタム型を指定し,別のファイルまたはモジュールでタイプパラメータのためのクラスまたはカウントを定義し, を使用します.<code>using module</code>タイプ定義をロードする記述.</p>
+<p>一般的なベースクラスから相続する方法を示す例については,[例 3][06]を参照してください.</p>
+<h3>継承する有用なクラス</h3>
+<p>PowerShell モジュールを作成する際に,相続するのに役立ついくつかのクラスがあります.このセクションでは,いくつかの基礎クラスとそこから派生されたクラスがどのような用途に 사용될 수 있는지列挙します.</p>
+<p><strong>System.Attribute</strong> - 変数,パラメータ,クラス,清算定義などに使用できる属性を定義するデリビュークラス <strong>System.Management.Automation.ArgumentTransformationAttribute</strong> - 変数またはパラメータの入力を特定のデータタイプに変換する処理のためのデリビュークラス <strong>System.Management.Automation.ValidateArgumentsAttribute</strong> - 変数,パラメータ,クラス属性に対するカスタム認証を適用するデリビュークラス <strong>System.Collections.Generic.List</strong> - 特定のデータタイプのリストを作成し管理することを容易にするデリビュークラス <strong>System.Exception</strong> - 定例エラーを定義するデリビュークラス</p>
+<h2>インターフェイスを実装する</h2>
+<p>PowerShell クラスでインターフェースを実行すると,そのインターフェースのすべてのメンバーが実装されなければならない.実装インターフェースメンバーを削除すると,スクリプトに解析時間のエラーが発生します.</p>
+<p>&gt; [!NOTE] &gt; PowerShell は PowerShell スクリプトで新しいインターフェースを宣言することをサポートしません. &gt; その代わりに,インターフェースは .NET コードで宣言され,セッションに追加されなければなりません &gt;   と.<code>Add-Type</code>cmdlet または <code>using assembly</code>声明.</p>
+<p>クラスがインターフェースを実行するときは,そのインターフェースを実装する他のクラスと同様に使用できます.一部のコマンドと操作は,サポートされているタイプを特定のインターフェースを実装するクラスに制限します.</p>
+<p>インターフェイスの実施例をレビューするには, [例 2][07] を参照してください.</p>
+<h1>about_Classes_Inheritanceについて</h1>
+<h3>実行するための有用なインターフェースです.</h3>
+<p>PowerShell モジュールを作成する際に,遺伝して役立ついくつかのインターフェースクラスがあります.このセクションでは,いくつかのベースクラスとそこから派生されたクラスがどのような用途に用いられるかをリストしています.</p>
+<p><strong>System.IEquatable</strong> - このインターフェースは,ユーザがクラス内の2つのインスタンスを比較できるようにします.クラスがこのインターフェースを実装していない場合,PowerShellは参照等式を使用して,2つのインスタンスの間の等価性をチェックします.つまり,クラス内のインスタンスは,両方のインスタンスのプロパティ値が同じであっても,自分自身に等しいです. - <strong>System.IComparable</strong> - このインターフェースは,ユーザがクラス内のインスタンスを  と比較できるようにします.<code>-le</code>     <code>-lt</code>     <code>-ge</code>そして,そして,<code>-gt</code>クラスがこのインターフェースを実装しない場合,それらのオペレーターはエラーを発生させます. - <strong>System.IFormattable</strong> - このインターフェースは,ユーザがクラスのインスタンスを異なる文字列にフォーマットできるようにします.これは,予算項目,文献,温度などの標準文字列表示以上のクラスに有用です. - <strong>System.IConvertible</strong> - このインターフェースは,ユーザがクラスのインスタンスを他の実行時間のタイプに変換できるようにします.これは,次元の数値を持つクラスまたは1に変換できます.</p>
+<h2>制限は限られている.</h2>
+<ul>
+<li>PowerShellではスクリプトコードでインターフェースを定義するサポートができません.</li>
+</ul>
+<p>ワークラウンド:C#でインターフェースを定義し,インターフェースを定義するアセンブリを参照してください. - PowerShell クラスは,ベースクラスから1つだけ相続することができます.</p>
+<p>ワークラウンド:クラス継承は移行的である. 派生クラスには,基クラスの性質と方法を得るために,別の派生クラスから継承することができる. - 一般的なクラスまたはインターフェースから継承する際,一般的なタイプのパラメータはすでに定義されなければなりません. クラスには,クラスまたはインターフェースのタイプパラメータとして定義することはできません.</p>
+<p>ワークラウンド:一般的なベースクラスまたはインターフェースから引き出せるためには,カスタムタイプを異なる で定義してください.<code>.psm1</code>ファイルで  を使って<code>using module</code>タイプをロードするステートメント. 汎用から相続する際,カスタムタイプが自己としてタイプパラメータとして使用する方法はない.</p>
+<h2>また, を参照してください.</h2>
+<ul>
+<li>[about_Classes][08] - [about_Classes_Constructors][09] - [about_Classes_Methods][10] - [about_Classes_Properties][11]</li>
+</ul>
+<p>リンク参照定義 --&gt; [01]: /dotnet/api/system.iformattable#methods [02]: /dotnet/api/system.iequatable-1#methods [03]: /dotnet/api/system.icomparable#methods [04]: about_Classes.md#export-classes-with-type-accelerators [05]: #example-1---inheriting-and-overriding-from-a-base-class [06]: #example-3---inheriting-from-a-generic-base-class [07]: #example-2---implementing-interfaces [08]: about_Classes.md [09]: about_Classes_Constructors.md [10]: about_Properance.md_Classes: about_Classes.md_classes.md_classes.md_classes.md_classes.md_classes.md_classes.md_classes.md_classes.md_classes.md_classes.md_classes.md_classes.md_classes.md_classes.md_d_d_d_d_d_d_d_d_d_d_d_d_d_d_d_d_d_d_d_d_d_d_d_d_d_d_d_d_d_d_d_d_d_d_d_d_d_d_d_d_d_d_d_d_d_d_d_d_d_d_d_d_d_d_d_d_d_d_d_d_d_d_d_d_d_d_d_d_d_d_d_d_d_d_d_d_d_d_d_d_d_d_d_d_d_d_d_d_d_d_d_d_d_d_d_d_d_d_d_d_d_d_d_d_d_d_d_d_d_d_d_d_</p></section><section class="en-original"><pre class="source-original"># about_Classes_Inheritance
+
+## Short description
+
+Describes how you can define classes that extend other types.
+
+## Long description
+
+PowerShell classes support _inheritance_, which allows you to define a child
+class that reuses (inherits), extends, or modifies the behavior of a parent
+class. The class whose members are inherited is called the _base class_. The
+class that inherits the members of the base class is called the
+_derived class_.
+
+PowerShell supports single inheritance only. A class can only inherit from a
+single class. However, inheritance is transitive, which allows you to define an
+inheritance hierarchy for a set of types. In other words, type **D** can
+inherit from type **C**, which inherits from type **B**, which inherits from
+the base class type **A**. Because inheritance is transitive, the members of
+type **A** are available to type **D**.
+
+Derived classes don&#x27;t inherit all members of the base class. The following
+members aren&#x27;t inherited:
+
+- Static constructors, which initialize the static data of a class.
+- Instance constructors, which you call to create a new instance of the class.
+  Each class must define its own constructors.
+
+You can extend a class by creating a new class that derives from an existing
+class. The derived class inherits the properties and methods of the base class.
+You can add or override the base class members as required.
+
+Classes can also inherit from interfaces, which define a contract. A class that
+inherits from an interface must implement that contract. When it does, the
+class is usable like any other class implementing that interface. If a class
+inherits from an interface but doesn&#x27;t implement the interface, PowerShell
+raises a parsing error for the class.
+
+Some PowerShell operators depend on a class implementing a specific interface.
+For example, the `-eq` operator only checks for reference equality unless the
+class implements the **System.IEquatable** interface. The `-le`, `-lt`, `-ge`,
+and `-gt` operators only work on classes that implement the
+**System.IComparable** interface.
+
+A derived class uses the `:` syntax to extend a base class or implement
+interfaces. The derived class should always be leftmost in the class
+declaration.
+
+This example shows the basic PowerShell class inheritance syntax.
+
+```powershell
+class Derived : Base {...}
+```
+
+This example shows inheritance with an interface declaration coming after the
+base class.
+
+```powershell
+class Derived : Base, Interface {...}
+```
+
+## Syntax
+
+Class inheritance uses the following syntaxes:
+
+### One line syntax
+
+```Syntax
+class &lt;derived-class-name&gt; : &lt;base-class-or-interface-name&gt;[, &lt;interface-name&gt;...] {
+    &lt;derived-class-body&gt;
+}
+```
+
+For example:
+
+```powershell
+
+# Base class only
+class Derived : Base {...}
+
+# Interface only
+class Derived : System.IComparable {...}
+
+# Base class and interface
+class Derived : Base, System.IComparable {...}
+```
+
+### Multiline syntax
+
+```Syntax
+class &lt;derived-class-name&gt; : &lt;base-class-or-interface-name&gt;[,
+    &lt;interface-name&gt;...] {
+    &lt;derived-class-body&gt;
+}
+```
+
+For example:
+
+```powershell
+class Derived : Base,
+                System.IComparable,
+                System.IFormattable,
+                System.IConvertible {
+    # Derived class definition
+}
+```
+
+## Examples
+
+# about_Classes_Inheritance
+
+### Example 1 - Inheriting and overriding from a base class
+
+The following example shows the behavior of inherited properties with and
+without overriding. Run the code blocks in order after reading their
+description.
+
+#### Defining the base class
+
+The first code block defines **PublishedWork** as a base class. It has two
+static properties, **List** and **Artists**. Next, it defines the static
+`RegisterWork()` method to add works to the static **List** property and the
+artists to the **Artists** property, writing a message for each new entry in
+the lists.
+
+The class defines three instance properties that describe a published work.
+Finally, it defines the `Register()` and `ToString()` instance methods.
+
+```powershell
+class PublishedWork {
+    static [PublishedWork[]] $List    = @()
+    static [string[]]        $Artists = @()
+
+    static [void] RegisterWork([PublishedWork]$Work) {
+        $wName   = $Work.Name
+        $wArtist = $Work.Artist
+        if ($Work -notin [PublishedWork]::List) {
+            Write-Verbose &quot;Adding work &#x27;$wName&#x27; to works list&quot;
+            [PublishedWork]::List += $Work
+        } else {
+            Write-Verbose &quot;Work &#x27;$wName&#x27; already registered.&quot;
+        }
+        if ($wArtist -notin [PublishedWork]::Artists) {
+            Write-Verbose &quot;Adding artist &#x27;$wArtist&#x27; to artists list&quot;
+            [PublishedWork]::Artists += $wArtist
+        } else {
+            Write-Verbose &quot;Artist &#x27;$wArtist&#x27; already registered.&quot;
+        }
+    }
+
+    static [void] ClearRegistry() {
+        Write-Verbose &quot;Clearing PublishedWork registry&quot;
+        [PublishedWork]::List    = @()
+        [PublishedWork]::Artists = @()
+    }
+
+    [string] $Name
+    [string] $Artist
+    [string] $Category
+
+    [void] Init([string]$WorkType) {
+        if ([string]::IsNullOrEmpty($this.Category)) {
+            $this.Category = &quot;${WorkType}s&quot;
+        }
+    }
+
+    PublishedWork() {
+        $WorkType = $this.GetType().FullName
+        $this.Init($WorkType)
+        Write-Verbose &quot;Defined a published work of type [$WorkType]&quot;
+    }
+
+    PublishedWork([string]$Name, [string]$Artist) {
+        $WorkType    = $this.GetType().FullName
+        $this.Name   = $Name
+        $this.Artist = $Artist
+        $this.Init($WorkType)
+
+        Write-Verbose &quot;Defined &#x27;$Name&#x27; by $Artist as a published work of type [$WorkType]&quot;
+    }
+
+    PublishedWork([string]$Name, [string]$Artist, [string]$Category) {
+        $WorkType    = $this.GetType().FullName
+        $this.Name   = $Name
+        $this.Artist = $Artist
+        $this.Init($WorkType)
+
+        Write-Verbose &quot;Defined &#x27;$Name&#x27; by $Artist ($Category) as a published work of type [$WorkType]&quot;
+    }
+
+    [void]   Register() { [PublishedWork]::RegisterWork($this) }
+    [string] ToString() { return &quot;$($this.Name) by $($this.Artist)&quot; }
+}
+```
+
+#### Defining a derived class without overrides
+
+The first derived class is **Album**. It doesn&#x27;t override any properties or
+methods. It adds a new instance property, **Genres**, that doesn&#x27;t exist on the
+base class.
+
+```powershell
+class Album : PublishedWork {
+    [string[]] $Genres   = @()
+}
+```
+
+The following code block shows the behavior of the derived **Album** class.
+First, it sets the `$VerbosePreference` so that the messages from the class
+methods emit to the console. It creates three instances of the class, shows
+them in a table, and then registers them with the inherited static
+`RegisterWork()` method. It then calls the same static method on the base class
+directly.
+
+```powershell
+$VerbosePreference = &#x27;Continue&#x27;
+$Albums = @(
+    [Album]@{
+        Name   = &#x27;The Dark Side of the Moon&#x27;
+        Artist = &#x27;Pink Floyd&#x27;
+        Genres = &#x27;Progressive rock&#x27;, &#x27;Psychedelic rock&#x27;
+    }
+    [Album]@{
+        Name   = &#x27;The Wall&#x27;
+        Artist = &#x27;Pink Floyd&#x27;
+        Genres = &#x27;Progressive rock&#x27;, &#x27;Art rock&#x27;
+    }
+    [Album]@{
+        Name   = &#x27;36 Chambers&#x27;
+        Artist = &#x27;Wu-Tang Clan&#x27;
+        Genres = &#x27;Hip hop&#x27;
+    }
+)
+
+$Albums | Format-Table
+$Albums | ForEach-Object { [Album]::RegisterWork($_) }
+$Albums | ForEach-Object { [PublishedWork]::RegisterWork($_) }
+```
+
+```Output
+VERBOSE: Defined a published work of type [Album]
+VERBOSE: Defined a published work of type [Album]
+VERBOSE: Defined a published work of type [Album]
+
+Genres                               Name                      Artist       Category
+------                               ----                      ------       --------
+{Progressive rock, Psychedelic rock} The Dark Side of the Moon Pink Floyd   Albums
+{Progressive rock, Art rock}         The Wall                  Pink Floyd   Albums
+{Hip hop}                            36 Chambers               Wu-Tang Clan Albums
+
+VERBOSE: Adding work &#x27;The Dark Side of the Moon&#x27; to works list
+VERBOSE: Adding artist &#x27;Pink Floyd&#x27; to artists list
+VERBOSE: Adding work &#x27;The Wall&#x27; to works list
+VERBOSE: Artist &#x27;Pink Floyd&#x27; already registered.
+VERBOSE: Adding work &#x27;36 Chambers&#x27; to works list
+VERBOSE: Adding artist &#x27;Wu-Tang Clan&#x27; to artists list
+
+VERBOSE: Work &#x27;The Dark Side of the Moon&#x27; already registered.
+VERBOSE: Artist &#x27;Pink Floyd&#x27; already registered.
+VERBOSE: Work &#x27;The Wall&#x27; already registered.
+VERBOSE: Artist &#x27;Pink Floyd&#x27; already registered.
+VERBOSE: Work &#x27;36 Chambers&#x27; already registered.
+VERBOSE: Artist &#x27;Wu-Tang Clan&#x27; already registered.
+```
+
+Notice that even though the **Album** class didn&#x27;t define a value for
+**Category** or any constructors, the property was defined by the default
+constructor of the base class.
+
+In the verbose messaging, the second call to the `RegisterWork()` method
+reports that the works and artists are already registered. Even though the
+first call to `RegisterWork()` was for the derived **Album** class, it used the
+inherited static method from the base **PublishedWork** class. That method
+updated the static **List** and **Artist** properties on the base class, which
+the derived class didn&#x27;t override.
+
+The next code block clears the registry and calls the `Register()` instance
+method on the **Album** objects.
+
+```powershell
+[PublishedWork]::ClearRegistry()
+$Albums.Register()
+```
+
+```Output
+VERBOSE: Clearing PublishedWork registry
+
+VERBOSE: Adding work &#x27;The Dark Side of the Moon&#x27; to works list
+VERBOSE: Adding artist &#x27;Pink Floyd&#x27; to artists list
+VERBOSE: Adding work &#x27;The Wall&#x27; to works list
+VERBOSE: Artist &#x27;Pink Floyd&#x27; already registered.
+VERBOSE: Adding work &#x27;36 Chambers&#x27; to works list
+VERBOSE: Adding artist &#x27;Wu-Tang Clan&#x27; to artists list
+```
+
+The instance method on the **Album** objects has the same effect as calling the
+static method on the derived or base class.
+
+The following code block compares the static properties for the base class and
+the derived class, showing that they&#x27;re the same.
+
+```powershell
+[pscustomobject]@{
+    &#x27;[PublishedWork]::List&#x27;    = [PublishedWork]::List -join &quot;,`n&quot;
+    &#x27;[Album]::List&#x27;            = [Album]::List -join &quot;,`n&quot;
+    &#x27;[PublishedWork]::Artists&#x27; = [PublishedWork]::Artists -join &quot;,`n&quot;
+    &#x27;[Album]::Artists&#x27;         = [Album]::Artists -join &quot;,`n&quot;
+    &#x27;IsSame::List&#x27;             = (
+        [PublishedWork]::List.Count -eq [Album]::List.Count -and
+        [PublishedWork]::List.ToString() -eq [Album]::List.ToString()
+    )
+    &#x27;IsSame::Artists&#x27;          = (
+        [PublishedWork]::Artists.Count -eq [Album]::Artists.Count -and
+        [PublishedWork]::Artists.ToString() -eq [Album]::Artists.ToString()
+    )
+} | Format-List
+```
+
+```Output
+[PublishedWork]::List    : The Dark Side of the Moon by Pink Floyd,
+                           The Wall by Pink Floyd,
+
+# about_Classes_Inheritance
+
+36 Chambers by Wu-Tang Clan
+[Album]::List            : The Dark Side of the Moon by Pink Floyd,
+                           The Wall by Pink Floyd,
+                           36 Chambers by Wu-Tang Clan
+[PublishedWork]::Artists : Pink Floyd,
+                           Wu-Tang Clan
+[Album]::Artists         : Pink Floyd,
+                           Wu-Tang Clan
+IsSame::List             : True
+IsSame::Artists          : True
+```
+
+#### Defining a derived class with overrides
+
+The next code block defines the **Illustration** class inheriting from the base
+**PublishedWork** class. The new class extends the base class by defining the
+**Medium** instance property with a default value of `Unknown`.
+
+Unlike the derived **Album** class, **Illustration** overrides the following
+properties and methods:
+
+- It overrides the static **Artists** property. The definition is the same, but
+  the **Illustration** class declares it directly.
+- It overrides the **Category** instance property, setting the default value to
+  `Illustrations`.
+- It overrides the `ToString()` instance method so the string representation of
+  an illustration includes the medium it was created with.
+
+The class also defines the static `RegisterIllustration()` method to first call
+the base class `RegisterWork()` method and then add the artist to the
+overridden **Artists** static property on the derived class.
+
+Finally, the class overrides all three constructors:
+
+1. The default constructor is empty except for a verbose message indicating it
+   created an illustration.
+1. The next constructor takes two string values for the name and artist that
+   created the illustration. Instead of implementing the logic for setting the
+   **Name** and **Artist** properties, the constructor calls the appropriate
+   constructor from the base class.
+1. The last constructor takes three string values for the name, artist, and
+   medium of the illustration. Both constructors write a verbose message
+   indicating that they created an illustration.
+
+```powershell
+class Illustration : PublishedWork {
+    static [string[]] $Artists = @()
+
+    static [void] RegisterIllustration([Illustration]$Work) {
+        $wArtist = $Work.Artist
+
+        [PublishedWork]::RegisterWork($Work)
+
+        if ($wArtist -notin [Illustration]::Artists) {
+            Write-Verbose &quot;Adding illustrator &#x27;$wArtist&#x27; to artists list&quot;
+            [Illustration]::Artists += $wArtist
+        } else {
+            Write-Verbose &quot;Illustrator &#x27;$wArtist&#x27; already registered.&quot;
+        }
+    }
+
+    [string] $Category = &#x27;Illustrations&#x27;
+    [string] $Medium   = &#x27;Unknown&#x27;
+
+    [string] ToString() {
+        return &quot;$($this.Name) by $($this.Artist) ($($this.Medium))&quot;
+    }
+
+    Illustration() {
+        Write-Verbose &#x27;Defined an illustration&#x27;
+    }
+
+    Illustration([string]$Name, [string]$Artist) : base($Name, $Artist) {
+        Write-Verbose &quot;Defined &#x27;$Name&#x27; by $Artist ($($this.Medium)) as an illustration&quot;
+    }
+
+    Illustration([string]$Name, [string]$Artist, [string]$Medium) {
+        $this.Name = $Name
+        $this.Artist = $Artist
+        $this.Medium = $Medium
+
+        Write-Verbose &quot;Defined &#x27;$Name&#x27; by $Artist ($Medium) as an illustration&quot;
+    }
+}
+```
+
+The following code block shows the behavior of the derived **Illustration**
+class. It creates three instances of the class, shows them in a table, and then
+registers them with the inherited static `RegisterWork()` method. It then calls
+the same static method on the base class directly. Finally, it writes messages
+showing the list of registered artists for the base class and the derived
+class.
+
+```powershell
+$Illustrations = @(
+    [Illustration]@{
+        Name   = &#x27;The Funny Thing&#x27;
+        Artist = &#x27;Wanda Gág&#x27;
+        Medium = &#x27;Lithography&#x27;
+    }
+    [Illustration]::new(&#x27;Millions of Cats&#x27;, &#x27;Wanda Gág&#x27;)
+    [Illustration]::new(
+      &#x27;The Lion and the Mouse&#x27;,
+      &#x27;Jerry Pinkney&#x27;,
+      &#x27;Watercolor&#x27;
+    )
+)
+
+$Illustrations | Format-Table
+$Illustrations | ForEach-Object { [Illustration]::RegisterIllustration($_) }
+$Illustrations | ForEach-Object { [PublishedWork]::RegisterWork($_) }
+&quot;Published work artists: $([PublishedWork]::Artists -join &#x27;, &#x27;)&quot;
+&quot;Illustration artists: $([Illustration]::Artists -join &#x27;, &#x27;)&quot;
+```
+
+```Output
+VERBOSE: Defined a published work of type [Illustration]
+VERBOSE: Defined an illustration
+VERBOSE: Defined &#x27;Millions of Cats&#x27; by Wanda Gág as a published work of type [Illustration]
+VERBOSE: Defined &#x27;Millions of Cats&#x27; by Wanda Gág (Unknown) as an illustration
+VERBOSE: Defined a published work of type [Illustration]
+VERBOSE: Defined &#x27;The Lion and the Mouse&#x27; by Jerry Pinkney (Watercolor) as an illustration
+
+Category      Medium      Name                   Artist
+--------      ------      ----                   ------
+Illustrations Lithography The Funny Thing        Wanda Gág
+Illustrations Unknown     Millions of Cats       Wanda Gág
+Illustrations Watercolor  The Lion and the Mouse Jerry Pinkney
+
+VERBOSE: Adding work &#x27;The Funny Thing&#x27; to works list
+VERBOSE: Adding artist &#x27;Wanda Gág&#x27; to artists list
+VERBOSE: Adding illustrator &#x27;Wanda Gág&#x27; to artists list
+VERBOSE: Adding work &#x27;Millions of Cats&#x27; to works list
+VERBOSE: Artist &#x27;Wanda Gág&#x27; already registered.
+VERBOSE: Illustrator &#x27;Wanda Gág&#x27; already registered.
+VERBOSE: Adding work &#x27;The Lion and the Mouse&#x27; to works list
+VERBOSE: Adding artist &#x27;Jerry Pinkney&#x27; to artists list
+VERBOSE: Adding illustrator &#x27;Jerry Pinkney&#x27; to artists list
+
+VERBOSE: Work &#x27;The Funny Thing&#x27; already registered.
+VERBOSE: Artist &#x27;Wanda Gág&#x27; already registered.
+VERBOSE: Work &#x27;Millions of Cats&#x27; already registered.
+VERBOSE: Artist &#x27;Wanda Gág&#x27; already registered.
+VERBOSE: Work &#x27;The Lion and the Mouse&#x27; already registered.
+VERBOSE: Artist &#x27;Jerry Pinkney&#x27; already registered.
+
+Published work artists: Pink Floyd, Wu-Tang Clan, Wanda Gág, Jerry Pinkney
+
+Illustration artists: Wanda Gág, Jerry Pinkney
+```
+
+The verbose messaging from creating the instances shows that:
+
+- When creating the first instance, the base class default constructor was
+  called before the derived class default constructor.
+- When creating the second instance, the explicitly inherited constructor was
+  called for the base class before the derived class constructor.
+- When creating the third instance, the base class default constructor was
+  called before the derived class constructor.
+
+The verbose messages from the `RegisterWork()` method indicate that the works
+and artists were already registered. This is because the
+`RegisterIllustration()` method called the `RegisterWork()` method internally.
+
+However, when comparing the value of the static **Artist** property for both
+the base class and derived class, the values are different. The **Artists**
+property for the derived class only includes illustrators, not the album
+artists. Redefining the **Artist** property in the derived class prevents the
+class from returning the static property on the base class.
+
+The final code block calls the `ToString()` method on the entries of the
+static **List** property on the base class.
+
+```powershell
+[PublishedWork]::List | ForEach-Object -Process { $_.ToString() }
+```
+
+```Output
+The Dark Side of the Moon by Pink Floyd
+The Wall by Pink Floyd
+36 Chambers by Wu-Tang Clan
+The Funny Thing by Wanda Gág (Lithography)
+Millions of Cats by Wanda Gág (Unknown)
+The Lion and the Mouse by Jerry Pinkney (Watercolor)
+```
+
+The **Album** instances only return the name and artist in their string. The
+
+# about_Classes_Inheritance
+
+**Illustration** instances also included the medium in parentheses, because
+that class overrode the `ToString()` method.
+
+# about_Classes_Inheritance
+
+### Example 2 - Implementing interfaces
+
+The following example shows how a class can implement one or more interfaces.
+The example extends the definition of a **Temperature** class to support more
+operations and behaviors.
+
+#### Initial class definition
+
+Before implementing any interfaces, the **Temperature** class is defined with
+two properties, **Degrees** and **Scale**. It defines constructors and three
+instance methods for returning the instance as degrees of a particular scale.
+
+The class defines the available scales with the **TemperatureScale**
+enumeration.
+
+```powershell
+class Temperature {
+    [float]            $Degrees
+    [TemperatureScale] $Scale
+
+    Temperature() {}
+    Temperature([float] $Degrees)          { $this.Degrees = $Degrees }
+    Temperature([TemperatureScale] $Scale) { $this.Scale = $Scale }
+    Temperature([float] $Degrees, [TemperatureScale] $Scale) {
+        $this.Degrees = $Degrees
+        $this.Scale   = $Scale
+    }
+
+    [float] ToKelvin() {
+        switch ($this.Scale) {
+            Celsius    { return $this.Degrees + 273.15 }
+            Fahrenheit { return ($this.Degrees + 459.67) * 5/9 }
+        }
+        return $this.Degrees
+    }
+    [float] ToCelsius() {
+        switch ($this.Scale) {
+            Fahrenheit { return ($this.Degrees - 32) * 5/9 }
+            Kelvin     { return $this.Degrees - 273.15 }
+        }
+        return $this.Degrees
+    }
+    [float] ToFahrenheit() {
+        switch ($this.Scale) {
+            Celsius    { return $this.Degrees * 9/5 + 32 }
+            Kelvin     { return $this.Degrees * 9/5 - 459.67 }
+        }
+        return $this.Degrees
+    }
+}
+
+enum TemperatureScale {
+    Celsius    = 0
+    Fahrenheit = 1
+    Kelvin     = 2
+}
+```
+
+However, in this basic implementation, there&#x27;s a few limitations as shown in
+the following example output:
+
+```powershell
+$Celsius    = [Temperature]::new()
+$Fahrenheit = [Temperature]::new([TemperatureScale]::Fahrenheit)
+$Kelvin     = [Temperature]::new(0, &#x27;Kelvin&#x27;)
+
+$Celsius, $Fahrenheit, $Kelvin
+
+&quot;The temperatures are: $Celsius, $Fahrenheit, $Kelvin&quot;
+
+[Temperature]::new() -eq $Celsius
+
+$Celsius -gt $Kelvin
+```
+
+```Output
+Degrees      Scale
+-------      -----
+   0.00    Celsius
+   0.00 Fahrenheit
+   0.00     Kelvin
+
+The temperatures are: Temperature, Temperature, Temperature
+
+False
+
+Cannot compare &quot;Temperature&quot; because it is not IComparable.
+At line:1 char:1
++ $Celsius -gt $Kelvin
++ ~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidOperation: (:) [], RuntimeException
+    + FullyQualifiedErrorId : NotIcomparable
+```
+
+The output shows that instances of **Temperature**:
+
+- Don&#x27;t display correctly as strings.
+- Can&#x27;t be checked properly for equivalency.
+- Can&#x27;t be compared.
+
+These three problems can be addressed by implementing interfaces for the class.
+
+#### Implementing IFormattable
+
+The first interface to implement for the **Temperature** class is
+**System.IFormattable**. This interface enables formatting an instance of the
+class as different strings. To implement the interface, the class needs to
+inherit from **System.IFormattable** and define the `ToString()` instance
+method.
+
+The `ToString()` instance method needs to have the following signature:
+
+```powershell
+[string] ToString(
+    [string]$Format,
+    [System.IFormatProvider]$FormatProvider
+) {
+    # Implementation
+}
+```
+
+The signature that the interface requires is listed in the
+[reference documentation][01].
+
+For **Temperature**, the class should support three formats: `C` to return the
+instance in Celsius, `F` to return it in Fahrenheit, and `K` to return it in
+Kelvin. For any other format, the method should throw a
+**System.FormatException**.
+
+```powershell
+[string] ToString(
+    [string]$Format,
+    [System.IFormatProvider]$FormatProvider
+) {
+    # If format isn&#x27;t specified, use the defined scale.
+    if ([string]::IsNullOrEmpty($Format)) {
+        $Format = switch ($this.Scale) {
+            Celsius    { &#x27;C&#x27; }
+            Fahrenheit { &#x27;F&#x27; }
+            Kelvin     { &#x27;K&#x27; }
+        }
+    }
+    # If format provider isn&#x27;t specified, use the current culture.
+    if ($null -eq $FormatProvider) {
+        $FormatProvider = [cultureinfo]::CurrentCulture
+    }
+    # Format the temperature.
+    switch ($Format) {
+        &#x27;C&#x27; {
+            return $this.ToCelsius().ToString(&#x27;F2&#x27;, $FormatProvider) + &#x27;°C&#x27;
+        }
+        &#x27;F&#x27; {
+            return $this.ToFahrenheit().ToString(&#x27;F2&#x27;, $FormatProvider) + &#x27;°F&#x27;
+        }
+        &#x27;K&#x27; {
+            return $this.ToKelvin().ToString(&#x27;F2&#x27;, $FormatProvider) + &#x27;°K&#x27;
+        }
+    }
+    # If we get here, the format is invalid.
+    throw [System.FormatException]::new(
+        &quot;Unknown format: &#x27;$Format&#x27;. Valid Formats are &#x27;C&#x27;, &#x27;F&#x27;, and &#x27;K&#x27;&quot;
+    )
+}
+```
+
+In this implementation, the method defaults to the instance scale for
+format and the current culture when formatting the numerical degree value
+itself. It uses the `To&lt;Scale&gt;()` instance methods to convert the degrees,
+formats them to two-decimal places, and appends the appropriate degree symbol
+to the string.
+
+With the required signature implemented, the class can also define overloads to
+make it easier to return the formatted instance.
+
+```powershell
+[string] ToString([string]$Format) {
+    return $this.ToString($Format, $null)
+}
+
+[string] ToString() {
+    return $this.ToString($null, $null)
+}
+```
+
+The following code shows the updated definition for **Temperature**:
+
+```powershell
+class Temperature : System.IFormattable {
+    [float]            $Degrees
+    [TemperatureScale] $Scale
+
+    Temperature() {}
+    Temperature([float] $Degrees)          { $this.Degrees = $Degrees }
+    Temperature([TemperatureScale] $Scale) { $this.Scale = $Scale }
+    Temperature([float] $Degrees, [TemperatureScale] $Scale) {
+        $this.Degrees = $Degrees
+        $this.Scale = $Scale
+    }
+
+    [float] ToKelvin() {
+        switch ($this.Scale) {
+            Celsius { return $this.Degrees + 273.15 }
+            Fahrenheit { return ($this.Degrees + 459.67) * 5 / 9 }
+        }
+        return $this.Degrees
+    }
+    [float] ToCelsius() {
+        switch ($this.Scale) {
+            Fahrenheit { return ($this.Degrees - 32) * 5 / 9 }
+            Kelvin { return $this.Degrees - 273.15 }
+        }
+        return $this.Degrees
+    }
+    [float] ToFahrenheit() {
+        switch ($this.Scale) {
+            Celsius { return $this.Degrees * 9 / 5 + 32 }
+            Kelvin { return $this.Degrees * 9 / 5 - 459.67 }
+        }
+        return $this.Degrees
+    }
+
+    [string] ToString(
+        [string]$Format,
+        [System.IFormatProvider]$FormatProvider
+    ) {
+        # If format isn&#x27;t specified, use the defined scale.
+        if ([string]::IsNullOrEmpty($Format)) {
+            $Format = switch ($this.Scale) {
+                Celsius    { &#x27;C&#x27; }
+                Fahrenheit { &#x27;F&#x27; }
+                Kelvin     { &#x27;K&#x27; }
+            }
+        }
+        # If format provider isn&#x27;t specified, use the current culture.
+        if ($null -eq $FormatProvider) {
+            $FormatProvider = [cultureinfo]::CurrentCulture
+        }
+        # Format the temperature.
+        switch ($Format) {
+            &#x27;C&#x27; {
+                return $this.ToCelsius().ToString(&#x27;F2&#x27;, $FormatProvider) + &#x27;°C&#x27;
+            }
+            &#x27;F&#x27; {
+                return $this.ToFahrenheit().ToString(&#x27;F2&#x27;, $FormatProvider) + &#x27;°F&#x27;
+            }
+            &#x27;K&#x27; {
+                return $this.ToKelvin().ToString(&#x27;F2&#x27;, $FormatProvider) + &#x27;°K&#x27;
+            }
+        }
+
+# If we get here, the format is invalid.
+        throw [System.FormatException]::new(
+            &quot;Unknown format: &#x27;$Format&#x27;. Valid Formats are &#x27;C&#x27;, &#x27;F&#x27;, and &#x27;K&#x27;&quot;
+        )
+    }
+
+    [string] ToString([string]$Format) {
+        return $this.ToString($Format, $null)
+    }
+
+    [string] ToString() {
+        return $this.ToString($null, $null)
+    }
+}
+
+enum TemperatureScale {
+    Celsius    = 0
+    Fahrenheit = 1
+    Kelvin     = 2
+}
+```
+
+The output for the method overloads is shown in the following block.
+
+```powershell
+$Temp = [Temperature]::new()
+&quot;The temperature is $Temp&quot;
+$Temp.ToString()
+$Temp.ToString(&#x27;K&#x27;)
+$Temp.ToString(&#x27;F&#x27;, $null)
+```
+
+```Output
+The temperature is 0.00°C
+
+0.00°C
+
+273.15°K
+
+32.00°F
+```
+
+#### Implementing IEquatable
+
+Now that the **Temperature** class can be formatted for readability, users need
+be able to check whether two instances of the class are equal. To support this
+test, the class needs to implement the **System.IEquatable** interface.
+
+To implement the interface, the class needs to inherit from
+**System.IEquatable** and define the `Equals()` instance method. The `Equals()`
+method needs to have the following signature:
+
+```powershell
+[bool] Equals([Object]$Other) {
+    # Implementation
+}
+```
+
+The signature that the interface requires is listed in the
+[reference documentation][02].
+
+For **Temperature**, the class should only support comparing two instances of
+the class. For any other value or type, including `$null`, it should return
+`$false`. When comparing two temperatures, the method should convert both
+values to Kelvin, since temperatures can be equivalent even with different
+scales.
+
+```powershell
+[bool] Equals([Object]$Other) {
+    # If the other object is null, we can&#x27;t compare it.
+    if ($null -eq $Other) {
+        return $false
+    }
+
+    # If the other object isn&#x27;t a temperature, we can&#x27;t compare it.
+    $OtherTemperature = $Other -as [Temperature]
+    if ($null -eq $OtherTemperature) {
+        return $false
+    }
+
+    # Compare the temperatures as Kelvin.
+    return $this.ToKelvin() -eq $OtherTemperature.ToKelvin()
+}
+```
+
+With the interface method implemented, the updated definition for
+**Temperature** is:
+
+```powershell
+class Temperature : System.IFormattable, System.IEquatable[Object] {
+    [float]            $Degrees
+    [TemperatureScale] $Scale
+
+    Temperature() {}
+    Temperature([float] $Degrees)          { $this.Degrees = $Degrees }
+    Temperature([TemperatureScale] $Scale) { $this.Scale = $Scale }
+    Temperature([float] $Degrees, [TemperatureScale] $Scale) {
+        $this.Degrees = $Degrees
+        $this.Scale = $Scale
+    }
+
+    [float] ToKelvin() {
+        switch ($this.Scale) {
+            Celsius { return $this.Degrees + 273.15 }
+            Fahrenheit { return ($this.Degrees + 459.67) * 5 / 9 }
+        }
+        return $this.Degrees
+    }
+    [float] ToCelsius() {
+        switch ($this.Scale) {
+            Fahrenheit { return ($this.Degrees - 32) * 5 / 9 }
+            Kelvin { return $this.Degrees - 273.15 }
+        }
+        return $this.Degrees
+    }
+    [float] ToFahrenheit() {
+        switch ($this.Scale) {
+            Celsius { return $this.Degrees * 9 / 5 + 32 }
+            Kelvin { return $this.Degrees * 9 / 5 - 459.67 }
+        }
+        return $this.Degrees
+    }
+
+    [string] ToString(
+        [string]$Format,
+        [System.IFormatProvider]$FormatProvider
+    ) {
+        # If format isn&#x27;t specified, use the defined scale.
+        if ([string]::IsNullOrEmpty($Format)) {
+            $Format = switch ($this.Scale) {
+                Celsius    { &#x27;C&#x27; }
+                Fahrenheit { &#x27;F&#x27; }
+                Kelvin     { &#x27;K&#x27; }
+            }
+        }
+        # If format provider isn&#x27;t specified, use the current culture.
+        if ($null -eq $FormatProvider) {
+            $FormatProvider = [cultureinfo]::CurrentCulture
+        }
+        # Format the temperature.
+        switch ($Format) {
+            &#x27;C&#x27; {
+                return $this.ToCelsius().ToString(&#x27;F2&#x27;, $FormatProvider) + &#x27;°C&#x27;
+            }
+            &#x27;F&#x27; {
+                return $this.ToFahrenheit().ToString(&#x27;F2&#x27;, $FormatProvider) + &#x27;°F&#x27;
+            }
+            &#x27;K&#x27; {
+                return $this.ToKelvin().ToString(&#x27;F2&#x27;, $FormatProvider) + &#x27;°K&#x27;
+            }
+        }
+        # If we get here, the format is invalid.
+        throw [System.FormatException]::new(
+            &quot;Unknown format: &#x27;$Format&#x27;. Valid Formats are &#x27;C&#x27;, &#x27;F&#x27;, and &#x27;K&#x27;&quot;
+        )
+    }
+
+    [string] ToString([string]$Format) {
+        return $this.ToString($Format, $null)
+    }
+
+    [string] ToString() {
+        return $this.ToString($null, $null)
+    }
+
+    [bool] Equals([Object]$Other) {
+        # If the other object is null, we can&#x27;t compare it.
+        if ($null -eq $Other) {
+            return $false
+        }
+
+        # If the other object isn&#x27;t a temperature, we can&#x27;t compare it.
+        $OtherTemperature = $Other -as [Temperature]
+        if ($null -eq $OtherTemperature) {
+            return $false
+        }
+
+        # Compare the temperatures as Kelvin.
+        return $this.ToKelvin() -eq $OtherTemperature.ToKelvin()
+    }
+}
+
+enum TemperatureScale {
+    Celsius    = 0
+    Fahrenheit = 1
+    Kelvin     = 2
+}
+```
+
+The following block shows how the updated class behaves:
+
+```powershell
+$Celsius    = [Temperature]::new()
+$Fahrenheit = [Temperature]::new(32, &#x27;Fahrenheit&#x27;)
+$Kelvin     = [Temperature]::new([TemperatureScale]::Kelvin)
+
+@&quot;
+Temperatures are: $Celsius, $Fahrenheit, $Kelvin
+`$Celsius.Equals(`$Fahrenheit) = $($Celsius.Equals($Fahrenheit))
+`$Celsius -eq `$Fahrenheit     = $($Celsius -eq $Fahrenheit)
+`$Celsius -ne `$Kelvin         = $($Celsius -ne $Kelvin)
+&quot;@
+```
+
+```Output
+Temperatures are: 0.00°C, 32.00°F, 0.00°K
+
+$Celsius.Equals($Fahrenheit) = True
+$Celsius -eq $Fahrenheit     = True
+$Celsius -ne $Kelvin         = True
+```
+
+#### Implementing IComparable
+
+The last interface to implement for the **Temperature** class is
+**System.IComparable**. When the class implements this interface, users can use
+the `-lt`, `-le`, `-gt`, and `-ge` operators to compare instances of the class.
+
+To implement the interface, the class needs to inherit from
+**System.IComparable** and define the `Equals()` instance method. The `Equals()`
+method needs to have the following signature:
+
+```powershell
+[int] CompareTo([Object]$Other) {
+    # Implementation
+}
+```
+
+The signature that the interface requires is listed in the
+[reference documentation][03].
+
+For **Temperature**, the class should only support comparing two instances of
+the class. Because the underlying type for the **Degrees** property, even when
+converted to a different scale, is a floating point number, the method can rely
+on the underlying type for the actual comparison.
+
+```powershell
+[int] CompareTo([Object]$Other) {
+    # If the other object&#x27;s null, consider this instance &quot;greater than&quot; it
+    if ($null -eq $Other) {
+        return 1
+    }
+    # If the other object isn&#x27;t a temperature, we can&#x27;t compare it.
+    $OtherTemperature = $Other -as [Temperature]
+    if ($null -eq $OtherTemperature) {
+        throw [System.ArgumentException]::new(
+            &quot;Object must be of type &#x27;Temperature&#x27;.&quot;
+        )
+    }
+    # Compare the temperatures as Kelvin.
+    return $this.ToKelvin().CompareTo($OtherTemperature.ToKelvin())
+}
+```
+
+The final definition for the **Temperature** class is:
+
+```powershell
+class Temperature : System.IFormattable,
+                    System.IComparable,
+
+# about_Classes_Inheritance
+
+System.IEquatable[Object] {
+    # Instance properties
+    [float]            $Degrees
+    [TemperatureScale] $Scale
+
+    # Constructors
+    Temperature() {}
+    Temperature([float] $Degrees)          { $this.Degrees = $Degrees }
+    Temperature([TemperatureScale] $Scale) { $this.Scale = $Scale }
+    Temperature([float] $Degrees, [TemperatureScale] $Scale) {
+        $this.Degrees = $Degrees
+        $this.Scale = $Scale
+    }
+
+    [float] ToKelvin() {
+        switch ($this.Scale) {
+            Celsius { return $this.Degrees + 273.15 }
+            Fahrenheit { return ($this.Degrees + 459.67) * 5 / 9 }
+        }
+        return $this.Degrees
+    }
+    [float] ToCelsius() {
+        switch ($this.Scale) {
+            Fahrenheit { return ($this.Degrees - 32) * 5 / 9 }
+            Kelvin { return $this.Degrees - 273.15 }
+        }
+        return $this.Degrees
+    }
+    [float] ToFahrenheit() {
+        switch ($this.Scale) {
+            Celsius { return $this.Degrees * 9 / 5 + 32 }
+            Kelvin { return $this.Degrees * 9 / 5 - 459.67 }
+        }
+        return $this.Degrees
+    }
+
+    [string] ToString(
+        [string]$Format,
+        [System.IFormatProvider]$FormatProvider
+    ) {
+        # If format isn&#x27;t specified, use the defined scale.
+        if ([string]::IsNullOrEmpty($Format)) {
+            $Format = switch ($this.Scale) {
+                Celsius    { &#x27;C&#x27; }
+                Fahrenheit { &#x27;F&#x27; }
+                Kelvin     { &#x27;K&#x27; }
+            }
+        }
+        # If format provider isn&#x27;t specified, use the current culture.
+        if ($null -eq $FormatProvider) {
+            $FormatProvider = [cultureinfo]::CurrentCulture
+        }
+        # Format the temperature.
+        switch ($Format) {
+            &#x27;C&#x27; {
+                return $this.ToCelsius().ToString(&#x27;F2&#x27;, $FormatProvider) + &#x27;°C&#x27;
+            }
+            &#x27;F&#x27; {
+                return $this.ToFahrenheit().ToString(&#x27;F2&#x27;, $FormatProvider) + &#x27;°F&#x27;
+            }
+            &#x27;K&#x27; {
+                return $this.ToKelvin().ToString(&#x27;F2&#x27;, $FormatProvider) + &#x27;°K&#x27;
+            }
+        }
+        # If we get here, the format is invalid.
+        throw [System.FormatException]::new(
+            &quot;Unknown format: &#x27;$Format&#x27;. Valid Formats are &#x27;C&#x27;, &#x27;F&#x27;, and &#x27;K&#x27;&quot;
+        )
+    }
+
+    [string] ToString([string]$Format) {
+        return $this.ToString($Format, $null)
+    }
+
+    [string] ToString() {
+        return $this.ToString($null, $null)
+    }
+
+    [bool] Equals([Object]$Other) {
+        # If the other object is null, we can&#x27;t compare it.
+        if ($null -eq $Other) {
+            return $false
+        }
+
+        # If the other object isn&#x27;t a temperature, we can&#x27;t compare it.
+        $OtherTemperature = $Other -as [Temperature]
+        if ($null -eq $OtherTemperature) {
+            return $false
+        }
+
+        # Compare the temperatures as Kelvin.
+        return $this.ToKelvin() -eq $OtherTemperature.ToKelvin()
+    }
+    [int] CompareTo([Object]$Other) {
+        # If the other object&#x27;s null, consider this instance &quot;greater than&quot; it
+        if ($null -eq $Other) {
+            return 1
+        }
+        # If the other object isn&#x27;t a temperature, we can&#x27;t compare it.
+        $OtherTemperature = $Other -as [Temperature]
+        if ($null -eq $OtherTemperature) {
+            throw [System.ArgumentException]::new(
+                &quot;Object must be of type &#x27;Temperature&#x27;.&quot;
+            )
+        }
+        # Compare the temperatures as Kelvin.
+        return $this.ToKelvin().CompareTo($OtherTemperature.ToKelvin())
+    }
+}
+
+enum TemperatureScale {
+    Celsius    = 0
+    Fahrenheit = 1
+    Kelvin     = 2
+}
+```
+
+With the full definition, users can format and compare instances of the class
+in PowerShell like any builtin type.
+
+```powershell
+$Celsius    = [Temperature]::new()
+$Fahrenheit = [Temperature]::new(32, &#x27;Fahrenheit&#x27;)
+$Kelvin     = [Temperature]::new([TemperatureScale]::Kelvin)
+
+@&quot;
+Temperatures are: $Celsius, $Fahrenheit, $Kelvin
+`$Celsius.Equals(`$Fahrenheit)    = $($Celsius.Equals($Fahrenheit))
+`$Celsius.Equals(`$Kelvin)        = $($Celsius.Equals($Kelvin))
+`$Celsius.CompareTo(`$Fahrenheit) = $($Celsius.CompareTo($Fahrenheit))
+`$Celsius.CompareTo(`$Kelvin)     = $($Celsius.CompareTo($Kelvin))
+`$Celsius -lt `$Fahrenheit        = $($Celsius -lt $Fahrenheit)
+`$Celsius -le `$Fahrenheit        = $($Celsius -le $Fahrenheit)
+`$Celsius -eq `$Fahrenheit        = $($Celsius -eq $Fahrenheit)
+`$Celsius -gt `$Kelvin            = $($Celsius -gt $Kelvin)
+&quot;@
+```
+
+```Output
+Temperatures are: 0.00°C, 32.00°F, 0.00°K
+$Celsius.Equals($Fahrenheit)    = True
+$Celsius.Equals($Kelvin)        = False
+$Celsius.CompareTo($Fahrenheit) = 0
+$Celsius.CompareTo($Kelvin)     = 1
+$Celsius -lt $Fahrenheit        = False
+$Celsius -le $Fahrenheit        = True
+$Celsius -eq $Fahrenheit        = True
+$Celsius -gt $Kelvin            = True
+```
+
+# about_Classes_Inheritance
+
+### Example 3 - Inheriting from a generic base class
+
+This example shows how you can derive from a generic type as long as the
+type parameter is already defined at parse time.
+
+#### Using a built-in class as the type parameter
+
+Run the following code block. It shows how a new class can inherit from a
+generic type as long as the type parameter is already defined at parse time.
+
+```powershell
+class ExampleStringList : System.Collections.Generic.List[string] {}
+
+$List = [ExampleStringList]::new()
+$List.AddRange([string[]]@(&#x27;a&#x27;,&#x27;b&#x27;,&#x27;c&#x27;))
+$List.GetType() | Format-List -Property Name, BaseType
+$List
+```
+
+```Output
+Name     : ExampleStringList
+BaseType : System.Collections.Generic.List`1[System.String]
+
+a
+b
+c
+```
+
+#### Using a custom class as the type parameter
+
+The next code block first defines a new class, **ExampleItem**,
+with a single instance property and the `ToString()` method. Then it defines
+the **ExampleItemList** class inheriting from the
+**System.Collections.Generic.List** base class with **ExampleItem** as the type
+parameter.
+
+Copy the entire code block and run it as a single statement.
+
+```powershell
+class ExampleItem {
+    [string] $Name
+    [string] ToString() { return $this.Name }
+}
+class ExampleItemList : System.Collections.Generic.List[ExampleItem] {}
+```
+
+```Output
+An error occurred while creating the pipeline.
+    + CategoryInfo          : NotSpecified: (:) [], ParentContainsErrorRe
+   cordException
+    + FullyQualifiedErrorId : RuntimeException
+```
+
+Running the entire code block raises an error because PowerShell hasn&#x27;t loaded
+the **ExampleItem** class into the runtime yet. You can&#x27;t use class name as the
+type parameter for the **System.Collections.Generic.List** base class yet.
+
+Run the following code blocks in the order they&#x27;re defined.
+
+```powershell
+class ExampleItem {
+    [string] $Name
+    [string] ToString() { return $this.Name }
+}
+```
+
+```powershell
+class ExampleItemList : System.Collections.Generic.List[ExampleItem] {}
+```
+
+This time, PowerShell doesn&#x27;t raise any errors. Both classes are now defined.
+Run the following code block to view the behavior of the new class.
+
+```powershell
+$List = [ExampleItemList]::new()
+$List.AddRange([ExampleItem[]]@(
+    [ExampleItem]@{ Name = &#x27;Foo&#x27; }
+    [ExampleItem]@{ Name = &#x27;Bar&#x27; }
+    [ExampleItem]@{ Name = &#x27;Baz&#x27; }
+))
+$List.GetType() | Format-List -Property Name, BaseType
+$List
+```
+
+```output
+Name     : ExampleItemList
+BaseType : System.Collections.Generic.List`1[ExampleItem]
+
+Name
+----
+Foo
+Bar
+Baz
+```
+
+#### Deriving a generic with a custom type parameter in a module
+
+The following code blocks show how you can define a class that inherits from a
+generic base class that uses a custom type for the type parameter.
+
+Save the following code block as `GenericExample.psd1`.
+
+```powershell
+@{
+    RootModule        = &#x27;GenericExample.psm1&#x27;
+    ModuleVersion     = &#x27;0.1.0&#x27;
+    GUID              = &#x27;2779fa60-0b3b-4236-b592-9060c0661ac2&#x27;
+}
+```
+
+Save the following code block as `GenericExample.InventoryItem.psm1`.
+
+```powershell
+class InventoryItem {
+    [string] $Name
+    [int]    $Count
+
+    InventoryItem() {}
+    InventoryItem([string]$Name) {
+        $this.Name = $Name
+    }
+    InventoryItem([string]$Name, [int]$Count) {
+        $this.Name  = $Name
+        $this.Count = $Count
+    }
+
+    [string] ToString() {
+        return &quot;$($this.Name) ($($this.Count))&quot;
+    }
+}
+```
+
+Save the following code block as `GenericExample.psm1`.
+
+```powershell
+using namespace System.Collections.Generic
+using module ./GenericExample.InventoryItem.psm1
+
+class Inventory : List[InventoryItem] {}
+
+# Define the types to export with type accelerators.
+$ExportableTypes =@(
+    [InventoryItem]
+    [Inventory]
+)
+
+# Get the internal TypeAccelerators class to use its static methods.
+$TypeAcceleratorsClass = [psobject].Assembly.GetType(
+    &#x27;System.Management.Automation.TypeAccelerators&#x27;
+)
+
+# Ensure none of the types would clobber an existing type accelerator.
+
+# If a type accelerator with the same name exists, throw an exception.
+$ExistingTypeAccelerators = $TypeAcceleratorsClass::Get
+foreach ($Type in $ExportableTypes) {
+    if ($Type.FullName -in $ExistingTypeAccelerators.Keys) {
+        $Message = @(
+            &quot;Unable to register type accelerator &#x27;$($Type.FullName)&#x27;&quot;
+            &#x27;Accelerator already exists.&#x27;
+        ) -join &#x27; - &#x27;
+
+        throw [System.Management.Automation.ErrorRecord]::new(
+            [System.InvalidOperationException]::new($Message),
+            &#x27;TypeAcceleratorAlreadyExists&#x27;,
+            [System.Management.Automation.ErrorCategory]::InvalidOperation,
+            $Type.FullName
+        )
+    }
+}
+
+# Add type accelerators for every exportable type.
+foreach ($Type in $ExportableTypes) {
+    $TypeAcceleratorsClass::Add($Type.FullName, $Type)
+}
+
+# Remove type accelerators when the module is removed.
+$MyInvocation.MyCommand.ScriptBlock.Module.OnRemove = {
+    foreach($Type in $ExportableTypes) {
+        $TypeAcceleratorsClass::Remove($Type.FullName)
+    }
+}.GetNewClosure()
+```
+
+&gt; [!TIP]
+&gt; The root module adds the custom types to PowerShell&#x27;s type accelerators. This
+&gt; pattern enables module users to immediately access IntelliSense and
+&gt; autocomplete for the custom types without needing to use the `using module`
+&gt; statement first.
+&gt;
+&gt; For more information about this pattern, see the &quot;Exporting with type
+&gt; accelerators&quot; section of [about_Classes][04].
+
+Import the module and verify the output.
+
+```powershell
+Import-Module ./GenericExample.psd1
+
+$Inventory = [Inventory]::new()
+$Inventory.GetType() | Format-List -Property Name, BaseType
+
+$Inventory.Add([InventoryItem]::new(&#x27;Bucket&#x27;, 2))
+$Inventory.Add([InventoryItem]::new(&#x27;Mop&#x27;))
+$Inventory.Add([InventoryItem]@{ Name = &#x27;Broom&#x27; ; Count = 4 })
+$Inventory
+```
+
+```Output
+Name     : Inventory
+BaseType : System.Collections.Generic.List`1[InventoryItem]
+
+Name   Count
+----   -----
+Bucket     2
+Mop        0
+Broom      4
+```
+
+The module loads without errors because the **InventoryItem** class is defined
+in a different module file than the **Inventory** class. Both classes are
+available to module users.
+
+## Inheriting a base class
+
+When a class inherits from a base class, it inherits the properties and methods
+of the base class. It doesn&#x27;t inherit the base class constructors directly,
+but it can call them.
+
+When the base class is defined in .NET rather than PowerShell, note that:
+
+- PowerShell classes can&#x27;t inherit from sealed classes.
+- When inheriting from a generic base class, the type parameter for the generic
+  class can&#x27;t be the derived class. Using the derived class as the type
+  parameter raises a parse error.
+
+To see how inheritance and overriding works for derived classes, see
+[Example 1][05].
+
+# about_Classes_Inheritance
+
+### Derived class constructors
+
+Derived classes don&#x27;t directly inherit the constructors of the base class. If
+the base class defines a default constructor and the derived class doesn&#x27;t
+define any constructors, new instances of the derived class use the base class
+default constructor. If the base class doesn&#x27;t define a default constructor,
+derived class must explicitly define at least one constructor.
+
+Derived class constructors can invoke a constructor from the base class with
+the `base` keyword. If the derived class doesn&#x27;t explicitly invoke a
+constructor from the base class, it invokes the default constructor for the
+base class instead.
+
+To invoke a nondefault base constructor, add `: base(&lt;parameters&gt;)` after the
+constructor parameters and before the body block.
+
+```Syntax
+class &lt;derived-class&gt; : &lt;base-class&gt; {
+    &lt;derived-class&gt;(&lt;derived-parameters&gt;) : &lt;base-class&gt;(&lt;base-parameters&gt;) {
+        # initialization code
+    }
+}
+```
+
+When defining a constructor that calls a base class constructor, the parameters
+can be any of the following items:
+
+- The variable of any parameter on the derived class constructor.
+- Any static value.
+- Any expression that evaluates to a value of the parameter type.
+
+The **Illustration** class in [Example 1][05] shows how a derived class can use
+the base class constructors.
+
+### Derived class methods
+
+When a class derives from a base class, it inherits the methods of the base
+class and their overloads. Any method overloads defined on the base class,
+including hidden methods, are available on the derived class.
+
+A derived class can override an inherited method overload by redefining it in
+the class definition. To override the overload, the parameter types must be the
+same as for the base class. The output type for the overload can be different.
+
+Unlike constructors, methods can&#x27;t use the `: base(&lt;parameters&gt;)` syntax to
+invoke a base class overload for the method. The redefined overload on the
+derived class completely replaces the overload defined by the base class. To
+call the base class method for an instance, cast the instance variable
+(`$this`) to the base class before calling the method.
+
+The following snippet shows how a derived class can call the base class method.
+
+```powershell
+class BaseClass {
+    [bool] IsTrue() { return $true }
+}
+class DerivedClass : BaseClass {
+    [bool] IsTrue()     { return $false }
+    [bool] BaseIsTrue() { return ([BaseClass]$this).IsTrue() }
+}
+
+@&quot;
+[BaseClass]::new().IsTrue()        = $([BaseClass]::new().IsTrue())
+[DerivedClass]::new().IsTrue()     = $([DerivedClass]::new().IsTrue())
+[DerivedClass]::new().BaseIsTrue() = $([DerivedClass]::new().BaseIsTrue())
+&quot;@
+```
+
+```Output
+[BaseClass]::new().IsTrue()        = True
+[DerivedClass]::new().IsTrue()     = False
+[DerivedClass]::new().BaseIsTrue() = True
+```
+
+For an extended sample showing how a derived class can override inherited
+methods, see the **Illustration** class in
+[Example 1][05].
+
+### Derived class properties
+
+When a class derives from a base class, it inherits the properties of the base
+class. Any properties defined on the base class, including hidden properties,
+are available on the derived class.
+
+A derived class can override an inherited property by redefining it in the
+class definition. The property on the derived class uses the redefined type and
+default value, if any. If the inherited property defined a default value and
+the redefined property doesn&#x27;t, the inherited property has no default value.
+
+If a derived class doesn&#x27;t override a static property, accessing the static
+property through the derived class accesses the static property of the base
+class. Modifying the property value through the derived class modifies the
+value on the base class. Any other derived class that doesn&#x27;t override the
+static property also uses the value of the property on the base class. Updating
+the value of an inherited static property in a class that doesn&#x27;t override the
+property might have unintended effects for classes derived from the same base
+class.
+
+[Example 1][05] shows how derived classes that inherit, extend, and override
+the base class properties.
+
+### Deriving from generics
+
+When a class derives from a generic, the type parameter must already be defined
+before PowerShell parses the derived class. If the type parameter for the
+generic is a PowerShell class or enumeration defined in the same file or
+code block, PowerShell raises an error.
+
+To derive a class from a generic base class with a custom type as the type
+parameter, define the class or enumeration for the type parameter in a
+different file or module and use the `using module` statement to load the type
+definition.
+
+For an example showing how to inherit from a generic base class, see
+[Example 3][06].
+
+### Useful classes to inherit
+
+There are a few classes that can be useful to inherit when authoring PowerShell
+modules. This section lists a few base classes and what a class derived from
+them can be used for.
+
+- **System.Attribute** - Derive classes to define attributes that can be used
+  for variables, parameters, class and enumeration definitions, and more.
+- **System.Management.Automation.ArgumentTransformationAttribute** - Derive
+  classes to handle converting input for a variable or parameter into a
+  specific data type.
+- **System.Management.Automation.ValidateArgumentsAttribute** - Derive classes
+  to apply custom validation to variables, parameters, and class properties.
+- **System.Collections.Generic.List** - Derive classes to make creating and
+  managing lists of a specific data type easier.
+- **System.Exception** - Derive classes to define custom errors.
+
+## Implementing interfaces
+
+A PowerShell class that implements an interface must implement all the members
+of that interface. Omitting the implementation interface members causes a
+parse-time error in the script.
+
+&gt; [!NOTE]
+&gt; PowerShell doesn&#x27;t support declaring new interfaces in PowerShell script.
+&gt; Instead, interfaces must be declared in .NET code and added to the session
+&gt; with the `Add-Type` cmdlet or the `using assembly` statement.
+
+When a class implements an interface, it can be used like any other class that
+implements that interface. Some commands and operations limit their supported
+types to classes that implement a specific interface.
+
+To review a sample implementation of interfaces, see [Example 2][07].
+
+# about_Classes_Inheritance
+
+### Useful interfaces to implement
+
+There are a few interface classes that can be useful to inherit when authoring
+PowerShell modules. This section lists a few base classes and what a class
+derived from them can be used for.
+
+- **System.IEquatable** - This interface enables users to compare two instances
+  of the class. When a class doesn&#x27;t implement this interface, PowerShell
+  checks for equivalency between two instances using reference equality. In
+  other words, an instance of the class only equals itself, even if the
+  property values on two instances are the same.
+- **System.IComparable** - This interface enables users to compare instances of
+  the class with the `-le`, `-lt`, `-ge`, and `-gt` comparison operators. When
+  a class doesn&#x27;t implement this interface, those operators raise an error.
+- **System.IFormattable** - This interface enables users to format instances of
+  the class into different strings. This is useful for classes that have more
+  than one standard string representation, like budget items, bibliographies,
+  and temperatures.
+- **System.IConvertible** - This interface enables users to convert instances
+  of the class to other runtime types. This is useful for classes that have an
+  underlying numerical value or can be converted to one.
+
+## Limitations
+
+- PowerShell doesn&#x27;t support defining interfaces in script code.
+
+  Workaround: Define interfaces in C# and reference the assembly that defines
+  the interfaces.
+- PowerShell classes can only inherit from one base class.
+
+  Workaround: Class inheritance is transitive. A derived class can inherit from
+  another derived class to get the properties and methods of a base class.
+- When inheriting from a generic class or interface, the type parameter for the
+  generic must already be defined. A class can&#x27;t define itself as the type
+  parameter for a class or interface.
+
+  Workaround: To derive from a generic base class or interface, define the
+  custom type in a different `.psm1` file and use the `using module` statement
+  to load the type. There&#x27;s no workaround for a custom type to use itself as
+  the type parameter when inheriting from a generic.
+
+## See also
+
+- [about_Classes][08]
+- [about_Classes_Constructors][09]
+- [about_Classes_Methods][10]
+- [about_Classes_Properties][11]
+
+&lt;!-- Link reference definitions --&gt;
+[01]: /dotnet/api/system.iformattable#methods
+[02]: /dotnet/api/system.iequatable-1#methods
+[03]: /dotnet/api/system.icomparable#methods
+[04]: about_Classes.md#export-classes-with-type-accelerators
+[05]: #example-1---inheriting-and-overriding-from-a-base-class
+[06]: #example-3---inheriting-from-a-generic-base-class
+[07]: #example-2---implementing-interfaces
+[08]: about_Classes.md
+[09]: about_Classes_Constructors.md
+[10]: about_Classes_Inheritance.md
+[11]: about_Classes_Properties.md</pre></section>

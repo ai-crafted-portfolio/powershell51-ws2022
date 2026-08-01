@@ -1,0 +1,348 @@
+<!doctype html><meta charset="utf-8"><section class="jp-official"><h1>内なるメンバーについて</h1>
+<h2>短編説明</h2>
+<p>PowerShell の内在メンバーに関する情報を提供し,すべての PowerShell オブジェクトに利用できます.</p>
+<h2>長い説明</h2>
+<p>オブジェクトが作成されたとき,PowerShellは各オブジェクトにいくつかの"隠れた"属性と方法を追加します.これらの属性と方法は _intrinsic members_として知られています.これらの内在メンバーは通常視界から隠されています.これらの隠れたメンバーは, [Get-Member][07の<strong>Force</strong>パラメータを使用して見ることができます.</p>
+<h2>対象ビュー</h2>
+<p>内固いメンバーには,オブジェクトのビューを表す<strong>MemberSet</strong>のプロパティが集まっている.MemberSet**のプロパティについての詳細については,PSMemberSet[08]を参照してください.</p>
+<p>PowerShell オブジェクトはそれぞれ以下の性質を含んでいます.</p>
+<ul>
+<li>-<code>psbase</code></li>
+</ul>
+<p><code>psbase</code><strong>MemberSet</strong>は,拡張や適応なしにベースオブジェクトのメンバーを含んでいます.オブジェクトタイプに応じて,それは .NETインスタンスのいずれかであり, で包まれたものです.<code>[psobject]</code>または,包装がない場合は,入力オブジェクトそのものです.</p>
+<ul>
+<li>-<code>psadapted</code></li>
+</ul>
+<p><code>psadapted</code><strong>MemberSet</strong>は,ベースオブジェクトと,適応したメンバーが,存在する場合,表示される.適応したメンバーは,拡張型システム (ETS) によって追加されます.</p>
+<ul>
+<li>-<code>psextended</code></li>
+</ul>
+<p><code>psextended</code><strong>MemberSet</strong> <em>only</em> は, [Types.ps1xml][05]ファイルと [Add-Member][06] cmdlet で追加されたメンバーを表示しています.任意のオブジェクトは,実行時に  を使って拡張できます.<code>Add-Member</code>cmdletです.</p>
+<ul>
+<li>-<code>psobject</code></li>
+</ul>
+<p><code>psobject</code><strong>MemberSet</strong>は,方法,性質,およびその物に関するその他の情報を含む任意のオブジェクトの反映の豊富な情報源です.</p>
+<h3>例文</h3>
+<p>この例では, <code>$hash</code>ユーザに関する情報を含んでいるハッシュテーブルです. の=================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================<code>Get-Member</code>対象の内在的なメンバーを示しています.</p>
+<pre><code class="language-powershell">$hash = @{
+    Age  = 33
+    Name = 'Bob'
+}
+
+$hash | Get-Member -Force -MemberType MemberSet, CodeProperty
+</code></pre>
+<pre><code class="language-Output">   TypeName: System.Collections.Hashtable
+
+Name        MemberType   Definition
+----        ----------   ----------
+pstypenames CodeProperty System.Collections.ObjectModel.Collection`1[[System.String, System.Private.CoreLib, Version=7…
+psadapted   MemberSet    psadapted {Item, IsReadOnly, IsFixedSize, IsSynchronized, Keys, Values, SyncRoot, Count, Add,…
+psbase      MemberSet    psbase {Item, IsReadOnly, IsFixedSize, IsSynchronized, Keys, Values, SyncRoot, Count, Add, Cl…
+psextended  MemberSet    psextended {}
+psobject    MemberSet    psobject {Members, Properties, Methods, ImmediateBaseObject, BaseObject, TypeNames, get_Membe…
+</code></pre>
+<p>を使って<code>psobject</code> を使用するとは似ている.<code>Get-Member</code>例えば,オブジェクトの性質とその値をリストすることができます.</p>
+<pre><code class="language-powershell">$hash.psobject.Properties | Select-Object Name, MemberType, Value
+</code></pre>
+<pre><code class="language-Output">Name           MemberType                    Value
+----           ----------                    -----
+IsReadOnly       Property                    False
+IsFixedSize      Property                    False
+IsSynchronized   Property                    False
+Keys             Property              {Age, Name}
+Values           Property                {33, Bob}
+SyncRoot         Property {[Age, 33], [Name, Bob]}
+Count            Property                        2
+</code></pre>
+<p>それを,ハッシュテーブルをPSCustomObject**に変換して作成したオブジェクトと比較してください.</p>
+<pre><code class="language-powershell">$user = [pscustomobject]$hash
+$user.psobject.Properties | Select-Object Name, MemberType, Value
+</code></pre>
+<pre><code class="language-Output">Name   MemberType Value
+----   ---------- -----
+Age  NoteProperty    33
+Name NoteProperty   Bob
+</code></pre>
+<p>ハッシュテーブルからのキーがPSCustomObjectのプロパティに変換されていることに注意してください.新しいプロパティは,現在,  の一部です.<code>psextended</code><strong>MemberSet</strong>.</p>
+<pre><code class="language-powershell">$user | Get-Member -Force -MemberType MemberSet, CodeProperty
+</code></pre>
+<pre><code class="language-Output">   TypeName: System.Management.Automation.PSCustomObject
+
+Name        MemberType   Definition
+----        ----------   ----------
+pstypenames CodeProperty System.Collections.ObjectModel.Collection`1[[System.String, System.Private.CoreLib, Version=7…
+psadapted   MemberSet    psadapted {ToString, GetType, Equals, GetHashCode}
+psbase      MemberSet    psbase {ToString, GetType, Equals, GetHashCode}
+psextended  MemberSet    psextended {Age, Name}
+psobject    MemberSet    psobject {Members, Properties, Methods, ImmediateBaseObject, BaseObject, TypeNames, get_Membe…
+</code></pre>
+<h2>情報の種類</h2>
+<p><code>pstypenames</code><strong>CodeProperty</strong>は,相続順でオブジェクトタイプ階層をリストする.例えば:</p>
+<pre><code class="language-powershell">$file = Get-Item C:\temp\test.txt
+$file.pstypenames
+</code></pre>
+<pre><code class="language-Output">System.IO.FileInfo
+System.IO.FileSystemInfo
+System.MarshalByRefObject
+System.Object
+</code></pre>
+<p>輸出は,最も特定のオブジェクトタイプから始まる.<code>System.IO.FileInfo</code>続きは,最も一般的なタイプまで続く.<code>System.Object</code> .</p>
+<h2>方法</h2>
+<p>PowerShellは,すべての PowerShell オブジェクトに2つの隠された方法を追加します.これらの方法は,  を使って目に見えない.<code>Get-Member -Force</code>コマンドまたはタブの完了.</p>
+<h3>ForEach() とWhere()</h3>
+<p><code>ForEach()</code>そして,<code>Where()</code>PowerShell オブジェクトのすべてにはメソッドが利用できます.しかし,コレクションと作業する際に最も有用です.これらの方法を使用する方法については,[about_Arrays][01]を参照してください.</p>
+<h2>資産は</h2>
+<p>すべてのスケールタイプには,ベースタイプに <strong>Count</strong>または <strong>Length</strong>のプロパティがない.PowerShellは,すべてのスケールタイプに内在メンバーとして欠けているプロパティを追加します.</p>
+<p>&gt; [!NOTE] &gt;初期化されていない変数は暗示的に行われます.<code>$null</code>  <code>$null</code>大きさの大きさで,内在的な数と長さは 0.の内在的な数と長さがあります.</p>
+<p><strong>Count</strong>と <strong>Length</strong>の属性は似ているが,データタイプによって異なる機能がある.例えば,文字列の <strong>Length</strong>は文字列の文字数である. <strong>Count</strong>の属性はオブジェクトのインスタンスの数である.</p>
+<pre><code class="language-powershell">PS&gt; $str = 'string'
+PS&gt; $str.Length
+6
+PS&gt; $str.Count
+1
+</code></pre>
+<p>これらのプロパティについての詳細については,[about_Properties][04]を参照してください.</p>
+<h2>アレイインデックスするスケール型</h2>
+<p>対象がインデックスされた集合でない場合,最初の要素にアクセスするためのインデックスオペレータを使用して,オブジェクトそのものが返されます.インデックス値は最初の要素返信を超えてです.<code>$null</code> .</p>
+<pre><code>PS&gt; (2)[0]
+2
+PS&gt; (2)[-1]
+2
+PS&gt; (2)[1] -eq $null
+True
+PS&gt; (2)[0,0] -eq $null
+True
+</code></pre>
+<p>詳細については[about_Operators][03] を参照してください.</p>
+<h2><code>new()</code>タイプのための方法</h2>
+<p>PowerShell 5.0 から始まって,PowerShell は静止を追加します.<code>new()</code>すべての .NET タイプのための方法.以下の例は同じ結果を生む.</p>
+<pre><code class="language-powershell">$expression = New-Object -TypeName regex -ArgumentList 'pattern'
+$expression = [regex]::new('pattern')
+</code></pre>
+<p>を使って<code>new()</code> を使用するよりも優れたパフォーマンスがあります.<code>New-Object</code> .</p>
+<p>詳細については[about_Classes][02] を参照してください.</p>
+<p>&lt;!--リンク参照 --&gt; [01]: about_Arrays.md [02]: about_Classes.md [03]: about_Operators.md#index-operator-- [04]: about_Properties.md [05]: about_Types.ps1xml.md [06]: xref:Microsoft.PowerShell.Utility.Add-Member [07]: xref:Microsoft.PowerShell.Utility.Get-Member [08]: xref:System.Management.Automation.PSMemberSet</p></section><section class="en-original"><pre class="source-original"># About intrinsic members
+
+## Short description
+
+Provides information about PowerShell&#x27;s intrinsic members that are available to
+all PowerShell objects.
+
+## Long description
+
+When objects are created, PowerShell adds some &quot;hidden&quot; properties and methods
+to each object. These properties and methods are known as _intrinsic members_.
+These intrinsic members are normally hidden from view. These hidden members can
+be seen using the **Force** parameter of [Get-Member][07].
+
+## Object views
+
+The intrinsic members include a set of **MemberSet** properties that represent
+a view of the object. For more information about **MemberSet** properties, see
+[PSMemberSet][08].
+
+Every PowerShell object includes the following properties.
+
+- `psbase`
+
+  The `psbase` **MemberSet** contains the members of the base object without
+  extension or adaptation. Depending on the object type it&#x27;s either a .NET
+  instance wrapped by a `[psobject]` instance or, if there&#x27;s no wrapper, it&#x27;s
+  the input object itself.
+
+- `psadapted`
+
+  The `psadapted` **MemberSet** shows the base object plus the adapted members,
+  if present. Adapted members are added by the Extended Type System (ETS).
+
+- `psextended`
+
+  The `psextended` **MemberSet** _only_ shows the members added by the
+  [Types.ps1xml][05] files and the [Add-Member][06] cmdlet. Any object can be
+  extended at runtime using the `Add-Member` cmdlet.
+
+- `psobject`
+
+  The `psobject` **MemberSet** is a rich source of reflection for any object that
+  includes methods, properties, and other information about the object.
+
+### Examples
+
+For this example, `$hash` is a hashtable containing information about a user.
+The **Force** parameter of `Get-Member` shows us the intrinsic members of the
+object.
+
+```powershell
+$hash = @{
+    Age  = 33
+    Name = &#x27;Bob&#x27;
+}
+
+$hash | Get-Member -Force -MemberType MemberSet, CodeProperty
+```
+
+```Output
+   TypeName: System.Collections.Hashtable
+
+Name        MemberType   Definition
+----        ----------   ----------
+pstypenames CodeProperty System.Collections.ObjectModel.Collection`1[[System.String, System.Private.CoreLib, Version=7…
+psadapted   MemberSet    psadapted {Item, IsReadOnly, IsFixedSize, IsSynchronized, Keys, Values, SyncRoot, Count, Add,…
+psbase      MemberSet    psbase {Item, IsReadOnly, IsFixedSize, IsSynchronized, Keys, Values, SyncRoot, Count, Add, Cl…
+psextended  MemberSet    psextended {}
+psobject    MemberSet    psobject {Members, Properties, Methods, ImmediateBaseObject, BaseObject, TypeNames, get_Membe…
+```
+
+Using `psobject` is similar to using `Get-Member`, but provides more
+flexibility. For example, you can enumerate the properties of an object and
+their values.
+
+```powershell
+$hash.psobject.Properties | Select-Object Name, MemberType, Value
+```
+
+```Output
+Name           MemberType                    Value
+----           ----------                    -----
+IsReadOnly       Property                    False
+IsFixedSize      Property                    False
+IsSynchronized   Property                    False
+Keys             Property              {Age, Name}
+Values           Property                {33, Bob}
+SyncRoot         Property {[Age, 33], [Name, Bob]}
+Count            Property                        2
+```
+
+Compare that to the object created by converting the hashtable to a
+**PSCustomObject**.
+
+```powershell
+$user = [pscustomobject]$hash
+$user.psobject.Properties | Select-Object Name, MemberType, Value
+```
+
+```Output
+Name   MemberType Value
+----   ---------- -----
+Age  NoteProperty    33
+Name NoteProperty   Bob
+```
+
+Notice that the keys from the hashtable have been converted to properties in
+the **PSCustomObject**. The new properties are now part of the `psextended`
+**MemberSet**.
+
+```powershell
+$user | Get-Member -Force -MemberType MemberSet, CodeProperty
+```
+
+```Output
+   TypeName: System.Management.Automation.PSCustomObject
+
+Name        MemberType   Definition
+----        ----------   ----------
+pstypenames CodeProperty System.Collections.ObjectModel.Collection`1[[System.String, System.Private.CoreLib, Version=7…
+psadapted   MemberSet    psadapted {ToString, GetType, Equals, GetHashCode}
+psbase      MemberSet    psbase {ToString, GetType, Equals, GetHashCode}
+psextended  MemberSet    psextended {Age, Name}
+psobject    MemberSet    psobject {Members, Properties, Methods, ImmediateBaseObject, BaseObject, TypeNames, get_Membe…
+```
+
+## Type information
+
+The `pstypenames` **CodeProperty** lists the object type hierarchy in order of
+inheritance. For example:
+
+```powershell
+$file = Get-Item C:\temp\test.txt
+$file.pstypenames
+```
+
+```Output
+System.IO.FileInfo
+System.IO.FileSystemInfo
+System.MarshalByRefObject
+System.Object
+```
+
+The Output starts with the most specific object type, `System.IO.FileInfo`, and
+continues down to the most generic type, `System.Object`.
+
+## Methods
+
+PowerShell adds two hidden methods to all PowerShell objects. These methods are
+not visible using the `Get-Member -Force` command or tab completion.
+
+### ForEach() and Where()
+
+The `ForEach()` and `Where()` methods are available to all PowerShell objects.
+However, they&#x27;re most useful when working with collections. For more
+information on how to use these methods, see [about_Arrays][01].
+
+## Properties
+
+Not all scalar type have **Count** or **Length** properties in the base type.
+PowerShell adds the missing property as an intrinsic member for all scalar
+types.
+
+&gt; [!NOTE]
+&gt; Uninitialized variables are implicitly `$null`. `$null` is scalar and has an
+&gt; intrinsic **Count** and **Length** of 0.
+
+While the **Count** and **Length** properties are similar, they may work
+differently depending on the data type. For example, the **Length** of a string
+is the number of characters in the string. The **Count** property is the number
+of instances of the object.
+
+```powershell
+PS&gt; $str = &#x27;string&#x27;
+PS&gt; $str.Length
+6
+PS&gt; $str.Count
+1
+```
+
+For more information about these properties, see [about_Properties][04].
+
+## Array indexing scalar types
+
+When an object isn&#x27;t an indexed collection, using the index operator to access
+the first element returns the object itself. Index values beyond the first
+element return `$null`.
+
+```
+PS&gt; (2)[0]
+2
+PS&gt; (2)[-1]
+2
+PS&gt; (2)[1] -eq $null
+True
+PS&gt; (2)[0,0] -eq $null
+True
+```
+
+For more information, see [about_Operators][03].
+
+## `new()` method for types
+
+Beginning in PowerShell 5.0, PowerShell adds a static `new()` method for all
+.NET types. The following examples produce the same result.
+
+```powershell
+$expression = New-Object -TypeName regex -ArgumentList &#x27;pattern&#x27;
+$expression = [regex]::new(&#x27;pattern&#x27;)
+```
+
+Using the `new()` method performs better than using `New-Object`.
+
+For more information, see [about_Classes][02].
+
+&lt;!-- link references --&gt;
+[01]: about_Arrays.md
+[02]: about_Classes.md
+[03]: about_Operators.md#index-operator--
+[04]: about_Properties.md
+[05]: about_Types.ps1xml.md
+[06]: xref:Microsoft.PowerShell.Utility.Add-Member
+[07]: xref:Microsoft.PowerShell.Utility.Get-Member
+[08]: xref:System.Management.Automation.PSMemberSet</pre></section>

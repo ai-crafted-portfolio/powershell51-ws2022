@@ -1,0 +1,652 @@
+<!doctype html><meta charset="utf-8"><section class="jp-official"><h1>about_Scriptsについて</h1>
+<h2>短編説明</h2>
+<p>PowerShellでスクリプトを実行し,書き込む方法を説明します.</p>
+<h2>長い説明</h2>
+<p>スクリプトは,PowerShellコマンド"つまたは複数のコマンドを含む素朴なテキストファイルです.PowerShellスクリプトには,<code>.ps1</code>ファイル拡張子です.</p>
+<p>スクリプトを実行することは,cmdletを実行するようなものです. スクリプトのパスとファイル名を入力し,パラメータを使用してデータを入力し,オプションをセットします. スクリプトをコンピュータで実行するか,別のコンピュータでリモートセッションで実行することができます.</p>
+<p>スクリプトを書くことで,コマンドが後に使用されやすく,他の人と共有されやすくなります.最も重要なことは,スクリプトの経路とファイル名を入力してコマンドを実行できます.スクリプトはファイル内の単一のコマンドと同じくらいシンプル,または複雑なプログラムと同じくらい広範です.</p>
+<p>スクリプトには追加機能があり,例えば <code>#Requires</code>特殊なコメント,パラメータの使用,データセクションのサポート,セキュリティのためのデジタルサインングなどもできます. また,スクリプトやスクリプト内の任意の機能のためにヘルプトピックも書きることができます.</p>
+<h2>スクリプトを実行する方法</h2>
+<p>Windowsでスクリプトを実行する前に,デフォルトのPowerShell実行ポリシーを変更する必要があります.実行ポリシーは,Windows以外のプラットフォームで実行されているPowerShellに適用されません.</p>
+<p>デフォルト実行ポリシーでは,<code>Restricted</code>ローカルコンピュータに書き込むスクリプトを含むすべてのスクリプトが実行されないようにします.詳細については,[about_Execution_Policies][01]を参照してください.</p>
+<p>実行ポリシーはレジストリに保存されているため,各コンピュータで一度だけ変更する必要があります.</p>
+<p>実行ポリシーを変更するには,次の手順を使用します.</p>
+<p>コマンドプロンプトで,入力してください:</p>
+<pre><code class="language-powershell">Set-ExecutionPolicy AllSigned
+</code></pre>
+<pre><code class="language-powershell">Set-ExecutionPolicy RemoteSigned
+</code></pre>
+<p>変更は直ちに有効になります.</p>
+<p>スクリプトを実行するには,脚本ファイルへの完全な名前と完全な経路を入力してください.</p>
+<p>例えば,C:\Scripts ディレクトリでGet-ServiceLog.ps1スクリプトを実行するには,入力してください:</p>
+<pre><code class="language-powershell">C:\Scripts\Get-ServiceLog.ps1
+</code></pre>
+<p>現在のディレクトリでスクリプトを実行するには,現在のディレクトリへの経路を入力するか,または現在のディレクトリを表す点を使用し,その後は経路バックスラッシュ () が表示されます.<code>.\</code>) でした.</p>
+<p>たとえば,ローカルディレクトリで ServicesLog.ps1 スクリプトを実行するには,入力してください:</p>
+<pre><code class="language-powershell">.\Get-ServiceLog.ps1
+</code></pre>
+<p>スクリプトにパラメータがある場合は,スクリプトファイル名の後でパラメータとパラメータ値を入力してください.</p>
+<p>例えば,次のコマンドは,Get-ServiceLog脚本の ServiceName パラメータを使用して,WinRMサービス活動のログを要求します.</p>
+<pre><code class="language-powershell">.\Get-ServiceLog.ps1 -ServiceName WinRM
+</code></pre>
+<p>セキュリティ機能として,PowerShellは,ファイルエクスプローラー内のスクリプトアイコンをダブルクリックすると,またはスクリプト名前の完全なパスなしで入力すると,スクリプトが現在のディレクトリに含まれている場合でもスクリプトを実行しません.PowerShellでコマンドとスクリプトを実行する詳細については,[about_Command_Precedence][02]を参照してください.</p>
+<h3>PowerShellで実行します</h3>
+<p>PowerShell 3.0 から始め,ファイル エクスプローラーからスクリプトを実行できます.</p>
+<p>"PowerShellで実行する"機能を使用するには:</p>
+<p>ファイルエクスプローラーを実行して,スクリプトファイル名を右クリックして",PowerShellで実行する"を選択します.</p>
+<p>"PowerShellで実行する"機能は,要求されたパラメータがないスクリプトを実行し,コマンドプロンプトに輸出を返さないように設計されています.</p>
+<p>詳細については[about_Run_With_PowerShell]をご覧ください.</p>
+<h3>他のコンピュータでスクリプトを実行する</h3>
+<p>脚本を1つまたは複数のリモートコンピュータで実行するには,  のファイルパスパラメータを使用します.<code>Invoke-Command</code>cmdletです.</p>
+<p>スクリプトのパスとファイル名を <strong>FilePath</strong>パラメータの値として入力します. スクリプトは,ローカルコンピュータまたはローカルコンピュータがアクセスできるディレクトリに配置する必要があります.</p>
+<p>次のコマンドは,  を実行します.<code>Get-ServiceLog.ps1</code>遠隔コンピュータのスクリプトは Server01 と Server02 と呼ばれる.</p>
+<pre><code class="language-powershell">$invokeCommandSplat = @{
+    ComputerName = 'Server01', 'Server02'
+    FilePath = 'C:\Scripts\Get-ServiceLog.ps1'
+}
+Invoke-Command @invokeCommandSplat
+</code></pre>
+<h2>スクリプトのサポートを入手してください.</h2>
+<p>Get-Help cmdlet では,スクリプトのサポートトピック,また,cmdletsなどのコマンドが表示されます.<code>Get-Help</code>その後は脚本のパスとファイル名が表示されます.脚本のパスがあなたの に存在する場合は,<code>PATH</code>環境変数では,パスを見逃すことができます.</p>
+<p>例えば, ServicesLog.ps1 スクリプトのサポートを希望するには,次の文字を入力してください.</p>
+<pre><code class="language-powershell">Get-Help C:\admin\scripts\ServicesLog.ps1
+</code></pre>
+<h2>脚本を書く方法</h2>
+<p>スクリプトには単一のコマンド,パイプライン,機能,および制御構造を使用するコマンドを含む有効なPowerShellコマンドが含まれる可能性があります.<code>if</code>声明と声明を表示する.<code>for</code>ループです.</p>
+<p>スクリプトを書くためには,テキストエディタで新しいファイルを開いて,コマンドを入力して,有効なファイル名を持つファイルに保存します.<code>.ps1</code>ファイル拡張子です.</p>
+<p>次の例は,現在のシステムで実行されているサービスを入手し,ログファイルに保存する簡単なスクリプトです.ログファイル名は現在の日付から作成されます.</p>
+<pre><code class="language-powershell">$date = (Get-Date).DayOfYear
+Get-Service | Out-File &quot;$date.log&quot;
+</code></pre>
+<p>このスクリプトを作成するには,テキスト編集者またはスクリプト編集者を開き,これらのコマンドを入力して,それを保存して, というファイルに保存してください.<code>ServiceLog.ps1</code> .</p>
+<h3>スクリプトのパラメータです.</h3>
+<p>スクリプトのパラメータを定義するには,  を使います.<code>param</code>声明は,<code>param</code>記述は,コメントと任意の を除いて,スクリプトの最初の記述である必要があります.<code>#Requires</code>声明.</p>
+<p>スクリプトパラメータは,機能パラメータのように機能する. スクリプト内のすべてのコマンドにパラメータ値が利用可能である. パラメータ属性とその命名された議論を含む,機能パラメータのすべての機能は,スクリプトでも有効である.</p>
+<p>スクリプトを実行する際に,スクリプトユーザーはスクリプト名前の後にパラメータを入力します.</p>
+<p>次の例では, a を示しています.<code>Test-Remote.ps1</code><strong>ComputerName</strong>パラメータを持つスクリプト.両方のスクリプト機能は <strong>ComputerName</strong>パラメータ値にアクセスできます.</p>
+<pre><code class="language-powershell">param ($ComputerName = $(throw &quot;ComputerName parameter is required.&quot;))
+
+function CanPing {
+   $Error.Clear()
+   $tmp = Test-Connection $ComputerName -ErrorAction SilentlyContinue
+
+   if (!$?)
+       {Write-Host &quot;Ping failed: $ComputerName.&quot;; return $false}
+   else
+       {Write-Host &quot;Ping succeeded: $ComputerName&quot;; return $true}
+}
+
+function CanRemote {
+    $s = New-PSSession $ComputerName -ErrorAction SilentlyContinue
+
+    if ($s -is [System.Management.Automation.Runspaces.PSSession])
+        {Write-Host &quot;Remote test succeeded: $ComputerName.&quot;}
+    else
+        {Write-Host &quot;Remote test failed: $ComputerName.&quot;}
+}
+
+if (CanPing $ComputerName) {CanRemote $ComputerName}
+</code></pre>
+<p>このスクリプトを実行するには,スクリプト名前の後にパラメータ名を入力してください.例えば:</p>
+<pre><code class="language-powershell">C:\PS&gt; .\test-remote.ps1 -ComputerName Server01
+
+Ping succeeded: Server01
+Remote test failed: Server01
+</code></pre>
+<p>について詳しい情報はこちらから<code>param</code>関数参数に関する声明と関数参数については, [about_Functions][04]と [about_Functions_Advanced_Parameters][05]を参照してください.</p>
+<h1>about_Scriptsについて</h1>
+<h3>スクリプトの書き込み支援</h3>
+<p>脚本に役立つテーマを以下の2つの方法いずれかを利用して書き込むことができます.</p>
+<ul>
+<li>コメントベースのスクリプトのサポート</li>
+</ul>
+<p>コメントに特別なキーワードを用いることで,ヘルプトピックを作成します.スクリプトのコメントベースのヘルプを作成するには,コメントはスクリプトファイルの初めまたは終わりに置かれなければなりません.コメントベースのヘルプについての詳細については,[about_Comment_Based_Help][06]を参照してください.</p>
+<ul>
+<li>XMLベースのスクリプトのサポート</li>
+</ul>
+<p>XMLベースのHelpトピックを作成する.例えば,通常 cmdlets に作成されるタイプ.XMLベースのHelpが必須である.もしHelpトピックを複数の言語に翻訳している場合は,XMLベースのHelpが必要です.</p>
+<p>脚本をXMLベースのヘルプトピックと関連付けするには,  を使ってください.<code>.EXTERNALHELP</code>キーワードのコメントを助ける.詳細については,以下を参照してください.</p>
+<p>[about_Comment_Based_Help][06] - [How to Write Cmdlet Help][07] -</p>
+<h3>出発値返却する</h3>
+<p>脚本が終了するときに,脚本が退出状態を返さない.<code>exit</code>脚本から出口コードを返却するという記述です.デフォルトでは,  は<code>exit</code>声明が返されます.<code>0</code>異なる出口状態を返すために数値値を入力できます.非ゼロ出口コードは通常失敗を表示します.</p>
+<p>Windowsでは,任意の番号を入力してください.<code>[int]::MinValue</code>そして,<code>[int]::MaxValue</code>is permitted.</p>
+<p>PowerShellで,その  は<code>exit</code>という記述の値を設定します.<code>$LASTEXITCODE</code>Windows コマンドシェル (cmd.exe) では,出口式は変数の値を設定します.<code>%ERRORLEVEL%</code>環境の変数.</p>
+<p>プラットフォームの範囲外で数値以外の議論は, の値に変換されます.<code>0</code> .</p>
+<h2>スキプト・スクープとドット・ソーサーリング</h2>
+<p>各スクリプトは独自の範囲で実行されます.スクリプトで作成された機能,変数,偽名,ドライブはスクリプト範囲内でのみ存在します.スクリプトが実行する範囲でこれらの項目またはその値にアクセスすることはできません.</p>
+<p>スクリプトを異なる範囲で実行するには,グローバルやローカルなどの範囲を指定するか,またはスクリプトのソースドットで指定することができます.</p>
+<p>ドットソース機能により,スクリプトの範囲ではなく,現在の範囲でスクリプトを実行できます.ドットソースのスクリプトを実行すると,スクリプト内のコマンドはコマンドプロンプトで入力したかのように実行されます.スクリプトが作成する機能,変数,ニックネーム,ドライブは,あなたが作業している範囲で作成されます.スクリプトが実行した後,作成されたアイテムを使用してセッションでその値にアクセスできます.</p>
+<p>スクリプトのソースを点にするには,スクリプトの経路の前に点 (.) とスペースを入力します.</p>
+<p>例えば:</p>
+<pre><code class="language-powershell">. C:\scripts\UtilityFunctions.ps1
+</code></pre>
+<pre><code class="language-powershell">. .\UtilityFunctions.ps1
+</code></pre>
+<p>後から<code>UtilityFunctions.ps1</code>スクリプトが実行する,スクリプトが作成する機能と変数は,現在の範囲に追加されます.</p>
+<p>例えば,は<code>UtilityFunctions.ps1</code>スクリプトは,  を作成します.<code>New-Profile</code>機能と関数と関数です.<code>$ProfileName</code>変数です.</p>
+<pre><code class="language-powershell">#In UtilityFunctions.ps1
+
+function New-Profile
+{
+  Write-Host &quot;Running New-Profile function&quot;
+  $profileName = Split-Path $PROFILE -Leaf
+
+  if (Test-Path $PROFILE)
+    {Write-Error &quot;Profile $profileName already exists on this computer.&quot;}
+  else
+    {New-Item -Type File -Path $PROFILE -Force }
+}
+</code></pre>
+<p>を走らせると<code>UtilityFunctions.ps1</code>脚本は,独自の脚本範囲で, <code>New-Profile</code>機能と関数と関数です.<code>$ProfileName</code>スクリプトが実行されている間のみ存在します. スクリプトが終了すると,関数と変数は次の例で示したように削除されます.</p>
+<pre><code class="language-powershell">C:\PS&gt; .\UtilityFunctions.ps1
+
+C:\PS&gt; New-Profile
+The term 'New-Profile' is not recognized as a cmdlet, function, operable
+program, or script file. Verify the term and try again.
+At line:1 char:12
++ New-Profile &lt;&lt;&lt;&lt;
+   + CategoryInfo          : ObjectNotFound: (New-Profile:String) [],
+   + FullyQualifiedErrorId : CommandNotFoundException
+
+C:\PS&gt; $profileName
+C:\PS&gt;
+</code></pre>
+<p>スクリプトのソースを点して実行すると,スクリプトが""を生成します.<code>New-Profile</code>機能と関数と関数です.<code>$ProfileName</code>スクリプトが実行された後,あなたは変数を使用することができます <code>New-Profile</code>このセッションの関数は,次の例で示されているように,あなたのセッションの関数です.</p>
+<pre><code class="language-powershell">C:\PS&gt; . .\UtilityFunctions.ps1
+
+C:\PS&gt; New-Profile
+
+    Directory: C:\Users\juneb\Documents\WindowsPowerShell
+
+    Mode    LastWriteTime     Length Name
+    ----    -------------     ------ ----
+    -a---   1/14/2009 3:08 PM      0 Microsoft.PowerShellISE_profile.ps1
+
+C:\PS&gt; $profileName
+Microsoft.PowerShellISE_profile.ps1
+</code></pre>
+<p>範囲に関する詳細については,[about_Scopes][08]を参照してください.</p>
+<h2>模組のスクリプトを表示します.</h2>
+<p>モジュールとは,単位として配布できる関連PowerShellリソースの集合である. 脚本,機能,その他のリソースを組織するためにモジュールを使用できます. また,コードを他の人々に配布したり,信頼できる情報源からコードを取得したりするためにモジュールを使用できます.</p>
+<p>模組にスクリプトを組み込むか,スクリプトモジュールを作成したりできます.スクリプトモジュールとは,完全にまたは主にスクリプトとサポートリソースで構成されるモジュールです.<code>.psm1</code>ファイル拡張子です.</p>
+<p>模块についての詳細については[about_Modules][09]を参照してください.</p>
+<h1>about_Scriptsについて</h1>
+<h2>他のスクリプトの特徴は</h2>
+<p>PowerShellには脚本で使える多くの有用な機能があります.</p>
+<ul>
+<li>
+<p>-<code>#Requires</code>- を用いられる<code>#Requires</code>脚本が指定されたモジュールやスナップインや指定されたバージョンのPowerShellなしで実行されないようにするための説明です.詳細については,[about_Requires][10]を参照してください.</p>
+</li>
+<li>
+<p>-<code>$PSCommandPath</code>-実行中の脚本の全経路と名前が含まれています.このパラメータはすべての脚本で有効です.この自動変数はPowerShell 3.0で導入されています.</p>
+</li>
+<li>
+<p>-<code>$PSScriptRoot</code>PowerShell 2.0では,この変数はスクリプトモジュール () でのみ有効です.<code>.psm1</code>) PowerShell 3.0 から始まって,すべてのスクリプトで有効です.</p>
+</li>
+<li>
+<p>-<code>$MyInvocation</code>-  - <code>$MyInvocation</code>自動変数は,現在のスクリプトに関する情報,その中のそれがどのように起動されたか,または"呼び出されたか"に関する情報を含んでいます.この変数とその性質を使用して,スクリプトが実行中にスクリプトに関する情報を取得できます.例えば, <code>$MyInvocation</code>.MyCommand.Path変数は脚本のパスとファイル名を含む. <code>$MyInvocation</code>.Lineは,すべてのパラメータと値を含むスクリプトを起動したコマンドを含んでいます.</p>
+</li>
+</ul>
+<p>PowerShell 3.0 から始め,<code>$MyInvocation</code>現在のスクリプトを呼び出したり呼び出したりしたスクリプトに関する情報を提供する新しい2つのプロパティがあります.これらのプロパティの値は,呼び出したり呼び出したりする者がスクリプトである場合にのみ埋められます.</p>
+<ul>
+<li><strong>PSCommandPath</strong>は,現在のスクリプトを呼び出したり呼び出したりしたスクリプトの完全なパスと名前が含まれています.</li>
+</ul>
+<p><strong>PSScriptRoot</strong>は,現在のスクリプトを呼び出したり呼び出したりしたスクリプトのディレクトリを含んでいます.</p>
+<p>とは異なり,<code>$PSCommandPath</code>そして,<code>$PSScriptRoot</code>自動変数には,現在のスクリプト,PSCommandPath<strong>とPSScriptRoot</strong>のプロパティに関する情報が含まれています.<code>$MyInvocation</code>変数は,現在のスクリプトを呼び出したスクリプトに関する情報を含んでいる.</p>
+<ul>
+<li>
+<p>データセクション - を利用できます.<code>Data</code>脚本における論理とデータを分離するキーワードです.データセクションは,局所化も容易にする可能性があります.詳細については,[about_Data_Sections][11]および[about_Script_Internationalization][12]を参照してください.</p>
+</li>
+<li>
+<p>スクリプトサイン - 脚本にデジタル署名を追加できます.実行方針に応じて,安全でないコマンドを含むスクリプトの実行を制限するためにデジタル署名を使用できます.詳細については,[about_Execution_Policies][01]および[about_Signing][13]を参照してください.</p>
+</li>
+</ul>
+<h2>また, を参照してください.</h2>
+<p>[about_Command_Precedence][02] - [about_Comment_Based_Help][06] - [about_Execution_Policies][01] - [about_Functions][04] - [about_Modules][09] - [about_Profiles][14] - [about_Requires][10] - [about_Run_With_PowerShell][03] - [about_Scopes][08] - [about_Script_Blocks][15] - [about_Signing][13] - [Invoke-Command][16] - - - -</p>
+<p>リンク参照 --&gt; [01]: about_Execution_Policies.md [02]: about_Command_Precedence.md [03]: about_Run_With_PowerShell.md [04]: about_Functions.md [05]: about_Functions_Advanced_Parameters.md [06]: about_Comment_Based_Help.md [07]: /shell/scripting/developer/help/help/ing-help-for-windows-powershell-dlets [08]: about_Scopes.md [09]: about_Modules.md [10]: about_Requires.md [11]: about_power_Sections. [12]:Power_Data_Intronalization.md [13]:[16]: about_Power_Intronalization.md [14]: about_Shell.md: about_Copy_Copy.md [15]: about_Shell.md: about_Copy_Blocks.md: about_Copy_Blocks.md: about_X.md</p></section><section class="en-original"><pre class="source-original"># about_Scripts
+
+## Short description
+
+Describes how to run and write scripts in PowerShell.
+
+## Long description
+
+A script is a plain text file that contains one or more PowerShell commands.
+PowerShell scripts have a `.ps1` file extension.
+
+Running a script is a lot like running a cmdlet. You type the path and file
+name of the script and use parameters to submit data and set options. You can
+run scripts on your computer or in a remote session on a different computer.
+
+Writing a script saves a command for later use and makes it easy to share with
+others. Most importantly, it lets you run the commands simply by typing the
+script path and the filename. Scripts can be as simple as a single command in
+a file or as extensive as a complex program.
+
+Scripts have additional features, such as the `#Requires` special comment, the
+use of parameters, support for data sections, and digital signing for security.
+You can also write Help topics for scripts and for any functions in the script.
+
+## How to run a script
+
+Before you can run a script on Windows, you need to change the default
+PowerShell execution policy. Execution policy does not apply to PowerShell
+running on non-Windows platforms.
+
+The default execution policy, `Restricted`, prevents all scripts from running,
+including scripts that you write on the local computer. For more information,
+see [about_Execution_Policies][01].
+
+The execution policy is saved in the registry, so you need to change it only
+once on each computer.
+
+To change the execution policy, use the following procedure.
+
+At the command prompt, type:
+
+```powershell
+Set-ExecutionPolicy AllSigned
+```
+
+or
+
+```powershell
+Set-ExecutionPolicy RemoteSigned
+```
+
+The change is effective immediately.
+
+To run a script, type the full name and the full path to the script file.
+
+For example, to run the Get-ServiceLog.ps1 script in the C:\Scripts directory,
+type:
+
+```powershell
+C:\Scripts\Get-ServiceLog.ps1
+```
+
+To run a script in the current directory, type the path to the current
+directory, or use a dot to represent the current directory, followed by a path
+backslash (`.\`).
+
+For example, to run the ServicesLog.ps1 script in the local directory, type:
+
+```powershell
+.\Get-ServiceLog.ps1
+```
+
+If the script has parameters, type the parameters and parameter values after
+the script filename.
+
+For example, the following command uses the ServiceName parameter of the
+Get-ServiceLog script to request a log of WinRM service activity.
+
+```powershell
+.\Get-ServiceLog.ps1 -ServiceName WinRM
+```
+
+As a security feature, PowerShell does not run scripts when you double-click
+the script icon in File Explorer or when you type the script name without a
+full path, even when the script is in the current directory. For more
+information about running commands and scripts in PowerShell, see
+[about_Command_Precedence][02].
+
+### Run with PowerShell
+
+Beginning in PowerShell 3.0, you can run scripts from File Explorer.
+
+To use the &quot;Run with PowerShell&quot; feature:
+
+Run File Explorer, right-click the script filename and then select &quot;Run with
+PowerShell&quot;.
+
+The &quot;Run with PowerShell&quot; feature is designed to run scripts that do not have
+required parameters and do not return output to the command prompt.
+
+For more information, see [about_Run_With_PowerShell][03].
+
+### Running scripts on other computers
+
+To run a script on one or more remote computers, use the **FilePath** parameter
+of the `Invoke-Command` cmdlet.
+
+Enter the path and filename of the script as the value of the **FilePath**
+parameter. The script must reside on the local computer or in a directory that
+the local computer can access.
+
+The following command runs the `Get-ServiceLog.ps1` script on the remote
+computers named Server01 and Server02.
+
+```powershell
+$invokeCommandSplat = @{
+    ComputerName = &#x27;Server01&#x27;, &#x27;Server02&#x27;
+    FilePath = &#x27;C:\Scripts\Get-ServiceLog.ps1&#x27;
+}
+Invoke-Command @invokeCommandSplat
+```
+
+## Get help for scripts
+
+The Get-Help cmdlet gets the help topics for scripts as well as for cmdlets
+and other types of commands. To get the help topic for a script, type
+`Get-Help` followed by the path and filename of the script. If the script
+path is in your `PATH` environment variable, you can omit the path.
+
+For example, to get help for the ServicesLog.ps1 script, type:
+
+```powershell
+Get-Help C:\admin\scripts\ServicesLog.ps1
+```
+
+## How to write a script
+
+A script can contain any valid PowerShell commands, including single commands,
+commands that use the pipeline, functions, and control structures such as `if`
+statements and `for` loops.
+
+To write a script, open a new file in a text editor, type the commands, and
+save them in a file with a valid filename with the `.ps1` file extension.
+
+The following example is a simple script that gets the services that are
+running on the current system and saves them to a log file. The log filename is
+created from the current date.
+
+```powershell
+$date = (Get-Date).DayOfYear
+Get-Service | Out-File &quot;$date.log&quot;
+```
+
+To create this script, open a text editor or a script editor, type these
+commands, and then save them in a file named `ServiceLog.ps1`.
+
+### Parameters in scripts
+
+To define parameters in a script, use a `param` statement. The `param`
+statement must be the first statement in a script, except for comments and any
+`#Requires` statements.
+
+Script parameters work like function parameters. The parameter values are
+available to all of the commands in the script. All of the features of
+function parameters, including the Parameter attribute and its named
+arguments, are also valid in scripts.
+
+When running the script, script users type the parameters after the script
+name.
+
+The following example shows a `Test-Remote.ps1` script that has a
+**ComputerName** parameter. Both of the script functions can access the
+**ComputerName** parameter value.
+
+```powershell
+param ($ComputerName = $(throw &quot;ComputerName parameter is required.&quot;))
+
+function CanPing {
+   $Error.Clear()
+   $tmp = Test-Connection $ComputerName -ErrorAction SilentlyContinue
+
+   if (!$?)
+       {Write-Host &quot;Ping failed: $ComputerName.&quot;; return $false}
+   else
+       {Write-Host &quot;Ping succeeded: $ComputerName&quot;; return $true}
+}
+
+function CanRemote {
+    $s = New-PSSession $ComputerName -ErrorAction SilentlyContinue
+
+    if ($s -is [System.Management.Automation.Runspaces.PSSession])
+        {Write-Host &quot;Remote test succeeded: $ComputerName.&quot;}
+    else
+        {Write-Host &quot;Remote test failed: $ComputerName.&quot;}
+}
+
+if (CanPing $ComputerName) {CanRemote $ComputerName}
+```
+
+To run this script, type the parameter name after the script name. For example:
+
+```powershell
+C:\PS&gt; .\test-remote.ps1 -ComputerName Server01
+
+Ping succeeded: Server01
+Remote test failed: Server01
+```
+
+For more information about the `param` statement and the function parameters,
+see [about_Functions][04] and [about_Functions_Advanced_Parameters][05].
+
+# about_Scripts
+
+### Writing help for scripts
+
+You can write a help topic for a script by using either of the two following
+methods:
+
+- Comment-Based Help for Scripts
+
+  Create a Help topic by using special keywords in the comments. To create
+  comment-based Help for a script, the comments must be placed at the beginning
+  or end of the script file. For more information about comment-based Help, see
+  [about_Comment_Based_Help][06].
+
+- XML-Based Help  for Scripts
+
+  Create an XML-based Help topic, such as the type that is typically created
+  for cmdlets. XML-based Help is required if you are translating Help topics
+  into multiple languages.
+
+To associate the script with the XML-based Help topic, use the `.EXTERNALHELP`
+Help comment keyword. For more information, see:
+
+- [about_Comment_Based_Help][06]
+- [How to Write Cmdlet Help][07]
+
+### Returning an exit value
+
+By default, scripts do not return an exit status when the script ends. You must
+use the `exit` statement to return an exit code from a script. By default, the
+`exit` statement returns `0`. You can provide a numeric value to return a
+different exit status. A nonzero exit code typically signals a failure.
+
+On Windows, any number between `[int]::MinValue` and `[int]::MaxValue` is
+allowed.
+
+
+In PowerShell, the `exit` statement sets the value of the `$LASTEXITCODE`
+variable. In the Windows Command Shell (cmd.exe), the exit statement sets the
+value of the `%ERRORLEVEL%` environment variable.
+
+Any argument that is non-numeric or outside the platform-specific range is
+translated to the value of `0`.
+
+## Script scope and dot sourcing
+
+Each script runs in its own scope. The functions, variables, aliases, and
+drives that are created in the script exist only in the script scope. You
+cannot access these items or their values in the scope in which the script
+runs.
+
+To run a script in a different scope, you can specify a scope, such as Global
+or Local, or you can dot source the script.
+
+The dot sourcing feature lets you run a script in the current scope instead of
+in the script scope. When you run a script that is dot sourced, the commands in
+the script run as though you had typed them at the command prompt. The
+functions, variables, aliases, and drives that the script creates are created
+in the scope in which you are working. After the script runs, you can use the
+created items and access their values in your session.
+
+To dot source a script, type a dot (.) and a space before the script path.
+
+For example:
+
+```powershell
+. C:\scripts\UtilityFunctions.ps1
+```
+
+or
+
+```powershell
+. .\UtilityFunctions.ps1
+```
+
+After the `UtilityFunctions.ps1` script runs, the functions and variables that
+the script creates are added to the current scope.
+
+For example, the `UtilityFunctions.ps1` script creates the `New-Profile`
+function and the `$ProfileName` variable.
+
+```powershell
+#In UtilityFunctions.ps1
+
+function New-Profile
+{
+  Write-Host &quot;Running New-Profile function&quot;
+  $profileName = Split-Path $PROFILE -Leaf
+
+  if (Test-Path $PROFILE)
+    {Write-Error &quot;Profile $profileName already exists on this computer.&quot;}
+  else
+    {New-Item -Type File -Path $PROFILE -Force }
+}
+```
+
+If you run the `UtilityFunctions.ps1` script in its own script scope, the
+`New-Profile` function and the `$ProfileName` variable exist only while the
+script is running. When the script exits, the function and variable are
+removed, as shown in the following example.
+
+```powershell
+C:\PS&gt; .\UtilityFunctions.ps1
+
+C:\PS&gt; New-Profile
+The term &#x27;New-Profile&#x27; is not recognized as a cmdlet, function, operable
+program, or script file. Verify the term and try again.
+At line:1 char:12
++ New-Profile &lt;&lt;&lt;&lt;
+   + CategoryInfo          : ObjectNotFound: (New-Profile:String) [],
+   + FullyQualifiedErrorId : CommandNotFoundException
+
+C:\PS&gt; $profileName
+C:\PS&gt;
+```
+
+When you dot source the script and run it, the script creates the `New-Profile`
+function and the `$ProfileName` variable in your session in your scope. After
+the script runs, you can use the `New-Profile` function in your session, as
+shown in the following example.
+
+```powershell
+C:\PS&gt; . .\UtilityFunctions.ps1
+
+C:\PS&gt; New-Profile
+
+    Directory: C:\Users\juneb\Documents\WindowsPowerShell
+
+    Mode    LastWriteTime     Length Name
+    ----    -------------     ------ ----
+    -a---   1/14/2009 3:08 PM      0 Microsoft.PowerShellISE_profile.ps1
+
+C:\PS&gt; $profileName
+Microsoft.PowerShellISE_profile.ps1
+```
+
+For more information about scope, see [about_Scopes][08].
+
+## Scripts in modules
+
+A module is a set of related PowerShell resources that can be distributed as a
+unit. You can use modules to organize your scripts, functions, and other
+resources. You can also use modules to distribute your code to others, and to
+get code from trusted sources.
+
+You can include scripts in your modules, or you can create a script module,
+which is a module that consists entirely or primarily of a script and
+supporting resources. A script module is just a script with a `.psm1` file
+extension.
+
+For more information about modules, see [about_Modules][09].
+
+# about_Scripts
+
+## Other script features
+
+PowerShell has many useful features that you can use in scripts.
+
+- `#Requires` - You can use a `#Requires` statement to prevent a script from
+  running without specified modules or snap-ins and a specified version of
+  PowerShell. For more information, see [about_Requires][10].
+
+- `$PSCommandPath` - Contains the full path and name of the script that is
+  being run. This parameter is valid in all scripts. This automatic variable is
+  introduced in PowerShell 3.0.
+
+- `$PSScriptRoot` - Contains the directory from which a script is being run. In
+  PowerShell 2.0, this variable is valid only in script modules (`.psm1`).
+  Beginning in PowerShell 3.0, it is valid in all scripts.
+
+- `$MyInvocation` - The `$MyInvocation` automatic variable contains information
+  about the current script, including information about how it was started or
+  &quot;invoked.&quot; You can use this variable and its properties to get information
+  about the script while it is running. For example, the
+  `$MyInvocation`.MyCommand.Path variable contains the path and filename of the
+  script. `$MyInvocation`.Line contains the command that started the script,
+  including all parameters and values.
+
+  Beginning in PowerShell 3.0, `$MyInvocation` has two new properties that
+  provide information about the script that called or invoked the current
+  script. The values of these properties are populated only when the invoker or
+  caller is a script.
+
+  - **PSCommandPath** contains the full path and name of the script that called
+    or invoked the current script.
+
+  - **PSScriptRoot** contains the directory of the script that called or
+    invoked the current script.
+
+  Unlike the `$PSCommandPath` and `$PSScriptRoot` automatic variables, which
+  contain information about the current script, the **PSCommandPath** and
+  **PSScriptRoot** properties of the `$MyInvocation` variable contain
+  information about the script that called the current script.
+
+- Data sections - You can use the `Data` keyword to separate data from logic in
+  scripts. Data sections can also make localization easier. For more
+  information, see [about_Data_Sections][11] and
+  [about_Script_Internationalization][12].
+
+- Script Signing - You can add a digital signature to a script. Depending on
+  the execution policy, you can use digital signatures to restrict the running
+  of scripts that could include unsafe commands. For more information, see
+  [about_Execution_Policies][01] and [about_Signing][13].
+
+## See also
+
+- [about_Command_Precedence][02]
+- [about_Comment_Based_Help][06]
+- [about_Execution_Policies][01]
+- [about_Functions][04]
+- [about_Modules][09]
+- [about_Profiles][14]
+- [about_Requires][10]
+- [about_Run_With_PowerShell][03]
+- [about_Scopes][08]
+- [about_Script_Blocks][15]
+- [about_Signing][13]
+- [Invoke-Command][16]
+
+&lt;!-- link references --&gt;
+[01]: about_Execution_Policies.md
+[02]: about_Command_Precedence.md
+[03]: about_Run_With_PowerShell.md
+[04]: about_Functions.md
+[05]: about_Functions_Advanced_Parameters.md
+[06]: about_Comment_Based_Help.md
+[07]: /powershell/scripting/developer/help/writing-help-for-windows-powershell-cmdlets
+[08]: about_Scopes.md
+[09]: about_Modules.md
+[10]: about_Requires.md
+[11]: about_Data_Sections.md
+[12]: about_Script_Internationalization.md
+[13]: about_Signing.md
+[14]: about_Profiles.md
+[15]: about_Script_Blocks.md
+[16]: xref:Microsoft.PowerShell.Core.Invoke-Command</pre></section>

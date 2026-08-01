@@ -1,0 +1,321 @@
+<!doctype html><meta charset="utf-8"><section class="jp-official"><h1>Get-ComputerRestorePoint を取得する</h1>
+<h2>SYNOPSISは,ローカルコンピュータで復元ポイントを入手します.</h2>
+<h2>SYNTAXは,のシンタックスです.</h2>
+<h3>ID (デフォルト)</h3>
+<pre><code>Get-ComputerRestorePoint [[-RestorePoint] &lt;Int32[]&gt;] [&lt;CommonParameters&gt;]
+</code></pre>
+<h3>ラストステータス</h3>
+<pre><code>Get-ComputerRestorePoint -LastStatus [&lt;CommonParameters&gt;]
+</code></pre>
+<h2>記述は,</h2>
+<p><code>Get-ComputerRestorePoint</code>cmdlet は,ローカルコンピュータのシステム復元ポイントを取得し,コンピュータを復元する最新の試みの状態を表示することができます.</p>
+<p>からの情報を利用できます.<code>Get-ComputerRestorePoint</code>復元ポイントを選択します.例えば,復元ポイントを識別するために序列番号を使用します.<code>Restore-Computer</code>cmdletです.</p>
+<p>システム復元ポイントと <code>Get-ComputerRestorePoint</code>cmdlet は,Windows 10などのクライアントオペレーティングシステムでのみサポートされます.</p>
+<h2>例えは</h2>
+<h3>例1:すべてのシステム復元ポイントを入手する</h3>
+<p>この例では,<code>Get-ComputerRestorePoint</code>ローカルコンピュータのシステム復元ポイントをすべて獲得します.</p>
+<pre><code class="language-powershell">Get-ComputerRestorePoint
+</code></pre>
+<pre><code class="language-Output">CreationTime           Description                    SequenceNumber    EventType         RestorePointType
+------------           -----------                    --------------    ---------         ----------------
+7/30/2019 09:17:24     Windows Update                 4                 BEGIN_SYSTEM_C... 17
+8/5/2019  08:15:37     Installed PowerShell 7-prev... 5                 BEGIN_SYSTEM_C... APPLICATION_INSTALL
+8/7/2019  12:56:45     Installed PowerShell 6-x64     6                 BEGIN_SYSTEM_C... APPLICATION_INSTALL
+</code></pre>
+<h3>例2:特定の順序番号を入手する</h3>
+<p>この例では,特定の序列番号のシステム復元ポイントが表示されます.</p>
+<pre><code class="language-powershell">Get-ComputerRestorePoint -RestorePoint 4, 5
+</code></pre>
+<pre><code class="language-Output">CreationTime           Description                    SequenceNumber    EventType         RestorePointType
+------------           -----------                    --------------    ---------         ----------------
+7/30/2019 09:17:24     Windows Update                 4                 BEGIN_SYSTEM_C... 17
+8/5/2019  08:15:37     Installed PowerShell 7-prev... 5                 BEGIN_SYSTEM_C... APPLICATION_INSTALL
+</code></pre>
+<p><code>Get-ComputerRestorePoint</code><strong>RestorePoint</strong>パラメータを使用して,逗号分離した配列の序列番号を指定します.</p>
+<h3>例3:システム復元の状態を表示する</h3>
+<p>この例では,ローカルコンピュータの最新のシステム復旧の状態が表示されます.</p>
+<pre><code class="language-powershell">Get-ComputerRestorePoint -LastStatus
+</code></pre>
+<pre><code class="language-Output">The last attempt to restore the computer failed.
+</code></pre>
+<p><code>Get-ComputerRestorePoint</code>最新システム復旧の結果を表示するために, <strong>LastStatus</strong> パラメータを使用します.</p>
+<h3>例4: クリエーションタイムを変換するために表現を使用します.</h3>
+<p><code>Get-ComputerRestorePoint</code><strong>CreationTime</strong> を Windows Management Instrumentation (WMI) の日付と時間文字列として出力します.</p>
+<p>この例では,変数は,CreationTime string を DateTime オブジェクトに変換する表現を保存します.変換する前に,CreationTime string を表示するには,  のようなコマンドを使用します.<code>((Get-ComputerRestorePoint).CreationTime)</code>. WMIの日付と時間文字列に関する詳細については, [CIM_DATETIME] (/windows/win32/wmisdk/cim-datetime) を参照してください.</p>
+<pre><code class="language-powershell">$date = @{Label=&quot;Date&quot;; Expression={$_.ConvertToDateTime($_.CreationTime)}}
+Get-ComputerRestorePoint | Select-Object -Property SequenceNumber, $date, Description
+</code></pre>
+<pre><code class="language-Output">SequenceNumber   Date                 Description
+--------------   ----                 -----------
+             4   7/30/2019 09:17:24   Windows Update
+             5   8/5/2019  08:15:37   Installed PowerShell 7-preview-x64
+             6   8/7/2019  12:56:45   Installed PowerShell 6-x64
+</code></pre>
+<p><code>$date</code><strong>ConvertToDateTime</strong>方法を使用する式を記入したハッシュテーブルを保存します.この式は <strong>CreationTime</strong>属性の値を WMI文字列から <strong>DateTime</strong>オブジェクトに変換します.</p>
+<p><code>Get-ComputerRestorePoint</code>システム復元ポイントオブジェクトをパイプラインに送り込む. <code>Select-Object</code>性能を指定するために<strong>Property</strong>パラメータを使用します.パイプライン内の各オブジェクトに対して,表現は で表示されます.<code>$date</code><strong>CreationTime</strong>を変換し,結果を <strong>Date</strong>属性に出す.</p>
+<h3>例5: 順序番号を入手するためにプロパティを使用します</h3>
+<p>この例では<strong>SequenceNumber</strong>属性とアレイインデックスを使用して順序番号を取得します.出力には順序番号のみが含まれます.</p>
+<pre><code class="language-powershell">((Get-ComputerRestorePoint).SequenceNumber)[-1]
+</code></pre>
+<pre><code class="language-Output">6
+</code></pre>
+<p><code>Get-ComputerRestorePoint</code><strong>SequenceNumber</strong>のプロパティを,アレイインデックスで使っています.<code>-1</code>アレア内の最新の配列番号が表示されます.</p>
+<h2>パラメータは</h2>
+<h3>- ラストステータス</h3>
+<p>を示しています.<code>Get-ComputerRestorePoint</code>最新のシステム復元操作のステータスを取得します.</p>
+<pre><code class="language-yaml">Type: System.Management.Automation.SwitchParameter
+Parameter Sets: LastStatus
+Aliases:
+
+Required: True
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-RestorePoint でした</h3>
+<p>システム復元ポイントの序列番号を指定します.単一の序列番号または逗号別列の序列番号を指定できます.</p>
+<p><strong>RestorePoint</strong>のパラメータが指定されていない場合は,<code>Get-ComputerRestorePoint</code>ローカルコンピュータのシステム復元ポイントをすべて返します.</p>
+<pre><code class="language-yaml">Type: System.Int32[]
+Parameter Sets: ID
+Aliases:
+
+Required: False
+Position: 0
+Default value: All restore points
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>共通パラメーター</h3>
+<p>このcmdletは,共通パラメータをサポートしています: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable.詳細については, <a href="を参照してください.https://go.microsoft.com/fwlink/?LinkID=113216">about_CommonParameters</a> でした.</p>
+<h2>輸入は</h2>
+<h3>どれもない</h3>
+<p>管道に沿って物体を送って送ることはできません.<code>Get-ComputerRestorePoint</code> .</p>
+<h2>輸出は</h2>
+<h3>System.Management.ManagementObject#root\default\SystemRestore or String をインストールする</h3>
+<p><code>Get-ComputerRestorePoint</code><strong>SystemRestore</strong>オブジェクトを返します.これはWindows Management Instrumentation (WMI) <strong>SystemRestore</strong>クラスの一例です.</p>
+<p><strong>LastStatus</strong>パラメータを使用すると,<code>Get-ComputerRestorePoint</code>文字列を返します.</p>
+<h2>NOTES  記事ができました.</h2>
+<p>を走らせるために<code>Get-ComputerRestorePoint</code>Windows Vistaおよび後代バージョンのWindowsでは,管理者として実行するコマンドを****オプションでPowerShellを開く.</p>
+<p><code>Get-ComputerRestorePoint</code>WMI <strong>SystemRestore</strong>クラスを使用しています.</p>
+<h2>関連リンク</h2>
+<p><a href="../Microsoft.PowerShell.Core/About/about_Hash_Tables.md">about_Hash_Tables</a> について</p>
+<p><a href="../Microsoft.PowerShell.Core/About/about_Arrays.md">about_Arrays</a> について</p>
+<p><a href="Checkpoint-Computer.md">Checkpoint-Computer</a> </p>
+<p><a href="Disable-ComputerRestore.md">Disable-ComputerRestore</a> でした.</p>
+<p><a href="Enable-ComputerRestore.md">Enable-ComputerRestore</a> は,コンピュータを回復させるためのツールです.</p>
+<p><a href="Restart-Computer.md">コンピュータを再起動</a></p>
+<p><a href="Restore-Computer.md">Restore-Computer</a> </p>
+<p><a href="/windows/win32/sr/systemrestore">SystemRestore</a> </p></section><section class="en-original"><pre class="source-original"># Get-ComputerRestorePoint
+
+## SYNOPSIS
+Gets the restore points on the local computer.
+
+## SYNTAX
+
+### ID (Default)
+
+```
+Get-ComputerRestorePoint [[-RestorePoint] &lt;Int32[]&gt;] [&lt;CommonParameters&gt;]
+```
+
+### LastStatus
+
+```
+Get-ComputerRestorePoint -LastStatus [&lt;CommonParameters&gt;]
+```
+
+## DESCRIPTION
+
+The `Get-ComputerRestorePoint` cmdlet gets the local computer&#x27;s system restore points. And, it can
+display the status of the most recent attempt to restore the computer.
+
+You can use the information from `Get-ComputerRestorePoint` to select a restore point. For example,
+use a sequence number to identify a restore point for the `Restore-Computer` cmdlet.
+
+System restore points and the `Get-ComputerRestorePoint` cmdlet are supported only on client
+operating systems such as Windows 10.
+
+## EXAMPLES
+
+### Example 1: Get all system restore points
+
+In this example, `Get-ComputerRestorePoint` gets all the local computer&#x27;s system restore points.
+
+```powershell
+Get-ComputerRestorePoint
+```
+
+```Output
+CreationTime           Description                    SequenceNumber    EventType         RestorePointType
+------------           -----------                    --------------    ---------         ----------------
+7/30/2019 09:17:24     Windows Update                 4                 BEGIN_SYSTEM_C... 17
+8/5/2019  08:15:37     Installed PowerShell 7-prev... 5                 BEGIN_SYSTEM_C... APPLICATION_INSTALL
+8/7/2019  12:56:45     Installed PowerShell 6-x64     6                 BEGIN_SYSTEM_C... APPLICATION_INSTALL
+```
+
+### Example 2: Get specific sequence numbers
+
+This example gets system restore points for specific sequence numbers.
+
+```powershell
+Get-ComputerRestorePoint -RestorePoint 4, 5
+```
+
+```Output
+CreationTime           Description                    SequenceNumber    EventType         RestorePointType
+------------           -----------                    --------------    ---------         ----------------
+7/30/2019 09:17:24     Windows Update                 4                 BEGIN_SYSTEM_C... 17
+8/5/2019  08:15:37     Installed PowerShell 7-prev... 5                 BEGIN_SYSTEM_C... APPLICATION_INSTALL
+```
+
+`Get-ComputerRestorePoint` uses the **RestorePoint** parameter to specify a comma-separated array of
+sequence numbers.
+
+### Example 3: Display the status of a system restore
+
+This example displays the status of the most recent system restore on the local computer.
+
+```powershell
+Get-ComputerRestorePoint -LastStatus
+```
+
+```Output
+The last attempt to restore the computer failed.
+```
+
+`Get-ComputerRestorePoint` uses the **LastStatus** parameter to display the result of the most
+recent system restore.
+
+### Example 4: Use an expression to convert the CreationTime
+
+`Get-ComputerRestorePoint` outputs the **CreationTime** as a Windows Management Instrumentation
+(WMI) date and time string.
+
+In this example, a variable stores an expression that converts the **CreationTime** string to a
+**DateTime** object. To view **CreationTime** strings before they&#x27;re converted, use a command such
+as `((Get-ComputerRestorePoint).CreationTime)`. For more information about the WMI date and time
+string, see [CIM_DATETIME](/windows/win32/wmisdk/cim-datetime).
+
+```powershell
+$date = @{Label=&quot;Date&quot;; Expression={$_.ConvertToDateTime($_.CreationTime)}}
+Get-ComputerRestorePoint | Select-Object -Property SequenceNumber, $date, Description
+```
+
+```Output
+SequenceNumber   Date                 Description
+--------------   ----                 -----------
+             4   7/30/2019 09:17:24   Windows Update
+             5   8/5/2019  08:15:37   Installed PowerShell 7-preview-x64
+             6   8/7/2019  12:56:45   Installed PowerShell 6-x64
+```
+
+The `$date` variable stores a hash table with the expression that uses the **ConvertToDateTime**
+method. The expression converts the **CreationTime** property&#x27;s value from a WMI string to a
+**DateTime** object.
+
+`Get-ComputerRestorePoint` sends the system restore point objects down the pipeline. `Select-Object`
+uses the **Property** parameter to specify the properties to display. For each object in the
+pipeline, the expression in `$date` converts the **CreationTime** and outputs the result in the
+**Date** property.
+
+### Example 5: Use a property to get a sequence number
+
+This example gets a sequence number by using the **SequenceNumber** property and an array index. The
+output only contains the sequence number.
+
+```powershell
+((Get-ComputerRestorePoint).SequenceNumber)[-1]
+```
+
+```Output
+6
+```
+
+`Get-ComputerRestorePoint` uses the **SequenceNumber** property with an array index. The array index
+of `-1` gets the most recent sequence number in the array.
+
+## PARAMETERS
+
+### -LastStatus
+
+Indicates that `Get-ComputerRestorePoint` gets the status of the most recent system restore
+operation.
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: LastStatus
+Aliases:
+
+Required: True
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -RestorePoint
+
+Specifies the sequence numbers of the system restore points. You can specify either a single
+sequence number or a comma-separated array of sequence numbers.
+
+If the **RestorePoint** parameter isn&#x27;t specified, `Get-ComputerRestorePoint` returns all the local
+computer&#x27;s system restore points.
+
+```yaml
+Type: System.Int32[]
+Parameter Sets: ID
+Aliases:
+
+Required: False
+Position: 0
+Default value: All restore points
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### CommonParameters
+
+This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable,
+-InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose,
+-WarningAction, and -WarningVariable. For more information, see [about_CommonParameters](https://go.microsoft.com/fwlink/?LinkID=113216).
+
+## INPUTS
+
+### None
+
+You can&#x27;t send objects down the pipeline to `Get-ComputerRestorePoint`.
+
+## OUTPUTS
+
+### System.Management.ManagementObject#root\default\SystemRestore or String
+
+`Get-ComputerRestorePoint` returns a **SystemRestore** object, which is an instance of the Windows
+Management Instrumentation (WMI) **SystemRestore** class.
+
+When you use the **LastStatus** parameter, `Get-ComputerRestorePoint` returns a string.
+
+## NOTES
+
+To run a `Get-ComputerRestorePoint` command on Windows Vista and later versions of Windows, open
+PowerShell with the **Run as administrator** option.
+
+`Get-ComputerRestorePoint` uses the WMI **SystemRestore** class.
+
+## RELATED LINKS
+
+[about_Hash_Tables](../Microsoft.PowerShell.Core/About/about_Hash_Tables.md)
+
+[about_Arrays](../Microsoft.PowerShell.Core/About/about_Arrays.md)
+
+[Checkpoint-Computer](Checkpoint-Computer.md)
+
+[Disable-ComputerRestore](Disable-ComputerRestore.md)
+
+[Enable-ComputerRestore](Enable-ComputerRestore.md)
+
+[Restart-Computer](Restart-Computer.md)
+
+[Restore-Computer](Restore-Computer.md)
+
+[SystemRestore](/windows/win32/sr/systemrestore)</pre></section>

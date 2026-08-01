@@ -1,0 +1,534 @@
+<!doctype html><meta charset="utf-8"><section class="jp-official"><h1>証明書を取得する</h1>
+<h2>SYNOPSIS は登録サーバーに証明書要求を送信し,応答をインストールするか,以前に提出された要求に対する証明書を取得します.</h2>
+<h2>SYNTAXは,のシンタックスです.</h2>
+<h3>提出要請</h3>
+<pre><code>Get-Certificate [-Url &lt;Uri&gt;] -Template &lt;String&gt; [-SubjectName &lt;String&gt;]
+ [-DnsName &lt;String[]&gt;] [-Credential &lt;PkiCredential&gt;] [-CertStoreLocation &lt;String&gt;]
+ [-WhatIf] [-Confirm] [&lt;CommonParameters&gt;]
+</code></pre>
+<h3>PendingRetrievalは,逆転が起きていた.</h3>
+<pre><code>Get-Certificate -Request &lt;Certificate&gt; [-Credential &lt;PkiCredential&gt;] [-WhatIf] [-Confirm]
+ [&lt;CommonParameters&gt;]
+</code></pre>
+<h2>記述は,</h2>
+<p><code>Get-Certificate</code>cmdlet を使用して証明書申請を提出し,結果の証明書をインストールし,未定の証明書申請から証明書をインストールし,LDAPに登録する.申請が発行された場合,返却証明書は <strong>CertStoreLocation</strong>  параметрによって決定された店舗にインストールされ,発行状態の <strong>EnrollmentResult</strong> 構造に証明書を返します.申請が進行中であれば,要求は機械 REQUEST ストアにインストールされ,要求は <strong>EnrollmentResult</strong> 構造に返却されます.</p>
+<p>このcmdletは,ステートレスモードで使用できます.このcmdletは,バウツで何も検索していない場合,または登録証明書登録ポリシーサーバーを識別子 (ID) と認証によって調べる Statefulモードで使用できます.このcmdletは,要求対象と認証なしで使用すると,登録ポリシーサーバーの URLに基づいてバウツで認証を確認します.</p>
+<p>このcmdletはポリシーサーバー識別子 (ID) を受け入れません.URLが指定されていない場合,標準証明書登録ポリシーIDのみが使用され,cmdletはURLのいずれかからポリシー情報を取得しようとします.</p>
+<p>このcmdletをWindows PowerShellでリモートしてユーザ設定を変更するときにデレガーションが必要になる可能性があります.</p>
+<h2>例えは</h2>
+<h3>例1</h3>
+<pre><code class="language-powershell">$cred = Get-Credential
+
+$params = @{
+    Template = 'SslWebServer'
+    DnsName = 'www.contoso.com', 'www.fabrikam.com'
+    Url = 'https://www.contoso.com/Policy/service.svc'
+    Credential = $cred
+    CertStoreLocation = 'Cert:\LocalMachine\My'
+} 
+Get-Certificate @params
+</code></pre>
+<p>この例では,証明書申請を  に提出します.<code>SslWebServer</code>ユーザ名とパスワードの認証を用い,特定のURLのテンプレートに表示します.このリクエストには2つのDNS名前が含まれます.これはマシンストアにある証明書です.リクエストが発行された場合,返済証明書はマシンにインストールされます.私のストアと<strong>登録結果</strong>構造の証明書は発行状態で返されます.リクエストが待機している場合は,リクエストがマシンREQUESTストアにインストールされ,登録結果**構造のリクエストは,待機状態で返されます.</p>
+<h3>例2</h3>
+<pre><code class="language-powershell">$cert = Get-ChildItem -Path cert:\LocalMachine\My\EEDEF61D4FF6EDBAAD538BB08CCAADDC3EE28FF
+
+$params = @{
+    Template = 'SslWebServer'
+    DnsName = 'www.contoso.com'
+    Url = 'https://www.contoso.com/policy/service.svc'
+    Credential = $cert
+    CertStoreLocation = 'Cert:\LocalMachine\My'
+}
+$enrollResult = Get-Certificate @params
+</code></pre>
+<p>この例では,認証のための証明書認証を用い,特定のURLに証明書要求を送信します.</p>
+<h3>例 3</h3>
+<pre><code class="language-powershell">$params = @{
+    Template = 'WorkstationTemplate'
+    Url = 'https://www.contoso.com/service.svc'
+}
+Set-Location -Path Cert:\LocalMachine\My
+
+$enrollResult = Get-Certificate @params
+</code></pre>
+<p>この例では,マシンアカウントとWindows統合認証を使用してURLを認証し,Templateのマシン証明書を申請します.<code>WorkstationTemplate</code> .</p>
+<h3>4 例を挙げてみましょう.</h3>
+<pre><code class="language-powershell">Set-Location -Path Cert:\CurrentUser\My
+
+Get-Certificate -Template User -Url ldap:
+</code></pre>
+<p>この例では,Windows 統合認証を使用して,テンプレート証明書に登録します.<code>User</code>証明書局へのDCOM電話を直接利用する.</p>
+<h3>例5</h3>
+<pre><code class="language-powershell">$request = Get-ChildItem -Path cert:\LocalMachine\Request\EEDEF61D4FF6EDBAAD538BB08CCAADDC3EE28FF
+
+$cred = Get-Credential
+
+Get-Certificate -Request $request -Credential $cred
+</code></pre>
+<p>この例では,ユーザー名とパスワードを認証として利用して,リクエストをリクエストして送信します.</p>
+<h3>例:6</h3>
+<pre><code class="language-powershell">$request = Get-ChildItem -Path cert:\LocalMachine\Request\EEDEF61D4FF6EDBAAD538BB08CCAADDC3EE28FF
+
+Get-Certificate -Request $request
+</code></pre>
+<p>この例では, によって識別された証明書を回収します.<code>$request</code>認証型が  の場合.<code>$request.EnrollmentServer.AuthType</code>Kerberos でないので,クレジット・ストアで確認してください.<code>$request.EnrollmentServer.Url</code>認証は存在しない場合は,Windows PowerShellが要求する (Windows PowerShell がインタラクティブモードにある場合).</p>
+<h2>パラメータは</h2>
+<h3>-CertStoreLocation でした</h3>
+<p>受け取った証明書への証明書ストアへの経路を指定します. 要求が待機している場合は,要求オブジェクトは対応する要求ストアに保存されます.</p>
+<p>&gt; [!NOTE] &gt; のみ<code>My</code>ストアがサポートされています.</p>
+<pre><code class="language-yaml">Type: System.String
+Parameter Sets: SubmitRequest
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-確認</h3>
+<p>cmdletを実行する前に確認を提示します.</p>
+<pre><code class="language-yaml">Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases: cf
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>- 信用証</h3>
+<p>証明書登録に使用する認証は,ユーザー名とパスワード (認証対象),X509証明書,または証明書への経路である.認証は指定されていない場合は,Kerberos認証を使用します.</p>
+<pre><code class="language-yaml">Type: Microsoft.CertificateServices.Commands.PkiCredential
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-DnsName</h3>
+<p>証明書要求に含まれる1つまたは複数のDNS名を対象の代替名前の拡張子として指定します.</p>
+<pre><code class="language-yaml">Type: System.String[]
+Parameter Sets: SubmitRequest
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-リクエスト</h3>
+<p>X509証明書またはリクエストストアにある要求された証明書への経路を指定します.</p>
+<pre><code class="language-yaml">Type: Microsoft.CertificateServices.Commands.Certificate
+Parameter Sets: PendingRetrieval
+Aliases: 
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: True (ByValue)
+Accept wildcard characters: False
+</code></pre>
+<h3>-SubjectName について</h3>
+<p>証明書要求に含まれる対象名を指定します.</p>
+<pre><code class="language-yaml">Type: System.String
+Parameter Sets: SubmitRequest
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-テンプレート</h3>
+<p>証明書要求で使用する証明書テンプレートのオブジェクト識別子または名称を指定します.</p>
+<pre><code class="language-yaml">Type: System.String
+Parameter Sets: SubmitRequest
+Aliases: 
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h1>証明書を取得する</h1>
+<h3>-Url</h3>
+<p>証明書登録に使用するポリシーサーバーURLを指定します.エンドポイントにユーザー名とパスワードまたはクライアントから証明書認証が必要であれば,認証は必要になります.認証が見つかりず,Windows PowerShellがインタラクティブモードで使用されている場合は,認証のプロンプトが表示されます.</p>
+<pre><code class="language-yaml">Type: System.Uri
+Parameter Sets: SubmitRequest
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName, ByValue)
+Accept wildcard characters: False
+</code></pre>
+<h3>-WhatIf</h3>
+<p>cmdletが実行されなければどうなるかを示しています.</p>
+<pre><code class="language-yaml">Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases: wi
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>共通パラメーター</h3>
+<p>このcmdletは,共通パラメータをサポートしています: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable.詳細については, <a href="を参照してください.https://go.microsoft.com/fwlink/?LinkID=113216">about_CommonParameters</a> でした.</p>
+<h2>輸入は</h2>
+<h3>システム.セキュリティ.暗号化.X509Certificates.X509Certificate2</h3>
+<p>証明書オブジェクトは証明書へのパスオブジェクトまたは <strong>X509Certificate2</strong>オブジェクトとして提供することができます.</p>
+<h3>System.Uriを表示する</h3>
+<p><strong>Uri</strong>オブジェクトは <strong>Url</strong>プロパティ名によってパイプライン化することもできます.</p>
+<h2>輸出は</h2>
+<h3>Microsoft.CertificateServices.Commands.Enrollment 結果は</h3>
+<p><strong>EnrollmentResult</strong>オブジェクトには,登録の結果が含まれています.</p>
+<h2>NOTES  記事ができました.</h2>
+<h2>関連リンク</h2>
+<p><a href="https://go.microsoft.com/fwlink/p/?LinkId=290488">Get-ChildItem</a> </p>
+<p>[Get-Credential] ◎https://go.microsoft.com/fwlink/p/?LinkId=293936) </p>
+<p><a href="https://go.microsoft.com/fwlink/p/?LinkId=293912">設定場所</a> </p>
+<p><a href="/windows/desktop/seccrypto/system-store-locations">システムストア・ロケーション</a> </p></section><section class="en-original"><pre class="source-original"># Get-Certificate
+
+## SYNOPSIS
+Submits a certificate request to an enrollment server and installs the response or retrieves a
+certificate for a previously submitted request.
+
+## SYNTAX
+
+### SubmitRequest
+
+```
+Get-Certificate [-Url &lt;Uri&gt;] -Template &lt;String&gt; [-SubjectName &lt;String&gt;]
+ [-DnsName &lt;String[]&gt;] [-Credential &lt;PkiCredential&gt;] [-CertStoreLocation &lt;String&gt;]
+ [-WhatIf] [-Confirm] [&lt;CommonParameters&gt;]
+```
+
+### PendingRetrieval
+
+```
+Get-Certificate -Request &lt;Certificate&gt; [-Credential &lt;PkiCredential&gt;] [-WhatIf] [-Confirm]
+ [&lt;CommonParameters&gt;]
+```
+
+## DESCRIPTION
+
+The `Get-Certificate` cmdlet can be used to submit a certificate request and install the resulting
+certificate, install a certificate from a pending certificate request, and enroll for LDAP. If the
+request is issued, then the returned certificate is installed in the store determined by the
+**CertStoreLocation** parameter and return the certificate in the **EnrollmentResult** structure
+with status Issued. If the request is made pending, then the request is installed in the machine
+REQUEST store and a request is returned in the **EnrollmentResult** structure with status Pending.
+
+This cmdlet can be used in a Stateless mode where this cmdlet does not look up anything in the vault
+or in a Stateful mode where it looks at registered certificate enrollment policy servers by
+identifier (ID) and credential. When used with a request object and no credential, this cmdlet will
+look up credentials in the vault based on the URL for the enrollment policy server.
+
+This cmdlet will not accept a policy server identifier (ID). If a URL is not specified, then only
+the default certificate enrollment policy ID is used and the cmdlet will attempt to obtain policy
+information from any of its URLs.
+
+Delegation may be required when using this cmdlet with Windows PowerShell remoting and changing user
+configuration.
+
+## EXAMPLES
+
+### EXAMPLE 1
+
+```powershell
+$cred = Get-Credential
+
+$params = @{
+    Template = &#x27;SslWebServer&#x27;
+    DnsName = &#x27;www.contoso.com&#x27;, &#x27;www.fabrikam.com&#x27;
+    Url = &#x27;https://www.contoso.com/Policy/service.svc&#x27;
+    Credential = $cred
+    CertStoreLocation = &#x27;Cert:\LocalMachine\My&#x27;
+} 
+Get-Certificate @params
+```
+
+This example submits a certificate request for the `SslWebServer` template to the specific URL using
+the user name and password credentials. The request will have two DNS names in it. This is for a
+certificate in the machine store. If the request is issued, then the returned certificate is
+installed in the machine My store and the certificate in the **EnrollmentResult** structure is
+returned with the status Issued. If the request is made pending, then the request is installed in
+the machine REQUEST store and the request in the **EnrollmentResult** structure is returned with the
+status Pending.
+
+### EXAMPLE 2
+
+```powershell
+$cert = Get-ChildItem -Path cert:\LocalMachine\My\EEDEF61D4FF6EDBAAD538BB08CCAADDC3EE28FF
+
+$params = @{
+    Template = &#x27;SslWebServer&#x27;
+    DnsName = &#x27;www.contoso.com&#x27;
+    Url = &#x27;https://www.contoso.com/policy/service.svc&#x27;
+    Credential = $cert
+    CertStoreLocation = &#x27;Cert:\LocalMachine\My&#x27;
+}
+$enrollResult = Get-Certificate @params
+```
+
+This example submits a certificate request to a specific URL using the certificate credential for
+authentication.
+
+### EXAMPLE 3
+
+```powershell
+$params = @{
+    Template = &#x27;WorkstationTemplate&#x27;
+    Url = &#x27;https://www.contoso.com/service.svc&#x27;
+}
+Set-Location -Path Cert:\LocalMachine\My
+
+$enrollResult = Get-Certificate @params
+```
+
+This example authenticates the URL using the machine account and Windows integrated authentication
+and submits a request for a machine certificate of template named `WorkstationTemplate`.
+
+### EXAMPLE 4
+
+```powershell
+Set-Location -Path Cert:\CurrentUser\My
+
+Get-Certificate -Template User -Url ldap:
+```
+
+This example uses Windows integrated authentication to enroll for a certificate of template `User`
+using direct DCOM calls to the Certificate Authority.
+
+### EXAMPLE 5
+
+```powershell
+$request = Get-ChildItem -Path cert:\LocalMachine\Request\EEDEF61D4FF6EDBAAD538BB08CCAADDC3EE28FF
+
+$cred = Get-Credential
+
+Get-Certificate -Request $request -Credential $cred
+```
+
+This example retrieves and submits a pending request using a user name and password as credentials.
+
+### EXAMPLE 6
+
+```powershell
+$request = Get-ChildItem -Path cert:\LocalMachine\Request\EEDEF61D4FF6EDBAAD538BB08CCAADDC3EE28FF
+
+Get-Certificate -Request $request
+```
+
+This example retrieves the certificate identified by `$request`. If the authentication type for
+`$request.EnrollmentServer.AuthType` is not Kerberos, then look in the credential store to see if
+there is a credential for `$request.EnrollmentServer.Url`. If there is a credential, then use it. If
+there is no credential, then Windows PowerShell will request it (if Windows PowerShell is in
+Interactive mode).
+
+## PARAMETERS
+
+### -CertStoreLocation
+
+Specifies the path to the certificate store for the received certificate.
+If the request is made pending, then the request object is saved in the corresponding request store.
+
+&gt; [!NOTE]
+&gt; Only `My` store is supported.
+
+```yaml
+Type: System.String
+Parameter Sets: SubmitRequest
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Confirm
+
+Prompts you for confirmation before running the cmdlet.
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases: cf
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Credential
+
+Specifies the credential to use for certificate enrollment. The credential can be a user name and
+password (a credential object), an X509 certificate, or the path to a certificate. If a credential
+is not specified, then Kerberos authentication is used.
+
+```yaml
+Type: Microsoft.CertificateServices.Commands.PkiCredential
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -DnsName
+
+Specifies one or more DNS names to be included in the certificate request as subject alternative
+name extension.
+
+```yaml
+Type: System.String[]
+Parameter Sets: SubmitRequest
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Request
+
+Specifies the X509 certificate or the path to a requested certificate located in the request store.
+
+```yaml
+Type: Microsoft.CertificateServices.Commands.Certificate
+Parameter Sets: PendingRetrieval
+Aliases: 
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: True (ByValue)
+Accept wildcard characters: False
+```
+
+### -SubjectName
+
+Specifies the subject name to be included in the certificate request.
+
+```yaml
+Type: System.String
+Parameter Sets: SubmitRequest
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Template
+
+Specifies the object identifier or name of a certificate template to use with the certificate
+request.
+
+```yaml
+Type: System.String
+Parameter Sets: SubmitRequest
+Aliases: 
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+# Get-Certificate
+
+### -Url
+
+Specifies the policy server URL to use for certificate enrollment. Credentials are required if the
+endpoint requires a user name and password or certificate authentication from the client. If
+credentials are not found and Windows PowerShell is in interactive mode, then a prompt for
+credentials will appear.
+
+```yaml
+Type: System.Uri
+Parameter Sets: SubmitRequest
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName, ByValue)
+Accept wildcard characters: False
+```
+
+### -WhatIf
+
+Shows what would happen if the cmdlet runs.
+The cmdlet is not run.
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases: wi
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### CommonParameters
+
+This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable,
+-InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose,
+-WarningAction, and -WarningVariable. For more information, see
+[about_CommonParameters](https://go.microsoft.com/fwlink/?LinkID=113216).
+
+## INPUTS
+
+### System.Security.Cryptography.X509Certificates.X509Certificate2
+
+The Certificate object can either be provided as a Path object to a certificate or an
+**X509Certificate2** object.
+
+### System.Uri
+
+The **Uri** object can also be pipelined by the **Url** property name.
+
+## OUTPUTS
+
+### Microsoft.CertificateServices.Commands.EnrollmentResult
+
+The **EnrollmentResult** object contains the results of enrollment.
+
+## NOTES
+
+## RELATED LINKS
+
+[Get-ChildItem](https://go.microsoft.com/fwlink/p/?LinkId=290488)
+
+[Get-Credential](https://go.microsoft.com/fwlink/p/?LinkId=293936)
+
+[Set-Location](https://go.microsoft.com/fwlink/p/?LinkId=293912)
+
+[System Store Locations](/windows/desktop/seccrypto/system-store-locations)</pre></section>

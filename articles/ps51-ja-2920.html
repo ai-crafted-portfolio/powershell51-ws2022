@@ -1,0 +1,875 @@
+<!doctype html><meta charset="utf-8"><section class="jp-official"><h1>New-SmbShare について</h1>
+<h2>SYNOPSIS は,SMBのシェアを作成します.</h2>
+<h2>SYNTAXは,のシンタックスです.</h2>
+<pre><code>New-SmbShare [-Temporary] [-ContinuouslyAvailable &lt;Boolean&gt;] [-Description &lt;String&gt;]
+ [-ConcurrentUserLimit &lt;UInt32&gt;] [-CATimeout &lt;UInt32&gt;]
+ [-FolderEnumerationMode &lt;FolderEnumerationMode&gt;] [-CachingMode &lt;CachingMode&gt;]
+ [-FullAccess &lt;String[]&gt;] [-ChangeAccess &lt;String[]&gt;] [-ReadAccess &lt;String[]&gt;] [-NoAccess &lt;String[]&gt;]
+ [-SecurityDescriptor &lt;String&gt;] [-Path] &lt;String&gt; [-Name] &lt;String&gt; [[-ScopeName] &lt;String&gt;]
+ [-EncryptData &lt;Boolean&gt;] [-CompressData &lt;Boolean&gt;] [-LeasingMode &lt;LeasingMode&gt;]
+ [-CimSession &lt;CimSession[]&gt;] [-ThrottleLimit &lt;Int32&gt;] [-AsJob] [-WhatIf] [-Confirm]
+ [&lt;CommonParameters&gt;]
+</code></pre>
+<h2>記述は,</h2>
+<p><code>New-SmbShare</code>cmdlet は,サーバーメッセージブロック (SMB) シェアとしてファイルシステムフォルダをリモートクライアントに公開します.</p>
+<p>このcmdletで作成されたシェアを削除するには,  を使ってください.<code>Remove-SmbShare</code>cmdletです.</p>
+<p>&gt; [!NOTE] &gt; このcmdletでは<strong>WhatIf</strong>パラメータが動作しません.</p>
+<h2>例えは</h2>
+<h3>例1:SMBシェアを作成する</h3>
+<pre><code class="language-powershell">$Parameters = @{
+    Name = 'VMSFiles'
+    Path = 'D:\Public'
+    FullAccess = 'Contoso\Administrator', 'Contoso\Contoso-HV1$'
+}
+New-SmbShare @Parameters
+</code></pre>
+<p>このコマンドは,SMBのシェアを作成し,その名前はです.<code>VMSFiles</code>への完全なアクセス権限を許可し,<code>Contoso\Administrator</code>そして,そして,<code>Contoso\Contoso-HV1$</code> .</p>
+<p>この例では,パラメータ値を から転送するためにスプラッティングを使用します.<code>$Parameters</code>[Splatting] (/powershell/module/microsoft.powershell.core/about/about_splatting) に関する詳細をご覧ください.</p>
+<h3>例2:暗号化されたSMBシェアを作成します</h3>
+<pre><code class="language-powershell">New-SmbShare -Name &quot;Data&quot; -Path &quot;J:\Data&quot; -EncryptData $True
+</code></pre>
+<p>このコマンドは暗号化されたSMBシェアを作成します.</p>
+<h3>例3:複数の許可でSMBシェアを作成する</h3>
+<pre><code class="language-powershell">$Parameters = @{
+    Name = 'VMSFiles'
+    Path = 'C:\ClusterStorage\Volume1\VMFiles'
+    ChangeAccess = 'CONTOSO\Finance Users','CONTOSO\HR Users'
+    FullAccess = 'Administrators'
+}
+New-SmbShare @Parameters
+</code></pre>
+<p>このコマンドは,SMBのシェアを作成し,その名前はです.<code>VMSFiles</code>そして,ドメイングループに変更許可を許可する.<code>CONTOSO\Finance Users</code>そして,<code>CONTOSO\HR Users</code>ビルチンへの完全なアクセス権限<code>Administrators</code>グループです.</p>
+<p>この例では,パラメータ値を から転送するためにスプラッティングを使用します.<code>$Parameters</code>[Splatting] (/powershell/module/microsoft.powershell.core/about/about_splatting) に関する詳細をご覧ください.</p>
+<h2>パラメータは</h2>
+<h3>- バイトとして</h3>
+<p>このパラメータを使用して,完成するのに時間がかかるコマンドを実行します.</p>
+<pre><code class="language-yaml">Type: SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-キャッシングモード</h3>
+<p>SMBシェア用のオフラインファイルのキャッシングモードを指定します.キャッシングモードは5つあります:</p>
+<ul>
+<li>ブランチキャッシュ - 分享フォルダに文書のブランチキャッシュと手動キャッシュを有効にする. - ドキュメント - 文書をオフラインで自動的に保存する. - マニュアル - ユーザーがオフラインで保存したい文書とプログラムを識別できるようにします. - プログラム - 文書とプログラムをオフラインで自動的に保存します. - 禁止 - 文書とプログラムをオフラインで保存することを防止します.</li>
+</ul>
+<pre><code class="language-yaml">Type: CachingMode
+Parameter Sets: (All)
+Aliases:
+Accepted values: None, Manual, Documents, Programs, BranchCache, Unknown
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>- タイムアウト</h3>
+<p>株式の継続的な利用期間を指定します.</p>
+<pre><code class="language-yaml">Type: UInt32
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-ChangeAccess</h3>
+<p>どれだけのユーザーに許可を与えられているかを指定します.シェアにアクセスする許可を変更します. 逗号別列のリストを使用して複数のユーザーを指定できます. 逗号別列のリストの各エントリは単一の引用またはダブル引用の中に含まれなければなりません.例えば, <code>'CONTOSO\Finance Users','CONTOSO\HR Users'</code> .</p>
+<pre><code class="language-yaml">Type: String[]
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-CimSession でした.</h3>
+<p>遠隔セッションまたは遠隔コンピュータでcmdletを実行します.コンピュータ名またはセッションオブジェクトを入力します.例えば[New-CimSession] (/powershell/module/cimcmdlets/new-cimsession) または [Get-CimSession] ((/powershell/module/cimcmdlets/get-cimsession) cmdletの出力です.デフォルトはローカルコンピュータの現在のセッションです.</p>
+<pre><code class="language-yaml">Type: CimSession[]
+Parameter Sets: (All)
+Aliases: Session
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-CompressDataを圧縮する</h3>
+<p>サポートするすべてのクライアント接続に対してSMB圧縮が要求されていることを表示します.</p>
+<pre><code class="language-yaml">Type: Boolean
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-コンクラントユーザー限定</h3>
+<p>新しいSMBシェアが容れる最大限の同時接続ユーザー数を指定します.このパラメータがゼロ (0) に設定されている場合,ユーザー数は無制限です.デフォルト値はゼロ (0).</p>
+<pre><code class="language-yaml">Type: UInt32
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-継続的に利用可能です.</h3>
+<p>株式が継続的に利用可能であることを示します.</p>
+<pre><code class="language-yaml">Type: Boolean
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-Description について説明します.</h3>
+<p>SMB株式のオプション説明を指定します.  を実行することで株式の説明が表示されます.<code>Get-SmbShare</code>cmdlet.記述は256文字以上を含まない.デフォルト値は説明または空き説明ではありません.</p>
+<pre><code class="language-yaml">Type: String
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-EncryptData</h3>
+<p>株式が暗号化されていることを示します.</p>
+<pre><code class="language-yaml">Type: Boolean
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-FolderEnumerationMode</h3>
+<p>SMB共有のファイルとフォルダがユーザーに目に見えるのはどれか指定します.このパラメータの受け入れ可能な値は:</p>
+<ul>
+<li>-<code>AccessBased</code>.SMBは,そのユーザがファイルやフォルダーにアクセスする権利を有していない限り,ファイルやフォルダをユーザーに共有するために表示しません.デフォルトでは,新しいSMBシェアに対してアクセスベースのリストが無効になります. - <code>Unrestricted</code>. SMBは,ユーザーがアイテムにアクセスする許可がない場合でも,ファイルとフォルダをユーザーに表示します.</li>
+</ul>
+<p>デフォルト値は です.<code>Unrestricted</code> .</p>
+<pre><code class="language-yaml">Type: FolderEnumerationMode
+Parameter Sets: (All)
+Aliases:
+Accepted values: AccessBased, Unrestricted
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h1>New-SmbShare について</h1>
+<h3>-FullAccess でした</h3>
+<p>どれだけのアカウントが株式にアクセスできるのか,完全な許可を与えられているかを指定します.複数のアカウントを指定するには,逗号別列を使用します.逗号別列の各エントリは単一の引用または双重引用の中に含まれなければなりません.例えば, <code>'CONTOSO\Finance Users','CONTOSO\HR Users'</code> .</p>
+<p>アカウントは<strong>FullAccess</strong>, <strong>ChangeAccess</strong>,または <strong>ReadAccess</strong>パラメータリストに1回以上指定することはできませんが, <strong>FullAccess</strong>, <strong>ChangeAccess</strong>,または <strong>ReadAccess</strong>パラメータリストに1回, <strong>NoAccess</strong>パラメータリストに1回指定することができます.</p>
+<pre><code class="language-yaml">Type: String[]
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-リースモード</h3>
+<p>適用互換性に関するSMBリースとオプロック行動を指定します.このパラメータの受け入れ可能な値は:</p>
+<ul>
+<li>-<code>Full</code>: SMB3からのデフォルトリーゼとオプロック行動を使用します. - <code>Shared</code>: 読み込みキャッシングのレンタを譲りますが,書き込みやハンドルキャッシングはしません. - <code>None</code>: オープロックやリースなし,SMB1のように振る舞う (推奨されていません).</li>
+</ul>
+<pre><code class="language-yaml">Type: LeasingMode
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-名字は</h3>
+<p>SMBシェアに名前を指定します.名前です.<code>pipe</code>そして,<code>mailslot</code>共有名は最大80文字まで長くなる.SMB共有名は,ファイルやディレクトリにWindowsが許可する任意の文字を使用することができる.ファイルの命名条約について詳しくは[ファイル名稱,パス,名前空間] (/windows/win32/fileio/naming-a-file) の記事を読む.</p>
+<pre><code class="language-yaml">Type: String
+Parameter Sets: (All)
+Aliases:
+
+Required: True
+Position: 1
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+</code></pre>
+<h3>-アクセス禁止です</h3>
+<p>SMBシェアへのアクセスが拒否されたアカウントを指定します. 逗号別列のリストを提供することで複数のアカウントを指定できます. 逗号別列のリストの各エントリは単一の引用またはダブル引用の中に含まれなければなりません.例えば, <code>'CONTOSO\Finance Users','CONTOSO\HR Users'</code> .</p>
+<pre><code class="language-yaml">Type: String[]
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>- 歩道</h3>
+<p>共有するフォルダの位置のパスを指定します.パスには完全に資格がある必要があります.ワイルドカード文字を含む相対的なパスまたはパスには許可されません.</p>
+<pre><code class="language-yaml">Type: String
+Parameter Sets: (All)
+Aliases:
+
+Required: True
+Position: 2
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+</code></pre>
+<h3>-ReadAccess</h3>
+<p>シェアにアクセスするための読書許可が与えられたユーザーを指定します. 逗号別列のリストを入力することで複数のユーザーを指定できます. 逗号別列のリストの各エントリは単行または双重引用の中に含まれなければなりません.例えば <code>'CONTOSO\Finance Users','CONTOSO\HR Users'</code> .</p>
+<pre><code class="language-yaml">Type: String[]
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-ScopeName</h3>
+<p>共有の範囲名を指定します.Windows Serverの失敗管理クラスターファイルサーバーリソースで使用します.</p>
+<pre><code class="language-yaml">Type: String
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: 3
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+</code></pre>
+<h3>-SecurityDescriptor について</h3>
+<p>SMBシェアのセキュリティデスクリプトを文字列形式で指定します.</p>
+<pre><code class="language-yaml">Type: String
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+</code></pre>
+<h3>-一時的な</h3>
+<p>新しいSMBシェアが一時的なものであり,次のコンピュータを再起動後には持続しないことを指定します.デフォルトでは,新しいSMBシェアは一時的なものではありません.</p>
+<pre><code class="language-yaml">Type: SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-ThrottleLimit</h3>
+<p>cmdletを実行するために設定できる最大限の同時操作数を指定します.このパラメータを省略した場合,または の値が省略された場合.<code>0</code>入力すると,Windows PowerShellは,コンピュータ上で実行されている CIM cmdletsの数に基づいて cmdlet の最適な加速度制限を計算します.加速度制限は,セッションやコンピュータに適用されない,現在の cmdlet にのみ適用されます.</p>
+<pre><code class="language-yaml">Type: Int32
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-確認</h3>
+<p>cmdletを実行する前に確認を提示します.</p>
+<pre><code class="language-yaml">Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: cf
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-WhatIf</h3>
+<p>実行されないcmdletが実行されればどうなるかを示しています.</p>
+<p>&gt; [!NOTE] &gt; このcmdletで <strong>WhatIf</strong> スイッチが動作しません.</p>
+<pre><code class="language-yaml">Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: wi
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>共通パラメーター</h3>
+<p>このcmdletは,共通パラメータである: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction,および -WarningVariableをサポートしています.詳細については, [about_CommonParameters] (/powershell/module/microsoft.powershell.core/about/about_about_commonparameters) を参照してください.</p>
+<h2>輸入は</h2>
+<h3>どれもない</h3>
+<h2>輸出は</h2>
+<h3>Microsoft.Management.Infrastructure.CimInstance#ROOT/Microsoft/Windows/SMB/MSFT_SmbShare</h3>
+<p><strong>Microsoft.Management.Infrastructure.CimInstance</strong> オブジェクトは,Windows Management Instrumentation (WMI) オブジェクトを表示する包装クラスです.<code>#</code>) は,元々のWMIオブジェクトの名前空間とクラス名を提供します.このcmdletは,SMBシェアを表示する <strong>MSFT_SmbShare</strong>オブジェクトを返します.</p>
+<h2>NOTES  記事ができました.</h2>
+<h2>関連リンク</h2>
+<p><a href="Get-SmbShare.md">Get-SmbShare</a> </p>
+<p><a href="Remove-SmbShare.md を削除する">Remove-SmbShare</a></p>
+<p><a href="Set-SmbShare.md">Set-SmbShare</a> </p></section><section class="en-original"><pre class="source-original"># New-SmbShare
+
+## SYNOPSIS
+Creates an SMB share.
+
+## SYNTAX
+
+```
+New-SmbShare [-Temporary] [-ContinuouslyAvailable &lt;Boolean&gt;] [-Description &lt;String&gt;]
+ [-ConcurrentUserLimit &lt;UInt32&gt;] [-CATimeout &lt;UInt32&gt;]
+ [-FolderEnumerationMode &lt;FolderEnumerationMode&gt;] [-CachingMode &lt;CachingMode&gt;]
+ [-FullAccess &lt;String[]&gt;] [-ChangeAccess &lt;String[]&gt;] [-ReadAccess &lt;String[]&gt;] [-NoAccess &lt;String[]&gt;]
+ [-SecurityDescriptor &lt;String&gt;] [-Path] &lt;String&gt; [-Name] &lt;String&gt; [[-ScopeName] &lt;String&gt;]
+ [-EncryptData &lt;Boolean&gt;] [-CompressData &lt;Boolean&gt;] [-LeasingMode &lt;LeasingMode&gt;]
+ [-CimSession &lt;CimSession[]&gt;] [-ThrottleLimit &lt;Int32&gt;] [-AsJob] [-WhatIf] [-Confirm]
+ [&lt;CommonParameters&gt;]
+```
+
+## DESCRIPTION
+
+The `New-SmbShare` cmdlet exposes a file system folder to remote clients as a Server Message Block
+(SMB) share.
+
+To delete a share that was created by this cmdlet, use the `Remove-SmbShare` cmdlet.
+
+&gt; [!NOTE]
+&gt; The **WhatIf** parameter does not work with this cmdlet.
+
+## EXAMPLES
+
+### Example 1: Create an SMB share
+
+```powershell
+$Parameters = @{
+    Name = &#x27;VMSFiles&#x27;
+    Path = &#x27;D:\Public&#x27;
+    FullAccess = &#x27;Contoso\Administrator&#x27;, &#x27;Contoso\Contoso-HV1$&#x27;
+}
+New-SmbShare @Parameters
+```
+
+This command creates an SMB share named `VMSFiles` and grants Full Access permissions to
+`Contoso\Administrator`, and `Contoso\Contoso-HV1$`.
+
+This example uses splatting to pass parameter values from the `$Parameters` variable to the command.
+Learn more about [Splatting](/powershell/module/microsoft.powershell.core/about/about_splatting).
+
+### Example 2: Create an encrypted SMB share
+
+```powershell
+New-SmbShare -Name &quot;Data&quot; -Path &quot;J:\Data&quot; -EncryptData $True
+```
+
+This command creates an encrypted SMB share.
+
+### Example 3: Create an SMB share with Multiple Permissions
+
+```powershell
+$Parameters = @{
+    Name = &#x27;VMSFiles&#x27;
+    Path = &#x27;C:\ClusterStorage\Volume1\VMFiles&#x27;
+    ChangeAccess = &#x27;CONTOSO\Finance Users&#x27;,&#x27;CONTOSO\HR Users&#x27;
+    FullAccess = &#x27;Administrators&#x27;
+}
+New-SmbShare @Parameters
+```
+
+This command creates an SMB share named `VMSFiles` and grants Change permissions to the domain
+groups `CONTOSO\Finance Users` and `CONTOSO\HR Users`. Full Access permissions to the builtin
+`Administrators` group.
+
+This example uses splatting to pass parameter values from the `$Parameters` variable to the command.
+Learn more about [Splatting](/powershell/module/microsoft.powershell.core/about/about_splatting).
+
+## PARAMETERS
+
+### -AsJob
+
+Runs the cmdlet as a background job. Use this parameter to run commands that take a long time to
+complete.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -CachingMode
+
+Specifies the caching mode of the offline files for the SMB share. There are five caching modes:
+
+- BranchCache - Enables BranchCache and manual caching of documents on the shared folder.
+- Documents - Automatically stores documents offline.
+- Manual - Allows users to identify the documents and programs that they want to store offline.
+- Programs - Automatically stores documents and programs offline.
+- None - Prevents users from storing documents and programs offline.
+
+```yaml
+Type: CachingMode
+Parameter Sets: (All)
+Aliases:
+Accepted values: None, Manual, Documents, Programs, BranchCache, Unknown
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -CATimeout
+
+Specifies the continuous availability time-out for the share.
+
+```yaml
+Type: UInt32
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -ChangeAccess
+
+Specifies which users are granted modify permission to access the share. Multiple users can be
+specified by using a comma-separated list. Each entry in the comma-separated list must be contained
+within single or double quotes, for example `&#x27;CONTOSO\Finance Users&#x27;,&#x27;CONTOSO\HR Users&#x27;`.
+
+```yaml
+Type: String[]
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -CimSession
+
+Runs the cmdlet in a remote session or on a remote computer. Enter a computer name or a session
+object, such as the output of a [New-CimSession](/powershell/module/cimcmdlets/new-cimsession)
+or [Get-CimSession](/powershell/module/cimcmdlets/get-cimsession) cmdlet. The default is the
+current session on the local computer.
+
+```yaml
+Type: CimSession[]
+Parameter Sets: (All)
+Aliases: Session
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -CompressData
+
+Indicates that SMB compression is requested for all client connections that support it.
+
+```yaml
+Type: Boolean
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -ConcurrentUserLimit
+
+Specifies the maximum number of concurrently connected users that the new SMB share may accommodate.
+If this parameter is set to zero (0), then the number of users is unlimited. The default value is
+zero (0).
+
+```yaml
+Type: UInt32
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -ContinuouslyAvailable
+
+Indicates that the share is continuously available.
+
+```yaml
+Type: Boolean
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Description
+
+Specifies an optional description of the SMB share. A description of the share is displayed by
+running the `Get-SmbShare` cmdlet. The description may not contain more than 256 characters. The
+default value is no description or an empty description.
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -EncryptData
+
+Indicates that the share is encrypted.
+
+```yaml
+Type: Boolean
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -FolderEnumerationMode
+
+Specifies which files and folders in the SMB share are visible to users. The acceptable values for
+this parameter are:
+
+- `AccessBased`. SMB doesn&#x27;t display the files and folders for a share to a user unless that user
+  has rights to access the files and folders. By default, access-based enumeration is disabled for
+  new SMB shares.
+- `Unrestricted`. SMB displays files and folders to a user even when the user doesn&#x27;t have
+  permission to access the items.
+
+The default value is `Unrestricted`.
+
+```yaml
+Type: FolderEnumerationMode
+Parameter Sets: (All)
+Aliases:
+Accepted values: AccessBased, Unrestricted
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+# New-SmbShare
+
+### -FullAccess
+
+Specifies which accounts are granted full permission to access the share. Use a comma-separated list
+to specify multiple accounts. Each entry in the comma-separated list must be contained within single
+or double quotes, for example `&#x27;CONTOSO\Finance Users&#x27;,&#x27;CONTOSO\HR Users&#x27;`.
+
+An account may not be specified more than once in the **FullAccess**, **ChangeAccess**, or
+**ReadAccess** parameter lists, but may be specified once in the **FullAccess**, **ChangeAccess**,
+or **ReadAccess** parameter list and once in the **NoAccess** parameter list.
+
+```yaml
+Type: String[]
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -LeasingMode
+
+Specifies SMB leasing and oplock behaviors for application compatibility. The acceptable values for
+this parameter are:
+
+- `Full`: Use default lease and oplock behaviors from SMB3.
+- `Shared`: Grant read-caching lease but not write or handle-caching.
+- `None`: No oplocks or leases, behave like SMB1 (not recommended).
+
+```yaml
+Type: LeasingMode
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Name
+
+Specifies a name for the SMB share. The names `pipe` and `mailslot` are reserved for use by the
+computer. Share names can be up to a maximum of 80 characters long. The SMB share name can use any
+character allowed by Windows for files and directories. To learn more about naming conventions for
+files read the [Naming Files, Paths, and Namespaces](/windows/win32/fileio/naming-a-file) articles.
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases:
+
+Required: True
+Position: 1
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -NoAccess
+
+Specifies which accounts are denied access to the SMB share. Multiple accounts can be specified by
+supplying a comma-separated list. Each entry in the comma-separated list must be contained within
+single or double quotes, for example `&#x27;CONTOSO\Finance Users&#x27;,&#x27;CONTOSO\HR Users&#x27;`.
+
+```yaml
+Type: String[]
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Path
+
+Specifies the path of the location of the folder to share. The path must be fully qualified.
+Relative paths or paths that contain wildcard characters aren&#x27;t permitted.
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases:
+
+Required: True
+Position: 2
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -ReadAccess
+
+Specifies which users are granted read permission to access the share. Multiple users can be
+specified by supplying a comma-separated list. Each entry in the comma-separated list must be
+contained within single or double quotes, for example `&#x27;CONTOSO\Finance Users&#x27;,&#x27;CONTOSO\HR Users&#x27;`.
+
+```yaml
+Type: String[]
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -ScopeName
+
+Specifies the scope name of the share. For use with Windows Server failover cluster file server
+resources.
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: 3
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -SecurityDescriptor
+
+Specifies the security descriptor for the SMB share in string format.
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -Temporary
+
+Specifies the new SMB share is temporary and will not persist beyond the next restart of the
+computer. By default, new SMB shares aren&#x27;t temporary.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -ThrottleLimit
+
+Specifies the maximum number of concurrent operations that can be established to run the cmdlet. If
+this parameter is omitted or a value of `0` is entered, then Windows PowerShell calculates an
+optimum throttle limit for the cmdlet based on the number of CIM cmdlets that are running on the
+computer. The throttle limit applies only to the current cmdlet, not to the session or to the
+computer.
+
+```yaml
+Type: Int32
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Confirm
+
+Prompts you for confirmation before running the cmdlet.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: cf
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -WhatIf
+
+Shows what would happen if the cmdlet runs. The cmdlet isn&#x27;t run.
+
+&gt; [!NOTE]
+&gt; The **WhatIf** switch doesn&#x27;t work with this cmdlet.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: wi
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### CommonParameters
+
+This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable,
+-InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose,
+-WarningAction, and -WarningVariable. For more information, see
+[about_CommonParameters](/powershell/module/microsoft.powershell.core/about/about_commonparameters).
+
+## INPUTS
+
+### None
+
+## OUTPUTS
+
+### Microsoft.Management.Infrastructure.CimInstance#ROOT/Microsoft/Windows/SMB/MSFT_SmbShare
+
+The **Microsoft.Management.Infrastructure.CimInstance** object is a wrapper class that displays
+Windows Management Instrumentation (WMI) objects. The path after the pound sign (`#`) provides the
+namespace and class name for the underlying WMI object. This cmdlet returns a **MSFT_SmbShare**
+object that represents the SMB share.
+
+## NOTES
+
+## RELATED LINKS
+
+[Get-SmbShare](Get-SmbShare.md)
+
+[Remove-SmbShare](Remove-SmbShare.md)
+
+[Set-SmbShare](Set-SmbShare.md)</pre></section>

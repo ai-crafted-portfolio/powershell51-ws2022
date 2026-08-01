@@ -1,0 +1,825 @@
+<!doctype html><meta charset="utf-8"><section class="jp-official"><h1>セットスケジュールされたJobOption</h1>
+<h2>シンプシス 予定の仕事の求人オプションを変更します.</h2>
+<h2>SYNTAXは,のシンタックスです.</h2>
+<pre><code>Set-ScheduledJobOption [-InputObject] &lt;ScheduledJobOptions&gt; [-PassThru] [-RunElevated] [-HideInTaskScheduler]
+ [-RestartOnIdleResume] [-MultipleInstancePolicy &lt;TaskMultipleInstancePolicy&gt;] [-DoNotAllowDemandStart]
+ [-RequireNetwork] [-StopIfGoingOffIdle] [-WakeToRun] [-ContinueIfGoingOnBattery] [-StartIfOnBattery]
+ [-IdleTimeout &lt;TimeSpan&gt;] [-IdleDuration &lt;TimeSpan&gt;] [-StartIfIdle] [&lt;CommonParameters&gt;]
+</code></pre>
+<h2>記述は,</h2>
+<p><code>Set-ScheduledJobOptions</code>cmdlet は予定された仕事の職種を変更します.</p>
+<p>予定の仕事のオプションを変更するには,まず""を用いることから始めましょう.<code>Get-ScheduledJobOption</code>cmdlet で,予定の仕事の求人オプションを取得します.その後,選択を  にパイプします.<code>Set-ScheduledJobOption</code>または,オプションを変数に保存して,  の <strong>InputObject</strong> パラメータを使用します.<code>Set-ScheduledJobOption</code>選択を識別するcmdlet.  の残ったパラメータを使用します.<code>Set-ScheduledJobOption</code>職種を変更する.</p>
+<p>選択を有効にするには,そのオプションを設定するパラメータを使用します.オプションをオフにするには,パラメータ名,コロン () を入力してください.<code>:</code>),そして,<code>$false</code>例えば,RunElevated オプションをオフにするには, を入力してください.<code>-RunElevated:$false</code> .</p>
+<p>各求人オプションオブジェクトには,予定された求人を含むJobDefinition属性が含まれています.したがって,求人オプションが変更されたときに予定された求人との関係は保持されます.</p>
+<p>予定された仕事オプションは,タスクスケジューラーによって開始されたときに仕事がどのように実行されるかを決定します.<code>Start-Job</code>予定の仕事を始めるためのcmdletです.</p>
+<p><code>Set-ScheduledJobOption</code>これは,Windows PowerShellに組み込まれたPSScheduledJobモジュール内の仕事スケジュリング cmdletのコレクションの一つです.</p>
+<p>予定された仕事に関する詳細については,PSScheduledJob モジュール内の話題について参照してください.PSScheduledJob モジュールを輸入して,入力してください: <code>Get-Help about_Scheduled*</code>または [about_Scheduled_Jobs.md]を参照してください.</p>
+<p>このcmdletはWindows PowerShell 3.0で導入されました.</p>
+<h2>例えは</h2>
+<h3>例1: 職種変更</h3>
+<pre><code class="language-powershell">Get-ScheduledJobOption -Name &quot;DeployPackage&quot;
+</code></pre>
+<pre><code class="language-Output">StartIfOnBatteries     : False
+StopIfGoingOnBatteries : True
+WakeToRun              : False
+StartIfNotIdle         : True
+StopIfGoingOffIdle     : False
+RestartOnIdleResume    : False
+IdleDuration           : 00:10:00
+IdleTimeout            : 01:00:00
+ShowInTaskScheduler    : True
+RunElevated            : False
+RunWithoutNetwork      : False
+DoNotAllowDemandStart  : False
+MultipleInstancePolicy : IgnoreNew
+JobDefinition          :
+</code></pre>
+<pre><code class="language-powershell">Get-ScheduledJobOption -Name &quot;DeployPackage&quot; |
+    Set-ScheduledJobOption -WakeToRun -RequireNetwork:$false -PassThru
+</code></pre>
+<pre><code class="language-Output">StartIfOnBatteries     : False
+StopIfGoingOnBatteries : True
+WakeToRun              : True
+StartIfNotIdle         : True
+StopIfGoingOffIdle     : False
+RestartOnIdleResume    : False
+IdleDuration           : 00:10:00
+IdleTimeout            : 01:00:00
+ShowInTaskScheduler    : True
+RunElevated            : False
+RunWithoutNetwork      : True
+DoNotAllowDemandStart  : False
+MultipleInstancePolicy : IgnoreNewJobDefinition          :
+</code></pre>
+<p>この例では,ローカルコンピュータのスケジュールワークのオプションを変更する方法を示しています.</p>
+<p>最初のコマンドは,を用います.<code>Get-ScheduledJobOption</code>DeployPackage の予定された作業の作業オプションをcmdlet に取得します.出力では, WakeToRun と RunElevated のプロパティが  に設定されていることが表示されます.<code>$false</code> .</p>
+<p>第二のコマンドは,  を使っています.<code>Set-ScheduledJobOpton</code>cmdlet は,ワークオプションを変更すると,WakeToRun と RunWithoutNetwork のプロパティの値は $true である.コマンドは <strong>PassThru</strong> パラメータを使用して変更後にトリガーを返します.</p>
+<p>このコマンドは必要ありません.オプション変更の効果を表示するためにのみ含まれています.</p>
+<h3>例2:すべてのリモートスケジュールされた仕事でオプションを変更します.</h3>
+<pre><code class="language-powershell">Invoke-Command -Computer &quot;Server01&quot; -ScriptBlock {
+    Get-ScheduledJob |
+        Get-ScheduledJobOption |
+        Set-ScheduledJobOption -IdleTimeout 2:00:00
+}
+</code></pre>
+<p>このコマンドは, Server01 コンピュータのすべての予定された作業で,1時間 (デフォルト値) から2時間に <strong>IdleTimeout</strong>の値を変更します.</p>
+<p>コマンドは""を用いています.<code>Invoke-Command</code>Server01 コンピュータでコマンドを実行するには cmdlet を使用します.</p>
+<p>リモートコマンドは,  で始まる.<code>Get-ScheduledJob</code>コンピュータのスケジュール上の作業をすべて取り出す.スケジュール上の作業は,パイプで  に送られます.<code>Get-ScheduledJobOption</code>cmdletは,予定された仕事の職のオプションを入手する.各職のオプションオブジェクトには,予定された職を含むJobDefinition属性があります.したがって,オプションオブジェクトは変更された場合でも予定された職と関連づけられます.</p>
+<p>バイトトリガーがパイプで に繋がっている.<code>Set-ScheduledJobOption</code>cmdletで,IdleTimeoutの値が2時間 (2:00:00) に変更されます.</p>
+<h2>パラメータは</h2>
+<h3>-Battery に進むと継続する</h3>
+<p>作業が実行中にコンピュータがバッテリー電源に切り替える場合,予定された作業を停止しないでください.デフォルトでは,コンピュータがAC電源から切り離されると予定された作業が停止します.</p>
+<p><strong>ContinueIfGoingOnBattery</strong> パラメータは,予定された仕事の StopIfGoingOnBatteries 属性の値を  に設定します.<code>$true</code> .</p>
+<pre><code class="language-yaml">Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-DoNotAllowDemandStart について</h3>
+<p>作業を起動する際にのみ起動します.タスクスケジラルの実行機能を使用するなど,ユーザは手動で作業を開始することはできません.</p>
+<p>このパラメータはタスクスケジララーにのみ影響する. ユーザがタスクスケジラルを利用することを妨げない.<code>Start-Job</code>仕事を始めるためのcmdletです.</p>
+<p><strong>DoNotAllowDemandStart</strong>パラメータは,予定された仕事の <strong>DoNotAllowDemandStart</strong> 属性の値を  に設定します.<code>$true</code> .</p>
+<pre><code class="language-yaml">Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-HideInTaskScheduler について</h3>
+<p>タスクスケジューラーでは,タスクを表示しないでください.この値は,タスクスケジューラーで実行されているコンピュータのみに影響します.デフォルトでは,スケジューラされたタスクがタスクスケジューラーで表示されます.</p>
+<p>タスクが隠されている場合でも,タスクスケジララーで隠されたタスクを表示するオプションを選択することで,ユーザはタスクを表示できます.</p>
+<p><strong>HideInTaskScheduler</strong>パラメータは,予定されている仕事の <strong>ShowInTaskScheduler</strong> 属性の値を  に設定します.<code>$false</code> .</p>
+<pre><code class="language-yaml">Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h1>セットスケジュールされたJobOption</h1>
+<h3>-イデュレーション</h3>
+<p>コンピュータが作業開始前に何時間無動状態でなければならないかを指定します.デフォルト値は10分です.コンピュータが <strong>IdleTimeout</strong>の値が終了する前に指定された時間無動状態にない場合は,予定された作業は次の予定された時間まで実行されません.</p>
+<p>によって生成された時間範囲オブジェクトのような時間範囲オブジェクトを入力します.<code>New-TimeSpan</code>cmdlet,または,値を入力します.<code>&lt;hours&gt;:&lt;minutes&gt;:&lt;seconds&gt;</code>自動的にTimeSpan**オブジェクトに変換されるフォーマットです.</p>
+<p>この値を有効にするには, <strong>StartIfIdle</strong> パラメータを使用します.デフォルトでは,予定された仕事の <strong>StartIfNotIdle</strong> 属性は  に設定されます.<code>$true</code>Windows PowerShellとWindows PowerShellでは,IdleDurationとIdleTimeoutの値を無視しています.</p>
+<pre><code class="language-yaml">Type: System.TimeSpan
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-イデールタイムアウト</h3>
+<p>コンピュータが作業開始前に何時間無動状態でなければならないかを指定します.デフォルト値は10分です.コンピュータが<strong>IdleTimeout</strong>の値が終了する前に指定された時間無動状態にない場合は,予定された作業は次の予定された時間まで実行されません.</p>
+<p>によって生成された時間範囲オブジェクトのような時間範囲オブジェクトを入力します.<code>New-TimeSpan</code>cmdlet,または,値を入力します.<code>&lt;hours&gt;:&lt;minutes&gt;:&lt;seconds&gt;</code>自動的にTimeSpan**オブジェクトに変換されるフォーマットです.</p>
+<p>この値を有効にするには,StartIfIdle<strong>パラメータを使用します.デフォルトでは,予定された仕事のStartIfNotIdle属性は $true に設定され,Windows PowerShell では </strong>IdleDuration<strong> と </strong>IdleTimeout** の値を無視します.</p>
+<pre><code class="language-yaml">Type: System.TimeSpan
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-InputObject</h3>
+<p>指定する仕事オプション. <strong>ScheduledJobOptions</strong> オブジェクトを含む変数を入力するか, のような <strong>ScheduledJobOptions</strong> オブジェクトを得るコマンドまたは表現を入力します.<code>Get-ScheduledJobOption</code>また,予定されたJobOptions へのオブジェクトをパイプすることもできます.<code>Set-ScheduledJobOption</code> .</p>
+<pre><code class="language-yaml">Type: Microsoft.PowerShell.ScheduledJob.ScheduledJobOptions
+Parameter Sets: (All)
+Aliases:
+
+Required: True
+Position: 0
+Default value: None
+Accept pipeline input: True (ByValue)
+Accept wildcard characters: False
+</code></pre>
+<h3>-MultipleInstancePolitics について</h3>
+<p>プログラム上の作業の別の実施例が実行されている間に,プログラム上の作業のインスタンスを起動する要請にシステムがどのように反応するかを決定します.このパラメータの受け入れ可能な値は:</p>
+<ul>
+<li>-<code>IgnoreNew</code>- 新しい仕事インスタンスは無視されます.これはデフォルト値です. - <code>Parallel</code>- 新しい求人インスタンスはすぐに開始します. - <code>Queue</code>- 新職インスタンスは,現在のインスタンスは完了するとすぐに開始します. - <code>StopExisting</code>- 停止の現在のインスタンスは,新しいインスタンスは開始されます.</li>
+</ul>
+<p>作業を実行するには,作業スケジュールに関するすべての条件が満たされなければなりません.例えば,RequireNetwork<strong>,IdleDuration</strong>,IdleTimeout**のパラメータで設定されている条件が満たされていない場合,このパラメータの値に関係なく,作業インスタンスは起動されません.</p>
+<pre><code class="language-yaml">Type: Microsoft.PowerShell.ScheduledJob.TaskMultipleInstancePolicy
+Parameter Sets: (All)
+Aliases:
+Accepted values: None, IgnoreNew, Parallel, Queue, StopExisting
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-PassThru でした.</h3>
+<p>あなたが取り組んでいる項目を表示するオブジェクトを返します.デフォルトでは,このcmdletは出力を生成しません.</p>
+<pre><code class="language-yaml">Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-RequireNetwork</h3>
+<p>ネットワーク接続が利用可能である場合にのみ予定された作業を実行します.</p>
+<p>このパラメータを指定し,ネットワークが予定された開始時に利用できない場合は,次の開始時間まで実行されません.</p>
+<p><strong>RequireNetwork</strong>パラメータは,予定された仕事の RunWithoutNetwork属性の値を  に設定します.<code>$false</code> .</p>
+<pre><code class="language-yaml">Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-RestartOnIdleResume スタートアップリニューアル</h3>
+<p>コンピュータが動かないときに予定された作業を再起動します.このパラメータは<strong>StopIfGoingOffIdle</strong>パラメータで動作します.このパラメータは,コンピュータが動いている場合 (動かない状態を去る) の予定された作業を停止します.</p>
+<p><strong>RestartOnIdleResume</strong>パラメータは,予定された仕事の <strong>RestartOnIdleResume</strong> 属性の値を  に設定します.<code>$true</code> .</p>
+<pre><code class="language-yaml">Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-RunElevated</h3>
+<p>作業が実行されているコンピュータの管理者グループメンバーの許可で予定された作業を実行します.</p>
+<p>予定された作業が管理者権限で実行できるようにするには, の<strong>Credential</strong>パラメータを使用してください.<code>Register-ScheduledJob</code>職務の資格を明確に証明するために.</p>
+<p><strong>RunElevated</strong>パラメータは,予定された仕事の <strong>RunElevated</strong> 属性の値を  に設定します.<code>$true</code> .</p>
+<pre><code class="language-yaml">Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-スタートフィードル</h3>
+<p><strong>IdleDuration</strong>パラメータで指定された時間, <strong>IdleTimeout</strong>パラメータで指定された時間が終了する前にコンピュータが無動していた場合,予定された作業を開始します.</p>
+<p>デフォルトでは,IdleDuration<strong>とIdleTimeout</strong>のパラメータは無視され,コンピュータが忙しくても,予定されたスタート時に作業が開始されます.</p>
+<p>このパラメータを指定し,予定された開始時にコンピュータが忙しく (無動) している場合は,次の予定された開始時間まで実行されません.</p>
+<p><strong>StartIfIdle</strong>パラメータは,予定された仕事の <strong>StartIfNotIdle</strong>属性の値を  に設定します.<code>$false</code> .</p>
+<pre><code class="language-yaml">Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-StartIfOnBatteryに スタートする</h3>
+<p>コンピュータが予定された開始時にバッテリーで動作している場合でも,予定された作業を起動します.デフォルト値は です.<code>$false</code> .</p>
+<p><strong>StartIfOnBattery</strong>パラメータは,予定された仕事の <strong>StartIfOnBatteries</strong> 属性の値を  に設定します.<code>$true</code> .</p>
+<pre><code class="language-yaml">Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-StopIfGoingOffFidle でした</h3>
+<p>コンピュータが起動している間にアクティブ (無動) になる場合,実行予定の仕事を停止します.</p>
+<p>デフォルトでは,コンピュータがアクティブになったときに停止された予定された作業が,コンピュータが再び無動になったときに再開されます.このデフォルト行動を変更するには, <strong>RestartOnIdleResume</strong> パラメータを使用します.</p>
+<p><strong>StopIfGoingOffIdle</strong>パラメータは,予定されている仕事の <strong>StopIfGoingOffIdle</strong>属性の値を  に設定します.<code>$true</code> .</p>
+<pre><code class="language-yaml">Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h1>セットスケジュールされたJobOption</h1>
+<h3>-WakeToRun</h3>
+<p>予定されたスタート時にコンピュータをハイバーネートまたはスリープ状態から覚醒させ,作業を実行できます.デフォルトでは,コンピュータが予定されたスタート時にハイバーネートまたはスリープ状態にある場合,作業が実行されません.</p>
+<p><strong>WakeToRun</strong>パラメータは,予定された仕事の WakeToRun 属性の値を  に設定します.<code>$true</code> .</p>
+<pre><code class="language-yaml">Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>共通パラメーター</h3>
+<p>このcmdletは,共通パラメータをサポートしています: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable.詳細については, <a href="を参照してください.https://go.microsoft.com/fwlink/?LinkID=113216">about_CommonParameters</a> でした.</p>
+<h2>輸入は</h2>
+<h3>Microsoft.PowerShell.ScheduledJob.ScheduledJobOptions</h3>
+<p>予定職オプションのオブジェクトをこのcmdletにパイプすることができます.</p>
+<h2>輸出は</h2>
+<h3>どれもない</h3>
+<p>デフォルトでは,このcmdletは出力返さない.</p>
+<h3>Microsoft.PowerShell.ScheduledJob.ScheduledJobOptions</h3>
+<p><strong>PassThru</strong>パラメータを使用すると,このcmdletは変更された職種オプションを返します.</p>
+<h2>NOTES  記事ができました.</h2>
+<h2>関連リンク</h2>
+<p><a href="Add-JobTrigger.md">JobTrigger追加</a> </p>
+<p><a href="Disable-JobTrigger.md">Disable-JobTrigger</a> は,無効で,</p>
+<p>[Disable-ScheduledJob.md]は,Disable-ScheduledJob.mdに変更された.</p>
+<p><a href="Enable-JobTrigger.md">Enable-JobTrigger</a> は,現在も採用されている.</p>
+<p><a href="Enable-ScheduledJob.md">Enable-ScheduledJob</a> は,現在も有効な</p>
+<p><a href="Get-JobTrigger.md">Get-JobTrigger</a> </p>
+<p><a href="Get-ScheduledJob.md">Get-ScheduledJob</a> </p>
+<p><a href="Get-ScheduledJobOption.md">Get-ScheduledJobOption</a> を表示する</p>
+<p><a href="New-JobTrigger.md">New-JobTrigger</a> </p>
+<p><a href="New-ScheduledJobOption.md">New-ScheduledJobOption</a> は,新しい雇用の選択を促しています.</p>
+<p>[登録者・予定職] (登録者・予定職.md)</p>
+<p><a href="Remove-JobTrigger.md">Remove-JobTrigger</a> を削除する</p>
+<p><a href="JobTrigger設定.md">JobTrigger設定</a> </p>
+<p>[セット・スケジュールされたJob.md]</p>
+<p><a href="セット-スケジュールされたJobOption.md">セット-スケジュールされたJobOption</a></p>
+<p>[Unregister-ScheduledJob.md]は,登録されていない.</p></section><section class="en-original"><pre class="source-original"># Set-ScheduledJobOption
+
+## SYNOPSIS
+Changes the job options of a scheduled job.
+
+## SYNTAX
+
+```
+Set-ScheduledJobOption [-InputObject] &lt;ScheduledJobOptions&gt; [-PassThru] [-RunElevated] [-HideInTaskScheduler]
+ [-RestartOnIdleResume] [-MultipleInstancePolicy &lt;TaskMultipleInstancePolicy&gt;] [-DoNotAllowDemandStart]
+ [-RequireNetwork] [-StopIfGoingOffIdle] [-WakeToRun] [-ContinueIfGoingOnBattery] [-StartIfOnBattery]
+ [-IdleTimeout &lt;TimeSpan&gt;] [-IdleDuration &lt;TimeSpan&gt;] [-StartIfIdle] [&lt;CommonParameters&gt;]
+```
+
+## DESCRIPTION
+
+The `Set-ScheduledJobOptions` cmdlet changes the job options of scheduled jobs.
+
+To change the options of a scheduled job, begin by using the `Get-ScheduledJobOption` cmdlet to get
+the job options of a scheduled job. Then, pipe the options to `Set-ScheduledJobOption` or save the
+options in a variable and use the **InputObject** parameter of `Set-ScheduledJobOption` cmdlet to
+identify the options. Use the remaining parameters of `Set-ScheduledJobOption` to change the job
+options.
+
+To turn on a job option, use the parameter that sets that option. To turn off an option, type the
+parameter name, a colon (`:`), and `$false`. For example, to turn off the **RunElevated** option,
+type `-RunElevated:$false`.
+
+Each job options object includes a JobDefinition property that contains the scheduled job, so the
+association with the scheduled job is retained when the job options are changed.
+
+The scheduled job options determine how the job runs when it is started by Task Scheduler. These
+options to not apply when you use the `Start-Job` cmdlet to start a scheduled job.
+
+`Set-ScheduledJobOption` is one of a collection of job scheduling cmdlets in the PSScheduledJob
+module that is included in Windows PowerShell.
+
+For more information about Scheduled Jobs, see the About topics in the PSScheduledJob module. Import
+the PSScheduledJob module and then type: `Get-Help about_Scheduled*` or see [about_Scheduled_Jobs](About/about_Scheduled_Jobs.md).
+
+This cmdlet was introduced in Windows PowerShell 3.0.
+
+## EXAMPLES
+
+### Example 1: Change job options
+
+```powershell
+Get-ScheduledJobOption -Name &quot;DeployPackage&quot;
+```
+
+```Output
+StartIfOnBatteries     : False
+StopIfGoingOnBatteries : True
+WakeToRun              : False
+StartIfNotIdle         : True
+StopIfGoingOffIdle     : False
+RestartOnIdleResume    : False
+IdleDuration           : 00:10:00
+IdleTimeout            : 01:00:00
+ShowInTaskScheduler    : True
+RunElevated            : False
+RunWithoutNetwork      : False
+DoNotAllowDemandStart  : False
+MultipleInstancePolicy : IgnoreNew
+JobDefinition          :
+```
+
+```powershell
+Get-ScheduledJobOption -Name &quot;DeployPackage&quot; |
+    Set-ScheduledJobOption -WakeToRun -RequireNetwork:$false -PassThru
+```
+
+```Output
+StartIfOnBatteries     : False
+StopIfGoingOnBatteries : True
+WakeToRun              : True
+StartIfNotIdle         : True
+StopIfGoingOffIdle     : False
+RestartOnIdleResume    : False
+IdleDuration           : 00:10:00
+IdleTimeout            : 01:00:00
+ShowInTaskScheduler    : True
+RunElevated            : False
+RunWithoutNetwork      : True
+DoNotAllowDemandStart  : False
+MultipleInstancePolicy : IgnoreNewJobDefinition          :
+```
+
+This example shows how to change the options of a scheduled job on the local computer.
+
+The first command uses the `Get-ScheduledJobOption` cmdlet to get the job options of the
+DeployPackage scheduled job. The output shows that the WakeToRun and RunElevated properties are set
+to `$false`.
+
+The second command uses the `Set-ScheduledJobOpton` cmdlet to change the job options so the values
+of the WakeToRun and RunWithoutNetwork properties are $true. The command uses the **PassThru**
+parameter to return the trigger after the change.
+
+This command is not required; it is included only to show the effect of the option change.
+
+### Example 2: Change an option on all remote scheduled jobs
+
+```powershell
+Invoke-Command -Computer &quot;Server01&quot; -ScriptBlock {
+    Get-ScheduledJob |
+        Get-ScheduledJobOption |
+        Set-ScheduledJobOption -IdleTimeout 2:00:00
+}
+```
+
+This command changes the value of the **IdleTimeout** from one hour (the default value) to two hours
+on all scheduled jobs on the Server01 computer.
+
+The command uses the `Invoke-Command` cmdlet to run a command on the Server01 computer.
+
+The remote command begins with a `Get-ScheduledJob` command that gets all scheduled jobs on the
+computer. The scheduled jobs are piped to the `Get-ScheduledJobOption` cmdlet, which gets the job
+options of the scheduled jobs. Each job options object contains a JobDefinition property that
+contains the scheduled job, so the options object remains associated with the scheduled job even
+when it is changed.
+
+The job triggers are piped to the `Set-ScheduledJobOption` cmdlet, which changes the value of the
+**IdleTimeout** option to two hours (2:00:00).
+
+## PARAMETERS
+
+### -ContinueIfGoingOnBattery
+
+Do not stop the scheduled job if the computer switches to battery power (disconnects from AC power)
+while the job is running. By default, scheduled jobs stop when the computer disconnects from AC
+power.
+
+The **ContinueIfGoingOnBattery** parameter sets the value of the StopIfGoingOnBatteries property of
+scheduled jobs to `$true`.
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -DoNotAllowDemandStart
+
+Start the job only when it is triggered. Users cannot start the job manually, such as by using the
+Run feature in Task Scheduler.
+
+This parameter only affects Task Scheduler. It does not prevents users from using the `Start-Job`
+cmdlet to start the job.
+
+The **DoNotAllowDemandStart** parameter sets the value of the **DoNotAllowDemandStart** property of
+scheduled jobs to `$true`.
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -HideInTaskScheduler
+
+Do not display the job in Task Scheduler. This value affects only the computer on which the job
+runs. By default, scheduled tasks appear in Task Scheduler.
+
+Even if a task is hidden, users can display the task by selecting the **Show hidden tasks** view
+option in Task Scheduler.
+
+The **HideInTaskScheduler** parameter sets the value of the **ShowInTaskScheduler** property of
+scheduled jobs to `$false`.
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+# Set-ScheduledJobOption
+
+### -IdleDuration
+
+Specifies how long the computer must be idle before the job starts. The default value is 10 minutes.
+If the computer is not idle for the specified duration before the value of **IdleTimeout** expires,
+the scheduled job does not run until the next scheduled time, if any.
+
+Enter a timespan object, such as one generated by the `New-TimeSpan` cmdlet, or enter a value in
+`&lt;hours&gt;:&lt;minutes&gt;:&lt;seconds&gt;` format that is automatically converted to a **TimeSpan** object.
+
+To enable this value, use the **StartIfIdle** parameter. By default, the **StartIfNotIdle** property
+of scheduled jobs is set to `$true` and Windows PowerShell ignores the **IdleDuration** and
+**IdleTimeout** values.
+
+```yaml
+Type: System.TimeSpan
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -IdleTimeout
+
+Specifies how long the computer must be idle before the job starts. The default value is 10 minutes.
+If the computer is not idle for the specified duration before the value of **IdleTimeout** expires,
+the scheduled job does not run until the next scheduled time, if any.
+
+Enter a timespan object, such as one generated by the `New-TimeSpan` cmdlet, or enter a value in
+`&lt;hours&gt;:&lt;minutes&gt;:&lt;seconds&gt;` format that is automatically converted to a **TimeSpan** object.
+
+To enable this value, use the **StartIfIdle** parameter. By default, the StartIfNotIdle property of
+scheduled jobs is set to $true and Windows PowerShell ignores the **IdleDuration** and
+**IdleTimeout** values.
+
+```yaml
+Type: System.TimeSpan
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -InputObject
+
+Specifies the job options. Enter a variable that contains **ScheduledJobOptions** objects or type a
+command or expression that gets **ScheduledJobOptions** objects, such as a `Get-ScheduledJobOption`
+command. You can also pipe a **ScheduledJobOptions** object to `Set-ScheduledJobOption`.
+
+```yaml
+Type: Microsoft.PowerShell.ScheduledJob.ScheduledJobOptions
+Parameter Sets: (All)
+Aliases:
+
+Required: True
+Position: 0
+Default value: None
+Accept pipeline input: True (ByValue)
+Accept wildcard characters: False
+```
+
+### -MultipleInstancePolicy
+
+Determines how the system responds to a request to start an instance of a scheduled job while
+another instance of the job is running. The acceptable values for this parameter are:
+
+- `IgnoreNew` - The new job instance is ignored. This is the default value.
+- `Parallel` - The new job instance starts immediately.
+- `Queue` - The new job instance starts as soon as the current instance completes.
+- `StopExisting` - The current instance of the job stop and the new instance starts.
+
+To run the job, all conditions for the job schedule must be met. For example, if the conditions that
+are set by the **RequireNetwork**, **IdleDuration**, and **IdleTimeout** parameters are not
+satisfied, the job instance is not started, regardless of the value of this parameter.
+
+```yaml
+Type: Microsoft.PowerShell.ScheduledJob.TaskMultipleInstancePolicy
+Parameter Sets: (All)
+Aliases:
+Accepted values: None, IgnoreNew, Parallel, Queue, StopExisting
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -PassThru
+
+Returns an object representing the item with which you are working. By default, this cmdlet does not
+generate any output.
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -RequireNetwork
+
+Runs the scheduled job only when network connections are available.
+
+If you specify this parameter and the network is not available at the scheduled start time, the job
+does not run until the next scheduled start time, if any.
+
+The **RequireNetwork** parameter sets the value of the RunWithoutNetwork property of scheduled jobs
+to `$false`.
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -RestartOnIdleResume
+
+Restarts a scheduled job when the computer becomes idle. This parameter works with the
+**StopIfGoingOffIdle** parameter, which suspends a running scheduled job if the computer becomes
+active (leaves the idle state).
+
+The **RestartOnIdleResume** parameter sets the value of the **RestartOnIdleResume** property of
+scheduled jobs to `$true`.
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -RunElevated
+
+Runs the scheduled job with the permissions of a member of the Administrators group on the computer
+on which the job runs.
+
+To enable a scheduled job to run with Administrator permissions, use the **Credential** parameter of
+`Register-ScheduledJob` to provide explicit credential for the job.
+
+The **RunElevated** parameter sets the value of the **RunElevated** property of scheduled jobs to
+`$true`.
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -StartIfIdle
+
+Starts the scheduled job if the computer has been idle for the time specified by the
+**IdleDuration** parameter before the time specified by the **IdleTimeout** parameter expires.
+
+By default, the **IdleDuration** and **IdleTimeout** parameters are ignored and the job starts at
+the scheduled start time even if the computer is busy.
+
+If you specify this parameter and the computer is busy (not idle) at the scheduled start time, the
+job does not run until the next scheduled start time, if any.
+
+The **StartIfIdle** parameter sets the value of the **StartIfNotIdle** property of scheduled jobs to
+`$false`.
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -StartIfOnBattery
+
+Starts the scheduled job even if the computer is running on batteries at the scheduled start time.
+The default value is `$false`.
+
+The **StartIfOnBattery** parameter sets the value of the **StartIfOnBatteries** property of
+scheduled jobs to `$true`.
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -StopIfGoingOffIdle
+
+Suspends a running scheduled job if the computer becomes active (not idle) while the job is running.
+
+By default, a scheduled job that is suspended when the computer becomes active resumes when the
+computer becomes idle again. To change this default behavior, use the **RestartOnIdleResume**
+parameter.
+
+The **StopIfGoingOffIdle** parameter sets the value of the **StopIfGoingOffIdle** property of
+scheduled jobs to `$true`.
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+# Set-ScheduledJobOption
+
+### -WakeToRun
+
+Wakes the computer from a Hibernate or Sleep state at the scheduled start time so it can run the
+job. By default, if the computer is in a Hibernate or Sleep state at the scheduled start time, the
+job does not run.
+
+The **WakeToRun** parameter sets the value of the WakeToRun property of scheduled jobs to `$true`.
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### CommonParameters
+
+This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable,
+-InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose,
+-WarningAction, and -WarningVariable. For more information, see [about_CommonParameters](https://go.microsoft.com/fwlink/?LinkID=113216).
+
+## INPUTS
+
+### Microsoft.PowerShell.ScheduledJob.ScheduledJobOptions
+
+You can pipe a scheduled job options object to this cmdlet.
+
+## OUTPUTS
+
+### None
+
+By default, this cmdlet returns no output.
+
+### Microsoft.PowerShell.ScheduledJob.ScheduledJobOptions
+
+When you use the **PassThru** parameter, this cmdlet returns the job options that were changed.
+
+## NOTES
+
+## RELATED LINKS
+
+[Add-JobTrigger](Add-JobTrigger.md)
+
+[Disable-JobTrigger](Disable-JobTrigger.md)
+
+[Disable-ScheduledJob](Disable-ScheduledJob.md)
+
+[Enable-JobTrigger](Enable-JobTrigger.md)
+
+[Enable-ScheduledJob](Enable-ScheduledJob.md)
+
+[Get-JobTrigger](Get-JobTrigger.md)
+
+[Get-ScheduledJob](Get-ScheduledJob.md)
+
+[Get-ScheduledJobOption](Get-ScheduledJobOption.md)
+
+[New-JobTrigger](New-JobTrigger.md)
+
+[New-ScheduledJobOption](New-ScheduledJobOption.md)
+
+[Register-ScheduledJob](Register-ScheduledJob.md)
+
+[Remove-JobTrigger](Remove-JobTrigger.md)
+
+[Set-JobTrigger](Set-JobTrigger.md)
+
+[Set-ScheduledJob](Set-ScheduledJob.md)
+
+[Set-ScheduledJobOption](Set-ScheduledJobOption.md)
+
+[Unregister-ScheduledJob](Unregister-ScheduledJob.md)</pre></section>

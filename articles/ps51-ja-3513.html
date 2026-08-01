@@ -1,0 +1,381 @@
+<!doctype html><meta charset="utf-8"><section class="jp-official"><h1>ケースセンシビリティについて</h1>
+<h2>短編説明</h2>
+<p>PowerShellは,ケースを保存しながら,可能な限りケースに敏感です.</p>
+<h2>長い説明</h2>
+<p>一般的に,PowerShellは可能な限りケースに敏感で,ケースを保存し,その底にあるOSを壊さない.</p>
+<p>Windowsベースのシステムはほとんどの操作に対してケース無感覚である.しかし,Windows以外のシステムはほとんどの操作に対してケース無感覚である.特にファイルシステムと環境変数アクセスについて.</p>
+<p>PowerShellは以下の分野においてすべてのシステムにケース無感覚であることを保証しています.</p>
+<p>変数名 - 操作者名 - 辞書以外のメンバーアクセス - PowerShell コマンドとアライズのコマンド発見.これはExternalScriptとアプリケーションコマンドを除く. - パラメーター名とアライス名 - PowerShell言語キーワード - <code>using namespace</code>文言 - 字面文字類 - <code>#Requires</code>解説 - コメントベースのヘルプキーワード - PSProvider names - PSDrive names - Scope modifiers</p>
+<h1>ケースセンシビリティについて</h1>
+<h2>特殊ケースです.</h2>
+<ul>
+<li>モジュール名はケース無感覚 (例外を除く)</li>
+</ul>
+<p>模組の <em>name</em> は純粋に PowerShell 概念であり,ケース無感覚に扱われています.しかし,フォल्डर名へのマッピングは強いので,その元にあるオペレーティングシステムではケース無感覚に感じられます.同じケース無感覚の名前を持つ2つのモジュールを輸入することは,異なる経路から同じ名前を持つ2つのモジュールを輸入すると同じ振る舞いをします.</p>
+<p>モデルの名前は,輸入されたケースを使用してセッション状態に保存されます. セッション状態に保存された名前では, によって使用されます.<code>Update-Help</code>新しいヘルプファイルを検索する際に使用する.Microsoftのヘルプファイルを提供するウェブサービスでは,ケースセンシティブファイルシステムを使用します.モジュールに輸入された名前が一致しない場合,<code>Update-Help</code>サポートファイルが見つかりませんでしたし,エラーを報告しました.</p>
+<ul>
+<li>[PSプロバイダー][05]:</li>
+</ul>
+<p><code>FileSystem</code>そして,<code>Environment</code>サービス提供者はWindows以外のシステムに対してケースセンシティブである.一般的に,経路や環境変数を伴う操作は,そのようなシステムに対してケースセンシティブである.</p>
+<p>しかし,[プロバイダー・cmdlets][02]による[ワイルドカードマッチング][09]は,システムに関係なく,ケース無感覚である.</p>
+<pre><code>```powershell
+</code></pre>
+<p>PS /home/user01&gt; New-Item -Path Temp:foo.txt -Force</p>
+<pre><code>  Directory: /tmp
+</code></pre>
+<p>UnixMode      User Group      LastWriteTime         Size Name
+  --------      ---- -----      -------------         ---- ----
+  -rw-r--r--  user01 user01    1/6/2026 10:53            0 foo.txt</p>
+<p>PS /home/user01&gt; (Get-Item -Path Temp:FOO.txt).Name
+  Get-Item: Cannot find path 'Temp:/FOO.txt' because it does not exist.</p>
+<p>PS /home/user01&gt; (Get-Item -Path Temp:F[O]*.txt).Name
+  foo.txt</p>
+<p>PS /home/user01&gt; (Get-Item -Path Env:hOM[E]).Name
+  HOME
+  ```</p>
+<ul>
+<li>パラメーターセット名はケースセンシティブです.</li>
+</ul>
+<p><code>DefaultParameterSetName</code>ケースは,同然と一致している必要があります.<code>ParameterSetName</code> .</p>
+<p>-NET方法は,デフォルトでケースセンシティブの行動を表すことが多い.</p>
+<p>例としては,以下のようなものがあります.</p>
+<ul>
+<li>
+<p>一般的なPowerShellオペレーターに等価な .NET方法 (明確に選択しない) が使用されます.<code>Array.Contains()</code>     <code>String.Contains()</code>     <code>String.Replace()</code>     <code>Regex.Match()</code>     <code>Regex.Replace()</code>- 反射;メンバー名前の正しいケースを使用する必要があります. - 非文字辞典インスタンテーション.例えば: - <code>[hashtable]::new()</code>ケースセンシティブキーがあるが,ハッシュテーブルは文字どおりに<code>@{}</code>ケース無感覚な鍵を持っている. - <code>[ordered]::new()</code>ケースセンシティブキーがあるが, は<code>[ordered] @{}</code>ケース無感覚な鍵を持っている.<code>[ordered]</code>_accelerator_はPowerShell v5.1 以降では利用できません.<code>Enum.Parse()</code>PowerShellは通常,ケースセンシティブで enums を処理する.</p>
+</li>
+<li>
+<p>-<code>-Unique</code>cmdlets: - []<code>Select-Object -Unique</code>[21]と[ ]<code>Get-Unique</code>[15]は,デフォルトでケースセンシティブである.<code>-CaseInsensitive</code>[20] PS v7.4でスイッチが追加されました. - [ ]<code>Sort-Object -Unique</code>[25]は,デフォルトでケース不敏感だが,常に[ ] を持っていた.<code>-CaseSensitive</code>[24] スイッチ. ]</p>
+</li>
+</ul>
+<p>[] - -<code>Compare-Object</code>[11]は,デフォルトでケース不敏感ですが, [ ] を有します.<code>-CaseSensitive</code>[12] スイッチ.  の比較 ]<code>[char]</code>文字列比較は,デフォルトでケース無感覚です.</p>
+<pre><code>```powershell
+</code></pre>
+<p># Compare strings - Equal (no output)
+  Compare-object -ReferenceObject a            -DifferenceObject A
+  # Compare chars - Different (output)
+  Compare-object -ReferenceObject ([char] 'a') -DifferenceObject ([char] 'A')
+  ```</p>
+<p>[] - -<code>ConvertFrom-Json -AsHashtable</code>[13]: -  ] ]<code>-AsHashtable</code>PS v6 で追加されました.PS v7.3 では,このパラメータが指定されたときに,JSON キーをケースセンシティブに扱うように変更されました. - このパラメータで, [] のオブジェクトが [] のタイプで設定されます.<code>Management.Automation.OrderedHashtable</code>[27]は発信され,ケースセンシティブキーがある. - パラメータなしでは,JSONキーはケースセンシティブとみなされる. 輸出はカスタムオブジェクトであり,最後のケースセンシティブキーが勝利する. -  ]https://github.com/PowerShell/PowerShell/issues/19928</p>
+<p>[] - -<code>Group-Object</code>[16]: - 既定ではケース不敏感ですが,その場合は[ ]<code>-CaseSensitive</code>[18] スイッチ. - Windows PowerShell v5.1では, ] <code>-CaseSensitive</code>[と]と<code>-AsHashtable</code>][17]はケース不敏感なハッシュテーブルを生成する.重複鍵がエラーを引き起こす.</p>
+<pre><code>```powershell
+[pscustomobject] @{ Foo = 'Bar' }, [pscustomobject] @{ Foo = 'bar' } |
+    Group-Object -Property Foo -CaseSensitive -AsHashtable
+```
+
+```Output
+Group-Object : The objects grouped by this property cannot be expanded
+because there is a key duplication. Provide a valid value for the
+property, and then try again.
+At line:2 char:11
++           Group-Object -Property Foo -CaseSensitive -AsHashtable
++           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidArgument: (:) [Group-Object], Exception
+    + FullyQualifiedErrorId : The objects grouped by this property
+cannot be expanded because there is a key duplication. Provide a valid
+value for the property, and then try again.,Microsoft.PowerShell.Comman
+ds.GroupObjectCommand
+```
+</code></pre>
+<ul>
+<li>
+<p>PowerShell v7 以降で,<code>-CaseSensitive</code>そして,<code>-AsHashtable</code>ケースセンシティブハッシュテーブルを生成します.重複キーでエラーが発生しません.</p>
+<p><code>powershell
+[pscustomobject] @{ Foo = 'Bar' }, [pscustomobject] @{ Foo = 'bar' } |
+    Group-Object -Property Foo -CaseSensitive -AsHashtable</code></p>
+<p><code>Output
+Name                           Value
+----                           -----
+Bar                            {@{Foo=Bar}}
+bar                            {@{Foo=bar}}</code></p>
+</li>
+</ul>
+<p>[] - -<code>Select-String</code>[22]: - 既定ではケース不敏感ですが,その場合は[ ]<code>-CaseSensitive</code>[23]スイッチ. ]</p>
+<p>[] - -<code>Get-Command</code>[14]およびコマンド発見/呼び出し: - ケースセンシティブファイルシステムについて,  の発見と呼び出し<code>ExternalScript</code>そして,<code>Application</code>コマンドはケースに敏感です. - <code>Get-Command</code>このタイプとワイルドカードのマッチングもケースに敏感です. - 他のすべての []<code>CommandTypes</code>[26]はケース無情である.</p>
+<ul>
+<li>
+<p>[比較操作者][03]: - デフォルトでは,操作者はケース無感覚です. - <code>-c*</code>オペレーターはケースに敏感です. - <code>-i*</code>オペレーターはケース不敏感です. - <code>-replace</code>  / / / / / / / / / / /<code>-ireplace</code>既定では, <em>except</em> with [named capture groups][01]で,ケースセンシティブである.</p>
+<p>```powershell
+'Bar' -replace '(?<a>a)', '${a}${a}'</p>
+<h1>Baar</h1>
+<p>'Bar' -replace '(?<a>a)', '${A}${A}'</p>
+<h1>B${A}${A}r</h1>
+<p>```</p>
+</li>
+</ul>
+<p>[] - -<code>-split</code>操作者[10]: - <code>-split</code>そして,<code>-isplit</code>ケースに敏感でない.<code>-csplit</code>ケースが敏感で, <em>unless</em> the <code>IgnoreCase</code>オプションが指定されています.</p>
+<pre><code>```powershell
+'Bar' -csplit 'A', 0
+# Bar
+
+'Bar' -csplit 'A', 0, 'IgnoreCase'
+# B
+# r
+```
+</code></pre>
+<ul>
+<li>[Tab completion][07]: - ケースセンシティブファイルシステムでは,タブ完了とグローブリングはどちらもケースセンシティブではありません.<code>TabExpansion2 -inputScript ./foo</code>完成するまでの作業を完了します.<code>./Foo.txt</code>Linuxで使用する.</li>
+</ul>
+<p>[] - -<code>using</code>[08]声明: - ケースセンシティブファイルシステムについて,  ]<code>using module</code>そして,<code>using assembly</code>経路が指定されたときにケースに敏感です. - <code>using module</code>単一のモジュール名前のみれば,ケース無感覚です. - <code>using namespace</code>いつもケースに敏感です.</p>
+<ul>
+<li>[特殊キャラクター][06]: - <code>のような脱出シーケンズ</code> <code>`</code> <code></code> <code></code> <code></code> <code></code> <code></code> <code></code> <code></code> ` ⌒' ⌒' ⌒' ⌒' ⌒' ⌒' ⌒' ⌒' ⌒' ⌒' ⌒' ⌒' ⌒' ⌒' ⌒' ⌒' ⌒' ⌒' ⌒' ⌒' ⌒' ⌒' ⌒' ⌒' ⌒' ⌒' ⌒' ⌒' ⌒' ⌒' ⌒' ⌒' ⌒' ⌒' ⌒' ⌒' ⌒' ⌒' ⌒' ⌒' ⌒' ⌒' ⌒' ⌒' ⌒' ⌒' ⌒' ⌒' ⌒' ⌒' ⌒' ⌒' ⌒' ⌒' ⌒' ⌒' ⌒' ⌒' ⌒' ⌒' ⌒' ⌒' ⌒' ⌒' ⌒' ⌒' ⌒' ⌒' ⌒' ⌒' ⌒' ⌒' ⌒' ⌒' ⌒' ⌒' ⌒' ⌒' ⌒' ⌒' ⌒' ⌒' ⌒' ⌒' ⌒' ⌒' ⌒' ⌒' ⌒' ⌒' ⌒' ⌒' ⌒' ⌒' ⌒' ⌒' ⌒' ⌒' ⌒' ⌒' ⌒' ⌒' ⌒' ⌒' ⌒' ⌒' ⌒' ⌒' ⌒' ⌒' ⌒' ⌒' ⌒' ⌒' ⌒' ⌒' ⌒' ⌒' ⌒' ⌒' ⌒' ⌒' ⌒' ⌒' ⌒' ⌒' ⌒' ⌒' ⌒' ⌒' ⌒' ⌒' ⌒' ⌒' ⌒' ⌒' ⌒' ⌒' ⌒' ⌒' ⌒' ⌒' ⌒' ⌒' ⌒' ⌒' ⌒' ⌒' ⌒' ⌒' ⌒' ⌒' ⌒' ⌒' ⌒' ⌒' ⌒' ⌒' ⌒'</li>
+</ul>
+<h1>ケースセンシビリティについて</h1>
+<h2>また, を参照してください.</h2>
+<ul>
+<li>[about_Environment_Variables][04] - [Import-Module][19]</li>
+</ul>
+<p>リンク参照 --&gt; [01]: /dotnet/standard/base-types/substitutions-in-regular-expressions#substituting-a-named-group [02]: /powershell/scripting/developer/provider/provider-cmdlets [03]: about_comparison_operators.md [04]: about_Environment_Variables.md [05]: about_providers.md [06]: about_special_characters.md [07]: about_tab_expansion.md [08]: about_using.md [09]: about_wildcards.md [10]: about_split.md [11]: xref:MicrosoftPowerShell.Utility.Compare-Object [12]:MicrosoftShell.PowerShell.Utility:Shell.Com:Shell.Shell.Com:Shell.com:Shell.com:Shell.com:Shell.com:Shell.com:Shell.com:Shell.com:Shell.com:Shell.com:Shell.com:Shell.com:Shell.com:Shell.com:Shell.com:Shell.com:Shell.com:Shell.com:Shell.com:Shell.com:Shell.com:Shell.com:Shell.com:Shell.com:Shell.com:Shell.com:Shell.com:Shell.com:Shell.com:Shell.com:Shell.com:Shell.com:Shell.com:Shell.com:Shell.com:Shell.com:Shell.com:Shell.com:Shell.com:Shell.com:Shell.com:Shell.com:Shell.com:Shell.com:Shell.com:Shell.com:Shell.com:Shell.com:Shell.com:Shell.com:Shell.com:Shell.com:Shell.com:Shell.com:Shell.com:Shell.com:Shell.com:Shell.com:Shell.com:Shell.com:Shell.com:Shell.com独一品 [16]: xref:Microsoft.PowerShell.Utility.Group-Object [17]: xref:Microsoft.PowerShell.Utility.Group-Object#-ashashashtable [18]: xref:Microsoft.PowerShell.Utility.Group-Object#-casesensitive [19]: xref:Microsoft.PowerShell.Core.Import-Module [20]: xref:Microsoft.PowerShell.Utility.Select-Object#-caseinsensitive [21]: xref:Microsoft.PowerShell.Utility.Select-Object#-ashashashtable [22]: xref:Microsoft.Shell.Utility.Select-String [23]: xref:Power:Microsoft.Shell.Utility.Select-String-String [20]:Select-String-Power:Select-Power:Select-Object:Select-Select-Select-Select-Select-Select-Select-Select-Select-Select-Select-Select-Select-Select-Select-Select-Select-Select-Select-Select-Select-Select-Select-Select-Select-Select-Select-Select-Select-Select-Select-Select-Select-Select-Select-Select-Select-Select-Select-Select-Select-Select-Select-Select-Select-Select-Select-Select-Select-Select-Select-Select-Select-Select-Select-Select-Select-Select-Select-Select-Select-Select-Select-Select-Select-Select-Select-Select-Select-Select-Selectm.Management.Automation.OrderedHashtable でした.</p></section><section class="en-original"><pre class="source-original"># about_Case-Sensitivity
+
+## Short description
+
+PowerShell is as case-insensitive as possible while preserving case.
+
+## Long description
+
+As a general principle, PowerShell is case-insensitive wherever possible while
+preserving case and not breaking the underlying OS.
+
+Windows-based systems are case-insensitive for most operations. However,
+non-Windows systems are case-sensitive for most operations, especially for
+file system and environment variable access.
+
+PowerShell is guaranteed to be case-insensitive on all systems for the
+following areas:
+
+- Variable names
+- Operator names
+- Non-dictionary member-access
+- Command discovery of PowerShell commands and aliases. This excludes
+  ExternalScript and Application commands.
+- Parameter names and aliases
+- PowerShell language keywords
+- `using namespace` statements
+- Type literals
+- `#Requires` statements
+- Comment-based help keywords
+- PSProvider names
+- PSDrive names
+- Scope modifiers
+
+# about_Case-Sensitivity
+
+## Special cases
+
+- Module names are case-insensitive (with exceptions)
+
+  The _name_ of the module is purely a PowerShell concept and treated
+  case-insensitively. However, there is a strong mapping to a foldername, which
+  can be case-sensitive in the underlying operating system. Importing two
+  modules with the same case-insensitive name has the same behavior as
+  importing two modules with the same name from different paths.
+
+  The name of a module is stored in the session state using the case by which
+  it was imported. The name, as stored in the session state, is used
+  by `Update-Help` when looking for new help files. The web service that serves
+  the help files for Microsoft uses a case-sensitive file system. When the case
+  of the imported name of the module doesn&#x27;t match, `Update-Help` can&#x27;t find
+  the help files and reports an error.
+
+- [PS providers][05]:
+
+  The `FileSystem` and `Environment` providers are case-sensitive on
+  non-Windows systems. Generally, operations involving paths or environment
+  variables are case-sensitive on such systems.
+
+  However, [wildcard matching][09] by [provider cmdlets][02] is
+  case-insensitive, irrespective of the system.
+
+  ```powershell
+  PS /home/user01&gt; New-Item -Path Temp:foo.txt -Force
+
+      Directory: /tmp
+
+  UnixMode      User Group      LastWriteTime         Size Name
+  --------      ---- -----      -------------         ---- ----
+  -rw-r--r--  user01 user01    1/6/2026 10:53            0 foo.txt
+
+  PS /home/user01&gt; (Get-Item -Path Temp:FOO.txt).Name
+  Get-Item: Cannot find path &#x27;Temp:/FOO.txt&#x27; because it does not exist.
+
+  PS /home/user01&gt; (Get-Item -Path Temp:F[O]*.txt).Name
+  foo.txt
+
+  PS /home/user01&gt; (Get-Item -Path Env:hOM[E]).Name
+  HOME
+  ```
+
+- Parameter set names are case-sensitive.
+
+  The `DefaultParameterSetName` case must be identical to `ParameterSetName`.
+
+- .NET methods often exhibit case-sensitive behavior by default.
+
+  Examples include:
+
+  - Equivalent .NET methods (without explicit opt-in) for common PowerShell
+    operators such as:
+    - `Array.Contains()`, `String.Contains()`, `String.Replace()`,
+      `Regex.Match()`, `Regex.Replace()`
+  - Reflection; member names must use the correct case.
+  - Non-literal dictionary instantiation. For example:
+    - `[hashtable]::new()` has case-sensitive keys, whereas a hashtable
+      literal `@{}` has case-insensitive keys.
+    - `[ordered]::new()` has case-sensitive keys, whereas a `[ordered] @{}` has
+      case-insensitive keys. The `[ordered]` type _accelerator_ isn&#x27;t available
+      in PowerShell v5.1 and earlier.
+  - Explicitly calling `Enum.Parse()` is case-sensitive by default, whereas
+    PowerShell typically handles enums in a case-insensitive manner.
+
+- `-Unique` cmdlets:
+  - [`Select-Object -Unique`][21] and [`Get-Unique`][15] are case-sensitive by
+    default. The [`-CaseInsensitive`][20] switch was added in PS v7.4.
+  - [`Sort-Object -Unique`][25] is case-insensitive by default, but has always
+    had the [`-CaseSensitive`][24] switch.
+
+- [`Compare-Object`][11] is case-insensitive by default, but has a
+  [`-CaseSensitive`][12] switch. Comparison of `[char]` types is case-sensitive
+  by default. String comparison is case-insensitive by default.
+
+  ```powershell
+  # Compare strings - Equal (no output)
+  Compare-object -ReferenceObject a            -DifferenceObject A
+  # Compare chars - Different (output)
+  Compare-object -ReferenceObject ([char] &#x27;a&#x27;) -DifferenceObject ([char] &#x27;A&#x27;)
+  ```
+
+- [`ConvertFrom-Json -AsHashtable`][13]:
+  - `-AsHashtable` was added in PS v6. In PS v7.3, a change was made to treat
+    JSON keys as case-sensitive when this parameter is specified.
+    - With the parameter, an object of type
+      [`Management.Automation.OrderedHashtable`][27] is emitted, which has
+      case-sensitive keys.
+    - Without the parameter, JSON keys are treated as case-insensitive. Output
+      is a custom object; last case-insensitive key wins.
+  - https://github.com/PowerShell/PowerShell/issues/19928
+
+- [`Group-Object`][16]:
+  - Case-insensitive by default, but does have a [`-CaseSensitive`][18]
+    switch.
+  - In Windows PowerShell v5.1, `-CaseSensitive` and [`-AsHashtable`][17]
+    produces a case-insensitive hashtable. Duplicate keys result in an error.
+
+    ```powershell
+    [pscustomobject] @{ Foo = &#x27;Bar&#x27; }, [pscustomobject] @{ Foo = &#x27;bar&#x27; } |
+        Group-Object -Property Foo -CaseSensitive -AsHashtable
+    ```
+
+    ```Output
+    Group-Object : The objects grouped by this property cannot be expanded
+    because there is a key duplication. Provide a valid value for the
+    property, and then try again.
+    At line:2 char:11
+    +           Group-Object -Property Foo -CaseSensitive -AsHashtable
+    +           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+        + CategoryInfo          : InvalidArgument: (:) [Group-Object], Exception
+        + FullyQualifiedErrorId : The objects grouped by this property
+    cannot be expanded because there is a key duplication. Provide a valid
+    value for the property, and then try again.,Microsoft.PowerShell.Comman
+    ds.GroupObjectCommand
+    ```
+
+  - In PowerShell v7 and higher, `-CaseSensitive` and `-AsHashtable` produces a
+    case-sensitive hashtable. No error occurs with duplicate keys.
+
+    ```powershell
+    [pscustomobject] @{ Foo = &#x27;Bar&#x27; }, [pscustomobject] @{ Foo = &#x27;bar&#x27; } |
+        Group-Object -Property Foo -CaseSensitive -AsHashtable
+    ```
+
+    ```Output
+    Name                           Value
+    ----                           -----
+    Bar                            {@{Foo=Bar}}
+    bar                            {@{Foo=bar}}
+    ```
+
+- [`Select-String`][22]:
+  - Case-insensitive by default, but does have a [`-CaseSensitive`][23] switch.
+
+- [`Get-Command`][14] and command discovery/invocation:
+  - On case-sensitive file systems, discovery and invocation of
+    `ExternalScript` and `Application` command are case-sensitive.
+  - `Get-Command` wildcard matching with these types is also case-sensitive.
+  - All other [`CommandTypes`][26] are case-insensitive.
+
+- [Comparison operators][03]:
+  - By default, operators are case-insensitive.
+  - `-c*` operators are case-sensitive.
+  - `-i*` operators are case-insensitive.
+  - `-replace`/`-ireplace` is case-insensitive by default, _except_ with [named
+    capture groups][01], which are case-sensitive.
+
+    ```powershell
+    &#x27;Bar&#x27; -replace &#x27;(?&lt;a&gt;a)&#x27;, &#x27;${a}${a}&#x27;
+    # Baar
+
+    &#x27;Bar&#x27; -replace &#x27;(?&lt;a&gt;a)&#x27;, &#x27;${A}${A}&#x27;
+    # B${A}${A}r
+    ```
+
+- [`-split` operator][10]:
+  - `-split` and `-isplit` are case-insensitive.
+  - `-csplit` is case-sensitive, _unless_ the `IgnoreCase` option is specified.
+
+    ```powershell
+    &#x27;Bar&#x27; -csplit &#x27;A&#x27;, 0
+    # Bar
+
+    &#x27;Bar&#x27; -csplit &#x27;A&#x27;, 0, &#x27;IgnoreCase&#x27;
+    # B
+    # r
+    ```
+
+- [Tab completion][07]:
+  - On case-sensitive file systems, tab completion and globbing are both
+    case-insensitive. For example, `TabExpansion2 -inputScript ./foo` will
+    complete to `./Foo.txt` on Linux.
+
+- [`using`][08] statement:
+  - On case-sensitive file systems, `using module` and `using assembly` are
+    case-sensitive when a path is specified.
+  - `using module` with just a module name is case-insensitive.
+  - `using namespace` is always case-insensitive.
+
+- [Special characters][06]:
+  - Escape sequences like `` `n `` are case-sensitive.
+
+# about_Case-Sensitivity
+
+## See also
+
+- [about_Environment_Variables][04]
+- [Import-Module][19]
+
+&lt;!-- link references --&gt;
+[01]: /dotnet/standard/base-types/substitutions-in-regular-expressions#substituting-a-named-group
+[02]: /powershell/scripting/developer/provider/provider-cmdlets
+[03]: about_comparison_operators.md
+[04]: about_Environment_Variables.md
+[05]: about_providers.md
+[06]: about_special_characters.md
+[07]: about_tab_expansion.md
+[08]: about_using.md
+[09]: about_wildcards.md
+[10]: about_split.md
+[11]: xref:Microsoft.PowerShell.Utility.Compare-Object
+[12]: xref:Microsoft.PowerShell.Utility.Compare-Object#-casesensitive
+[13]: xref:Microsoft.PowerShell.Utility.ConvertFrom-Json#-ashashtable
+[14]: xref:Microsoft.PowerShell.Core.Get-Command
+[15]: xref:Microsoft.PowerShell.Utility.Get-Unique
+[16]: xref:Microsoft.PowerShell.Utility.Group-Object
+[17]: xref:Microsoft.PowerShell.Utility.Group-Object#-ashashtable
+[18]: xref:Microsoft.PowerShell.Utility.Group-Object#-casesensitive
+[19]: xref:Microsoft.PowerShell.Core.Import-Module
+[20]: xref:Microsoft.PowerShell.Utility.Select-Object#-caseinsensitive
+[21]: xref:Microsoft.PowerShell.Utility.Select-Object#-unique
+[22]: xref:Microsoft.PowerShell.Utility.Select-String
+[23]: xref:Microsoft.PowerShell.Utility.Select-String#-casesensitive
+[24]: xref:Microsoft.PowerShell.Utility.Sort-Object#-casesensitive
+[25]: xref:Microsoft.PowerShell.Utility.Sort-Object#-unique
+[26]: xref:System.Management.Automation.CommandTypes
+[27]: xref:System.Management.Automation.OrderedHashtable</pre></section>

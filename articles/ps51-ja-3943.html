@@ -1,0 +1,578 @@
+<!doctype html><meta charset="utf-8"><section class="jp-official"><h1>トレースコマンドです.</h1>
+<h2>SYNOPSISは,指定された表現またはコマンドの追跡を設定し,起動します.</h2>
+<h2>SYNTAXは,のシンタックスです.</h2>
+<h3>設定式 (デフォルト式)</h3>
+<pre><code>Trace-Command [-InputObject &lt;PSObject&gt;] [-Name] &lt;String[]&gt;
+ [[-Option] &lt;PSTraceSourceOptions&gt;] [-Expression] &lt;ScriptBlock&gt;
+ [-ListenerOption &lt;TraceOptions&gt;] [-FilePath &lt;String&gt;] [-Force] [-Debugger] [-PSHost]
+ [&lt;CommonParameters&gt;]
+</code></pre>
+<h3>コマンドセット</h3>
+<pre><code>Trace-Command [-InputObject &lt;PSObject&gt;] [-Name] &lt;String[]&gt;
+ [[-Option] &lt;PSTraceSourceOptions&gt;] [-Command] &lt;String&gt; [-ArgumentList &lt;Object[]&gt;]
+ [-ListenerOption &lt;TraceOptions&gt;] [-FilePath &lt;String&gt;] [-Force] [-Debugger] [-PSHost]
+ [&lt;CommonParameters&gt;]
+</code></pre>
+<h2>記述は,</h2>
+<p><code>Trace-Command</code>cmdlet は指定された表現またはコマンドの追跡を設定し起動します.指定されたコマンドにのみ適用される場合を除き,Set-TraceSource のように動作します.</p>
+<h2>例えは</h2>
+<h3>例1:メタデータ処理,パラメータ結合,および表現の追跡について説明します.</h3>
+<p>この例では,メタデータ処理,パラメータ結合,およびcmdlet作成と破壊の痕跡を開始します.<code>Get-Process Notepad</code>表現.</p>
+<pre><code class="language-powershell">Trace-Command -Name Metadata, ParameterBinding, Cmdlet -Expression {Get-Process Notepad} -PSHost
+</code></pre>
+<p>追跡源を指定するには <strong>Name</strong> パラメータ,コマンドを指定するには <strong>Expression</strong> パラメータ,および輸出をコンソールに送信するには <strong>PSHost</strong> パラメタを使用します.追跡オプションやリスナーオプションを指定していないため,コマンドはデフォルトを使用します:</p>
+<ul>
+<li>追跡オプションのためすべて - 聴衆オプションのためはいません</li>
+</ul>
+<h3>例2:パラメーターBinding 操作の行動を追跡する</h3>
+<p>この例では,ParameterBindingの動作を PowerShellで処理している間に追跡します.<code>Get-Alias</code>パイプラインから入力を取り出す表現です.</p>
+<pre><code class="language-powershell">$A = &quot;i*&quot;
+Trace-Command ParameterBinding {Get-Alias $input} -PSHost -InputObject $A
+</code></pre>
+<pre><code>      `Trace-Command`, **InputObject**パラメータは,追跡中に処理されている表現にオブジェクトを転送します.
+</code></pre>
+<p>最初のコマンドは文字列を保存します.<code>i*</code>の内側にある<code>$A</code>第2コマンドは,変数  を使っています.<code>Trace-Command</code>パーマメーターBinding 追跡源のcmdlet. <strong>PSHost</strong> パラメータは,輸出をコンソールに送信します.</p>
+<p>処理されている表現は,<code>Get-Alias $input</code>がどこにいるのか.<code>$input</code><strong>InputObject</strong> 変数と関連付けられている. <strong>InputObject</strong> 変数が変数  を過ぎていく.<code>$A</code>実際,追跡中に処理されているコマンドは, です.<code>Get-Alias -InputObject $A" or "$A | Get-Alias</code> .</p>
+<h2>パラメータは</h2>
+<h3>-ArgumentList</h3>
+<p>追跡されるコマンドのパラメータとパラメータ値を指定します. <strong>ArgumentList</strong>のニックネームは <strong>Args</strong>です.この機能はダイナミックパラメータをデバッグするのに役立ちます.</p>
+<p><strong>ArgumentList</strong>の行動についての詳細については, [about_Splatting] (../Microsoft.PowerShell.Core/About/about_Splatting.md#splatting-with-arrays) を参照してください.</p>
+<pre><code class="language-yaml">Type: System.Object[]
+Parameter Sets: commandSet
+Aliases: Args
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>- コマンド</h3>
+<p>追跡中に処理されているコマンドを指定します.</p>
+<p>このパラメータを使用すると,PowerShellはパイプラインで処理されるようにコマンドを処理します.例えば,コマンド発見は,各入力対象に繰り返されない.</p>
+<pre><code class="language-yaml">Type: System.String
+Parameter Sets: commandSet
+Aliases:
+
+Required: True
+Position: 1
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-デバッグ機</h3>
+<p>cmdletがトラスアウトプットをデバッグに送信することを表示します.任意のユーザーモードまたはカーネルモードデバッグで,またはVisual Studioで,output を表示できます.このパラメータはデフォルトトラスリスナーも選択します.</p>
+<pre><code class="language-yaml">Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-Expression</h3>
+<p>追跡中に処理されている表現を指定します. 表現を括弧に収め ()<code>{}</code>) でした.</p>
+<pre><code class="language-yaml">Type: System.Management.Automation.ScriptBlock
+Parameter Sets: expressionSet
+Aliases:
+
+Required: True
+Position: 1
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-FilePath</h3>
+<p>cmdletが追跡出力を送るファイルを指定する.このパラメータはファイル追跡聴き器も選択します.</p>
+<pre><code class="language-yaml">Type: System.String
+Parameter Sets: (All)
+Aliases: PSPath
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-フォース</h3>
+<p>ユーザの確認を要求せずにコマンドを実行するように強制します. <strong>FilePath</strong>パラメータで使用されます. <strong>Force</strong>パラメータを使用しても,cmdletはセキュリティ制限を覆すことはできません.</p>
+<pre><code class="language-yaml">Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-InputObject</h3>
+<p>追跡中に処理されている表現への入力を指定します.表現が受け入れている入力を表す変数を入力するか,パイプラインを通過するオブジェクトを入力することができます.</p>
+<pre><code class="language-yaml">Type: System.Management.Automation.PSObject
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByValue)
+Accept wildcard characters: False
+</code></pre>
+<h3>-ListenerOption について</h3>
+<p>輸出中の各トラスメッセージの前文字にオプションデータを指定します.このパラメータの受け入れ可能な値は:です.</p>
+<ul>
+<li>-<code>None</code> - -<code>LogicalOperationStack</code> - -<code>DateTime</code> - -<code>Timestamp</code> - -<code>ProcessId</code> - -<code>ThreadId</code> - -<code>Callstack</code></li>
+</ul>
+<p><code>None</code>既定はデフォルトです.</p>
+<p>これらの値はフラグベースの数えとして定義されます.このパラメータを使用して複数のフラグを設定するために複数の値を組み合わせることができます.値は,値の配列として<strong>ListenerOption</strong>パラメータに転送され,またはそれらの値の逗号分離文字列として.cmdletはバイナリー-OR操作を使用して値を組み合わせます.マレイとして値を転送することは最も簡単なオプションであり,値のタブ完了を使用することもできます.</p>
+<pre><code class="language-yaml">Type: System.Diagnostics.TraceOptions
+Parameter Sets: (All)
+Aliases:
+Accepted values: None, LogicalOperationStack, DateTime, Timestamp, ProcessId, ThreadId, Callstack
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-名字は</h3>
+<p>PowerShellの追跡可能な構成要素の配列を指定します.各構成要素の追跡源の名前を入力します.ワイルドカードが許可されています.コンピュータの追跡源を検索するには, を入力してください.<code>Get-TraceSource</code> .</p>
+<pre><code class="language-yaml">Type: System.String[]
+Parameter Sets: (All)
+Aliases:
+
+Required: True
+Position: 0
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h1>トレースコマンドです.</h1>
+<h3>-オプション</h3>
+<p>追跡されるイベントの種類を決定します.このパラメータの受け入れ可能な値は:です.</p>
+<ul>
+<li>-<code>None</code> - -<code>Constructor</code> - -<code>Dispose</code> - -<code>Finalizer</code> - -<code>Method</code> - -<code>Property</code> - -<code>Delegates</code> - -<code>Events</code> - -<code>Exception</code> - -<code>Lock</code> - -<code>Error</code> - -<code>Errors</code> - -<code>Warning</code> - -<code>Verbose</code> - -<code>WriteLine</code> - -<code>Data</code> - -<code>Scope</code> - -<code>ExecutionFlow</code> - -<code>Assert</code> - -<code>All</code></li>
+</ul>
+<p><code>All</code>既定はデフォルトです.</p>
+<p>次の値は他の値の組み合わせです:</p>
+<ul>
+<li>-<code>ExecutionFlow</code>: <code>Constructor</code>     <code>Dispose</code>     <code>Finalizer</code>     <code>Method</code>     <code>Delegates</code>     <code>Events</code>     <code>Scope</code> - -<code>Data</code>: <code>Constructor</code>     <code>Dispose</code>     <code>Finalizer</code>     <code>Property</code>     <code>Verbose</code>     <code>WriteLine</code> - -<code>Errors</code>: <code>Error</code>     <code>Exception</code></li>
+</ul>
+<p>これらの値はフラグベースの数えとして定義されます.このパラメータを使用して複数のフラグを設定するために複数の値を組み合わせることができます.これらの値は <strong>Option</strong>パラメータに値の配列としてまたはそれらの値の逗号分離文字列として転送することができます. cmdlet は二進式-OR操作を使用して値を組み合わせます.マレイとして値をパスすることは最も簡単なオプションであり,値のタブ完了を使用することもできます.</p>
+<pre><code class="language-yaml">Type: System.Management.Automation.PSTraceSourceOptions
+Parameter Sets: (All)
+Aliases:
+Accepted values: None, Constructor, Dispose, Finalizer, Method, Property, Delegates, Events, Exception, Lock, Error, Errors, Warning, Verbose, WriteLine, Data, Scope, ExecutionFlow, Assert, All
+
+Required: False
+Position: 2
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-PSHost</h3>
+<p>cmdletがトラス輸出をPowerShellホストに送信することを表示します.このパラメータはPSHostトラスリスナーも選択します.</p>
+<pre><code class="language-yaml">Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>共通パラメーター</h3>
+<p>このcmdletは,共通パラメータをサポートしています: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable.詳細については, <a href="を参照してください.https://go.microsoft.com/fwlink/?LinkID=113216">about_CommonParameters</a> でした.</p>
+<h2>輸入は</h2>
+<h3>システム管理自動化PSObject</h3>
+<p>表現への入力を表すオブジェクトをこのcmdletにパイプすることができます.</p>
+<h2>輸出は</h2>
+<h3>システム管理自動化PSObject</h3>
+<p>このcmdletは,独自の出力返さない.追跡されたコマンドは,出力返却する可能性があります.このcmdletは,デバッグストリームにコマンドの追跡を書きます.</p>
+<h2>NOTES  記事ができました.</h2>
+<p>Windows PowerShell では,次のアライスがあります.<code>Trace-Command</code>:</p>
+<ul>
+<li>-<code>trcm</code></li>
+</ul>
+<p>追跡は,開発者がプログラムをデバッグして改良するために使用する方法である.追跡する際に,プログラムは内部処理の各ステップについての詳細なメッセージを生成します.PowerShell追跡のcmdletはPowerShell開発者に役立つように設計されていますが,すべてのユーザーに利用できます.彼らはシェルの機能のほぼすべての側面を監視することができます.</p>
+<p>追跡源は,各PowerShellコンポーネントの部分で,追跡を管理し,そのコンポーネントの追跡メッセージを生成する部分です.コンポーネントを追跡するには,その追跡源を特定します.</p>
+<p>活用する<code>Get-TraceSource</code>PowerShellの追跡が可能になったコンポーネントのリストを見る.</p>
+<p>追跡リスナーが追跡の出力を受信してユーザに表示する.あなたは追跡データをユーザーモードまたはカーネルモードデバッグに,ホストまたはコンソール,ファイル,または <strong>System.Diagnostics.TraceListener</strong> クラスから派生したカスタムリスナーに送信することを選択できます.</p>
+<h2>関連リンク</h2>
+<p><a href="Get-TraceSource.md">Get-TraceSource</a> </p>
+<p><a href="Measure-Command.md">Measure-Command</a> でした.</p>
+<p><a href="Set-TraceSource.md">Set-TraceSource</a> </p>
+<p><a href="Show-Command.md">Show-Command</a> </p></section><section class="en-original"><pre class="source-original"># Trace-Command
+
+## SYNOPSIS
+Configures and starts a trace of the specified expression or command.
+
+## SYNTAX
+
+### expressionSet (Default)
+
+```
+Trace-Command [-InputObject &lt;PSObject&gt;] [-Name] &lt;String[]&gt;
+ [[-Option] &lt;PSTraceSourceOptions&gt;] [-Expression] &lt;ScriptBlock&gt;
+ [-ListenerOption &lt;TraceOptions&gt;] [-FilePath &lt;String&gt;] [-Force] [-Debugger] [-PSHost]
+ [&lt;CommonParameters&gt;]
+```
+
+### commandSet
+
+```
+Trace-Command [-InputObject &lt;PSObject&gt;] [-Name] &lt;String[]&gt;
+ [[-Option] &lt;PSTraceSourceOptions&gt;] [-Command] &lt;String&gt; [-ArgumentList &lt;Object[]&gt;]
+ [-ListenerOption &lt;TraceOptions&gt;] [-FilePath &lt;String&gt;] [-Force] [-Debugger] [-PSHost]
+ [&lt;CommonParameters&gt;]
+```
+
+## DESCRIPTION
+
+The `Trace-Command` cmdlet configures and starts a trace of the specified expression or command.
+It works like Set-TraceSource, except that it applies only to the specified command.
+
+## EXAMPLES
+
+### Example 1: Trace metadata processing, parameter binding, and an expression
+
+This example starts a trace of metadata processing, parameter binding, and cmdlet creation and
+destruction of the `Get-Process Notepad` expression.
+
+```powershell
+Trace-Command -Name Metadata, ParameterBinding, Cmdlet -Expression {Get-Process Notepad} -PSHost
+```
+
+It uses the **Name** parameter to specify the trace sources, the **Expression** parameter to specify
+the command, and the **PSHost** parameter to send the output to the console. Because it doesn&#x27;t
+specify any tracing options or listener options, the command uses the defaults:
+
+- All for the tracing options
+- None for the listener options
+
+### Example 2: Trace the actions of ParameterBinding operations
+
+This example traces the actions of the **ParameterBinding** operations of PowerShell while it
+processes a `Get-Alias` expression that takes input from the pipeline.
+
+```powershell
+$A = &quot;i*&quot;
+Trace-Command ParameterBinding {Get-Alias $input} -PSHost -InputObject $A
+```
+
+In `Trace-Command`, the **InputObject** parameter passes an object to the expression that&#x27;s being
+processed during the trace.
+
+The first command stores the string `i*` in the `$A` variable. The second command uses the
+`Trace-Command` cmdlet with the ParameterBinding trace source. The **PSHost** parameter sends the
+output to the console.
+
+The expression being processed is `Get-Alias $input`, where the `$input` variable is associated with
+the **InputObject** parameter. The **InputObject** parameter passes the variable `$A` to the
+expression. In effect, the command being processed during the trace is
+`Get-Alias -InputObject $A&quot; or &quot;$A | Get-Alias`.
+
+## PARAMETERS
+
+### -ArgumentList
+
+Specifies the parameters and parameter values for the command being traced. The alias for
+**ArgumentList** is **Args**. This feature is useful for debugging dynamic parameters.
+
+For more information about the behavior of **ArgumentList**, see
+[about_Splatting](../Microsoft.PowerShell.Core/About/about_Splatting.md#splatting-with-arrays).
+
+```yaml
+Type: System.Object[]
+Parameter Sets: commandSet
+Aliases: Args
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Command
+
+Specifies a command that&#x27;s being processed during the trace.
+
+When you use this parameter, PowerShell processes the command just as it would be processed in a
+pipeline. For example, command discovery isn&#x27;t repeated for each incoming object.
+
+
+```yaml
+Type: System.String
+Parameter Sets: commandSet
+Aliases:
+
+Required: True
+Position: 1
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Debugger
+
+Indicates that the cmdlet sends the trace output to the debugger. You can view the output in any
+user-mode or kernel mode debugger or in Visual Studio. This parameter also selects the default trace
+listener.
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Expression
+
+Specifies the expression that&#x27;s being processed during the trace. Enclose the expression in braces
+(`{}`).
+
+```yaml
+Type: System.Management.Automation.ScriptBlock
+Parameter Sets: expressionSet
+Aliases:
+
+Required: True
+Position: 1
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -FilePath
+
+Specifies a file that the cmdlet sends the trace output to. This parameter also selects the file
+trace listener.
+
+```yaml
+Type: System.String
+Parameter Sets: (All)
+Aliases: PSPath
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Force
+
+Forces the command to run without asking for user confirmation. Used with the **FilePath**
+parameter. Even using the **Force** parameter, the cmdlet can&#x27;t override security restrictions.
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -InputObject
+
+Specifies input to the expression that&#x27;s being processed during the trace. You can enter a variable
+that represents the input that the expression accepts, or pass an object through the pipeline.
+
+```yaml
+Type: System.Management.Automation.PSObject
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByValue)
+Accept wildcard characters: False
+```
+
+### -ListenerOption
+
+Specifies optional data to the prefix of each trace message in the output. The acceptable values for
+this parameter are:
+
+- `None`
+- `LogicalOperationStack`
+- `DateTime`
+- `Timestamp`
+- `ProcessId`
+- `ThreadId`
+- `Callstack`
+
+`None` is the default.
+
+These values are defined as a flag-based enumeration. You can combine multiple values together to
+set multiple flags using this parameter. The values can be passed to the **ListenerOption**
+parameter as an array of values or as a comma-separated string of those values. The cmdlet will
+combine the values using a binary-OR operation. Passing values as an array is the simplest option
+and also allows you to use tab-completion on the values.
+
+```yaml
+Type: System.Diagnostics.TraceOptions
+Parameter Sets: (All)
+Aliases:
+Accepted values: None, LogicalOperationStack, DateTime, Timestamp, ProcessId, ThreadId, Callstack
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Name
+
+Specifies an array of PowerShell components that are traced. Enter the name of the trace source of
+each component. Wildcards are permitted. To find the trace sources on your computer, type
+`Get-TraceSource`.
+
+```yaml
+Type: System.String[]
+Parameter Sets: (All)
+Aliases:
+
+Required: True
+Position: 0
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+# Trace-Command
+
+### -Option
+
+Determines the type of events that are traced. The acceptable values for this parameter are:
+
+- `None`
+- `Constructor`
+- `Dispose`
+- `Finalizer`
+- `Method`
+- `Property`
+- `Delegates`
+- `Events`
+- `Exception`
+- `Lock`
+- `Error`
+- `Errors`
+- `Warning`
+- `Verbose`
+- `WriteLine`
+- `Data`
+- `Scope`
+- `ExecutionFlow`
+- `Assert`
+- `All`
+
+`All` is the default.
+
+The following values are combinations of other values:
+
+- `ExecutionFlow`: `Constructor`, `Dispose`, `Finalizer`, `Method`, `Delegates`, `Events`, `Scope`
+- `Data`: `Constructor`, `Dispose`, `Finalizer`, `Property`, `Verbose`, `WriteLine`
+- `Errors`: `Error`, `Exception`
+
+These values are defined as a flag-based enumeration. You can combine multiple values together to
+set multiple flags using this parameter. The values can be passed to the **Option** parameter as an
+array of values or as a comma-separated string of those values. The cmdlet will combine the values
+using a binary-OR operation. Passing values as an array is the simplest option and also allows you
+to use tab-completion on the values.
+
+```yaml
+Type: System.Management.Automation.PSTraceSourceOptions
+Parameter Sets: (All)
+Aliases:
+Accepted values: None, Constructor, Dispose, Finalizer, Method, Property, Delegates, Events, Exception, Lock, Error, Errors, Warning, Verbose, WriteLine, Data, Scope, ExecutionFlow, Assert, All
+
+Required: False
+Position: 2
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -PSHost
+
+Indicates that the cmdlet sends the trace output to the PowerShell host. This parameter also selects
+the PSHost trace listener.
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### CommonParameters
+
+This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable,
+-InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose,
+-WarningAction, and -WarningVariable. For more information, see
+[about_CommonParameters](https://go.microsoft.com/fwlink/?LinkID=113216).
+
+## INPUTS
+
+### System.Management.Automation.PSObject
+
+You can pipe objects that represent input to the expression to this cmdlet.
+
+## OUTPUTS
+
+### System.Management.Automation.PSObject
+
+This cmdlet returns no output of its own. The traced command may return output.
+This cmdlet writes the command trace to the debug stream.
+
+## NOTES
+
+Windows PowerShell includes the following aliases for `Trace-Command`:
+
+- `trcm`
+
+Tracing is a method that developers use to debug and refine programs. When tracing, the program
+generates detailed messages about each step in its internal processing. The PowerShell tracing
+cmdlets are designed to help PowerShell developers, but they&#x27;re available to all users. They let
+you monitor nearly every aspect of the functionality of the shell.
+
+A trace source is the part of each PowerShell component that manages tracing and generates trace
+messages for the component. To trace a component, you identify its trace source.
+
+Use `Get-TraceSource` to see a list of PowerShell components that are enabled for tracing.
+
+A trace listener receives the output of the trace and displays it to the user. You can elect to send
+the trace data to a user-mode or kernel-mode debugger, to the host or console, to a file, or to a
+custom listener derived from the **System.Diagnostics.TraceListener** class.
+
+## RELATED LINKS
+
+[Get-TraceSource](Get-TraceSource.md)
+
+[Measure-Command](Measure-Command.md)
+
+[Set-TraceSource](Set-TraceSource.md)
+
+[Show-Command](Show-Command.md)</pre></section>

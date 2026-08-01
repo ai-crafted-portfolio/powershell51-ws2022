@@ -1,0 +1,372 @@
+<!doctype html><meta charset="utf-8"><section class="jp-official"><h1>デバッグランススペース</h1>
+<h2>SYNOPSISは,ランススペースでインタラクティブなデバッグセッションを開始します.</h2>
+<h2>SYNTAXは,のシンタックスです.</h2>
+<h3>RunspaceParameterSet (デフォルト) を設定する</h3>
+<pre><code>Debug-Runspace [-Runspace] &lt;Runspace&gt; [-WhatIf] [-Confirm] [&lt;CommonParameters&gt;]
+</code></pre>
+<h3>名前パラメーターセット</h3>
+<pre><code>Debug-Runspace [-Name] &lt;String&gt; [-WhatIf] [-Confirm] [&lt;CommonParameters&gt;]
+</code></pre>
+<h3>IdParameterSet は,</h3>
+<pre><code>Debug-Runspace [-Id] &lt;Int32&gt; [-WhatIf] [-Confirm] [&lt;CommonParameters&gt;]
+</code></pre>
+<h3>InstanceIdParameterSet 設定は</h3>
+<pre><code>Debug-Runspace [-InstanceId] &lt;Guid&gt; [-WhatIf] [-Confirm] [&lt;CommonParameters&gt;]
+</code></pre>
+<h2>記述は,</h2>
+<p><code>Debug-Runspace</code>cmdlet は,ローカルまたはリモート アクティブランスペースでインタラクティブデバッグセッションを開始します.<code>Get-Process</code>PowerShell に関するプロセスを探すため,<code>Enter-PSHostProcess</code>プロセスに添付する<strong>Id</strong>パラメータで指定されたプロセスIDと,その後は<code>Get-Runspace</code>PowerShell ホストプロセス内のランスペアをリストにします.</p>
+<p>実行スペースをデバッグする選択した後,もしその実行空間が現在コマンドまたはスクリプトを実行している場合,またはスクリプトがbreakpointで停止している場合,PowerShellは,実行空間のためのリモートデバッグセッションを開きます.リモートセッションスクリプトがデバッグされるように,実行空間スクリプトをデバッグすることができます.</p>
+<p>PowerShell ホストプロセスに接続できるのは,そのプロセスを実行しているコンピュータの管理者である場合のみ,またはデバッグしたいスクリプトを実行している場合のみです.また,現在の PowerShell セッションを実行しているホストプロセスに入力することはできません.異なる PowerShell セッションを実行しているホストプロセスにのみ入力できます.</p>
+<h2>例えは,</h2>
+<h3>例1: リモートランスプレスをデバッグします.</h3>
+<p>この例では,遠隔コンピュータ,WS10TestServer で開いているランスペースをデバッグします.コマンドの最初の行で,  を実行します.<code>Get-Process</code>この例では,Windows PowerShell ISE ホストプロセスプロセスプロセスID 1152をデバッグしたい.</p>
+<pre><code class="language-powershell">PS C:\&gt; Get-Process -ComputerName &quot;WS10TestServer&quot; -Name &quot;*powershell*&quot;
+
+Handles      WS(K)   VM(M)      CPU(s)    Id  ProcessName
+-------      -----   -----      ------    --  -----------
+    377      69912     63     2.09      2420  powershell
+    399     123396    829     4.48      1152  powershell_ise
+
+PS C:\&gt; Enter-PSSession -ComputerName &quot;WS10TestServer&quot;
+[WS10TestServer]:PS C:\&gt; Enter-PSHostProcess -Id 1152
+[WS10TestServer:][Process:1152]: PS C:\Users\Test\Documents&gt; Get-Runspace
+
+Id Name            ComputerName    Type          State         Availability
+-- ----            ------------    ----          -----         ------------
+ 1 Runspace1       WS10TestServer  Remote        Opened        Available
+ 2 RemoteHost      WS10TestServer  Remote        Opened        Busy
+
+[WS10TestServer][Process:1152]: PS C:\Users\Test\Documents&gt; Debug-Runspace -Id 2
+
+Hit Line breakpoint on 'C:\TestWFVar1.ps1:83'
+At C:\TestWFVar1.ps1:83 char:1
++ $scriptVar = &quot;Script Variable&quot;
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+[Process:1152]: [RSDBG: 2]: PS C:\&gt; &gt;
+</code></pre>
+<p>2番目のコマンドでは,実行します.<code>Enter-PSSession</code>WS10TestServerでリモートセッションを開くために,第三のコマンドでは,リモートサーバーで実行されているWindows PowerShell ISE ホストプロセスに接続します.<code>Enter-PSHostProcess</code>命令第1号,1152で取得したホストプロセスのIDを指定します.</p>
+<p>第4コマンドでは,実行するプロセスID 1152 の実行スペースをリストにします.<code>Get-Runspace</code>忙しいランスプレスのID番号を注目にします.それはデバッグしたいスクリプトを実行しています.</p>
+<p>最後のコマンドで,スクリプトを実行している開かれた実行空間をデバッグします.<code>TestWFVar1.ps1</code>実行することで,<code>Debug-Runspace</code>脚本に断点があるので,デバッグが開きます.</p>
+<h2>パラメータは</h2>
+<h3>-Id</h3>
+<p>ランスプレスのID番号を指定します.実行できます.<code>Get-Runspace</code>runpace ID を表示する.</p>
+<pre><code class="language-yaml">Type: System.Int32
+Parameter Sets: IdParameterSet
+Aliases:
+
+Required: True
+Position: 0
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-インスタンスの</h3>
+<p>実行空間をインスタンスのIDで指定し,実行することで表示できる GUIDです.<code>Get-Runspace</code> .</p>
+<pre><code class="language-yaml">Type: System.Guid
+Parameter Sets: InstanceIdParameterSet
+Aliases:
+
+Required: True
+Position: 0
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-名字は</h3>
+<p>ランスプレイスを名前で指定します.<code>Get-Runspace</code>ランスペアの名前を表示します.</p>
+<pre><code class="language-yaml">Type: System.String
+Parameter Sets: NameParameterSet
+Aliases:
+
+Required: True
+Position: 0
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-ランススペース</h3>
+<p>このパラメータの値を指定する最も簡単な方法は,フィルタされた  の結果を含む変数を指定することです.<code>Get-Runspace</code>命令です.</p>
+<pre><code class="language-yaml">Type: System.Management.Automation.Runspaces.Runspace
+Parameter Sets: RunspaceParameterSet
+Aliases:
+
+Required: True
+Position: 0
+Default value: None
+Accept pipeline input: True (ByPropertyName, ByValue)
+Accept wildcard characters: False
+</code></pre>
+<h3>-確認</h3>
+<p>cmdletを実行する前に確認を提示します.</p>
+<pre><code class="language-yaml">Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases: cf
+
+Required: False
+Position: Named
+Default value: True
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-WhatIf</h3>
+<p>cmdletが実行されなければどうなるかを示しています.</p>
+<pre><code class="language-yaml">Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases: wi
+
+Required: False
+Position: Named
+Default value: True
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>共通パラメーター</h3>
+<p>このcmdletは,共通パラメータをサポートしています: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable.詳細については, <a href="を参照してください.https://go.microsoft.com/fwlink/?LinkID=113216">about_CommonParameters</a> でした.</p>
+<h2>輸入は</h2>
+<h3>システム管理自動化ランススペースランススペース</h3>
+<p>の結果をパイプで表示できます.<code>Get-Runspace</code>このcmdletへのコマンド.</p>
+<h2>輸出は</h2>
+<h2>NOTES  記事ができました.</h2>
+<p><code>Debug-Runspace</code>オープン状態にあるランスペースで動作します.ランスペースの状態がオープン状態から別の状態に変更された場合,そのランスペースは自動的に実行リストから削除されます.実行リストにランスペースが追加されるのは,以下の基準を満たす場合に限ります.</p>
+<ul>
+<li>呼び出しコマンドから来ている場合,つまり,その上にがあります.<code>Invoke-Command</code>- もし,その番号が, から来ているなら<code>Debug-Runspace</code> を持っている.<code>Debug-Runspace</code>GUID ID. - PowerShell ワークフローから送信されている場合,そのワークフロー ワークフロー ID は,現在のアクティブデバガーのワークフロー ワークフロー ID と同じです.</li>
+</ul>
+<h2>関連リンク</h2>
+<p><a href="../Microsoft.PowerShell.Core/About/about_Debuggers.md">about_Debuggers</a> について</p>
+<p><a href="../Microsoft.PowerShell.Core/Debug-Job.md">デバッグ・ジョブ</a></p>
+<p><a href="Get-Runspace.md">Get-Runspace</a> </p>
+<p><a href="../Microsoft.PowerShell.Management/Get-Process.md">Get-Process</a> </p>
+<p><a href="../Microsoft.PowerShell.Core/PSHostProcess 入力.md">PSHostProcess 入力</a></p>
+<p><a href="../Microsoft.PowerShell.Core/Enter-PSSession.md">PSSession</a> について</p></section><section class="en-original"><pre class="source-original"># Debug-Runspace
+
+## SYNOPSIS
+Starts an interactive debugging session with a runspace.
+
+## SYNTAX
+
+### RunspaceParameterSet (Default)
+
+```
+Debug-Runspace [-Runspace] &lt;Runspace&gt; [-WhatIf] [-Confirm] [&lt;CommonParameters&gt;]
+```
+
+### NameParameterSet
+
+```
+Debug-Runspace [-Name] &lt;String&gt; [-WhatIf] [-Confirm] [&lt;CommonParameters&gt;]
+```
+
+### IdParameterSet
+
+```
+Debug-Runspace [-Id] &lt;Int32&gt; [-WhatIf] [-Confirm] [&lt;CommonParameters&gt;]
+```
+
+### InstanceIdParameterSet
+
+```
+Debug-Runspace [-InstanceId] &lt;Guid&gt; [-WhatIf] [-Confirm] [&lt;CommonParameters&gt;]
+```
+
+## DESCRIPTION
+
+The `Debug-Runspace` cmdlet starts an interactive debugging session with a local or remote active
+runspace. You can find a runspace that you want to debug by first running `Get-Process` to find
+processes associated with PowerShell, then `Enter-PSHostProcess` with the process ID specified in
+the **Id** parameter to attach to the process, and then `Get-Runspace` to list runspaces within the
+PowerShell host process.
+
+After you have selected a runspace to debug, if the runspace is currently running a command or
+script, or if the script has stopped at a breakpoint, PowerShell opens a remote debugger session for
+the runspace. You can debug the runspace script in the same way remote session scripts are debugged.
+
+You can only attach to a PowerShell host process if you are an administrator on the computer that is
+running the process, or you are running the script that you want to debug. Also, you cannot enter
+the host process that is running the current PowerShell session. You can only enter a host process
+that is running a different PowerShell session.
+
+## EXAMPLES
+
+### Example 1: Debug a remote runspace
+
+In this example, you debug a runspace that is open on a remote computer, WS10TestServer. In the
+first line of the command, you run `Get-Process` on the remote computer, and filter for Windows
+PowerShell host processes. In this example, you want to debug process ID 1152, the Windows
+PowerShell ISE host process.
+
+```powershell
+PS C:\&gt; Get-Process -ComputerName &quot;WS10TestServer&quot; -Name &quot;*powershell*&quot;
+
+Handles      WS(K)   VM(M)      CPU(s)    Id  ProcessName
+-------      -----   -----      ------    --  -----------
+    377      69912     63     2.09      2420  powershell
+    399     123396    829     4.48      1152  powershell_ise
+
+PS C:\&gt; Enter-PSSession -ComputerName &quot;WS10TestServer&quot;
+[WS10TestServer]:PS C:\&gt; Enter-PSHostProcess -Id 1152
+[WS10TestServer:][Process:1152]: PS C:\Users\Test\Documents&gt; Get-Runspace
+
+Id Name            ComputerName    Type          State         Availability
+-- ----            ------------    ----          -----         ------------
+ 1 Runspace1       WS10TestServer  Remote        Opened        Available
+ 2 RemoteHost      WS10TestServer  Remote        Opened        Busy
+
+[WS10TestServer][Process:1152]: PS C:\Users\Test\Documents&gt; Debug-Runspace -Id 2
+
+Hit Line breakpoint on &#x27;C:\TestWFVar1.ps1:83&#x27;
+At C:\TestWFVar1.ps1:83 char:1
++ $scriptVar = &quot;Script Variable&quot;
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+[Process:1152]: [RSDBG: 2]: PS C:\&gt; &gt;
+```
+
+In the second command, you run `Enter-PSSession` to open a remote session on WS10TestServer. In the
+third command, you attach to the Windows PowerShell ISE host process running on the remote server by
+running `Enter-PSHostProcess`, and specifying the ID of the host process that you obtained in the
+first command, 1152.
+
+In the fourth command, you list available runspaces for process ID 1152 by running `Get-Runspace`.
+You note the ID number of the Busy runspace; it is running a script that you want to debug.
+
+In the last command, you start debugging an opened runspace that is running a script,
+`TestWFVar1.ps1`, by running `Debug-Runspace`, and identifying the runspace by its ID, 2, by adding
+the **Id** parameter. Because there&#x27;s a breakpoint in the script, the debugger opens.
+
+## PARAMETERS
+
+### -Id
+
+Specifies the ID number of a runspace. You can run `Get-Runspace` to show runspace IDs.
+
+```yaml
+Type: System.Int32
+Parameter Sets: IdParameterSet
+Aliases:
+
+Required: True
+Position: 0
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -InstanceId
+
+Specifies a runspace by its instance ID, a GUID that you can show by running `Get-Runspace`.
+
+```yaml
+Type: System.Guid
+Parameter Sets: InstanceIdParameterSet
+Aliases:
+
+Required: True
+Position: 0
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Name
+
+Specifies a runspace by its name. You can run `Get-Runspace` to show the names of runspaces.
+
+```yaml
+Type: System.String
+Parameter Sets: NameParameterSet
+Aliases:
+
+Required: True
+Position: 0
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Runspace
+
+Specifies a runspace object. The simplest way to provide a value for this parameter is to specify a
+variable that contains the results of a filtered `Get-Runspace` command.
+
+```yaml
+Type: System.Management.Automation.Runspaces.Runspace
+Parameter Sets: RunspaceParameterSet
+Aliases:
+
+Required: True
+Position: 0
+Default value: None
+Accept pipeline input: True (ByPropertyName, ByValue)
+Accept wildcard characters: False
+```
+
+### -Confirm
+
+Prompts you for confirmation before running the cmdlet.
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases: cf
+
+Required: False
+Position: Named
+Default value: True
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -WhatIf
+
+Shows what would happen if the cmdlet runs. The cmdlet is not run.
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases: wi
+
+Required: False
+Position: Named
+Default value: True
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### CommonParameters
+
+This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable,
+-InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose,
+-WarningAction, and -WarningVariable. For more information, see
+[about_CommonParameters](https://go.microsoft.com/fwlink/?LinkID=113216).
+
+## INPUTS
+
+### System.Management.Automation.Runspaces.Runspace
+
+You can pipe the results of a `Get-Runspace` command to this cmdlet.
+
+## OUTPUTS
+
+## NOTES
+
+`Debug-Runspace` works on runspaces that are in the Opened state. If a runspace state changes from
+Opened to another state, that runspace is automatically removed from the running list. A runspace is
+added to the running list only if it meets the following criteria.
+
+- If it is coming from Invoke-Command; that is, it has an `Invoke-Command` GUID ID.
+- If it is coming from `Debug-Runspace`; that is, it has a `Debug-Runspace` GUID ID.
+- If it is coming from a PowerShell workflow, and its workflow job ID is the same as the current
+  active debugger workflow job ID.
+
+## RELATED LINKS
+
+[about_Debuggers](../Microsoft.PowerShell.Core/About/about_Debuggers.md)
+
+[Debug-Job](../Microsoft.PowerShell.Core/Debug-Job.md)
+
+[Get-Runspace](Get-Runspace.md)
+
+[Get-Process](../Microsoft.PowerShell.Management/Get-Process.md)
+
+[Enter-PSHostProcess](../Microsoft.PowerShell.Core/Enter-PSHostProcess.md)
+
+[Enter-PSSession](../Microsoft.PowerShell.Core/Enter-PSSession.md)</pre></section>

@@ -1,0 +1,383 @@
+<!doctype html><meta charset="utf-8"><section class="jp-official"><h1>新しいAdfsAccessControlPolicies を公開しました.</h1>
+<h2>SYNOPSIS は AD FS アクセス制御ポリシーを作成します.</h2>
+<h2>SYNTAX</h2>
+<pre><code>New-AdfsAccessControlPolicy -Name &lt;String&gt; [-SourceName &lt;String&gt;] [-Identifier &lt;String&gt;]
+ [-Description &lt;String&gt;] [-PolicyMetadata &lt;PolicyMetadata&gt;] [-PolicyMetadataFile &lt;String&gt;] [-WhatIf] [-Confirm]
+ [&lt;CommonParameters&gt;]
+</code></pre>
+<h2>記述 ニュー・アドフスAccessControlPolicy* cmdlet は,ポリシーメタデータファイルからアクティブディレクトリ連邦サービス (AD FS) アクセス制御ポリシーを作成します.</h2>
+<p><strong>連邦メタデータファイルを作成する方法</strong></p>
+<p>連邦メタデータ文書は,[ダウンロード] (/windows-server/identity/ad-fs/operations/offline-tools) に利用可能な XML ファイルです.文書を回収するには,連邦サービス名を入力し,その後 <strong>Get federation metadata</strong> ボタンを選択してください.</p>
+<h2>例えは,</h2>
+<h3>例1:ポリシーメタデータファイルからポリシーテンプレートを作成します.```</h3>
+<p>PS C:&gt; $t=New-AdfsAccessControlPolicy -Name "DemoOne" -PolicyMetadataFile "C:\filepath\ PolicyTemplateIntranetWithOneGroupParameterMFA.xml"</p>
+<pre><code>
+このコマンドは,ポリシーメタデータファイルからポリシーテンプレートを作成します.
+
+### 例2: ポリシーテンプレートを使用して頼りになる当事者を作成します.```
+PS C:\&gt; Add-AdfsRelyingPartyTrust -Name &quot;DemoRP1&quot; -Identifier &quot;https://DemoRP1&quot; -AccessControlPolicyName DemoOne -AccessControlPolicyParameters &quot;Administrators&quot;
+</code></pre>
+<p>このコマンドは,ポリシーテンプレートを利用して,依存する当事者を作成します.</p>
+<h3>例3:パラメータを変更する```</h3>
+<p>PS C:&gt; Set-AdfsRelyingPartyTrust -TargetName "DemoRP1" -AccessControlPolicyParameters ("Administrators","Users") -AccessControlPolicyName "DemoOne"</p>
+<pre><code>
+このコマンドはアクセス管理ポリシーのパラメータを変更します.
+
+### 例4: ポリシーテンプレートを非割り当てする```
+PS C:\&gt; Set-AdfsRelyingPartyTrust -TargetName &quot;DemoRP1&quot; -AccessControlPolicyName $null
+</code></pre>
+<p>このコマンドは,ポリシーテンプレートを非割り当てします.</p>
+<h3>例5:既存のテンプレートからポリシーテンプレートを作成します.```</h3>
+<p>PS C:&gt; New-AdfsAccessControlPolicy -Name "DemoCopyOne" -SourceName "DemoOne"</p>
+<pre><code>
+このコマンドは,既存のテンプレートからポリシーテンプレートを作成します.
+
+### 例 6:既存のメタデータからポリシーテンプレートを作成します.```
+PS C:\&gt; New-AdfsAccessControlPolicy -Name &quot;DemoCopyTwo&quot; -PolicyMetadata $t.PolicyMetadata
+</code></pre>
+<p>このコマンドは既存のメタデータからポリシーテンプレートを作成します. $t変数は <strong>New-AccessControlPolicy</strong>からオブジェクトです.</p>
+<h3>例7: 頼りになる政党結果ポリシーからポリシーテンプレートを作成する```</h3>
+<p>PS C:&gt; New-AdfsAccessControlPolicy -Name "DemoCopyWithAssignment" -PolicyMetadata $r.ResultantPolicy</p>
+<pre><code>
+このコマンドは,依存するパーティーの結果ポリシーからポリシーテンプレートを作成します. $r変数は **Get-AdfsRelyingPartyTrust**から返されたオブジェクトです.
+
+### 例8: 新しいテンプレートを使用するために頼りになる方を変えましょう.```
+PS C:\&gt; Set-AdfsRelyingPartyTrust -TargetName &quot;DemoRP1&quot; -AccessControlPolicyName &quot;DemoTwo&quot; -AccessControlPolicyParameters @{PermitGroup=&quot;Users&quot;;RejectGroup=&quot;Administrators&quot;}
+</code></pre>
+<p>このコマンドは,新しいテンプレートを使用するために頼る当事者を変更します.</p>
+<h3>例 9: 特定の請求を伴う複雑な条件```</h3>
+<p>PS C:&gt; Set-AdfsRelyingPartyTrust -TargetName "DemoRP1" -AccessControlPolicyName DemoRP -AccessControlPolicyParameters`
+    @{"SPParameter"= @{ClaimType="http://schemas.xmlsoap.org/ws/2005/05/identity/claims/OfficeLocation"; Operator="Equals"; Value="Redmond"}}</p>
+<pre><code>
+### 例10:単一のパラメータについて2つの特定主張```
+PS C:\&gt; Set-AdfsRelyingPartyTrust -TargetName &quot;DemoRP1&quot; -AccessControlPolicyName &quot;DemoRP&quot; -AccessControlPolicyParameters`
+    @{&quot;SPParameter&quot;= (@{ClaimType=&quot;http://schemas.xmlsoap.org/ws/2005/05/identity/claims/OfficeLocation&quot;; Operator=&quot;Equals&quot;; Value=(&quot;Redmond&quot;,&quot;DC&quot;)},`
+                      @{ClaimType=&quot;http://schemas.xmlsoap.org/ws/2005/05/identity/claims/Department&quot;; Operator=&quot;Equals&quot;; Value=&quot;Azure&quot;})}
+</code></pre>
+<h2>パラメータは</h2>
+<h3>-Description は説明を指定します.</h3>
+<pre><code class="language-yaml">Type: String
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-IDIDはIDを指定する.</h3>
+<pre><code class="language-yaml">Type: String
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-名 名前指定する.</h3>
+<pre><code class="language-yaml">Type: String
+Parameter Sets: (All)
+Aliases: 
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-PoliceMetadata ポリシーのためのメタデータを指定します.</h3>
+<pre><code class="language-yaml">Type: PolicyMetadata
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-PoliticsMetadataFile ポリシーに関するメタデータを含むファイルを指定します.</h3>
+<pre><code class="language-yaml">Type: String
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-SourceName  ソース名```yaml</h3>
+<p>Type: String
+Parameter Sets: (All)
+Aliases: </p>
+<p>Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False</p>
+<pre><code>
+### - 確認は,cmdletを実行する前に確認を提示します.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: cf
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-WhatIf が実行されればどうなるか示します.</h3>
+<pre><code class="language-yaml">Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: wi
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>共通パラメータ このcmdletは共通パラメータをサポートしています: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable.詳細については, <a href="を参照してください.https://go.microsoft.com/fwlink/?LinkID=113216">about_CommonParameters</a> でした.</h3>
+<h2>輸入は</h2>
+<h2>輸出は</h2>
+<h2>NOTES  記事ができました.</h2>
+<h2>関連リンク</h2>
+<p><a href="./Get-AdfsAccessControlPolicy.md">Get-AdfsAccessControlPolicy</a> は,インターネットで利用できる</p>
+<p><a href="./Remove-AdfsAccessControlPolicy.md">Remove-AdfsAccessControlPolicy</a> </p>
+<p><a href="./Set-AdfsAccessControlPolicy.md">Set-AdfsAccessControlPolicy</a> は,管理者による管理を目的としたものです.</p></section><section class="en-original"><pre class="source-original"># New-AdfsAccessControlPolicy
+
+## SYNOPSIS
+Creates an AD FS access control policy.
+
+## SYNTAX
+
+```
+New-AdfsAccessControlPolicy -Name &lt;String&gt; [-SourceName &lt;String&gt;] [-Identifier &lt;String&gt;]
+ [-Description &lt;String&gt;] [-PolicyMetadata &lt;PolicyMetadata&gt;] [-PolicyMetadataFile &lt;String&gt;] [-WhatIf] [-Confirm]
+ [&lt;CommonParameters&gt;]
+```
+
+## DESCRIPTION
+The **New-AdfsAccessControlPolicy** cmdlet creates an Active Directory Federation Services (AD FS) access control policy from a policy metadata file.
+
+**How to create a federation metadata file**
+
+The federation metadata document is an XML file that is available for [download](/windows-server/identity/ad-fs/operations/offline-tools). To retrieve your document, enter your federation service name, and then select the **Get federation metadata** button.
+
+## EXAMPLES
+
+### Example 1: Create a policy template from a policy metadata file
+```
+PS C:\&gt; $t=New-AdfsAccessControlPolicy -Name &quot;DemoOne&quot; -PolicyMetadataFile &quot;C:\filepath\ PolicyTemplateIntranetWithOneGroupParameterMFA.xml&quot;
+```
+
+This command creates a policy template from a policy metadata file.
+
+### Example 2: Create a relying party using the policy template
+```
+PS C:\&gt; Add-AdfsRelyingPartyTrust -Name &quot;DemoRP1&quot; -Identifier &quot;https://DemoRP1&quot; -AccessControlPolicyName DemoOne -AccessControlPolicyParameters &quot;Administrators&quot;
+```
+
+This command creates a relying party using the policy template.
+
+### Example 3: Change parameters
+```
+PS C:\&gt; Set-AdfsRelyingPartyTrust -TargetName &quot;DemoRP1&quot; -AccessControlPolicyParameters (&quot;Administrators&quot;,&quot;Users&quot;) -AccessControlPolicyName &quot;DemoOne&quot;
+```
+
+This command changes parameters for an access control policy.
+
+### Example 4: Un-assign a policy template
+```
+PS C:\&gt; Set-AdfsRelyingPartyTrust -TargetName &quot;DemoRP1&quot; -AccessControlPolicyName $null
+```
+
+This command un-assigns a policy template.
+
+### Example 5: Create a policy template from an existing template
+```
+PS C:\&gt; New-AdfsAccessControlPolicy -Name &quot;DemoCopyOne&quot; -SourceName &quot;DemoOne&quot;
+```
+
+This command creates a policy template from an existing template.
+
+### Example 6: Create a policy template from existing metadata
+```
+PS C:\&gt; New-AdfsAccessControlPolicy -Name &quot;DemoCopyTwo&quot; -PolicyMetadata $t.PolicyMetadata
+```
+
+This command creates a policy template from existing metadata.
+The $t variable is an object from **New-AccessControlPolicy**.
+
+### Example 7: Create a policy template from a relying party result policy
+```
+PS C:\&gt; New-AdfsAccessControlPolicy -Name &quot;DemoCopyWithAssignment&quot; -PolicyMetadata $r.ResultantPolicy
+```
+
+This command creates a policy template from a relying party result policy.
+The $r variable is the object returned from **Get-AdfsRelyingPartyTrust**.
+
+### Example 8: Change the relying party to use a new template
+```
+PS C:\&gt; Set-AdfsRelyingPartyTrust -TargetName &quot;DemoRP1&quot; -AccessControlPolicyName &quot;DemoTwo&quot; -AccessControlPolicyParameters @{PermitGroup=&quot;Users&quot;;RejectGroup=&quot;Administrators&quot;}
+```
+
+This command changes the relying party to use a new template.
+
+### Example 9: Complicated conditions with specific claims
+```
+PS C:\&gt; Set-AdfsRelyingPartyTrust -TargetName &quot;DemoRP1&quot; -AccessControlPolicyName DemoRP -AccessControlPolicyParameters`
+    @{&quot;SPParameter&quot;= @{ClaimType=&quot;http://schemas.xmlsoap.org/ws/2005/05/identity/claims/OfficeLocation&quot;; Operator=&quot;Equals&quot;; Value=&quot;Redmond&quot;}}
+```
+
+### Example 10: Two specific claims for single parameter
+```
+PS C:\&gt; Set-AdfsRelyingPartyTrust -TargetName &quot;DemoRP1&quot; -AccessControlPolicyName &quot;DemoRP&quot; -AccessControlPolicyParameters`
+    @{&quot;SPParameter&quot;= (@{ClaimType=&quot;http://schemas.xmlsoap.org/ws/2005/05/identity/claims/OfficeLocation&quot;; Operator=&quot;Equals&quot;; Value=(&quot;Redmond&quot;,&quot;DC&quot;)},`
+                      @{ClaimType=&quot;http://schemas.xmlsoap.org/ws/2005/05/identity/claims/Department&quot;; Operator=&quot;Equals&quot;; Value=&quot;Azure&quot;})}
+```
+
+## PARAMETERS
+
+### -Description
+Specifies a description.
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Identifier
+Specifies an ID.
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Name
+Specifies a name.
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases: 
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -PolicyMetadata
+Specifies metadata for the policy.
+
+```yaml
+Type: PolicyMetadata
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -PolicyMetadataFile
+Specifies a file that contains metadata for the policy.
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -SourceName
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Confirm
+Prompts you for confirmation before running the cmdlet.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: cf
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -WhatIf
+Shows what would happen if the cmdlet runs.
+The cmdlet is not run.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: wi
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### CommonParameters
+This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable. For more information, see [about_CommonParameters](https://go.microsoft.com/fwlink/?LinkID=113216).
+
+## INPUTS
+
+## OUTPUTS
+
+## NOTES
+
+## RELATED LINKS
+
+[Get-AdfsAccessControlPolicy](./Get-AdfsAccessControlPolicy.md)
+
+[Remove-AdfsAccessControlPolicy](./Remove-AdfsAccessControlPolicy.md)
+
+[Set-AdfsAccessControlPolicy](./Set-AdfsAccessControlPolicy.md)</pre></section>

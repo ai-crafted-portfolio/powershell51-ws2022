@@ -1,0 +1,662 @@
+<!doctype html><meta charset="utf-8"><section class="jp-official"><h1>Add-RemoteAccessRadius を追加する</h1>
+<h2>SYNOPSISは,VPN認証のための新しい外部RADIUSサーバを追加し,DirectAccess (DA) とVPNの認証,またはDAのためのワンタイムパスワード (OTP) 認証を考慮します.</h2>
+<h2>SYNTAXは,のシンタックスです.</h2>
+<pre><code>Add-RemoteAccessRadius [-ServerName] &lt;String&gt; [-SharedSecret] &lt;String&gt; [-ComputerName &lt;String&gt;]
+ [-Port &lt;UInt16&gt;] [-Score &lt;Byte&gt;] [-Timeout &lt;UInt32&gt;] [-Purpose] &lt;String&gt; [-AccountingOnOffMsg &lt;String&gt;]
+ [-MsgAuthenticator &lt;String&gt;] [-EntrypointName &lt;String&gt;] [-PassThru] [-CimSession &lt;CimSession[]&gt;]
+ [-ThrottleLimit &lt;Int32&gt;] [-AsJob] [-WhatIf] [-Confirm] [&lt;CommonParameters&gt;]
+</code></pre>
+<h2>記述 <strong>Add-RemoteAccessRadius</strong> cmdlet は,次の目的の一つのために新しい外部RADIUSサーバを追加します:</h2>
+<p>アカウントリングラジュースの設定は,DirectAccess (DA) とVPNの両方に適用されます.</p>
+<p>ワンタイムパスワード (OTP) RADIUS設定はDAにのみ適用されます.</p>
+<p>認証ラジュースの設定はVPNのみに適用されます.</p>
+<p>経理とOTPのラディアスサーバー設定は,グローバル性であり,例えば,リモートアクセス展開全体に適用される設定である.VPNのラディアスサーバー設定は,特定のVPNサーバーのみに適用され,ロードバランスクラスター内のすべてのサーバー,または複数のサイトを展開している場合,すべてのVPNサーバーに適用されます.</p>
+<p>以下は,このcmdletの行動の側面を説明します.</p>
+<p>--もしRADIUSサーバが現在特定の目的のために使用されている場合,このcmdletを使用して追加目的のために追加することができます.</p>
+<p>認証と会計のためのRADIUSサーバーのプロパティは,RADIUSの会計にのみ適用される <strong>AccountingOnOffMsg</strong>パラメータと,RADIUSの認証にのみ適用される <strong>MsgAuthenticator</strong>パラメータを除いて同じです.これらのプロパティはDA OTP認証に関連するものではありません.</p>
+<p>ユーザが特定の目的のためにRADIUSサーバを追加しようとしたが,その目的に適用できないパラメータを指定した場合,このcmdletは依然として実行されますが,パラメータは無視され,警告メッセージが発行されます.OTP認証のためのRADIUSサーバを追加する際に,上記に記載されたパラメータの両方が指定された場合無視されます.</p>
+<p>会計設定がWindows Server® 2012の会計である場合,ユーザーは会計目的のために外部RADIUSサーバを追加することで外部RADIUS会計に切り替えることができます.</p>
+<p>以下は,RADIUSサーバーを追加するための先要条件です.</p>
+<p>---- VPNがインストールされていない場合,認証のためにRADIUSサーバを追加することはできません.</p>
+<p>---- 認証タイプがWindowsまたはローカルNPSがインストールされている場合,認証のためにRADIUSサーバーを追加することはできません.</p>
+<p>---- 外部のRADIUS会計が有効でない場合,会計目的のためにRADIUSサーバーを追加することはできません.</p>
+<p>---- OTP認証が有効でない場合,OTP認証のためにRADIUSサーバを追加することはできません.</p>
+<h2>例えは</h2>
+<h3>例1 ```</h3>
+<p>PS C:&gt;Add-RemoteAccessRadius -ServerName 10.1.2.1 Authentication "s3cr3t2" -PassThru
+ServerName   Purpose         Score  Timeout(s)  Port   AccountingOnOffMsg MsgAuthenticator
+----------   -------         -----  ----------  ----   ------------------ ----------------
+10.1.2.1     Authentication  30     5           1812                      Disabled</p>
+<pre><code>
+この例では,VPN認証のためにRADIUSサーバの名前10.1.2.1を追加します.
+
+### 例2 ```
+PS C:\&gt;Add-RemoteAccessRadius -ServerName 10.1.3.1 Accounting &quot;s3cr3t5&quot; -PassThru
+ServerName   Purpose         Score  Timeout(s)  Port   AccountingOnOffMsg MsgAuthenticator
+----------   -------         -----  ----------  ----   ------------------ ----------------
+10.1.3.1     Accounting      30     5           1813   Disabled
+</code></pre>
+<p>この例では,DAとVPNの会計を目的として,RADIUSサーバの名前10.1.3.1を追加します.</p>
+<h2>パラメータは</h2>
+<h3>-AccountingOnOffMsg オンまたはオフのアカウントメッセージを送信するための有効状態を表示します.このパラメータの受け入れ可能な値は:</h3>
+<p>-- 有効になった.</p>
+<p>-- 障害. これはデフォルト値です. このパラメータは,リモートアクセス会計のためにRADIUSサーバを追加されている場合にのみ適用されます.</p>
+<pre><code class="language-yaml">Type: String
+Parameter Sets: (All)
+Aliases:
+Accepted values: Enabled, Disabled,
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+</code></pre>
+<h3>-AsJobは,背景作業としてcmdletを実行する.このパラメータを使用して,完了するのに時間がかかるコマンドを実行します.</h3>
+<pre><code class="language-yaml">Type: SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-CimSession は,リモートセッションまたはリモートコンピュータでcmdletを実行します.コンピュータ名またはセッションオブジェクトを入力します.例えば,[New-CimSession]の出力です.https://go.microsoft.com/fwlink/p/?LinkId=227967) または [Get-CimSession]https://go.microsoft.com/fwlink/p/?LinkId=227966標準的には,ローカルコンピュータの現在のセッションです.</h3>
+<pre><code class="language-yaml">Type: CimSession[]
+Parameter Sets: (All)
+Aliases: Session
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-ComputerName コンピュータの IPv4 または IPv6 アドレス,またはホスト名を指定します.このコンピュータでリモートアクセスサーバーのコンピュータ特別のタスクを実行する必要があります.認証のためにRADIUSサーバを追加するときにこのパラメータが指定されている場合,このパラメータ値で表示されるVPNサーバに追加されます.</h3>
+<pre><code class="language-yaml">Type: String
+Parameter Sets: (All)
+Aliases: Cn
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>- 確認は,cmdletを実行する前に確認を提示します.</h3>
+<pre><code class="language-yaml">Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: cf
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-EntrypointName は,マルチサイト展開におけるサイトのアイデンティティを指定します.このパラメータはVPN認証のためのRADIUSサーバー設定のみに適用されます.RADIUS会計とOTPには適用されません.したがって,ユーザーがこれらの目的のためにラディアスサーバーを追加しようとすると無視されます.</h3>
+<p>このパラメータが指定されたとき,そのサイトにVPN認証のためのRADIUSサーバを追加すべきであることを表示します.</p>
+<p>このパラメータが複数のサイト展開で指定されていない場合,このパラメータ値は,cmdletが実行されているサーバーに用いられる.また,サーバーは <strong>ComputerName</strong>パラメータを使用して表示される可能性があります.</p>
+<p>このパラメータと <strong>ComputerName</strong>パラメータが指定され, <strong>ComputerName</strong>パラメータ値は,このパラメータ値で表示されるサイトに属していない場合,このパラメータが優先され,RADIUSサーバが追加されます.</p>
+<pre><code class="language-yaml">Type: String
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+</code></pre>
+<h3>-MsgAuthenticator メッセージ認証器の使用の有効状態を指定します.このパラメータの受け入れ可能な値は:です.</h3>
+<p>-- 有効になった.</p>
+<p>-- 障害物.これはデフォルト値です.</p>
+<p>このパラメータは,VPN認証のためにRADIUSサーバが追加されている場合にのみ適用されます.</p>
+<pre><code class="language-yaml">Type: String
+Parameter Sets: (All)
+Aliases:
+Accepted values: Enabled, Disabled,
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+</code></pre>
+<h1>Add-RemoteAccessRadius を追加する</h1>
+<h3>-PassThru は,あなたが取り組んでいるアイテムを表すオブジェクトを返します.デフォルトでは,このcmdlet は出力を生成しません.</h3>
+<pre><code class="language-yaml">Type: SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-ポートは,RADIUSサーバが認証要求を受け入れるポート番号を指定します.デフォルト値は です.<code>1813</code> .</h3>
+<pre><code class="language-yaml">Type: UInt16
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+</code></pre>
+<h3>-Purpose 外部RADIUSサーバが追加される目的を指定する.このパラメータの受け入れ可能な値は:</h3>
+<p>-- 認証です.</p>
+<p>会計. -- 会計</p>
+<p>-- Otp.</p>
+<pre><code class="language-yaml">Type: String
+Parameter Sets: (All)
+Aliases:
+Accepted values: Authentication, Accounting, Otp
+
+Required: True
+Position: 2
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+</code></pre>
+<h3>-スコア は初期スコアを指定します.デフォルト値は30です.</h3>
+<pre><code class="language-yaml">Type: Byte
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+</code></pre>
+<h3>-ServerName は,外部RADIUSサーバの IPv4 または IPv6 アドレス,またはホスト名を指定します.</h3>
+<pre><code class="language-yaml">Type: String
+Parameter Sets: (All)
+Aliases:
+
+Required: True
+Position: 1
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+</code></pre>
+<h3>-SharedSecret VPNサーバーと指定された外部RADIUSサーバー間の共有秘密を指定します.注意:秘密は明確なテキストで指定されています.</h3>
+<pre><code class="language-yaml">Type: String
+Parameter Sets: (All)
+Aliases:
+
+Required: True
+Position: 3
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+</code></pre>
+<h3>-ThrottleLimit は,cmdletを実行するために設定できる最大限の同時操作数を指定します.このパラメータを省略した場合,または値が  の値である場合.<code>0</code>入力すると,Windows PowerShell® は,コンピュータ上で実行されている CIM cmdlets の数に基づいて cmdlet の最適な加速度制限を計算します.加速度制限は,セッションやコンピュータにではなく,現在の cmdlet にのみ適用されます.</h3>
+<pre><code class="language-yaml">Type: Int32
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-Timeout は秒でタイムアウト値を指定します.デフォルト値は5 (秒) です.</h3>
+<pre><code class="language-yaml">Type: UInt32
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+</code></pre>
+<h3>-WhatIf が実行されればどうなるか示します.</h3>
+<pre><code class="language-yaml">Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: wi
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>共通パラメータ このcmdletは共通パラメータをサポートしています: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable.詳細については, <a href="を参照してください.https://go.microsoft.com/fwlink/?LinkID=113216">about_CommonParameters</a> でした.</h3>
+<h2>輸入は</h2>
+<h3>System.String でした.</h3>
+<h3>System.UInt16 を表示しています.</h3>
+<h3>System.Byte を表示する.</h3>
+<h3>System.UInt32</h3>
+<h2>輸出は</h2>
+<h3>Microsoft.Management.Infrastructure.CimInstance[]</h3>
+<h3>Microsoft.Management.Infrastructure.CimInstance#RemoteAccessRadiusServer でした</h3>
+<p><code>Microsoft.Management.Infrastructure.CimInstance</code>Windows Management Instrumentation (WMI) のオブジェクトを表示する包装クラスです.ポンドサインの後に行進するパス () は,<code>#</code>) は,元々のWMIオブジェクトの名前空間とクラス名を提供します.</p>
+<p>RemoteAccessRadiusServer オブジェクトアレイは,以下のプロパティで構成されています.</p>
+<p>-- 追加されたRADIUSサーバの IPv4 または IPv6 アドレス,またはホスト名.</p>
+<p><strong>サーバーが追加された</strong>の性質:RADIUSサーバはVPN認証,会計,またはOTPのために追加することができます.</p>
+<p>-- 半径初期スコア</p>
+<p>-- 半径タイムアウトは秒で</p>
+<p>-- 半径ポート番号.</p>
+<p>セキュリティを高めるため,Radius共有秘密のプロパティは決して入住されません.それは常に空白として表示されます.</p>
+<p>-- 認証またはOTPのためにRADIUSサーバが追加された場合,オン・オフメッセージの会計状態は**のプロパティは常に空白です.</p>
+<p>メッセージ認証のステータス属性**は,RADIUSサーバが会計またはOTPのために追加された場合,常に空白です.</p>
+<h2>NOTES  記事ができました.</h2>
+<h2>関連リンク</h2>
+<p><a href="./Get-RemoteAccessRadius.md">Get-RemoteAccessRadius</a> </p>
+<p><a href="./Remote-RemoteAccessRadius.md を削除する">Remote-RemoteAccessRadius</a></p>
+<p><a href="./Set-RemoteAccessRadius.md">Set-RemoteAccessRadius</a> </p></section><section class="en-original"><pre class="source-original"># Add-RemoteAccessRadius
+
+## SYNOPSIS
+Adds a new external RADIUS server for VPN authentication, accounting for DirectAccess (DA) and VPN, or one-time password (OTP) authentication for DA.
+
+## SYNTAX
+
+```
+Add-RemoteAccessRadius [-ServerName] &lt;String&gt; [-SharedSecret] &lt;String&gt; [-ComputerName &lt;String&gt;]
+ [-Port &lt;UInt16&gt;] [-Score &lt;Byte&gt;] [-Timeout &lt;UInt32&gt;] [-Purpose] &lt;String&gt; [-AccountingOnOffMsg &lt;String&gt;]
+ [-MsgAuthenticator &lt;String&gt;] [-EntrypointName &lt;String&gt;] [-PassThru] [-CimSession &lt;CimSession[]&gt;]
+ [-ThrottleLimit &lt;Int32&gt;] [-AsJob] [-WhatIf] [-Confirm] [&lt;CommonParameters&gt;]
+```
+
+## DESCRIPTION
+The **Add-RemoteAccessRadius** cmdlet adds a new external RADIUS server for one of the following purposes:
+
+ -- Accounting Radius configuration applies to both DirectAccess (DA) and VPN.
+
+ -- One-time password (OTP) RADIUS configuration applies only to DA.
+
+ -- Authentication Radius configuration applies only to VPN.
+
+Radius server configuration for Accounting and OTP are global in nature, such as the configurations apply to the entire Remote Access deployment.
+RADIUS server configuration for VPN applies only to a specific VPN server, and all servers in a load balancing cluster, or if multi-site is deployed, to all VPN servers at a site.
+
+Following describes aspects of this cmdlet behavior.
+
+ -- If a RADIUS server is currently being used for a specific purpose, then it can be added for additional purpose using this cmdlet.
+
+ -- The RADIUS server properties for authentication and accounting are the same except for the **AccountingOnOffMsg** parameter which is applicable only to accounting RADIUS and the **MsgAuthenticator** parameter which is applicable only to authentication RADIUS.
+These properties are not relevant for DA OTP authentication.
+
+ -- If a user tries to add a RADIUS server for a particular purpose but specifies a parameter that is not applicable to that purpose, then this cmdlet will still run but the parameter will be ignored and a warning message will be issued.
+When adding a RADIUS server for OTP authentication both the above described parameters are ignored if specified.
+
+ -- If the accounting configuration is Windows Server® 2012 accounting, then a user can switch to external RADIUS accounting by adding an external RADIUS server for the purpose of accounting.
+
+ -- Following are some pre-requisites for adding a RADIUS server.
+
+ ---- A RADIUS server cannot be added for authentication when VPN is not even installed.
+
+ ---- A RADIUS server cannot be added for authentication when the authentication type is Windows or when local NPS is installed.
+
+ ---- A RADIUS server cannot be added for the purpose of accounting when external RADIUS accounting is not enabled.
+
+ ---- A RADIUS server cannot be added for purpose of OTP authentication if OTP authentication is not enabled.
+
+## EXAMPLES
+
+### EXAMPLE 1
+```
+PS C:\&gt;Add-RemoteAccessRadius -ServerName 10.1.2.1 Authentication &quot;s3cr3t2&quot; -PassThru
+ServerName   Purpose         Score  Timeout(s)  Port   AccountingOnOffMsg MsgAuthenticator
+----------   -------         -----  ----------  ----   ------------------ ----------------
+10.1.2.1     Authentication  30     5           1812                      Disabled
+```
+
+This example adds the RADIUS server named 10.1.2.1 for the purpose of VPN authentication.
+
+### EXAMPLE 2
+```
+PS C:\&gt;Add-RemoteAccessRadius -ServerName 10.1.3.1 Accounting &quot;s3cr3t5&quot; -PassThru
+ServerName   Purpose         Score  Timeout(s)  Port   AccountingOnOffMsg MsgAuthenticator
+----------   -------         -----  ----------  ----   ------------------ ----------------
+10.1.3.1     Accounting      30     5           1813   Disabled
+```
+
+This example adds the RADIUS server named 10.1.3.1 for the purpose of accounting for DA and VPN.
+
+## PARAMETERS
+
+### -AccountingOnOffMsg
+Indicates the enabled state for sending of accounting on or off messages.
+The acceptable values for this parameter are:
+
+ -- Enabled.
+
+ -- Disabled.
+This is the default value.
+This parameter is applicable only when the RADIUS server is being added for Remote Access accounting.
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases:
+Accepted values: Enabled, Disabled,
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -AsJob
+Runs the cmdlet as a background job. Use this parameter to run commands that take a long time to complete.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -CimSession
+Runs the cmdlet in a remote session or on a remote computer.
+Enter a computer name or a session object, such as the output of a [New-CimSession](https://go.microsoft.com/fwlink/p/?LinkId=227967) or [Get-CimSession](https://go.microsoft.com/fwlink/p/?LinkId=227966) cmdlet.
+The default is the current session on the local computer.
+
+```yaml
+Type: CimSession[]
+Parameter Sets: (All)
+Aliases: Session
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -ComputerName
+Specifies the IPv4 or IPv6 address, or host name, of the computer on which the remote access server computer-specific tasks should be executed.
+If this parameter is specified when adding a RADIUS server for authentication, then it is added for the VPN server represented by this parameter value.
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases: Cn
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Confirm
+Prompts you for confirmation before running the cmdlet.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: cf
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -EntrypointName
+Specifies the identity of a site in a multi-site deployment.
+This parameter is applicable only to RADIUS server configuration for VPN authentication.
+It is not applicable to RADIUS accounting and OTP and hence is ignored when a user tries to add a radius server for these purposes.
+
+When this parameter is specified it indicates that the RADIUS server for VPN authentication should be added for that site.
+
+If this parameter is not specified in a multi-site deployment, then this parameter value for the server on which the cmdlet is run is used.
+The server could also be represented by using the **ComputerName** parameter.
+
+If this parameter and **ComputerName** parameter are specified and the **ComputerName** parameter value does not belong to the site represented by this parameter value, then this parameter takes precedence and the RADIUS server is added to it.
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -MsgAuthenticator
+Specifies the enabled state for the usage of message authenticator.
+The acceptable values for this parameter are:
+
+ -- Enabled.
+
+ -- Disabled.
+This is the default value.
+
+This parameter is applicable only when the RADIUS server is being added for VPN authentication.
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases:
+Accepted values: Enabled, Disabled,
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+# Add-RemoteAccessRadius
+
+### -PassThru
+Returns an object representing the item with which you are working.
+By default, this cmdlet does not generate any output.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Port
+Specifies the port number on which the RADIUS server is accepting authentication requests.
+The default value is `1813`.
+
+```yaml
+Type: UInt16
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -Purpose
+Specifies the purpose for which the external RADIUS server is being added.
+The acceptable values for this parameter are:
+
+ -- Authentication.
+
+ -- Accounting.
+
+ -- Otp.
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases:
+Accepted values: Authentication, Accounting, Otp
+
+Required: True
+Position: 2
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -Score
+Specifies the initial score.
+The default value is 30.
+
+```yaml
+Type: Byte
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -ServerName
+Specifies the IPv4 or IPv6 address, or host name, of the external RADIUS server.
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases:
+
+Required: True
+Position: 1
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -SharedSecret
+Specifies the shared secret between the VPN server and the specified external RADIUS server.
+Note: The secret is specified in clear text.
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases:
+
+Required: True
+Position: 3
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -ThrottleLimit
+Specifies the maximum number of concurrent operations that can be established to run the cmdlet.
+If this parameter is omitted or a value of `0` is entered, then Windows PowerShell® calculates an optimum throttle limit for the cmdlet based on the number of CIM cmdlets that are running on the computer.
+The throttle limit applies only to the current cmdlet, not to the session or to the computer.
+
+```yaml
+Type: Int32
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Timeout
+Specifies the timeout value in seconds.
+The default value is 5 (seconds).
+
+```yaml
+Type: UInt32
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -WhatIf
+Shows what would happen if the cmdlet runs.
+The cmdlet is not run.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: wi
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### CommonParameters
+This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable. For more information, see [about_CommonParameters](https://go.microsoft.com/fwlink/?LinkID=113216).
+
+## INPUTS
+
+### System.String
+
+### System.UInt16
+
+### System.Byte
+
+### System.UInt32
+
+## OUTPUTS
+
+### Microsoft.Management.Infrastructure.CimInstance[]
+
+### Microsoft.Management.Infrastructure.CimInstance#RemoteAccessRadiusServer
+
+The `Microsoft.Management.Infrastructure.CimInstance` object is a wrapper class that displays Windows Management Instrumentation (WMI) objects.
+The path after the pound sign (`#`) provides the namespace and class name for the underlying WMI object.
+
+The RemoteAccessRadiusServer object array consists of the following properties:
+
+ -- IPv4 or IPv6 address, or host name, of the RADIUS server that was added.
+
+ -- The **Purpose for which the server was added** property: the RADIUS server can be added for VPN authentication, accounting or OTP.
+
+ -- Radius initial score.
+
+ -- Radius timeout in seconds.
+
+ -- Radius port number.
+
+ -- For added security, the **Radius shared secret** property is never populated; it will always show as blank.
+
+ -- The **Status of accounting on and off messages** property is always blank if the RADIUS server was added for authentication or OTP.
+
+ -- The **Status of message authenticator property** is always blank if the RADIUS server was added for accounting or OTP.
+
+## NOTES
+
+## RELATED LINKS
+
+[Get-RemoteAccessRadius](./Get-RemoteAccessRadius.md)
+
+[Remove-RemoteAccessRadius](./Remove-RemoteAccessRadius.md)
+
+[Set-RemoteAccessRadius](./Set-RemoteAccessRadius.md)</pre></section>

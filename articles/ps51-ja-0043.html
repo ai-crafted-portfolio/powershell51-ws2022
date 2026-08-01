@@ -1,0 +1,740 @@
+<!doctype html><meta charset="utf-8"><section class="jp-official"><h1>Get-ADOrganizationalUnitを活用する</h1>
+<h2>SYNOPSISは,アクティブディレクトリ組織単位を1つまたは複数の単位に取得します.</h2>
+<h2>SYNTAXは,のシンタックスです.</h2>
+<h3>フィルター (デフォルト) ```</h3>
+<p>Get-ADOrganizationalUnit [-AuthType <ADAuthType>] [-Credential <PSCredential>] -Filter <String>
+ [-Properties <String[]>] [-ResultPageSize <Int32>] [-ResultSetSize <Int32>] [-SearchBase <String>]
+ [-SearchScope <ADSearchScope>] [-Server <String>] [<CommonParameters>]</p>
+<pre><code>
+### アイデンティティ```
+Get-ADOrganizationalUnit [-AuthType &lt;ADAuthType&gt;] [-Credential &lt;PSCredential&gt;]
+ [-Identity] &lt;ADOrganizationalUnit&gt; [-Partition &lt;String&gt;] [-Properties &lt;String[]&gt;] [-Server &lt;String&gt;]
+ [&lt;CommonParameters&gt;]
+</code></pre>
+<h3>LdapFilter ```</h3>
+<p>Get-ADOrganizationalUnit [-AuthType <ADAuthType>] [-Credential <PSCredential>] -LDAPFilter <String>
+ [-Properties <String[]>] [-ResultPageSize <Int32>] [-ResultSetSize <Int32>] [-SearchBase <String>]
+ [-SearchScope <ADSearchScope>] [-Server <String>] [<CommonParameters>]</p>
+<pre><code>
+## 記述 **Get-ADOrganizationalUnit** cmdlet は組織単位 (OU) オブジェクトを取得するか,複数のOUを取得するために検索を実行するかです.
+
+*Identity* パラメータは,取得するアクティブディレクトリ OUを指定します.あなたは,その名前の別名または GUID によって OU を識別することができます.また,そのパラメータを OU オブジェクト変数に設定できます.例えば `$&lt;localOrganizationalunitObject&gt;`または,パイプラインを通ってOUオブジェクトを *Identity* パラメータに転送する.
+
+1つ以上の OU を検索し取り出すには, *フィルター* または *LDAPFilter* パラメータを使用します. *フィルター* パラメータは,Active Directory のクエリ文字列を書くために PowerShell エクスペレーション言語を使用します. PowerShell エクスペレーション言語の構文は, *フィルター* パラメータによって受信された値型に対する豊富なタイプの変換サポートを提供します. *フィルター* パラメータ構文についての詳細については,  タイプを入力してください.`Get-Help about_ActiveDirectory_Filter`.既存のLightweight Directory Access Protocol (LDAP) 查询文字列を保有している場合は, *LDAPFilter* パラメータを使用できます.
+
+このcmdletは,OUオブジェクトのプロパティのデフォルトセットを取得します.追加のプロパティを得るには, *プロパティ*パラメータを使用します.コンピュータオブジェクトのプロパティをどのように決定するかについての詳細については, *プロパティ*パラメータ説明を参照してください.
+
+## 例えは
+
+### 例1: ドメインのOUをすべて取得する```powershell
+PS C:\&gt; Get-ADOrganizationalUnit -Filter 'Name -like &quot;*&quot;' | Format-Table Name, DistinguishedName -A
+```    ```output
+Name                 DistinguishedName
+----                 -----------------
+Domain Controllers   OU=Domain Controllers,DC=FABRIKAM,DC=COM
+UserAccounts         OU=UserAccounts,DC=FABRIKAM,DC=COM
+Sales                OU=Sales,OU=UserAccounts,DC=FABRIKAM,DC=COM
+Marketing            OU=Marketing,OU=UserAccounts,DC=FABRIKAM,DC=COM
+Production           OU=Production,OU=UserAccounts,DC=FABRIKAM,DC=COM
+HumanResources       OU=HumanResources,OU=UserAccounts,DC=FABRIKAM,DC=COM
+NorthAmerica         OU=NorthAmerica,OU=Sales,OU=UserAccounts,DC=FABRIKAM,DC=COM
+SouthAmerica         OU=SouthAmerica,OU=Sales,OU=UserAccounts,DC=FABRIKAM,DC=COM
+Europe               OU=Europe,OU=Sales,OU=UserAccounts,DC=FABRIKAM,DC=COM
+AsiaPacific          OU=AsiaPacific,OU=Sales,OU=UserAccounts,DC=FABRIKAM,DC=COM
+Finance              OU=Finance,OU=UserAccounts,DC=FABRIKAM,DC=COM
+Corporate            OU=Corporate,OU=UserAccounts,DC=FABRIKAM,DC=COM
+ApplicationServers   OU=ApplicationServers,DC=FABRIKAM,DC=COM
+Groups               OU=Groups,OU=Managed,DC=FABRIKAM,DC=COM
+PasswordPolicyGroups OU=PasswordPolicyGroups,OU=Groups,OU=Managed,DC=FABRIKAM,DC=COM
+Managed              OU=Managed,DC=FABRIKAM,DC=COM
+ServiceAccounts      OU=ServiceAccounts,OU=Managed,DC=FABRIKAM,DC=COM
+</code></pre>
+<p>このコマンドは,ドメインのすべての OU を取得します.</p>
+<h3>例2: 著名な名前でOUを取得する```powershell</h3>
+<p>PS C:&gt; Get-ADOrganizationalUnit -Identity 'OU=AsiaPacific,OU=Sales,OU=UserAccounts,DC=FABRIKAM,DC=COM' | Format-Table Name,Country,PostalCode,City,StreetAddress,State -A
+<code></code>output
+Name        Country PostalCode City     StreetAddress    State
+----        ------- ---------- ----     -------------    -----
+AsiaPacific AU      4171       Balmoral 45 Martens Place QLD</p>
+<pre><code>
+このコマンドは,OU=AsiaPacific,OU=Sales,OU=UserAccounts,DC=FABRIKAM,DC=COMという名前のOUを取得します.
+
+### 例3:子供にOUを出す```powershell
+PS C:\&gt; Get-ADOrganizationalUnit -LDAPFilter '(name=*)' -SearchBase 'OU=Sales,OU=UserAccounts,DC=FABRIKAM,DC=COM' -SearchScope OneLevel | Format-Table Name,Country,PostalCode,City,StreetAddress,State
+```    ```output
+Name                    Country                 PostalCode             City                   StreetAddress          State
+----                    -------                 ----------             ----                   -------------          -----
+AsiaPacific             AU                      4171                   Balmoral               45 Martens Place       QLD
+Europe                  UK                      NG34 0NI               QUARRINGTON            22 Station Rd
+NorthAmerica            US                      02142                  Cambridge              1634 Randolph Street   MA
+</code></pre>
+<p>このコマンドは,LDAPフィルタを使用して Sales OU の下に OU を取得します.</p>
+<h2>パラメータは</h2>
+<h3>-AuthType は,使用する認証方法を指定します.このパラメータの受け入れ可能な値は:です.</h3>
+<ul>
+<li>交渉するまたは0 - 基本または1</li>
+</ul>
+<p>デフォルト認証方法は,交渉です.</p>
+<p>基本認証方法には,セキュアソケットレイヤ (SSL) 接続が必要となります.</p>
+<pre><code class="language-yaml">Type: ADAuthType
+Parameter Sets: (All)
+Aliases: 
+Accepted values: Negotiate, Basic
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-Credential この作業を実行するために使用するユーザーアカウントの認証を指定します.当時はログインしているユーザーに,Cmdlet がWindows PowerShell プロバイダードライブのアクティブディレクトリ モジュールから実行されていない限り,デフォルトで実行される認証です.Cmdlet がそのようなプロバイダードライブから実行されている場合,ドライブに関連したアカウントはデフォルトです.</h3>
+<p>このパラメータを指定するには,ユーザー名,例えば User1 または Domain01\User01 を入力するか,PSCredential** オブジェクトを指定することもできます.このパラメータのユーザー名を指定すると,cmdlet はパスワードを提示します.</p>
+<p>また,スクリプトを使用して <strong>PSCredential</strong> オブジェクトを作成したり, <strong>Get-Credential</strong> cmdlet を使用したりできます.その後, <strong>PSCredential</strong> オブジェクトに <em>Credential</em> パラメータを設定できます.</p>
+<p>実行する認証がタスクを実行するためのディレクトリレベルの許可がない場合,Windows PowerShell用のアクティブディレクトリモジュールでは終了エラーが返されます.</p>
+<pre><code class="language-yaml">Type: PSCredential
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h1>Get-ADOrganizationalUnitを活用する</h1>
+<h3>-フィルタは,アクティブディレクトリオブジェクトを回収するクエリ文字列を指定します.この文字列はPowerShell エクスペレーション言語の構文を使用します.PowerShell エクスペレーション言語の構文は, <em>フィルター</em>パラメータによって受信された値型のための豊富なタイプ変換サポートを提供します.構文は,順序表示を使用します.つまり,オペレータはオペレンドと値の間に配置されます. <em>フィルター</em>パラメータについての詳細については,  タイプしてください.<code>Get-Help about_ActiveDirectory_Filter</code> .</h3>
+<p>文法:</p>
+<p>次の構文では,このパラメータのためにPowerShell表現言語を使用する方法を示すために,バックス-ナウルフォームを使用します.</p>
+<p>::= "{" \&lt;FilterComponentList\&gt; "}"</p>
+<p>フィルター構成要素リストは,フィルター構成要素の構成要素を組み合わせて操作する.</p>
+<p>\&lt;FilterComponent\&gt; ::= \&lt;attr\&gt; \&lt;FilterOperator\&gt; \&lt;value\&gt; ....\"\"\"&lt;FilterComponent\&gt; ")"</p>
+<p>フィルターオペレータは, "-eq" "-le" "-ge" "-ne" "-lt" "-gt" "-approx" "-bor" "-band" "-recursivmatch" "-like" "-notlike"</p>
+<p>&lt;&lt;JoinOperator&gt;&gt; ::= "-and" ≫</p>
+<p>\&lt;NotOperator\&gt; ::= "-not"</p>
+<p>\ \attr\&gt; ::= \&lt;PropertyName\&gt; \ \ \LDAPDisplayName of the attribute\&gt;\&gt;</p>
+<p>指定した \&lt;FilterOperator\&gt;\&gt; を使って,この値を \&lt;attr\&gt; と比較してみてください.</p>
+<p>\&lt;value\&gt; のサポートされているタイプのリストのために,  を入力してください.<code>Get-Help about_ActiveDirectory_ObjectModel</code> .</p>
+<p>注: <em>以外のPowerShellワイルドカードは, ? など, </em>フィルター*構文ではサポートされていません.</p>
+<p>注: LDAP 查询文字列を使用してクエリを行うには, <em>LDAPFilter</em> パラメータを使用してください.</p>
+<pre><code class="language-yaml">Type: String
+Parameter Sets: Filter
+Aliases: 
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-Identity Active Directory の組織単位オブジェクトを次の値のうちの1つを提供することで指定します.括弧の識別子は属性のLDAP表示名です.このパラメータの受け入れ可能な値は:</h3>
+<p>優れた名前 - GUID (objectGUID) - セキュリティ識別子 (objectSid) - セキュリティアカウントマネージャーのアカウント名 (sAMAccountName)</p>
+<p>cmdlet は,オブジェクトを見つけるためにデフォルトの命名コンテキストまたはパーティションを探します.もし2つ以上のオブジェクトが見つかった場合,cmdlet は,終了しないエラーを返します.</p>
+<p>このパラメータは,このオブジェクトをパイプラインを通過させることもできます.または,このパラメータをオブジェクトインスタンスの設定でもできます.</p>
+<pre><code class="language-yaml">Type: ADOrganizationalUnit
+Parameter Sets: Identity
+Aliases: 
+
+Required: True
+Position: 0
+Default value: None
+Accept pipeline input: True (ByValue)
+Accept wildcard characters: False
+</code></pre>
+<h3>-LDAPFilterは,アクティブディレクトリオブジェクトをフィルタリングするために使用される LDAPクエリ文字列を指定します.このパラメータを使用して既存の LDAPクエリを実行できます. <em>フィルター</em>パラメータ構文は,LDAP構文と同じ機能をサポートします.詳細については, <em>フィルター</em>パラメータ説明またはタイプ を参照してください.<code>Get-Help about_ActiveDirectory_Filter</code> .</h3>
+<pre><code class="language-yaml">Type: String
+Parameter Sets: LdapFilter
+Aliases: 
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-Partition Active Directory のパーティションの名前の指定.この名前の指定は,現在のディレクトリサーバーの名前設定のいずれかである必要があります. cmdlet はこのパーティションで検索して, <em>Identity</em> パラメータで定義されたオブジェクトを見つける.</h3>
+<p>多くの場合,デフォルト値が指定されていない場合, <em>Partition</em> パラメータにデフォルト値が使用されます.デフォルト値の決定のためのルールが下記に記載されています.最初にリストされたルールが最初に評価され,デフォルト値が決定されると,他のルールが評価されないことに注意してください.</p>
+<p>Active Directory Domain Services 環境では,以下の場合, <em>Partition</em> のデフォルト値は設定されます.</p>
+<ul>
+<li><em>Identity</em> パラメータが別名に設定されている場合, <em>Partition</em> のデフォルト値は自動的にこの別名から生成されます. - Active Directory プロバイダードライブからcmdletsを実行している場合は, <em>Partition</em> のデフォルト値は自動的にドライブ内の現在のパスから生成されます. - 前例のいずれも適用されない場合, <em>Partition</em> のデフォルト値は目標ドメインのデフォルトパーティションまたは命名コンテキストに設定されます.</li>
+</ul>
+<p>Active Directory Lightweight Directory Services (AD LDS) の環境では,以下の場合, <em>Partition</em> のデフォルト値は設定されます.</p>
+<p><em>Identity</em>パラメータが別名に設定されている場合, <em>Partition</em> のデフォルト値は自動的にこの別名から生成されます. - Active Directory プロバイダードライブから cmdlets を実行している場合, <em>Partition</em> のデフォルト値は自動的にドライブ内の現在のパスから生成されます. - ターゲット AD LDS インスタンスのデフォルトの命名コンテキストがある場合, <em>Partition</em> のデフォルト値はデフォルトの命名コンテキストに設定されます. AD LDS 環境のデフォルトの命名コンテキストを指定するには,LDS インスタンスの Active Directory Directory Service Agent (DSA) オブジェクト (nTDSDSA) の <strong>msDS-defaultNamingContext</strong> 属性 (nTDSDSA<em><em>) を設定します. - 前述のいずれも適用されない場合,AD </em>P の AD </em>P の場合,artition* パラメータは,デフォルト値を受け付けません.</p>
+<pre><code class="language-yaml">Type: String
+Parameter Sets: Identity
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-プロパティ サーバから取得する輸出オブジェクトのプロパティを指定します.このパラメータを使用してデフォルトセットに含まれていないプロパティを取得します.</h3>
+<p>このパラメータの属性を逗号別名列として指定する.オブジェクトに設定されたすべての属性を表示するには, * (アステリスックス) を指定します.</p>
+<p>個別拡張属性を指定するには,その属性の名前を用い.デフォルトまたは拡張属性でない属性については,属性のLDAP表示名称を指定する必要があります.</p>
+<p>属性を取り出し,オブジェクトに表示するには,オブジェクトに関連したGet-<em> cmdlet を使用して,出力を </em><em>Get-Member</em>* cmdlet に転送できます.</p>
+<pre><code class="language-yaml">Type: String[]
+Parameter Sets: (All)
+Aliases: Property
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-ResultPageSize AD DS 查询のために,一つのページに含まれるオブジェクトの数を指定します.</h3>
+<p>デフォルトは,ページ દીઠ256オブジェクトです.</p>
+<pre><code class="language-yaml">Type: Int32
+Parameter Sets: Filter, LdapFilter
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-ResultSetSize は,AD DS 查询で返される最大数のオブジェクトを指定します.すべてのオブジェクトを受け取りたい場合は,このパラメータを $Null (ゼロ値) に設定します. Ctrl+C を使用して查询を停止し,オブジェクト返却をします.</h3>
+<p>デフォルトは$Nullです.</p>
+<pre><code class="language-yaml">Type: Int32
+Parameter Sets: Filter, LdapFilter
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h1>Get-ADOrganizationalUnitを活用する</h1>
+<h3>-SearchBase は Active Directory の検索パスを指定します.</h3>
+<p>Active Directory プロバイダードライブからcmdletを実行すると,このパラメータのデフォルト値はドライブの現在のパスです.</p>
+<p>アクティブディレクトリプロバイダドライブの外でCMdletを AD DSターゲットに実行すると,このパラメータのデフォルト値は,ターゲットドメインのデフォルト命名文脈です.</p>
+<p>アクティブディレクトリプロバイダードライブの外で AD LDS ターゲットに対して cmdlet を実行すると,デフォルト値は, AD LDS インスタンスの AD LDS ターゲットのデフォルトの命名コンテキストである.このコンテキストが AD LDS インスタンスの AD LDS 対象の AD LDS 向けにデフォルトの命名コンテキストが指定されていない場合,このパラメータにはデフォルトの値がない.</p>
+<p><em>SearchBase</em>パラメータの値は空文字列に設定され,あなたはグローバルカタログ (GC) ポートに接続されている場合,すべてのパーティションが検索されます. <em>SearchBase</em>パラメータの値は空文字列に設定され,あなたはGC ポートに接続されていない場合,エラーが発生します.</p>
+<pre><code class="language-yaml">Type: String
+Parameter Sets: Filter, LdapFilter
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-SearchScope は,アクティブディレクトリ検索の範囲を指定します.このパラメータの受け入れ可能な値は:</h3>
+<p>ベースまたは0 - OneLevelまたは1 - サブリーまたは2</p>
+<p>ベースクエリは,現在のパスまたはオブジェクトのみを検索します.OneLevelクエリは,そのパスまたはオブジェクトの直接的な子供を探します.Subtreeクエリは,現在のパスまたはオブジェクトとそのパスまたはオブジェクトのすべての子供を探します.</p>
+<pre><code class="language-yaml">Type: ADSearchScope
+Parameter Sets: Filter, LdapFilter
+Aliases: 
+Accepted values: Base, OneLevel, Subtree
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-Serverは,対応するドメイン名またはディレクトリサーバーに以下の値のうちの1つを提供することで,接続するAD DSインスタンスを指定します.サービスは,以下のいずれかである可能性があります:AD LDS,AD DS,またはアクティブディレクトリスナップショットインスタンスの.</h3>
+<p>次の方法の一つでAD DSインスタンスを指定してください.</p>
+<p>ドメイン名値:</p>
+<ul>
+<li>完全資格ドメイン名 - NetBIOS名</li>
+</ul>
+<p>ディレクトリサーバーの値: </p>
+<ul>
+<li>完全資格のあるディレクトリサーバー名 - NetBIOS名 - 完全資格のあるディレクトリサーバー名とポート</li>
+</ul>
+<p>このパラメータのデフォルト値は,次の方法のうちの1つによって,列挙された順序で決定されます:</p>
+<ul>
+<li>パイプラインを通過したオブジェクトから <em>Server</em> 値を利用する - - AD DS Windows PowerShell プロバイダードライブに関連したサーバー情報を利用する - - そのドライブでcmdletが実行される場合,Windows PowerShellを実行しているコンピュータのドメインを使用する</li>
+</ul>
+<pre><code class="language-yaml">Type: String
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>共通パラメータ このcmdletは共通パラメータをサポートしています: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable.詳細については, <a href="を参照してください.https://go.microsoft.com/fwlink/?LinkID=113216">about_CommonParameters</a> でした.</h3>
+<h2>輸入は</h2>
+<h3>Microsoft.ActiveDirectory.Management.ADOrganizationalUnit None.ActiveDirectory.ADOrganizationalUnit OUオブジェクトは, <em>Identity</em> パラメータで受信されます.</h3>
+<h2>輸出は</h2>
+<h3>Microsoft.ActiveDirectory.Management.ADOrganizationalUnitは,一以上のOUオブジェクトを返します.</h3>
+<p>このcmdletは <strong>ADOrganizational</strong>のプロパティ値のデフォルトセットを返します.追加の <strong>ADOrganizational</strong>のプロパティを取得するには, <em>Properties</em>パラメータを使用してください.</p>
+<p><strong>ADOrganizational</strong>オブジェクトのプロパティを表示するには,以下の例を参照してください.これらの例を実行するには,OUの特徴的な名前などのOU識別子で\&lt;組織単位\&gt;を置き換えます.</p>
+<p><strong>ADOrganizational</strong>オブジェクトのデフォルトプロパティセットのリストを取得するには,次のコマンドを使用してください.</p>
+<p><code>Get-ADOrganizationalUnit</code>\&lt;組織的単位\&gt;<code>| Get-Member</code></p>
+<p><strong>ADOrganizational</strong>オブジェクトのすべての属性のリストを取得するには,次のコマンドを使用してください:</p>
+<p><code>Get-ADOrganizationalUnit</code>\&lt;組織的単位\&gt;<code>-Properties * | Get-Member</code></p>
+<h2>NOTES  記事ができました.</h2>
+<h2>関連リンク</h2>
+<p><a href="./New-ADOrganizationalUnit.md">New-ADOrganizationalUnit</a> </p>
+<p><a href="./Remove-ADOrganizationalUnit.md">Remove-ADOrganizationalUnit</a> </p>
+<p><a href="./Set-ADOrganizationalUnit.md">Set-ADOrganizationalUnit</a> について</p></section><section class="en-original"><pre class="source-original"># Get-ADOrganizationalUnit
+
+## SYNOPSIS
+Gets one or more Active Directory organizational units.
+
+## SYNTAX
+
+### Filter (Default)
+```
+Get-ADOrganizationalUnit [-AuthType &lt;ADAuthType&gt;] [-Credential &lt;PSCredential&gt;] -Filter &lt;String&gt;
+ [-Properties &lt;String[]&gt;] [-ResultPageSize &lt;Int32&gt;] [-ResultSetSize &lt;Int32&gt;] [-SearchBase &lt;String&gt;]
+ [-SearchScope &lt;ADSearchScope&gt;] [-Server &lt;String&gt;] [&lt;CommonParameters&gt;]
+```
+
+### Identity
+```
+Get-ADOrganizationalUnit [-AuthType &lt;ADAuthType&gt;] [-Credential &lt;PSCredential&gt;]
+ [-Identity] &lt;ADOrganizationalUnit&gt; [-Partition &lt;String&gt;] [-Properties &lt;String[]&gt;] [-Server &lt;String&gt;]
+ [&lt;CommonParameters&gt;]
+```
+
+### LdapFilter
+```
+Get-ADOrganizationalUnit [-AuthType &lt;ADAuthType&gt;] [-Credential &lt;PSCredential&gt;] -LDAPFilter &lt;String&gt;
+ [-Properties &lt;String[]&gt;] [-ResultPageSize &lt;Int32&gt;] [-ResultSetSize &lt;Int32&gt;] [-SearchBase &lt;String&gt;]
+ [-SearchScope &lt;ADSearchScope&gt;] [-Server &lt;String&gt;] [&lt;CommonParameters&gt;]
+```
+
+## DESCRIPTION
+The **Get-ADOrganizationalUnit** cmdlet gets an organizational unit (OU) object or performs a search to get multiple OUs.
+
+The *Identity* parameter specifies the Active Directory OU to get.
+You can identify an OU by its distinguished name or GUID.
+You can also set the parameter to an OU object variable, such as `$&lt;localOrganizationalunitObject&gt;` or pass an OU object through the pipeline to the *Identity* parameter.
+
+To search for and retrieve more than one OU, use the *Filter* or *LDAPFilter* parameters.
+The *Filter* parameter uses the PowerShell Expression Language to write query strings for Active Directory.
+PowerShell Expression Language syntax provides rich type conversion support for value types received by the *Filter* parameter.
+For more information about the *Filter* parameter syntax, type `Get-Help about_ActiveDirectory_Filter`.
+If you have existing Lightweight Directory Access Protocol (LDAP) query strings, you can use the *LDAPFilter* parameter.
+
+This cmdlet gets a default set of OU object properties.
+To get additional properties, use the *Properties* parameter.
+For more information about the how to determine the properties for computer objects, see the *Properties* parameter description.
+
+## EXAMPLES
+
+### Example 1: Get all of the OUs in a domain
+```powershell
+PS C:\&gt; Get-ADOrganizationalUnit -Filter &#x27;Name -like &quot;*&quot;&#x27; | Format-Table Name, DistinguishedName -A
+```
+```output
+Name                 DistinguishedName
+----                 -----------------
+Domain Controllers   OU=Domain Controllers,DC=FABRIKAM,DC=COM
+UserAccounts         OU=UserAccounts,DC=FABRIKAM,DC=COM
+Sales                OU=Sales,OU=UserAccounts,DC=FABRIKAM,DC=COM
+Marketing            OU=Marketing,OU=UserAccounts,DC=FABRIKAM,DC=COM
+Production           OU=Production,OU=UserAccounts,DC=FABRIKAM,DC=COM
+HumanResources       OU=HumanResources,OU=UserAccounts,DC=FABRIKAM,DC=COM
+NorthAmerica         OU=NorthAmerica,OU=Sales,OU=UserAccounts,DC=FABRIKAM,DC=COM
+SouthAmerica         OU=SouthAmerica,OU=Sales,OU=UserAccounts,DC=FABRIKAM,DC=COM
+Europe               OU=Europe,OU=Sales,OU=UserAccounts,DC=FABRIKAM,DC=COM
+AsiaPacific          OU=AsiaPacific,OU=Sales,OU=UserAccounts,DC=FABRIKAM,DC=COM
+Finance              OU=Finance,OU=UserAccounts,DC=FABRIKAM,DC=COM
+Corporate            OU=Corporate,OU=UserAccounts,DC=FABRIKAM,DC=COM
+ApplicationServers   OU=ApplicationServers,DC=FABRIKAM,DC=COM
+Groups               OU=Groups,OU=Managed,DC=FABRIKAM,DC=COM
+PasswordPolicyGroups OU=PasswordPolicyGroups,OU=Groups,OU=Managed,DC=FABRIKAM,DC=COM
+Managed              OU=Managed,DC=FABRIKAM,DC=COM
+ServiceAccounts      OU=ServiceAccounts,OU=Managed,DC=FABRIKAM,DC=COM
+```
+
+This command gets all of the OUs in a domain.
+
+### Example 2: Get an OU by its distinguished name
+```powershell
+PS C:\&gt; Get-ADOrganizationalUnit -Identity &#x27;OU=AsiaPacific,OU=Sales,OU=UserAccounts,DC=FABRIKAM,DC=COM&#x27; | Format-Table Name,Country,PostalCode,City,StreetAddress,State -A
+```
+```output
+Name        Country PostalCode City     StreetAddress    State
+----        ------- ---------- ----     -------------    -----
+AsiaPacific AU      4171       Balmoral 45 Martens Place QLD
+```
+
+This command gets the OU with the distinguished name OU=AsiaPacific,OU=Sales,OU=UserAccounts,DC=FABRIKAM,DC=COM.
+
+### Example 3: Get child OUs
+```powershell
+PS C:\&gt; Get-ADOrganizationalUnit -LDAPFilter &#x27;(name=*)&#x27; -SearchBase &#x27;OU=Sales,OU=UserAccounts,DC=FABRIKAM,DC=COM&#x27; -SearchScope OneLevel | Format-Table Name,Country,PostalCode,City,StreetAddress,State
+```
+```output
+Name                    Country                 PostalCode             City                   StreetAddress          State
+----                    -------                 ----------             ----                   -------------          -----
+AsiaPacific             AU                      4171                   Balmoral               45 Martens Place       QLD
+Europe                  UK                      NG34 0NI               QUARRINGTON            22 Station Rd
+NorthAmerica            US                      02142                  Cambridge              1634 Randolph Street   MA
+```
+
+This command gets OUs underneath the Sales OU using an LDAP filter.
+
+## PARAMETERS
+
+### -AuthType
+Specifies the authentication method to use.
+The acceptable values for this parameter are:
+
+- Negotiate or 0
+- Basic or 1
+
+The default authentication method is Negotiate.
+
+A Secure Sockets Layer (SSL) connection is required for the Basic authentication method.
+
+```yaml
+Type: ADAuthType
+Parameter Sets: (All)
+Aliases: 
+Accepted values: Negotiate, Basic
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Credential
+Specifies the user account credentials to use to perform this task.
+The default credentials are the credentials of the currently logged on user unless the cmdlet is run from an Active Directory module for Windows PowerShell provider drive.
+If the cmdlet is run from such a provider drive, the account associated with the drive is the default.
+
+To specify this parameter, you can type a user name, such as User1 or Domain01\User01 or you can specify a **PSCredential** object.
+If you specify a user name for this parameter, the cmdlet prompts for a password.
+
+You can also create a **PSCredential** object by using a script or by using the **Get-Credential** cmdlet.
+You can then set the *Credential* parameter to the **PSCredential** object.
+
+If the acting credentials do not have directory-level permission to perform the task, Active Directory module for Windows PowerShell returns a terminating error.
+
+```yaml
+Type: PSCredential
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+# Get-ADOrganizationalUnit
+
+### -Filter
+Specifies a query string that retrieves Active Directory objects.
+This string uses the PowerShell Expression Language syntax.
+The PowerShell Expression Language syntax provides rich type-conversion support for value types received by the *Filter* parameter.
+The syntax uses an in-order representation, which means that the operator is placed between the operand and the value.
+For more information about the *Filter* parameter, type `Get-Help about_ActiveDirectory_Filter`.
+
+Syntax:
+
+The following syntax uses Backus-Naur form to show how to use the PowerShell Expression Language for this parameter.
+
+\&lt;filter\&gt;  ::= &quot;{&quot; \&lt;FilterComponentList\&gt; &quot;}&quot;
+
+\&lt;FilterComponentList\&gt; ::= \&lt;FilterComponent\&gt; | \&lt;FilterComponent\&gt; \&lt;JoinOperator\&gt; \&lt;FilterComponent\&gt; | \&lt;NotOperator\&gt;  \&lt;FilterComponent\&gt;
+
+\&lt;FilterComponent\&gt; ::= \&lt;attr\&gt; \&lt;FilterOperator\&gt; \&lt;value\&gt; | &quot;(&quot; \&lt;FilterComponent\&gt; &quot;)&quot;
+
+\&lt;FilterOperator\&gt; ::= &quot;-eq&quot; | &quot;-le&quot; | &quot;-ge&quot; | &quot;-ne&quot; | &quot;-lt&quot; | &quot;-gt&quot;| &quot;-approx&quot; | &quot;-bor&quot; | &quot;-band&quot; | &quot;-recursivematch&quot; | &quot;-like&quot; | &quot;-notlike&quot;
+
+\&lt;JoinOperator\&gt; ::= &quot;-and&quot; | &quot;-or&quot;
+
+\&lt;NotOperator\&gt; ::= &quot;-not&quot;
+
+\&lt;attr\&gt; ::= \&lt;PropertyName\&gt; | \&lt;LDAPDisplayName of the attribute\&gt;
+
+\&lt;value\&gt;::= \&lt;compare this value with an \&lt;attr\&gt; by using the specified \&lt;FilterOperator\&gt;\&gt;
+
+For a list of supported types for \&lt;value\&gt;, type `Get-Help about_ActiveDirectory_ObjectModel`.
+
+Note: PowerShell wildcards other than *, such as ?, are not supported by the *Filter* syntax.
+
+Note: To query using LDAP query strings, use the *LDAPFilter* parameter.
+
+```yaml
+Type: String
+Parameter Sets: Filter
+Aliases: 
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Identity
+Specifies an Active Directory organizational unit object by providing one of the following values.
+The identifier in parentheses is the LDAP display name for the attribute.
+The acceptable values for this parameter are:
+
+- A distinguished name
+- A GUID (objectGUID) 
+- A security identifier (objectSid) 
+- A Security Account Manager account name (sAMAccountName)
+
+The cmdlet searches the default naming context or partition to find the object.
+If two or more objects are found, the cmdlet returns a non-terminating error.
+
+This parameter can also get this object through the pipeline or you can set this parameter to an object instance.
+
+```yaml
+Type: ADOrganizationalUnit
+Parameter Sets: Identity
+Aliases: 
+
+Required: True
+Position: 0
+Default value: None
+Accept pipeline input: True (ByValue)
+Accept wildcard characters: False
+```
+
+### -LDAPFilter
+Specifies an LDAP query string that is used to filter Active Directory objects.
+You can use this parameter to run your existing LDAP queries.
+The *Filter* parameter syntax supports the same functionality as the LDAP syntax.
+For more information, see the *Filter* parameter description or type `Get-Help about_ActiveDirectory_Filter`.
+
+```yaml
+Type: String
+Parameter Sets: LdapFilter
+Aliases: 
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Partition
+Specifies the distinguished name of an Active Directory partition.
+The distinguished name must be one of the naming contexts on the current directory server.
+The cmdlet searches this partition to find the object defined by the *Identity* parameter.
+
+In many cases, a default value is used for the *Partition* parameter if no value is specified.
+The rules for determining the default value are given below.
+Note that rules listed first are evaluated first and once a default value can be determined, no further rules are evaluated.
+
+In Active Directory Domain Services environments, a default value for *Partition* is set in the following cases: 
+
+- If the *Identity* parameter is set to a distinguished name, the default value of *Partition* is automatically generated from this distinguished name. 
+- If running cmdlets from an Active Directory provider drive, the default value of *Partition* is automatically generated from the current path in the drive. 
+- If none of the previous cases apply, the default value of *Partition* is set to the default partition or naming context of the target domain.
+
+In Active Directory Lightweight Directory Services (AD LDS) environments, a default value for *Partition* is set in the following cases:
+
+- If the *Identity* parameter is set to a distinguished name, the default value of *Partition* is automatically generated from this distinguished name.
+- If running cmdlets from an Active Directory provider drive, the default value of *Partition* is automatically generated from the current path in the drive. 
+- If the target AD LDS instance has a default naming context, the default value of *Partition* is set to the default naming context.
+To specify a default naming context for an AD LDS environment, set the **msDS-defaultNamingContext** property of the Active Directory directory service agent (DSA) object (**nTDSDSA**) for the AD LDS instance. 
+- If none of the previous cases apply, the *Partition* parameter will not take any default value.
+
+```yaml
+Type: String
+Parameter Sets: Identity
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Properties
+Specifies the properties of the output object to retrieve from the server.
+Use this parameter to retrieve properties that are not included in the default set.
+
+Specify properties for this parameter as a comma-separated list of names.
+To display all of the attributes that are set on the object, specify * (asterisk).
+
+To specify an individual extended property, use the name of the property.
+For properties that are not default or extended properties, you must specify the LDAP display name of the attribute.
+
+To retrieve properties and display them for an object, you can use the Get-* cmdlet associated with the object and pass the output to the **Get-Member** cmdlet.
+
+```yaml
+Type: String[]
+Parameter Sets: (All)
+Aliases: Property
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -ResultPageSize
+Specifies the number of objects to include in one page for an AD DS query.
+
+The default is 256 objects per page.
+
+```yaml
+Type: Int32
+Parameter Sets: Filter, LdapFilter
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -ResultSetSize
+Specifies the maximum number of objects to return for an AD DS query.
+If you want to receive all of the objects, set this parameter to $Null (null value).
+You can use Ctrl+C to stop the query and return of objects.
+
+The default is $Null.
+
+```yaml
+Type: Int32
+Parameter Sets: Filter, LdapFilter
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+# Get-ADOrganizationalUnit
+
+### -SearchBase
+Specifies an Active Directory path to search.
+
+When you run a cmdlet from an Active Directory provider drive, the default value of this parameter is the current path of the drive.
+
+When you run a cmdlet outside of an Active Directory provider drive against an AD DS target, the default value of this parameter is the default naming context of the target domain.
+
+When you run a cmdlet outside of an Active Directory provider drive against an AD LDS target, the default value is the default naming context of the target AD LDS instance if one has been specified by setting the **msDS-defaultNamingContext** property of the Active Directory directory service agent object (**nTDSDSA**) for the AD LDS instance.
+If no default naming context has been specified for the target AD LDS instance, then this parameter has no default value.
+
+When the value of the *SearchBase* parameter is set to an empty string and you are connected to a global catalog (GC) port, all partitions are searched.
+If the value of the *SearchBase*  parameter is set to an empty string and you are not connected to a GC port, an error is thrown.
+
+```yaml
+Type: String
+Parameter Sets: Filter, LdapFilter
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -SearchScope
+Specifies the scope of an Active Directory search. 
+The acceptable values for this parameter are:
+
+- Base or 0
+- OneLevel or 1
+- Subtree or 2
+
+A Base query searches only the current path or object.
+A OneLevel query searches the immediate children of that path or object.
+A Subtree query searches the current path or object and all children of that path or object.
+
+```yaml
+Type: ADSearchScope
+Parameter Sets: Filter, LdapFilter
+Aliases: 
+Accepted values: Base, OneLevel, Subtree
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Server
+Specifies the AD DS instance to connect to, by providing one of the following values for a corresponding domain name or directory server.
+The service may be any of the following: AD LDS, AD DS, or Active Directory snapshot instance.
+
+Specify the AD DS instance in one of the following ways:  
+
+Domain name values:
+
+- Fully qualified domain name
+- NetBIOS name
+
+Directory server values:  
+
+- Fully qualified directory server name
+- NetBIOS name
+- Fully qualified directory server name and port
+
+The default value for this parameter is determined by one of the following methods in the order that they are listed:
+
+- By using the *Server* value from objects passed through the pipeline
+- By using the server information associated with the AD DS Windows PowerShell provider drive, when the cmdlet runs in that drive
+- By using the domain of the computer running Windows PowerShell
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### CommonParameters
+This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable. For more information, see [about_CommonParameters](https://go.microsoft.com/fwlink/?LinkID=113216).
+
+## INPUTS
+
+### None or Microsoft.ActiveDirectory.Management.ADOrganizationalUnit
+An OU object is received by the *Identity* parameter.
+
+## OUTPUTS
+
+### Microsoft.ActiveDirectory.Management.ADOrganizationalUnit
+Returns one or more OU objects.
+
+This cmdlet returns a default set of **ADOrganizational** property values.
+To retrieve additional **ADOrganizational** properties, use the *Properties* parameter.
+
+To view the properties for an **ADOrganizational** object, see the following examples.
+To run these examples, replace \&lt;organizational unit\&gt; with an OU identifier such as the distinguished name of an OU.
+
+To get a list of the default set of properties of an **ADOrganizational** object, use the following command:
+
+`Get-ADOrganizationalUnit`\&lt;organizational unit\&gt;`| Get-Member`
+
+To get a list of all the properties of an **ADOrganizational** object, use the following command:
+
+`Get-ADOrganizationalUnit`\&lt;organizational unit\&gt;`-Properties * | Get-Member`
+
+## NOTES
+
+## RELATED LINKS
+
+[New-ADOrganizationalUnit](./New-ADOrganizationalUnit.md)
+
+[Remove-ADOrganizationalUnit](./Remove-ADOrganizationalUnit.md)
+
+[Set-ADOrganizationalUnit](./Set-ADOrganizationalUnit.md)</pre></section>

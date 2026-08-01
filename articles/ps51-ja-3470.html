@@ -1,0 +1,325 @@
+<!doctype html><meta charset="utf-8"><section class="jp-official"><h1>Start-WBBackup を起動する</h1>
+<h2>SYNOPSIS は,一度のバックアップ操作を開始します.</h2>
+<h2>SYNTAXは,のシンタックスです.</h2>
+<pre><code>Start-WBBackup [-Policy] &lt;WBPolicy&gt; [-Async] [-Force] [-AllowDeleteOldBackups] [-DoNotVerifyMedia]
+ [&lt;CommonParameters&gt;]
+</code></pre>
+<h2>記述 スタート-WBBackup* cmdlet は,一度のバックアップ操作を開始します.</h2>
+<p>設定を設定する際には,WBPolicy**オブジェクトを指定して,既存のバックアップポリシーから設定を設定する際には,新しい設定を使用してバックアップを開始できます.バックアップを作成するために新しい設定を使用する場合,次の手順を実行する必要があります.</p>
+<p>バックアップに含まれるアイテムを指定する. <a href="./Add-WBVolume.md">Add-WBVolume</a>, <a href="./Add-WBFileSpec.md">Add-WBFileSpec</a>, <a href="./Add-WBSystemState.md">Add-WBSystemState</a>,および <a href="./Add-WBBareMetalRecovery.md">Add-WBBareMetalRecovery</a> cmdletsを使用して指定する. - 既定の位置を使用してバックアップストレージの場所を指定する.</p>
+<p><strong>WBPolicy</strong> オブジェクトにバックアップターゲットを追加する前に,編集モードに <strong>WBPolicy</strong> オブジェクトを入れます. 予定のバックアップポリシーとして設定したポリシーに編集モードに <strong>WBPolicy</strong> オブジェクトを入れると, <em>Editable</em> パラメータを持つGet-WBPolicy cmdlet を使用します. <a href="./Get-WBPolicy.md">Get-WBPolicy</a> cmdlet は,すでに編集モードにある新しい <strong>WBPolicy</strong> オブジェクトを作成します.</p>
+<p>このcmdletを使用するには,管理者グループまたはバックアップオペレーターグループの一員である必要があります.</p>
+<h2>例えは</h2>
+<h3>例1:新しい設定を使用してバックアップを開始します.```</h3>
+<p>The first command creates a new backup policy object and stores it in a variable named $Policy.
+PS C:&gt; $Policy = New-WBPolicy</p>
+<p>The next command creates a backup source, adds the file named C:\15-12-08_1645.jpg to the backup source, and stores the backup source in a variable named $FileSpec.
+PS C:&gt; $FileSpec = New-WBFileSpec -FileSpec "C:\15-12-08_1645.jpg"</p>
+<p>This command associates the backup source in the $FileSpec variable with the backup policy in the $Policy variable.
+PS C:&gt; Add-WBFileSpec -Policy $Policy -FileSpec $FileSpec</p>
+<p>This command stores the volume that has the drive letter F: in the variable named $Volume.
+PS C:&gt; $Volume = Get-WBVolume -VolumePath "F:"</p>
+<p>This command stores the volume in the $Volume variable in the backup policy in the $Policy variable.
+PS C:&gt; Add-WBVolume -Policy $Policy -Volume $Volume</p>
+<p>This command adds the current system state options to the backup policy in the $Policy variable.
+PS C:&gt; Add-WBSystemState $Policy</p>
+<p>This command adds the ability to perform a bare-metal recovery to the backup policy in the $Policy variable.
+PS C:&gt; Add-WBBareMetalRecovery $Policy</p>
+<p>This command creates a new backup location object that contains the volume that has the drive letter D: and then stores that object in the $BackupLocation variable.
+PS C:&gt; $BackupLocation = New-WBBackupTarget -VolumePath "D:"</p>
+<p>This command adds the backup target based on the backup policy in the $Policy variable and the backup location in the $BackupLocation variable.
+PS C:&gt; Add-WBBackupTarget -Policy $Policy -Target $BackupLocation</p>
+<p>This command specifies that the backup policy in the $Policy variable uses Volume Shadow Copy Service (VSS) copy backups.
+PS C:&gt; Set-WBVssBackupOptions -Policy $Policy -VssCopyBackup</p>
+<p>This command starts the backup by using the backup policy in the $Policy variable.
+PS C:&gt; Start-WBBackup -Policy $Policy</p>
+<pre><code>
+この例では,新しい設定を使用してバックアップを開始します.
+
+### 例2: バックアップポリシー設定を使用してバックアップを開始します.```
+PS C:\&gt; $Policy = Get-WBPolicy
+PS C:\&gt; Start-WBBackup -Policy $Policy -Async
+PS C:\&gt; $BackupJob = Get-WBJob
+</code></pre>
+<p>この例では,バックアップポリシーで定義されたスケジュールバックアップの設定を使用してバックアップを開始します.</p>
+<p>最初のコマンドは,現在のバックアップポリシーを入手し,$Policyという変数に保存します.</p>
+<p>2番目のコマンドでバックアップが起動されます.コマンドは <em>Async</em> パラメータを指定しているので,cmdlet はすぐに返されます.</p>
+<p>3番目のコマンドはバックアップ状態を取得し,$BackupJobという変数に保存します. 2番目のコマンドには <em>Async</em> パラメータが含まれているので,Get-WBJob cmdlet を使用してバックアップ状態を表示できます.</p>
+<h2>パラメータは</h2>
+<h3>-AllowDeleteOldBackups 操作システムの古いバージョンのバックアップをcmdletが削除すると表示します.</h3>
+<pre><code class="language-yaml">Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: 3
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-Async 備份が起動した直後にWindows PowerShell が戻ってくることを表示し,状態メッセージが表示されない.このパラメータを指定して状態メッセージが表示されないことを選択した場合,当時は実行中の備份操作の状態を入手するにはGet-WBJob cmdlet を使用できます.</h3>
+<pre><code class="language-yaml">Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: 1
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-DoNotVerifyMedia 使用しない.このパラメータは,このバージョンのモジュールで実装されていません.</h3>
+<pre><code class="language-yaml">Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: 4
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>- ユーザの確認を要求せずにコマンドを実行するように強制します.</h3>
+<pre><code class="language-yaml">Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: 2
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-Policies は,既存のバックアップポリシーオブジェクトを使用してバックアップするためのポリシー設定を含むWBPolicyオブジェクトを指定します.</h3>
+<pre><code class="language-yaml">Type: WBPolicy
+Parameter Sets: (All)
+Aliases: 
+
+Required: True
+Position: 0
+Default value: None
+Accept pipeline input: True (ByValue)
+Accept wildcard characters: False
+</code></pre>
+<h3>共通パラメータ このcmdletは共通パラメータをサポートしています: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable.詳細については, [about_CommonParameters] を参照してください.https://go.microsoft.com/fwlink/?LinkID=113216) でした.</h3>
+<h2>輸入は</h2>
+<h3>Microsoft.Windows.ServerBackup.Commands.WBPolicy</h3>
+<h2>輸出は</h2>
+<h3>System.Object について</h3>
+<h2>NOTES  記事ができました.</h2>
+<h2>関連リンク</h2>
+<p>[WBBackupTarget.md を追加する]</p>
+<p>[Add-WBBareMetalRecovery.md] (/Add-WBBareMetalRecovery.md) について</p>
+<p><a href="./Add-WBFileSpec.md">WBFileSpecを追加</a> </p>
+<p><a href="./Add-WBSystemState.md">Add-WBSystemState</a> について</p>
+<p><a href="./Add-WBVolume.md">Add-WBVolume.md</a> </p>
+<p><a href="./Get-WBJob.md">Get-WBJob</a> </p>
+<p><a href="./Get-WBPolicy.md">Get-WBPolicy</a> </p>
+<p><a href="./Get-WBVolume.md">Get-WBVolume</a> </p>
+<p>[New-WBBackupTarget.md] (新・WBBackupTarget.md) は,新しいWBBackupTarget.md を表示しています.</p>
+<p><a href="./New-WBFileSpec.md">New-WBFileSpec</a> </p>
+<p><a href="./New-WBPolicy.md">New-WBPolicy</a> </p>
+<p><a href="./Resume-WBBackup.md">Resume-WBBackup</a> について</p>
+<p><a href="./Set-WBVssBackupOption.md">Set-WBVssBackupOption</a> を表示する</p></section><section class="en-original"><pre class="source-original"># Start-WBBackup
+
+## SYNOPSIS
+Starts a one-time backup operation.
+
+## SYNTAX
+
+```
+Start-WBBackup [-Policy] &lt;WBPolicy&gt; [-Async] [-Force] [-AllowDeleteOldBackups] [-DoNotVerifyMedia]
+ [&lt;CommonParameters&gt;]
+```
+
+## DESCRIPTION
+The **Start-WBBackup** cmdlet starts a one-time backup operation.
+
+You can use the settings from an existing backup policy for the scheduled backup by specifying a **WBPolicy** object, or you can start a backup by using new settings.
+If you use new settings to create a backup, you must do the following:
+
+- Specify the items to include in the backup by using the [Add-WBVolume](./Add-WBVolume.md), [Add-WBFileSpec](./Add-WBFileSpec.md), [Add-WBSystemState](./Add-WBSystemState.md), and [Add-WBBareMetalRecovery](./Add-WBBareMetalRecovery.md) cmdlets.
+- Specify the location for backup storage by using the locations already defined in a **WBBackupTarget** object or by updating an object of that type.
+
+Before you can add a backup target to a **WBPolicy** object, put the **WBPolicy** object in edit mode.
+To put the **WBPolicy** object in edit mode for a policy that you have set as the scheduled backup policy, use the Get-WBPolicy cmdlet with the *Editable* parameter.
+The [Get-WBPolicy](./Get-WBPolicy.md) cmdlet creates a new **WBPolicy** object that is already in edit mode.
+
+To use this cmdlet, you must be a member of the Administrators group or Backup Operators group.
+
+## EXAMPLES
+
+### Example 1: Start a backup by using new settings
+```
+The first command creates a new backup policy object and stores it in a variable named $Policy.
+PS C:\&gt; $Policy = New-WBPolicy
+
+The next command creates a backup source, adds the file named C:\15-12-08_1645.jpg to the backup source, and stores the backup source in a variable named $FileSpec.
+PS C:\&gt; $FileSpec = New-WBFileSpec -FileSpec &quot;C:\15-12-08_1645.jpg&quot;
+
+This command associates the backup source in the $FileSpec variable with the backup policy in the $Policy variable.
+PS C:\&gt; Add-WBFileSpec -Policy $Policy -FileSpec $FileSpec
+
+This command stores the volume that has the drive letter F: in the variable named $Volume.
+PS C:\&gt; $Volume = Get-WBVolume -VolumePath &quot;F:&quot;
+
+This command stores the volume in the $Volume variable in the backup policy in the $Policy variable.
+PS C:\&gt; Add-WBVolume -Policy $Policy -Volume $Volume
+
+This command adds the current system state options to the backup policy in the $Policy variable.
+PS C:\&gt; Add-WBSystemState $Policy
+
+This command adds the ability to perform a bare-metal recovery to the backup policy in the $Policy variable.
+PS C:\&gt; Add-WBBareMetalRecovery $Policy
+
+This command creates a new backup location object that contains the volume that has the drive letter D: and then stores that object in the $BackupLocation variable.
+PS C:\&gt; $BackupLocation = New-WBBackupTarget -VolumePath &quot;D:&quot;
+
+This command adds the backup target based on the backup policy in the $Policy variable and the backup location in the $BackupLocation variable.
+PS C:\&gt; Add-WBBackupTarget -Policy $Policy -Target $BackupLocation
+
+This command specifies that the backup policy in the $Policy variable uses Volume Shadow Copy Service (VSS) copy backups.
+PS C:\&gt; Set-WBVssBackupOptions -Policy $Policy -VssCopyBackup
+
+This command starts the backup by using the backup policy in the $Policy variable.
+PS C:\&gt; Start-WBBackup -Policy $Policy
+```
+
+This example starts a backup by using new settings.
+
+### Example 2: Start a backup by using backup policy settings
+```
+PS C:\&gt; $Policy = Get-WBPolicy
+PS C:\&gt; Start-WBBackup -Policy $Policy -Async
+PS C:\&gt; $BackupJob = Get-WBJob
+```
+
+This example starts a backup by using the settings for scheduled backups defined in a backup policy.
+
+The first command gets the current backup policy and stores it in the variable named $Policy.
+
+The second command starts the backup.
+Because the command specifies the *Async* parameter, the cmdlet returns immediately.
+
+The third command gets the backup status and stores it in the variable named $BackupJob.
+Because the second command includes the *Async*  parameter, you can view the backup status by using the Get-WBJob cmdlet.
+
+## PARAMETERS
+
+### -AllowDeleteOldBackups
+Indicates that the cmdlet deletes backups of older versions of the operating system.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: 3
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Async
+Indicates that Windows PowerShell returns immediately after the backup starts and does not display status messages.
+If you specify this parameter and choose not to display status messages, you can use the Get-WBJob cmdlet to get the status of the currently running backup operation.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: 1
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -DoNotVerifyMedia
+Do not use.
+This parameter is not implemented in this version of the module.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: 4
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Force
+Forces the command to run without asking for user confirmation.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: 2
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Policy
+Specifies a **WBPolicy** object that includes the policy settings for the backup by using an existing backup policy object.
+
+```yaml
+Type: WBPolicy
+Parameter Sets: (All)
+Aliases: 
+
+Required: True
+Position: 0
+Default value: None
+Accept pipeline input: True (ByValue)
+Accept wildcard characters: False
+```
+
+### CommonParameters
+This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable. For more information, see [about_CommonParameters](https://go.microsoft.com/fwlink/?LinkID=113216).
+
+## INPUTS
+
+### Microsoft.Windows.ServerBackup.Commands.WBPolicy
+
+## OUTPUTS
+
+### System.Object
+
+## NOTES
+
+## RELATED LINKS
+
+[Add-WBBackupTarget](./Add-WBBackupTarget.md)
+
+[Add-WBBareMetalRecovery](./Add-WBBareMetalRecovery.md)
+
+[Add-WBFileSpec](./Add-WBFileSpec.md)
+
+[Add-WBSystemState](./Add-WBSystemState.md)
+
+[Add-WBVolume](./Add-WBVolume.md)
+
+[Get-WBJob](./Get-WBJob.md)
+
+[Get-WBPolicy](./Get-WBPolicy.md)
+
+[Get-WBVolume](./Get-WBVolume.md)
+
+[New-WBBackupTarget](./New-WBBackupTarget.md)
+
+[New-WBFileSpec](./New-WBFileSpec.md)
+
+[New-WBPolicy](./New-WBPolicy.md)
+
+[Resume-WBBackup](./Resume-WBBackup.md)
+
+[Set-WBVssBackupOption](./Set-WBVssBackupOption.md)</pre></section>

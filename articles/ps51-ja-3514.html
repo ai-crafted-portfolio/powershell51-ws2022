@@ -1,0 +1,325 @@
+<!doctype html><meta charset="utf-8"><section class="jp-official"><h1>about_Character_Encodingについて</h1>
+<h2>短編説明</h2>
+<p>PowerShell で文字符をコードして文字列データを入力・出力させる方法について説明します.</p>
+<h2>長い説明</h2>
+<p>Unicodeは世界規模の文字エンコーディング標準です.このシステムは Unicode を文字と文字列の操作のためにのみ使用しています. Unicode のすべての側面の詳細な説明については,[ユニコード標準][01]を参照してください.</p>
+<p>Windows は Unicode と伝統的な文字セットをサポートしています.Windows のコードページなどの伝統的な文字セットは,特定の言語や地域設定で使用される文字を表すために,8-ビット値または8-ビット値の組み合わせを使用します.</p>
+<p>PowerShellではデフォルトで設定されたユニコード文字を使用します.しかし,いくつかのcmdletsには <strong>Encoding</strong>パラメータがあり,異なる文字セットのエンコーディングを指定できます.このパラメータは,他のシステムとアプリケーションとの相互運用のために必要な特定の文字エンコーディングを選択することができます.</p>
+<p>次のcmdletsには<strong>Encoding</strong>パラメータがあります:</p>
+<p>Microsoft.PowerShell.Management - Add-Content - Get-Content - Set-Content - Microsoft.PowerShell.Utility - Export-Clixml - Export-Csv - Export-PSSession - Format-Hex - Import-Csv - Out-File - Select-String - Send-MailMessage</p>
+<h2>バイト・オーダーマーク</h2>
+<p>バイト・オーダーマーク (BOM) は,ファイルまたはテキストストリームの最初の数バイトで,データに使用されたユニコードコードを表示する_ユニコード署名_Byte_オーダーマーク[02]ドキュメントを参照してください.</p>
+<p>Windows PowerShellでは, Unicode のコードを除いて,任意の Unicode のコードを除きます.<code>UTF7</code>PowerShell (v6およびそれ以上の) のデフォルトは,常にBOMを作成します.<code>utf8NoBOM</code>すべてのテキスト出力のために.</p>
+<p>総合的に最適の互換性のために,UTF-8ファイルでBOMを使用することを避ける.UnixプラットフォームとWindowsプラットフォームで使用されているUnix-heritageユーティリティはBOMをサポートしません.</p>
+<p>同様に, <code>UTF7</code>UTF-7は標準的な Unicode 暗号化ではなく,PowerShell のすべてのバージョンでBOM を使わずに記述されています.</p>
+<p>Unixのようなプラットフォーム上でPowerShellスクリプトを作成したり,Visual Studio CodeなどのWindows上のクロスプラットフォームエディタを使用すると,ファイルが を使用して暗号化される結果になります.<code>UTF8NoBOM</code>これらのファイルはPowerShellでうまく動作しますが,ファイルにAscii以外の文字が含まれている場合はWindows PowerShellで壊れることがあります.</p>
+<p>スクリプトに非AScii文字を使用する必要がある場合は,BOMでUTF-8として保存してください.BOMがなければ,Windows PowerShellは,古い"ANSI"コードページでスクリプトを暗号化されていると誤解します.逆に,UTF-8BOMを持つファイルは,ユニックスのようなプラットフォームで問題がある可能性があります.<code>cat</code>     <code>sed</code>     <code>awk</code>などの編集者もいる.<code>gedit</code>BOMをどう扱うかわからない.</p>
+<h2>Windows PowerShellで文字コードを表示する</h2>
+<p>PowerShell 5.1では, <strong>Encoding</strong> パラメータは以下の値をサポートします.</p>
+<ul>
+<li>-<code>Ascii</code>Ascii (7ビット) の文字セットを使用します. - <code>BigEndianUnicode</code>UTF-16 を大エンディアンバイト順で使用します. - <code>BigEndianUTF32</code>UTF-32 を大エンディアンバイト順で使用します. - <code>Byte</code>文字を並べてバイトの連続にコードする. - <code>Default</code>システム内のアクティブコードページ (通常はANSI) に対応するエンコーディングを使用します. - <code>Oem</code>システム内の現在のOEMコードページに対応するエンコーディングを使用します. - <code>String</code>と同じです.<code>Unicode</code>- <code>Unicode</code>UTF-16 を小エンディアンバイト順で使用します. - <code>Unknown</code>と同じです.<code>Unicode</code>- <code>UTF32</code>UTF-32 を小エンディアンバイト順で使用します. - <code>UTF7</code>UTF-7 を使用します.<code>UTF8</code>UTF-8 (BOM) を使用しています.</li>
+</ul>
+<p>一般的に,Windows PowerShellはデフォルトで Unicode [UTF-16LE][03] のエンコーディングを使用している.しかし,Windows PowerShell のcmdlets で使用されるデフォルトエンコーディングは一致しない.</p>
+<p>&gt; [!NOTE] &gt; Unicode のコードをすべて使用する.<code>UTF7</code>必ずBOMを作ります.</p>
+<p>ファイルに輸出を書き出すcmdlets に対して:</p>
+<ul>
+<li>
+<p>-<code>Out-File</code>そして,リダイレクトオペレータを<code>&gt;</code>そして,<code>&gt;&gt;</code>作成するUTF-16LEは,特に,UTF-16LEとは大きく異なる.<code>Set-Content</code>そして,<code>Add-Content</code> .</p>
+</li>
+<li>
+<p>-<code>New-ModuleManifest</code>そして,<code>Export-Clixml</code>また,UTF-16LE ファイルを作成します.</p>
+</li>
+<li>
+<p>ターゲットファイルが空いているか存在しないとき,<code>Set-Content</code>そして,<code>Add-Content</code> use use を使用する<code>Default</code>暗号化する<code>Default</code>アクティブシステムローケルのANSIレガシーコードページで指定されたエンコーディングです.</p>
+</li>
+<li>
+<p>-<code>Export-Csv</code> を創造する<code>Ascii</code>しかし,ファイルを表示する際には異なるエンコーディングを使用します (下記を参照).</p>
+</li>
+<li>
+<p>-<code>Export-PSSession</code>既定 BOM で UTF-8 ファイルを作成します.</p>
+</li>
+<li>
+<p>-<code>New-Item -Type File -Value</code>BOM-less UTF-8ファイルを作成します.</p>
+</li>
+<li>
+<p>-<code>Send-MailMessage</code>は,利用しています.<code>Ascii</code>デフォルトでエンコーディングする.</p>
+</li>
+<li>
+<p>-<code>Start-Transcript</code> を創造する<code>Utf8</code><strong>Append</strong>パラメータを使用すると,コード化が異なる可能性があります (以下を参照).</p>
+</li>
+</ul>
+<p>既存のファイルに添付するコマンドについては:</p>
+<ul>
+<li>
+<p>-<code>Out-File -Append</code>そして,その <code>&gt;&gt;</code>リダイレクトオペレーターは既存のターゲットファイルのコンテンツのエンコーディングに一致する試みを行わない.代わりに, <strong>Encoding</strong> パラメータを使用しない限り,デフォルトエンコーディングを使用します.コンテンツを添付する際に,ファイルのオリジナルエンコーディングを使用する必要があります.</p>
+</li>
+<li>
+<p>明確なエンコーディングパラメータがない場合,<code>Add-Content</code>既存のコードを検出し,自動的に新しいコンテンツに適用します.既存のコンテンツにBOMがない場合は,<code>Default</code>ANSIエンコーディングが用いられる.<code>Add-Content</code>パワーシェル (v6 以降) で同じですが,デフォルトコードは  だけです.<code>Utf8</code> .</p>
+</li>
+<li>
+<p>-<code>Export-Csv -Append</code>ターゲットファイルにBOMが含まれる場合,既存のエンコーディングに一致する.BOMがない場合,それは を使用します.<code>Utf8</code>暗号化です.</p>
+</li>
+<li>
+<p>-<code>Start-Transcript -Append</code>BOM を含むファイルの既存のエンコーディングに一致する.BOM が存在しない場合,デフォルトで  に一致する.<code>Ascii</code>このコーディングは,トランスクリプトのデータにはマルチバイト文字が含まれる場合,データ損失や文字の腐敗を引き起こす可能性があります.</p>
+</li>
+</ul>
+<p>BOMがない場合,文字列データを読み取るcmdletについては:</p>
+<ul>
+<li>
+<p>-<code>Get-Content</code>そして,<code>Import-PowerShellDataFile</code>は利用しています.<code>Default</code>ANSI は PowerShell エンジンがファイルからソースコードを読み取るときに使用するものです.</p>
+</li>
+<li>
+<p>-<code>Import-Csv</code>     <code>Import-Clixml</code>そして,そして,<code>Select-String</code> 想定する<code>Utf8</code>BOMがない場合.</p>
+</li>
+</ul>
+<h2>PowerShellで文字コードを入力します.</h2>
+<p>PowerShell (v7.1 以降) では,Encoding**のパラメータは以下の値をサポートします.</p>
+<ul>
+<li>-<code>ascii</code>: ASCII (7ビット) キャラクターセットのエンコーディングを使用します. - <code>bigendianunicode</code>: UTF-16形式でコードを Big-endian byte 順でコードする. - <code>bigendianutf32</code>: UTF-32形式でコードを Big-endian byte 順でコードする. - <code>oem</code>: MS-DOSとコンソールプログラムにデフォルトのエンコーディングを使用します. - <code>unicode</code>: UTF-16形式で little-endian byte 順を使用したコード. - <code>utf7</code>: UTF-7形式のコードを表示する. - <code>utf8</code>: UTF-8形式のコード (BOMなし). - <code>utf8BOM</code>: UTF-8フォーマットでバイトオーダーマーク (BOM) を用いたコード - <code>utf8NoBOM</code>: UTF-8フォーマットでバイト・オーダーマーク (BOM) を使わないコード - <code>utf32</code>: 略微のエンディアンバイト順序を用いたUTF-32形式のコード.</li>
+</ul>
+<p>への PowerShell デフォルトの障害です.<code>utf8NoBOM</code>すべての出力に適用されます.</p>
+<p>PowerShell 6.2 から始まる<strong>Encoding</strong> パラメータは,登録コードページ (例えば ) の数値IDを許可する.<code>-Encoding 1251</code>) または登録コードページの文字列名 (例えば ) を指定する.<code>-Encoding "windows-1251"</code>詳細については, [Encoding.CodePage][04] の .NETドキュメントを参照してください.</p>
+<h1>about_Character_Encodingについて</h1>
+<h2>デフォルトのエンコーディングを変更する</h2>
+<p>PowerShellには,2つのデフォルト変数があり,デフォルトのエンコーディング行動を変えるために使用できます.</p>
+<ul>
+<li>-<code>$PSDefaultParameterValues</code> - -<code>$OutputEncoding</code></li>
+</ul>
+<p>詳細については,[about_Preference_Variables][05]を参照してください.</p>
+<p>PowerShell 5.1 から始まる,リダイレクトオペレータ () は ()<code>&gt;</code>そして,<code>&gt;&gt;</code>) を呼び出す.<code>Out-File</code>cmdlet.したがって,そのデフォルトエンコーディングを設定するには,  を使って設定できます.<code>$PSDefaultParameterValues</code>この例で示されている偏好変数:</p>
+<pre><code class="language-powershell">$PSDefaultParameterValues['Out-File:Encoding'] = 'utf8'
+</code></pre>
+<p><strong>Encoding</strong>パラメータを持つすべてのcmdletのデフォルトエンコーディングを変更するには,次の記述を使用します.</p>
+<pre><code class="language-powershell">$PSDefaultParameterValues['*:Encoding'] = 'utf8'
+</code></pre>
+<p>[!IMPORTANT] &gt;このコマンドをPowerShellプロフィールに挿入すると,選択は &gt; セッショングローバル設定で,コードを明確に指定しないすべてのコマンドやスクリプトに影響する. &gt; &gt; &gt; 同様に,スクリプトやモジュールに同じ動作をしたいようなコマンドを含まれさせなければなりません.これらのコマンドを使用すると,他のユーザー,別のコンピュータ, &gt; または PowerShell の異なるバージョンで実行された場合でも,cmdlets &gt; が同じ動作することを保証します.</p>
+<p>自動変数です.<code>$OutputEncoding</code>PowerShellが外部プログラムと通信するために使用するエンコーディングに影響を与えます.これは,輸出リダイレクトオペレーターやPowerShell cmdletsがファイルに保存するために使用するエンコーディングに影響しません.</p>
+<h2>また, を参照してください.</h2>
+<ul>
+<li>[about_Preference_Variables][05] - <a href="https://wikipedia.org/wiki/Byte_order_mark">バイト注文マーク</a> - <a href="/windows/win32/intl/code-pages">コードページ - Win32 アプリ</a> - [Encoding.CodePage][04] - <a href="/dotnet/standard/base-types/character-encoding-introduction"> .NET の文字エンコーディングの紹介</a> - [Unicode Standard][01] - [UTF-16LE][03]</li>
+</ul>
+<p>&lt;!--リンク参照 --&gt; [01]: https://www.unicode.org/standard/standard.html[02]: /globalization/encoding/byte-order-mark [03]: https://wikipedia.org/wiki/UTF-16[04]: /dotnet/api/system.text.encoding.codepage [05]: about_Preference_Variables.mdについて</p></section><section class="en-original"><pre class="source-original"># about_Character_Encoding
+
+## Short description
+
+Describes how PowerShell uses character encoding for input and output of string
+data.
+
+## Long description
+
+Unicode is a worldwide character-encoding standard. The system uses Unicode
+exclusively for character and string manipulation. For a detailed description
+of all aspects of Unicode, refer to [The Unicode Standard][01].
+
+Windows supports Unicode and traditional character sets. Traditional character
+sets, such as Windows code pages, use 8-bit values or combinations of 8-bit
+values to represent the characters used in a specific language or geographical
+region settings.
+
+PowerShell uses a Unicode character set by default. However, several cmdlets
+have an **Encoding** parameter that can specify encoding for a different
+character set. This parameter allows you to choose the specific the character
+encoding you need for interoperability with other systems and applications.
+
+The following cmdlets have the **Encoding** parameter:
+
+- Microsoft.PowerShell.Management
+  - Add-Content
+  - Get-Content
+  - Set-Content
+- Microsoft.PowerShell.Utility
+  - Export-Clixml
+  - Export-Csv
+  - Export-PSSession
+  - Format-Hex
+  - Import-Csv
+  - Out-File
+  - Select-String
+  - Send-MailMessage
+
+## The byte-order-mark
+
+The byte-order-mark (BOM) is a _Unicode signature_ in the first few bytes of a
+file or text stream that indicate which Unicode encoding used for the data. For
+more information, see the [Byte order mark][02] documentation.
+
+In Windows PowerShell, any Unicode encoding, except `UTF7`, always creates a
+BOM. PowerShell (v6 and higher) defaults to `utf8NoBOM` for all text output.
+
+For best overall compatibility, avoid using BOMs in UTF-8 files. Unix platforms
+and Unix-heritage utilities also used on Windows Platforms don&#x27;t support BOMs.
+
+Similarly, `UTF7` encoding should be avoided. UTF-7 is not a standard Unicode
+encoding and is written without a BOM in all versions of PowerShell.
+
+Creating PowerShell scripts on a Unix-like platform or using a cross-platform
+editor on Windows, such as Visual Studio Code, results in a file encoded using
+`UTF8NoBOM`. These files work fine in PowerShell, but may break in Windows
+PowerShell if the file contains non-Ascii characters.
+
+If you need to use non-Ascii characters in your scripts, save them as UTF-8
+with BOM. Without the BOM, Windows PowerShell misinterprets your script as
+being encoded in the legacy &quot;ANSI&quot; codepage. Conversely, files that do have the
+UTF-8 BOM can be problematic on Unix-like platforms. Many Unix tools such as
+`cat`, `sed`, `awk`, and some editors such as `gedit` don&#x27;t know how to treat
+the BOM.
+
+## Character encoding in Windows PowerShell
+
+In PowerShell 5.1, the **Encoding** parameter supports the following values:
+
+- `Ascii` Uses Ascii (7-bit) character set.
+- `BigEndianUnicode` Uses UTF-16 with the big-endian byte order.
+- `BigEndianUTF32` Uses UTF-32 with the big-endian byte order.
+- `Byte` Encodes a set of characters into a sequence of bytes.
+- `Default` Uses the encoding that corresponds to the system&#x27;s active code page
+  (usually ANSI).
+- `Oem` Uses the encoding that corresponds to the system&#x27;s current OEM code
+  page.
+- `String` Same as `Unicode`.
+- `Unicode` Uses UTF-16 with the little-endian byte order.
+- `Unknown` Same as `Unicode`.
+- `UTF32` Uses UTF-32 with the little-endian byte order.
+- `UTF7` Uses UTF-7.
+- `UTF8` Uses UTF-8 (with BOM).
+
+In general, Windows PowerShell uses the Unicode [UTF-16LE][03] encoding by
+default. However, the default encoding used by cmdlets in Windows PowerShell
+is not consistent.
+
+&gt; [!NOTE]
+&gt; Using any Unicode encoding, except `UTF7`, always creates a BOM.
+
+For cmdlets that write output to files:
+
+- `Out-File` and the redirection operators `&gt;` and `&gt;&gt;` create UTF-16LE, which
+  notably differs from `Set-Content` and `Add-Content`.
+
+- `New-ModuleManifest` and `Export-Clixml` also create UTF-16LE files.
+
+- When the target file is empty or doesn&#x27;t exist, `Set-Content` and
+  `Add-Content` use `Default` encoding. `Default` is the encoding specified by
+  the active system locale&#x27;s ANSI legacy code page.
+
+- `Export-Csv` creates `Ascii` files but uses different encoding when using
+  **Append** parameter (see below).
+
+- `Export-PSSession` creates UTF-8 files with BOM by default.
+
+- `New-Item -Type File -Value` creates a BOM-less UTF-8 file.
+
+- `Send-MailMessage` uses `Ascii` encoding by default.
+
+- `Start-Transcript` creates `Utf8` files with a BOM. When the **Append**
+  parameter is used, the encoding can be different (see below).
+
+For commands that append to an existing file:
+
+- `Out-File -Append` and the `&gt;&gt;` redirection operator make no attempt to match
+  the encoding of the existing target file&#x27;s content. Instead, they use the
+  default encoding unless the **Encoding** parameter is used. You must use the
+  files original encoding when appending content.
+
+- In the absence of an explicit **Encoding** parameter, `Add-Content` detects
+  the existing encoding and automatically applies it to the new content. If the
+  existing content has no BOM, `Default` ANSI encoding is used. The behavior of
+  `Add-Content` is the same in PowerShell (v6 and higher) except the default
+  encoding is `Utf8`.
+
+- `Export-Csv -Append` matches the existing encoding when the target file
+  contains a BOM. In the absence of a BOM, it uses `Utf8` encoding.
+
+- `Start-Transcript -Append` matches the existing encoding of files that
+  include a BOM. In the absence of a BOM, it defaults to `Ascii` encoding. This
+  encoding can result in data loss or character corruption when the data in the
+  transcript contains multibyte characters.
+
+For cmdlets that read string data in the absence of a BOM:
+
+- `Get-Content` and `Import-PowerShellDataFile` uses the `Default` ANSI
+  encoding. ANSI is also what the PowerShell engine uses when it reads source
+  code from files.
+
+- `Import-Csv`, `Import-Clixml`, and `Select-String` assume `Utf8` in the
+  absence of a BOM.
+
+## Character encoding in PowerShell
+
+In PowerShell (v7.1 and higher), the **Encoding** parameter supports the
+following values:
+
+- `ascii`: Uses the encoding for the ASCII (7-bit) character set.
+- `bigendianunicode`: Encodes in UTF-16 format using the big-endian byte order.
+- `bigendianutf32`: Encodes in UTF-32 format using the big-endian byte order.
+- `oem`: Uses the default encoding for MS-DOS and console programs.
+- `unicode`: Encodes in UTF-16 format using the little-endian byte order.
+- `utf7`: Encodes in UTF-7 format.
+- `utf8`: Encodes in UTF-8 format (no BOM).
+- `utf8BOM`: Encodes in UTF-8 format with Byte Order Mark (BOM)
+- `utf8NoBOM`: Encodes in UTF-8 format without Byte Order Mark (BOM)
+- `utf32`: Encodes in UTF-32 format using the little-endian byte order.
+
+PowerShell defaults to `utf8NoBOM` for all output.
+
+Beginning with PowerShell 6.2, the **Encoding** parameter also allows numeric
+IDs of registered code pages (like `-Encoding 1251`) or string names of
+registered code pages (like `-Encoding &quot;windows-1251&quot;`). For more information,
+see the .NET documentation for [Encoding.CodePage][04].
+
+# about_Character_Encoding
+
+## Changing the default encoding
+
+PowerShell has two default variables that can be used to change the default
+encoding behavior.
+
+- `$PSDefaultParameterValues`
+- `$OutputEncoding`
+
+For more information, see [about_Preference_Variables][05].
+
+Beginning in PowerShell 5.1, the redirection operators (`&gt;` and `&gt;&gt;`) call the
+`Out-File` cmdlet. Therefore, you can set the default encoding of them using
+the `$PSDefaultParameterValues` preference variable as shown in this example:
+
+```powershell
+$PSDefaultParameterValues[&#x27;Out-File:Encoding&#x27;] = &#x27;utf8&#x27;
+```
+
+Use the following statement to change the default encoding for all cmdlets that
+have the **Encoding** parameter.
+
+```powershell
+$PSDefaultParameterValues[&#x27;*:Encoding&#x27;] = &#x27;utf8&#x27;
+```
+
+&gt; [!IMPORTANT]
+&gt; Putting this command in your PowerShell profile makes the preference a
+&gt; session-global setting that affects all commands and scripts that do not
+&gt; explicitly specify an encoding.
+&gt;
+&gt; Similarly, you should include such commands in your scripts or modules that
+&gt; you want to behave the same way. Using these commands ensure that cmdlets
+&gt; behave the same way even when run by another user, on a different computer,
+&gt; or in a different version of PowerShell.
+
+The automatic variable `$OutputEncoding` affects the encoding PowerShell uses
+to communicate with external programs. It has no effect on the encoding that
+the output redirection operators and PowerShell cmdlets use to save to files.
+
+## See also
+
+- [about_Preference_Variables][05]
+- [Byte order mark](https://wikipedia.org/wiki/Byte_order_mark)
+- [Code Pages - Win32 apps](/windows/win32/intl/code-pages)
+- [Encoding.CodePage][04]
+- [Introduction to character encoding in .NET](/dotnet/standard/base-types/character-encoding-introduction)
+- [The Unicode Standard][01]
+- [UTF-16LE][03]
+
+&lt;!-- link references --&gt;
+[01]: https://www.unicode.org/standard/standard.html
+[02]: /globalization/encoding/byte-order-mark
+[03]: https://wikipedia.org/wiki/UTF-16
+[04]: /dotnet/api/system.text.encoding.codepage
+[05]: about_Preference_Variables.md</pre></section>

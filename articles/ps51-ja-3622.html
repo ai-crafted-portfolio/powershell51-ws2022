@@ -1,0 +1,129 @@
+<!doctype html><meta charset="utf-8"><section class="jp-official"><h1>about_Simplified_Syntaxについて</h1>
+<h2>短編説明</h2>
+<p>楽で自然言語で物体のコレクションのスクリプトフィルタを書き込む方法を説明します.</p>
+<h2>長い説明</h2>
+<p>Windows PowerShell 3.0で導入された簡素化された構文では,スクリプトブロックを使わずにフィルターコマンドをいくつか構築できます.簡素化された構文は自然言語に近いもので,主に命令にパイプされたオブジェクトの集合で有用です.<code>Where-Object</code>そして,<code>ForEach-Object</code>またはその関連アニックネームを<code>where</code>そして,<code>foreach</code> .</p>
+<p>集合のメンバー (最も一般的なのは,アレイ) に関する方法を使用できますが,自動変数に言及せずにします.<code>$_</code>脚本ブロックの内部にある.</p>
+<p>次の2つの呼び出しを考えてみてください.</p>
+<h3>標準語法</h3>
+<pre><code class="language-powershell">Get-ChildItem Cert:\LocalMachine\Root |
+    Where-Object -FilterScript { $_.FriendlyName -eq 'Verisign' }
+Get-ChildItem Cert:\ -Recurse |
+    ForEach-Object -FilterScript { $_.GetKeyAlgorithm() }
+</code></pre>
+<p>&gt; [!NOTE] &gt;第2コマンドでは,  を入力します.<code>GetKeyAlgorithm</code>集合内の各オブジェクト &gt; に方法が呼び出される.パイプラインから受信されたオブジェクトが &gt;  を持っていない場合.<code>GetKeyAlgorithm</code>方法では,コマンドがエラーを生む.</p>
+<h3>簡略化された構文です.</h3>
+<p>簡略化された構文では,集合内のオブジェクトのメンバーを扱う比較オペレータがパラメータとして実装されます.また,自動変数  を参照せずに集合内のオブジェクトに方法を呼び出すことができます.<code>$_</code>脚本ブロックの内部で,以下の2つの呼び出しを標準語法例と比較してください.</p>
+<pre><code class="language-powershell">Get-ChildItem Cert:\LocalMachine\Root |
+    Where-Object -Property FriendlyName -EQ 'Verisign'
+Get-ChildItem Cert:\ -Recurse |
+    ForEach-Object -MemberName GetKeyAlgorithm
+</code></pre>
+<p><strong>プロパティ</strong>と <strong>メンバーネーム</strong>のパラメータが位置性なので,コマンドから省略できます.</p>
+<pre><code class="language-powershell">dir Cert:\LocalMachine\Root | where FriendlyName -EQ 'Verisign'
+dir Cert:\ -Recurse | foreach GetKeyAlgorithm
+</code></pre>
+<p>両方の構文が機能する一方,簡略化された構文は自動変数に言及せずに結果を返します.<code>$_</code>簡略化された構文は自然言語の文のように読み取られ,理解が容易になる.</p>
+<p>方法名 <code>GetKeyAlgorithm</code> の<strong>MemberName</strong>パラメータの議論として通過します.<code>ForEach-Object</code>簡略化された構文を用いた方法を呼び出すとき,その方法がパイプライン内の各オブジェクトに呼び出されるのは,そのオブジェクトがその方法を持っている場合にのみです.したがって,同じ結果が得られますが,エラーはありません.</p>
+<p>次の例では,<code>Description</code> の<strong>MemberName</strong>パラメータに転送されます.<code>ForEach-Object</code>コマンドでは,各システム診断プロセスオブジェクトの記述が表示されます.<code>Get-Process</code> .</p>
+<pre><code class="language-powershell">Get-Process | foreach Description
+</code></pre>
+<p>この例では,方法名 <code>GetFiles</code> の<strong>MemberName</strong>パラメータに転送されます.<code>ForEach-Object</code>コマンドです.<code>.*</code>値がArgumentListのパラメータに転送されます.<code>GetFiles()</code>方法は検索パターンパラメータで呼び出される.<code>.*</code>によって返還されたすべての <strong>System.IO.DirectoryInfo</strong> オブジェクトについて<code>Get-ChildItem</code> .</p>
+<pre><code class="language-powershell">Get-ChildItem /home -Directory | foreach GetFiles .*
+</code></pre>
+<h2>また, を参照してください.</h2>
+<ul>
+<li>[about_Comparison_Operators] ([about_Comparison_Operators.md) - [about_Foreach] ((about_Foreach.md) - [ForEach-Object] (xref:Microsoft.PowerShell.Core.ForEach-Object) - [Where-Object] (xref:Microsoft.PowerShell.Core.Where-Object)</li>
+</ul></section><section class="en-original"><pre class="source-original"># about_Simplified_Syntax
+
+## Short description
+
+Describes easier, more natural-language ways of scripting filters for
+collections of objects.
+
+## Long description
+
+Simplified syntax, introduced in Windows PowerShell 3.0, lets you build some
+filter commands without using scriptblocks. The simplified syntax more closely
+resembles natural language, and is primarily useful with collections of objects
+that get piped into commands `Where-Object` and `ForEach-Object` or their
+corresponding aliases `where` and `foreach`.
+
+You can use a method on the members of a collection (most commonly, an array)
+without referring to the automatic variable `$_` inside a scriptblock.
+
+Consider the following two invocations:
+
+### Standard Syntax
+
+```powershell
+Get-ChildItem Cert:\LocalMachine\Root |
+    Where-Object -FilterScript { $_.FriendlyName -eq &#x27;Verisign&#x27; }
+Get-ChildItem Cert:\ -Recurse |
+    ForEach-Object -FilterScript { $_.GetKeyAlgorithm() }
+```
+
+&gt; [!NOTE]
+&gt; In the second command, the `GetKeyAlgorithm` method is called on each object
+&gt; in the collection. If the object received from the pipeline doesn&#x27;t have a
+&gt; `GetKeyAlgorithm` method, the command produces an error.
+
+### Simplified syntax
+
+Under the simplified syntax, comparison operators that work on members of
+objects in a collection are implemented as parameters. Also, you can invoke a
+method on objects in a collection without referring to the automatic variable
+`$_` inside a scriptblock. Compare the following two invocations to the
+standard syntax examples:
+
+```powershell
+Get-ChildItem Cert:\LocalMachine\Root |
+    Where-Object -Property FriendlyName -EQ &#x27;Verisign&#x27;
+Get-ChildItem Cert:\ -Recurse |
+    ForEach-Object -MemberName GetKeyAlgorithm
+```
+
+Since the **Property** and **MemberName** parameters are positional, you can
+omit them from the command. Using aliases, you can further simplify the
+commands:
+
+```powershell
+dir Cert:\LocalMachine\Root | where FriendlyName -EQ &#x27;Verisign&#x27;
+dir Cert:\ -Recurse | foreach GetKeyAlgorithm
+```
+
+While both syntaxes work, the simplified syntax returns results without
+referring to the automatic variable `$_` inside a scriptblock. The simplified
+syntax reads more like a natural language statement and can be easier to
+understand.
+
+The method name `GetKeyAlgorithm` is passed as an argument for the
+**MemberName** parameter of `ForEach-Object`. When you invoke the method using
+the simplified syntax, the method is called for each object in pipeline only if
+that object has that method. Therefore, you get the same results, but without
+errors.
+
+In the next example, `Description` is passed to the **MemberName** parameter of
+`ForEach-Object`. The command displays the description of each
+**System.Diagnostics.Process** object returned by `Get-Process`.
+
+```powershell
+Get-Process | foreach Description
+```
+
+In this example, the method name `GetFiles` is passed to the **MemberName**
+parameter of the `ForEach-Object` command. The `.*` value is passed to the
+**ArgumentList** parameter. The `GetFiles()` method is called with the search
+pattern parameter `.*` for each **System.IO.DirectoryInfo** object returned by
+`Get-ChildItem`.
+
+```powershell
+Get-ChildItem /home -Directory | foreach GetFiles .*
+```
+
+## See also
+
+- [about_Comparison_Operators](about_Comparison_Operators.md)
+- [about_Foreach](about_Foreach.md)
+- [ForEach-Object](xref:Microsoft.PowerShell.Core.ForEach-Object)
+- [Where-Object](xref:Microsoft.PowerShell.Core.Where-Object)</pre></section>

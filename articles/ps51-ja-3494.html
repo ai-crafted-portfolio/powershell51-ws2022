@@ -1,0 +1,225 @@
+<!doctype html><meta charset="utf-8"><section class="jp-official"><h1>Get-IseSnippet を入手する</h1>
+<h2>SYNOPSISは,ユーザーが作成したスニッペットを入手します.</h2>
+<h2>SYNTAXは,のシンタックスです.</h2>
+<pre><code>Get-IseSnippet [&lt;CommonParameters&gt;]
+</code></pre>
+<h2>記述は,</h2>
+<p><code>Get-IseSnippet</code>cmdlet は,ユーザーが作成した再利用可能なテキストスニペットを含む PS1XML ファイルを取得します.これはWindows PowerShell 統合脚本環境 (ISE) でのみ動作します.</p>
+<p>を使うとき<code>New-IseSnippet</code>cmdlet でスニッペットを作成します.<code>New-IseSnippet</code> を創り出す.<code>&lt;SnippetTitle&gt;.Snippets.ps1xml</code>のファイルに載っている.<code>$HOME\Documents\WindowsPowerShell\Snippets</code>ダイレクトリです. <code>Get-IseSnippet</code>スニッペットディレクトリでスニッペットファイルを取得します.</p>
+<p>このcmdletには,組み込みのスニッペットや,  経由でモジュールから輸入されたスニッペットが含まれていません.<code>Import-IseSnippet</code>cmdletです.</p>
+<p>このcmdletはWindows PowerShell 3.0で導入されました.</p>
+<h2>例えは</h2>
+<h3>例1:すべてのユーザー定義スニッペットを入手する</h3>
+<p>この例では,スニッペットディレクトリ内のユーザー定義スニッペットすべてが表示されます.</p>
+<pre><code class="language-powershell">Get-IseSnippet
+</code></pre>
+<h3>例2: リモートコンピュータからユーザー定義のスニペットをすべて共有ディレクトリにコピーする</h3>
+<p>この例では,遠隔コンピュータのグループから作成されたすべてのスニッペットを共有されたスニッペットディレクトリにコピーします.</p>
+<pre><code class="language-powershell">Invoke-Command -Computer (Get-Content Servers.txt) -ScriptBlock {
+    Get-IseSnippet | Copy-Item -Destination \\Server01\Share01\Snippets
+}
+</code></pre>
+<p><code>Invoke-Command</code> ランス<code>Get-IseSnippet</code>のコンピュータの上で<code>Servers.txt</code>パイプラインオペレーター ()<code>|</code>) はスニペットファイルを  に送ります.<code>Copy-Item</code>cmdletで,それを<strong>Destination</strong>パラメータで指定されたディレクトリにコピーします.</p>
+<h3>例3:各スニペットのタイトルとテキストをローカルコンピュータに表示します.</h3>
+<p>この例では,という文字を使用しています.<code>Get-IseSnippet</code>そして,<code>Select-Xml</code>ローカルコンピュータにそれぞれのスニペットのタイトルとテキストを表示するcmdlets.</p>
+<pre><code class="language-powershell">#Parse-Snippet Function
+function Parse-Snippet {
+  $SnippetFiles = Get-IseSnippet
+  $SnippetNamespace = @{x=&quot;http://schemas.microsoft.com/PowerShell/Snippets&quot;}
+  foreach ($SnippetFile in $SnippetFiles) {
+     Write-Host &quot;&quot;
+     $Title = Select-Xml -Path $SnippetFile.FullName -Namespace $SnippetNamespace -XPath &quot;//x:Title&quot; |
+       ForEach-Object {$_.Node.InnerXml}
+     $Text = Select-Xml -Path $SnippetFile.FullName -Namespace $SnippetNamespace -XPath &quot;//x:Script&quot; |
+       ForEach-Object {$_.Node.InnerText}
+     Write-Host &quot;Title: $Title&quot;
+     Write-Host &quot;Text: $Text&quot;
+   }
+}
+</code></pre>
+<pre><code class="language-Output">Title: Mandatory
+Text:
+param
+(
+  [Parameter(Mandatory=True)]
+  [string[]]
+  $&lt;ParameterName&gt;
+)
+
+Title: Copyright
+Text:  (c) Fabrikam, Inc. 2012
+</code></pre>
+<h3>例4:セッション中のすべてのスニッペットのタイトルと説明を表示します.</h3>
+<p>この例では,内蔵のスニッペット,ユーザー定義のスニッペット,輸入のスニッペットを含むセッション中のすべてのスニッペットのタイトルと説明が表示されます.</p>
+<pre><code class="language-powershell">$psISE.CurrentPowerShellTab.Snippets | Format-Table DisplayTitle, Description
+</code></pre>
+<p><code>$psISE</code>Windows PowerShell ISE ホストプログラムを表しています. 変数の <strong>CurrentPowerShellTab</strong> 属性です.<code>$psISE</code>変数は現在のセッションを表しています. <strong>Snippets</strong>属性は,現在のセッションのスニッペットを表しています.</p>
+<p><code>$psISE.CurrentPowerShellTab.Snippets</code>命令は,微軟.PowerShell.Host.ISE.ISESnippet**オブジェクトを返して, snippet を表示する.<code>Get-IseSnippet</code>cmdlet. <code>Get-IseSnippet</code>ファイルオブジェクト (System.Io.FileInfo) を返却するので,スニペットファイルを表します.</p>
+<p><code>Format-Table</code>cmdlet は,表内のスニペットの <strong>DisplayTitle</strong> と <strong>Description</strong> 属性を表示します.</p>
+<h2>パラメータは</h2>
+<h3>共通パラメーター</h3>
+<p>このcmdletは,共通パラメータをサポートしています: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable.詳細については, <a href="を参照してください.https://go.microsoft.com/fwlink/?LinkID=113216">about_CommonParameters</a> でした.</p>
+<h2>輸入は</h2>
+<h3>どれもない</h3>
+<p>このcmdletに物体をパイプすることはできません.</p>
+<h2>輸出は</h2>
+<h3>System.IO.FileInfo について</h3>
+<p>このcmdletは,スニペットファイルを表示するファイルオブジェクトを返します.</p>
+<h2>NOTES  記事ができました.</h2>
+<ul>
+<li>
+<ul>
+<li><code>New-IseSnippet</code>cmdlet は未署名でユーザー作成した新しいスニッペットを保存します.<code>.ps1xml</code>Windows PowerShell は,実行ポリシーが <strong>AllSigned</strong> または <strong>Restricted</strong> のセッションに追加することはできません. <strong>Restricted</strong> または <strong>AllSigned</strong> のセッションでは,未署名ユーザー作成したスニペットを作成,取得,輸入することができますが,セッションで使用することはできません.</li>
+</ul>
+</li>
+</ul>
+<p>署名されていないユーザー作成のスニッペットを使用するには,<code>Get-IseSnippet</code>cmdlet が返して実行ポリシーを変更し,Windows PowerShell ISE を再起動します.</p>
+<p>Windows PowerShell実行ポリシーに関する詳細については, [about_Execution_Policies] (../Microsoft.PowerShell.Core/About/about_Execution_Policies.md) を参照してください.</p>
+<h2>関連リンク</h2>
+<p><a href="New-IseSnippet.md">New-IseSnippet</a> </p>
+<p><a href="Import-IseSnippet.md を輸入する">Import-IseSnippet</a></p></section><section class="en-original"><pre class="source-original"># Get-IseSnippet
+
+## SYNOPSIS
+Gets snippets that the user created.
+
+## SYNTAX
+
+```
+Get-IseSnippet [&lt;CommonParameters&gt;]
+```
+
+## DESCRIPTION
+
+The `Get-IseSnippet` cmdlet gets the PS1XML files that contain reusable text snippets that the user
+created. It works only in Windows PowerShell Integrated Scripting Environment (ISE).
+
+When you use the `New-IseSnippet` cmdlet to create a snippet, `New-IseSnippet` creates a
+`&lt;SnippetTitle&gt;.Snippets.ps1xml` file in the `$HOME\Documents\WindowsPowerShell\Snippets` directory.
+`Get-IseSnippet` gets the snippet files in the Snippets directory.
+
+This cmdlet does not get built-in snippets or snippets that are imported from modules through the
+`Import-IseSnippet` cmdlet.
+
+This cmdlet was introduced in Windows PowerShell 3.0.
+
+## EXAMPLES
+
+### Example 1: Get all user-defined snippets
+
+This example gets all user-define snippets in the Snippets directory.
+
+```powershell
+Get-IseSnippet
+```
+
+### Example 2: Copy all user-defined snippets from remote computers to a shared directory
+
+This example copies all of the user-created snippets from a group of remote computers to a shared
+Snippets directory.
+
+```powershell
+Invoke-Command -Computer (Get-Content Servers.txt) -ScriptBlock {
+    Get-IseSnippet | Copy-Item -Destination \\Server01\Share01\Snippets
+}
+```
+
+`Invoke-Command` runs `Get-IseSnippet` on the computers in the `Servers.txt` file. A pipeline
+operator (`|`) sends the snippet files to the `Copy-Item` cmdlet, which copies them to the directory
+that is specified by the **Destination** parameter.
+
+### Example 3: Display the title and text of each snippet on a local computer
+
+This example uses the `Get-IseSnippet` and `Select-Xml` cmdlets to display the title and text of
+each snippet on the local computer.
+
+```powershell
+#Parse-Snippet Function
+function Parse-Snippet {
+  $SnippetFiles = Get-IseSnippet
+  $SnippetNamespace = @{x=&quot;http://schemas.microsoft.com/PowerShell/Snippets&quot;}
+  foreach ($SnippetFile in $SnippetFiles) {
+     Write-Host &quot;&quot;
+     $Title = Select-Xml -Path $SnippetFile.FullName -Namespace $SnippetNamespace -XPath &quot;//x:Title&quot; |
+       ForEach-Object {$_.Node.InnerXml}
+     $Text = Select-Xml -Path $SnippetFile.FullName -Namespace $SnippetNamespace -XPath &quot;//x:Script&quot; |
+       ForEach-Object {$_.Node.InnerText}
+     Write-Host &quot;Title: $Title&quot;
+     Write-Host &quot;Text: $Text&quot;
+   }
+}
+```
+
+```Output
+Title: Mandatory
+Text:
+param
+(
+  [Parameter(Mandatory=True)]
+  [string[]]
+  $&lt;ParameterName&gt;
+)
+
+Title: Copyright
+Text:  (c) Fabrikam, Inc. 2012
+```
+
+### Example 4: Display the title and description of all snippets in the session
+
+This example displays the title and description of all snippets in the session, including built-in
+snippets, user-defined snippets, and imported snippets.
+
+```powershell
+$psISE.CurrentPowerShellTab.Snippets | Format-Table DisplayTitle, Description
+```
+
+The `$psISE` variable represents the Windows PowerShell ISE host program. The
+**CurrentPowerShellTab** property of the `$psISE` variable represent the current session. The
+**Snippets** property represents snippets in the current session.
+
+The `$psISE.CurrentPowerShellTab.Snippets` command returns a
+**Microsoft.PowerShell.Host.ISE.ISESnippet** object that represents a snippet, unlike the
+`Get-IseSnippet` cmdlet. `Get-IseSnippet` returns a file object (System.Io.FileInfo) that represents
+a snippet file.
+
+The `Format-Table` cmdlet displays the **DisplayTitle** and **Description** properties of the
+snippets in a table.
+
+## PARAMETERS
+
+### CommonParameters
+
+This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable,
+-InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose,
+-WarningAction, and -WarningVariable. For more information, see
+[about_CommonParameters](https://go.microsoft.com/fwlink/?LinkID=113216).
+
+## INPUTS
+
+### None
+
+You can&#x27;t pipe objects to this cmdlet.
+
+## OUTPUTS
+
+### System.IO.FileInfo
+
+This cmdlet returns a file object representing the snippet file.
+
+## NOTES
+
+- The `New-IseSnippet` cmdlet stores new user-created snippets in unsigned `.ps1xml` files. As such,
+  Windows PowerShell cannot add them to a session in which the execution policy is **AllSigned** or
+  **Restricted**. In a **Restricted** or **AllSigned** session, you can create, get, and import
+  unsigned user-created snippets, but you cannot use them in the session.
+
+  To use unsigned user-created snippets that the `Get-IseSnippet` cmdlet returns, change the
+  execution policy, and then restart Windows PowerShell ISE.
+
+  For more information about Windows PowerShell execution policies, see
+  [about_Execution_Policies](../Microsoft.PowerShell.Core/About/about_Execution_Policies.md).
+
+## RELATED LINKS
+
+[New-IseSnippet](New-IseSnippet.md)
+
+[Import-IseSnippet](Import-IseSnippet.md)</pre></section>

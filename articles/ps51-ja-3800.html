@@ -1,0 +1,851 @@
+<!doctype html><meta charset="utf-8"><section class="jp-official"><h1>コンピュータを再起動する</h1>
+<h2>SYNOPSISは,ローカル・コンピュータとリモート・コンピュータのオペレーティング・システムを再起動します.</h2>
+<h2>SYNTAX</h2>
+<h3>デフォルトセット (デフォルト)</h3>
+<pre><code>Restart-Computer [-DcomAuthentication &lt;AuthenticationLevel&gt;]
+ [-Impersonation &lt;ImpersonationLevel&gt;]  [-WsmanAuthentication &lt;String&gt;]
+ [-Protocol &lt;String&gt;] [[-ComputerName] &lt;String[]&gt;]
+ [[-Credential] &lt;PSCredential&gt;] [-Force] [-Wait] [-Timeout &lt;Int32&gt;]
+ [-For &lt;WaitForServiceTypes&gt;]  [-Delay &lt;Int16&gt;] [-WhatIf] [-Confirm]
+ [&lt;CommonParameters&gt;]
+</code></pre>
+<h3>職種として</h3>
+<pre><code>Restart-Computer [-AsJob] [-DcomAuthentication &lt;AuthenticationLevel&gt;]
+ [-Impersonation &lt;ImpersonationLevel&gt;] [[-ComputerName] &lt;String[]&gt;]
+ [[-Credential] &lt;PSCredential&gt;] [-Force] [-ThrottleLimit &lt;Int32&gt;] [-WhatIf]
+ [-Confirm] [&lt;CommonParameters&gt;]
+</code></pre>
+<h2>記述は,</h2>
+<p><code>Restart-Computer</code>cmdlet は,ローカル・コンピュータとリモート・コンピュータのオペレーティング・システムを再起動します.</p>
+<p>のパラメータを使用できます.<code>Restart-Computer</code>背景の仕事として再起動操作を実行し,認証レベルと代替認証情報を指定し,同時に実行する操作を制限し,即座再起動を強制する.</p>
+<p>Windows PowerShell 3.0 から起動すると,次のコマンドを実行する前に再起動が完了するまで待つことができます.待ち時間とクエリ間隔を指定し,再起動されたコンピュータに特定のサービスが利用可能になるのを待つことができます.この機能により,利用可能な  を実行できます.<code>Restart-Computer</code>スクリプトや関数についてです.</p>
+<p>コンピュータを再起動するにはWS-Management (WSMan) プロトコルを使用できます.例えば,企業ファイアウォールによって,DCOM (分布式構成要素オブジェクトモデル) 呼び出しがブロックされている場合.詳細については, [WS-Management Protocol] (/windows/desktop/WinRM/ws-management-protocol) を参照してください.</p>
+<p>このcmdletでは,コマンドで <strong>AsJob</strong>パラメータを使用するときにのみ Windows PowerShell リモート処理が必要となります.</p>
+<h2>例えは,</h2>
+<h3>例1:ローカルコンピュータを再起動する</h3>
+<p><code>Restart-Computer</code>ローカルコンピュータを再起動します.</p>
+<pre><code class="language-powershell">Restart-Computer
+</code></pre>
+<h3>例2:複数のコンピュータを再起動する</h3>
+<p><code>Restart-Computer</code>リモート・およびローカル・コンピュータを再起動できます. <strong>ComputerName</strong> パラメータは,コンピュータ名前の配列を受け入れます.</p>
+<pre><code class="language-powershell">Restart-Computer -ComputerName Server01, Server02, localhost
+</code></pre>
+<h3>例3: コンピュータをバックグラウンドワークとして再起動する</h3>
+<p>これらのコマンドは,  を実行します.<code>Restart-Computer</code>命令は,2つのリモートコンピュータのバックグラウンド作業として実行され,結果が得られます.</p>
+<p><strong>AsJob</strong>は,ローカルコンピュータで仕事を作成し,自動的にローカルコンピュータに結果を返してしまって,実行できます.<code>Receive-Job</code>ローカルコマンドとして.</p>
+<pre><code class="language-powershell">$Job = Restart-Computer -ComputerName &quot;Server01&quot;, &quot;Server02&quot; -AsJob
+$Job | Receive-Job
+</code></pre>
+<p><code>Restart-Computer</code><strong>ComputerName</strong>を用い, <strong>Server01</strong> と <strong>Server02</strong>を指定する. <strong>AsJob</strong>のパラメータは,コマンドを背景の仕事として実行する. 作業オブジェクトは,  に保存されます.<code>$Job</code> 変数<code>$Job</code>管道を通って送られてきます.<code>Receive-Job</code>cmdletで結果が得られます.</p>
+<h3>例4: リモートコンピュータを再起動する</h3>
+<p><code>Restart-Computer</code>リモートコンピュータをリモート起動して,カスタマイズされた偽装と認証設定で起動します.</p>
+<pre><code class="language-powershell">Restart-Computer -ComputerName Server01 -Impersonation Anonymous -DcomAuthentication PacketIntegrity
+</code></pre>
+<p><code>Restart-Computer</code><strong>Server01</strong>を指定するために <strong>ComputerName</strong>パラメータを使用します. <strong>Impersonation</strong>パラメータは,リクエストのアイデンティティを隠すために匿名を指定します. <strong>DcomAuthentication</strong>パラメータは,接続の認証レベルとしてPacketIntegrityを指定します.</p>
+<h3>例5:テキストファイルにリストされているコンピュータの強制再起動</h3>
+<p>この例では,  に記載されているコンピュータを直ちに再起動させる.<code>Domain01.txt</code>テキストファイルからコンピュータの名前が変数に保存されます. <strong>Force</strong> パラメータは即座にリセットアップを強制し, <strong>ThrottleLimit</strong> パラメータは同時接続数を制限します.</p>
+<pre><code class="language-powershell">$Names = Get-Content -Path C:\Domain01.txt
+$Creds = Get-Credential
+Restart-Computer -ComputerName $Names -Credential $Creds -Force -ThrottleLimit 10
+</code></pre>
+<p><code>Get-Content</code><strong>Path</strong>パラメータを使用して,テキストファイル, <strong>Domain01.txt</strong> からコンピュータ名リストを取得します.コンピュータ名々は変数  で保存されます.<code>$Names</code>  <code>Get-Credential</code>ユーザー名とパスワードを提示し,変数内の値を保存します.<code>$Creds</code>  <code>Restart-Computer</code><strong>ComputerName</strong>と <strong>Credential</strong>のパラメータを変数とともに使用する. <strong>Force</strong>のパラメータは,各コンピュータの即座再起動を促す. <strong>ThrottleLimit</strong>のパラメータは,コマンドを10つの同時接続に制限する.</p>
+<h3>例6: リモートコンピュータを再起動してPowerShellを待って下さい.</h3>
+<p><code>Restart-Computer</code>リモートコンピュータを再起動し,再起動したコンピュータにPowerShellが利用可能になるまで5分 (300秒) 待ちます.</p>
+<pre><code class="language-powershell">Restart-Computer -ComputerName Server01 -Wait -For PowerShell -Timeout 300 -Delay 2
+</code></pre>
+<p><code>Restart-Computer</code><strong>ComputerName</strong>パラメータは, <strong>Server01</strong>を指定する. <strong>Wait</strong>パラメータは,再起動が完了するまで待つ. <strong>For</strong>は,PowerShell がリモートコンピュータでコマンドを実行できることを指定する. <strong>Timeout</strong>パラメータは,5分間の待機を指定する. <strong>Delay</strong>パラメータは,リモートコンピュータを2秒ごとにクエリして,再起動かどうかを判断する.</p>
+<h3>例7:WSManプロトコルを使ってコンピュータを再起動する</h3>
+<p><code>Restart-Computer</code>デフォルトのDCOMではなくWSManプロトコルを使用してリモートコンピュータを再起動します.Kerberos認証は,現在のユーザーがリモートコンピュータを再起動する許可があるかどうかを決定します.</p>
+<p>これらの設定は,DCOMがブロックされたため,DCOMベースのリスタートが失敗する企業向けに設計されています.例えば,ファイアウォールによって.</p>
+<pre><code class="language-powershell">Restart-Computer -ComputerName Server01 -Protocol WSMan -WsmanAuthentication Kerberos
+</code></pre>
+<p><code>Restart-Computer</code><strong>ComputerName</strong>を使ってリモートコンピュータ, <strong>Server01</strong>を指定する. <strong>Protocol</strong>のパラメータはWSManプロトコルを使用することを指定する. <strong>WsmanAuthentication</strong>のパラメータは認証方法を <strong>Kerberos</strong>として指定する.</p>
+<h2>パラメータは</h2>
+<h3>- バイトとして</h3>
+<p>を示しています.<code>Restart-Computer</code>背景の仕事として実行します.</p>
+<p>このパラメータを使用するには,ローカル・コンピュータとリモート・コンピュータはリモート・コンピュータに設定する必要があります.Windows VistaおよびWindowsオペレーティングシステムの後バージョンでは,管理者として実行する**オプションを使用してPowerShellを開く必要があります.詳細については, [about_Remote_Requirements] (/Microsoft.PowerShell.Core/About/about_Remote_Requirements.md) を参照してください.</p>
+<p><strong>AsJob</strong>パラメータを指定すると,コマンドは,バックグラウンドの仕事を代表するオブジェクトをすぐに返します.作業が完了する間,セッションで作業を続けることができます.作業はローカルコンピュータで作成され,リモートコンピュータからの結果は自動的にローカルコンピュータに返されます.作業を管理するには, <strong>Job</strong> cmdlet を使用します.作業結果を入手するには,  を使用します.<code>Receive-Job</code>cmdletです.</p>
+<p>Windows PowerShell の背景の仕事に関する詳細については, [<em>about_Jobs] ([[Microsoft_Microsoft_PowerShell.Core_About_about_Jobs.md</em>) と [about_Remote_Jobs] ([[Microsoft_Microsoft_PowerShell.Core_About_about_Remote_Jobs.md_) を参照してください.</p>
+<pre><code class="language-yaml">Type: System.Management.Automation.SwitchParameter
+Parameter Sets: AsJobSet
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h1>コンピュータを再起動する</h1>
+<h3>-コンピュータ名</h3>
+<p>コンピュータ名または komma別数列のコンピュータ名を指定します. <code>Restart-Computer</code><strong>ComputerName</strong>はパイプラインや変数からのオブジェクトを受け入れます.</p>
+<p>遠隔コンピュータの NetBIOS 名前,IP アドレス,または完全認証ドメイン名を入力してください.ローカルコンピュータを指定するには,コンピュータの名前,ドット  を入力してください.<code>.</code>,またはローカルホスト.</p>
+<p>このパラメータはPowerShellのリモート操作に依存しません.コンピュータがリモートコマンドを実行するように設定されていない場合でも, <strong>ComputerName</strong>パラメータを使用できます.</p>
+<p><strong>ComputerName</strong>のパラメータが指定されていない場合は,<code>Restart-Computer</code>ローカルコンピュータをリセットします.</p>
+<pre><code class="language-yaml">Type: System.String[]
+Parameter Sets: (All)
+Aliases: CN, __SERVER, Server, IPAddress
+
+Required: False
+Position: 0
+Default value: None
+Accept pipeline input: True (ByPropertyName, ByValue)
+Accept wildcard characters: False
+</code></pre>
+<h3>- 信用証</h3>
+<p>このアクションを行う許可があるユーザーアカウントを指定します.デフォルトは現在のユーザーです.</p>
+<p><strong>User01</strong>や <strong>Domain01\User01</strong>のようなユーザー名を入力するか,PSCredential**オブジェクトを入力してください.<code>Get-Credential</code>cmdlet.ユーザー名を入力すると,パスワードを入力するよう求められます.</p>
+<p>認証は [PSCredential] (/dotnet/api/system.management.automation.pscredential) オブジェクトに保存され,パスワードは [SecureString] ((/dotnet/api/system.security.securestring) として保存されます.</p>
+<p>[!注] &gt;SecureStringのデータ保護に関する詳細については, [How secure is SecureString?] を参照してください.</p>
+<pre><code class="language-yaml">Type: System.Management.Automation.PSCredential
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: 1
+Default value: Current user
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-DcomAuthentication</h3>
+<p>WMI接続に使用される認証レベルを指定します. <code>Restart-Computer</code>WMIを使用しています.</p>
+<p>有効な値は以下の通りです.</p>
+<p><strong>Call</strong>:コールレベルCOM認証 - <strong>Connect</strong>:Connect-level COM認証 - <strong>Default</strong>: Windows認証 - <strong>None</strong>:No COM認証 - <strong>Packet</strong>:Packet-level COM認証. - <strong>PacketIntegrity</strong>:Packet Integrity-level COM認証 - <strong>PacketPrivacy</strong>:Packet Privacy-level COM認証. - <strong>Unchanged</strong>:認証レベルは前のコマンドと同じです.</p>
+<p>詳細については,[認証レベル表] (/dotnet/api/system.management.authenticationlevel) を参照してください.</p>
+<p>このパラメータはWindows PowerShell 3.0で導入されています.</p>
+<pre><code class="language-yaml">Type: System.Management.AuthenticationLevel
+Parameter Sets: (All)
+Aliases: Authentication
+Accepted values: Default, None, Connect, Call, Packet, PacketIntegrity, PacketPrivacy, Unchanged
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-遅延</h3>
+<p>PowerShellは<strong>For</strong>パラメータで指定されたサービスを查询し,コンピュータを再起動した後,サービスが利用可能かどうかを判断します.</p>
+<p>このパラメータは <strong>Wait</strong> と <strong>For</strong> のパラメータとともに有効である.</p>
+<p>このパラメータはWindows PowerShell 3.0で導入されました.</p>
+<p><strong>Delay</strong>パラメータが指定されていない場合は,<code>Restart-Computer</code>5秒遅延を使用します.</p>
+<pre><code class="language-yaml">Type: System.Int16
+Parameter Sets: DefaultSet
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-Forについて</h3>
+<p>パワーシェルの動作を指定します.このパラメータは,コンピュータを再起動した後,指定されたサービスまたは機能が利用可能になるのを待つためです.このパラメータは <strong>Wait</strong>パラメータのみで有効です.</p>
+<p>このパラメータの受け入れられる値は:</p>
+<ul>
+<li><strong>デフォルト</strong>:PowerShellが再起動するのを待っている. - <strong>PowerShell</strong>: パソコンのPowerShellリモートセッションでコマンドを実行できます. - <strong>WMI</strong>:コンピュータの <strong>Win32_ComputerSystem</strong>クエリに返事を受信します. - <strong>WinRM</strong>: WS-Management を使用してコンピュータにリモートセッションを設定できます.</li>
+</ul>
+<p>このパラメータはWindows PowerShell 3.0で導入されました.</p>
+<pre><code class="language-yaml">Type: Microsoft.PowerShell.Commands.WaitForServiceTypes
+Parameter Sets: DefaultSet
+Aliases:
+Accepted values: Wmi, WinRM, PowerShell
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-フォース</h3>
+<p>コンピューターを即座に再起動させる.</p>
+<pre><code class="language-yaml">Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases: f
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-イマントレーション</h3>
+<p>このcmdletでWMIを呼び出すために使用する偽装レベルを指定します. <code>Restart-Computer</code>このパラメータの受け入れられる値は:</p>
+<p><strong>デフォルト</strong>:デフォルトの偽装.名前にもかかわらず,これはデフォルト値ではありません. - <strong>匿名</strong>:呼び手の身分を隠します. - <strong>識別</strong>:オブジェクトが呼び手の認証を查询できるようにします. - <strong>偽装</strong>:オブジェクトが呼び手の認証を使用できるようにします.</p>
+<pre><code class="language-yaml">Type: System.Management.ImpersonationLevel
+Parameter Sets: (All)
+Aliases:
+Accepted values: Default, Anonymous, Identify, Impersonate, Delegate
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>- 議定書</h3>
+<p>コンピュータを再起動するためにどのプロトコルを使用するか指定します.有効値は <strong>WSMan</strong>と <strong>DCOM</strong>です.</p>
+<p>このパラメータはWindows PowerShell 3.0で導入されています.</p>
+<pre><code class="language-yaml">Type: System.String
+Parameter Sets: DefaultSet
+Aliases:
+Accepted values: DCOM, WSMan
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-ThrottleLimit</h3>
+<p>このコマンドを実行するために設定できる最大限の同時接続数を指定します.  制限は,セッションやコンピュータにではなく,現在のコマンドにのみ適用されます.</p>
+<p><strong>ThrottleLimit</strong>パラメータが指定されていない場合,または0の値が使用されている場合,<code>Restart-Computer</code>最大32つの同時接続を使用します.</p>
+<pre><code class="language-yaml">Type: System.Int32
+Parameter Sets: AsJobSet
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-タイムアウト</h3>
+<p>待ち時間の期間を秒で指定します.タイムアウトが経過すると,<code>Restart-Computer</code>コンピュータが再起動していない場合でも,コマンドプロンプトに戻ります.</p>
+<p><strong>Timeout</strong>パラメータは <strong>Wait</strong>パラメータでのみ有効です. <strong>Timeout</strong>は <strong>Wait</strong>パラメータの無期限待機期間を覆します.</p>
+<p>このパラメータはWindows PowerShell 3.0で導入されました.</p>
+<pre><code class="language-yaml">Type: System.Int32
+Parameter Sets: DefaultSet
+Aliases: TimeoutSec
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h1>コンピュータを再起動する</h1>
+<h3>- 待って下さい</h3>
+<p><code>Restart-Computer</code>PowerShell プロンプトを抑制し,コンピュータが再起動するまでパイプラインをブロックします.このパラメータをスクリプトでコンピュータを再起動するために使用し,再起動が完了したら処理を続けることができます.</p>
+<p><strong>Wait</strong>パラメータは,コンピュータが再起動するのを,無期限に待っている.あなたは <strong>Timeout</strong>を使用して,タイムと <strong>For</strong>と <strong>Delay</strong>パラメータを調整し,再起動されたコンピュータで特定のサービスが利用可能になるのを待つことができます.</p>
+<p><strong>Wait</strong>パラメータは,ローカルコンピュータを再起動する際に有効ではありません. <strong>ComputerName</strong>パラメータの値は,リモートコンピュータとローカルコンピュータの名前を含んでいる場合,<code>Restart-Computer</code>ローカルコンピュータで <strong>Wait</strong> を終了しないエラーを生成しますが,リモートコンピュータが再起動するのを待つのです.</p>
+<p>このパラメータはWindows PowerShell 3.0で導入されました.</p>
+<pre><code class="language-yaml">Type: System.Management.Automation.SwitchParameter
+Parameter Sets: DefaultSet
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-WsmanAuthentication について</h3>
+<p>ユーザー認証を認証するために使用されるメカニズムを指定します.このパラメータはWindows PowerShell 3.0で導入されました.</p>
+<p>このパラメータの受け入れられる値は, <strong>Basic</strong>, <strong>CredSSP</strong>, <strong>Default</strong>, <strong>Digest</strong>, <strong>Kerberos</strong>, <strong>Negotiate</strong>です.</p>
+<p>詳細については, [認証メカニズム] (xref:システム・管理・自動化・ランススペース・認証メカニズム) を参照してください.</p>
+<p>認証されるユーザー認証は,認証されるリモートコンピュータに転送される.このメカニズムは,リモートネットワークシェアにアクセスなどの複数のリソースで認証を要求するコマンドに設計されています.このメカニズムは,リモートネットワークシェアへのアクセスを高める.このリモートコンピュータが攻撃を受けると,そのリモートコンピュータに転送される認証は,ネットワークセッションを制御するために使用できます.</p>
+<pre><code class="language-yaml">Type: System.String
+Parameter Sets: DefaultSet
+Aliases:
+Accepted values: Basic, CredSSP, Default, Digest, Kerberos, Negotiate
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-確認する</h3>
+<p>実行する前に確認を提示します.<code>Restart-Computer</code> .</p>
+<pre><code class="language-yaml">Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases: cf
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>-WhatIf</h3>
+<p>が起こったらどうなるか示しています.<code>Restart-Computer</code>ランスです.<code>Restart-Computer</code>cmdlet は実行されていません.</p>
+<pre><code class="language-yaml">Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases: wi
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+</code></pre>
+<h3>共通パラメーター</h3>
+<p>このcmdletは,共通パラメータをサポートしています: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable.詳細については, <a href="を参照してください.https://go.microsoft.com/fwlink/?LinkID=113216">about_CommonParameters</a> でした.</p>
+<h2>輸入は</h2>
+<h3>System.String でした.</h3>
+<p>このcmdletにコンピュータ名を含む文字列をパイプすることができます.</p>
+<h2>輸出は</h2>
+<h3>どれもない</h3>
+<p>デフォルトでは,このcmdletは出力返さない.</p>
+<h3>システム管理自動化 遠隔作業の仕事です.</h3>
+<p><strong>AsJob</strong>パラメータを使用すると,このcmdletは,仕事オブジェクトを返します.</p>
+<h2>NOTES  記事ができました.</h2>
+<ul>
+<li>Windowsでは,<code>Restart-Computer</code>[Win32_OperatingSystem] (/windows/desktop/CIMWin32Prov/win32shutdown-method-in-class-win32-operatingsystem) [Win32_OperatingSystem] (/windows/desktop/CIMWin32Prov/win32-operatingsystem) クラス.この方法は,マシンを再起動するために使用されるユーザーアカウントにSeShutdownPrivilege**の特権が有効になっていることを要求します.</li>
+</ul>
+<p>Windows PowerShell 2.0では,リモートコンピュータを再起動または停止する際に <strong>AsJob</strong> パラメータが信頼に適さない.Windows PowerShell 3.0では,この問題を解決するために実装が変更されます.</p>
+<h2>関連リンク</h2>
+<p><a href="/windows/desktop/WinRM/about-windows-remote-management">Windows リモート管理について</a></p>
+<p><a href="../Microsoft.PowerShell.Security/Get-Credential.md">Get-Credential</a> について</p>
+<p><a href="/windows/desktop/WinRM/ws-management-protocol">WS-Management Protocol</a> について</p></section><section class="en-original"><pre class="source-original"># Restart-Computer
+
+## SYNOPSIS
+Restarts the operating system on local and remote computers.
+
+## SYNTAX
+
+### DefaultSet (Default)
+
+```
+Restart-Computer [-DcomAuthentication &lt;AuthenticationLevel&gt;]
+ [-Impersonation &lt;ImpersonationLevel&gt;]  [-WsmanAuthentication &lt;String&gt;]
+ [-Protocol &lt;String&gt;] [[-ComputerName] &lt;String[]&gt;]
+ [[-Credential] &lt;PSCredential&gt;] [-Force] [-Wait] [-Timeout &lt;Int32&gt;]
+ [-For &lt;WaitForServiceTypes&gt;]  [-Delay &lt;Int16&gt;] [-WhatIf] [-Confirm]
+ [&lt;CommonParameters&gt;]
+```
+
+### AsJobSet
+
+```
+Restart-Computer [-AsJob] [-DcomAuthentication &lt;AuthenticationLevel&gt;]
+ [-Impersonation &lt;ImpersonationLevel&gt;] [[-ComputerName] &lt;String[]&gt;]
+ [[-Credential] &lt;PSCredential&gt;] [-Force] [-ThrottleLimit &lt;Int32&gt;] [-WhatIf]
+ [-Confirm] [&lt;CommonParameters&gt;]
+```
+
+## DESCRIPTION
+
+The `Restart-Computer` cmdlet restarts the operating system on the local and remote computers.
+
+You can use the parameters of `Restart-Computer` to run the restart operations as a background job,
+to specify the authentication levels and alternate credentials, to limit the operations that run at
+the same time, and to force an immediate restart.
+
+Starting in Windows PowerShell 3.0, you can wait for the restart to complete before you run the next
+command. Specify a waiting time-out and query interval, and wait for particular services to be
+available on the restarted computer. This feature makes it practical to use `Restart-Computer` in
+scripts and functions.
+
+You can use the WS-Management (WSMan) protocol to restart the computer, in case Distributed
+Component Object Model (DCOM) calls are blocked, such as by an enterprise firewall. For more
+information, see [WS-Management Protocol](/windows/desktop/WinRM/ws-management-protocol).
+
+This cmdlet requires Windows PowerShell remoting only when you use the **AsJob** parameter in a
+command.
+
+## EXAMPLES
+
+### Example 1: Restart the local computer
+
+`Restart-Computer` restarts the local computer.
+
+```powershell
+Restart-Computer
+```
+
+### Example 2: Restart multiple computers
+
+`Restart-Computer` can restart remote and local computers. The **ComputerName** parameter accepts an
+array of computer names.
+
+```powershell
+Restart-Computer -ComputerName Server01, Server02, localhost
+```
+
+### Example 3: Restart computers as a background job
+
+These commands run a `Restart-Computer` command as a background job on two remote computers, and
+then get the results.
+
+Because **AsJob** creates the job on the local computer and automatically returns the results to the
+local computer, you can run `Receive-Job` as a local command.
+
+```powershell
+$Job = Restart-Computer -ComputerName &quot;Server01&quot;, &quot;Server02&quot; -AsJob
+$Job | Receive-Job
+```
+
+`Restart-Computer` uses the **ComputerName** parameter to specify **Server01** and **Server02**. The
+**AsJob** parameter runs the command as a background job. The job object is stored in the `$Job`
+variable. `$Job` is sent down the pipeline to the `Receive-Job` cmdlet that gets the results.
+
+### Example 4: Restart a remote computer
+
+`Restart-Computer` restarts a remote computer with customized impersonation and authentication
+settings.
+
+```powershell
+Restart-Computer -ComputerName Server01 -Impersonation Anonymous -DcomAuthentication PacketIntegrity
+```
+
+`Restart-Computer` uses the **ComputerName** parameter to specify **Server01**. The
+**Impersonation** parameter specifies Anonymous to hide the requester&#x27;s identity. The
+**DcomAuthentication** parameter specifies PacketIntegrity as the connection&#x27;s authentication level.
+
+### Example 5: Force restart of computers listed in a text file
+
+This example forces an immediate restart of the computers listed in the `Domain01.txt` file. The
+computer names from the text file are stored in a variable. The **Force** parameter forces an
+immediate restart and the **ThrottleLimit** parameter limits the number of concurrent connections.
+
+```powershell
+$Names = Get-Content -Path C:\Domain01.txt
+$Creds = Get-Credential
+Restart-Computer -ComputerName $Names -Credential $Creds -Force -ThrottleLimit 10
+```
+
+`Get-Content` uses the **Path** parameter to get a list of computer names from a text file,
+**Domain01.txt**. The computer names are stored in the variable `$Names`. `Get-Credential` prompts
+you for a username and password and stores the values in the variable `$Creds`. `Restart-Computer`
+uses the **ComputerName** and **Credential** parameters with their variables. The **Force**
+parameter causes an immediate restart of each computer. The **ThrottleLimit** parameter limits the
+command to 10 concurrent connections.
+
+### Example 6: Restart a remote computer and wait for PowerShell
+
+`Restart-Computer` restarts the remote computer and then waits up to 5 minutes (300 seconds) for
+PowerShell to become available on the restarted computer before it continues.
+
+```powershell
+Restart-Computer -ComputerName Server01 -Wait -For PowerShell -Timeout 300 -Delay 2
+```
+
+`Restart-Computer` uses the **ComputerName** parameter to specify **Server01**. The **Wait**
+parameter waits for the restart to finish. The **For** specifies that PowerShell can run commands on
+the remote computer. The **Timeout** parameter specifies a five-minute wait. The **Delay** parameter
+queries the remote computer every two seconds to determine whether it&#x27;s restarted.
+
+### Example 7: Restart a computer by using the WSMan Protocol
+
+`Restart-Computer` restarts the remote computer by using the WSMan protocol instead of the default,
+DCOM. Kerberos authentication determines whether the current user has permission to restart the
+remote computer.
+
+These settings are designed for enterprises in which DCOM-based restarts fail because DCOM is
+blocked. For example, by a firewall.
+
+```powershell
+Restart-Computer -ComputerName Server01 -Protocol WSMan -WsmanAuthentication Kerberos
+```
+
+`Restart-Computer` uses the **ComputerName** parameter to specify the remote computer, **Server01**.
+The **Protocol** parameter specifies to use the WSMan protocol. The **WsmanAuthentication**
+parameter specifies the authentication method as **Kerberos**.
+
+## PARAMETERS
+
+### -AsJob
+
+Indicates that `Restart-Computer` runs as a background job.
+
+To use this parameter, the local and remote computers must be configured for remoting. On Windows
+Vista and later versions of the Windows operating system, you must open PowerShell by using the
+**Run as Administrator** option. For more information, see [about_Remote_Requirements](../Microsoft.PowerShell.Core/About/about_Remote_Requirements.md).
+
+When you specify the **AsJob** parameter, the command immediately returns an object that represents
+the background job. You can continue to work in the session while the job finishes. The job is
+created on the local computer and the results from remote computers are automatically returned to
+the local computer. To manage the job, use the **Job** cmdlets. To get the job results, use the
+`Receive-Job` cmdlet.
+
+For more information about Windows PowerShell background jobs, see [about_Jobs](../Microsoft.PowerShell.Core/About/about_Jobs.md)
+and [about_Remote_Jobs](../Microsoft.PowerShell.Core/About/about_Remote_Jobs.md).
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: AsJobSet
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+# Restart-Computer
+
+### -ComputerName
+
+Specifies one computer name or a comma-separated array of computer names. `Restart-Computer` accepts
+**ComputerName** objects from the pipeline or variables.
+
+Type the NetBIOS name, an IP address, or a fully qualified domain name of a remote computer. To
+specify the local computer, type the computer name, a dot `.`, or localhost.
+
+This parameter doesn&#x27;t rely on PowerShell remoting. You can use the **ComputerName** parameter even
+if your computer isn&#x27;t configured to run remote commands.
+
+If the **ComputerName** parameter isn&#x27;t specified, `Restart-Computer` restarts the local computer.
+
+```yaml
+Type: System.String[]
+Parameter Sets: (All)
+Aliases: CN, __SERVER, Server, IPAddress
+
+Required: False
+Position: 0
+Default value: None
+Accept pipeline input: True (ByPropertyName, ByValue)
+Accept wildcard characters: False
+```
+
+### -Credential
+
+Specifies a user account that has permission to do this action. The default is the current user.
+
+Type a user name, such as **User01** or **Domain01\User01**, or enter a **PSCredential** object
+generated by the `Get-Credential` cmdlet. If you type a user name, you&#x27;re prompted to enter the
+password.
+
+Credentials are stored in a [PSCredential](/dotnet/api/system.management.automation.pscredential)
+object and the password is stored as a [SecureString](/dotnet/api/system.security.securestring).
+
+&gt; [!NOTE]
+&gt; For more information about **SecureString** data protection, see
+&gt; [How secure is SecureString?](/dotnet/fundamentals/runtime-libraries/system-security-securestring#how-secure-is-securestring).
+
+```yaml
+Type: System.Management.Automation.PSCredential
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: 1
+Default value: Current user
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -DcomAuthentication
+
+Specifies the authentication level that is used for the WMI connection. `Restart-Computer` uses WMI.
+
+Valid values are:
+
+- **Call**:            Call-level COM authentication
+- **Connect**:         Connect-level COM authentication
+- **Default**:         Windows Authentication
+- **None**:            No COM authentication
+- **Packet**:          Packet-level COM authentication.
+- **PacketIntegrity**: Packet Integrity-level COM authentication
+- **PacketPrivacy**:   Packet Privacy-level COM authentication.
+- **Unchanged**:       The authentication level is the same as the previous command.
+
+For more information, see
+[AuthenticationLevel Enumeration](/dotnet/api/system.management.authenticationlevel).
+
+This parameter is introduced in Windows PowerShell 3.0.
+
+```yaml
+Type: System.Management.AuthenticationLevel
+Parameter Sets: (All)
+Aliases: Authentication
+Accepted values: Default, None, Connect, Call, Packet, PacketIntegrity, PacketPrivacy, Unchanged
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Delay
+
+Specifies the frequency of queries, in seconds. PowerShell queries the service specified by the
+**For** parameter to determine whether the service is available after the computer is restarted.
+
+This parameter is valid only together with the **Wait** and **For** parameters.
+
+This parameter was introduced in Windows PowerShell 3.0.
+
+If the **Delay** parameter isn&#x27;t specified, `Restart-Computer` uses a five second delay.
+
+```yaml
+Type: System.Int16
+Parameter Sets: DefaultSet
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -For
+
+Specifies the behavior of PowerShell as it waits for the specified service or feature to become
+available after the computer restarts. This parameter is only valid with the **Wait** parameter.
+
+The acceptable values for this parameter are:
+
+- **Default**: Waits for PowerShell to restart.
+- **PowerShell**: Can run commands in a PowerShell remote session on the computer.
+- **WMI**: Receives a reply to a **Win32_ComputerSystem** query for the computer.
+- **WinRM**: Can establish a remote session to the computer by using WS-Management.
+
+This parameter was introduced in Windows PowerShell 3.0.
+
+```yaml
+Type: Microsoft.PowerShell.Commands.WaitForServiceTypes
+Parameter Sets: DefaultSet
+Aliases:
+Accepted values: Wmi, WinRM, PowerShell
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Force
+
+Forces an immediate restart of the computer.
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases: f
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Impersonation
+
+Specifies the impersonation level that this cmdlet uses to call WMI. `Restart-Computer` uses WMI.
+The acceptable values for this parameter are:
+
+- **Default**: Default impersonation. Despite the name, this isn&#x27;t the default value.
+- **Anonymous**: Hides the identity of the caller.
+- **Identify**: Allows objects to query the credentials of the caller.
+- **Impersonate**: Allows objects to use the credentials of the caller.
+
+```yaml
+Type: System.Management.ImpersonationLevel
+Parameter Sets: (All)
+Aliases:
+Accepted values: Default, Anonymous, Identify, Impersonate, Delegate
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Protocol
+
+Specifies which protocol to use to restart the computers. The valid values are **WSMan** and
+**DCOM**.
+
+This parameter is introduced in Windows PowerShell 3.0.
+
+```yaml
+Type: System.String
+Parameter Sets: DefaultSet
+Aliases:
+Accepted values: DCOM, WSMan
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -ThrottleLimit
+
+Specifies the maximum number of concurrent connections that can be established to run this command.
+The throttle limit applies only to the current command, not to the session or to the computer.
+
+If the **ThrottleLimit** parameter isn&#x27;t specified or a value of 0 is used, `Restart-Computer` uses
+a maximum of 32 concurrent connections.
+
+```yaml
+Type: System.Int32
+Parameter Sets: AsJobSet
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Timeout
+
+Specifies the duration of the wait, in seconds. When the timeout elapses, `Restart-Computer` returns
+to the command prompt, even if the computers aren&#x27;t restarted.
+
+The **Timeout** parameter is only valid with the **Wait** parameter. **Timeout** overrides the
+**Wait** parameter&#x27;s indefinite waiting period.
+
+This parameter was introduced in Windows PowerShell 3.0.
+
+```yaml
+Type: System.Int32
+Parameter Sets: DefaultSet
+Aliases: TimeoutSec
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+# Restart-Computer
+
+### -Wait
+
+`Restart-Computer` suppresses the PowerShell prompt and blocks the pipeline until the computers have
+restarted. You can use this parameter in a script to restart computers and then continue to process
+when the restart is finished.
+
+The **Wait** parameter waits indefinitely for the computers to restart. You can use **Timeout** to
+adjust the timing and the **For** and **Delay** parameters to wait for particular services to become
+available on the restarted computers.
+
+The **Wait** parameter isn&#x27;t valid when you&#x27;re restarting the local computer. If the value of the
+**ComputerName** parameter contains the names of remote computers and the local computer,
+`Restart-Computer` generates a non-terminating error for **Wait** on the local computer, but waits
+for the remote computers to restart.
+
+This parameter was introduced in Windows PowerShell 3.0.
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: DefaultSet
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -WsmanAuthentication
+
+Specifies the mechanism that is used to authenticate the user credentials. This parameter was
+introduced in Windows PowerShell 3.0.
+
+The acceptable values for this parameter are: **Basic**, **CredSSP**, **Default**, **Digest**,
+**Kerberos**, and **Negotiate**.
+
+For more information, see
+[AuthenticationMechanism](xref:System.Management.Automation.Runspaces.AuthenticationMechanism).
+
+&gt; [!WARNING]
+&gt; Credential Security Service Provider (CredSSP) authentication, in which the user credentials are
+&gt; passed to a remote computer to be authenticated, is designed for commands that require
+&gt; authentication on more than one resource, such as accessing a remote network share. This mechanism
+&gt; increases the security risk of the remote operation. If the remote computer is compromised, the
+&gt; credentials that are passed to it can be used to control the network session.
+
+```yaml
+Type: System.String
+Parameter Sets: DefaultSet
+Aliases:
+Accepted values: Basic, CredSSP, Default, Digest, Kerberos, Negotiate
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Confirm
+
+Prompts you for confirmation before running `Restart-Computer`.
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases: cf
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -WhatIf
+
+Shows what would happen if the `Restart-Computer` runs. The `Restart-Computer` cmdlet isn&#x27;t run.
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases: wi
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### CommonParameters
+
+This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable,
+-InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose,
+-WarningAction, and -WarningVariable. For more information, see
+[about_CommonParameters](https://go.microsoft.com/fwlink/?LinkID=113216).
+
+## INPUTS
+
+### System.String
+
+You can pipe a string that contains a computer name to this cmdlet.
+
+## OUTPUTS
+
+### None
+
+By default, this cmdlet returns no output.
+
+### System.Management.Automation.RemotingJob
+
+When you use the **AsJob** parameter, this cmdlet returns a job object.
+
+## NOTES
+
+- On Windows, `Restart-Computer` uses the
+  [Win32Shutdown method](/windows/desktop/CIMWin32Prov/win32shutdown-method-in-class-win32-operatingsystem)
+  [Win32_OperatingSystem](/windows/desktop/CIMWin32Prov/win32-operatingsystem) class. This method
+  requires the **SeShutdownPrivilege** privilege be enabled for the user account used to restart
+  the machine.
+
+In Windows PowerShell 2.0, the **AsJob** parameter doesn&#x27;t work reliably when you are restarting or
+stopping remote computers. In Windows PowerShell 3.0, the implementation is changed to resolve this
+problem.
+
+## RELATED LINKS
+
+[About Windows Remote Management](/windows/desktop/WinRM/about-windows-remote-management)
+
+[Get-Credential](../Microsoft.PowerShell.Security/Get-Credential.md)
+
+[WS-Management Protocol](/windows/desktop/WinRM/ws-management-protocol)</pre></section>
