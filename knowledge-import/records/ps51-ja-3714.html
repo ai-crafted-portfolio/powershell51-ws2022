@@ -1,0 +1,495 @@
+<!doctype html><html lang="ja"><meta charset="utf-8"><pre class="record-source">###KnowledgeNo###
+PS51-WS2022-2026-3714
+###FormatID###
+PS51-WS2022
+###CreatedAt###
+2026-08-01 00:00
+###UpdatedAt###
+2026-08-01 00:00
+###タイトル###
+Export-Counter
+###モジュール###
+Microsoft.PowerShell.Diagnostics
+###製品###
+Windows PowerShell 5.1
+###対応OS###
+Windows Server 2022
+###日本語訳###
+# 輸出カウンターです.
+
+## SYNOPSISは,ログファイルにパフォーマンスカウンターデータを輸出する.
+
+## SYNTAXは,のシンタックスです.
+
+```
+Export-Counter [-Path] &lt;String&gt; [-FileFormat &lt;String&gt;] [-MaxSize &lt;UInt32&gt;]
+ -InputObject &lt;PerformanceCounterSampleSet[]&gt; [-Force] [-Circular] [&lt;CommonParameters&gt;]
+```
+
+## 記述は,
+
+   `Export-Counter`cmdlet は,二進式パフォーマンスログ () でログファイルにパフォーマンスカウンターデータを (**PerformanceCounterSampleSet** objects) 輸出する.`.blg`),逗号分離値 ()`.csv`),またはタブ別値 ()`.tsv`このcmdletを使ってパフォーマンスカウンターデータを記録します.
+
+   `Export-Counter`cmdlet は,返信されたデータを輸出するために設計されています.`Get-Counter`そして,`Import-Counter`cmdlets.
+
+このcmdletは Windows 7 および Windows Server 2008 R2 および Windows の後代バージョンでのみ実行されます.
+
+## 例えは
+
+### 例1: 計数データをファイルに輸出する
+
+この例では,カウンターデータをBLGファイルに輸出します.
+
+```powershell
+Get-Counter &quot;\Processor(*)\% Processor Time&quot; | Export-Counter -Path $HOME\Counters.blg
+```
+
+コマンドは&quot;&quot;を用いています.`Get-Counter`cmdlet はプロセッサ時間データを収集する.`|`) にデータを送る.`Export-Counter`cmdlet. のcmdlet.`Export-Counter`命令は,出力ファイルを指定するために **Path**変数を使用します.
+
+データセットが非常に大きいので,この例ではデータを  に送ります.`Export-Counter`データが変数で保存された場合,不均衡なメモリが使用される可能性があります.
+
+### 例2: ファイルをカウンターファイル形式に輸出する
+
+この例では,CSVファイルをカウンターデータBLGフォーマットに変換します.
+
+   `Import-Counter`cmdlet は,性能カウンターデータを  から輸入する.`Threads.csv`ファイル.この例では,このファイルが以前,  を使って輸出されたと仮定します.`Export-Counter`cmdlet.パイプラインオペレーター ()`|`) は輸入されたデータを  に送信します.`Export-Counter`cmdlet.コマンドは,出力ファイルの位置を指定するために**Path**パラメータを使用します. を指向するために**Circular**と **MaxSize**パラメータを使用します.`Export-Counter`cmdlet で1GBで包み込む円ログを作成します. **MaxSize**パラメータはメガバイトで表されます.
+
+```powershell
+$1GBInMB = 1024 # 1GB = 1024MB
+Import-Counter Threads.csv | Export-Counter -Path ThreadTest.blg -Circular -MaxSize $1GBInMB
+```
+
+### 例3: リモートコンピュータからカウンターデータを取得し,データをファイルに保存します.
+
+この例では,リモートコンピュータからパフォーマンスカウンターデータを入手し,リモートコンピュータのファイルにデータを保存する方法を示しています.
+
+最初のコマンドは,を用います.`Get-Counter`作業セットカウンターデータをリモートコンピュータ Server01 から収集するcmdletです.コマンドは,データを  に保存します.`$C`変数です.
+
+2番目のコマンドはパイプラインオペレーター () を使います.`|`) でデータを送信するには,`$C`へ`Export-Counter`cmdletで保存する.`Workingset.blg`のファイルに載っている.`Perf`Server01 コンピュータのシェアです.
+
+```powershell
+$C = Get-Counter -ComputerName Server01 -Counter &quot;\Process(*)\Working Set - Private&quot; -MaxSamples $C | Export-Counter -Path \\Server01\Perf\WorkingSet.blg
+```
+
+```Output
+20
+```
+
+### 例4:既存のデータをリログする
+
+この例では,どのように&quot;&quot;を用いられるかを示しています.`Import-Counter`そして,`Export-Counter`既存のデータをリログするcmdlets.
+
+最初のコマンドは,を用います.`Import-Counter`からパフォーマンスカウンターデータをインポートするcmdletです.`DiskSpace.blg`ログでデータを保存します.`$All`このファイルには,企業内の200以上のリモートコンピュータの&quot;LogicalDisk\% Free Space&quot;カウンターのサンプルが含まれています.
+
+第二のコマンドは,  を使っています.`Where-Object`設定した値が15%以下である**CookedValue**のオブジェクトを選択するには cmdlet を選択します.コマンドは結果を&quot;&quot;に保存します.`$LowSpace`変数です.
+
+第三のコマンドはパイプラインオペレーター () を使用します.`|`) において,データを送信する.`$LowSpace`変数に変数する.`Export-Counter`cmdlet.コマンドは,選択したデータが  にログインすべきであることを示すために**Path**パラメータを使用します.`LowDiskSpace.blg`ファイル.
+
+```powershell
+$All = Import-Counter DiskSpace.blg
+$LowSpace = $All | Where-Object {$_.CounterSamples.CookedValue -lt 15}
+$LowSpace | Export-Counter -Path LowDiskSpace.blg
+```
+
+## パラメータは
+
+### -円形
+
+輸出ファイルは,最初に入る,最初に出る (FIFO) 形式の円形のログであることを示す.このパラメータを入力すると, **MaxSize** パラメータが求められます.
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -FileFormat
+
+輸出ログファイルの出力フォーマットを指定します.
+
+このパラメータの受け入れられる値は:
+
+ - -`CSV` - -`TSV` - -`BLG`
+
+デフォルト値は です.`BLG` .
+
+```yaml
+Type: System.String
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -フォース
+
+既存のファイルが**Path**パラメータで指定された場所に存在している場合は,書き換え,置き換えます.
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -InputObject
+
+アレンジとして,輸出するカウンターデータを指定します.データを含む変数またはデータを取得するコマンドを入力します.例えば, `Get-Counter`     `Import-Counter`cmdletです.
+
+```yaml
+Type: Microsoft.PowerShell.Commands.GetCounter.PerformanceCounterSampleSet[]
+Parameter Sets: (All)
+Aliases:
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName, ByValue)
+Accept wildcard characters: False
+```
+
+### -マックスサイズ
+
+輸出ファイルの最大サイズをメガバイト (MB) で指定します.
+
+**Circular**パラメータが指定されている場合,ログファイルが指定された最大サイズに達すると,古いエントリが新しく追加されるにつれて削除されます. **Circular**パラメータが指定されていない場合,ログファイルが指定された最大サイズに達すると,新しいデータが追加されず,cmdletは終了しないエラーを生成します.
+
+```yaml
+Type: System.UInt32
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### - 歩道
+
+輸出ファイルのパスとファイル名を指定します.ローカルコンピュータの相対または絶対パス,またはリモートコンピュータへの統一命名条約 (UNC) パス,例えば を入力します.`\\Computer\Share\file.blg`このパラメータは必須です.
+
+ファイルフォーマットは,パス内のファイル名拡張ではなく, **FileFormat**パラメータの値によって決定されます.
+
+```yaml
+Type: System.String
+Parameter Sets: (All)
+Aliases: PSPath
+
+Required: True
+Position: 1
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### 共通パラメーター
+
+このcmdletは,共通パラメータをサポートしています: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable.詳細については, [about_CommonParameters](を参照してください.https://go.microsoft.com/fwlink/?LinkID=113216) でした.
+
+## 輸入は
+
+### Microsoft.PowerShell.Commands.GetCounter.PerformanceCounterSampleSet でした.
+
+性能カウンターデータをパイプして利用できます.`Get-Counter`     `Import-Counter`このcmdletに表示します.
+
+## 輸出は
+
+### どれもない
+
+# 輸出カウンターです.
+
+##  NOTES  記事ができました.
+
+ログファイル生成子は,すべての入力オブジェクトが同じカウンターパスを持ち,オブジェクトが上昇する時間順で配置されることを期待します.
+
+最初の入力オブジェクトのカウンタタイプとパスがログファイルに記録されたプロパティを決定します.他の入力オブジェクトが記録されたプロパティの値を持っていない場合,プロパティフィールドは空です.オブジェクトが記録されていないプロパティ値を持っている場合,追加のプロパティ値は無視されます.
+
+性能モニターは,すべてのログを読み取れないかもしれません.`Export-Counter`例えば,パフォーマンスモニターは,すべてのオブジェクトが同じ経路を持つこと,すべてのオブジェクトが同じ時間間隔で分離されることを要求します.
+
+   `Import-Counter`cmdlet には**ComputerName** パラメータはありません.しかし,コンピュータがリモート Windows PowerShell Windows PowerShellのために設定されている場合は,  を使用できます.`Invoke-Command`cmdlet を実行する`Import-Counter`リモートコンピュータのコマンドです.
+
+## 関連リンク
+
+[Get-Counter](Get-Counter.md) でした.
+
+[輸入対対](輸入対.md) 
+###英語原文###
+# Export-Counter
+
+## SYNOPSIS
+Exports performance counter data to log files.
+
+## SYNTAX
+
+```
+Export-Counter [-Path] &lt;String&gt; [-FileFormat &lt;String&gt;] [-MaxSize &lt;UInt32&gt;]
+ -InputObject &lt;PerformanceCounterSampleSet[]&gt; [-Force] [-Circular] [&lt;CommonParameters&gt;]
+```
+
+## DESCRIPTION
+
+The `Export-Counter` cmdlet exports performance counter data (**PerformanceCounterSampleSet**
+objects) to log files in binary performance log (`.blg`), comma-separated value (`.csv`), or
+tab-separated value (`.tsv`) format. You use this cmdlet to log performance counter data.
+
+The `Export-Counter` cmdlet is designed to export data that is returned by the `Get-Counter` and
+`Import-Counter` cmdlets.
+
+This cmdlet runs only on Windows 7, Windows Server 2008 R2, and later versions of Windows.
+
+## EXAMPLES
+
+### EXAMPLE 1: Export counter data to a file
+
+This example exports counter data to a BLG file.
+
+```powershell
+Get-Counter &quot;\Processor(*)\% Processor Time&quot; | Export-Counter -Path $HOME\Counters.blg
+```
+
+The command uses the `Get-Counter` cmdlet to collect processor time data. It uses a pipeline
+operator (`|`) to send the data to the `Export-Counter` cmdlet. The `Export-Counter` command uses
+the **Path** variable to specify the output file.
+
+Because the data set might be very large, this example sends the data to `Export-Counter` through
+the pipeline. If the data were saved in a variable, you might use a disproportionate amount of
+memory.
+
+### Example 2: Export a file to a counter file format
+
+This example converts a CSV file to a counter data BLG format.
+
+The `Import-Counter` cmdlet imports performance counter data from the `Threads.csv` file. The
+example presumes that this file was previously exported by using the `Export-Counter` cmdlet. A
+pipeline operator (`|`) sends the imported data to the `Export-Counter` cmdlet. The command uses the
+**Path** parameter to specify the location of the output file. It uses the **Circular** and
+**MaxSize** parameters to direct the `Export-Counter` cmdlet to create a circular log that wraps at
+1 GB. The **MaxSize** parameter is expressed in megabytes.
+
+```powershell
+$1GBInMB = 1024 # 1GB = 1024MB
+Import-Counter Threads.csv | Export-Counter -Path ThreadTest.blg -Circular -MaxSize $1GBInMB
+```
+
+### Example 3: Get counter data from a remote computer and save the data to a file
+
+This example shows how to get performance counter data from a remote computer and save the data in a
+file on the remote computer.
+
+The first command uses the `Get-Counter` cmdlet to collect working set counter data from Server01, a
+remote computer. The command saves the data in the `$C` variable.
+
+The second command uses a pipeline operator (`|`) to send the data in `$C` to the `Export-Counter`
+cmdlet, which saves it in the `Workingset.blg` file in the `Perf` share of the Server01 computer.
+
+```powershell
+$C = Get-Counter -ComputerName Server01 -Counter &quot;\Process(*)\Working Set - Private&quot; -MaxSamples $C | Export-Counter -Path \\Server01\Perf\WorkingSet.blg
+```
+
+```Output
+20
+```
+
+### Example 4: Re-log existing data
+
+This example shows how to use the `Import-Counter` and `Export-Counter` cmdlets to re-log existing
+data.
+
+The first command uses the `Import-Counter` cmdlet to import performance counter data from the
+`DiskSpace.blg` log. It saves the data in the `$All` variable. This file contains samples of the
+&quot;LogicalDisk\% Free Space&quot; counter on more than 200 remote computers in the enterprise.
+
+The second command uses the `Where-Object` cmdlet to select objects with **CookedValue** of less
+than 15 (percent). The command saves the results in the `$LowSpace` variable.
+
+The third command uses a pipeline operator (`|`) to send the data in the `$LowSpace` variable to the
+`Export-Counter` cmdlet. The command uses the **Path** parameter to indicate that the selected data
+should be logged in the `LowDiskSpace.blg` file.
+
+```powershell
+$All = Import-Counter DiskSpace.blg
+$LowSpace = $All | Where-Object {$_.CounterSamples.CookedValue -lt 15}
+$LowSpace | Export-Counter -Path LowDiskSpace.blg
+```
+
+## PARAMETERS
+
+### -Circular
+
+Indicates that the output file is a circular log with first in, first out (FIFO) format. When you
+include this parameter, the **MaxSize** parameter is required.
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -FileFormat
+
+Specifies the output format of the output log file.
+
+The acceptable values for this parameter are:
+
+- `CSV`
+- `TSV`
+- `BLG`
+
+The default value is `BLG`.
+
+```yaml
+Type: System.String
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Force
+
+Overwrites and replaces an existing file if one exists in the location specified by the **Path**
+parameter.
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -InputObject
+
+Specifies, as an array, the counter data to export. Enter a variable that contains the data or a
+command that gets the data, such as the `Get-Counter` or `Import-Counter` cmdlet.
+
+```yaml
+Type: Microsoft.PowerShell.Commands.GetCounter.PerformanceCounterSampleSet[]
+Parameter Sets: (All)
+Aliases:
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName, ByValue)
+Accept wildcard characters: False
+```
+
+### -MaxSize
+
+Specifies the maximum size of the output file in megabytes (MB).
+
+If the **Circular** parameter is specified, then when the log file reaches the specified maximum
+size, the oldest entries are deleted as newer ones are added. If the **Circular** parameter is not
+specified, then when the log file reaches the specified maximum size, no new data is added and the
+cmdlet generates a non-terminating error.
+
+```yaml
+Type: System.UInt32
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Path
+
+Specifies the path and file name of the output file. Enter a relative or absolute path on the local
+computer, or a Uniform Naming Convention (UNC) path to a remote computer, such as
+`\\Computer\Share\file.blg`. This parameter is required.
+
+The file format is determined by the value of the **FileFormat** parameter, not by the file name
+extension in the path.
+
+```yaml
+Type: System.String
+Parameter Sets: (All)
+Aliases: PSPath
+
+Required: True
+Position: 1
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### CommonParameters
+
+This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable,
+-InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose,
+-WarningAction, and -WarningVariable. For more information, see
+[about_CommonParameters](https://go.microsoft.com/fwlink/?LinkID=113216).
+
+## INPUTS
+
+### Microsoft.PowerShell.Commands.GetCounter.PerformanceCounterSampleSet
+
+You can pipe performance counter data from `Get-Counter` or `Import-Counter` to this cmdlet.
+
+## OUTPUTS
+
+### None
+
+# Export-Counter
+
+## NOTES
+
+The log file generator expects that all input objects have the same counter path and that the
+objects are arranged in ascending time order.
+
+The counter type and path of the first input object determines the properties recorded in the log
+file. If other input objects do not have a value for a recorded property, the property field is
+empty. If the objects have property values that were not recorded, the extra property values are
+ignored.
+
+Performance Monitor might not be able to read all logs that `Export-Counter` generates. For
+instance, Performance Monitor requires that all objects have the same path and that all objects are
+separated by the same time interval.
+
+The `Import-Counter` cmdlet does not have a **ComputerName** parameter. However, if the computer is
+configured for remote Windows PowerShell Windows PowerShell, you can use the `Invoke-Command` cmdlet
+to run an `Import-Counter` command on a remote computer.
+
+## RELATED LINKS
+
+[Get-Counter](Get-Counter.md)
+
+[Import-Counter](Import-Counter.md)
+###Microsoft Learn URL###
+https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.diagnostics/export-counter/?view=powershell-5.1
+</pre></html>

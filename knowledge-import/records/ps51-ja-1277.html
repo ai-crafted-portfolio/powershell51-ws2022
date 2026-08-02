@@ -1,0 +1,610 @@
+<!doctype html><html lang="ja"><meta charset="utf-8"><pre class="record-source">###KnowledgeNo###
+PS51-WS2022-2026-1277
+###FormatID###
+PS51-WS2022
+###CreatedAt###
+2026-08-01 00:00
+###UpdatedAt###
+2026-08-01 00:00
+###タイトル###
+Get-GPRegistryValue
+###モジュール###
+grouppolicy
+###製品###
+Windows PowerShell 5.1
+###対応OS###
+Windows Server 2022
+###日本語訳###
+# Get-GPRegistryValue について
+
+## シノプシスです.
+
+GPOでコンピュータ設定またはユーザー設定のいずれかの下にあるレジストリベースのポリシー設定を1つまたは複数の取得します.
+
+## SYNTAXは,のシンタックスです.
+
+### GetByGUID (デフォルト) を取得する
+
+```
+Get-GPRegistryValue -Guid &lt;Guid&gt; -Key &lt;String&gt; [-ValueName &lt;String&gt;] [-Domain &lt;String&gt;]
+ [-Server &lt;String&gt;] [&lt;CommonParameters&gt;]
+```
+
+### GetByName を取得する
+
+```
+Get-GPRegistryValue [-Name] &lt;String&gt; -Key &lt;String&gt; [-ValueName &lt;String&gt;] [-Domain &lt;String&gt;]
+ [-Server &lt;String&gt;] [&lt;CommonParameters&gt;]
+```
+
+## 記述は,
+
+   `Get-GPRegistryValue`cmdlet は,グループポリシーオブジェクト (GPO) のコンピュータ設定またはユーザー設定のいずれかの下では,レジストリベースのポリシー設定を1つまたは複数の回取りします.
+
+特定のレジスタ値,またはすべてのレジスタ値のためのレジスタベースのポリシー設定をキーで取得できます:
+
+- 特定のレジストリ値を設定するレジストリベースのポリシー設定を取得するには, **Key** と **ValueName** の両方のパラメータを指定してください.
+
+- 登録キーの下で直接値を設定するレジストリベースのポリシー設定をすべて取得するには, **ValueName** 参数なしで **Key** パラメータを指定してください.
+
+キーに含まれる値を設定するポリシー設定に加えて,鍵の次のファーストレベルサブキーが返されます.
+
+- 値を設定するポリシー設定を持つファーストレベルサブキー.
+
+- 1位レベルサブキーで,任意のレベルで,値を設定するポリシー設定を持つサブキーがあります.
+
+この情報を利用して,レジストリベースのポリシー設定を閲覧できます.
+
+## 例えは
+
+### 例1:指定されたキーからグループポリシーレジストリ値を取得します
+
+```powershell
+$params = @{
+    ValueName = &#x27;ValueOne&#x27;
+    Key       = &#x27;HKEY_CURRENT_USER\Software\Policies\Microsoft\ExampleKey&#x27;
+    Name      = &#x27;TestGPO&#x27;
+}
+Get-GPRegistryValue @params
+```
+
+```Output
+KeyPath     : Software\Policies\Microsoft\ExampleKey 
+FullKeyPath : HKEY_CURRENT_USER\Software\Policies\Microsoft\ExampleKey 
+Hive        : CurrentUser 
+PolicyState : Set 
+Value       : TestGPO 
+Type        : String 
+ValueName   : ValueOne 
+HasValue    : True
+```
+
+このコマンドは,レジストリベースのポリシー設定を取得し,レジストリ値を設定します.`HKEY_CURRENT_USER\Software\Policies\Microsoft\ExampleKey:ValueOne`ユーザー設定のGPOからTestGPOと名付けました.
+
+### 例2:指定されたキーからすべてのグループポリシーレジストリ値を取得します
+
+```powershell
+Get-GPRegistryValue -Name &quot;TestGPO&quot; -Key &quot;HKCU\Software\Policies\Microsoft\ExampleKey&quot;
+```
+
+```Output
+KeyPath     : Software\Policies\Microsoft\ExampleKey 
+FullKeyPath : HKEY_CURRENT_USER\Software\Policies\Microsoft\ExampleKey 
+Hive        : CurrentUser 
+PolicyState : Set 
+Value       : TestGPO 
+Type        : String 
+ValueName   : ValueOne 
+HasValue    : True 
+
+KeyPath     : Software\Policies\Microsoft\ExampleKey 
+FullKeyPath : HKEY_CURRENT_USER\Software\Policies\Microsoft\ExampleKey 
+Hive        : CurrentUser 
+PolicyState : Delete 
+Value       : 
+Type        : String 
+ValueName   : ValueTwo 
+HasValue    : True 
+
+
+KeyPath     : Software\Policies\Microsoft\ExampleKey\Subkey1 
+FullKeyPath : HKEY_CURRENT_USER\Software\Policies\Microsoft\ExampleKey\Subkey1 
+Hive        : CurrentUser 
+
+KeyPath     : Software\Policies\Microsoft\ExampleKey\SubKey2 
+FullKeyPath : HKEY_CURRENT_USER\Software\Policies\Microsoft\ExampleKey\SubKey2 
+Hive        : CurrentUser
+```
+
+このコマンドは,登録基のポリシー設定をすべて取得し,登録値を設定する鍵を&quot;&quot;で設定します.`HKEY_CURRENT_USER\Software\Policies\Microsoft\ExampleKey`ユーザー設定のGPOから名付けました.`TestGPO`登録ベースのポリシー設定を持つこの鍵のサブキーも返されます.第2の登録ベースのポリシー設定 (ValueTwo) は無効です (その **PolicyState** 属性は削除に設定されています).
+
+## パラメータは
+
+### -ドメイン
+
+このcmdletのドメインを指定します.ドメインの完全資格ドメイン名 (FQDN) を指定する必要があります (例えば: sales.contoso.com).
+
+のために`Get-GPRegistryValue`cmdlet,レジストリベースのポリシー設定を取得するためのGPOは,このドメインで存在する必要があります.
+
+**Domain**パラメータを指定していない場合は,現在のセッションを実行しているユーザーのドメインが使用されます.もし,cmdletがコンピュータの起動またはシャットダウンスクリプトから実行されている場合は,コンピュータのドメインが使用されます.詳細については,完全なヘルプのメモセクションを参照してください.
+
+特定のドメインが現在のセッションを実行しているユーザーのドメイン (または起動またはシャットダウンスクリプトの場合,コンピュータ) と異なることを指定した場合,そのドメインとユーザーのドメインまたはコンピュータの間に信頼が存在する必要があります.
+
+ドメインを内蔵の名前で参照することもできます. **DomainName**.詳細については, [about_Aliases] (/powershell/module/microsoft.powershell.core/about/about_aliases) を参照してください.
+
+```yaml
+Type: System.String
+Parameter Sets: (All)
+Aliases: DomainName
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -ガイド
+
+登録基のポリシー設定をグローバル・ユニコム・ID (GUID) で取得するGPOを指定する.GIDはGPOをユニークに識別する.
+
+また,内蔵の名前名, **Id**によって **Guid** パラメタを参照することもできます.詳細については, [about_Aliases] (/powershell/module/microsoft.powershell.core/about/about_aliases) を参照してください.
+
+```yaml
+Type: Guid
+Parameter Sets: GetByGUID
+Aliases: Id
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -キー
+
+このcmdletがレジストリベースのポリシー設定を取得するレジストリキーを指定します.例えば: `HKLM\Software\Policies\Microsoft\Windows NT\DNSClient` .
+
+鍵は以下の2つのレジストリ巣の1つに存在しなければならない.
+
+- HKEY_LOCAL_MACHINE (HKLM) は,コンピュータ設定におけるレジストリベースのポリシー設定です.
+
+- HKEY_CURRENT_USER (HKCU) は,ユーザー設定でレジストリベースのポリシー設定のために使用されています.
+
+指定できる:
+
+**Key** パラメータが使えていない **ValueName** パラメータは,そのキーの下にある直接の値を設定するレジストリベースのポリシー設定をすべて入手します.
+
+- キーパラメータと **ValueName**パラメータを組み合わせて,特定のレジストリ値を設定するレジストリベースのポリシー設定を取得します.
+
+また,その内蔵の FullKeyPath という名前の **Key** パラメタにも言及できます.詳細については, [about_Aliases] (/powershell/module/microsoft.powershell.core/about/about_aliases) を参照してください.
+
+```yaml
+Type: System.String
+Parameter Sets: (All)
+Aliases: FullKeyPath
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -名字は
+
+このcmdletが登録ベースのポリシー設定を表示名によって取得するGPOを指定します.
+
+画面名はドメインでユニークであることを保証することはできません.同じ表示名を持つ別のGPOがドメインで存在した場合,エラーが発生します.GPOをユニークに識別するために**Guid**パラメータを使用できます.
+
+また,内蔵の名前, **DisplayName**によって **Name**パラメータを参照することもできます.詳細については, [about_Aliases] (/powershell/module/microsoft.powershell.core/about/about_aliases) を参照してください.
+
+```yaml
+Type: System.String
+Parameter Sets: GetByName
+Aliases: DisplayName
+
+Required: True
+Position: 0
+Default value: None
+Accept pipeline input: True (ByValue)
+Accept wildcard characters: False
+```
+
+# Get-GPRegistryValue について
+
+### -サーバー
+
+このcmdletが操作を完了するために連絡するドメインコントローラの名前を指定します.完全に資格のあるドメイン名 (FQDN) またはホスト名を指定することができます.
+
+**Server**パラメータを使用して名前を指定しない場合は,プライマリドメインコントローラー (PDC) エミュレーターに連絡されます.
+
+```yaml
+Type: System.String
+Parameter Sets: (All)
+Aliases: DC
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -ValueName
+
+このcmdletがレジストリベースのポリシー設定を取得するレジストリ値の名前を指定します.例えば,レジストリキー `HKLM\Software\Policies\Microsoft\Windows NT\DNSClient`登録キーのデフォルト値については&quot;,default&quot;または空き文字列 (&quot;&quot;) を指定してください.
+
+このパラメータで **Key** パラメータを指定することも必要です.
+
+```yaml
+Type: System.String
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### 共通パラメーター
+
+このcmdletは,共通パラメータをサポートしています: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable.詳細については, [about_CommonParameters](を参照してください.https://go.microsoft.com/fwlink/?LinkID=113216) でした.
+
+## 輸入は
+
+### Microsoft.GroupPolicy.Gpo
+
+このcmdletがレジストリベースのポリシー設定を得られるGPOをパイプすることができます.異なるドメインからGPOを含むコレクションはサポートされません.
+
+## 輸出は
+
+### Microsoft.GroupPolicy.PolicyRegistrySetting 設定について
+
+このcmdletは,レジストリベースのポリシー設定を表す**PolicyRegistrySetting**オブジェクトを返します.これらのオブジェクトは以下のcmdletsにパイプされることができます:
+
+ - -`Set-GPRegistryValue`
+
+ - -`Remove-GPRegistryValue`
+
+##  NOTES  記事ができました.
+
+指定したレジストリキー (HKLMまたは HKCU) の巣箱は,レジストリベースのポリシー設定がコンピュータ設定またはユーザー設定から取得されているかどうかを表示します.
+
+指定されたレジストリキーはポリシーに位置できない場合 (レジストリキーは設定されていない) に,対応するエラーメッセージが表示されます.
+
+**Domain**パラメータを使用して,このcmdletのドメインを明確に指定することができます.
+
+域を明示的に指定しない場合は,cmdletはデフォルトドメインを使用します.デフォルトドメインは,現在のセッションが実行されているセキュリティコンテキストによってネットワークリソースにアクセスするために使用されるドメインです.このドメインは,通常,セッションを実行しているユーザーのドメインです.例えば,Windows PowerShellを開きセッションを開始したユーザーのドメインまたはルーンコマンドで指定されたユーザーのドメインです.しかし,コンピュータの起動とシャットダウンスクリプトは,ローカルシステムアカウントのコンテキストで実行されます.ローカルシステムアカウントは,内蔵のローカルアカウントであり,コンピュータアカウントのコンテキストでネットワークリソースにアクセスします.このcmdletが起動またはシャットダウンスクリプトから実行される場合,デフォルトドメインはコンピュータが接続されているドメインです.
+
+## 関連リンク
+
+[Remove-GPRegistryValue](./Remove-GPRegistryValue.md) を削除する
+
+[Set-GPRegistryValue](./Set-GPRegistryValue.md) 
+###英語原文###
+# Get-GPRegistryValue
+
+## SYNOPSIS
+
+Gets one or more registry-based policy settings under either Computer Configuration or User
+Configuration in a GPO.
+
+## SYNTAX
+
+### GetByGUID (Default)
+
+```
+Get-GPRegistryValue -Guid &lt;Guid&gt; -Key &lt;String&gt; [-ValueName &lt;String&gt;] [-Domain &lt;String&gt;]
+ [-Server &lt;String&gt;] [&lt;CommonParameters&gt;]
+```
+
+### GetByName
+
+```
+Get-GPRegistryValue [-Name] &lt;String&gt; -Key &lt;String&gt; [-ValueName &lt;String&gt;] [-Domain &lt;String&gt;]
+ [-Server &lt;String&gt;] [&lt;CommonParameters&gt;]
+```
+
+## DESCRIPTION
+
+The `Get-GPRegistryValue` cmdlet retrieves one or more registry-based policy settings under either
+Computer Configuration or User Configuration in a Group Policy Object (GPO).
+
+You can get registry-based policy settings for a specific registry value, or for all the registry
+values under a key:
+
+- To get the registry-based policy setting that configures a specific registry value, specify both
+  the **Key** and the **ValueName** parameters.
+
+- To get all the registry-based policy settings that configure values directly under a registry key,
+  specify the **Key** parameter without the **ValueName** parameter.
+
+If you specify only a key, in addition to the policy settings that configure values under the key,
+the following first-level subkeys of the key are returned:
+
+- first-level subkeys that have a policy setting that configures a value.
+
+- first-level subkeys that have a subkey, at any level, with a policy setting that configures a
+  value.
+
+You can use this information to browse for registry-based policy settings.
+
+## EXAMPLES
+
+### Example 1: Get the group policy registry value from the specified key
+
+```powershell
+$params = @{
+    ValueName = &#x27;ValueOne&#x27;
+    Key       = &#x27;HKEY_CURRENT_USER\Software\Policies\Microsoft\ExampleKey&#x27;
+    Name      = &#x27;TestGPO&#x27;
+}
+Get-GPRegistryValue @params
+```
+
+```Output
+KeyPath     : Software\Policies\Microsoft\ExampleKey 
+FullKeyPath : HKEY_CURRENT_USER\Software\Policies\Microsoft\ExampleKey 
+Hive        : CurrentUser 
+PolicyState : Set 
+Value       : TestGPO 
+Type        : String 
+ValueName   : ValueOne 
+HasValue    : True
+```
+
+This command gets the registry-based policy setting that configures the registry value
+`HKEY_CURRENT_USER\Software\Policies\Microsoft\ExampleKey:ValueOne` from User Configuration in the
+GPO named TestGPO.
+
+### Example 2: Get all group policy registry values from the specified key
+
+```powershell
+Get-GPRegistryValue -Name &quot;TestGPO&quot; -Key &quot;HKCU\Software\Policies\Microsoft\ExampleKey&quot;
+```
+
+```Output
+KeyPath     : Software\Policies\Microsoft\ExampleKey 
+FullKeyPath : HKEY_CURRENT_USER\Software\Policies\Microsoft\ExampleKey 
+Hive        : CurrentUser 
+PolicyState : Set 
+Value       : TestGPO 
+Type        : String 
+ValueName   : ValueOne 
+HasValue    : True 
+
+KeyPath     : Software\Policies\Microsoft\ExampleKey 
+FullKeyPath : HKEY_CURRENT_USER\Software\Policies\Microsoft\ExampleKey 
+Hive        : CurrentUser 
+PolicyState : Delete 
+Value       : 
+Type        : String 
+ValueName   : ValueTwo 
+HasValue    : True 
+
+
+KeyPath     : Software\Policies\Microsoft\ExampleKey\Subkey1 
+FullKeyPath : HKEY_CURRENT_USER\Software\Policies\Microsoft\ExampleKey\Subkey1 
+Hive        : CurrentUser 
+
+KeyPath     : Software\Policies\Microsoft\ExampleKey\SubKey2 
+FullKeyPath : HKEY_CURRENT_USER\Software\Policies\Microsoft\ExampleKey\SubKey2 
+Hive        : CurrentUser
+```
+
+This command gets all the registry-based policy settings that configure registry values under the
+key `HKEY_CURRENT_USER\Software\Policies\Microsoft\ExampleKey` from User Configuration in the GPO
+named `TestGPO`. Subkeys of this key that have registry-based policy settings, are also returned.
+The second registry-based policy setting (ValueTwo) is disabled (its **PolicyState** property is set
+to Delete).
+
+## PARAMETERS
+
+### -Domain
+
+Specifies the domain for this cmdlet. You must specify the fully qualified domain name (FQDN) of the
+domain (for instance: sales.contoso.com).
+
+For the `Get-GPRegistryValue` cmdlet, the GPO for which to get registry-based policy settings must
+exist in this domain.
+
+If you do not specify the **Domain** parameter, the domain of the user that is running the current
+session is used. If the cmdlet is being run from a computer startup or shutdown script, the domain
+of the computer is used. For more information, see the Notes section in the full Help.
+
+If you specify a domain that is different from the domain of the user that is running the current
+session (or, for a startup or shutdown script, the computer), a trust must exist between that domain
+and the domain of the user or the computer.
+
+You can also refer to Domain by its built-in alias, **DomainName**. For more information, see
+[about_Aliases](/powershell/module/microsoft.powershell.core/about/about_aliases).
+
+```yaml
+Type: System.String
+Parameter Sets: (All)
+Aliases: DomainName
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -Guid
+
+Specifies the GPO from which to retrieve the registry-based policy setting by its globally unique
+identifier (GUID). The GUID uniquely identifies the GPO.
+
+You can also refer to the **Guid** parameter by its built-in alias, **Id**. For more information,
+see [about_Aliases](/powershell/module/microsoft.powershell.core/about/about_aliases).
+
+```yaml
+Type: Guid
+Parameter Sets: GetByGUID
+Aliases: Id
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -Key
+
+Specifies the registry key for which this cmdlet gets the registry-based policy setting. For
+instance: `HKLM\Software\Policies\Microsoft\Windows NT\DNSClient`.
+
+The key must be in one of the two following registry hives:
+
+- HKEY_LOCAL_MACHINE (HKLM) for a registry-based policy setting in Computer Configuration.
+
+- HKEY_CURRENT_USER (HKCU) for a registry-based policy setting in User Configuration.
+
+You can specify:
+
+- The **Key** parameter without the **ValueName** parameter to get all the registry-based policy
+  settings that configure values directly under that key.
+
+- The Key parameter together with the **ValueName** parameter to get the registry-based policy
+  setting that configures a specific registry value.
+
+You can also refer to the **Key** parameter by its built-in alias FullKeyPath. For more information,
+see [about_Aliases](/powershell/module/microsoft.powershell.core/about/about_aliases).
+
+```yaml
+Type: System.String
+Parameter Sets: (All)
+Aliases: FullKeyPath
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Name
+
+Specifies the GPO from which this cmdlet gets the registry-based policy setting by its display name.
+
+The display name is not guaranteed to be unique in the domain. If another GPO with the same display
+name exists in the domain an error occurs. You can use the **Guid** parameter to uniquely identify a
+GPO.
+
+You can also refer to the **Name** parameter by its built-in alias, **DisplayName**. For more
+information, see [about_Aliases](/powershell/module/microsoft.powershell.core/about/about_aliases).
+
+```yaml
+Type: System.String
+Parameter Sets: GetByName
+Aliases: DisplayName
+
+Required: True
+Position: 0
+Default value: None
+Accept pipeline input: True (ByValue)
+Accept wildcard characters: False
+```
+
+# Get-GPRegistryValue
+
+### -Server
+
+Specifies the name of the domain controller that this cmdlet contacts to complete the operation. You
+can specify either the fully qualified domain name (FQDN) or the host name.
+
+If you do not specify the name by using the **Server** parameter, the primary domain controller
+(PDC) emulator is contacted.
+
+```yaml
+Type: System.String
+Parameter Sets: (All)
+Aliases: DC
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -ValueName
+
+Specifies the name of a registry value for which this cmdlet gets the registry-based policy setting.
+For instance, the registry key `HKLM\Software\Policies\Microsoft\Windows NT\DNSClient` can have a
+value with the following name: UseDomainNameDevolution. For the default value of a registry key,
+specify &quot;(default)&quot; or an empty string (&quot;&quot;).
+
+You must also specify the **Key** parameter with this parameter.
+
+```yaml
+Type: System.String
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### CommonParameters
+
+This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable,
+-InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose,
+-WarningAction, and -WarningVariable. For more information, see
+[about_CommonParameters](https://go.microsoft.com/fwlink/?LinkID=113216).
+
+## INPUTS
+
+### Microsoft.GroupPolicy.Gpo
+
+You can pipe a GPO for which this cmdlet gets registry-based policy settings. Collections that
+contain GPOs from different domains are not supported.
+
+## OUTPUTS
+
+### Microsoft.GroupPolicy.PolicyRegistrySetting
+
+This cmdlet returns **PolicyRegistrySetting** objects that represent registry-based policy settings.
+These objects can be piped into the following cmdlets:
+
+- `Set-GPRegistryValue`
+
+- `Remove-GPRegistryValue`
+
+## NOTES
+
+* The hive of the registry key that you specify (HKLM or HKCU) indicates whether the registry-based
+  policy setting is retrieved from Computer Configuration or User Configuration.
+
+  If the specified registry key cannot be located in policy (the registry key is not configured), a
+  corresponding error message is displayed.
+
+  You can use the **Domain** parameter to explicitly specify the domain for this cmdlet.
+
+  If you do not explicitly specify the domain, the cmdlet uses a default domain. The default domain
+  is the domain that is used to access network resources by the security context under which the
+  current session is running. This domain is typically the domain of the user that is running the
+  session. For instance, the domain of the user who started the session by opening Windows
+  PowerShell or the domain of a user that is specified in a runas command. However, computer startup
+  and shutdown scripts run under the context of the LocalSystem account. The LocalSystem account is
+  a built-in local account, and it accesses network resources under the context of the computer
+  account. Therefore, when this cmdlet is run from a startup or shutdown script, the default domain
+  is the domain to which the computer is joined.
+
+## RELATED LINKS
+
+[Remove-GPRegistryValue](./Remove-GPRegistryValue.md)
+
+[Set-GPRegistryValue](./Set-GPRegistryValue.md)
+###Microsoft Learn URL###
+https://learn.microsoft.com/en-us/powershell/module/grouppolicy/get-gpregistryvalue/?view=windowsserver2022-ps
+</pre></html>

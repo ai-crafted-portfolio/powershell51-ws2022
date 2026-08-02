@@ -1,0 +1,444 @@
+<!doctype html><html lang="ja"><meta charset="utf-8"><pre class="record-source">###KnowledgeNo###
+PS51-WS2022-2026-3845
+###FormatID###
+PS51-WS2022
+###CreatedAt###
+2026-08-01 00:00
+###UpdatedAt###
+2026-08-01 00:00
+###タイトル###
+Protect-CmsMessage
+###モジュール###
+Microsoft.PowerShell.Security
+###製品###
+Windows PowerShell 5.1
+###対応OS###
+Windows Server 2022
+###日本語訳###
+# 保護CmsMessage
+
+## SYNOPSISは,暗号メッセージシンタックス形式を使用してコンテンツを暗号化します.
+
+## SYNTAXは,のシンタックスです.
+
+### ByContent (デフォルト) 
+
+```
+Protect-CmsMessage [-To] &lt;CmsMessageRecipient[]&gt; [-Content] &lt;PSObject&gt;
+ [[-OutFile] &lt;String&gt;] [&lt;CommonParameters&gt;]
+```
+
+### ByPath
+
+```
+Protect-CmsMessage [-To] &lt;CmsMessageRecipient[]&gt; [-Path] &lt;String&gt; [[-OutFile] &lt;String&gt;]
+ [&lt;CommonParameters&gt;]
+```
+
+### ByLiteralPath について
+
+```
+Protect-CmsMessage [-To] &lt;CmsMessageRecipient[]&gt; [-LiteralPath] &lt;String&gt;
+ [[-OutFile] &lt;String&gt;] [&lt;CommonParameters&gt;]
+```
+
+## 記述は,
+
+   `Protect-CmsMessage`cmdlet は,暗号メッセージ合成 (CMS) 形式を使用してコンテンツを暗号化します.
+
+CMS cmdlets は,IETF 形式を使用してコンテンツの暗号化および解読をサポートしており,この文書は [RFC5652]によって文書化されている.https://tools.ietf.org/html/rfc5652.html) でした.
+
+CMS暗号化標準は,公開鍵暗号を使用しており,コンテンツを暗号化するために使用される鍵 (公開鍵) とコンテンツを解読するために使用される鍵 (プライベート鍵) は別々にあります.あなたの公開鍵は広く共有され,敏感なデータではありません.この公開鍵で暗号化されたコンテンツは,あなたのプライベート鍵だけが解読できます.詳細については, [公開鍵暗号] (公開鍵) を参照してください.https://en.wikipedia.org/wiki/Public-key_cryptography) でした.
+
+を走れる前に`Protect-CmsMessage`cmdletでは暗号証明書が設定されている必要があります.PowerShellで認識されるためには,暗号証明書には,独自の拡張鍵使用 ([EKU](/windows/desktop/SecCrypto/eku)) ID が必要で,データ暗号証明書 (コードサインと暗号化されたメールのIDなど) として識別されます.文書暗号化に役立つ証明書の例については,このテーマの例1を参照してください.
+
+## 例えは
+
+### 例1: コンテンツ暗号化のための証明書を作成します.
+
+を走れる前に`Protect-CmsMessage`cmdlet では暗号化証明書を作成する必要があります.以下のテキストを使用して,主題行の名前を名前,メール,または他の識別子に変更し,証明書をファイルに保存します (例えば ).`DocumentEncryption.inf`この例で示されているように).
+
+```powershell
+
+# Create .INF file for certreq
+{[Version]
+Signature = &quot;$Windows NT$&quot;
+
+[Strings]
+szOID_ENHANCED_KEY_USAGE = &quot;2.5.29.37&quot;
+szOID_DOCUMENT_ENCRYPTION = &quot;1.3.6.1.4.1.311.80.1&quot;
+
+[NewRequest]
+Subject = &quot;cn=youralias@emailaddress.com&quot;
+MachineKeySet = false
+KeyLength = 2048
+KeySpec = AT_KEYEXCHANGE
+HashAlgorithm = Sha1
+Exportable = true
+RequestType = Cert
+KeyUsage = &quot;CERT_KEY_ENCIPHERMENT_KEY_USAGE | CERT_DATA_ENCIPHERMENT_KEY_USAGE&quot;
+ValidityPeriod = &quot;Years&quot;
+ValidityPeriodUnits = &quot;1000&quot;
+
+[Extensions]
+%szOID_ENHANCED_KEY_USAGE% = &quot;{text}%szOID_DOCUMENT_ENCRYPTION%&quot;
+} | Out-File -FilePath DocumentEncryption.inf
+
+# After you have created your certificate file, run the following command to add
+
+# the certificate file to the certificate store. Now you are ready to encrypt and
+
+# decrypt content with the next two examples.
+certreq.exe -new DocumentEncryption.inf DocumentEncryption.cer
+```
+
+### 例2:メールで送られたメッセージを暗号化します.
+
+```powershell
+$Protected = &quot;Hello World&quot; | Protect-CmsMessage -To &quot;*youralias@emailaddress.com*&quot;
+```
+
+次の例では,メッセージ&quot;Hello World&quot;を暗号化して,パイプを&quot;&quot;に送ります.`Protect-CmsMessage`cmdlet,そして暗号化されたメッセージを変数に保存します. **To** パラメータは証明書内のSubject ラインの値を使用します.
+
+### 例3: ドキュメント暗号化証明書を見る
+
+```
+PS C:\&gt; cd Cert:\CurrentUser\My
+PS Cert:\CurrentUser\My&gt; Get-ChildItem -DocumentEncryptionCert
+```
+
+証明書プロバイダのドキュメント暗号化証明書を表示するには,証明書プロバイダがロードされたときにのみ利用可能な [Get-ChildItem]の動態パラメータ **DocumentEncryptionCert**を追加できます.
+
+## パラメータは
+
+### -コンテンツ
+
+例えば,イベントメッセージの内容を暗号化して,メッセージを含む変数を使用できます ().`$Event`この例では) を **Content**パラメータの値として表示します.`$event = Get-WinEvent -ProviderName &quot;PowerShell&quot; -MaxEvents 1`号も使えます.`Get-Content`cmdlet は,Microsoft Word 文書のようなファイルの内容を取得し,その内容を,コンテンツパラメータの値として使用する変数に保存します.
+
+```yaml
+Type: System.Management.Automation.PSObject
+Parameter Sets: ByContent
+Aliases:
+
+Required: True
+Position: 1
+Default value: None
+Accept pipeline input: True (ByValue)
+Accept wildcard characters: False
+```
+
+### -リテラルパース
+
+暗号化したいコンテンツへのパス指定します. **Path**とは異なり,LiteralPath**の値は入力されたまま使用されます.文字はワイルドカードとして解釈されません.パスにエスケープ文字が含まれている場合は単一の引用符で囲み付けます.単一の引用符はPowerShellに文字をエスケープシーケンスのように解釈しないように言います.
+
+```yaml
+Type: System.String
+Parameter Sets: ByLiteralPath
+Aliases:
+
+Required: True
+Position: 1
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -OutFile
+
+暗号化されたコンテンツを送信したいファイルのパスとファイル名を指定します.
+
+```yaml
+Type: System.String
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: 2
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### - 歩道
+
+暗号化したいコンテンツへの経路を指定します.
+
+```yaml
+Type: System.String
+Parameter Sets: ByPath
+Aliases:
+
+Required: True
+Position: 1
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -To - について
+
+指定する CMS メッセージ受信者の1つまたは複数の種類,以下の形式で識別されます.
+
+証明書の実際の証明書 (証明書提供者から取得されたもの) - 証明書を含むファイルへのパス - 証明書を含むディレクトリへのパス - 証明書の指紋 (証明書ストアで見るために使用されます) - 証明書の対象名 (証明書ストアで見るために使用されます)
+
+```yaml
+Type: System.Management.Automation.CmsMessageRecipient[]
+Parameter Sets: (All)
+Aliases:
+
+Required: True
+Position: 0
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### 共通パラメーター
+
+このcmdletは,共通のパラメータをサポートしています: `-Debug`     `-ErrorAction`     `-ErrorVariable`     `-InformationAction`     `-InformationVariable`     `-OutVariable`     `-OutBuffer`     `-PipelineVariable`     `-Verbose`     `-WarningAction`そして,そして,`-WarningVariable`.詳細については, [about_CommonParameters.md]をご覧ください.
+
+## 輸入は
+
+## 輸出は
+
+##  NOTES  記事ができました.
+
+## 関連リンク
+
+[about_Providers](../Microsoft.PowerShell.Core/About/about_Providers.md) について
+
+[Get-CmsMessage](Get-CmsMessage.md) を表示する
+
+[Unprotect-CmsMessage](Unprotect-CmsMessage.md) 
+###英語原文###
+# Protect-CmsMessage
+
+## SYNOPSIS
+Encrypts content by using the Cryptographic Message Syntax format.
+
+## SYNTAX
+
+### ByContent (Default)
+
+```
+Protect-CmsMessage [-To] &lt;CmsMessageRecipient[]&gt; [-Content] &lt;PSObject&gt;
+ [[-OutFile] &lt;String&gt;] [&lt;CommonParameters&gt;]
+```
+
+### ByPath
+
+```
+Protect-CmsMessage [-To] &lt;CmsMessageRecipient[]&gt; [-Path] &lt;String&gt; [[-OutFile] &lt;String&gt;]
+ [&lt;CommonParameters&gt;]
+```
+
+### ByLiteralPath
+
+```
+Protect-CmsMessage [-To] &lt;CmsMessageRecipient[]&gt; [-LiteralPath] &lt;String&gt;
+ [[-OutFile] &lt;String&gt;] [&lt;CommonParameters&gt;]
+```
+
+## DESCRIPTION
+
+The `Protect-CmsMessage` cmdlet encrypts content by using the Cryptographic Message Syntax (CMS)
+format.
+
+The CMS cmdlets support encryption and decryption of content using the IETF format as documented by
+[RFC5652](https://tools.ietf.org/html/rfc5652.html).
+
+The CMS encryption standard uses public key cryptography, where the keys used to encrypt content
+(the public key) and the keys used to decrypt content (the private key) are separate. Your public
+key can be shared widely, and is not sensitive data. If any content is encrypted with this public
+key, only your private key can decrypt it. For more information, see
+[Public-key cryptography](https://en.wikipedia.org/wiki/Public-key_cryptography).
+
+Before you can run the `Protect-CmsMessage` cmdlet, you must have an encryption certificate set up.
+To be recognized in PowerShell, encryption certificates require a unique extended key usage
+([EKU](/windows/desktop/SecCrypto/eku)) ID to identify them as data encryption certificates (such as
+the IDs for Code Signing and Encrypted Mail). For an example of a certificate that would work for
+document encryption, see Example 1 in this topic.
+
+## EXAMPLES
+
+### Example 1: Create a certificate for encrypting content
+
+Before you can run the `Protect-CmsMessage` cmdlet, you must create an encryption certificate. Using
+the following text, change the name in the Subject line to your name, email, or other identifier,
+and save the certificate in a file (such as `DocumentEncryption.inf`, as shown in this example).
+
+```powershell
+
+# Create .INF file for certreq
+{[Version]
+Signature = &quot;$Windows NT$&quot;
+
+[Strings]
+szOID_ENHANCED_KEY_USAGE = &quot;2.5.29.37&quot;
+szOID_DOCUMENT_ENCRYPTION = &quot;1.3.6.1.4.1.311.80.1&quot;
+
+[NewRequest]
+Subject = &quot;cn=youralias@emailaddress.com&quot;
+MachineKeySet = false
+KeyLength = 2048
+KeySpec = AT_KEYEXCHANGE
+HashAlgorithm = Sha1
+Exportable = true
+RequestType = Cert
+KeyUsage = &quot;CERT_KEY_ENCIPHERMENT_KEY_USAGE | CERT_DATA_ENCIPHERMENT_KEY_USAGE&quot;
+ValidityPeriod = &quot;Years&quot;
+ValidityPeriodUnits = &quot;1000&quot;
+
+[Extensions]
+%szOID_ENHANCED_KEY_USAGE% = &quot;{text}%szOID_DOCUMENT_ENCRYPTION%&quot;
+} | Out-File -FilePath DocumentEncryption.inf
+
+# After you have created your certificate file, run the following command to add
+
+# the certificate file to the certificate store. Now you are ready to encrypt and
+
+# decrypt content with the next two examples.
+certreq.exe -new DocumentEncryption.inf DocumentEncryption.cer
+```
+
+### Example 2: Encrypt a message sent by email
+
+```powershell
+$Protected = &quot;Hello World&quot; | Protect-CmsMessage -To &quot;*youralias@emailaddress.com*&quot;
+```
+
+In the following example, you encrypt a message, &quot;Hello World&quot;, by piping it to the
+`Protect-CmsMessage` cmdlet, and then save the encrypted message in a variable. The **To** parameter
+uses the value of the Subject line in the certificate.
+
+### Example 3: View document encryption certificates
+
+```
+PS C:\&gt; cd Cert:\CurrentUser\My
+PS Cert:\CurrentUser\My&gt; Get-ChildItem -DocumentEncryptionCert
+```
+
+To view document encryption certificates in the Certificate provider, you can add the
+**DocumentEncryptionCert** dynamic parameter of
+[Get-ChildItem](../Microsoft.PowerShell.Management/Get-ChildItem.md), available only when the
+Certificate provider is loaded.
+
+## PARAMETERS
+
+### -Content
+
+Specifies a **PSObject** that contains content that you want to encrypt. For example, you can
+encrypt the content of an event message, and then use the variable containing the message (`$Event`,
+in this example) as the value of the **Content** parameter:
+`$event = Get-WinEvent -ProviderName &quot;PowerShell&quot; -MaxEvents 1`. You can also use the `Get-Content`
+cmdlet to get the contents of a file, such as a Microsoft Word document, and save the content in a
+variable that you use as the value of the **Content** parameter.
+
+```yaml
+Type: System.Management.Automation.PSObject
+Parameter Sets: ByContent
+Aliases:
+
+Required: True
+Position: 1
+Default value: None
+Accept pipeline input: True (ByValue)
+Accept wildcard characters: False
+```
+
+### -LiteralPath
+
+Specifies the path to content that you want to encrypt. Unlike **Path**, the value of
+**LiteralPath** is used exactly as it is typed. No characters are interpreted as wildcards. If the
+path includes escape characters, enclose it in single quotation marks. Single quotation marks tell
+PowerShell not to interpret any characters as escape sequences.
+
+```yaml
+Type: System.String
+Parameter Sets: ByLiteralPath
+Aliases:
+
+Required: True
+Position: 1
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -OutFile
+
+Specifies the path and file name of a file to which you want to send the encrypted content.
+
+```yaml
+Type: System.String
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: 2
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Path
+
+Specifies the path to content that you want to encrypt.
+
+```yaml
+Type: System.String
+Parameter Sets: ByPath
+Aliases:
+
+Required: True
+Position: 1
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -To
+
+Specifies one or more CMS message recipients, identified in any of the following formats:
+
+- An actual certificate (as retrieved from the Certificate provider).
+- Path to the file containing the certificate.
+- Path to a directory containing the certificate.
+- Thumbprint of the certificate (used to look in the certificate store).
+- Subject name of the certificate (used to look in the certificate store).
+
+```yaml
+Type: System.Management.Automation.CmsMessageRecipient[]
+Parameter Sets: (All)
+Aliases:
+
+Required: True
+Position: 0
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### CommonParameters
+
+This cmdlet supports the common parameters: `-Debug`, `-ErrorAction`, `-ErrorVariable`,
+`-InformationAction`, `-InformationVariable`, `-OutVariable`, `-OutBuffer`, `-PipelineVariable`,
+`-Verbose`, `-WarningAction`, and `-WarningVariable`. For more information, see
+[about_CommonParameters](../Microsoft.PowerShell.Core/About/about_CommonParameters.md).
+
+## INPUTS
+
+## OUTPUTS
+
+## NOTES
+
+## RELATED LINKS
+
+[about_Providers](../Microsoft.PowerShell.Core/About/about_Providers.md)
+
+[Get-CmsMessage](Get-CmsMessage.md)
+
+[Unprotect-CmsMessage](Unprotect-CmsMessage.md)
+###Microsoft Learn URL###
+https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.security/protect-cmsmessage/?view=powershell-5.1
+</pre></html>

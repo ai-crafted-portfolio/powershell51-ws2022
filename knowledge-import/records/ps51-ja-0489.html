@@ -1,0 +1,374 @@
+<!doctype html><html lang="ja"><meta charset="utf-8"><pre class="record-source">###KnowledgeNo###
+PS51-WS2022-2026-0489
+###FormatID###
+PS51-WS2022
+###CreatedAt###
+2026-08-01 00:00
+###UpdatedAt###
+2026-08-01 00:00
+###タイトル###
+Add-BitsFile
+###モジュール###
+bitstransfer
+###製品###
+Windows PowerShell 5.1
+###対応OS###
+Windows Server 2022
+###日本語訳###
+# Add-BitsFile への追加
+
+## SYNOPSIS は,既存のBITS転送作業に1つまたは複数のファイルを追加します.
+
+## SYNTAXは,のシンタックスです.
+
+```
+Add-BitsFile [-BitsJob] &lt;BitsJob[]&gt; [[-Destination] &lt;String[]&gt;] [-Source] &lt;String[]&gt; [-WhatIf] [-Confirm]
+ [&lt;CommonParameters&gt;]
+```
+
+## 記述 **Add-BitsFile** cmdlet は,バックグラウンドインテリジェント・トランスフォーサービス (BITS) 転送作業にファイルを追加します.コマンドプロンプトで名前でBITS 転送作業に追加するファイルを指定するか,または komma分離値 (CSV) ファイルで指定できます.
+
+重要:アップロード作業は,ファイルが1つしか含まれない.複数のファイルをアップロードするには, **Import-Csv** cmdlet を使用し,出力を **Add-BitsFile** cmdlet にパイプします.詳細については,このヘルプトピックの例3を参照してください.または,キャビネットファイル (.cab) または圧縮ファイル (.zip) を使用してください.
+
+## 例えは
+
+### 例1:既存のBITS転送の仕事の転送キューにファイルを追加する```
+PS C:\&gt; Get-BitsTransfer -JobId 10778CFA-C1D7-4A82-8A9D-80B19224879C | Add-BitsFile -Source http://server01/servertestdir/testfile1.txt -Destination &quot;c:\clienttestdir\testfile1.txt&quot;
+```
+
+このコマンドは,既存のBITS転送作業の転送キューにファイルを追加します.
+
+この例では,Get-BitsTransfer*cmdletの出力が,独自のジョブIDで識別される**BitsJob**オブジェクトである.コマンドは,ジョブIDを**Add-BitsFile**cmdletにパイプします.ファイルのローカル・リモート・名前がパラメータに含まれます.
+
+### 例2:既存のBITS転送の仕事の転送キューにファイルセットを添付する```
+PS C:\&gt; $Bits = Get-BitsTransfer -JobId 10778CFA-C1D7-4A82-8A9D-80B19224879C
+PS C:\&gt; Add-BitsFile -BitsJob $Bits -Source &quot;http://server01/servertestdir/testfile1.txt&quot;, &quot;http://server01/servertestdir/testfile2.txt&quot; -Destination &quot;c:\clienttestdir\testfile1.txt&quot;, &quot;c:\clienttestdir\testfile2.txt&quot;
+```
+
+このコマンドは,既存のBITS転送作業の転送キューに一連のファイルを追加します.
+
+最初のコマンドは,BITS転送作業をBITSIDで識別し,その後に$b変数に保存します.第2コマンドは,$b変数に保存されている**BitsJob**オブジェクトを **Add-BitsFile**に転送するために,BitsJob*パラメータを使用します.
+
+サーバーのファイル名は,対応するクライアントのファイル名とペアされます.
+
+### 例3:新しいBITS転送仕事の転送列にファイルセットを追加する```
+PS C:\&gt; $Bits = Start-BitsTransfer -Suspended
+PS C:\&gt; Import-CSV filelist.txt | Add-BitsFile -BitsJob $Bits
+PS C:\&gt; Resume-BitsTransfer -BitsJob $Bits
+```
+
+この例では,新しいBITS転送作業の転送列に一連のファイルを追加します.
+
+最初のコマンドは新しいBitsJobオブジェクトを作成し,$Bits変数に保存します.
+
+2番目のコマンドは,転送されるファイルの一覧を含むテキストファイルを輸入するために**Import-CSV** cmdlet を使用します.テキストファイルは,オブジェクトの数列 (一行あたり1個) に変換され,パイプラインを通って **Add-BitsFile** cmdlet に渡されます. *BitsJob* パラメータは,$Bits変数に保存されている **BitsJob** (転送作業) を,$Add-BitsFile** cmdlet に渡すために使用されます.これらのオブジェクトの数列は,ダウンロードされるファイルごとに同時にBITS転送作業を追加し,クライアントに同時転送します.このコマンドは,転送されるファイルリストとともに転送作業も更新します.
+
+第三のコマンドは$Bits変数に保存されている**BitsJob**オブジェクトを**Resume-BitsTransfer**cmdletに転送し,BITS転送作業を再起動し,Filelist.txtファイルに指定されたファイルがソースから目的地に転送されます.
+
+   `Import-CSV filelist.txt`第二コマンドの要素は,転送されるファイルの一覧を含むテキストファイルを輸入する.このファイルの各行は,転送されるファイルを指定する.`&lt;Source&gt;,&lt;Destination&gt;`テキストファイルは,一行ごとに1つのオブジェクトのアレイに変換され,パイプラインを通過します.この例では,オブジェクトのアレイを&quot;&quot;に転送します.`Add-BitsFile`cmdletです.
+
+Filelist.txt ファイルの内容は,以下の情報に似ている.
+
+- **ソース,目的地** - `http://server01/servertestdir/testfile1.txt, c:\clienttestdir\testfile1.txt` - -`http://server01/servertestdir/testfile2.txt, c:\clienttestdir\testfile2.txt` - -`http://server01/servertestdir/testfile3.txt, c:\clienttestdir\testfile3.txt` - -`http://server01/servertestdir/testfile4.txt, c:\clienttestdir\testfile4.txt`
+
+## パラメータは
+
+### ファイルを追加したいBITS転送職を指定する.このパラメータに他のcmdletから値をパイプすることができます **Get-BitsTransfer**などのBitsJob**オブジェクトを返します.
+
+```yaml
+Type: BitsJob[]
+Parameter Sets: (All)
+Aliases: 
+
+Required: True
+Position: 0
+Default value: None
+Accept pipeline input: True (ByValue)
+Accept wildcard characters: False
+```
+
+### -Confirm は,cmdlet を実行する前に確認を提示します.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: cf
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -目的地指定は,目的地と転送したいファイル名を指定します.目的地名と対応するソースファイル名がペアされます.例えば, *Source* パラメータで指定された最初のファイル名は, *Destination* パラメータで最初のファイル名と, *Source* パラメータで2番目のファイル名は, *Destination* パラメータで2番目のファイル名と一致します. *Source* と *Destination* パラメータには,同じ数の要素が表示されなければなりません.そうでなければ,コマンドはエラーを生む.
+
+```yaml
+Type: String[]
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: 2
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -Source はソースロケーションと転送したいファイル名を指定します.ソースファイル名は対応する目的地ファイル名とペアされます.例えば, *Source* パラメータで指定された最初のファイル名は, *Destination* パラメータで最初のファイル名と, *Source* パラメータで2番目のファイル名は, *Destination* パラメータで2番目のファイル名と一致します. *Source* と *Destination* パラメータには同じ数の要素が含まれなければなりません.そうでなければ,エラーが発生します. 星座 (*) と質問マーク (?) のような標準ワイルカード文字を使用するか, &quot;\[a-r\&quot;のような範囲操作符を使用できます.
+
+```yaml
+Type: String[]
+Parameter Sets: (All)
+Aliases: 
+
+Required: True
+Position: 1
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -WhatIf が実行されればどうなるか示します.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: wi
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### 共通パラメータ このcmdletは共通パラメータをサポートしています: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable.詳細については, [about_CommonParameters](を参照してください.https://go.microsoft.com/fwlink/?LinkID=113216) でした.
+
+## 輸入は
+
+### Microsoft.BackgroundIntelligentTransfer.Management.BitsJob[] このcmdletは,BitsJob*パラメータを埋め込む入力として,一以上の **BitsJob**オブジェクトを受け入れます.
+
+## 輸出は
+
+# Add-BitsFile への追加
+
+### Microsoft.BackgroundIntelligentTransfer.Management.BitsJob[] このcmdletは,ファイルが追加されたBITS転送仕事に関連した **BitsJob**オブジェクトを生成します.
+
+##  NOTES  記事ができました.
+
+## 関連リンク
+
+[Complete-BitsTransfer](./Complete-BitsTransfer.md) について
+
+[Get-BitsTransfer](./Get-BitsTransfer.md) 
+
+[Remove-BitsTransfer](./Remove-BitsTransfer.md) 
+
+[Resume-BitsTransfer](./Resume-BitsTransfer.md) について
+
+[Set-BitsTransfer](./Set-BitsTransfer.md) 
+
+[Start-BitsTransfer](./Start-BitsTransfer.md) について
+
+[Suspend-BitsTransfer](./Suspend-BitsTransfer.md) 
+###英語原文###
+# Add-BitsFile
+
+## SYNOPSIS
+Adds one or more files to an existing BITS transfer job.
+
+## SYNTAX
+
+```
+Add-BitsFile [-BitsJob] &lt;BitsJob[]&gt; [[-Destination] &lt;String[]&gt;] [-Source] &lt;String[]&gt; [-WhatIf] [-Confirm]
+ [&lt;CommonParameters&gt;]
+```
+
+## DESCRIPTION
+The **Add-BitsFile** cmdlet adds files to a Background Intelligent Transfer Service (BITS) transfer job.
+You can specify the files to add to the BITS transfer job by name at the command prompt or in a comma-separated value (CSV) file.
+
+Important: An upload job can contain only one file.
+To upload more than one file, use the **Import-Csv** cmdlet, and pipe the output to the **Add-BitsFile** cmdlet.
+For more information, see example 3 in this Help topic.
+Or, use a cabinet file (.cab) or a compressed file (.zip).
+
+## EXAMPLES
+
+### Example 1: Append a file to the transfer queue of an existing BITS transfer job
+```
+PS C:\&gt; Get-BitsTransfer -JobId 10778CFA-C1D7-4A82-8A9D-80B19224879C | Add-BitsFile -Source http://server01/servertestdir/testfile1.txt -Destination &quot;c:\clienttestdir\testfile1.txt&quot;
+```
+
+This command appends a file to the transfer queue of an existing BITS transfer job.
+
+In this example, the output of the **Get-BitsTransfer** cmdlet is a **BitsJob** object that is identified by its unique job ID.
+The command pipes the job ID to the **Add-BitsFile** cmdlet.
+The local and remote names of the file are in the parameters.
+
+### Example 2: Append a set of files to the transfer queue of an existing BITS transfer job
+```
+PS C:\&gt; $Bits = Get-BitsTransfer -JobId 10778CFA-C1D7-4A82-8A9D-80B19224879C
+PS C:\&gt; Add-BitsFile -BitsJob $Bits -Source &quot;http://server01/servertestdir/testfile1.txt&quot;, &quot;http://server01/servertestdir/testfile2.txt&quot; -Destination &quot;c:\clienttestdir\testfile1.txt&quot;, &quot;c:\clienttestdir\testfile2.txt&quot;
+```
+
+This command appends a set of files to the transfer queue of an existing BITS transfer job.
+
+The first command retrieves the BITS transfer job that is identified by the job ID and then stores it in the $b variable.
+The second command uses the *BitsJob* parameter to pass the **BitsJob** object that is stored in the $b variable to **Add-BitsFile**.
+
+The server file names are paired with the corresponding client file names.
+
+### Example 3: Add a set of files to the transfer queue of a new BITS transfer job
+```
+PS C:\&gt; $Bits = Start-BitsTransfer -Suspended
+PS C:\&gt; Import-CSV filelist.txt | Add-BitsFile -BitsJob $Bits
+PS C:\&gt; Resume-BitsTransfer -BitsJob $Bits
+```
+
+This example adds a set of files to the transfer queue of a new BITS transfer job.
+
+The first command creates a new BitsJob object and then stores it in the $Bits variable.
+
+The second command uses the **Import-CSV** cmdlet to import a text file that contains a list of files to be transferred.
+The text file is converted to an array of objects (one per line) and passed through the pipeline to the **Add-BitsFile** cmdlet.
+The *BitsJob* parameter is used to pass the **BitsJob** object (the transfer job) that is stored in the $Bits variable to the **Add-BitsFile** cmdlet. These array of objects, adds BITS transfer job for each of the file to be downloaded and then transfers them concurrently to the client. This command also updates the transfer job with the list of files to be transferred.
+
+The third command passes the **BitsJob** object that is stored in the $Bits variable to the **Resume-BitsTransfer** cmdlet.
+The BITS transfer job is restarted, and the files that are specified in the Filelist.txt file are transferred from the source to the destination.
+
+The `Import-CSV filelist.txt` element of the second command imports a text file that contains the list of files to be transferred.
+Each line of this file specifies a file to be transferred, in the `&lt;Source&gt;,&lt;Destination&gt;` format.
+The text file is converted to an array of objects, one per line, and passed through the pipeline.
+In this example, the array of objects is passed to the `Add-BitsFile` cmdlet.
+
+The contents of the Filelist.txt file resemble the following information:
+
+- **Source, Destination**
+- `http://server01/servertestdir/testfile1.txt, c:\clienttestdir\testfile1.txt`
+- `http://server01/servertestdir/testfile2.txt, c:\clienttestdir\testfile2.txt`
+- `http://server01/servertestdir/testfile3.txt, c:\clienttestdir\testfile3.txt`
+- `http://server01/servertestdir/testfile4.txt, c:\clienttestdir\testfile4.txt`
+
+## PARAMETERS
+
+### -BitsJob
+Specifies the BITS transfer jobs to which you want to add files.
+You can pipe a value to this parameter from other cmdlets that return **BitsJob** objects, such as **Get-BitsTransfer**.
+
+```yaml
+Type: BitsJob[]
+Parameter Sets: (All)
+Aliases: 
+
+Required: True
+Position: 0
+Default value: None
+Accept pipeline input: True (ByValue)
+Accept wildcard characters: False
+```
+
+### -Confirm
+Prompts you for confirmation before running the cmdlet.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: cf
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Destination
+Specifies the destination location and the names of the files that you want to transfer.
+The destination names are paired with the corresponding source file names.
+For instance, the first file name specified in the *Source* parameter corresponds to the first file name in the *Destination* parameter, and the second file name in the *Source*  parameter corresponds to the second file name in the *Destination* parameter.
+The *Source* and *Destination* parameters must have the same number of elements; otherwise, the command produces an error.
+
+```yaml
+Type: String[]
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: 2
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -Source
+Specifies the source location and the names of the files that you want to transfer.
+The source file names are paired with the corresponding destination file names.
+For instance, the first file name specified in the *Source* parameter corresponds to the first file name in the *Destination* parameter, and the second file name in the *Source* parameter corresponds to the second file name in the *Destination* parameter.
+The *Source* and *Destination* parameters must have the same number of elements; otherwise, the command produces an error.
+You can use standard wildcard characters such as the asterisk (*) and the question mark (?), or you can use a range operator such as &quot;\[a-r\]&quot;.
+
+```yaml
+Type: String[]
+Parameter Sets: (All)
+Aliases: 
+
+Required: True
+Position: 1
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -WhatIf
+Shows what would happen if the cmdlet runs.
+The cmdlet is not run.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: wi
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### CommonParameters
+This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable. For more information, see [about_CommonParameters](https://go.microsoft.com/fwlink/?LinkID=113216).
+
+## INPUTS
+
+### Microsoft.BackgroundIntelligentTransfer.Management.BitsJob[]
+This cmdlet accepts one or more **BitsJob** objects as input that populates the *BitsJob* parameter.
+
+## OUTPUTS
+
+# Add-BitsFile
+
+### Microsoft.BackgroundIntelligentTransfer.Management.BitsJob[]
+This cmdlet generates the **BitsJob** objects that are associated with the BITS transfer jobs to which the files were added.
+
+## NOTES
+
+## RELATED LINKS
+
+[Complete-BitsTransfer](./Complete-BitsTransfer.md)
+
+[Get-BitsTransfer](./Get-BitsTransfer.md)
+
+[Remove-BitsTransfer](./Remove-BitsTransfer.md)
+
+[Resume-BitsTransfer](./Resume-BitsTransfer.md)
+
+[Set-BitsTransfer](./Set-BitsTransfer.md)
+
+[Start-BitsTransfer](./Start-BitsTransfer.md)
+
+[Suspend-BitsTransfer](./Suspend-BitsTransfer.md)
+###Microsoft Learn URL###
+https://learn.microsoft.com/en-us/powershell/module/bitstransfer/add-bitsfile/?view=windowsserver2022-ps
+</pre></html>

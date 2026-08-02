@@ -1,0 +1,1007 @@
+<!doctype html><html lang="ja"><meta charset="utf-8"><pre class="record-source">###KnowledgeNo###
+PS51-WS2022-2026-3635
+###FormatID###
+PS51-WS2022
+###CreatedAt###
+2026-08-01 00:00
+###UpdatedAt###
+2026-08-01 00:00
+###タイトル###
+about_Types.ps1xml
+###モジュール###
+Microsoft.PowerShell.Core
+###製品###
+Windows PowerShell 5.1
+###対応OS###
+Windows Server 2022
+###日本語訳###
+# about_Types.ps1xmlについて
+
+## 短編説明
+
+の使い方について説明します.`Types.ps1xml`PowerShellで使用されているオブジェクトの種類を拡張するためのファイルです.
+
+## 長い説明
+
+拡張型データでは,PowerShellでオブジェクトタイプの追加特性と方法 (&quot;members&quot;) を定義します.PowerShellセッションに拡張型データを追加するための2つの技術があります.
+
+ - -`Types.ps1xml`ファイル:拡張型データを定義するXMLファイル. - `Update-TypeData`: 再び充電するcmdlet`Types.ps1xml`ファイルと定義する拡張データ 現在のセッションのタイプ.
+
+このトピックは,説明します `Types.ps1xml`ファイルの使用に関する詳細については, ファイルを使用します.`Update-TypeData`cmdletで,現在のセッションに動態型拡張型データを追加するには, [Update-TypeData][01] を参照してください.
+
+## 拡張型データについて
+
+拡張型データでは,PowerShellでオブジェクトタイプの追加特性と方法 (&quot;メンバー&quot;) を定義します.あなたはPowerShellでサポートされている任意のタイプを拡張し,追加した特性と方法をオブジェクトタイプで定義されている性質を使用するように同じ方法で使用できます.
+
+例えば,PowerShellはすべての  に **DateTime** 属性を追加します.`System.DateTime`が持つ物体など.`Get-Date`cmdlet が返されます.
+
+```powershell
+(Get-Date).DateTime
+```
+
+```Output
+Sunday, January 29, 2012 9:43:57 AM
+```
+
+[System.DateTime][02]構造の説明では **DateTime**属性が見つからない.なぜなら,PowerShellが属性を追加し,PowerShellでのみ可視されるからです.
+
+PowerShellでは内部で標準的な拡張型を定義します.このタイプの情報は起動時にすべての PowerShell セッションで読み込まれます. **DateTime** 属性はこの標準セットの一部です.PowerShell 6以前,タイプ定義は に保存されていました.`Types.ps1xml`PowerShellのインストールディレクトリにあるファイル ()`$PSHOME`) でした.
+
+## PowerShellに拡張型データを追加する
+
+PowerShellセッションでは,拡張型データの3つのソースがあります.
+
+- 拡張型データはPowerShellで定義され,すべてのPowerShellセッションに自動的にロードされます.PowerShell6から,この情報はPowerShellにまとめられ,もはや で送信されません.`Types.ps1xml`ファイル.
+
+-  - `Types.ps1xml`モデルの輸出がモジュールが現在のセッションに輸入されたときに読み込まれているファイルです.
+
+ を使って定義される拡張型データです.`Update-TypeData`cmdlet は現在のセッションにのみ追加されます.ファイルに保存されていません.
+
+セッションでは,3つのソースからの拡張型データは,同じ方法でオブジェクトに適用され,指定型のすべてのオブジェクトに利用可能になります.
+
+## タイプデータ・cmdlets
+
+次のcmdletsは,PowerShell 3.0およびそれ以降の PowerShell 3.0の使用機能のモジュールに含まれています.
+
+ - -`Get-TypeData`: 現在のセッションで拡張型データを取得します. - `Update-TypeData`: Reloads `Types.ps1xml`拡張型データを現在のセッションに追加します. - `Remove-TypeData`: 現在のセッションから拡張型データを削除します.
+
+これらのcmdletについての詳細については,それぞれのcmdletのヘルプトピックを参照してください.
+
+## 組み込み型.ps1xmlファイルです.
+
+   `Types.ps1xml`のファイルに含まれるファイルです.`$PSHOME`ダイレクトリは,毎セッションに自動的に追加されます.
+
+   `Types.ps1xml`PowerShellのインストールディレクトリにあるファイル ()`$PSHOME`) は,XMLベースのテキストファイルで,PowerShellで使用するオブジェクトにプロパティとメソッドを追加することができます.PowerShellは内蔵されている`Types.ps1xml`.NET型にはいくつかの要素を追加するファイルが,追加的に作成できます.`Types.ps1xml`ファイルは,種類をさらに拡張するために使用されます.
+
+例えば,デフォルトでは,アレンジオブジェクト () が表示されます.`System.Array`) には,数列内のオブジェクトの数をリストする ** 長い** 属性があります.しかし, ** 長い** という名前はその属性を明確に記述していないため,PowerShell は ** カウント** という名前外属性を追加し,同じ値を表示します.次の XML は ** カウント** の属性を  に追加します.`System.Array`タイプです.
+
+```xml
+&lt;Type&gt;
+  &lt;Name&gt;System.Array&lt;/Name&gt;
+  &lt;Members&gt;
+    &lt;AliasProperty&gt;
+      &lt;Name&gt;Count&lt;/Name&gt;
+      &lt;ReferencedMemberName&gt;
+        Length
+      &lt;/ReferencedMemberName&gt;
+    &lt;/AliasProperty&gt;
+  &lt;/Members&gt;
+&lt;/Type&gt;
+```
+
+新しいAliasProperty を取得するには,  を使ってください.`Get-Member`次の例で示されているように,任意のアレイ上のコマンドです.
+
+```powershell
+Get-Member -InputObject (1,2,3,4)
+```
+
+このコマンドは以下の結果を返します.
+
+```Output
+Name       MemberType    Definition
+----       ----------    ----------
+Count      AliasProperty Count = Length
+Address    Method        System.Object&amp; Address(Int32)
+Clone      Method        System.Object Clone()
+CopyTo     Method        System.Void CopyTo(Array array, Int32 index):
+Equals     Method        System.Boolean Equals(Object obj)
+Get        Method        System.Object Get(Int32)
+
+# ...
+```
+
+その結果,PowerShellでアレイの **Count**属性や **Length**属性を使用できます.例えば:
+
+```powershell
+(1, 2, 3, 4).Count
+4
+```
+
+```powershell
+(1, 2, 3, 4).Length
+4
+```
+
+## 新しいType.ps1xmlファイルを作成する
+
+   `.ps1xml`PowerShellでインストールされているファイルは,格式化にはスクリプトブロックが含まれているため,不正操作を防ぐためにデジタル署名されています.したがって, .NET タイプにプロパティまたはメソッドを追加するには,独自の  を作成してください.`Types.ps1xml`ファイルを追加して PowerShell セッションに追加します.
+
+新しいファイルを作成するには,既存のファイルをコピーして始めます.`Types.ps1xml`新しいファイルにはどんな名前も持っていても,必ず&quot;&quot;が付いているはずです.`.ps1xml`新しいファイルをPowerShellにアクセスできるすべてのディレクトリに配置できますが, PowerShell のインストールディレクトリにファイルを配置することは有用です ().`$PSHOME`) またはインストールディレクトリの一部の下目録に.
+
+新しいファイルを保存した後に,  を使ってください.`Update-TypeData`PowerShellセッションに新しいファイルを追加するには cmdlet を使用します. 型が定義されている内蔵型よりも優先されるようにしたい場合は,  の **PrependData** パラメータを使用してください.`Update-TypeData`cmdlet. `Update-TypeData`現在のセッションのみに影響します.将来のセッションに変更を行うには,コンソールを輸出するか,または  を追加する`Update-TypeData`PowerShell プロフィールへのコマンド.
+
+## Types.ps1xml と Add-Member を追加する
+
+   `Types.ps1xml`PowerShellセッションで指定された .NET タイプのオブジェクトのすべてのインスタンスのプロパティとメソッドを追加します.しかし,あなたがオブジェクトのインスタンスの1つにだけプロパティまたはメソッドを追加する必要がある場合は,  ファイルを使用してください.`Add-Member`詳細については[Add-Member][03]を参照してください.
+
+# about_Types.ps1xmlについて
+
+## 例: FileInfo オブジェクトに年齢メンバーを追加する
+
+この例では,システム.IO.FileInfo**オブジェクトに **Age**属性を追加する方法を示しています.ファイルの年齢は,作成時間と現在の数日間の違いです.
+
+**Age**属性はスクリプトブロックを使用して計算されているため,  を探す.`&lt;ScriptProperty&gt;`タグは新しい **Age**プロパティのモデルとして使用されます.
+
+フォローするXMLコードをファイルに保存します.`$PSHOME\MyTypes.ps1xml` .
+
+```xml
+&lt;?xml version=&quot;1.0&quot; encoding=&quot;utf-8&quot; ?&gt;
+&lt;Types&gt;
+  &lt;Type&gt;
+    &lt;Name&gt;System.IO.FileInfo&lt;/Name&gt;
+    &lt;Members&gt;
+      &lt;ScriptProperty&gt;
+        &lt;Name&gt;Age&lt;/Name&gt;
+        &lt;GetScriptBlock&gt;
+          ((Get-Date) - ($this.CreationTime)).Days
+        &lt;/GetScriptBlock&gt;
+      &lt;/ScriptProperty&gt;
+    &lt;/Members&gt;
+  &lt;/Type&gt;
+&lt;/Types&gt;
+```
+
+ラン・ラン`Update-TypeData`追加する新しい `Types.ps1xml`コマンドは **PrependData** パラメータを使用して,新しいファイルを元の定義よりも高い優先順位に配置します.`Update-TypeData`[Update-TypeData] を参照してください.
+
+```powershell
+Update-TypeData -PrependPath $PSHOME\MyTypes.ps1xml
+```
+
+変更をテストするには,  を実行してください.`Get-ChildItem`コマンドを入手する`powershell.exe`のファイルに載っている.`$PSHOME`ディレクトリで,ファイルをパイプして,`Format-List`cmdlet は,ファイルのすべての属性をリストにします.変更の結果, **Age** 属性はリストに表示されます.
+
+```powershell
+Get-ChildItem $PSHOME\pwsh.exe | Select-Object Age
+```
+
+```Output
+142
+```
+
+## Types.ps1xml の XML のファイル
+
+完全なスケーマ定義は,GitHubのPowerShellソースコードリポジトリの [Types.xsd][04] で見つけることができます.
+
+   `&lt;Types&gt;`タグは,ファイルで定義されているすべてのタイプを囲む.ただ一つだけ () があるべきです.`&lt;Types&gt;`タグ.
+
+ファイルに記載されている各 .NET タイプは,で表示される必要があります.`&lt;Type&gt;`タグ.
+
+タイプタグには以下のタグが含まれなければならない:
+
+`&lt;Name&gt;`: 影響を受けた .NET タイプの名前を含みます.
+
+`&lt;Members&gt;`: .NET型に定義されている新しいプロパティとメソッドのタグを付いています.
+
+次のメンバータグは,いずれも,  の内部にある可能性があります.`&lt;Members&gt;`タグ.
+
+### アリアスプロパティ
+
+既存の財産の新しい名前を定義します.
+
+   `&lt;AliasProperty&gt;`タグには&quot;&quot;が付いている必要があります.`&lt;Name&gt;`新しいプロパティの名前と&quot;&quot;を指定するタグ.`&lt;ReferencedMemberName&gt;`既存のプロパティを指定するタグです.
+
+例えば, **Count** alias 属性は,アレイオブジェクトの **Length** 属性の別名です.
+
+```xml
+&lt;Type&gt;
+  &lt;Name&gt;System.Array&lt;/Name&gt;
+  &lt;Members&gt;
+    &lt;AliasProperty&gt;
+      &lt;Name&gt;Count&lt;/Name&gt;
+      &lt;ReferencedMemberName&gt;Length&lt;/ReferencedMemberName&gt;
+    &lt;/AliasProperty&gt;
+  &lt;/Members&gt;
+&lt;/Type&gt;
+```
+
+### CodeMethod
+
+.NETクラスの静止方法を指す.
+
+   `&lt;CodeMethod&gt;`タグには&quot;&quot;が付いている必要があります.`&lt;Name&gt;`新しい方法の名前と&quot;&quot;を指定するタグです.`&lt;CodeReference&gt;`方法が定義されているコードを指定するタグです.
+
+例えば, **ToString** 方法は **Microsoft.PowerShell.ToStringCodeMethods** のコード定義の名前です.
+
+```xml
+  &lt;Type&gt;
+    &lt;Name&gt;System.Xml.XmlNode&lt;/Name&gt;
+    &lt;Members&gt;
+      &lt;CodeMethod&gt;
+        &lt;Name&gt;ToString&lt;/Name&gt;
+        &lt;CodeReference&gt;
+          &lt;TypeName&gt;Microsoft.PowerShell.ToStringCodeMethods&lt;/TypeName&gt;
+          &lt;MethodName&gt;XmlNode&lt;/MethodName&gt;
+        &lt;/CodeReference&gt;
+      &lt;/CodeMethod&gt;
+    &lt;/Members&gt;
+  &lt;/Type&gt;
+```
+
+### CodeProperty
+
+.NETクラスの静止方法を指す.
+
+   `&lt;CodeProperty&gt;`タグには&quot;&quot;が付いている必要があります.`&lt;Name&gt;`新しいプロパティの名前と&quot;&quot;を指定するタグ.`&lt;GetCodeReference&gt;`資産が定義されているコードを指定するタグです.
+
+例えば,  の **Mode** 属性`System.IO.DirectoryInfo`objects は,PowerShell FileSystem プロバイダーで定義されているコードプロパティです.
+
+```xml
+&lt;Type&gt;
+  &lt;Name&gt;System.IO.DirectoryInfo&lt;/Name&gt;
+  &lt;Members&gt;
+    &lt;CodeProperty&gt;
+      &lt;Name&gt;Mode&lt;/Name&gt;
+      &lt;GetCodeReference&gt;
+        &lt;TypeName&gt;
+          Microsoft.PowerShell.Commands.FileSystemProvider
+        &lt;/TypeName&gt;
+        &lt;MethodName&gt;Mode&lt;/MethodName&gt;
+      &lt;/GetCodeReference&gt;
+    &lt;/CodeProperty&gt;
+  &lt;/Members&gt;
+&lt;/Type&gt;
+```
+
+### MemberSet はメンバーセットです.
+
+メンバーの集合 (属性と方法) を定義します.
+
+   `&lt;MemberSet&gt;`タグは,プライマリに表示される.`&lt;Members&gt;`タグは,タグに&quot;つを含めなければならない.`&lt;Name&gt;`メンバーセットの名前と次元のタグを囲むタグです.`&lt;Members&gt;`セット内のメンバー (プロパティと方法) を囲むタグ. 属性を作成するタグ (例えば ) のいずれか.`&lt;NoteProperty&gt;`    `&lt;ScriptProperty&gt;`) または方法 (例えば,) を使用する.`&lt;Method&gt;`     `&lt;ScriptMethod&gt;`) がセットのメンバーになることができます.
+
+          `Types.ps1xml`ファイル,ファイル,ファイル`&lt;MemberSet&gt;`PowerShellで .NETオブジェクトのデフォルトビューを定義するために使用されます.この場合は,メンバーセットの名前 (  の内の値) が表示されます.`&lt;Name&gt;`標籤) は常に **PsStandardMembers**であり,属性の名前 (値値の値) を表示します.`&lt;Name&gt;`タグ) は以下のいずれかです:
+
+ - -`DefaultDisplayProperty`: 対象の単一の性質.
+
+ - -`DefaultDisplayPropertySet`: 物体の1つまたは複数の性質.
+
+ - -`DefaultKeyPropertySet`: 重要なプロパティは,セッション履歴のアイテムのID番号などのプロパティ値のインスタンスを識別する.
+
+例えば,次のXMLは,サービスのデフォルト表示を定義します ().`System.ServiceProcess.ServiceController`によって返される物体) を.`Get-Service`cmdlet. これは **PsStandardMembers**というメンバーセットを定義し,既定プロパティセットと既定表示プロパティで構成されています.既定プロパティセットを **Status**, **Name**, **DisplayName**プロパティとして定義します.既定表示プロパティを **Name**として定義します.
+
+```xml
+&lt;Type&gt;
+  &lt;Name&gt;System.ServiceProcess.ServiceController&lt;/Name&gt;
+  &lt;Members&gt;
+    &lt;MemberSet&gt;
+      &lt;Name&gt;PSStandardMembers&lt;/Name&gt;
+      &lt;Members&gt;
+        &lt;PropertySet&gt;
+          &lt;Name&gt;DefaultDisplayPropertySet&lt;/Name&gt;
+          &lt;ReferencedProperties&gt;
+            &lt;Name&gt;Status&lt;/Name&gt;
+            &lt;Name&gt;Name&lt;/Name&gt;
+            &lt;Name&gt;DisplayName&lt;/Name&gt;
+          &lt;/ReferencedProperties&gt;
+        &lt;/PropertySet&gt;
+        &lt;NoteProperty&gt;
+          &lt;Name&gt;DefaultDisplayProperty&lt;/Name&gt;
+          &lt;Value&gt;Name&lt;/Value&gt;
+        &lt;/NoteProperty&gt;
+      &lt;/Members&gt;
+    &lt;/MemberSet&gt;
+  &lt;/Members&gt;
+&lt;/Type&gt;
+```
+
+`&lt;Method&gt;`: 基因オブジェクトのネイティブ方法を参照します.
+
+`&lt;Methods&gt;`: 対象の方法の集合.
+
+### NoteProperty について
+
+静数値を持つプロパティを定義します.
+
+   `&lt;NoteProperty&gt;`タグには&quot;&quot;が付いている必要があります.`&lt;Name&gt;`新しいプロパティの名前と&quot;&quot;を指定するタグ.`&lt;Value&gt;`資産の値を指定するタグです.
+
+例えば,次のXMLは**System.IO.DirectoryInfo**オブジェクトの**Status**属性を作成します.**Status**属性の値は常に**Success**です.
+
+```xml
+&lt;Type&gt;
+  &lt;Name&gt;System.IO.DirectoryInfo&lt;/Name&gt;
+  &lt;Members&gt;
+    &lt;NoteProperty&gt;
+      &lt;Name&gt;Status&lt;/Name&gt;
+      &lt;Value&gt;Success&lt;/Value&gt;
+    &lt;/NoteProperty&gt;
+  &lt;/Members&gt;
+&lt;/Type&gt;
+```
+
+# about_Types.ps1xmlについて
+
+### プロパティセット
+
+議論を取り,値返した属性.
+
+`&lt;Properties&gt;`: 対象の性質の集合.
+
+`&lt;Property&gt;`: 基礎オブジェクトの属性.
+
+`&lt;PropertySet&gt;`: 対象の性質を集合する定義.
+
+   `&lt;PropertySet&gt;`タグには&quot;&quot;が付いている必要があります.`&lt;Name&gt;`資産セットの名前と, というタグを指定するタグです.`&lt;ReferencedProperty&gt;`属性を指定するタグです.属性の名前は, で付いています.`&lt;Name&gt;`タグ.
+
+        `Types.ps1xml`     `&lt;PropertySet&gt;`標籤は,オブジェクトのデフォルト表示のプロパティセットを定義するために使用されます. 設定の表示を,PSStandardMembers**の値で識別できます.`&lt;Name&gt;`タグのタグを表示する.`&lt;MemberSet&gt;`タグ.
+
+例えば,次のXMLは,DefaultDisplayPropertySetという名前の **PropertySet** を3つの **ReferencedProperties** となす**と作成します.
+
+```xml
+&lt;Type&gt;
+  &lt;Name&gt;System.ServiceProcess.ServiceController&lt;/Name&gt;
+  &lt;Members&gt;
+    &lt;MemberSet&gt;
+      &lt;Name&gt;PSStandardMembers&lt;/Name&gt;
+      &lt;Members&gt;
+        &lt;PropertySet&gt;
+          &lt;Name&gt;DefaultDisplayPropertySet&lt;/Name&gt;
+          &lt;ReferencedProperties&gt;
+            &lt;Name&gt;Status&lt;/Name&gt;
+            &lt;Name&gt;Name&lt;/Name&gt;
+            &lt;Name&gt;DisplayName&lt;/Name&gt;
+          &lt;/ReferencedProperties&gt;
+        &lt;/PropertySet&gt;
+      &lt;/Members&gt;
+    &lt;/MemberSet&gt;
+  &lt;/Members&gt;
+&lt;/Type&gt;
+```
+
+### 脚本メソッド
+
+文字の出力値である方法を定義します.
+
+   `&lt;ScriptMethod&gt;`タグには&quot;&quot;が付いている必要があります.`&lt;Name&gt;`新しい方法の名前と&quot;&quot;を指定するタグです.`&lt;Script&gt;`方法結果を返したスクリプトブロックを囲むタグです.
+
+例えば,は`ConvertToDateTime`そして,`ConvertFromDateTime`管理オブジェクトの方法 ()`System.System.Management.ManagementObject`) は,文字の方法で,  を使っている.`ToDateTime`そして,`ToDmtfDateTime`の静止方法について`System.Management.ManagementDateTimeConverter`クラスです.
+
+```xml
+&lt;Type&gt;
+ &lt;Name&gt;System.Management.ManagementObject&lt;/Name&gt;
+ &lt;Members&gt;
+ &lt;ScriptMethod&gt;
+   &lt;Name&gt;ConvertToDateTime&lt;/Name&gt;
+   &lt;Script&gt;
+   [System.Management.ManagementDateTimeConverter]::ToDateTime($args[0])
+   &lt;/Script&gt;
+ &lt;/ScriptMethod&gt;
+ &lt;ScriptMethod&gt;
+   &lt;Name&gt;ConvertFromDateTime&lt;/Name&gt;
+   &lt;Script&gt;
+   [System.Management.ManagementDateTimeConverter]::ToDmtfDateTime($args[0])
+   &lt;/Script&gt;
+ &lt;/ScriptMethod&gt;
+ &lt;/Members&gt;
+&lt;/Type&gt;
+```
+
+### ScriptProperty について
+
+値がスクリプトの出力であるプロパティを定義します.
+
+   `&lt;ScriptProperty&gt;`タグには&quot;&quot;が付いている必要があります.`&lt;Name&gt;`新しいプロパティの名前と&quot;&quot;を指定するタグ.`&lt;GetScriptBlock&gt;`属性値を返却するスクリプトブロックを囲むタグです.
+
+例えば,System.IO.FileInfo**オブジェクトの **VersionInfo**属性は,System.IO.FileInfo**オブジェクトの **GetVersionInfo**静[U+6001]方法の **FullName**属性を利用して得られたスクリプト属性です.
+
+```xml
+&lt;Type&gt;
+  &lt;Name&gt;System.IO.FileInfo&lt;/Name&gt;
+  &lt;Members&gt;
+    &lt;ScriptProperty&gt;
+      &lt;Name&gt;VersionInfo&lt;/Name&gt;
+      &lt;GetScriptBlock&gt;
+      [System.Diagnostics.FileVersionInfo]::GetVersionInfo($this.FullName)
+      &lt;/GetScriptBlock&gt;
+    &lt;/ScriptProperty&gt;
+  &lt;/Members&gt;
+&lt;/Type&gt;
+```
+
+詳細については[Windows PowerShell ソフトウェア開発キット (SDK) ][05]を参照してください.
+
+## Update-TypeData を更新する
+
+荷物を荷入するために`Types.ps1xml`PowerShellセッションにファイルを送り, を実行します.`Update-TypeData`cmdlet. ファイル内のタイプが内蔵型よりも優先されるようにしたい場合は,`Types.ps1xml`ファイルに,PrependDataのパラメータを追加します.`Update-TypeData`  `Update-TypeData`変更を将来のセッションに変更するには,セッションを輸出するか,または  を追加する.`Update-TypeData`PowerShell プロフィールへのコマンド.
+
+属性や属性を追加した場合の例外は,`Update-TypeData`コマンドは,誤りを報告しないでください.`StdErr`これは,フォーマットおよびアウトプット中に多くの一般的なタイプで発生する例外を削除するためです.あなたが .NET属性を取得している場合は,以下の例で示されているように,方法構文を使用することで例外の削除を取り巻くことができます.
+
+```powershell
+&quot;hello&quot;.get_Length()
+```
+
+方法構文は .NET 属性のみで使用できることに注意してください.  を実行することで追加される属性です.`Update-TypeData`cmdlet は方法構文を使用できない.
+
+## Types.ps1xml ファイルにサインする
+
+ユーザーを保護するために`Types.ps1xml`デジタル署名を使用してファイルに署名することができます.詳細については,[about_Signing][06]を参照してください.
+
+## また, を参照してください.
+
+- [about_Signing][06] - [Copy-Item][07] - [Copy-ItemProperty][08] - [Get-Member][09] - [Get-TypeData][10] - [Remove-TypeData][11] - [Update-TypeData][01]
+
+&lt;!--リンク参照 --&gt; [01]: xref:Microsoft.PowerShell.Utility.Update-TypeData [02]: /dotnet/api/system.datetime [03]: xref:Microsoft.PowerShell.Utility.Add-Member [04]: https://github.com/PowerShell/PowerShell/blob/master/src/Schemas/Types.xsd[05]: /powershell/scripting/developer/windows-powershell [06]: about_Signing.md [07]: xref:Microsoft.PowerShell.Management.Copy-Item [08]: xref:Microsoft.PowerShell.Management.Copy-ItemProperty [09]: xref:Microsoft.PowerShell.Utility.Get-Member [10]: xref:Microsoft.PowerShell.Utility.Get-TypeData [11]: xref:Microsoft.PowerShell.Utility.Remove-Data
+###英語原文###
+# about_Types.ps1xml
+
+## Short description
+
+Explains how to use `Types.ps1xml` files to extend the types of objects that
+are used in PowerShell.
+
+## Long description
+
+Extended type data defines additional properties and methods (&quot;members&quot;) of
+object types in PowerShell. There are two techniques for adding extended type
+data to a PowerShell session.
+
+- `Types.ps1xml` file: An XML file that defines extended type data.
+- `Update-TypeData`: A cmdlet that reloads `Types.ps1xml` files and defines
+  extended data for types in the current session.
+
+This topic describes `Types.ps1xml` files. For more information about using the
+`Update-TypeData` cmdlet to add dynamic extended type data to the current
+session see [Update-TypeData][01].
+
+## About extended type data
+
+Extended type data defines additional properties and methods (&quot;members&quot;) of
+object types in PowerShell. You can extend any type that is supported by
+PowerShell and use the added properties and methods in the same way that you
+use the properties that are defined on the object types.
+
+For example, PowerShell adds a **DateTime** property to all `System.DateTime`
+objects, such as the ones that the `Get-Date` cmdlet returns.
+
+```powershell
+(Get-Date).DateTime
+```
+
+```Output
+Sunday, January 29, 2012 9:43:57 AM
+```
+
+You won&#x27;t find the **DateTime** property in the description of the
+[System.DateTime][02] structure, because PowerShell adds the property and it is
+visible only in PowerShell.
+
+PowerShell internally defines a default set of extended types. This type
+information is loaded in every PowerShell session at startup. The **DateTime**
+property is part of this default set. Prior to PowerShell 6, the type
+definitions were stored the `Types.ps1xml` file in the PowerShell installation
+directory (`$PSHOME`).
+
+## Adding extended type data to PowerShell
+
+There are three sources of extended type data in PowerShell sessions.
+
+- Extended type data is defined by PowerShell and loaded automatically into
+  every PowerShell session. Beginning with PowerShell 6, this information is
+  compiled into PowerShell and is no longer shipped in a `Types.ps1xml` file.
+
+- The `Types.ps1xml` files that modules export are loaded when the module
+  is imported into the current session.
+
+- Extended type data that is defined by using the `Update-TypeData` cmdlet
+  is added only to the current session. It is not saved in a file.
+
+In the session, the extended type data from the three sources is applied
+to objects in the same way and is available on all objects of the specified
+types.
+
+## The TypeData cmdlets
+
+The following cmdlets are included in the **Microsoft.PowerShell.Utility**
+module in PowerShell 3.0 and later.
+
+- `Get-TypeData`: Gets extended type data in the current session.
+- `Update-TypeData`: Reloads `Types.ps1xml` files. Adds extended type data to
+  the current session.
+- `Remove-TypeData`: Removes extended type data from the current session.
+
+For more information about these cmdlets, see the help topic for each cmdlet.
+
+## Built-in Types.ps1xml files
+
+The `Types.ps1xml` files in the `$PSHOME` directory are added automatically to
+every session.
+
+The `Types.ps1xml` file in the PowerShell installation directory (`$PSHOME`) is
+an XML-based text file that lets you add properties and methods to the objects
+that are used in PowerShell. PowerShell has built-in `Types.ps1xml` files that
+add several elements to the .NET types, but you can create additional
+`Types.ps1xml` files to further extend the types.
+
+For example, by default, array objects (`System.Array`) have a **Length**
+property that lists the number of objects in the array. However, because the
+name **Length** does not clearly describe the property, PowerShell adds an alias
+property named **Count** that displays the same value. The following XML adds
+the **Count** property to the `System.Array` type.
+
+```xml
+&lt;Type&gt;
+  &lt;Name&gt;System.Array&lt;/Name&gt;
+  &lt;Members&gt;
+    &lt;AliasProperty&gt;
+      &lt;Name&gt;Count&lt;/Name&gt;
+      &lt;ReferencedMemberName&gt;
+        Length
+      &lt;/ReferencedMemberName&gt;
+    &lt;/AliasProperty&gt;
+  &lt;/Members&gt;
+&lt;/Type&gt;
+```
+
+To get the new **AliasProperty**, use a `Get-Member` command on any array, as
+shown in the following example.
+
+```powershell
+Get-Member -InputObject (1,2,3,4)
+```
+
+The command returns the following results.
+
+```Output
+Name       MemberType    Definition
+----       ----------    ----------
+Count      AliasProperty Count = Length
+Address    Method        System.Object&amp; Address(Int32)
+Clone      Method        System.Object Clone()
+CopyTo     Method        System.Void CopyTo(Array array, Int32 index):
+Equals     Method        System.Boolean Equals(Object obj)
+Get        Method        System.Object Get(Int32)
+
+# ...
+```
+
+As a result, you can use either the **Count** property or the **Length**
+property of arrays in PowerShell. For example:
+
+```powershell
+(1, 2, 3, 4).Count
+4
+```
+
+```powershell
+(1, 2, 3, 4).Length
+4
+```
+
+## Creating new Types.ps1xml files
+
+The `.ps1xml` files that are installed with PowerShell are
+digitally signed to prevent tampering because the formatting can include
+scriptblocks. Therefore, to add a property or method to a .NET
+type, create your own `Types.ps1xml` files, and then add them to your
+PowerShell session.
+
+To create a new file, start by copying an existing `Types.ps1xml` file. The new
+file can have any name, but it must have a `.ps1xml` file name extension. You
+can place the new file in any directory that is accessible to PowerShell, but
+it is useful to place the files in the PowerShell installation directory
+(`$PSHOME`) or in a subdirectory of the installation directory.
+
+When you have saved the new file, use the `Update-TypeData` cmdlet to add the
+new file to your PowerShell session. If you want your types to take precedence
+over the built-in types that are defined, use the **PrependData** parameter of
+the `Update-TypeData` cmdlet. `Update-TypeData` affects only the current
+session. To make the change to all future sessions, export the console, or add
+the `Update-TypeData` command to your PowerShell profile.
+
+## Types.ps1xml and Add-Member
+
+The `Types.ps1xml` files add properties and methods to all the instances of the
+objects of the specified .NET type in the affected PowerShell session. However,
+if you need to add properties or methods only to one instance of an object, use
+the `Add-Member` cmdlet. For more information, see [Add-Member][03].
+
+# about_Types.ps1xml
+
+## Example: Adding an Age member to FileInfo objects
+
+This example shows how to add an **Age** property to **System.IO.FileInfo**
+objects. The age of a file is the difference between its creation time and the
+current time in days.
+
+Because the **Age** property is calculated by using a scriptblock, find a
+`&lt;ScriptProperty&gt;` tag to use as a model for the new **Age** property.
+
+Save the follow XML code to the file `$PSHOME\MyTypes.ps1xml`.
+
+```xml
+&lt;?xml version=&quot;1.0&quot; encoding=&quot;utf-8&quot; ?&gt;
+&lt;Types&gt;
+  &lt;Type&gt;
+    &lt;Name&gt;System.IO.FileInfo&lt;/Name&gt;
+    &lt;Members&gt;
+      &lt;ScriptProperty&gt;
+        &lt;Name&gt;Age&lt;/Name&gt;
+        &lt;GetScriptBlock&gt;
+          ((Get-Date) - ($this.CreationTime)).Days
+        &lt;/GetScriptBlock&gt;
+      &lt;/ScriptProperty&gt;
+    &lt;/Members&gt;
+  &lt;/Type&gt;
+&lt;/Types&gt;
+```
+
+Run `Update-TypeData` to add the new `Types.ps1xml` file to the current
+session. The command uses the **PrependData** parameter to place the new file
+in a precedence order higher than the original definitions. For more
+information about `Update-TypeData`, see [Update-TypeData][01].
+
+```powershell
+Update-TypeData -PrependPath $PSHOME\MyTypes.ps1xml
+```
+
+To test the change, run a `Get-ChildItem` command to get the `powershell.exe`
+file in the `$PSHOME` directory, and then pipe the file to the `Format-List`
+cmdlet to list all of the properties of the file. As a result of the change,
+the **Age** property appears in the list.
+
+```powershell
+Get-ChildItem $PSHOME\pwsh.exe | Select-Object Age
+```
+
+```Output
+142
+```
+
+## The XML in Types.ps1xml files
+
+The full schema definition can be found in [Types.xsd][04] in the PowerShell
+source code repository on GitHub.
+
+The `&lt;Types&gt;` tag encloses all of the types that are defined in the file. There
+should be only one `&lt;Types&gt;` tag.
+
+Each .NET type mentioned in the file should be represented by a `&lt;Type&gt;` tag.
+
+The type tags must contain the following tags:
+
+`&lt;Name&gt;`: Encloses the name of the affected .NET
+type.
+
+`&lt;Members&gt;`: Encloses the tags for the new properties and methods that are
+defined for the .NET type.
+
+Any of the following member tags can be inside the `&lt;Members&gt;` tag.
+
+### AliasProperty
+
+Defines a new name for an existing property.
+
+The `&lt;AliasProperty&gt;` tag must have a `&lt;Name&gt;` tag that specifies the name of
+the new property and a `&lt;ReferencedMemberName&gt;` tag that specifies the existing
+property.
+
+For example, the **Count** alias property is an alias for the **Length**
+property of array objects.
+
+```xml
+&lt;Type&gt;
+  &lt;Name&gt;System.Array&lt;/Name&gt;
+  &lt;Members&gt;
+    &lt;AliasProperty&gt;
+      &lt;Name&gt;Count&lt;/Name&gt;
+      &lt;ReferencedMemberName&gt;Length&lt;/ReferencedMemberName&gt;
+    &lt;/AliasProperty&gt;
+  &lt;/Members&gt;
+&lt;/Type&gt;
+```
+
+### CodeMethod
+
+References a static method of a .NET class.
+
+The `&lt;CodeMethod&gt;` tag must have a `&lt;Name&gt;` tag that specifies the name of the
+new method and a `&lt;CodeReference&gt;` tag that specifies the code in which the
+method is defined.
+
+For example, the **ToString** method is the name of the
+**Microsoft.PowerShell.ToStringCodeMethods** code definition.
+
+```xml
+  &lt;Type&gt;
+    &lt;Name&gt;System.Xml.XmlNode&lt;/Name&gt;
+    &lt;Members&gt;
+      &lt;CodeMethod&gt;
+        &lt;Name&gt;ToString&lt;/Name&gt;
+        &lt;CodeReference&gt;
+          &lt;TypeName&gt;Microsoft.PowerShell.ToStringCodeMethods&lt;/TypeName&gt;
+          &lt;MethodName&gt;XmlNode&lt;/MethodName&gt;
+        &lt;/CodeReference&gt;
+      &lt;/CodeMethod&gt;
+    &lt;/Members&gt;
+  &lt;/Type&gt;
+```
+
+### CodeProperty
+
+References a static method of a .NET class.
+
+The `&lt;CodeProperty&gt;` tag must have a `&lt;Name&gt;` tag that specifies the name of
+the new property and a `&lt;GetCodeReference&gt;` tag that specifies the code in
+which the property is defined.
+
+For example, the **Mode** property of `System.IO.DirectoryInfo` objects is a
+code property defined in the PowerShell FileSystem provider.
+
+```xml
+&lt;Type&gt;
+  &lt;Name&gt;System.IO.DirectoryInfo&lt;/Name&gt;
+  &lt;Members&gt;
+    &lt;CodeProperty&gt;
+      &lt;Name&gt;Mode&lt;/Name&gt;
+      &lt;GetCodeReference&gt;
+        &lt;TypeName&gt;
+          Microsoft.PowerShell.Commands.FileSystemProvider
+        &lt;/TypeName&gt;
+        &lt;MethodName&gt;Mode&lt;/MethodName&gt;
+      &lt;/GetCodeReference&gt;
+    &lt;/CodeProperty&gt;
+  &lt;/Members&gt;
+&lt;/Type&gt;
+```
+
+### MemberSet
+
+Defines a collection of members (properties and methods).
+
+The `&lt;MemberSet&gt;` tags appear within the primary `&lt;Members&gt;` tags. The tags
+must enclose a `&lt;Name&gt;` tag surrounding the name of the member set and
+a secondary `&lt;Members&gt;` tag that surround the members (properties and
+methods) in the set. Any of the tags that create a property (such as
+`&lt;NoteProperty&gt;` or `&lt;ScriptProperty&gt;`) or a method (such as `&lt;Method&gt;` or
+`&lt;ScriptMethod&gt;`) can be members of the set.
+
+In `Types.ps1xml` files, the `&lt;MemberSet&gt;` tag is used to define the default
+views of the .NET objects in PowerShell. In this case, the name of the member
+set (the value within the `&lt;Name&gt;` tags) is always **PsStandardMembers**, and
+the names of the properties (the value of the `&lt;Name&gt;` tag) are one of the
+following:
+
+- `DefaultDisplayProperty`: A single property of an object.
+
+- `DefaultDisplayPropertySet`: One or more properties of an object.
+
+- `DefaultKeyPropertySet`: One or more key properties of an object. A key
+  property identifies instances of property values, such as the ID number of
+  items in a session history.
+
+For example, the following XML defines the default display of services
+(`System.ServiceProcess.ServiceController` objects) that are returned by the
+`Get-Service` cmdlet. It defines a member set named **PsStandardMembers** that
+consists of a default property set and a default display property. It defines
+the default property set as the **Status**, **Name**, and **DisplayName**
+properties. It defines the default display property as **Name**.
+
+```xml
+&lt;Type&gt;
+  &lt;Name&gt;System.ServiceProcess.ServiceController&lt;/Name&gt;
+  &lt;Members&gt;
+    &lt;MemberSet&gt;
+      &lt;Name&gt;PSStandardMembers&lt;/Name&gt;
+      &lt;Members&gt;
+        &lt;PropertySet&gt;
+          &lt;Name&gt;DefaultDisplayPropertySet&lt;/Name&gt;
+          &lt;ReferencedProperties&gt;
+            &lt;Name&gt;Status&lt;/Name&gt;
+            &lt;Name&gt;Name&lt;/Name&gt;
+            &lt;Name&gt;DisplayName&lt;/Name&gt;
+          &lt;/ReferencedProperties&gt;
+        &lt;/PropertySet&gt;
+        &lt;NoteProperty&gt;
+          &lt;Name&gt;DefaultDisplayProperty&lt;/Name&gt;
+          &lt;Value&gt;Name&lt;/Value&gt;
+        &lt;/NoteProperty&gt;
+      &lt;/Members&gt;
+    &lt;/MemberSet&gt;
+  &lt;/Members&gt;
+&lt;/Type&gt;
+```
+
+`&lt;Method&gt;`: References a native method of the underlying object.
+
+`&lt;Methods&gt;`: A collection of the methods of the object.
+
+### NoteProperty
+
+Defines a property with a static value.
+
+The `&lt;NoteProperty&gt;` tag must have a `&lt;Name&gt;` tag that specifies the name of
+the new property and a `&lt;Value&gt;` tag that specifies the value of the property.
+
+For example, the following XML creates a **Status** property for
+**System.IO.DirectoryInfo** objects. The value of the **Status** property is
+always **Success**.
+
+```xml
+&lt;Type&gt;
+  &lt;Name&gt;System.IO.DirectoryInfo&lt;/Name&gt;
+  &lt;Members&gt;
+    &lt;NoteProperty&gt;
+      &lt;Name&gt;Status&lt;/Name&gt;
+      &lt;Value&gt;Success&lt;/Value&gt;
+    &lt;/NoteProperty&gt;
+  &lt;/Members&gt;
+&lt;/Type&gt;
+```
+
+# about_Types.ps1xml
+
+### PropertySet
+
+Properties that take arguments and return a value.
+
+`&lt;Properties&gt;`: A collection of the properties of the object.
+
+`&lt;Property&gt;`: A property of the base object.
+
+`&lt;PropertySet&gt;`: Defines a collection of properties of the object.
+
+The `&lt;PropertySet&gt;` tag must have a `&lt;Name&gt;` tag that specifies the name
+of the property set and a `&lt;ReferencedProperty&gt;` tag that specifies the
+properties. The names of the properties are enclosed in `&lt;Name&gt;` tag.
+
+In `Types.ps1xml`, `&lt;PropertySet&gt;` tags are used to define sets of properties
+for the default display of an object. You can identify the default displays by
+the value **PsStandardMembers** in the `&lt;Name&gt;` tag of a `&lt;MemberSet&gt;` tag.
+
+For example, the following XML creates a **PropertySet** named
+**DefaultDisplayPropertySet** with three **ReferencedProperties**.
+
+```xml
+&lt;Type&gt;
+  &lt;Name&gt;System.ServiceProcess.ServiceController&lt;/Name&gt;
+  &lt;Members&gt;
+    &lt;MemberSet&gt;
+      &lt;Name&gt;PSStandardMembers&lt;/Name&gt;
+      &lt;Members&gt;
+        &lt;PropertySet&gt;
+          &lt;Name&gt;DefaultDisplayPropertySet&lt;/Name&gt;
+          &lt;ReferencedProperties&gt;
+            &lt;Name&gt;Status&lt;/Name&gt;
+            &lt;Name&gt;Name&lt;/Name&gt;
+            &lt;Name&gt;DisplayName&lt;/Name&gt;
+          &lt;/ReferencedProperties&gt;
+        &lt;/PropertySet&gt;
+      &lt;/Members&gt;
+    &lt;/MemberSet&gt;
+  &lt;/Members&gt;
+&lt;/Type&gt;
+```
+
+### ScriptMethod
+
+Defines a method whose value is the output of a script.
+
+The `&lt;ScriptMethod&gt;` tag must have a `&lt;Name&gt;` tag that specifies the name of
+the new method and a `&lt;Script&gt;` tag that encloses the scriptblock that returns
+the method result.
+
+For example, the `ConvertToDateTime` and `ConvertFromDateTime` methods of
+management objects (`System.System.Management.ManagementObject`) are script
+methods that use the `ToDateTime` and `ToDmtfDateTime` static methods of the
+`System.Management.ManagementDateTimeConverter` class.
+
+```xml
+&lt;Type&gt;
+ &lt;Name&gt;System.Management.ManagementObject&lt;/Name&gt;
+ &lt;Members&gt;
+ &lt;ScriptMethod&gt;
+   &lt;Name&gt;ConvertToDateTime&lt;/Name&gt;
+   &lt;Script&gt;
+   [System.Management.ManagementDateTimeConverter]::ToDateTime($args[0])
+   &lt;/Script&gt;
+ &lt;/ScriptMethod&gt;
+ &lt;ScriptMethod&gt;
+   &lt;Name&gt;ConvertFromDateTime&lt;/Name&gt;
+   &lt;Script&gt;
+   [System.Management.ManagementDateTimeConverter]::ToDmtfDateTime($args[0])
+   &lt;/Script&gt;
+ &lt;/ScriptMethod&gt;
+ &lt;/Members&gt;
+&lt;/Type&gt;
+```
+
+### ScriptProperty
+
+Defines a property whose value is the output of a script.
+
+The `&lt;ScriptProperty&gt;` tag must have a `&lt;Name&gt;` tag that specifies the
+name of the new property and a `&lt;GetScriptBlock&gt;` tag that encloses the
+scriptblock that returns the property value.
+
+For example, the **VersionInfo** property of the **System.IO.FileInfo** object
+is a script property that results from using the **FullName** property of the
+**GetVersionInfo** static method of **System.Diagnostics.FileVersionInfo**
+objects.
+
+```xml
+&lt;Type&gt;
+  &lt;Name&gt;System.IO.FileInfo&lt;/Name&gt;
+  &lt;Members&gt;
+    &lt;ScriptProperty&gt;
+      &lt;Name&gt;VersionInfo&lt;/Name&gt;
+      &lt;GetScriptBlock&gt;
+      [System.Diagnostics.FileVersionInfo]::GetVersionInfo($this.FullName)
+      &lt;/GetScriptBlock&gt;
+    &lt;/ScriptProperty&gt;
+  &lt;/Members&gt;
+&lt;/Type&gt;
+```
+
+For more information, see the
+[Windows PowerShell Software Development Kit (SDK)][05].
+
+## Update-TypeData
+
+To load your `Types.ps1xml` files into a PowerShell session, run the
+`Update-TypeData` cmdlet. If you want the types in your file to take precedence
+over types in the built-in `Types.ps1xml` file, add the **PrependData**
+parameter of `Update-TypeData`. `Update-TypeData` affects only the current
+session. To make the change to all future sessions, export the session, or add
+the `Update-TypeData` command to your PowerShell profile.
+
+Exceptions that occur in properties, or from adding properties to an
+`Update-TypeData` command, do not report errors to `StdErr`. This is to
+suppress exceptions that would occur in many common types during formatting and
+outputting. If you are getting .NET properties, you can work around the
+suppression of exceptions by using method syntax instead, as shown in the
+following example:
+
+```powershell
+&quot;hello&quot;.get_Length()
+```
+
+Note that method syntax can only be used with .NET properties. Properties that
+are added by running the `Update-TypeData` cmdlet cannot use method syntax.
+
+## Signing a Types.ps1xml file
+
+To protect users of your `Types.ps1xml` file, you can sign the file using a
+digital signature. For more information, see [about_Signing][06].
+
+## See also
+
+- [about_Signing][06]
+- [Copy-Item][07]
+- [Copy-ItemProperty][08]
+- [Get-Member][09]
+- [Get-TypeData][10]
+- [Remove-TypeData][11]
+- [Update-TypeData][01]
+
+&lt;!-- link references --&gt;
+[01]: xref:Microsoft.PowerShell.Utility.Update-TypeData
+[02]: /dotnet/api/system.datetime
+[03]: xref:Microsoft.PowerShell.Utility.Add-Member
+[04]: https://github.com/PowerShell/PowerShell/blob/master/src/Schemas/Types.xsd
+[05]: /powershell/scripting/developer/windows-powershell
+[06]: about_Signing.md
+[07]: xref:Microsoft.PowerShell.Management.Copy-Item
+[08]: xref:Microsoft.PowerShell.Management.Copy-ItemProperty
+[09]: xref:Microsoft.PowerShell.Utility.Get-Member
+[10]: xref:Microsoft.PowerShell.Utility.Get-TypeData
+[11]: xref:Microsoft.PowerShell.Utility.Remove-TypeData
+###Microsoft Learn URL###
+https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_types.ps1xml/?view=powershell-5.1
+</pre></html>

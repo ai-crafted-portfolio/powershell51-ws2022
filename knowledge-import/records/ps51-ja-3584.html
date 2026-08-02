@@ -1,0 +1,1037 @@
+<!doctype html><html lang="ja"><meta charset="utf-8"><pre class="record-source">###KnowledgeNo###
+PS51-WS2022-2026-3584
+###FormatID###
+PS51-WS2022
+###CreatedAt###
+2026-08-01 00:00
+###UpdatedAt###
+2026-08-01 00:00
+###タイトル###
+about_Pipelines
+###モジュール###
+Microsoft.PowerShell.Core
+###製品###
+Windows PowerShell 5.1
+###対応OS###
+Windows Server 2022
+###日本語訳###
+# about_Pipelinesについて
+
+## 短編説明
+
+パワーシェルで命令をパイプラインに組み合わせる
+
+## 長い説明
+
+パイプラインとは,パイプラインオペレーターによって接続されたコマンドの連鎖である ().`|`) (ASCII 124).パイプラインオペレーターそれぞれ,前のコマンドの結果を次のコマンドに送信します.
+
+最初のコマンドの出力は第2コマンドへの入力として処理のために送信され,その出力は別のコマンドに送られる.結果として複雑なコマンドチェーンまたは _pipeline_ が構成される.
+
+例えば
+
+```powershell
+Command-1 | Command-2 | Command-3
+```
+
+この例では,物体が`Command-1`発信者は,送られてきます.`Command-2`  `Command-2`対象を処理して,送り返す.`Command-3`  `Command-3`管道ではコマンドがなくなったので,結果はコンソールで表示されます.
+
+パイプラインでは,コマンドは左から右に順番で処理され,処理は単一の操作として処理され,出力は生成時に表示されます.
+
+以下は簡単な例です.次のコマンドは,ノートパッドプロセスを取り出し,それを停止します.
+
+例えば
+
+```powershell
+Get-Process notepad | Stop-Process
+```
+
+最初のコマンドは,を用います.`Get-Process`Notepad プロセスを表現するオブジェクトを入手するには cmdlet を使用します.このプロセスはパイプラインオペレーター () を使います.`|`) をして,プロセスオブジェクトを  に送る.`Stop-Process`cmdletでノートパッドのプロセスを停止します.`Stop-Process`指定されたプロセスはパイプラインを通じて送信されているため,このプロセスを指定する**Name**または**Id**パラメータはコマンドにはありません.
+
+このパイプライン例では,現在のディレクトリ内のテキストファイルを入手し,長さ1万バイト以上のファイルを選択し,長さによって整理し,各ファイルの名前と長さを表で表示します.
+
+```powershell
+Get-ChildItem -Path *.txt |
+  Where-Object {$_.Length -gt 10000} |
+    Sort-Object -Property Length |
+      Format-Table -Property Name, Length
+```
+
+このパイプラインは,指定順に4つのコマンドで構成されています.以下の図は,パイプライン内の次のコマンドに転送されるたびに,各コマンドからの出力を示しています.
+
+```
+Get-ChildItem -Path *.txt
+| (FileInfo objects for *.txt)
+V
+Where-Object {$_.Length -gt 10000}
+| (FileInfo objects for *.txt)
+| (      Length &gt; 10000      )
+V
+Sort-Object -Property Length
+| (FileInfo objects for *.txt)
+| (      Length &gt; 10000      )
+| (     Sorted by length     )
+V
+Format-Table -Property Name, Length
+| (FileInfo objects for *.txt)
+| (      Length &gt; 10000      )
+| (     Sorted by length     )
+| (   Formatted in a table   )
+V
+
+Name                       Length
+----                       ------
+tmp1.txt                    82920
+tmp2.txt                   114000
+tmp3.txt                   114000
+```
+
+## 管道を利用して
+
+ほとんどのPowerShell cmdletはパイプラインをサポートするように設計されています.ほとんどの場合,あなたは **Get** cmdlet の結果を同じ名詞の別の cmdlet に _pipe_ することができます.例えば,あなたは  の輸出をパイプすることができます.`Get-Service` に cmdlet を入れます.`Start-Service`    `Stop-Service`cmdlets.
+
+この例パイプラインは,コンピュータ上でWMIサービスを起動します.
+
+```powershell
+Get-Service wmi | Start-Service
+```
+
+別の例では,  の出力をパイプで配ることができます.`Get-Item`    `Get-ChildItem`PowerShell Registry プロバイダー内の  に PowerShell Registry プロバイダーを入力します.`New-ItemProperty`この例では, **MyCompany**登録キーに **8124**の値を持つ新しい登録入力, **NoOfEmployees** を追加します.
+
+```powershell
+Get-Item -Path HKLM:\Software\MyCompany |
+  New-ItemProperty -Name NoOfEmployees -Value 8124
+```
+
+多くのユーティリティのcmdlet,例えば,`Get-Member`     `Where-Object`     `Sort-Object`     `Group-Object`そして,そして,`Measure-Object`これらのcmdletに任意のオブジェクトタイプをパイプすることができます.この例では,各プロセスの開いたハンドル数によってコンピュータ上のすべてのプロセスをどのように排列するか示しています.
+
+```powershell
+Get-Process | Sort-Object -Property Handles
+```
+
+形式化,輸出,輸出のcmdletsにオブジェクトをパイプすることができます.`Format-List`     `Format-Table`     `Export-Clixml`     `Export-Csv`そして,そして,`Out-File` .
+
+この例では,どのように&quot;&quot;を用いられるかを示しています.`Format-List`cmdlet はプロセスオブジェクトのプロパティリストを表示する.
+
+```powershell
+Get-Process winlogon | Format-List -Property *
+```
+
+また,ネイティブコマンドの出力をPowerShell cmdletsにパイプすることもできます.例えば:
+
+```powershell
+PS&gt; ipconfig.exe | Select-String -Pattern &#x27;IPv4&#x27;
+
+   IPv4 Address. . . . . . . . . . . : 172.24.80.1
+   IPv4 Address. . . . . . . . . . . : 192.168.1.45
+   IPv4 Address. . . . . . . . . . . : 100.64.108.37
+```
+
+&gt; [!IMPORTANT] &gt; **Success**と **Error**のストリームは,他のシェルのストーアウトとストーダーと類似している.しかし,ストーディンはPowerShell &gt;入力パイプラインに接続されていない.詳細については, &gt; [about_Redirection][07] を参照してください.
+
+練習すれば,シンプルなコマンドをパイプラインに組み合わせることで,時間とタイピングを節約し,スクリプトを効率的に作れるようになるでしょう.
+
+## 管道管道がどのように機能するか
+
+このセクションでは,入力オブジェクトがcmdletパラメータに結びつけられ,パイプライン実行中に処理される方法を説明します.
+
+### パイプライン入力を承認します.
+
+パイプラインをサポートするには,受信するcmdletには,パイプライン入力を受け入れるパラメータがなければならない.`Get-Help`**Full**または **Parameter**のオプションを使用したコマンドで,pipeline inputをどのcmdletのパラメータが受け入れているかを判断します.
+
+例えば,  のパラメータのうちどれが決まるかを調べるため.`Start-Service`cmdlet はパイプライン入力を受け付けます.
+
+```powershell
+Get-Help Start-Service -Full
+```
+
+         
+
+```powershell
+Get-Help Start-Service -Parameter *
+```
+
+の助けを借りる`Start-Service`cmdlet は,InputObject** と **Name** のパラメータだけがパイプライン入力を受け入れることを示しています.
+
+```Output
+-InputObject &lt;ServiceController[]&gt;
+Specifies ServiceController objects representing the services to be started.
+Enter a variable that contains the objects, or type a command or expression
+that gets the objects.
+
+Required?                    true
+Position?                    0
+Default value                None
+Accept pipeline input?       True (ByValue)
+Accept wildcard characters?  false
+
+-Name &lt;String[]&gt;
+Specifies the service names for the service to be started.
+
+The parameter name is optional. You can use Name or its alias, ServiceName,
+or you can omit the parameter name.
+
+Required?                    true
+Position?                    0
+Default value                None
+Accept pipeline input?       True (ByPropertyName, ByValue)
+Accept wildcard characters?  false
+```
+
+管道を通って物体を送るときは,`Start-Service`PowerShellでオブジェクトを **InputObject** と **Name** パラメータと関連付けようとします.
+
+# about_Pipelinesについて
+
+### パイプライン入力を受け入れる方法
+
+Cmdletsのパラメータは,パイプライン入力を2つの異なる方法のうちの1つで受け入れることができます.
+
+- **ByValue**: パラメータは,期待される .NET タイプに一致する値,またはそのタイプに変換できる値を受け入れます.
+
+例えば,  の **Name** パラメータを`Start-Service`文字列の入力を値別で受け入れる.文字列のオブジェクトまたは文字列に変換できるオブジェクトを受け入れることができる.
+
+- **ByPropertyName**: 参数が入力対象がパラメータと同じ名前を持つ場合にのみ入力を受け入れます.
+
+例えば,  の名前パラメータを`Start-Service`名前属性を持つオブジェクトを受け入れることができる.オブジェクトの属性をリストするには,それを  にパイプして表示してください.`Get-Member` .
+
+いくつかのパラメータは,値またはプロパティの名前の両方でオブジェクトを受け入れることができるので,パイプラインから入力を取ることは容易になります.
+
+### パラメーター結合
+
+命令から命令へとオブジェクトをパイプするときは,PowerShellはパイプされたオブジェクトを受信するcmdletのパラメータと関連付けようとします.
+
+PowerShellのパラメータ結合コンポーネントは,以下の基準に従って入力オブジェクトとcmdletパラメータを関連付けます.
+
+- パラメータはパイプラインからの入力を受け入れておく必要があります. - パラメータは送信されるオブジェクトの種類や,期待されるタイプに変換できるタイプを受け入れなければなりません. - パラメータはコマンドで使用されなかった.
+
+例えば,は`Start-Service`cmdlet には多くのパラメータがありますが,そのうちの2つだけ, **Name** と **InputObject** がパイプライン入力を受け入れます. **Name** パラメータは文字列と **InputObject** パラメータはサービスオブジェクトをします.したがって,文字列,サービスオブジェクト,および文字列またはサービスオブジェクトに変換できる属性を持つオブジェクトをパイプすることができます.
+
+PowerShellはパラメータ結合をできるだけ効率的に管理する.あなたは,PowerShellを特定のパラメータに結合させるよう提案したり強制したりすることはできません.PowerShellがパイプされたオブジェクトを結合できない場合はコマンドが失敗します.
+
+結合エラーのトラブルシューティングに関する詳細については,この記事の後に[パイプラインエラーを調査する]を参照してください.
+
+### ワン・ア・タイム・プロセッサ
+
+命令にオブジェクトをパイプすることは,オブジェクトを送信するためにコマンドのパラメータを使用することと似ている.パイプライン例を見てみましょう.この例では,サービスオブジェクトの表を表示するためにパイプラインを使用します.
+
+```powershell
+Get-Service | Format-Table -Property Name, DependentServices
+```
+
+機能的には,これは,  の **InputObject** パラメータを使用するようなものです.`Format-Table`対象のコレクションを提出する.
+
+例えば,サービスコレクションを **InputObject** パラメータを使用して渡された変数に保存することができます.
+
+```powershell
+$services = Get-Service
+Format-Table -InputObject $services -Property Name, DependentServices
+```
+
+あるいは,コマンドを **InputObject** パラメータに埋め込むことができます.
+
+```powershell
+Format-Table -InputObject (Get-Service) -Property Name, DependentServices
+```
+
+しかし,重要な違いはあります.複数のオブジェクトをコマンドにパイプすると,PowerShell はオブジェクトをコマンドに一度に送信します.コマンドパラメータを使用すると,オブジェクトは単一のアレンジオブジェクトとして送信されます.この小さな違いには重大な影響があります.
+
+パイプラインを実行する際,PowerShellは自動的に, を実行する任意のタイプをリストアップします.`IEnumerable`リストされたアイテムはパイプラインを1つずつ送る.PowerShellはまた,システム.データ.データテーブル[08]タイプを&quot;&quot;を通じてリストする.`Rows`財産.
+
+自動計算にはいくつかの例外がある.
+
+- を電話して欲しい`GetEnumerator()`ハッシュテーブルの方法,  を実装するタイプです.`IDictionary`システム.Xml.XmlNode** タイプ - システム.ストリング** クラスは実装します`IEnumerable`しかし,PowerShellでは文字列オブジェクトを数えていない.
+
+次の例では,アレイとハッシュテーブルがパイプで に繋がっている.`Measure-Object`cmdlet はパイプラインから受信されたオブジェクトの数を数えることができます.アレイには複数のメンバーがあり,ハッシュテーブルには複数のキー-値ペアがあります.アレイは一度に1つずつ数えます.
+
+```powershell
+@(1,2,3) | Measure-Object
+```
+
+```Output
+Count    : 3
+Average  :
+Sum      :
+Maximum  :
+Minimum  :
+Property :
+```
+
+```powershell
+@{&quot;One&quot;=1;&quot;Two&quot;=2} | Measure-Object
+```
+
+```Output
+Count    : 1
+Average  :
+Sum      :
+Maximum  :
+Minimum  :
+Property :
+```
+
+同様に,複数のプロセスオブジェクトをパイプして,`Get-Process` に cmdlet を入れます.`Get-Member`cmdletでは,PowerShellでプロセスオブジェクトをそれぞれ,一度に1つずつ,  に送信します.`Get-Member`  `Get-Member`プロセスオブジェクトの .NETクラス (タイプ) とその性質と方法が表示されます.
+
+```powershell
+Get-Process | Get-Member
+```
+
+```Output
+TypeName: System.Diagnostics.Process
+
+Name      MemberType     Definition
+----      ----------     ----------
+Handles   AliasProperty  Handles = Handlecount
+Name      AliasProperty  Name = ProcessName
+NPM       AliasProperty  NPM = NonpagedSystemMemorySize
+...
+```
+
+&gt; [!NOTE] &gt; `Get-Member`複製を排除するので,オブジェクトがすべて同じ &gt; タイプである場合,ただ一つのオブジェクトタイプのみ表示されます.
+
+しかし,InputObjectのパラメータを用いると,`Get-Member`じゃあ,`Get-Member`システム・診断・プロセス・オブジェクトの数列を単一単位として受け取る. 対象の数列の性質を表示する. (数列符号に注意してください ()`[]`) を後に **System.Object** のタイプ名.)
+
+例えば
+
+```powershell
+Get-Member -InputObject (Get-Process)
+```
+
+```Output
+TypeName: System.Object[]
+
+Name               MemberType    Definition
+----               ----------    ----------
+Count              AliasProperty Count = Length
+Address            Method        System.Object&amp; Address(Int32 )
+Clone              Method        System.Object Clone()
+...
+```
+
+この結果は意図されたものではないかもしれません.しかし理解した後,それを使用することができます.例えば,すべての数列オブジェクトには** Count**属性があります.それをコンピュータで実行されているプロセスの数を数えることができます.
+
+例えば
+
+```powershell
+(Get-Process).Count
+```
+
+管道から下ろされた物体は,一度に1つずつ届いていることを覚えておくことが重要です.
+
+## パイプラインでネイティブコマンドを使用します
+
+PowerShellで,ネイティブ外部コマンドをパイプラインに組み込むことができます.しかし,PowerShellのパイプラインはオブジェクト指向で,原発バイトデータをサポートしていないことに注意することが重要です.
+
+原発バイトデータを出力するネイティブプログラムから出力をパイプまたはリダイレクトすることで,出力を .NET文字列に変換します.この変換により原発データ出力の腐敗を引き起こす可能性があります.
+
+解決方法として,ネイティブコマンドを呼び出し,  を使用してください.`cmd.exe /c`そして,その文字を使ってください.`|`そして,`&gt;`ネイティブシェルによって提供されたオペレーターです.
+
+# about_Pipelinesについて
+
+## パイプラインエラーを調査する
+
+PowerShellがパイプされたオブジェクトを受信するcmdletのパラメータと関連付けることができない場合,コマンドが失敗します.
+
+次の例では,レジストリエントリをレジストリキーから別の鍵に移動しようとします.`Get-Item`cmdlet は目的地パスを取得し,その後にパイプで  へ送られます.`Move-ItemProperty`cmdlet. のcmdlet.`Move-ItemProperty`コマンドは,移動するレジストリエントリーの現在のパスと名前を指定します.
+
+```powershell
+Get-Item -Path HKLM:\Software\MyCompany\sales |
+Move-ItemProperty -Path HKLM:\Software\MyCompany\design -Name product
+```
+
+コマンドが失敗すると,PowerShellで以下のエラーメッセージが表示されます.
+
+```Output
+Move-ItemProperty : The input object can&#x27;t be bound to any parameters for
+the command either because the command doesn&#x27;t take pipeline input or the
+input and its properties do not match any of the parameters that take
+pipeline input.
+At line:1 char:23
++ $a | Move-ItemProperty &lt;&lt;&lt;&lt;  -Path HKLM:\Software\MyCompany\design -Name p
+```
+
+調べるために,  を使って調べてください.`Trace-Command`PowerShellのパラメータ結合構成要素を追跡するcmdlet.下記の例は,パイプラインが実行中にパラメータ結合を追跡する. **PSHost**パラメータは,コンソールで追跡結果を表示し, **FilePath**パラメータは,追跡結果を に送信します.`debug.txt`後で参考にファイル.
+
+```powershell
+Trace-Command -Name ParameterBinding -PSHost -FilePath debug.txt -Expression {
+  Get-Item -Path HKLM:\Software\MyCompany\sales |
+    Move-ItemProperty -Path HKLM:\Software\MyCompany\design -Name product
+}
+```
+
+追跡結果は長いですが,値が に結びついていることを示しています.`Get-Item`cmdletと,名前の値が  に結合される.`Move-ItemProperty`cmdletです.
+
+```Output
+...
+BIND NAMED cmd line args [`Move-ItemProperty`]
+BIND arg [HKLM:\Software\MyCompany\design] to parameter [Path]
+...
+BIND arg [product] to parameter [Name]
+...
+BIND POSITIONAL cmd line args [`Move-ItemProperty`]
+...
+```
+
+最後に,このパスを の**Destination**パラメータに結びつける試みが示されている.`Move-ItemProperty`失敗した.
+
+```Output
+...
+BIND PIPELINE object to parameters: [`Move-ItemProperty`]
+PIPELINE object TYPE = [Microsoft.Win32.RegistryKey]
+RESTORING pipeline parameter&#x27;s original values
+Parameter [Destination] PIPELINE INPUT ValueFromPipelineByPropertyName NO
+COERCION
+Parameter [Credential] PIPELINE INPUT ValueFromPipelineByPropertyName NO
+COERCION
+...
+```
+
+ を使って`Get-Help`cmdlet で **Destination** パラメータの属性を表示できます.
+
+```Output
+Get-Help Move-ItemProperty -Parameter Destination
+
+-Destination &lt;String&gt;
+    Specifies the path to the destination location.
+
+    Required?                    true
+    Position?                    1
+    Default value                None
+    Accept pipeline input?       True (ByPropertyName)
+    Accept wildcard characters?  false
+```
+
+結果は, **Destination** が&quot;プロパティ名&quot;によってのみパイプライン入力を取ることを示しています.したがって,パイプされたオブジェクトには **Destination** というプロパティがなければならない.
+
+活用する`Get-Member`対象の性質を確認するには,その対象から来る物体です.`Get-Item` .
+
+```powershell
+Get-Item -Path HKLM:\Software\MyCompany\sales | Get-Member
+```
+
+輸出は,そのアイテムが**Microsoft.Win32.RegistryKey**オブジェクトであることを示し,そのアイテムには**Destination**プロパティがないことを示し,その命令が失敗した理由を説明します.
+
+**Path**パラメータは,名前や値によってパイプライン入力を受け入れます.
+
+```Output
+Get-Help Move-ItemProperty -Parameter Path
+
+-Path &lt;String[]&gt;
+    Specifies the path to the current location of the property. Wildcard
+    characters are permitted.
+
+    Required?                    true
+    Position?                    0
+    Default value                None
+    Accept pipeline input?       True (ByPropertyName, ByValue)
+    Accept wildcard characters?  true
+```
+
+命令を修正するには,目的地を  で指定する必要があります.`Move-ItemProperty`cmdlet と使用する`Get-Item`移動したいアイテムのパスを取得します.
+
+例えば
+
+```powershell
+Get-Item -Path HKLM:\Software\MyCompany\design |
+Move-ItemProperty -Destination HKLM:\Software\MyCompany\sales -Name product
+```
+
+## 内線連続は内線連続です.
+
+すでに説明したように,パイプラインは,パイプラインオペレーターによって接続された一連のコマンド () です.`|`),通常は単行で書かれています.しかし,読みやすさを保つために,PowerShellはパイプラインを複数のラインに分割することを可能にします.パイプオペレーターがラインの最後のトークンである場合,PowerShell解析器はパイプラインの構築を継続するために現在のコマンドの次のラインに結合します.
+
+例えば,次の単線パイプライン:
+
+```powershell
+Command-1 | Command-2 | Command-3
+```
+
+書き換えられるのは:
+
+```powershell
+Command-1 |
+    Command-2 |
+    Command-3
+```
+
+後の行の先頭空間の意味は低い. 挿入は読める力を高めます.
+
+## また, を参照してください.
+
+- [about_Objects][05] - [about_Parameters][06] - [about_Command_Syntax][03] - [about_Foreach][04]
+
+&lt;!--リンク参照 --&gt; [02]: #調査-パイプライン-エラー [03]: about_Command_Syntax.md [04]: about_Foreach.md [05]: about_Objects.md [06]: about_Parameters.md [07]: about_Redirection.md [08]: xref:System.Data.DataTable.Rows
+###英語原文###
+# about_Pipelines
+
+## Short description
+
+Combining commands into pipelines in the PowerShell
+
+## Long description
+
+A pipeline is a series of commands connected by pipeline operators (`|`)
+(ASCII 124). Each pipeline operator sends the results of the preceding command
+to the next command.
+
+The output of the first command can be sent for processing as input to the
+second command. And that output can be sent to yet another command. The result
+is a complex command chain or _pipeline_ that&#x27;s composed of a series of
+simple commands.
+
+For example,
+
+```powershell
+Command-1 | Command-2 | Command-3
+```
+
+In this example, the objects that `Command-1` emits are sent to `Command-2`.
+`Command-2` processes the objects and sends them to `Command-3`. `Command-3`
+processes the objects and send them down the pipeline. Because there are no
+more commands in the pipeline, the results are displayed at the console.
+
+In a pipeline, the commands are processed in order from left to right. The
+processing is handled as a single operation and output is displayed as it&#x27;s
+generated.
+
+Here is a simple example. The following command gets the Notepad process and
+then stops it.
+
+For example,
+
+```powershell
+Get-Process notepad | Stop-Process
+```
+
+The first command uses the `Get-Process` cmdlet to get an object representing
+the Notepad process. It uses a pipeline operator (`|`) to send the process
+object to the `Stop-Process` cmdlet, which stops the Notepad process. Notice
+that the `Stop-Process` command doesn&#x27;t have a **Name** or **Id** parameter to
+specify the process, because the specified process is submitted through the
+pipeline.
+
+This pipeline example gets the text files in the current directory, selects
+only the files that are more than 10,000 bytes long, sorts them by length, and
+displays the name and length of each file in a table.
+
+```powershell
+Get-ChildItem -Path *.txt |
+  Where-Object {$_.Length -gt 10000} |
+    Sort-Object -Property Length |
+      Format-Table -Property Name, Length
+```
+
+This pipeline consists of four commands in the specified order. The following
+illustration shows the output from each command as it&#x27;s passed to the next
+command in the pipeline.
+
+```
+Get-ChildItem -Path *.txt
+| (FileInfo objects for *.txt)
+V
+Where-Object {$_.Length -gt 10000}
+| (FileInfo objects for *.txt)
+| (      Length &gt; 10000      )
+V
+Sort-Object -Property Length
+| (FileInfo objects for *.txt)
+| (      Length &gt; 10000      )
+| (     Sorted by length     )
+V
+Format-Table -Property Name, Length
+| (FileInfo objects for *.txt)
+| (      Length &gt; 10000      )
+| (     Sorted by length     )
+| (   Formatted in a table   )
+V
+
+Name                       Length
+----                       ------
+tmp1.txt                    82920
+tmp2.txt                   114000
+tmp3.txt                   114000
+```
+
+## Using pipelines
+
+Most PowerShell cmdlets are designed to support pipelines. In most cases, you
+can _pipe_ the results of a **Get** cmdlet to another cmdlet of the same noun.
+For example, you can pipe the output of the `Get-Service` cmdlet to the
+`Start-Service` or `Stop-Service` cmdlets.
+
+This example pipeline starts the WMI service on the computer:
+
+```powershell
+Get-Service wmi | Start-Service
+```
+
+For another example, you can pipe the output of `Get-Item` or `Get-ChildItem`
+within the PowerShell Registry provider to the `New-ItemProperty` cmdlet. This
+example adds a new registry entry, **NoOfEmployees**, with a value of **8124**,
+to the **MyCompany** registry key.
+
+```powershell
+Get-Item -Path HKLM:\Software\MyCompany |
+  New-ItemProperty -Name NoOfEmployees -Value 8124
+```
+
+Many of the utility cmdlets, such as `Get-Member`, `Where-Object`,
+`Sort-Object`, `Group-Object`, and `Measure-Object` are used almost exclusively
+in pipelines. You can pipe any object type to these cmdlets. This example shows
+how to sort all the processes on the computer by the number of open handles in
+each process.
+
+```powershell
+Get-Process | Sort-Object -Property Handles
+```
+
+You can pipe objects to the formatting, export, and output cmdlets, such as
+`Format-List`, `Format-Table`, `Export-Clixml`, `Export-Csv`, and `Out-File`.
+
+This example shows how to use the `Format-List` cmdlet to display a list of
+properties for a process object.
+
+```powershell
+Get-Process winlogon | Format-List -Property *
+```
+
+You can also pipe the output of native commands to PowerShell cmdlets. For
+example:
+
+```powershell
+PS&gt; ipconfig.exe | Select-String -Pattern &#x27;IPv4&#x27;
+
+   IPv4 Address. . . . . . . . . . . : 172.24.80.1
+   IPv4 Address. . . . . . . . . . . : 192.168.1.45
+   IPv4 Address. . . . . . . . . . . : 100.64.108.37
+```
+
+&gt; [!IMPORTANT]
+&gt; The **Success** and **Error** streams are similar to the stdout and stderr
+&gt; streams of other shells. However, stdin isn&#x27;t connected to the PowerShell
+&gt; pipeline for input. For more information, see
+&gt; [about_Redirection][07].
+
+With a bit of practice, you&#x27;ll find that combining simple commands into
+pipelines saves time and typing, and makes your scripting more efficient.
+
+## How pipelines work
+
+This section explains how input objects are bound to cmdlet parameters and
+processed during pipeline execution.
+
+### Accepts pipeline input
+
+To support pipelining, the receiving cmdlet must have a parameter that accepts
+pipeline input. Use the `Get-Help` command with the **Full** or **Parameter**
+options to determine which parameters of a cmdlet accept pipeline input.
+
+For example, to determine which of the parameters of the `Start-Service`
+cmdlet accepts pipeline input, type:
+
+```powershell
+Get-Help Start-Service -Full
+```
+
+or
+
+```powershell
+Get-Help Start-Service -Parameter *
+```
+
+The help for the `Start-Service` cmdlet shows that only the **InputObject** and
+**Name** parameters accept pipeline input.
+
+```Output
+-InputObject &lt;ServiceController[]&gt;
+Specifies ServiceController objects representing the services to be started.
+Enter a variable that contains the objects, or type a command or expression
+that gets the objects.
+
+Required?                    true
+Position?                    0
+Default value                None
+Accept pipeline input?       True (ByValue)
+Accept wildcard characters?  false
+
+-Name &lt;String[]&gt;
+Specifies the service names for the service to be started.
+
+The parameter name is optional. You can use Name or its alias, ServiceName,
+or you can omit the parameter name.
+
+Required?                    true
+Position?                    0
+Default value                None
+Accept pipeline input?       True (ByPropertyName, ByValue)
+Accept wildcard characters?  false
+```
+
+When you send objects through the pipeline to `Start-Service`, PowerShell
+attempts to associate the objects with the **InputObject** and **Name**
+parameters.
+
+# about_Pipelines
+
+### Methods of accepting pipeline input
+
+Cmdlets parameters can accept pipeline input in one of two different ways:
+
+- **ByValue**: The parameter accepts values that match the expected .NET type
+  or that can be converted to that type.
+
+  For example, the **Name** parameter of `Start-Service` accepts pipeline input
+  by value. It can accept string objects or objects that can be converted to
+  strings.
+
+- **ByPropertyName**: The parameter accepts input only when the input object
+  has a property of the same name as the parameter.
+
+  For example, the Name parameter of `Start-Service` can accept objects that
+  have a **Name** property. To list the properties of an object, pipe it to
+  `Get-Member`.
+
+Some parameters can accept objects by both value or property name, making it
+easier to take input from the pipeline.
+
+### Parameter binding
+
+When you pipe objects from one command to another command, PowerShell attempts
+to associate the piped objects with a parameter of the receiving cmdlet.
+
+PowerShell&#x27;s parameter binding component associates the input objects with
+cmdlet parameters according to the following criteria:
+
+- The parameter must accept input from a pipeline.
+- The parameter must accept the type of object being sent or a type that can be
+  converted to the expected type.
+- The parameter wasn&#x27;t used in the command.
+
+For example, the `Start-Service` cmdlet has many parameters, but only two of
+them, **Name** and **InputObject** accept pipeline input. The **Name**
+parameter takes strings and the **InputObject** parameter takes service
+objects. Therefore, you can pipe strings, service objects, and objects with
+properties that can be converted to string or service objects.
+
+PowerShell manages parameter binding as efficiently as possible. You can&#x27;t
+suggest or force the PowerShell to bind to a specific parameter. The command
+fails if PowerShell can&#x27;t bind the piped objects.
+
+For more information about troubleshooting binding errors, see
+[Investigating Pipeline Errors][02] later in this article.
+
+### One-at-a-time processing
+
+Piping objects to a command is much like using a parameter of the command to
+submit the objects. Let&#x27;s look at a pipeline example. In this example, we use a
+pipeline to display a table of service objects.
+
+```powershell
+Get-Service | Format-Table -Property Name, DependentServices
+```
+
+Functionally, this is like using the **InputObject** parameter of
+`Format-Table` to submit the object collection.
+
+For example, we can save the collection of services to a variable that&#x27;s
+passed using the **InputObject** parameter.
+
+```powershell
+$services = Get-Service
+Format-Table -InputObject $services -Property Name, DependentServices
+```
+
+Or we can embed the command in the **InputObject** parameter.
+
+```powershell
+Format-Table -InputObject (Get-Service) -Property Name, DependentServices
+```
+
+However, there&#x27;s an important difference. When you pipe multiple objects to a
+command, PowerShell sends the objects to the command one at a time. When you
+use a command parameter, the objects are sent as a single array object. This
+minor difference has significant consequences.
+
+When executing a pipeline, PowerShell automatically enumerates any type that
+implements the `IEnumerable` interface or its generic counterpart. Enumerated
+items are sent through the pipeline one at a time. PowerShell also enumerates
+[System.Data.DataTable][08] types through the `Rows` property.
+
+There are a few exceptions to automatic enumeration.
+
+- You must call the `GetEnumerator()` method for hash tables, types that
+  implement the `IDictionary` interface or its generic counterpart, and
+  **System.Xml.XmlNode** types.
+- The **System.String** class implements `IEnumerable`, however PowerShell
+  doesn&#x27;t enumerate string objects.
+
+In the following examples, an array and a hashtable are piped to the
+`Measure-Object` cmdlet to count the number of objects received from the
+pipeline. The array has multiple members, and the hashtable has multiple
+key-value pairs. Only the array is enumerated one at a time.
+
+```powershell
+@(1,2,3) | Measure-Object
+```
+
+```Output
+Count    : 3
+Average  :
+Sum      :
+Maximum  :
+Minimum  :
+Property :
+```
+
+```powershell
+@{&quot;One&quot;=1;&quot;Two&quot;=2} | Measure-Object
+```
+
+```Output
+Count    : 1
+Average  :
+Sum      :
+Maximum  :
+Minimum  :
+Property :
+```
+
+Similarly, if you pipe multiple process objects from the `Get-Process` cmdlet
+to the `Get-Member` cmdlet, PowerShell sends each process object, one at a
+time, to `Get-Member`. `Get-Member` displays the .NET class (type) of the
+process objects, and their properties and methods.
+
+```powershell
+Get-Process | Get-Member
+```
+
+```Output
+TypeName: System.Diagnostics.Process
+
+Name      MemberType     Definition
+----      ----------     ----------
+Handles   AliasProperty  Handles = Handlecount
+Name      AliasProperty  Name = ProcessName
+NPM       AliasProperty  NPM = NonpagedSystemMemorySize
+...
+```
+
+&gt; [!NOTE]
+&gt; `Get-Member` eliminates duplicates, so if the objects are all of the same
+&gt; type, it only displays one object type.
+
+However, if you use the **InputObject** parameter of `Get-Member`, then
+`Get-Member` receives an array of **System.Diagnostics.Process** objects as a
+single unit. It displays the properties of an array of objects. (Note the array
+symbol (`[]`) after the **System.Object** type name.)
+
+For example,
+
+```powershell
+Get-Member -InputObject (Get-Process)
+```
+
+```Output
+TypeName: System.Object[]
+
+Name               MemberType    Definition
+----               ----------    ----------
+Count              AliasProperty Count = Length
+Address            Method        System.Object&amp; Address(Int32 )
+Clone              Method        System.Object Clone()
+...
+```
+
+This result might not be what you intended. But after you understand it, you
+can use it. For example, all array objects have a **Count** property. You can
+use that to count the number of processes running on the computer.
+
+For example,
+
+```powershell
+(Get-Process).Count
+```
+
+It&#x27;s important to remember that objects sent down the pipeline are delivered
+one at a time.
+
+## Using native commands in the pipeline
+
+PowerShell allows you to include native external commands in the pipeline.
+However, it&#x27;s important to note that PowerShell&#x27;s pipeline is object-oriented
+and doesn&#x27;t support raw byte data.
+
+Piping or redirecting output from a native program that outputs raw byte data
+converts the output to .NET strings. This conversion can cause corruption of
+the raw data output.
+
+As a workaround, call the native commands using `cmd.exe /c` and use the `|`
+and `&gt;` operators provided by the native shell.
+
+# about_Pipelines
+
+## Investigating pipeline errors
+
+When PowerShell can&#x27;t associate the piped objects with a parameter of the
+receiving cmdlet, the command fails.
+
+In the following example, we try to move a registry entry from one registry key
+to another. The `Get-Item` cmdlet gets the destination path, which is then
+piped to the `Move-ItemProperty` cmdlet. The `Move-ItemProperty` command
+specifies the current path and name of the registry entry to be moved.
+
+```powershell
+Get-Item -Path HKLM:\Software\MyCompany\sales |
+Move-ItemProperty -Path HKLM:\Software\MyCompany\design -Name product
+```
+
+The command fails and PowerShell displays the following error
+message:
+
+```Output
+Move-ItemProperty : The input object can&#x27;t be bound to any parameters for
+the command either because the command doesn&#x27;t take pipeline input or the
+input and its properties do not match any of the parameters that take
+pipeline input.
+At line:1 char:23
++ $a | Move-ItemProperty &lt;&lt;&lt;&lt;  -Path HKLM:\Software\MyCompany\design -Name p
+```
+
+To investigate, use the `Trace-Command` cmdlet to trace the parameter binding
+component of PowerShell. The following example traces parameter binding while
+the pipeline is executing. The **PSHost** parameter displays the trace results
+in the console and the **FilePath** parameter send the trace results to the
+`debug.txt` file for later reference.
+
+```powershell
+Trace-Command -Name ParameterBinding -PSHost -FilePath debug.txt -Expression {
+  Get-Item -Path HKLM:\Software\MyCompany\sales |
+    Move-ItemProperty -Path HKLM:\Software\MyCompany\design -Name product
+}
+```
+
+The results of the trace are lengthy, but they show the values being bound to
+the `Get-Item` cmdlet and then the named values being bound to the
+`Move-ItemProperty` cmdlet.
+
+```Output
+...
+BIND NAMED cmd line args [`Move-ItemProperty`]
+BIND arg [HKLM:\Software\MyCompany\design] to parameter [Path]
+...
+BIND arg [product] to parameter [Name]
+...
+BIND POSITIONAL cmd line args [`Move-ItemProperty`]
+...
+```
+
+Finally, it shows that the attempt to bind the path to the **Destination**
+parameter of `Move-ItemProperty` failed.
+
+```Output
+...
+BIND PIPELINE object to parameters: [`Move-ItemProperty`]
+PIPELINE object TYPE = [Microsoft.Win32.RegistryKey]
+RESTORING pipeline parameter&#x27;s original values
+Parameter [Destination] PIPELINE INPUT ValueFromPipelineByPropertyName NO
+COERCION
+Parameter [Credential] PIPELINE INPUT ValueFromPipelineByPropertyName NO
+COERCION
+...
+```
+
+Use the `Get-Help` cmdlet to view the attributes of the **Destination**
+parameter.
+
+```Output
+Get-Help Move-ItemProperty -Parameter Destination
+
+-Destination &lt;String&gt;
+    Specifies the path to the destination location.
+
+    Required?                    true
+    Position?                    1
+    Default value                None
+    Accept pipeline input?       True (ByPropertyName)
+    Accept wildcard characters?  false
+```
+
+The results show that **Destination** takes pipeline input only &quot;by property
+name&quot;. Therefore, the piped object must have a property named **Destination**.
+
+Use `Get-Member` to see the properties of the object coming from `Get-Item`.
+
+```powershell
+Get-Item -Path HKLM:\Software\MyCompany\sales | Get-Member
+```
+
+The output shows that the item is a **Microsoft.Win32.RegistryKey** object that
+doesn&#x27;t have a **Destination** property. That explains why the command failed.
+
+The **Path** parameter accepts pipeline input by name or by value.
+
+```Output
+Get-Help Move-ItemProperty -Parameter Path
+
+-Path &lt;String[]&gt;
+    Specifies the path to the current location of the property. Wildcard
+    characters are permitted.
+
+    Required?                    true
+    Position?                    0
+    Default value                None
+    Accept pipeline input?       True (ByPropertyName, ByValue)
+    Accept wildcard characters?  true
+```
+
+To fix the command, we must specify the destination in the `Move-ItemProperty`
+cmdlet and use `Get-Item` to get the **Path** of the item we want to move.
+
+For example,
+
+```powershell
+Get-Item -Path HKLM:\Software\MyCompany\design |
+Move-ItemProperty -Destination HKLM:\Software\MyCompany\sales -Name product
+```
+
+## Intrinsic line continuation
+
+As already discussed, a pipeline is a series of commands connected by pipeline
+operators (`|`), usually written on a single line. However, for readability,
+PowerShell allows you to split the pipeline across multiple lines. When a pipe
+operator is the last token on the line, the PowerShell parser joins the next
+line to current command to continue the construction of the pipeline.
+
+For example, the following single-line pipeline:
+
+```powershell
+Command-1 | Command-2 | Command-3
+```
+
+can be written as:
+
+```powershell
+Command-1 |
+    Command-2 |
+    Command-3
+```
+
+The leading spaces on the subsequent lines aren&#x27;t significant. The indentation
+enhances readability.
+
+## See also
+
+- [about_Objects][05]
+- [about_Parameters][06]
+- [about_Command_Syntax][03]
+- [about_Foreach][04]
+
+&lt;!-- link references --&gt;
+[02]: #investigating-pipeline-errors
+[03]: about_Command_Syntax.md
+[04]: about_Foreach.md
+[05]: about_Objects.md
+[06]: about_Parameters.md
+[07]: about_Redirection.md
+[08]: xref:System.Data.DataTable.Rows
+###Microsoft Learn URL###
+https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_pipelines/?view=powershell-5.1
+</pre></html>

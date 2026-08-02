@@ -1,0 +1,953 @@
+<!doctype html><html lang="ja"><meta charset="utf-8"><pre class="record-source">###KnowledgeNo###
+PS51-WS2022-2026-3888
+###FormatID###
+PS51-WS2022
+###CreatedAt###
+2026-08-01 00:00
+###UpdatedAt###
+2026-08-01 00:00
+###タイトル###
+Get-Member
+###モジュール###
+Microsoft.PowerShell.Utility
+###製品###
+Windows PowerShell 5.1
+###対応OS###
+Windows Server 2022
+###日本語訳###
+# メンバーを募集する
+
+## シンプシスは物体の性質と方法を把握する.
+
+## SYNTAXは,のシンタックスです.
+
+```
+Get-Member [-InputObject &lt;PSObject&gt;] [[-Name] &lt;String[]&gt;] [-MemberType &lt;PSMemberTypes&gt;]
+ [-View &lt;PSMemberViewTypes&gt;] [-Static] [-Force] [&lt;CommonParameters&gt;]
+```
+
+## 記述は,
+
+   `Get-Member`cmdlet は,オブジェクトの構成要素,性質,方法を取得します.
+
+オブジェクトを指定するには, **InputObject** パラメータを使用するか,オブジェクトを  にパイプして指定してください.`Get-Member`静[U+6001]メンバーに関する情報を入手するには,インスタンスのメンバーではなく,クラスのメンバーが******を使用する. **NoteProperties**などの特定のメンバータイプのみを入手するには**MemberType**を使用する.
+
+`Get-Member`メンバーのリストをアルファベット順に並べて表示します.方法が最初にリストされ,その後にプロパティが返されます.
+
+## 例えは
+
+### 例1:プロセスオブジェクトのメンバーを入手する
+
+このコマンドでは, によって生成されたサービスオブジェクトの特性と方法が表示されます.`Get-Service`cmdletです.
+
+なぜなら,その `Get-Member`コマンドの一部にはパラメータがないので,パラメータのデフォルト値を使用します.`Get-Member`静かまたは内在的なメンバーを得ない.
+
+```powershell
+Get-Service | Get-Member
+```
+
+```Output
+   TypeName: System.ServiceProcess.ServiceController
+
+Name                      MemberType    Definition
+----                      ----------    ----------
+Name                      AliasProperty Name = ServiceName
+RequiredServices          AliasProperty RequiredServices = ServicesDependedOn
+Disposed                  Event         System.EventHandler Disposed(System.Object, System.EventArgs)
+Close                     Method        void Close()
+Continue                  Method        void Continue()
+CreateObjRef              Method        System.Runtime.Remoting.ObjRef CreateObjRef(type requestedType)
+Dispose                   Method        void Dispose(), void IDisposable.Dispose()
+Equals                    Method        bool Equals(System.Object obj)
+ExecuteCommand            Method        void ExecuteCommand(int command)
+GetHashCode               Method        int GetHashCode()
+GetLifetimeService        Method        System.Object GetLifetimeService()
+GetType                   Method        type GetType()
+InitializeLifetimeService Method        System.Object InitializeLifetimeService()
+Pause                     Method        void Pause()
+Refresh                   Method        void Refresh()
+Start                     Method        void Start(), void Start(string[] args)
+Stop                      Method        void Stop()
+WaitForStatus             Method        void WaitForStatus(System.ServiceProcess.ServiceControllerSt...
+CanPauseAndContinue       Property      bool CanPauseAndContinue {get;}
+CanShutdown               Property      bool CanShutdown {get;}
+CanStop                   Property      bool CanStop {get;}
+Container                 Property      System.ComponentModel.IContainer Container {get;}
+DependentServices         Property      System.ServiceProcess.ServiceController[] DependentServices {get;}
+DisplayName               Property      string DisplayName {get;set;}
+MachineName               Property      string MachineName {get;set;}
+ServiceHandle             Property      System.Runtime.InteropServices.SafeHandle ServiceHandle {get;}
+ServiceName               Property      string ServiceName {get;set;}
+ServicesDependedOn        Property      System.ServiceProcess.ServiceController[] ServicesDependedOn {get;}
+ServiceType               Property      System.ServiceProcess.ServiceType ServiceType {get;}
+Site                      Property      System.ComponentModel.ISite Site {get;set;}
+StartType                 Property      System.ServiceProcess.ServiceStartMode StartType {get;}
+Status                    Property      System.ServiceProcess.ServiceControllerStatus Status {get;}
+ToString                  ScriptMethod  System.Object ToString();
+```
+
+### 例2:サービスオブジェクトのメンバーを入手する
+
+この例では,サービスオブジェクトのすべてのメンバー (プロパティと方法) を によって取り戻します.`Get-Service`cmdlet に, **psbase**, **psobject**, **get_**, **set_** のような内在メンバーが含まれています.
+
+```powershell
+Get-Service | Get-Member -Force
+(Get-Service Schedule).psbase
+```
+
+   `Get-Member`**Force**パラメータを使用して,オブジェクトの内在メンバーとコンパイラ生成されたオブジェクトを表示します.このプロパティとメソッドを,あなたがオブジェクトの適応方法を使用するように使用できます.第2コマンドはスケジュールサービスの **psbase**属性の値を表示する方法を示します.内在メンバーに関する詳細については, [about_Intrinsic_Members]を参照してください. /Microsoft.PowerShell.Core/About/about_Intrinsic_Members.md) 
+
+### 例3:サービスオブジェクトの会員拡張を取得します.
+
+この例では,サービスオブジェクトの方法と性質を得ます.`Types.ps1xml`ファイルまたはファイル`Add-Member`cmdletです.
+
+```powershell
+Get-Service | Get-Member -View Extended
+```
+
+```Output
+   TypeName: System.ServiceProcess.ServiceController
+
+Name             MemberType    Definition
+----             ----------    ----------
+Name             AliasProperty Name = ServiceName
+RequiredServices AliasProperty RequiredServices = ServicesDependedOn
+ToString         ScriptMethod  System.Object ToString();
+```
+
+   `Get-Member`このコマンドは **View** パラメータを使用して,サービスオブジェクトの拡張メンバーのみを取得します.この場合,拡張メンバーは **Name** 属性です.これは **ServiceName** 属性の異名属性です.
+
+### 例4:イベントログオブジェクトのスクリプトプロパティを取得します
+
+この例では,イベントビューア内のシステムログのイベントログオブジェクトのスクリプトプロパティが表示されます.
+
+```powershell
+Get-WinEvent -LogName System -MaxEvents 1 | Get-Member -MemberType NoteProperty
+```
+
+```Output
+   TypeName: System.Diagnostics.Eventing.Reader.EventLogRecord
+
+Name    MemberType   Definition
+----    ----------   ----------
+Message NoteProperty string Message=The machine-default permission settings do not grant Local ...
+```
+
+**MemberType**パラメータは,値のオブジェクトのみを獲得します.`NoteProperty`彼らのMemberType 財産のために.
+
+このコマンドは,EventLogRecord**オブジェクトの **Message**プロパティを返します.
+
+### 例5:指定されたプロパティを持つオブジェクトを入手する
+
+この例では,CMdletのリストから出力する**MachineName**属性を持つオブジェクトが表示されます.
+
+   `$list`評価されるcmdletsのリストが含まれています.変数は`foreach`命令を呼び出し,結果を  に送信します.`Get-Member`**Name**パラメータは, からの結果を制限します.`Get-Member`**MachineName**という名前を持つメンバーに.
+
+```powershell
+$list = &quot;Get-Process&quot;, &quot;Get-Service&quot;, &quot;Get-Culture&quot;, &quot;Get-PSDrive&quot;, &quot;Get-ExecutionPolicy&quot;
+foreach ($cmdlet in $list) {&amp; $cmdlet | Get-Member -Name MachineName}
+```
+
+```Output
+   TypeName: System.Diagnostics.Process
+
+Name        MemberType Definition
+----        ---------- ----------
+MachineName Property   string MachineName {get;}
+
+   TypeName: System.ServiceProcess.ServiceController
+
+Name        MemberType Definition
+----        ---------- ----------
+MachineName Property   string MachineName {get;set;}
+```
+
+結果は,処理オブジェクトとサービスオブジェクトだけが **MachineName**属性を持っていることを示しています.
+
+# メンバーを募集する
+
+### 例 6: アレンジのメンバーを獲得する
+
+この例では,物件配列のメンバーをどのように探すかを示しています.`Get-Member`cmdlet は,アレイ内の各個別のオブジェクトタイプのメンバーリストを返します. **InputObject** パラメータを使用してアレイをパスすると,アレイは単一のオブジェクトとして扱われます.
+
+```powershell
+$array = @(1,&#x27;hello&#x27;)
+$array | Get-Member
+```
+
+```Output
+   TypeName: System.Int32
+
+Name        MemberType Definition
+----        ---------- ----------
+CompareTo   Method     int CompareTo(System.Object value), int CompareTo(int value), int ICompar...
+Equals      Method     bool Equals(System.Object obj), bool Equals(int obj), bool IEquatable[int...
+GetHashCode Method     int GetHashCode()
+GetType     Method     type GetType()
+GetTypeCode Method     System.TypeCode GetTypeCode(), System.TypeCode IConvertible.GetTypeCode()
+ToBoolean   Method     bool IConvertible.ToBoolean(System.IFormatProvider provider)
+ToByte      Method     byte IConvertible.ToByte(System.IFormatProvider provider)
+...
+
+   TypeName: System.String
+
+Name                 MemberType            Definition
+----                 ----------            ----------
+Clone                Method                System.Object Clone(), System.Object ICloneable.Clone()
+CompareTo            Method                int CompareTo(System.Object value), int CompareTo(str...
+Contains             Method                bool Contains(string value), bool Contains(string val...
+CopyTo               Method                void CopyTo(int sourceIndex, char[] destination, int ...
+EndsWith             Method                bool EndsWith(string value), bool EndsWith(string val...
+EnumerateRunes       Method                System.Text.StringRuneEnumerator EnumerateRunes()
+Equals               Method                bool Equals(System.Object obj), bool Equals(string va...
+GetEnumerator        Method                System.CharEnumerator GetEnumerator(), System.Collect...
+GetHashCode          Method                int GetHashCode(), int GetHashCode(System.StringCompa...
+...
+```
+
+```powershell
+Get-Member -InputObject $array
+```
+
+```Output
+   TypeName: System.Object[]
+
+Name           MemberType            Definition
+----           ----------            ----------
+Add            Method                int IList.Add(System.Object value)
+Address        Method                System.Object&amp;, System.Private.CoreLib, Version=4.0.0.0, Cu...
+Clear          Method                void IList.Clear()
+Clone          Method                System.Object Clone(), System.Object ICloneable.Clone()
+CompareTo      Method                int IStructuralComparable.CompareTo(System.Object other, Sy...
+...
+```
+
+   `$array`**Int32** オブジェクトと **string** オブジェクトが含まれるので,アレイをパイプして  に送ると見ることができます.`Get-Member`いつ. `$array`**InputObject**パラメータを使用して通過しています.`Get-Member`**Object[]** のメンバーを返します.
+
+### 例7: 設定できるオブジェクトの属性を決定する
+
+この例では,物体の性質が変更される方法が示されています.
+
+```powershell
+$File = Get-Item C:\test\textFile.txt
+$File.psobject.Properties | Where-Object IsSettable | Select-Object -Property Name
+```
+
+```Output
+Name
+----
+PSPath
+PSParentPath
+PSChildName
+PSDrive
+PSProvider
+PSIsContainer
+IsReadOnly
+CreationTime
+CreationTimeUtc
+LastAccessTime
+LastAccessTimeUtc
+LastWriteTime
+LastWriteTimeUtc
+Attributes
+```
+
+### 例8: 物体の性質を,その順に創った順にリストする
+
+この例では新しいPSObjectを作成し,そのものにプロパティを追加します.`Get-Member`属性をアルファベット順で表しています.属性をオブジェクトに追加された順で表示するには,内在メンバーの **psobject** を使用する必要があります.
+
+```powershell
+$Asset = New-Object -TypeName psobject
+$d = [ordered]@{Name=&quot;Server30&quot;;System=&quot;Server Core&quot;;PSVersion=&quot;4.0&quot;}
+$Asset | Add-Member -NotePropertyMembers $d -TypeName Asset
+$Asset.psobject.Properties | Select-Object Name, Value
+```
+
+```Output
+Name      Value
+----      -----
+Name      Server30
+System    Server Core
+PSVersion 4.0
+```
+
+## パラメータは
+
+### -フォース
+
+内部メンバーとコンパイラ生成した **get_**と **set_**のメソッドを表示に追加します.以下のリストは, **Force**パラメータを使用すると追加される属性を記述します:
+
+ - -`psbase`: 拡張や適応なしに .NETオブジェクトのオリジナルプロパティ. これらはオブジェクトクラスに定義されたプロパティです. - `psadapted`: PowerShell拡張型システムで定義された特性と方法. - `psextended`: に追加された特性と方法`Types.ps1xml`ファイルまたは  ファイルを使用します.`Add-Member`cmdletです.`psobject`: ベースオブジェクトをPowerShell **PSObject**オブジェクトに変換するアダプタ. - `pstypenames`: 特定の順にオブジェクトを記述するオブジェクトタイプの一覧.オブジェクトをフォーマットする際に,PowerShellは&quot;&quot;のタイプを探します.`Format.ps1xml`PowerShellのインストールディレクトリにあるファイル ()`$PSHOME`フォートアップの定義を用い,最初に見つけたタイプを定義します.
+
+デフォルトでは, `Get-Member`**Base**と **Adapted**を除くすべてのビューでこれらのプロパティを取得しますが,表示されません.
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -InputObject
+
+メンバーが回収されるオブジェクトを指定します.
+
+**InputObject**パラメータを使用することは,物体をパイプして  に送るようなものではありません.`Get-Member`違いは以下の通りです.
+
+- 集合物をパイプして に送ると`Get-Member`     `Get-Member`集合内の個々のオブジェクトのメンバーを得ます.例えば,文字列の配列内の各文字列の属性などです. - 集合のオブジェクトを提出するために **InputObject** を使用すると, `Get-Member`集合のメンバーを,例えば,文字列の配列の属性等を,得ます.
+
+```yaml
+Type: System.Management.Automation.PSObject
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByValue)
+Accept wildcard characters: False
+```
+
+# メンバーを募集する
+
+### -MemberType
+
+このcmdletが取得するメンバータイプを指定します.デフォルトは です.`All` .
+
+このパラメータの受け入れられる値は:
+
+ - -`AliasProperty` - -`CodeProperty` - -`Property` - -`NoteProperty` - -`ScriptProperty` - -`Properties` - -`PropertySet` - -`Method` - -`CodeMethod` - -`ScriptMethod` - -`Methods` - -`ParameterizedProperty` - -`MemberSet` - -`Event` - -`Dynamic` - -`All`
+
+これらの値はフラグベースの数値として定義されます.このパラメータを使用して複数のフラグを設定するために複数の値を組み合わせることができます.値は **MemberType**パラメータに値の配列としてまたはそれらの値の逗号分離文字列として転送することができます. cmdlet はバイナリ-OR操作を使用して値を組み合わせます.マレイとして値をパスすることは最も簡単なオプションであり,値のタブ完了を使用することもできます.
+
+これらの値についての情報については,PSMemberTypes [PSMemberTypes Enumeration] (/dotnet/api/system.management.automation.psmembertypes) を参照してください.
+
+すべてのオブジェクトにはすべてのメンバータイプが存在しない.オブジェクトが持っていないメンバータイプを指定すると,PowerShellでゼロ値が返されます.すべての拡張メンバーなどの関連するメンバータイプを取得するには, **View**パラメータを使用します. **Static**または **View**パラメータを持つ **MemberType**パラメータを使用する場合,`Get-Member`両組のメンバーを獲得します.
+
+```yaml
+Type: System.Management.Automation.PSMemberTypes
+Parameter Sets: (All)
+Aliases: Type
+Accepted values: AliasProperty, CodeProperty, Property, NoteProperty, ScriptProperty, Properties, PropertySet, Method, CodeMethod, ScriptMethod, Methods, ParameterizedProperty, MemberSet, Event, Dynamic, All
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -名字は
+
+対象物の1つまたは複数の性質または方法の名前を指定します. `Get-Member`指定された性質と方法のみを取得します.
+
+**MemberType**, **View**,または **Static**のパラメータで **Name**パラメータを使用すると,`Get-Member`すべてのパラメータの基準を満たすメンバーのみが獲得します.
+
+スタティックメンバーを名前で指定するには, **Name** パラメータを付いた **Static** パラメータを使用します.
+
+```yaml
+Type: System.String[]
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: 0
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -静的
+
+このcmdletはオブジェクトの静的特性と方法のみが得られることを示します.静的特性と方法は,そのクラスの特定の例ではなく,オブジェクトのクラスで定義されます.
+
+**View**または **Force**のパラメータで**Static**を用いると,cmdletはそれらのパラメータを無視します. **MemberType**のパラメータで**Static**を用いると,`Get-Member`両組のメンバーのみが獲得する.
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -View
+
+このcmdletが特定のタイプのプロパティとメソッドのみを取得することを指定します.その値のうちの&quot;つまたは複数の値を指定します.デフォルトは **Adapted**, **Extended**です.
+
+このパラメータの受け入れられる値は:
+
+- ベース. .NETオブジェクトのオリジナルプロパティとメソッドのみを取得します (拡張や適応なし). - 適応. PowerShell拡張タイプシステムで定義されたプロパティとメソッドのみを取得します. - 拡張. 拡張子で追加されたプロパティとメソッドのみを取得します.`Types.ps1xml`ファイルまたは  ファイルを使用することで`Add-Member`cmdlet. - 全部. ベース,適応,拡張ビューのメンバーを入手します.
+
+**View**パラメータは,それらのメンバーの表示だけでなく,取得されたメンバーを決定します.
+
+脚本属性などの特定のメンバータイプを取得するには, **MemberType** パラメータを使用します.同じコマンドで **MemberType** と **View** パラメータを使用する場合, `Get-Member`両組のメンバーを獲得します.同じコマンドで**Static**と**View**のパラメータを使用すると**View**のパラメータは無視されます.
+
+```yaml
+Type: System.Management.Automation.PSMemberViewTypes
+Parameter Sets: (All)
+Aliases:
+Accepted values: Extended, Adapted, Base, All
+
+Required: False
+Position: Named
+Default value: Adapted, Extended
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### 共通パラメーター
+
+このcmdletは,共通パラメータをサポートしています: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable.詳細については, [about_CommonParameters](を参照してください.https://go.microsoft.com/fwlink/?LinkID=113216) でした.
+
+## 輸入は
+
+### システム管理自動化PSObject
+
+このcmdletに任意のオブジェクトをパイプすることができます.
+
+## 輸出は
+
+### Microsoft.PowerShell.Commands.MemberDefinition について
+
+このcmdletは,その得られたすべてのプロパティまたは方法に対して**MemberDefinition**を返します.
+
+##  NOTES  記事ができました.
+
+Windows PowerShell では,次のアライスがあります.`Get-Member`:
+
+ - -`gm`
+
+集合オブジェクトに関する情報を,InputObject**パラメータを使用して,または小数で先行するオブジェクトをパイプして,`Get-Member` .
+
+を用いることができます.`$this`新しい性質と方法の値を定義するスクリプトブロックの自動変数です.`$this`属性や方法が追加されているオブジェクトのインスタンスを指す. 変数についての詳細については,`$this`[about_Automatic_Variables]を参照してください. (Microsoft.PowerShell.Core/About/about_Automatic_Variables.md)
+
+_type_を表示するオブジェクトを _type_ とする場合は,文字直式のタイプのような_ を渡す.`[int]`     `Get-Member`返還に関する情報`[System.RuntimeType]`しかし,Static パラメータを使用すると,  はタイプします.`Get-Member`で表現される特定のタイプの静止メンバーを返します.`System.RuntimeType`instance. を表示する.
+
+## 関連リンク
+
+[Add-Member](Add-Member.md) 
+###英語原文###
+# Get-Member
+
+## SYNOPSIS
+Gets the properties and methods of objects.
+
+## SYNTAX
+
+```
+Get-Member [-InputObject &lt;PSObject&gt;] [[-Name] &lt;String[]&gt;] [-MemberType &lt;PSMemberTypes&gt;]
+ [-View &lt;PSMemberViewTypes&gt;] [-Static] [-Force] [&lt;CommonParameters&gt;]
+```
+
+## DESCRIPTION
+
+The `Get-Member` cmdlet gets the members, the properties and methods, of objects.
+
+To specify the object, use the **InputObject** parameter or pipe an object to `Get-Member`. To get
+information about static members, the members of the class, not of the instance, use the **Static**
+parameter. To get only certain types of members, such as **NoteProperties**, use the **MemberType**
+parameter.
+
+`Get-Member` returns a list of members that&#x27;s sorted alphabetically. Methods are listed first,
+followed by the properties.
+
+## EXAMPLES
+
+### Example 1: Get the members of process objects
+
+This command displays the properties and methods of the service objects generated by the
+`Get-Service` cmdlet.
+
+Because the `Get-Member` part of the command doesn&#x27;t have any parameters, it uses default values for
+the parameters. By default, `Get-Member` doesn&#x27;t get static or intrinsic members.
+
+```powershell
+Get-Service | Get-Member
+```
+
+```Output
+   TypeName: System.ServiceProcess.ServiceController
+
+Name                      MemberType    Definition
+----                      ----------    ----------
+Name                      AliasProperty Name = ServiceName
+RequiredServices          AliasProperty RequiredServices = ServicesDependedOn
+Disposed                  Event         System.EventHandler Disposed(System.Object, System.EventArgs)
+Close                     Method        void Close()
+Continue                  Method        void Continue()
+CreateObjRef              Method        System.Runtime.Remoting.ObjRef CreateObjRef(type requestedType)
+Dispose                   Method        void Dispose(), void IDisposable.Dispose()
+Equals                    Method        bool Equals(System.Object obj)
+ExecuteCommand            Method        void ExecuteCommand(int command)
+GetHashCode               Method        int GetHashCode()
+GetLifetimeService        Method        System.Object GetLifetimeService()
+GetType                   Method        type GetType()
+InitializeLifetimeService Method        System.Object InitializeLifetimeService()
+Pause                     Method        void Pause()
+Refresh                   Method        void Refresh()
+Start                     Method        void Start(), void Start(string[] args)
+Stop                      Method        void Stop()
+WaitForStatus             Method        void WaitForStatus(System.ServiceProcess.ServiceControllerSt...
+CanPauseAndContinue       Property      bool CanPauseAndContinue {get;}
+CanShutdown               Property      bool CanShutdown {get;}
+CanStop                   Property      bool CanStop {get;}
+Container                 Property      System.ComponentModel.IContainer Container {get;}
+DependentServices         Property      System.ServiceProcess.ServiceController[] DependentServices {get;}
+DisplayName               Property      string DisplayName {get;set;}
+MachineName               Property      string MachineName {get;set;}
+ServiceHandle             Property      System.Runtime.InteropServices.SafeHandle ServiceHandle {get;}
+ServiceName               Property      string ServiceName {get;set;}
+ServicesDependedOn        Property      System.ServiceProcess.ServiceController[] ServicesDependedOn {get;}
+ServiceType               Property      System.ServiceProcess.ServiceType ServiceType {get;}
+Site                      Property      System.ComponentModel.ISite Site {get;set;}
+StartType                 Property      System.ServiceProcess.ServiceStartMode StartType {get;}
+Status                    Property      System.ServiceProcess.ServiceControllerStatus Status {get;}
+ToString                  ScriptMethod  System.Object ToString();
+```
+
+### Example 2: Get members of service objects
+
+This example gets all the members (properties and methods) of service objects retrieved by the
+`Get-Service` cmdlet, including the intrinsic members, such as **psbase**, **psobject**, and the
+**get_** and **set_** methods.
+
+```powershell
+Get-Service | Get-Member -Force
+(Get-Service Schedule).psbase
+```
+
+The `Get-Member` command uses the **Force** parameter to add the intrinsic members and
+compiler-generated members of the objects to the display. You can use these properties and methods
+in the same way that you would use an adapted method of the object. The second command shows how to
+display the value of the **psbase** property of the Schedule service. For more information on
+intrinsic members, see
+[about_Intrinsic_Members](../Microsoft.PowerShell.Core/About/about_Intrinsic_Members.md)
+
+### Example 3: Get extended members of service objects
+
+This example gets the methods and properties of service objects that were extended using a
+`Types.ps1xml` file or the `Add-Member` cmdlet.
+
+```powershell
+Get-Service | Get-Member -View Extended
+```
+
+```Output
+   TypeName: System.ServiceProcess.ServiceController
+
+Name             MemberType    Definition
+----             ----------    ----------
+Name             AliasProperty Name = ServiceName
+RequiredServices AliasProperty RequiredServices = ServicesDependedOn
+ToString         ScriptMethod  System.Object ToString();
+```
+
+The `Get-Member` command uses the **View** parameter to get only the extended members of the service
+objects. In this case, the extended member is the **Name** property, which is an alias property of
+the **ServiceName** property.
+
+### Example 4: Get script properties of event log objects
+
+This example gets the script properties of event log objects in the System log in Event Viewer.
+
+```powershell
+Get-WinEvent -LogName System -MaxEvents 1 | Get-Member -MemberType NoteProperty
+```
+
+```Output
+   TypeName: System.Diagnostics.Eventing.Reader.EventLogRecord
+
+Name    MemberType   Definition
+----    ----------   ----------
+Message NoteProperty string Message=The machine-default permission settings do not grant Local ...
+```
+
+The **MemberType** parameter gets only objects with a value of `NoteProperty` for their
+**MemberType** property.
+
+The command returns the **Message** property of the **EventLogRecord** object.
+
+### Example 5: Get objects with a specified property
+
+This example gets objects that have a **MachineName** property in the output from a list of cmdlets.
+
+The `$list` variable contains a list of cmdlets to be evaluated. The `foreach` statement invokes
+each command and sends the results to `Get-Member`. The **Name** parameter limits the results from
+`Get-Member` to members that have the name **MachineName**.
+
+```powershell
+$list = &quot;Get-Process&quot;, &quot;Get-Service&quot;, &quot;Get-Culture&quot;, &quot;Get-PSDrive&quot;, &quot;Get-ExecutionPolicy&quot;
+foreach ($cmdlet in $list) {&amp; $cmdlet | Get-Member -Name MachineName}
+```
+
+```Output
+   TypeName: System.Diagnostics.Process
+
+Name        MemberType Definition
+----        ---------- ----------
+MachineName Property   string MachineName {get;}
+
+   TypeName: System.ServiceProcess.ServiceController
+
+Name        MemberType Definition
+----        ---------- ----------
+MachineName Property   string MachineName {get;set;}
+```
+
+The results show that only process objects and service objects have a **MachineName** property.
+
+# Get-Member
+
+### Example 6: Get members for an array
+
+This example demonstrates how to find the members of an array of objects. When you pipe and array of
+objects to `Get-Member`, the cmdlet returns a member list for each unique object type in the array.
+If you pass the array using the **InputObject** parameter, the array is treated as a single object.
+
+```powershell
+$array = @(1,&#x27;hello&#x27;)
+$array | Get-Member
+```
+
+```Output
+   TypeName: System.Int32
+
+Name        MemberType Definition
+----        ---------- ----------
+CompareTo   Method     int CompareTo(System.Object value), int CompareTo(int value), int ICompar...
+Equals      Method     bool Equals(System.Object obj), bool Equals(int obj), bool IEquatable[int...
+GetHashCode Method     int GetHashCode()
+GetType     Method     type GetType()
+GetTypeCode Method     System.TypeCode GetTypeCode(), System.TypeCode IConvertible.GetTypeCode()
+ToBoolean   Method     bool IConvertible.ToBoolean(System.IFormatProvider provider)
+ToByte      Method     byte IConvertible.ToByte(System.IFormatProvider provider)
+...
+
+   TypeName: System.String
+
+Name                 MemberType            Definition
+----                 ----------            ----------
+Clone                Method                System.Object Clone(), System.Object ICloneable.Clone()
+CompareTo            Method                int CompareTo(System.Object value), int CompareTo(str...
+Contains             Method                bool Contains(string value), bool Contains(string val...
+CopyTo               Method                void CopyTo(int sourceIndex, char[] destination, int ...
+EndsWith             Method                bool EndsWith(string value), bool EndsWith(string val...
+EnumerateRunes       Method                System.Text.StringRuneEnumerator EnumerateRunes()
+Equals               Method                bool Equals(System.Object obj), bool Equals(string va...
+GetEnumerator        Method                System.CharEnumerator GetEnumerator(), System.Collect...
+GetHashCode          Method                int GetHashCode(), int GetHashCode(System.StringCompa...
+...
+```
+
+```powershell
+Get-Member -InputObject $array
+```
+
+```Output
+   TypeName: System.Object[]
+
+Name           MemberType            Definition
+----           ----------            ----------
+Add            Method                int IList.Add(System.Object value)
+Address        Method                System.Object&amp;, System.Private.CoreLib, Version=4.0.0.0, Cu...
+Clear          Method                void IList.Clear()
+Clone          Method                System.Object Clone(), System.Object ICloneable.Clone()
+CompareTo      Method                int IStructuralComparable.CompareTo(System.Object other, Sy...
+...
+```
+
+The `$array` variable contains an **Int32** object and a **string** object, as seen when the array
+is piped to `Get-Member`. When `$array` is passed using the **InputObject** parameter `Get-Member`
+returns the members of the **Object[]** type.
+
+### Example 7: Determine which object properties you can set
+
+This example shows how to determine which properties of an object can be changed.
+
+```powershell
+$File = Get-Item C:\test\textFile.txt
+$File.psobject.Properties | Where-Object IsSettable | Select-Object -Property Name
+```
+
+```Output
+Name
+----
+PSPath
+PSParentPath
+PSChildName
+PSDrive
+PSProvider
+PSIsContainer
+IsReadOnly
+CreationTime
+CreationTimeUtc
+LastAccessTime
+LastAccessTimeUtc
+LastWriteTime
+LastWriteTimeUtc
+Attributes
+```
+
+### Example 8: List the properties of an object in the order they were created
+
+This example creates a new **PSObject** and adds properties to it. `Get-Member` lists the properties
+in alphabetic order. To see the properties in the order they were added to the object you must use
+the **psobject** intrinsic member.
+
+```powershell
+$Asset = New-Object -TypeName psobject
+$d = [ordered]@{Name=&quot;Server30&quot;;System=&quot;Server Core&quot;;PSVersion=&quot;4.0&quot;}
+$Asset | Add-Member -NotePropertyMembers $d -TypeName Asset
+$Asset.psobject.Properties | Select-Object Name, Value
+```
+
+```Output
+Name      Value
+----      -----
+Name      Server30
+System    Server Core
+PSVersion 4.0
+```
+
+## PARAMETERS
+
+### -Force
+
+Adds the intrinsic members and the compiler-generated **get_** and **set_** methods to the display.
+The following list describes the properties that are added when you use the **Force** parameter:
+
+- `psbase`: The original properties of the .NET object without extension or adaptation. These are
+  the properties defined for the object class.
+- `psadapted`: The properties and methods defined in the PowerShell extended type system.
+- `psextended`: The properties and methods that were added in the `Types.ps1xml` files or using the
+  `Add-Member` cmdlet.
+- `psobject`: The adapter that converts the base object to a PowerShell **PSObject** object.
+- `pstypenames`: A list of object types that describe the object, in order of specificity. When
+  formatting the object, PowerShell searches for the types in the `Format.ps1xml` files in the
+  PowerShell installation directory (`$PSHOME`). It uses the formatting definition for the first
+  type that it finds.
+
+By default, `Get-Member` gets these properties in all views except **Base** and **Adapted**, but
+doesn&#x27;t display them.
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -InputObject
+
+Specifies the object whose members are retrieved.
+
+Using the **InputObject** parameter isn&#x27;t the same as piping an object to `Get-Member`. The
+differences are as follows:
+
+- When you pipe a collection of objects to `Get-Member`, `Get-Member` gets the members of the
+  individual objects in the collection, such as the properties of each string in an array of
+  strings.
+- When you use **InputObject** to submit a collection of objects, `Get-Member` gets the members of
+  the collection, such as the properties of the array in an array of strings.
+
+```yaml
+Type: System.Management.Automation.PSObject
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByValue)
+Accept wildcard characters: False
+```
+
+# Get-Member
+
+### -MemberType
+
+Specifies the member type that this cmdlet gets. The default is `All`.
+
+The acceptable values for this parameter are:
+
+- `AliasProperty`
+- `CodeProperty`
+- `Property`
+- `NoteProperty`
+- `ScriptProperty`
+- `Properties`
+- `PropertySet`
+- `Method`
+- `CodeMethod`
+- `ScriptMethod`
+- `Methods`
+- `ParameterizedProperty`
+- `MemberSet`
+- `Event`
+- `Dynamic`
+- `All`
+
+These values are defined as a flag-based enumeration. You can combine multiple values together to
+set multiple flags using this parameter. The values can be passed to the **MemberType** parameter as
+an array of values or as a comma-separated string of those values. The cmdlet will combine the
+values using a binary-OR operation. Passing values as an array is the simplest option and also
+allows you to use tab-completion on the values.
+
+For information about these values, see
+[PSMemberTypes Enumeration](/dotnet/api/system.management.automation.psmembertypes).
+
+Not all objects have every type of member. If you specify a member type that the object doesn&#x27;t
+have, PowerShell returns a null value. To get related types of members, such as all extended
+members, use the **View** parameter. If you use the **MemberType** parameter with the **Static** or
+**View** parameters, `Get-Member` gets the members that belong to both sets.
+
+```yaml
+Type: System.Management.Automation.PSMemberTypes
+Parameter Sets: (All)
+Aliases: Type
+Accepted values: AliasProperty, CodeProperty, Property, NoteProperty, ScriptProperty, Properties, PropertySet, Method, CodeMethod, ScriptMethod, Methods, ParameterizedProperty, MemberSet, Event, Dynamic, All
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Name
+
+Specifies the names of one or more properties or methods of the object. `Get-Member` gets only the
+specified properties and methods.
+
+If you use the **Name** parameter with the **MemberType**, **View**, or **Static** parameter,
+`Get-Member` gets only the members that satisfy the criteria of all parameters.
+
+To get a static member by name, use the **Static** parameter with the **Name** parameter.
+
+```yaml
+Type: System.String[]
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: 0
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Static
+
+Indicates that this cmdlet gets only the static properties and methods of the object. Static
+properties and methods are defined on the class of objects, not on any particular instance of the
+class.
+
+If you use the **Static** parameter with the **View** or **Force** parameters, the cmdlet ignores
+those parameters. If you use the **Static** parameter with the **MemberType** parameter,
+`Get-Member` gets only the members that belong to both sets.
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -View
+
+Specifies that this cmdlet gets only particular types properties and methods. Specify one or more of
+the values. The default is **Adapted**, **Extended**.
+
+The acceptable values for this parameter are:
+
+- Base. Gets only the original properties and methods of the .NET object (without extension or
+  adaptation).
+- Adapted. Gets only the properties and methods defined in the PowerShell extended type system.
+- Extended. Gets only the properties and methods that were added in a `Types.ps1xml` files or by
+  using the `Add-Member` cmdlet.
+- All. Gets the members in the Base, Adapted, and Extended views.
+
+The **View** parameter determines the members retrieved, not just the display of those members.
+
+To get particular member types, such as script properties, use the **MemberType** parameter. If you
+use the **MemberType** and **View** parameters in the same command, `Get-Member` gets the members
+that belong to both sets. If you use the **Static** and **View** parameters in the same command, the
+**View** parameter is ignored.
+
+```yaml
+Type: System.Management.Automation.PSMemberViewTypes
+Parameter Sets: (All)
+Aliases:
+Accepted values: Extended, Adapted, Base, All
+
+Required: False
+Position: Named
+Default value: Adapted, Extended
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### CommonParameters
+
+This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable,
+-InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose,
+-WarningAction, and -WarningVariable. For more information, see
+[about_CommonParameters](https://go.microsoft.com/fwlink/?LinkID=113216).
+
+## INPUTS
+
+### System.Management.Automation.PSObject
+
+You can pipe any object to this cmdlet.
+
+## OUTPUTS
+
+### Microsoft.PowerShell.Commands.MemberDefinition
+
+This cmdlet returns a **MemberDefinition** for each property or method that its gets.
+
+## NOTES
+
+Windows PowerShell includes the following aliases for `Get-Member`:
+
+- `gm`
+
+You can get information about a collection object either using the **InputObject** parameter or by
+piping the object, preceded by a comma, to `Get-Member`.
+
+You can use the `$this` automatic variable in scriptblocks that define the values of new properties
+and methods. The `$this` variable refers to the instance of the object to which the properties and
+methods are being added. For more information about the `$this` variable, see
+[about_Automatic_Variables](../Microsoft.PowerShell.Core/About/about_Automatic_Variables.md).
+
+If you pass an object representing a _type_, like a type literal such as `[int]`, `Get-Member`
+return information about the `[System.RuntimeType]` type. However, when you use the **Static**
+parameter, `Get-Member` returns the static members of the specific type represented by the
+`System.RuntimeType` instance.
+
+## RELATED LINKS
+
+[Add-Member](Add-Member.md)
+###Microsoft Learn URL###
+https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.utility/get-member/?view=powershell-5.1
+</pre></html>

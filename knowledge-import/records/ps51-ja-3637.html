@@ -1,0 +1,330 @@
+<!doctype html><html lang="ja"><meta charset="utf-8"><pre class="record-source">###KnowledgeNo###
+PS51-WS2022-2026-3637
+###FormatID###
+PS51-WS2022
+###CreatedAt###
+2026-08-01 00:00
+###UpdatedAt###
+2026-08-01 00:00
+###タイトル###
+about_Using
+###モジュール###
+Microsoft.PowerShell.Core
+###製品###
+Windows PowerShell 5.1
+###対応OS###
+Windows Server 2022
+###日本語訳###
+# about_Usingについて
+
+## 短編説明
+
+セッションで使うネームスペースを指定することができます.
+
+## 長い説明
+
+   `using`名前空間を追加することで, .NET クラスとメンバーの使用が簡素化され,スクリプトモジュールやアセンブリからクラスをインポートすることができます.
+
+   `using`脚本やモジュール内の他の記述よりも前に,記述が来る必要があります.パラメータを含むコメントされていない記述は,その前に行けません.
+
+   `using`声明には変数が含まれない.
+
+   `using`文は,同じではない.`Using:`変数のための範囲変更.詳細については, [about_Remote_Variables] (about_Remote_Variables.md) を参照してください.
+
+## Namespaceの構文です.
+
+.NET名空からタイプを解決するには:
+
+```Syntax
+using namespace &lt;.NET-namespace&gt;
+```
+
+名前空間を指定することで,型を短名で参照することが容易になります.
+
+### 例 - Typename resolutionの名前空を追加する
+
+次のスクリプトは&quot;Hello World&quot;文字列の暗号ハッシュを取得します.
+
+の仕組みに注意してください.`using namespace System.Text`そして,`using namespace System.IO`への参照を簡素化します.`[UnicodeEncoding]`     `System.Text`そして,`[Stream]`そして,`[MemoryStream]`     `System.IO` .
+
+```powershell
+using namespace System.Text
+using namespace System.IO
+
+[string]$string = &quot;Hello World&quot;
+
+## VALID VALUES ARE &quot;SHA1&quot;, &quot;SHA256&quot;, &quot;SHA384&quot;, &quot;SHA512&quot;, &quot;MD5&quot;
+[string]$algorithm = &quot;SHA256&quot;
+
+[byte[]]$stringBytes = [UnicodeEncoding]::Unicode.GetBytes($string)
+
+[Stream]$memoryStream = [MemoryStream]::new($stringBytes)
+$getFileHashSplat = @{
+    InputStream = $memoryStream
+    Algorithm   = $algorithm
+}
+$hashFromStream = Get-FileHash @getFileHashSplat
+$hashFromStream.Hash.ToString()
+```
+
+## モジュール構文
+
+PowerShell モジュールからクラスとリストを読み込むために:
+
+```Syntax
+using module &lt;module-name&gt;
+```
+
+の値が`&lt;module-name&gt;`模組名,完全な模組仕様,または模組ファイルへのパスになる可能性があります.
+
+ いつ`&lt;module-name&gt;`経路は,完全に合格または相対的なものになる.相対的な経路は,文字に比べて解消される.`using`声明.
+
+ いつ`&lt;module-name&gt;`名前またはモジュール仕様である場合,PowerShellは指定されたモジュールについて **PSModulePath** を検索します.
+
+モジュール仕様とは,次のキーを持つハッシュテーブルです.
+
+ - -`ModuleName`- **Required** モジュール名前の指定をします. - `GUID`- ** オプション ** モジュールのGUIDを指定します. - また,以下の3つのキーのうち少なくとも1つを指定する必要があります. - `ModuleVersion`- モデルの最小の受け入れ可能なバージョンを指定します. - `MaximumVersion`- モジュールの一番の受け入れられるバージョンを指定します. - `RequiredVersion`- 模組の正確なバージョンを指定します.これは他のバージョンキーで使用できません.
+
+`Import-Module`そして,その `#Requires`単語の声明は,モジュールによって定義されたように,モジュール関数,ニックネーム,変数を輸入するのみです.クラスと清算は輸入されません.
+
+   `using module`根モジュールから輸入するクラスとリストを表示する () 記述`ModuleToProcess`脚本モジュールまたはバイナリモジュール (SCRM) のスクリプトモジュール (脚本モジュール) の. 固有のモジュールまたはルートモジュールに点ソースされたスクリプトに定義されたクラスまたは数えを一貫して輸入しません. ルーツモジュールで直接利用できるようにしたいクラスとリストを定義します.
+
+スクリプトモジュールの開発中に,コードに変更を加え,その後の新しいバージョンのモジュールを  を使用してロードすることが一般的です.`Import-Module`**Force**パラメータで,これはルーツモジュールでの機能変更のみで有効です. `Import-Module`巣のモジュールも再ロードしない.また,更新されたクラスや数値も再ロードできない.
+
+最新バージョンを実行していることを確認するには,新しいセッションを開始する必要があります. PowerShellで定義されたクラスと清算が,  で輸入されています.`using`声明が解読できない.
+
+### 例 - スクリプトモジュールからクラスロード
+
+この例では,PowerShellスクリプトモジュール名前の **CardGames**が以下のクラスを定義しています.
+
+- デック - カード
+
+`Import-Module`そして,その `#Requires`声明は,モジュールによって定義された模組機能,アライス,変数をのみ輸入する.クラスが輸入されません.`using module`コマンドはモジュールを輸入し,クラス定義もロードします.
+
+```powershell
+using module CardGames
+
+[Deck]$deck = [Deck]::new()
+$deck.Shuffle()
+[Card[]]$hand1 = $deck.Deal(5)
+[Card[]]$hand2 = $deck.Deal(5)
+[Card[]]$hand3 = $deck.Deal(5)
+```
+
+## 会議の構文
+
+次の構文は,実行開始時に,アセンブリからスクリプトに .NET タイプをロードします.アセンブリファイルへの完全に合格したパスを使用する必要があります.
+
+```Syntax
+using assembly &lt;.NET-assembly-path&gt;
+```
+
+   `using assembly`という文字を使うと,この文字は同じです.`Add-Type`cmdlet.しかし,そのcmdletは`Add-Type`cmdlet は,その時に  のタイプを追加します.`Add-Type`スクリプトの実行開始時に実行されるのではなく実行されます.詳細については, [Add-Type] (xref:Microsoft.PowerShell.Utility.Add-Type) を参照してください.
+
+### 例 - 組み立てからロードタイプ
+
+この例では,集合を読み込み,そのクラスがデータを処理する際に使用されるようにします.次のスクリプトではデータをYAMLフォーマットに変換します.
+
+```powershell
+using assembly &#x27;./YamlDotNet.dll&#x27;
+using namespace YamlDotNet
+
+$yamlSerializer = [Serialization.Serializer]::new()
+
+$info = [ordered]@{
+  Inventory = @(
+    @{ Name = &#x27;Apples&#x27; ; Count = 1234 }
+    @{ Name = &#x27;Bagels&#x27; ; Count = 5678 }
+  )
+  CheckedAt = [datetime]&#x27;2023-01-01T01:01:01&#x27;
+}
+
+$yamlSerializer.Serialize($info)
+```
+
+```Output
+Inventory:
+- Name: Apples
+  Count: 1234
+- Name: Bagels
+  Count: 5678
+CheckedAt: 2023-01-01T01:01:01.0000000
+```
+###英語原文###
+# about_Using
+
+## Short description
+
+Allows you to specify namespaces to use in the session.
+
+## Long description
+
+The `using` statement allows you to specify namespaces to use in the session.
+Adding namespaces simplifies usage of .NET classes and members and allows you
+to import classes from script modules and assemblies.
+
+The `using` statements must come before any other statements in a script or
+module. No uncommented statement can precede it, including parameters.
+
+The `using` statement must not contain any variables.
+
+The `using` statement isn&#x27;t the same as the `Using:` scope modifier for
+variables. For more information, see
+[about_Remote_Variables](about_Remote_Variables.md).
+
+## Namespace syntax
+
+To resolve types from a .NET namespace:
+
+```Syntax
+using namespace &lt;.NET-namespace&gt;
+```
+
+Specifying a namespace makes it easier to reference types by their short names.
+
+### Example - Add namespaces for typename resolution
+
+The following script gets the cryptographic hash for the &quot;Hello World&quot; string.
+
+Note how the `using namespace System.Text` and `using namespace System.IO`
+simplify the references to `[UnicodeEncoding]` in `System.Text` and `[Stream]`
+and `[MemoryStream]` in `System.IO`.
+
+```powershell
+using namespace System.Text
+using namespace System.IO
+
+[string]$string = &quot;Hello World&quot;
+
+## VALID VALUES ARE &quot;SHA1&quot;, &quot;SHA256&quot;, &quot;SHA384&quot;, &quot;SHA512&quot;, &quot;MD5&quot;
+[string]$algorithm = &quot;SHA256&quot;
+
+[byte[]]$stringBytes = [UnicodeEncoding]::Unicode.GetBytes($string)
+
+[Stream]$memoryStream = [MemoryStream]::new($stringBytes)
+$getFileHashSplat = @{
+    InputStream = $memoryStream
+    Algorithm   = $algorithm
+}
+$hashFromStream = Get-FileHash @getFileHashSplat
+$hashFromStream.Hash.ToString()
+```
+
+## Module syntax
+
+To load classes and enumerations from a PowerShell module:
+
+```Syntax
+using module &lt;module-name&gt;
+```
+
+The value of `&lt;module-name&gt;` can be a module name, a full module specification,
+or a path to a module file.
+
+When `&lt;module-name&gt;` is a path, the path can be fully qualified or relative. A
+relative path resolves relative to the script that has the `using` statement.
+
+When `&lt;module-name&gt;` is a name or module specification, PowerShell searches the
+**PSModulePath** for the specified module.
+
+A module specification is a hashtable that has the following keys.
+
+- `ModuleName` - **Required** Specifies the module name.
+- `GUID` - **Optional** Specifies the GUID of the module.
+- It&#x27;s also **Required** to specify at least one of the three below keys.
+  - `ModuleVersion` - Specifies a minimum acceptable version of the module.
+  - `MaximumVersion` - Specifies the maximum acceptable version of the module.
+  - `RequiredVersion` - Specifies an exact, required version of the module.
+    This can&#x27;t be used with the other Version keys.
+
+`Import-Module` and the `#Requires` statement only import the module functions,
+aliases, and variables, as defined by the module. Classes and enumerations
+aren&#x27;t imported.
+
+The `using module` statement imports classes and enumerations from the root
+module (`ModuleToProcess`) of a script module or binary module. It doesn&#x27;t
+consistently import classes or enumerations defined in nested modules or in
+scripts that are dot-sourced into the root module. Define classes and
+enumerations that you want to be available to users outside of the module
+directly in the root module.
+
+During development of a script module, it&#x27;s common to make changes to the code
+then load the new version of the module using `Import-Module` with the
+**Force** parameter. This works for changes to functions in the root module
+only. `Import-Module` doesn&#x27;t reload any nested modules. Also, there&#x27;s no way
+to load any updated classes or enumerations.
+
+To ensure that you&#x27;re running the latest version, you must start a new session.
+Classes and enumerations defined in PowerShell and imported with a `using`
+statement can&#x27;t be unloaded.
+
+### Example - Load classes from a script module
+
+In this example, a PowerShell script module named **CardGames** defines the
+following classes:
+
+- **Deck**
+- **Card**
+
+`Import-Module` and the `#Requires` statement only import the module functions,
+aliases, and variables, as defined by the module. Classes aren&#x27;t imported. The
+`using module` command imports the module and also loads the class definitions.
+
+```powershell
+using module CardGames
+
+[Deck]$deck = [Deck]::new()
+$deck.Shuffle()
+[Card[]]$hand1 = $deck.Deal(5)
+[Card[]]$hand2 = $deck.Deal(5)
+[Card[]]$hand3 = $deck.Deal(5)
+```
+
+## Assembly syntax
+
+The following syntax loads .NET types from an assembly into a script at the
+beginning of execution. You must use a fully-qualified path to the assembly
+file.
+
+```Syntax
+using assembly &lt;.NET-assembly-path&gt;
+```
+
+The `using assembly` statement is similar to using the `Add-Type` cmdlet.
+However, the `Add-Type` cmdlet adds the type at the time that `Add-Type` is
+executed, rather than at the start of execution of the script. For more
+information, see [Add-Type](xref:Microsoft.PowerShell.Utility.Add-Type).
+
+### Example - Load types from an assembly
+
+This example loads an assembly so that its classes can be used when processing
+data. The following script converts data into a YAML format.
+
+```powershell
+using assembly &#x27;./YamlDotNet.dll&#x27;
+using namespace YamlDotNet
+
+$yamlSerializer = [Serialization.Serializer]::new()
+
+$info = [ordered]@{
+  Inventory = @(
+    @{ Name = &#x27;Apples&#x27; ; Count = 1234 }
+    @{ Name = &#x27;Bagels&#x27; ; Count = 5678 }
+  )
+  CheckedAt = [datetime]&#x27;2023-01-01T01:01:01&#x27;
+}
+
+$yamlSerializer.Serialize($info)
+```
+
+```Output
+Inventory:
+- Name: Apples
+  Count: 1234
+- Name: Bagels
+  Count: 5678
+CheckedAt: 2023-01-01T01:01:01.0000000
+```
+###Microsoft Learn URL###
+https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_using/?view=powershell-5.1
+</pre></html>

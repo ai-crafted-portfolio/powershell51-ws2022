@@ -1,0 +1,202 @@
+<!doctype html><html lang="ja"><meta charset="utf-8"><pre class="record-source">###KnowledgeNo###
+PS51-WS2022-2026-4019
+###FormatID###
+PS51-WS2022
+###CreatedAt###
+2026-08-01 00:00
+###UpdatedAt###
+2026-08-01 00:00
+###タイトル###
+about_Foreach-Parallel
+###モジュール###
+PSWorkflow
+###製品###
+Windows PowerShell 5.1
+###対応OS###
+Windows Server 2022
+###日本語訳###
+# about_Foreach-Parallelについて
+
+## 短編説明は,  の形状を記述しています.`foreach -Parallel`Windows PowerShell Workflowで言語構築を構成する.
+
+## 長い記述です.
+
+のパラレルパラメータを`foreach`キーワードは,コマンドを&quot;&quot;で実行します.`foreach`指定されたコレクションの各項目に対して一度にスクリプトをブロックします.
+
+集合内のアイテム,例えばディスクの集合内のディスクは,並行処理されます.スクリプトブロックのコマンドは,集合内の各アイテムに順序的に実行されます.
+
+`foreach -Parallel`Windows PowerShell Workflowではのみ有効です.
+
+### SYNTAXは,のシンタックスです.
+
+```
+foreach -Parallel ($&lt;item&gt; in $&lt;collection&gt;) {
+    [&lt;Activity1&gt;]
+    [&lt;Activity2&gt;]
+    ...
+}
+```
+
+### 詳細な説明です.
+
+のようなもの.`foreach`Windows PowerShellで,コレクションの記述を含む変数です.`$&lt;collection&gt;` は  よりも前に定義されなければならない.`foreach -Parallel`声明が,現在の項目を表示する変数である.`$&lt;item&gt;`で定義されている.`foreach -Parallel`声明.
+
+   `foreach -Parallel`構造は, と異なる.`foreach`キーワードとパラレルパラメータ.`foreach`キーワードは,コレクション内のアイテムを順序的に処理する. **パラレル**パラメータは,スクリプトブロックでコマンドを並行して実行する. でパラレルスクリプトブロックを閉じることができます.`foreach -Parallel`脚本ブロック.
+
+ワークフローのターゲットコンピュータ,例えばPSComputerName ワークフローの共通パラメータで指定されているコンピュータは,常に並行で処理されます.`foreach -Parallel`この目的のためにキーワードです.
+
+### 例えは
+
+次のワークフローには,  が含まれています.`foreach -Parallel`処理するディスクを処理する記述です.`Get-Disk`活動が得られる.  のコマンドは`foreach -Parallel`スクリプトブロックは順序的に実行されますが,並行してディスク上で実行されます.ディスクは同時に,任意の順序で処理されることがあります.
+
+```powershell
+workflow Test-Workflow {
+    $Disks = Get-Disk
+
+    # The disks are processed in parallel.
+    foreach -Parallel ($Disk in $Disks)
+    {
+        # The commands run sequentially on each disk.
+        $DiskPath = $Disk.Path
+        $Disk | Initialize-Disk
+        Set-Disk -Path $DiskPath
+    }
+}
+```
+
+このバージョンのワークフローでは, `Get-Process`そして,`Get-Service`命令は並行して実行されます.ワークフロー機能は, まで続きます.`foreach -Parallel`コマンドが順序的に実行されるループが,並行してディスク上で実行される.`foreach -Parallel`ループが同時に実行されます.
+
+```powershell
+workflow Test-Workflow {
+    #Run commands in parallel.
+    parallel
+    {
+        Get-Process
+        Get-Service
+    }
+
+   $Disks = Get-Disk
+
+   # The disks are processed in parallel.
+   foreach -Parallel ($Disk in $Disks)
+   {
+       # The commands run in parallel on each disk.
+       parallel
+       {
+           Initialize-Disk
+           inlinescript {.\Get-DiskInventory}
+       }
+   }
+}
+```
+
+## また,参照してください
+
+[about_Keywords.md] - [about_Language_Keywords.md] - [about_PowerShell.md] - [about_Language_Keywords.md] - [about_Language_Keywords.md] - [about_Parallel] - [about_Parallel] - [about_Workflows] - [about_Workflows.md) - [Script Workflow] - [previous-versions/powershell/scripting/developer/workflow/creating-a-workflow-by-windows-shell-script) - [about_Workflows.md] - [about_Workflows.md] - [Script_Workflow] - [previous-versions/powershell/scripting/developer/workflow/creating-a-workflow-by-windows-power-a-shell-script) -
+###英語原文###
+# about_Foreach-Parallel
+
+## SHORT DESCRIPTION
+Describes the `foreach -Parallel` language construct in Windows PowerShell
+Workflow.
+
+## LONG DESCRIPTION
+
+The **Parallel** parameter of the `foreach` keyword runs the commands in a
+`foreach` script block once for each item in a specified collection.
+
+The items in the collection, such as a disk in a collection of disks, are
+processed in parallel. The commands in the script block run sequentially on
+each item in the collection.
+
+`foreach -Parallel` is valid only in a Windows PowerShell Workflow.
+
+### SYNTAX
+
+```
+foreach -Parallel ($&lt;item&gt; in $&lt;collection&gt;) {
+    [&lt;Activity1&gt;]
+    [&lt;Activity2&gt;]
+    ...
+}
+```
+
+### DETAILED DESCRIPTION
+
+Like the `foreach` statement in Windows PowerShell, the variable that contains
+collection `$&lt;collection&gt;` must be defined before the `foreach -Parallel`
+statement, but the variable that represents the current item `$&lt;item&gt;` is
+defined in the `foreach -Parallel` statement.
+
+The `foreach -Parallel` construct is different from the `foreach` keyword and
+the **Parallel** parameter. The `foreach` keyword processes the items in the
+collection in sequence. The **Parallel** parameter runs commands in a script
+block in parallel. You can enclose a Parallel script block in a
+`foreach -Parallel` script block.
+
+The target computers in a workflow, such as those specified by the
+**PSComputerName** workflow common parameter, are always processed in parallel.
+You do not need to specify the `foreach -Parallel` keyword for this purpose.
+
+### EXAMPLES
+
+The following workflow contains a `foreach -Parallel` statement that processes
+the disks that the `Get-Disk` activity gets. The commands in the
+`foreach -Parallel` script block run sequentially, but they run on the disks in
+parallel. The disks might be processed concurrently and in any order.
+
+```powershell
+workflow Test-Workflow {
+    $Disks = Get-Disk
+
+    # The disks are processed in parallel.
+    foreach -Parallel ($Disk in $Disks)
+    {
+        # The commands run sequentially on each disk.
+        $DiskPath = $Disk.Path
+        $Disk | Initialize-Disk
+        Set-Disk -Path $DiskPath
+    }
+}
+```
+
+In this version of the workflow, the `Get-Process` and `Get-Service` commands
+are run in parallel. The workflow function continues to the `foreach -Parallel`
+loop where the commands are run sequentially, but they run on the disks in
+parallel. The parallel commands and the `foreach -Parallel` loop run
+concurrently.
+
+```powershell
+workflow Test-Workflow {
+    #Run commands in parallel.
+    parallel
+    {
+        Get-Process
+        Get-Service
+    }
+
+   $Disks = Get-Disk
+
+   # The disks are processed in parallel.
+   foreach -Parallel ($Disk in $Disks)
+   {
+       # The commands run in parallel on each disk.
+       parallel
+       {
+           Initialize-Disk
+           inlinescript {.\Get-DiskInventory}
+       }
+   }
+}
+```
+
+## See Also
+
+- [about_Foreach](../../Microsoft.PowerShell.Core/About/about_Foreach.md)
+- [about_Language_Keywords](../../Microsoft.PowerShell.Core/About/about_Language_Keywords.md)
+- [about_Parallel](about_Parallel.md)
+- [about_Workflows](about_Workflows.md)
+- [Writing a Script Workflow](/previous-versions/powershell/scripting/developer/workflow/creating-a-workflow-by-using-a-windows-powershell-script)
+###Microsoft Learn URL###
+https://learn.microsoft.com/en-us/powershell/module/psworkflow/about/about_foreach-parallel/?view=powershell-5.1
+</pre></html>

@@ -1,0 +1,559 @@
+<!doctype html><html lang="ja"><meta charset="utf-8"><pre class="record-source">###KnowledgeNo###
+PS51-WS2022-2026-3588
+###FormatID###
+PS51-WS2022
+###CreatedAt###
+2026-08-01 00:00
+###UpdatedAt###
+2026-08-01 00:00
+###タイトル###
+about_Profiles
+###モジュール###
+Microsoft.PowerShell.Core
+###製品###
+Windows PowerShell 5.1
+###対応OS###
+Windows Server 2022
+###日本語訳###
+# about_Profilesについて
+
+## 短編説明
+
+PowerShell プロフィールを作成し,使用する方法について説明します.
+
+## 長い説明
+
+環境をカスタマイズし,開始するすべてのPowerShellセッションにセッション特有の要素を追加するために,PowerShellプロフィールを作成できます.
+
+PowerShell プロフィールとは,PowerShellが起動するときに実行されるスクリプトです.環境をカスタマイズするためにプロフィールを起動スクリプトとして使用できます.コマンド,ニンニ,関数,変数,モジュール,PowerShellドライブなどを追加できます.また,他のセッション特有の要素をプロフィールに追加することもできますので,それらを輸入したり再作成したりせずに毎セッションで利用できます.
+
+PowerShellはユーザーやホストプログラム用の複数のプロフィールをサポートしていますが,あなたのためにプロフィールを作成しません.
+
+## プロフィールタイプと場所
+
+PowerShellでは,ユーザーやPowerShellホストに対象とした複数のプロフィールファイルをサポートしています.これらのプロフィールのうち,いずれかまたはすべては,コンピュータに保存することができます.
+
+PowerShell コンソールは以下の基本的なプロフィールファイルをサポートしています.これらのファイル経路はデフォルト位置です.
+
+- すべてのユーザー,すべてのホスト - `$PSHOME\Profile.ps1`- すべてのユーザー,現在のホスト - `$PSHOME\Microsoft.PowerShell_profile.ps1`- 現在のユーザー,すべてのホスト - `$HOME\Documents\WindowsPowerShell\Profile.ps1`- 現在のユーザー,現在のホスト - `$HOME\Documents\WindowsPowerShell\Microsoft.PowerShell_profile.ps1`
+
+&gt; [!NOTE] &gt; Windowsでは,位置の位置を表示します.`Documents`フォルダはフォルダ &gt;リダイレクトまたはOneDriveによって変更できます.私たちはリダイレクトを推奨しません.`Documents`&gt;フォルダをネットワーク共有またはOneDriveに追加する.フォルダをリダイレクトすると,モジュールが読み込みに失敗し,プロフィールスクリプトにエラーが生じる可能性があります. &gt; 削除に関する情報については,`Documents`OneDrive &gt;管理のフォルダから,[OneDriveドキュメント] (/onedrive/) を参照してください.
+
+プロフィールスクリプトはリストの順に実行されます.つまり, **AllUsersAllHosts** プロフィールに変更されたものは他のプロフィールスクリプトのいずれかに覆われることができます. **CurrentUserCurrentHost** プロフィールは常に最後に実行されます.PowerShell Helpでは, **CurrentUserCurrentHost** プロフィールが最も頻繁に _your PowerShell profile_と呼ばれるプロフィールです.
+
+PowerShellをホストする他のプログラムは,独自のプロフィールをサポートすることができます.例えば,Visual Studio Code (VS Code) は以下のホスト特有のプロフィールをサポートします.
+
+- すべてのユーザー,現在のホスト - `$PSHOME\Microsoft.VSCode_profile.ps1`- 現在のユーザー,現在のホスト - `$HOME\Documents\PowerShell\Microsoft.VSCode_profile.ps1`
+
+プロフィール経路には以下の変数が含まれています.
+
+-  - `$PSHOME`PowerShell のインストールディレクトリを保存します - 変数`$HOME`変数によって現在のユーザーのホームディレクトリが保存されます
+
+## $PROFILE変数
+
+   `$PROFILE`自動変数は,現在のセッションで利用可能なPowerShellプロフィールへの経路を自動的に保存します.
+
+プロフィールパスを表示するには,  の値を表示します.`$PROFILE`また,変数  を使ってもよい.`$PROFILE`変数で命令を入力して,パスを表す.
+
+   `$PROFILE`ページの&quot;現在のユーザー,現在のホスト&quot;プロフィールへの経路を保存します.他のプロフィールは,変数のメモプロパティに保存されます.`$PROFILE`変数です.
+
+例えば,は`$PROFILE`Windows PowerShell コンソールで次の値が変数である.
+
+- 現在のユーザー,現在のホスト - `$PROFILE`- 現在のユーザー,現在のホスト - `$PROFILE.CurrentUserCurrentHost`- 現在のユーザー,すべてのホスト - `$PROFILE.CurrentUserAllHosts`- すべてのユーザー,現在のホスト - `$PROFILE.AllUsersCurrentHost`- すべてのユーザー,すべてのホスト - `$PROFILE.AllUsersAllHosts`
+
+の値が値上がりしているからです.`$PROFILE`各ユーザーおよび各ホストアプリケーションの変数変更により,ご利用している各PowerShellホストアプリケーションでプロフィール変数の値を表示することを確認してください.
+
+の現在の値を表示するには,`$PROFILE`変数型:
+
+```powershell
+$PROFILE | Select-Object *
+```
+
+を用いることができます.`$PROFILE`例えば,次のコマンドは,ノートパッドの変数&quot;現在のユーザー,現在のホスト&quot;プロフィールを開きます.
+
+```powershell
+notepad $PROFILE
+```
+
+次のコマンドで,ローカルコンピュータで&quot;All Users, All Hosts&quot;プロフィールが作成されたかどうかを判断します.
+
+```powershell
+Test-Path -Path $PROFILE.AllUsersAllHosts
+```
+
+## プロフィールを作成する方法
+
+PowerShell プロフィールを作成するには,次のコマンド形式を使用します.
+
+```powershell
+if (!(Test-Path -Path &lt;profile-name&gt;)) {
+  New-Item -ItemType File -Path &lt;profile-name&gt; -Force
+}
+```
+
+例えば,現在のPowerShellホストアプリケーションで現在のユーザーにプロフィールを作成するには,次のコマンドを使用してください.
+
+```powershell
+if (!(Test-Path -Path $PROFILE)) {
+  New-Item -ItemType File -Path $PROFILE -Force
+}
+```
+
+このコマンドでは,  を入力します.`if`既存のプロフィールを書き換えることができないという状態です. の値を置き換える`$PROFILE`作成したいプロフィールファイルへのパスと変数.
+
+&gt; [!NOTE] &gt; Windows VistaおよびWindowsの後代バージョンで&quot;すべてのユーザー&quot;プロフィールを作成するには,管理者として実行する**オプションでPowerShellを起動します.
+
+## プロフィールを編集する方法
+
+Notepadなどのテキストエディタで任意の PowerShell プロフィールを開くことができます.
+
+現在の PowerShell ホストアプリケーションの現在のユーザーのプロフィールをノートパッドで開くには,次のタイプを入力してください.
+
+```powershell
+notepad $PROFILE
+```
+
+他のプロフィールを開くには,プロフィール名を指定してください.例えば,ホストアプリケーションのすべてのユーザーにプロフィールを開くには,次のタイプを入力してください:
+
+```powershell
+notepad $PROFILE.AllUsersAllHosts
+```
+
+変更を適用するには,プロフィールファイルを保存して,PowerShellを再起動します.
+
+## プロフィールを選択する方法
+
+複数のホストアプリケーションを使用している場合は,すべてのホストアプリケーションで使用しているアイテムをあなたの  に入れます.`$PROFILE.CurrentUserAllHosts`ホストアプリケーションの背景色を設定するコマンドのようなホストアプリケーションに特化したアイテムを,そのホストアプリケーションに特化したプロフィールに配置します.
+
+パワーシェルを多くのユーザーに設定している管理者である場合は,以下のガイドラインに従ってください.
+
+- 共通項を&quot;&quot;に保存する`$PROFILE.AllUsersAllHosts`- ホストアプリケーションに特化したアイテムをプロフィールで保存します.`$PROFILE.AllUsersCurrentHost`ホストアプリケーションに特化したプロフィール - 特定のユーザー向けのアイテムをユーザー特定プロフィールに保存します
+
+PowerShell プロフィールの特別な実装をチェックする際には,ホストアプリケーションのドキュメントを確認してください.
+
+## プロフィールを使用する方法
+
+PowerShellで作成したアイテムの多くは,実行したコマンドの大半が,現在のセッションのみに影響を与えます.セッション終了すると,アイテムは削除されます.
+
+セッション特有のコマンドとアイテムは,セッションに追加するPowerShell変数,環境変数,偽名,機能,コマンド,およびPowerShellモジュールを含む.
+
+これらのアイテムを保存し,将来のセッションで利用できるようにするには,PowerShell プロフィールに追加してください.
+
+プロフィールの一般的な用途は,頻繁に使用されている機能,偽名,変数を保存することです.プロフィールにアイテムを保存すると,それらを再現せずに任意のセッションで使用できます.
+
+## プロフィールを起動する方法
+
+プロフィールファイルを開くと,空白になりますが,頻繁に使っている変数,ニックネーム,コマンドで埋めることができます.
+
+以下は,お前に始められるためのいくつかの提案です.
+
+### 任意のcmdletの名前列をリストする関数を追加します
+
+```powershell
+function Get-CmdletAlias ($cmdletName) {
+  Get-Alias |
+    Where-Object -FilterScript {$_.Definition -like &quot;$cmdletName&quot;} |
+      Format-Table -Property Definition, Name -AutoSize
+}
+```
+
+# about_Profilesについて
+
+### カスタマイズするコンソール
+
+```powershell
+function CustomizeConsole {
+  $hostTime = (Get-ChildItem -Path $PSHOME\powershell.exe).CreationTime
+  $hostVersion=&quot;$($Host.Version.Major)`.$($Host.Version.Minor)&quot;
+  $Host.UI.RawUI.WindowTitle = &quot;PowerShell $hostVersion ($hostTime)&quot;
+  Clear-Host
+}
+CustomizeConsole
+```
+
+### パーソナライズされたPowerShellプロンプトを追加します.
+
+```powershell
+function prompt {
+    $Env:COMPUTERNAME + &quot;\&quot; + (Get-Location) + &quot;&gt; &quot;
+}
+```
+
+PowerShell プロンプトに関する詳細については,[about_Prompts][04] を参照してください.
+
+他のプロフィール例については,[シェル環境のカスタマイズ]を参照してください.
+
+## ナンバープレートパラメータ
+
+プロフィールなしでPowerShellを起動するには,NoProfileのパラメータを使用してください.`powershell.exe`PowerShell を起動するプログラムです.
+
+まず,Cmd.exeやPowerShellそのものを PowerShell を起動できるプログラムを開く.また,Windowsで Run のダイアログボックスを使用することもできます.
+
+タイプ:
+
+```
+powershell -NoProfile
+```
+
+powershell.exeのパラメータの完全なリストについては,次のタイプを入力してください:
+
+```
+powershell -?
+```
+
+## プロフィールと実行方針
+
+PowerShellの実行ポリシーでは,プロフィールを含むスクリプトを実行し,構成ファイルをロードできるかどうかを部分的に決定します. **Restricted**実行ポリシーはデフォルトです. プロフィールを含むすべてのスクリプトが実行されないようにします. &quot;Restricted&quot;ポリシーを使用すると,プロフィールが実行され,その内容が適用されません.
+
+A  `Set-ExecutionPolicy`実行方針を設定し変更するコマンドです.これはすべてのPowerShellセッションで適用される数少ないコマンドの一つです.その値はレジストリに保存されているため.コンソールを開くときに設定する必要はありません.また,保存する必要はありません.`Set-ExecutionPolicy`プロフィールでコマンドを表示します.
+
+## プロフィールやリモートセッションです.
+
+PowerShell プロフィールはリモートセッションで自動的に実行されないため,プロフィールが追加するコマンドはリモートセッションには存在しません.`$PROFILE`自動変数は遠隔セッションでは使用されません.
+
+セッションでプロフィールを実行するには, [Invoke-Command][08] cmdlet を使用します.
+
+例えば,次のコマンドは,セッション中のコンピュータから&quot;現在のユーザー,現在のホスト&quot;プロフィールを実行します.`$s` .
+
+```powershell
+Invoke-Command -Session $s -FilePath $PROFILE
+```
+
+次のコマンドは,セッション中のリモートコンピュータから&quot;現在のユーザー,現在のホスト&quot;プロフィールを  で実行します.`$s`がいたから.`$PROFILE`変数が埋もれていないので,コマンドはプロフィールへの明示的な経路を使用します.私たちは点源操作符を使用しますので,プロフィールがリモートコンピュータの現在の範囲で実行され,その範囲ではなく実行されます.
+
+```powershell
+Invoke-Command -Session $s -ScriptBlock {
+  . &quot;$HOME\Documents\WindowsPowerShell\Microsoft.PowerShell_profile.ps1&quot;
+}
+```
+
+このコマンドを実行した後,プロフィールがセッションに追加するコマンドは, で利用できます.`$s` .
+
+## また, を参照してください.
+
+[about_Automatic_Variables][01] - [about_Execution_Policies][02] - [about_Functions][03] - [about_Prompts][04] - [about_Remote][05] - [about_Scopes][06] - [about_Signing][07] - [Set-ExecutionPolicy][09]
+
+&lt;!--リンク参照 --&gt; [01]: about_Automatic_Variables.md [02]: about_Execution_Policies.md [03]: about_Functions.md [04]: about_Prompts.md [05]: about_Remote.md [06]: about_Scopes.md [07]: about_Signing.md [08]: xref:Microsoft.PowerShell.Core.Invoke-Command [09]: xref:Microsoft.PowerShell.Security.Set-ExecutionPolicy [10]: /powershell/scripting/learn/shell/creating-profiles
+###英語原文###
+# about_Profiles
+
+## Short description
+
+Describes how to create and use a PowerShell profile.
+
+## Long description
+
+You can create a PowerShell profile to customize your environment and add
+session-specific elements to every PowerShell session that you start.
+
+A PowerShell profile is a script that runs when PowerShell starts. You can use
+the profile as a startup script to customize your environment. You can add
+commands, aliases, functions, variables, modules, PowerShell drives and more.
+You can also add other session-specific elements to your profile so they&#x27;re
+available in every session without having to import or re-create them.
+
+PowerShell supports several profiles for users and host programs. However, it
+doesn&#x27;t create the profiles for you.
+
+## Profile types and locations
+
+PowerShell supports several profile files that are scoped to users and
+PowerShell hosts. You can have any or all these profiles on your computer.
+
+The PowerShell console supports the following basic profile files. These file
+paths are the default locations.
+
+- All Users, All Hosts - `$PSHOME\Profile.ps1`
+- All Users, Current Host - `$PSHOME\Microsoft.PowerShell_profile.ps1`
+- Current User, All Hosts - `$HOME\Documents\WindowsPowerShell\Profile.ps1`
+- Current user, Current Host -
+  `$HOME\Documents\WindowsPowerShell\Microsoft.PowerShell_profile.ps1`
+
+&gt; [!NOTE]
+&gt; In Windows, the location of the `Documents` folder can be changed by folder
+&gt; redirection or OneDrive. We don&#x27;t recommend redirecting the `Documents`
+&gt; folder to a network share or including it in OneDrive. Redirecting the folder
+&gt; can cause modules to fail to load and create errors in your profile scripts.
+&gt; For information about removing the `Documents` folder from OneDrive
+&gt; management, consult the [OneDrive documentation](/onedrive/).
+
+The profile scripts are executed in the order listed. This means that changes
+made in the **AllUsersAllHosts** profile can be overridden by any of the other
+profile scripts. The **CurrentUserCurrentHost** profile always runs last. In
+PowerShell Help, the **CurrentUserCurrentHost** profile is the profile most
+often referred to as _your PowerShell profile_.
+
+Other programs that host PowerShell can support their own profiles. For
+example, Visual Studio Code (VS Code) supports the following host-specific
+profiles.
+
+- All users, Current Host - `$PSHOME\Microsoft.VSCode_profile.ps1`
+- Current user, Current Host -
+  `$HOME\Documents\PowerShell\Microsoft.VSCode_profile.ps1`
+
+The profile paths include the following variables:
+
+- The `$PSHOME` variable stores the installation directory for PowerShell
+- The `$HOME` variable stores the current user&#x27;s home directory
+
+## The $PROFILE variable
+
+The `$PROFILE` automatic variable stores the paths to the PowerShell profiles
+that are available in the current session.
+
+To view a profile path, display the value of the `$PROFILE` variable. You can
+also use the `$PROFILE` variable in a command to represent a path.
+
+The `$PROFILE` variable stores the path to the &quot;Current User, Current Host&quot;
+profile. The other profiles are saved in note properties of the `$PROFILE`
+variable.
+
+For example, the `$PROFILE` variable has the following values in the Windows
+PowerShell console.
+
+- Current User, Current Host - `$PROFILE`
+- Current User, Current Host - `$PROFILE.CurrentUserCurrentHost`
+- Current User, All Hosts - `$PROFILE.CurrentUserAllHosts`
+- All Users, Current Host - `$PROFILE.AllUsersCurrentHost`
+- All Users, All Hosts - `$PROFILE.AllUsersAllHosts`
+
+Because the values of the `$PROFILE` variable change for each user and in each
+host application, ensure that you display the values of the profile variables
+in each PowerShell host application that you use.
+
+To see the current values of the `$PROFILE` variable, type:
+
+```powershell
+$PROFILE | Select-Object *
+```
+
+You can use the `$PROFILE` variable in many commands. For example, the
+following command opens the &quot;Current User, Current Host&quot; profile in Notepad:
+
+```powershell
+notepad $PROFILE
+```
+
+The following command determines whether an &quot;All Users, All Hosts&quot; profile has
+been created on the local computer:
+
+```powershell
+Test-Path -Path $PROFILE.AllUsersAllHosts
+```
+
+## How to create a profile
+
+To create a PowerShell profile, use the following command format:
+
+```powershell
+if (!(Test-Path -Path &lt;profile-name&gt;)) {
+  New-Item -ItemType File -Path &lt;profile-name&gt; -Force
+}
+```
+
+For example, to create a profile for the current user in the current PowerShell
+host application, use the following command:
+
+```powershell
+if (!(Test-Path -Path $PROFILE)) {
+  New-Item -ItemType File -Path $PROFILE -Force
+}
+```
+
+In this command, the `if` statement prevents you from overwriting an existing
+profile. Replace the value of the `$PROFILE` variable with the path to the
+profile file that you want to create.
+
+&gt; [!NOTE]
+&gt; To create &quot;All Users&quot; profiles in Windows Vista and later versions of
+&gt; Windows, start PowerShell with the **Run as administrator** option.
+
+## How to edit a profile
+
+You can open any PowerShell profile in a text editor, such as Notepad.
+
+To open the profile of the current user in the current PowerShell host
+application in Notepad, type:
+
+```powershell
+notepad $PROFILE
+```
+
+To open other profiles, specify the profile name. For example, to open the
+profile for all the users of all the host applications, type:
+
+```powershell
+notepad $PROFILE.AllUsersAllHosts
+```
+
+To apply the changes, save the profile file, and then restart PowerShell.
+
+## How to choose a profile
+
+If you use multiple host applications, put the items that you use in all the
+host applications into your `$PROFILE.CurrentUserAllHosts` profile. Put items
+that are specific to a host application, such as a command that sets the
+background color for a host application, in a profile that&#x27;s specific to that
+host application.
+
+If you are an administrator who is customizing PowerShell for many
+users, follow these guidelines:
+
+- Store the common items in the `$PROFILE.AllUsersAllHosts` profile
+- Store items that are specific to a host application in
+  `$PROFILE.AllUsersCurrentHost` profiles that are specific to the host
+  application
+- Store items for particular users in the user-specific profiles
+
+Be sure to check the host application documentation for any special
+implementation of PowerShell profiles.
+
+## How to use a profile
+
+Many of the items that you create in PowerShell and most commands that you run
+affect only the current session. When you end the session, the items are
+deleted.
+
+The session-specific commands and items include PowerShell variables,
+environment variables, aliases, functions, commands, and PowerShell modules
+that you add to the session.
+
+To save these items and make them available in all future sessions, add them
+to a PowerShell profile.
+
+Another common use for profiles is to save frequently used functions, aliases,
+and variables. When you save the items in a profile, you can use them in any
+applicable session without recreating them.
+
+## How to start a profile
+
+When you open the profile file, it&#x27;s blank. However, you can fill it with the
+variables, aliases, and commands that you use frequently.
+
+Here are a few suggestions to get you started.
+
+### Add a function that lists aliases for any cmdlet
+
+```powershell
+function Get-CmdletAlias ($cmdletName) {
+  Get-Alias |
+    Where-Object -FilterScript {$_.Definition -like &quot;$cmdletName&quot;} |
+      Format-Table -Property Definition, Name -AutoSize
+}
+```
+
+# about_Profiles
+
+### Customize your console
+
+```powershell
+function CustomizeConsole {
+  $hostTime = (Get-ChildItem -Path $PSHOME\powershell.exe).CreationTime
+  $hostVersion=&quot;$($Host.Version.Major)`.$($Host.Version.Minor)&quot;
+  $Host.UI.RawUI.WindowTitle = &quot;PowerShell $hostVersion ($hostTime)&quot;
+  Clear-Host
+}
+CustomizeConsole
+```
+
+### Add a customized PowerShell prompt
+
+```powershell
+function prompt {
+    $Env:COMPUTERNAME + &quot;\&quot; + (Get-Location) + &quot;&gt; &quot;
+}
+```
+
+For more information about the PowerShell prompt, see [about_Prompts][04].
+
+For other profile examples, see [Customizing your shell environment][10].
+
+## The NoProfile parameter
+
+To start PowerShell without profiles, use the **NoProfile** parameter of
+`powershell.exe`, the program that starts PowerShell.
+
+To begin, open a program that can start PowerShell, such as Cmd.exe or
+PowerShell itself. You can also use the Run dialog box in Windows.
+
+Type:
+
+```
+powershell -NoProfile
+```
+
+For a complete list of the parameters of powershell.exe, type:
+
+```
+powershell -?
+```
+
+## Profiles and execution policy
+
+The PowerShell execution policy determines, in part, whether you can run
+scripts and load configuration files, including the profiles. The
+**Restricted** execution policy is the default. It prevents all scripts from
+running, including the profiles. If you use the &quot;Restricted&quot; policy, the
+profile doesn&#x27;t run, and its contents aren&#x27;t applied.
+
+A `Set-ExecutionPolicy` command sets and changes your execution policy. it&#x27;s
+one of the few commands that applies in all PowerShell sessions because the
+value is saved in the registry. You don&#x27;t have to set it when you open the
+console, and you don&#x27;t have to store a `Set-ExecutionPolicy` command in your
+profile.
+
+## Profiles and remote sessions
+
+PowerShell profiles aren&#x27;t run automatically in remote sessions, so the
+commands that the profiles add aren&#x27;t present in the remote session. In
+addition, the `$PROFILE` automatic variable isn&#x27;t populated in remote sessions.
+
+To run a profile in a session, use the [Invoke-Command][08] cmdlet.
+
+For example, the following command runs the &quot;Current user, Current Host&quot;
+profile from the local computer in the session in `$s`.
+
+```powershell
+Invoke-Command -Session $s -FilePath $PROFILE
+```
+
+The following command runs the &quot;Current user, Current Host&quot; profile from the
+remote computer in the session in `$s`. Because the `$PROFILE` variable isn&#x27;t
+populated, the command uses the explicit path to the profile. We use dot
+sourcing operator so that the profile executes in the current scope on the
+remote computer and not in its own scope.
+
+```powershell
+Invoke-Command -Session $s -ScriptBlock {
+  . &quot;$HOME\Documents\WindowsPowerShell\Microsoft.PowerShell_profile.ps1&quot;
+}
+```
+
+After running this command, the commands that the profile adds to the session
+are available in `$s`.
+
+## See also
+
+- [about_Automatic_Variables][01]
+- [about_Execution_Policies][02]
+- [about_Functions][03]
+- [about_Prompts][04]
+- [about_Remote][05]
+- [about_Scopes][06]
+- [about_Signing][07]
+- [Set-ExecutionPolicy][09]
+
+&lt;!-- link references --&gt;
+[01]: about_Automatic_Variables.md
+[02]: about_Execution_Policies.md
+[03]: about_Functions.md
+[04]: about_Prompts.md
+[05]: about_Remote.md
+[06]: about_Scopes.md
+[07]: about_Signing.md
+[08]: xref:Microsoft.PowerShell.Core.Invoke-Command
+[09]: xref:Microsoft.PowerShell.Security.Set-ExecutionPolicy
+[10]: /powershell/scripting/learn/shell/creating-profiles
+###Microsoft Learn URL###
+https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_profiles/?view=powershell-5.1
+</pre></html>

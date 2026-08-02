@@ -1,0 +1,1321 @@
+<!doctype html><html lang="ja"><meta charset="utf-8"><pre class="record-source">###KnowledgeNo###
+PS51-WS2022-2026-0442
+###FormatID###
+PS51-WS2022
+###CreatedAt###
+2026-08-01 00:00
+###UpdatedAt###
+2026-08-01 00:00
+###タイトル###
+Add-AppxPackage
+###モジュール###
+appx
+###製品###
+Windows PowerShell 5.1
+###対応OS###
+Windows Server 2022
+###日本語訳###
+# Add-AppxPackage 追加アプリxパッケージ
+
+## SYNOPSIS は,ユーザーアカウントに署名したアプリパッケージを追加します.
+
+## SYNTAXは,のシンタックスです.
+
+### AddSet (デフォルト) を追加する
+
+```
+Add-AppxPackage [-Path] &lt;String&gt; [-DependencyPath &lt;String[]&gt;] [-RequiredContentGroupOnly]
+ [-ForceApplicationShutdown] [-ForceTargetApplicationShutdown] [-ForceUpdateFromAnyVersion]
+ [-RetainFilesOnFailure] [-InstallAllResources] [-Volume &lt;AppxVolume&gt;]
+ [-ExternalPackages &lt;String[]&gt;] [-OptionalPackages &lt;String[]&gt;] [-RelatedPackages &lt;String[]&gt;]
+ [-ExternalLocation &lt;String&gt;] [-DeferRegistrationWhenPackagesAreInUse]
+ [-StubPackageOption &lt;StubPackageOption&gt;] [-AllowUnsigned] [-WhatIf] [-Confirm] [&lt;CommonParameters&gt;]
+```
+
+### AddByAppInstallerSet を追加する
+
+```
+Add-AppxPackage [-Path] &lt;String&gt; [-RequiredContentGroupOnly] [-AppInstallerFile]
+ [-ForceTargetApplicationShutdown] [-InstallAllResources] [-LimitToExistingPackages]
+ [-Volume &lt;AppxVolume&gt;] [-WhatIf] [-Confirm] [&lt;CommonParameters&gt;]
+```
+
+### RegisterSet を登録する
+
+```
+Add-AppxPackage [-Path] &lt;String&gt; [-DependencyPath &lt;String[]&gt;] [-Register] [-DisableDevelopmentMode]
+ [-ForceApplicationShutdown] [-ForceTargetApplicationShutdown] [-ForceUpdateFromAnyVersion]
+ [-InstallAllResources] [-ExternalLocation &lt;String&gt;] [-WhatIf] [-Confirm] [&lt;CommonParameters&gt;]
+```
+
+### アップデートセット
+
+```
+Add-AppxPackage [-Path] &lt;String&gt; [-DependencyPath &lt;String[]&gt;] [-RequiredContentGroupOnly]
+ [-ForceApplicationShutdown] [-ForceTargetApplicationShutdown] [-ForceUpdateFromAnyVersion]
+ [-RetainFilesOnFailure] [-InstallAllResources] [-Update] [-WhatIf] [-Confirm] [&lt;CommonParameters&gt;]
+```
+
+### ステージセット
+
+```
+Add-AppxPackage [-Path] &lt;String&gt; [-DependencyPath &lt;String[]&gt;] [-RequiredContentGroupOnly] [-Stage]
+ [-ForceUpdateFromAnyVersion] [-Volume &lt;AppxVolume&gt;] [-ExternalPackages &lt;String[]&gt;]
+ [-OptionalPackages &lt;String[]&gt;] [-RelatedPackages &lt;String[]&gt;] [-ExternalLocation &lt;String&gt;]
+ [-StubPackageOption &lt;StubPackageOption&gt;] [-WhatIf] [-Confirm] [&lt;CommonParameters&gt;]
+```
+
+### RegisterByPackageFullNameSet 登録ByPackageFullNameSet
+
+```
+Add-AppxPackage [-Register] -MainPackage &lt;String&gt; [-DependencyPackages &lt;String[]&gt;]
+ [-ForceApplicationShutdown] [-ForceTargetApplicationShutdown] [-ForceUpdateFromAnyVersion]
+ [-InstallAllResources] [-WhatIf] [-Confirm] [&lt;CommonParameters&gt;]
+```
+
+### RegisterByPackageFamilyNameSet
+
+```
+Add-AppxPackage [-RegisterByFamilyName] -MainPackage &lt;String&gt; [-DependencyPackages &lt;String[]&gt;]
+ [-ForceApplicationShutdown] [-ForceTargetApplicationShutdown] [-InstallAllResources]
+ [-OptionalPackages &lt;String[]&gt;] [-WhatIf] [-Confirm] [&lt;CommonParameters&gt;]
+```
+
+## 記述は,
+
+   `Add-AppxPackage`cmdlet はユーザーアカウントに署名したアプリパッケージを追加します.アプリパッケージには,`.msix`     `.appx`ファイル名拡張子.アプリパッケージのインストールに必要な他のパッケージをすべて追加するには,依存性パスパラメータを使用します.
+
+Windows Store アプリの開発中に,パッケージ化されていないファイルフォルダからインストールするには,登録するパラメータを****を使用できます.
+
+すでにインストールされているパッケージを更新するには,新しいパッケージには同じパッケージファミリー名が必要になります.
+
+## 例えは
+
+### 例1:アプリパッケージを追加する
+
+```powershell
+Add-AppxPackage -Path &#x27;.\MyApp.msix&#x27; -DependencyPath &#x27;.\winjs.msix&#x27;
+```
+
+このコマンドは,パッケージに含まれるアプリパッケージを追加します.
+
+### 例2:アプリを更新する,しかしアプリが閉じるまで登録を遅らせる.
+
+```powershell
+$params = @{
+    Path = &#x27;.\MyApp.msix&#x27; 
+    DependencyPath = &#x27;.\winjs.msix&#x27;
+    DeferRegistrationWhenPackagesAreInUse = $true
+}
+Add-AppxPackage @params
+```
+
+このコマンドは既存のアプリの更新を記録しますが,アプリの次の起動まで更新されません.
+
+### 例3:開発モードで無効なアプリパッケージを追加する
+
+```powershell
+$InstallLocation = Get-AppxPackage -Name &#x27;*WindowsCalculator*&#x27; |
+    Select-Object -ExpandProperty InstallLocation
+$ManifestPath = $InstallLocation + &#x27;\Appxmanifest.xml&#x27;
+Add-AppxPackage -Path $ManifestPath -Register -DisableDevelopmentMode
+```
+
+このコマンドは,インストールされたWindows Storeアプリのパッケージマニフェストファイルの完全な経路を取得し,そのパッケージを登録します.あなたは**DisableDevelopmentMode**を使用して,StagePackageAsync** APIによってステージ化された,無効になった,またはテスト中に破損したアプリケーションを登録できます.
+
+### 例4: アプリをオプションパッケージと一緒に追加する
+
+```powershell
+Add-AppxPackage -Path &#x27;.\MyApp.msixbundle&#x27; -ExternalPackages @(
+    &#x27;.\optionalpackage1.msix&#x27;
+    &#x27;.\optionalpackage2.msixbundle&#x27;
+)
+
+Add-AppxPackage -Path &#x27;.\MyApp.msixbundle&#x27; -OptionalPackages &#x27;29270sandstorm.OptionalPackage1_gah1vdar1nn7a&#x27;
+```
+
+このコマンドは,オプションパッケージとともにアプリパッケージを追加します.これは原子操作で,アプリケーションまたはオプションパッケージがインストールできなければ,展開操作が中止されます.
+
+### 例5: ストリーミングアプリの必要なセクションのみをインストールする
+
+```powershell
+Add-AppxPackage -Path &#x27;.\MyApp.msixbundle&#x27; -RequiredContentGroupOnly
+```
+
+このコマンドは,アプリパッケージを追加しますが,ストリーミングアプリの必要なセクションをインストールするだけです.このコマンドを**RequiredContentGroupOnly** パラメータなしで再び呼び出すことで,残りのアプリケーションを, によって定義された順にインストールします.`AppxContentGroupMap.xml`
+
+### 例 6: App Installer ファイルを使ってアプリをインストールする
+
+```powershell
+Add-AppxPackage -AppInstallerFile &quot;C:\Users\user1\Desktop\MyApp.appinstaller&quot;
+```
+
+このコマンドは,App Installerファイルに記載されているアプリパッケージを追加し,アプリケーションインストーラーファイルに指定されたすべての更新設定を表示します.
+
+## パラメータは
+
+### -AllowUnsigned 許可不可
+
+署名されていないパッケージを追加することを許可します.
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: AddSet
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -AppInstallerFile
+
+Appinstallerのファイルを実行し,ユーザが1クリックですべての定義されたパッケージをインストールできるようにします.詳細については, [手動でApp Installerファイルを作成] (/windows/msix/app-installer/how-to-create-appinstaller-file) を参照してください.)
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: AddByAppInstallerSet
+Aliases:
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -DeferRegistrationWhenPackagesAreInUse 登録されたとき
+
+アプリは現在使用されている場合,ユーザー登録をしないことを指定します.次の開始時にアプリが更新されます.
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: AddSet
+Aliases:
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -依存性パッケージ
+
+登録する依存パッケージの全名前または依存パッケージのバンドルの全名前を指定します.
+
+```yaml
+Type: System.String[]
+Parameter Sets: RegisterByPackageFullNameSet, RegisterByPackageFamilyNameSet
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByValue)
+Accept wildcard characters: False
+```
+
+# Add-AppxPackage 追加アプリxパッケージ
+
+### -依存症Path
+
+アプリパッケージのインストールに必要な依存パッケージのファイルパスを表示する.`.msix`     `.appx`     `.msixbundle`       `.appxbundle`ファイル名拡張子.複数の依存パケットへの経路を指定できます. パッケージがユーザーに既にインストールされている場合は,依存パースに追加することをスキップできます.
+
+```yaml
+Type: System.String[]
+Parameter Sets: AddSet, RegisterSet, UpdateSet, StageSet
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -DisableDevelopmentMode 開発障害者モード
+
+このcmdletは,無効,登録されていない,または破損した既存のアプリパッケージインストールを登録することを示します.現在のパラメータを使用してマニフェストは開発モードのファイルコレクションではなく,既存のインストールからであることを指定します.また,このパラメータを使用して, [パッケージマネージャー API] のアプリケーションを登録することができます.https://go.microsoft.com/fwlink/?LinkId=245447**Register**パラメータを使用して,アプリパッケージマニストの位置を指定します.`.xml`インストール場所からファイル.
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: RegisterSet
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -ExternalLocation でした
+
+MSIX パッケージの外にある外部ディスク位置の URI パスチャーは,パッケージマニフェストがアプリケーションコンテンツを参照できる場所です.
+
+```yaml
+Type: System.String
+Parameter Sets: AddSet, RegisterSet, StageSet
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -ExternalPackages について
+
+アプリパッケージと並んでインストールしなければならないオプションパッケージの配列を指定します.これは原子操作です.つまり,アプリケーションまたはオプションパッケージがインストールできなければ,展開操作が中止されます.
+
+```yaml
+Type: System.String[]
+Parameter Sets: AddSet, StageSet
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -ForceApplicationShutdown でした
+
+このcmdletはパッケージやその依存関係に関連するすべてのアクティブプロセスがシャットダウンすることを強制すると示します.このパラメータを指定した場合,ForceTargetApplicationShutdown**パラメータを指定しないでください.
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: AddSet, RegisterSet, UpdateSet, RegisterByPackageFullNameSet, RegisterByPackageFamilyNameSet
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -ForceTargetApplicationShutdown
+
+このcmdletはパッケージに関連したすべてのアクティブプロセスがシャットダウンすることを強制すると示します.このパラメータを指定した場合,ForceApplicationShutdown**パラメータを指定しないでください.
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: AddSet, AddByAppInstallerSet, RegisterSet, UpdateSet, RegisterByPackageFullNameSet, RegisterByPackageFamilyNameSet
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -ForceUpdateFromAnyVersion フォースアップデート
+
+このパラメータは,より高いバージョンが既にステージ化または登録されているかどうかに関係なく,パッケージの特定のバージョンをステージ化または登録するように強制するために使用されます.
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: AddSet, RegisterSet, UpdateSet, StageSet, RegisterByPackageFullNameSet
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -InstallAllResourcesをインストールする
+
+このcmdletは,bundle 論点から指定されたすべてのリソースパッケージの展開を強制すると示します.これは,展開エンジンによるリソース適用性チェックを過失し,すべてのリソースパッケージのステージ設定,すべてのリソースパッケージの登録,またはすべてのリソースパッケージのステージ設定と登録を強制します.このパラメータは,リソースバンドルまたはリソースバンドルマニストを指定するときにのみ使用できます.
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: AddSet, AddByAppInstallerSet, RegisterSet, UpdateSet, RegisterByPackageFullNameSet, RegisterByPackageFamilyNameSet
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -LimitToExistingPackages 限定されているパッケージ
+
+このパラメータは,失われた参照されたパッケージがダウンロードされないようにするために使用されます.
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: AddByAppInstallerSet
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### - メインパックage
+
+登録するメインパッケージの全名前またはバンドルの全名前を指定します.
+
+```yaml
+Type: System.String
+Parameter Sets: RegisterByPackageFullNameSet, RegisterByPackageFamilyNameSet
+Aliases:
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: True (ByValue)
+Accept wildcard characters: False
+```
+
+### - オプション・パッケージ
+
+アプリと並ぶインストールが必要とする関連セットにあるオプションパッケージのパッケージファミリーネームを指定します.外部パッケージフラグとは異なり,オプションパッケージへのパスで移動する必要はありません.これは原子操作です.つまり,アプリケーションまたはオプションパッケージがインストールできなければ,展開操作が中止されます.
+
+```yaml
+Type: System.String[]
+Parameter Sets: AddSet, StageSet, RegisterByPackageFamilyNameSet
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### - 歩道
+
+アプリパッケージファイルへの経路を指定します. アプリパッケージには,`.msix`     `.appx`     `.msixbundle`       `.appxbundle`ファイル名拡張子です.
+
+```yaml
+Type: System.String
+Parameter Sets: AddSet, AddByAppInstallerSet, RegisterSet, UpdateSet, StageSet
+Aliases: PSPath
+
+Required: True
+Position: 1
+Default value: None
+Accept pipeline input: True (ByValue)
+Accept wildcard characters: False
+```
+
+### -登録者
+
+このcmdletは開発モードでアプリケーションを登録することを示します.開発モードを使用して未パッケージファイルフォルダからアプリケーションをインストールできます.アプリケーションパッケージとして展開する前に現在のパラメータを使用してWindows Storeアプリをテストできます.既存のアプリケーションパッケージのインストールを登録するには, **DisableDevelopmentMode**パラメータと **Register**パラメータを指定する必要があります.依存パッケージを指定するには, **DependencyPath**パラメータと **DisableDevelopmentMode**パラメータを使用します.
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: RegisterSet
+Aliases:
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: RegisterByPackageFullNameSet
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+# Add-AppxPackage 追加アプリxパッケージ
+
+### -RegisterByFamilyName
+
+登録される姓または全名を定義するメインパケットのパラメータを指定します.
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: RegisterByPackageFamilyNameSet
+Aliases:
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -RelatedPackages
+
+これは,メインアプリパッケージに指定されている他のオプションパッケージを指定するために使用されるオプション要素です.これらのパッケージは,展開操作の一環としてインストールされません.
+
+```yaml
+Type: System.String[]
+Parameter Sets: AddSet, StageSet
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -RequiredContentGroupOnly
+
+で指定された必要なコンテンツグループのみを指定します.`AppxContentGroupMap.xml`インストールする必要があります.この時点でアプリが起動できます. 呼び出し `Add-AppxPackage`アプリへの経路を指定すると,残りのアプリが で定義された順にインストールされるようになります.`AppxContentGroupMap.xml` .
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: AddSet, AddByAppInstallerSet, UpdateSet, StageSet
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -RetainFilesOnFailure 失敗について
+
+展開が失敗した場合,このスイッチが  に設定されている場合`$true`インストール中にターゲットマシンで作成されたファイルは削除されません.
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: AddSet, UpdateSet
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -ステージ
+
+パッケージを登録せずにシステムにステージします.
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: StageSet
+Aliases:
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -StubPackageOption スタブパッケージオプション
+
+追加またはステージ化されたアプリパッケージのスタブ行動を定義します.このパラメータの受け入れ可能な値は:です.
+
+ - -`Default`: デフォルトの行動を使用します - `InstallFull`: 完全なアプリとしてインストールする - `InstallStub`: スタブアプリとしてインストールする - `UsePreference`: パッケージの現在の [PackageStubPreference] (/uwp/api/windows.management.deployment.packagestubpreference) を使用します.
+
+```yaml
+Type: StubPackageOption
+Parameter Sets: AddSet, StageSet
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -更新日
+
+追加されているパッケージは依存パッケージ更新であることを指定します.親アプリが削除されたときに依存パッケージがユーザーアカウントから削除されます.このパラメータを使用しない場合は,追加されるパッケージはプライマリパッケージであり,親アプリが削除された場合,ユーザーアカウントから削除されません.既にインストールされたパッケージを更新するには,新しいパッケージには同じパッケージファミリー名が必要です.
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: UpdateSet
+Aliases:
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Volume
+
+パッケージをステージにインする **AppxVolume**オブジェクトを指定します.また,そのボリュームでは,ユーザー **AppData**のデフォルト位置を指定します.
+
+```yaml
+Type: AppxVolume
+Parameter Sets: AddSet, AddByAppInstallerSet, StageSet
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName, ByValue)
+Accept wildcard characters: False
+```
+
+### -確認する
+
+cmdletを実行する前に確認を提示します.
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases: cf
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -WhatIf
+
+実行されないcmdletが実行されればどうなるかを示しています.
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases: wi
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### 共通パラメーター
+
+このcmdletは,共通パラメータをサポートしています: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable.詳細については, [about_CommonParameters](を参照してください.http://go.microsoft.com/fwlink/?LinkID=113216) でした.
+
+## 輸入は
+
+### システム.ストリング[]
+
+### System.IO.FileInfo について
+
+## 輸出は
+
+### どれもない
+
+##  NOTES  記事ができました.
+
+## 関連リンク
+
+[パッケージマネージャー API](https://go.microsoft.com/fwlink/?LinkId=245447) 
+
+[アプリを追加して削除する方法](https://go.microsoft.com/fwlink/?LinkID=231020) 
+
+[Get-AppxPackage](./Get-AppxPackage.md) を表示しています.
+
+[Get-AppxPackageManifest](./Get-AppxPackageManifest.md) について
+
+[Move-AppxPackage](./Move-AppxPackage.md) 
+
+[AppxPackage.md]を削除する
+###英語原文###
+# Add-AppxPackage
+
+## SYNOPSIS
+Adds a signed app package to a user account.
+
+## SYNTAX
+
+### AddSet (Default)
+
+```
+Add-AppxPackage [-Path] &lt;String&gt; [-DependencyPath &lt;String[]&gt;] [-RequiredContentGroupOnly]
+ [-ForceApplicationShutdown] [-ForceTargetApplicationShutdown] [-ForceUpdateFromAnyVersion]
+ [-RetainFilesOnFailure] [-InstallAllResources] [-Volume &lt;AppxVolume&gt;]
+ [-ExternalPackages &lt;String[]&gt;] [-OptionalPackages &lt;String[]&gt;] [-RelatedPackages &lt;String[]&gt;]
+ [-ExternalLocation &lt;String&gt;] [-DeferRegistrationWhenPackagesAreInUse]
+ [-StubPackageOption &lt;StubPackageOption&gt;] [-AllowUnsigned] [-WhatIf] [-Confirm] [&lt;CommonParameters&gt;]
+```
+
+### AddByAppInstallerSet
+
+```
+Add-AppxPackage [-Path] &lt;String&gt; [-RequiredContentGroupOnly] [-AppInstallerFile]
+ [-ForceTargetApplicationShutdown] [-InstallAllResources] [-LimitToExistingPackages]
+ [-Volume &lt;AppxVolume&gt;] [-WhatIf] [-Confirm] [&lt;CommonParameters&gt;]
+```
+
+### RegisterSet
+
+```
+Add-AppxPackage [-Path] &lt;String&gt; [-DependencyPath &lt;String[]&gt;] [-Register] [-DisableDevelopmentMode]
+ [-ForceApplicationShutdown] [-ForceTargetApplicationShutdown] [-ForceUpdateFromAnyVersion]
+ [-InstallAllResources] [-ExternalLocation &lt;String&gt;] [-WhatIf] [-Confirm] [&lt;CommonParameters&gt;]
+```
+
+### UpdateSet
+
+```
+Add-AppxPackage [-Path] &lt;String&gt; [-DependencyPath &lt;String[]&gt;] [-RequiredContentGroupOnly]
+ [-ForceApplicationShutdown] [-ForceTargetApplicationShutdown] [-ForceUpdateFromAnyVersion]
+ [-RetainFilesOnFailure] [-InstallAllResources] [-Update] [-WhatIf] [-Confirm] [&lt;CommonParameters&gt;]
+```
+
+### StageSet
+
+```
+Add-AppxPackage [-Path] &lt;String&gt; [-DependencyPath &lt;String[]&gt;] [-RequiredContentGroupOnly] [-Stage]
+ [-ForceUpdateFromAnyVersion] [-Volume &lt;AppxVolume&gt;] [-ExternalPackages &lt;String[]&gt;]
+ [-OptionalPackages &lt;String[]&gt;] [-RelatedPackages &lt;String[]&gt;] [-ExternalLocation &lt;String&gt;]
+ [-StubPackageOption &lt;StubPackageOption&gt;] [-WhatIf] [-Confirm] [&lt;CommonParameters&gt;]
+```
+
+### RegisterByPackageFullNameSet
+
+```
+Add-AppxPackage [-Register] -MainPackage &lt;String&gt; [-DependencyPackages &lt;String[]&gt;]
+ [-ForceApplicationShutdown] [-ForceTargetApplicationShutdown] [-ForceUpdateFromAnyVersion]
+ [-InstallAllResources] [-WhatIf] [-Confirm] [&lt;CommonParameters&gt;]
+```
+
+### RegisterByPackageFamilyNameSet
+
+```
+Add-AppxPackage [-RegisterByFamilyName] -MainPackage &lt;String&gt; [-DependencyPackages &lt;String[]&gt;]
+ [-ForceApplicationShutdown] [-ForceTargetApplicationShutdown] [-InstallAllResources]
+ [-OptionalPackages &lt;String[]&gt;] [-WhatIf] [-Confirm] [&lt;CommonParameters&gt;]
+```
+
+## DESCRIPTION
+
+The `Add-AppxPackage` cmdlet adds a signed app package to a user account. An app package has an
+`.msix` or `.appx` filename extension. Use the **DependencyPath** parameter to add all other
+packages required for the installation of the app package.
+
+You can use the **Register** parameter to install from a folder of unpackaged files during
+development of Windows Store apps.
+
+To update an already installed package, the new package must have the same package family name.
+
+## EXAMPLES
+
+### Example 1: Add an app package
+
+```powershell
+Add-AppxPackage -Path &#x27;.\MyApp.msix&#x27; -DependencyPath &#x27;.\winjs.msix&#x27;
+```
+
+This command adds an app package that the package contains.
+
+### Example 2: Update an app, but defer registration until the app has closed
+
+```powershell
+$params = @{
+    Path = &#x27;.\MyApp.msix&#x27; 
+    DependencyPath = &#x27;.\winjs.msix&#x27;
+    DeferRegistrationWhenPackagesAreInUse = $true
+}
+Add-AppxPackage @params
+```
+
+This command will register an update to an existing app, but won&#x27;t do so until the next launch of
+the app.
+
+### Example 3: Add a disabled app package in development mode
+
+```powershell
+$InstallLocation = Get-AppxPackage -Name &#x27;*WindowsCalculator*&#x27; |
+    Select-Object -ExpandProperty InstallLocation
+$ManifestPath = $InstallLocation + &#x27;\Appxmanifest.xml&#x27;
+Add-AppxPackage -Path $ManifestPath -Register -DisableDevelopmentMode
+```
+
+This command gets the full path of the package manifest file of an installed Windows Store app, and
+then registers that package. You can use **DisableDevelopmentMode** to register an application
+that&#x27;s staged by the **StagePackageAsync** API, has been disabled, or has become corrupted during
+testing.
+
+### Example 4: Add an app along with its optional packages
+
+```powershell
+Add-AppxPackage -Path &#x27;.\MyApp.msixbundle&#x27; -ExternalPackages @(
+    &#x27;.\optionalpackage1.msix&#x27;
+    &#x27;.\optionalpackage2.msixbundle&#x27;
+)
+
+Add-AppxPackage -Path &#x27;.\MyApp.msixbundle&#x27; -OptionalPackages &#x27;29270sandstorm.OptionalPackage1_gah1vdar1nn7a&#x27;
+```
+
+This command adds an app package along with its optional packages. It&#x27;s an atomic operation, which
+means that if the app or its optional packages fail to install, the deployment operation will be
+aborted
+
+### Example 5: Install only the required section of a streaming app
+
+```powershell
+Add-AppxPackage -Path &#x27;.\MyApp.msixbundle&#x27; -RequiredContentGroupOnly
+```
+
+This command adds an app package but only installs the required section of a streaming app. Calling
+this command again without the **RequiredContentGroupOnly** parameter proceeds to install the rest
+of the application in the order defined by the `AppxContentGroupMap.xml`
+
+### Example 6: Install an app using the App Installer file
+
+```powershell
+Add-AppxPackage -AppInstallerFile &quot;C:\Users\user1\Desktop\MyApp.appinstaller&quot;
+```
+
+This command adds an app package as outlined in the App Installer file with all update settings
+specified within the App Installer file, if any.
+
+## PARAMETERS
+
+### -AllowUnsigned
+
+Allows adding an unsigned package.
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: AddSet
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -AppInstallerFile
+
+Runs an appinstaller file and allows the user to install all the defined packages with a single
+click. For more information, see
+[Create an App Installer file manually](/windows/msix/app-installer/how-to-create-appinstaller-file).
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: AddByAppInstallerSet
+Aliases:
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -DeferRegistrationWhenPackagesAreInUse
+
+Specifies that the app won&#x27;t register for a user if currently in use. The app will update on the
+next launch.
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: AddSet
+Aliases:
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -DependencyPackages
+
+Specifies the dependency package full name or dependency package bundle full name to be registered.
+
+```yaml
+Type: System.String[]
+Parameter Sets: RegisterByPackageFullNameSet, RegisterByPackageFamilyNameSet
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByValue)
+Accept wildcard characters: False
+```
+
+# Add-AppxPackage
+
+### -DependencyPath
+
+Specifies an array of file paths of dependency packages that are required for the installation of
+the app package. The app package has an `.msix`, `.appx`, `.msixbundle`, or `.appxbundle` filename
+extension. You can specify the paths to more than one dependency package. If a package is already
+installed for a user, you can skip adding it to the DependencyPath.
+
+```yaml
+Type: System.String[]
+Parameter Sets: AddSet, RegisterSet, UpdateSet, StageSet
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -DisableDevelopmentMode
+
+Indicates that this cmdlet registers an existing app package installation that has been disabled,
+didn&#x27;t register, or has become corrupted. Use the current parameter to specify that the manifest is
+from an existing installation, and not from a collection of files in development mode. You can also
+use this parameter to register an application that the
+[Package Manager API](https://go.microsoft.com/fwlink/?LinkId=245447) has staged. Use the
+**Register** parameter to specify the location of the app package manifest `.xml` file from the
+installation location.
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: RegisterSet
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -ExternalLocation
+
+URI path of an external disk location outside of the MSIX package where the package manifest can
+reference application content.
+
+```yaml
+Type: System.String
+Parameter Sets: AddSet, RegisterSet, StageSet
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -ExternalPackages
+
+Specifies an array of optional packages that must be installed along with the app package. It&#x27;s an
+atomic operation, which means that if the app or its optional packages fail to install, the
+deployment operation will be aborted.
+
+```yaml
+Type: System.String[]
+Parameter Sets: AddSet, StageSet
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -ForceApplicationShutdown
+
+Indicates that this cmdlet forces all active processes associated with the package or its
+dependencies to shut down. If you specify this parameter, don&#x27;t specify the
+**ForceTargetApplicationShutdown** parameter.
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: AddSet, RegisterSet, UpdateSet, RegisterByPackageFullNameSet, RegisterByPackageFamilyNameSet
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -ForceTargetApplicationShutdown
+
+Indicates that this cmdlet forces all active processes associated with the package to shut down. If
+you specify this parameter, don&#x27;t specify the **ForceApplicationShutdown** parameter.
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: AddSet, AddByAppInstallerSet, RegisterSet, UpdateSet, RegisterByPackageFullNameSet, RegisterByPackageFamilyNameSet
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -ForceUpdateFromAnyVersion
+
+This parameter is used to force a specific version of a package to be staged or registered,
+regardless of whether a higher version is already staged or registered.
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: AddSet, RegisterSet, UpdateSet, StageSet, RegisterByPackageFullNameSet
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -InstallAllResources
+
+Indicates that this cmdlet forces the deployment of all resource packages specified from a bundle
+argument. This overrides the resource applicability check of the deployment engine and forces
+staging of all resource packages, registration of all resource packages, or staging and registration
+of all resource packages. This parameter can only be used when specifying a resource bundle or
+resource bundle manifest.
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: AddSet, AddByAppInstallerSet, RegisterSet, UpdateSet, RegisterByPackageFullNameSet, RegisterByPackageFamilyNameSet
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -LimitToExistingPackages
+
+This parameter is used to prevent missing referenced packages to be downloaded.
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: AddByAppInstallerSet
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -MainPackage
+
+Specifies the main package full name or bundle full name to register.
+
+```yaml
+Type: System.String
+Parameter Sets: RegisterByPackageFullNameSet, RegisterByPackageFamilyNameSet
+Aliases:
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: True (ByValue)
+Accept wildcard characters: False
+```
+
+### -OptionalPackages
+
+Specifies the PackageFamilyName of the optional packages that are in a related set that need to be
+installed along with the app. Unlike the external packages flag, you don&#x27;t need to pass in a path
+to the optional packages. It&#x27;s an atomic operation, which means that if the app or its optional
+packages fail to install, the deployment operation will be aborted.
+
+```yaml
+Type: System.String[]
+Parameter Sets: AddSet, StageSet, RegisterByPackageFamilyNameSet
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Path
+
+Specifies the path to the app package file. An app package has an `.msix`, `.appx`, `.msixbundle`,
+or `.appxbundle` filename extension.
+
+```yaml
+Type: System.String
+Parameter Sets: AddSet, AddByAppInstallerSet, RegisterSet, UpdateSet, StageSet
+Aliases: PSPath
+
+Required: True
+Position: 1
+Default value: None
+Accept pipeline input: True (ByValue)
+Accept wildcard characters: False
+```
+
+### -Register
+
+Indicates that this cmdlet registers an application in development mode. You can use development
+mode to install applications from a folder of unpackaged files. You can use the current parameter
+to test your Windows Store apps before you deploy them as app packages. To register an existing app
+package installation, you must specify the **DisableDevelopmentMode** parameter and the
+**Register** parameter. To specify dependency packages, use the **DependencyPath** parameter and
+the **DisableDevelopmentMode** parameter.
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: RegisterSet
+Aliases:
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: RegisterByPackageFullNameSet
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+# Add-AppxPackage
+
+### -RegisterByFamilyName
+
+Specifies the parameter -MainPackage that defines the family name or full name to be registered.
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: RegisterByPackageFamilyNameSet
+Aliases:
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -RelatedPackages
+
+This is an optional element that&#x27;s used to specify the other optional packages that are specified
+in the main app package. These packages won&#x27;t be installed as part of the deployment operation.
+
+```yaml
+Type: System.String[]
+Parameter Sets: AddSet, StageSet
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -RequiredContentGroupOnly
+
+Specifies that only the required content group that&#x27;s specified in the `AppxContentGroupMap.xml`
+must be installed. At this point the app can be launched. Calling `Add-AppxPackage` and specifying
+the path to the app triggers the rest of the app to be installed in the order defined in the
+`AppxContentGroupMap.xml`.
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: AddSet, AddByAppInstallerSet, UpdateSet, StageSet
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -RetainFilesOnFailure
+
+In case of a failed deployment, if this switch is set to `$true`, files that have been created on
+the target machine during the installation process aren&#x27;t removed.
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: AddSet, UpdateSet
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Stage
+
+Stages a package to the system without registering it.
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: StageSet
+Aliases:
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -StubPackageOption
+
+Defines the stub behavior for an app package that&#x27;s being added or staged. The acceptable values
+for this parameter are:
+
+- `Default`: Uses the default behavior
+- `InstallFull`: Installs as a full app
+- `InstallStub`: Installs as a stub app
+- `UsePreference`: Uses the current
+  [PackageStubPreference](/uwp/api/windows.management.deployment.packagestubpreference) for the
+  package
+
+```yaml
+Type: StubPackageOption
+Parameter Sets: AddSet, StageSet
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Update
+
+Specifies that the package being added is a dependency package update. A dependency package is
+removed from the user account when the parent app is removed. If you don&#x27;t use this parameter, the
+package being added is a primary package and isn&#x27;t removed from the user account if the parent app
+is removed. To update an already installed package, the new package must have the same package
+family name.
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: UpdateSet
+Aliases:
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Volume
+
+Specifies the **AppxVolume** object to stage the package in. The volume also specifies the default
+location for user **AppData**.
+
+```yaml
+Type: AppxVolume
+Parameter Sets: AddSet, AddByAppInstallerSet, StageSet
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName, ByValue)
+Accept wildcard characters: False
+```
+
+### -Confirm
+
+Prompts you for confirmation before running the cmdlet.
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases: cf
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -WhatIf
+
+Shows what would happen if the cmdlet runs. The cmdlet isn&#x27;t run.
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases: wi
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### CommonParameters
+
+This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable,
+-InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose,
+-WarningAction, and -WarningVariable. For more information, see
+[about_CommonParameters](http://go.microsoft.com/fwlink/?LinkID=113216).
+
+## INPUTS
+
+### System.String[]
+
+### System.IO.FileInfo
+
+## OUTPUTS
+
+### None
+
+## NOTES
+
+## RELATED LINKS
+
+[Package Manager API](https://go.microsoft.com/fwlink/?LinkId=245447)
+
+[How to Add and Remove Apps](https://go.microsoft.com/fwlink/?LinkID=231020)
+
+[Get-AppxPackage](./Get-AppxPackage.md)
+
+[Get-AppxPackageManifest](./Get-AppxPackageManifest.md)
+
+[Move-AppxPackage](./Move-AppxPackage.md)
+
+[Remove-AppxPackage](./Remove-AppxPackage.md)
+###Microsoft Learn URL###
+https://learn.microsoft.com/en-us/powershell/module/appx/add-appxpackage/?view=windowsserver2022-ps
+</pre></html>

@@ -1,0 +1,23 @@
+<!doctype html><html lang="ja"><meta charset="utf-8"><pre class="file-source">param(
+  [string]$BundlePath = &#x27;.\powershell51_knowledge_bundle_cp932.txt&#x27;,
+  [string]$OutputDir = &#x27;.\records&#x27;
+)
+$ErrorActionPreference = &#x27;Stop&#x27;
+$ExpectedRecords = 4030
+$Utf8NoBom = New-Object System.Text.UTF8Encoding($false)
+$Encoding932 = [System.Text.Encoding]::GetEncoding(932)
+$bundleText = $Encoding932.GetString([System.IO.File]::ReadAllBytes($BundlePath))
+$records = [regex]::Split($bundleText, &#x27;(?=###KnowledgeNo###\r?\n)&#x27;) | Where-Object { $_ }
+if ($records.Count -ne $ExpectedRecords) {
+  throw &quot;bundle ??????????????: $ExpectedRecords ??: $($records.Count)&quot;
+}
+New-Item -ItemType Directory -Path $OutputDir -Force | Out-Null
+for ($index = 0; $index -lt $records.Count; $index++) {
+  $recordNo = $index + 1
+  $recordName = (&#x27;PS51-WS2022-2026-{0:D4}.txt&#x27; -f $recordNo)
+  $normalized = $records[$index] -replace &quot;`r`n&quot;, &quot;`n&quot; -replace &quot;`r&quot;, &quot;`n&quot;
+  $normalized = $normalized.TrimEnd(&quot;`n&quot;).Replace(&quot;`n&quot;, &quot;`r`n&quot;) + &quot;`r`n&quot;
+  [System.IO.File]::WriteAllText((Join-Path $OutputDir $recordName), $normalized, $Utf8NoBom)
+}
+Write-Host &quot;SPLIT PASS output=$OutputDir records=$($records.Count) encoding=UTF-8&quot;
+</pre></html>

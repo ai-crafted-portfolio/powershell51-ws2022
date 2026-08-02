@@ -1,0 +1,563 @@
+<!doctype html><html lang="ja"><meta charset="utf-8"><pre class="record-source">###KnowledgeNo###
+PS51-WS2022-2026-3856
+###FormatID###
+PS51-WS2022
+###CreatedAt###
+2026-08-01 00:00
+###UpdatedAt###
+2026-08-01 00:00
+###タイトル###
+ConvertFrom-Csv
+###モジュール###
+Microsoft.PowerShell.Utility
+###製品###
+Windows PowerShell 5.1
+###対応OS###
+Windows Server 2022
+###日本語訳###
+# 変換From-Csv
+
+## シノプシスです.
+
+文字別値 (CSV) 形式のオブジェクト属性を元のオブジェクトの CSVバージョンに変換します.
+
+## SYNTAXは,のシンタックスです.
+
+### デリミーター (デフォルト)
+
+```
+ConvertFrom-Csv [-InputObject] &lt;psobject[]&gt; [[-Delimiter] &lt;char&gt;] [-Header &lt;string[]&gt;]
+ [&lt;CommonParameters&gt;]
+```
+
+### ユースカルチャー
+
+```
+ConvertFrom-Csv [-InputObject] &lt;psobject[]&gt; -UseCulture [-Header &lt;string[]&gt;]
+ [&lt;CommonParameters&gt;]
+```
+
+## 記述は,
+
+   `ConvertFrom-Csv`cmdlet は,CSV の各行データに対して,文字別値 (CSV) データを **PSObject** タイプオブジェクトに変換します.新しいオブジェクトは CSV データから読み取られる順でパイプラインに書き込まれます.CSV の列ヘッダー行の値は,各新しい **PSObject** に追加されたプロパティの名前になります.
+
+  している物体.`ConvertFrom-Csv`CSVファイル内の各行に **PSObject** のオブジェクトが作成されます.CSVオブジェクトのプロパティ値は,オリジナルのオブジェクトのプロパティ値の文字列バージョンです. CSVオブジェクトのバージョンには方法はありません.
+
+号も使えます.`Export-Csv`そして,`Import-Csv`ファイル内のオブジェクトをCSV文字列に変換するcmdlets.これらのcmdletsは,  の同じです.`ConvertTo-Csv`そして,`ConvertFrom-Csv`cmdletsは, CSV文字列をファイルに保存する.
+
+**PSObject** タイプは,列ヘッダ順でプロパティの順序を維持します.つまり,オブジェクトをCSVフォーマットに戻すと同じ列順が表示されます.
+
+## 例えは,
+
+### 例1: ローカルコンピュータのプロセスをCSVフォーマットに変換する
+
+この例では,ローカルコンピュータのプロセスを CSVフォーマットに変換して,オブジェクト形式に戻す方法を示しています.
+
+```powershell
+$P = Get-Process | ConvertTo-Csv
+$P | ConvertFrom-Csv
+```
+
+   `Get-Process`cmdlet は,プロセスをパイプラインを介して  に送ります.`ConvertTo-Csv`           `ConvertTo-Csv`cmdlet はプロセスオブジェクトを CSV 文字列のシリーズに変換します.`ConvertFrom-Csv`cmdlet では,CSV文字列を元のプロセスオブジェクトの CSV バージョンに変換します.CSV文字列は,  に保存されます.`$P`変数です.
+
+### 例2:データオブジェクトをCSVフォーマットに変換し,その後,CSVオブジェクトフォーマットに変換します
+
+この例では,データオブジェクトを CSVフォーマットに,その後 CSVオブジェクトフォーマットに変換する方法を示しています.
+
+```powershell
+$Date = Get-Date | ConvertTo-Csv -Delimiter &#x27;;&#x27;
+ConvertFrom-Csv -InputObject $Date -Delimiter &#x27;;&#x27;
+```
+
+最初のコマンドは,  を使います.`Get-Date`パイプラインを抜けて現在の日と時間を  に送る`ConvertTo-Csv`           `ConvertTo-Csv`cmdlet は日付オブジェクトを CSV 文字列のシリーズに変換します. **Delimiter** パラメータは半角の境界線を指定するために使用されます.文字列は  で保存されます.`$Date`変数です.
+
+### 例3: ヘッダパラメータを使用してプロパティの名前を変更します.
+
+この例では,Headerのパラメータをどのように使うか示しています.`ConvertFrom-Csv`輸入されたオブジェクトのプロパティ名を変更する.
+
+```powershell
+$J = Start-Job -ScriptBlock { Get-Process } | ConvertTo-Csv  -NoTypeInformation
+$Header = &#x27;State&#x27;, &#x27;MoreData&#x27;, &#x27;StatusMessage&#x27;, &#x27;Location&#x27;, &#x27;Command&#x27;,
+          &#x27;StateInfo&#x27;, &#x27;Finished&#x27;, &#x27;InstanceId&#x27;, &#x27;Id&#x27;, &#x27;Name&#x27;, &#x27;ChildJobs&#x27;,
+          &#x27;BeginTime&#x27;, &#x27;EndTime&#x27;, &#x27;JobType&#x27;, &#x27;Output&#x27;, &#x27;Error&#x27;, &#x27;Progress&#x27;,
+          &#x27;Verbose&#x27;, &#x27;Debug&#x27;, &#x27;Warning&#x27;, &#x27;Information&#x27;
+
+# Delete the default header from $J
+$J = $J[1..($J.Count - 1)]
+$J | ConvertFrom-Csv -Header $Header
+```
+
+```Output
+State         : Running
+MoreData      : True
+StatusMessage :
+Location      : localhost
+Command       : Get-Process
+StateInfo     : Running
+Finished      : System.Threading.ManualResetEvent
+InstanceId    : a259eb63-6824-4b97-a033-305108ae1c2e
+Id            : 1
+Name          : Job1
+ChildJobs     : System.Collections.Generic.List`1[System.Management.Automation.Job]
+BeginTime     : 12/20/2018 18:59:57
+EndTime       :
+JobType       : BackgroundJob
+Output        : System.Management.Automation.PSDataCollection`1[System.Management.Automation.PSObject]
+Error         : System.Management.Automation.PSDataCollection`1[System.Management.Automation.ErrorRecord]
+Progress      : System.Management.Automation.PSDataCollection`1[System.Management.Automation.ProgressRecord]
+Verbose       : System.Management.Automation.PSDataCollection`1[System.Management.Automation.VerboseRecord]
+Debug         : System.Management.Automation.PSDataCollection`1[System.Management.Automation.DebugRecord]
+Warning       : System.Management.Automation.PSDataCollection`1[System.Management.Automation.WarningRecord]
+Information   : System.Management.Automation.PSDataCollection`1[System.Management.Automation.InformationRecord]
+```
+
+   `Start-Job`cmdlet は, background ワークを起動し,実行します.`Get-Process`作業オブジェクトがパイプラインを下に送られてきます.`ConvertTo-Csv`**NoTypeInformation**パラメータは, CSV 輸出からタイプ情報ヘッダを削除し,PowerShell v6 以降でオプションです.`$Header`**HasMoreData**, **JobStateInfo**, **PSBeginTime**, **PSEndTime**, **PSJobTypeName**という変数を置き換えるカスタムヘッダが含まれる.`$J`CSV文字列が含まれるので,デフォルトヘッダを削除するために使用されます.`ConvertFrom-Csv`cmdlet は CSV 文字列を **PSCustomObject** に変換し, **Header** パラメータを使用して  を適用します.`$Header`変数です.
+
+### 例4:サービスオブジェクトのCSV文字列をコンバーートする
+
+この例では,どのように&quot;&quot;を用いられるかを示しています.`ConvertFrom-Csv`cmdlet で,UseCulture  параметрが表示されています.
+
+```powershell
+(Get-Culture).TextInfo.ListSeparator
+$Services = (Get-Service | ConvertTo-Csv)
+ConvertFrom-Csv -InputObject $Services -UseCulture
+```
+
+   `Get-Culture`cmdlet は,当時の文化のデフォルトリスト分離器を得るために,ネードされたプロパティ **TextInfo**と **ListSeparator** を使用します.`Get-Service`cmdlet は,サービスオブジェクトをパイプラインを下に,  に送ります.`ConvertTo-Csv`         `ConvertTo-Csv`サービスオブジェクトを CSV文字列に変換する.CSV文字列は, に保存されます.`$Services`変数です.`ConvertFrom-Csv`cmdlet は **InputObject** パラメータを使用して,CSV 文字列を  から変換します.`$Services`**UseCulture**パラメータは,現在の文化のデフォルトリスト分離器を使用しています.
+
+**UseCulture** パラメータを使用すると,現在のカルトのデフォルトリスト分離器がCSV文字列で使用されているデリミーターに一致していることを確認してください.`ConvertFrom-Csv`異なる属性に各列を解析することはできません.
+
+### 例5: CSVデータをW3C拡張ログフォーマットに変換する
+
+この例では,W3C拡張ログ形式の CSVデータをオブジェクトに変換する方法を示しています.
+
+```powershell
+$logData = @&quot;
+#Version: 1.0
+#Fields: time,cs-method,cs-uri
+00:34:23,GET,/foo/bar.html
+12:21:16,GET,/foo/bar.html
+12:45:52,GET,/foo/bar.html
+12:57:34,GET,/foo/bar.html
+&quot;@
+ConvertFrom-Csv $logData
+```
+
+```Output
+time     cs-method cs-uri
+----     --------- ------
+00:34:23 GET       /foo/bar.html
+12:21:16 GET       /foo/bar.html
+12:45:52 GET       /foo/bar.html
+12:57:34 GET       /foo/bar.html
+```
+
+## パラメータは
+
+# 変換From-Csv
+
+### - 境界線
+
+CSV データにおけるプロパティ値を分離する境界線を指定します.デフォルトは komma () です.`,`) でした.
+
+コロンなどの文字を入力してください ()`:`半角形を指定するには ()`;`逃げた特殊文字を指定するには,タブ (`) のような特殊文字を指定します.` `t ``),二重引用符で封じ込めます.
+
+指定された文字がCSVデータにおける実際の境界線に一致しない場合は,`ConvertFrom-Csv`各列を個々のプロパティに解析することはできません.この場合は,1行ごとに1つの **PSCustomObject** を出します.それぞれが,1つのプロパティを含んでいます.その名前は完全なヘッダーであり,その値は行テキストです.
+
+```yaml
+Type: System.Char
+Parameter Sets: Delimiter
+Aliases:
+
+Required: False
+Position: 1
+Default value: comma (,)
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -ヘッダ
+
+輸入された文字列の代替列ヘッダ列を指定します.この列ヘッダは, によって作成されたオブジェクトのプロパティ名稱を決定します.`ConvertFrom-Csv` .
+
+字符別列の列頭列を入力してください.ヘッダ文字列を引用元に閉じ込めてはいけません.各列頭列を単一の引用元に閉じ込めてください.
+
+データ列よりも少数の列頭を入力すると,残りのデータ列は廃棄されます.データ列よりも多くの列頭を入力すると,空のデータ列で追加的な列頭が作成されます.
+
+**Header**パラメータを使用する際,CSV文字列から列のヘッダー文字列を省略します.そうでなければ,このcmdletはヘッダー行内のアイテムから追加のオブジェクトを作成します.
+
+```yaml
+Type: System.String[]
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -InputObject
+
+CSV文字列をオブジェクトに変換する CSV文字列を指定します. CSV文字列を含む変数を入力するか,CSV文字列を入手するコマンドまたは表現を入力します.また,CSV文字列を  にパイプすることもできます.`ConvertFrom-Csv` .
+
+```yaml
+Type: System.Management.Automation.PSObject[]
+Parameter Sets: (All)
+Aliases:
+
+Required: True
+Position: 0
+Default value: None
+Accept pipeline input: True (ByPropertyName, ByValue)
+Accept wildcard characters: False
+```
+
+### -UseCulture 活用文化
+
+商品の境界線として現在の文化のためのリスト分離[U+0C95][U+0CB5][U+0CA8][U+0CCD][U+0CA8][U+0CC1]使用します.文化のためのリスト分離[U+0C95][U+0CB5][U+0CA8][U+0CCD][U+0CA8][U+0CC1]探すには,次のコマンドを使用します. `(Get-Culture).TextInfo.ListSeparator` .
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: UseCulture
+Aliases:
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### 共通パラメーター
+
+このcmdletは,共通パラメータをサポートしています: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable.詳細については, [about_CommonParameters](を参照してください.https://go.microsoft.com/fwlink/?LinkID=113216) でした.
+
+## 輸入は
+
+### System.String でした.
+
+CSV文字列をこのcmdletにパイプすることができます.
+
+## 輸出は
+
+### システム管理自動化PSObject
+
+このcmdletは,CSV文字列のプロパティによって記述されたオブジェクトを返します.
+
+##  NOTES  記事ができました.
+
+CSV形式では,各オブジェクトはオブジェクトのプロパティ値の文字別列で表示される.プロパティ値は,文字列に変換され,  を使います.`ToString()`対象の方法 対象の方法を輸出する方法は存在しない.
+
+`ConvertFrom-Csv`また,W3C拡張ログ形式もサポートされています.ハッシュ文字 () から始まる行 (行)`#`) はコメントとして扱われ,コメントが&quot;&quot;から始まる場合を除き無視されます.`#Fields:`コラム名の一行が表され,コマ限定の列名リストが含まれています.その場合,cmdletはそれらの列名を使用します.これはWindows IISやその他のウェブサーバーログの標準形式です.詳細については,[拡張ログファイル形式]をご覧ください.https://www.w3.org/TR/WD-logfile.html) でした.
+
+## 関連リンク
+
+[ConvertTo-Csv](ConvertTo-Csv.md) 
+
+[Export-Csv](Export-Csv.md) 
+
+[Import-Csv](Import-Csv.md) 
+###英語原文###
+# ConvertFrom-Csv
+
+## SYNOPSIS
+
+Converts object properties in character-separated value (CSV) format into CSV versions of the
+original objects.
+
+## SYNTAX
+
+### Delimiter (Default)
+
+```
+ConvertFrom-Csv [-InputObject] &lt;psobject[]&gt; [[-Delimiter] &lt;char&gt;] [-Header &lt;string[]&gt;]
+ [&lt;CommonParameters&gt;]
+```
+
+### UseCulture
+
+```
+ConvertFrom-Csv [-InputObject] &lt;psobject[]&gt; -UseCulture [-Header &lt;string[]&gt;]
+ [&lt;CommonParameters&gt;]
+```
+
+## DESCRIPTION
+
+The `ConvertFrom-Csv` cmdlet converts character-separated value (CSV) data to **PSObject** type
+objects for each line of CSV data. The new objects are written to the pipeline in the order they are
+read from the CSV data. The values in column header row of the CSV become the names of the
+properties added to each new **PSObject**.
+
+The objects that `ConvertFrom-Csv` creates are **PSObject** type object for each row in the CSV
+file. The property values of the CSV objects are string versions of the property values of the
+original objects. The CSV versions of the objects don&#x27;t have any methods.
+
+You can also use the `Export-Csv` and `Import-Csv` cmdlets to convert objects to CSV strings in a
+file and back. These cmdlets are the same as the `ConvertTo-Csv` and `ConvertFrom-Csv` cmdlets,
+except that they save the CSV strings in a file.
+
+The **PSObject** type maintains the order of the properties in column header order. This means that
+you get the same column order when you convert the objects back into CSV format.
+
+## EXAMPLES
+
+### Example 1: Convert processes on the local computer to CSV format
+
+This example shows how to convert the processes on the local computer into CSV format and then
+restore them to object form.
+
+```powershell
+$P = Get-Process | ConvertTo-Csv
+$P | ConvertFrom-Csv
+```
+
+The `Get-Process` cmdlet sends the processes down the pipeline to `ConvertTo-Csv`. The
+`ConvertTo-Csv` cmdlet converts the process objects to a series of CSV strings. The
+`ConvertFrom-Csv` cmdlet converts the CSV strings into CSV versions of the original process objects.
+The CSV strings are saved in the `$P` variable.
+
+### Example 2: Convert a data object to CSV format and then to CSV object format
+
+This example shows how to convert a data object to CSV format and then to CSV object format.
+
+```powershell
+$Date = Get-Date | ConvertTo-Csv -Delimiter &#x27;;&#x27;
+ConvertFrom-Csv -InputObject $Date -Delimiter &#x27;;&#x27;
+```
+
+The first command uses `Get-Date` to send the current date and time down the pipeline to
+`ConvertTo-Csv`. The `ConvertTo-Csv` cmdlet converts the date object to a series of CSV strings. The
+**Delimiter** parameter is used to specify a semicolon delimiter. The strings are saved in the
+`$Date` variable.
+
+### Example 3: Use the header parameter to change the names of properties
+
+This example shows how to use the **Header** parameter of `ConvertFrom-Csv` to change the names of
+properties in the resulting imported object.
+
+```powershell
+$J = Start-Job -ScriptBlock { Get-Process } | ConvertTo-Csv  -NoTypeInformation
+$Header = &#x27;State&#x27;, &#x27;MoreData&#x27;, &#x27;StatusMessage&#x27;, &#x27;Location&#x27;, &#x27;Command&#x27;,
+          &#x27;StateInfo&#x27;, &#x27;Finished&#x27;, &#x27;InstanceId&#x27;, &#x27;Id&#x27;, &#x27;Name&#x27;, &#x27;ChildJobs&#x27;,
+          &#x27;BeginTime&#x27;, &#x27;EndTime&#x27;, &#x27;JobType&#x27;, &#x27;Output&#x27;, &#x27;Error&#x27;, &#x27;Progress&#x27;,
+          &#x27;Verbose&#x27;, &#x27;Debug&#x27;, &#x27;Warning&#x27;, &#x27;Information&#x27;
+
+# Delete the default header from $J
+$J = $J[1..($J.Count - 1)]
+$J | ConvertFrom-Csv -Header $Header
+```
+
+```Output
+State         : Running
+MoreData      : True
+StatusMessage :
+Location      : localhost
+Command       : Get-Process
+StateInfo     : Running
+Finished      : System.Threading.ManualResetEvent
+InstanceId    : a259eb63-6824-4b97-a033-305108ae1c2e
+Id            : 1
+Name          : Job1
+ChildJobs     : System.Collections.Generic.List`1[System.Management.Automation.Job]
+BeginTime     : 12/20/2018 18:59:57
+EndTime       :
+JobType       : BackgroundJob
+Output        : System.Management.Automation.PSDataCollection`1[System.Management.Automation.PSObject]
+Error         : System.Management.Automation.PSDataCollection`1[System.Management.Automation.ErrorRecord]
+Progress      : System.Management.Automation.PSDataCollection`1[System.Management.Automation.ProgressRecord]
+Verbose       : System.Management.Automation.PSDataCollection`1[System.Management.Automation.VerboseRecord]
+Debug         : System.Management.Automation.PSDataCollection`1[System.Management.Automation.DebugRecord]
+Warning       : System.Management.Automation.PSDataCollection`1[System.Management.Automation.WarningRecord]
+Information   : System.Management.Automation.PSDataCollection`1[System.Management.Automation.InformationRecord]
+```
+
+The `Start-Job` cmdlet starts a background job that runs `Get-Process`. A job object is sent down
+the pipeline to `ConvertTo-Csv` and converted to a CSV string. The **NoTypeInformation** parameter
+removes the type information header from CSV output and is optional in PowerShell v6 and higher. The
+`$Header` variable contains a custom header that replaces the following default values:
+**HasMoreData**, **JobStateInfo**, **PSBeginTime**, **PSEndTime**, and **PSJobTypeName**. The `$J`
+variable contains the CSV string and is used to remove the default header. The `ConvertFrom-Csv`
+cmdlet converts the CSV string into a **PSCustomObject** and uses the **Header** parameter to apply
+the `$Header` variable.
+
+### Example 4: Convert CSV strings of service objects
+
+This example shows how to use the `ConvertFrom-Csv` cmdlet with the **UseCulture** parameter.
+
+```powershell
+(Get-Culture).TextInfo.ListSeparator
+$Services = (Get-Service | ConvertTo-Csv)
+ConvertFrom-Csv -InputObject $Services -UseCulture
+```
+
+The `Get-Culture` cmdlet uses the nested properties **TextInfo** and **ListSeparator** to get the
+current culture&#x27;s default list separator. The `Get-Service` cmdlet sends service objects down the
+pipeline to `ConvertTo-Csv`. The `ConvertTo-Csv` converts the service objects to a series of CSV
+strings. The CSV strings are stored in the `$Services` variable. The `ConvertFrom-Csv` cmdlet uses
+the **InputObject** parameter and converts the CSV strings from the `$Services` variable. The
+**UseCulture** parameter uses the current culture&#x27;s default list separator.
+
+When the **UseCulture** parameter is used, be sure that the current culture&#x27;s default list
+separator matches the delimiter used in the CSV strings. Otherwise, `ConvertFrom-Csv` can&#x27;t
+can&#x27;t parse each column into distinct properties.
+
+### Example 5: Convert CSV data in W3C Extended Log Format
+
+This example shows how to convert CSV data in W3C Extended Log Format to objects.
+
+```powershell
+$logData = @&quot;
+#Version: 1.0
+#Fields: time,cs-method,cs-uri
+00:34:23,GET,/foo/bar.html
+12:21:16,GET,/foo/bar.html
+12:45:52,GET,/foo/bar.html
+12:57:34,GET,/foo/bar.html
+&quot;@
+ConvertFrom-Csv $logData
+```
+
+```Output
+time     cs-method cs-uri
+----     --------- ------
+00:34:23 GET       /foo/bar.html
+12:21:16 GET       /foo/bar.html
+12:45:52 GET       /foo/bar.html
+12:57:34 GET       /foo/bar.html
+```
+
+## PARAMETERS
+
+# ConvertFrom-Csv
+
+### -Delimiter
+
+Specifies the delimiter that separates the property values in the CSV data. The default is a comma
+(`,`).
+
+Enter a character, such as a colon (`:`). To specify a semicolon (`;`), enclose it in single
+quotation marks. To specify escaped special characters such as tab (`` `t ``), enclose it in double
+quotation marks.
+
+If the specified character doesn&#x27;t match the actual delimiter in the CSV data, `ConvertFrom-Csv`
+can&#x27;t parse each column into distinct properties. In this case, it outputs one **PSCustomObject**
+per row, each containing a single property whose name is the full header and whose value is the row
+text.
+
+```yaml
+Type: System.Char
+Parameter Sets: Delimiter
+Aliases:
+
+Required: False
+Position: 1
+Default value: comma (,)
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Header
+
+Specifies an alternate column header row for the imported string. The column header determines the
+property names of the objects created by `ConvertFrom-Csv`.
+
+Enter column headers as a character-separated list. don&#x27;t enclose the header string in quotation
+marks. Enclose each column header in single quotation marks.
+
+If you enter fewer column headers than there are data columns, the remaining data columns are
+discarded. If you enter more column headers than there are data columns, the additional column
+headers are created with empty data columns.
+
+When using the **Header** parameter, omit the column header string from the CSV strings. Otherwise,
+this cmdlet creates an extra object from the items in the header row.
+
+```yaml
+Type: System.String[]
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -InputObject
+
+Specifies the CSV strings to be converted to objects. Enter a variable that contains the CSV strings
+or type a command or expression that gets the CSV strings. You can also pipe the CSV strings to
+`ConvertFrom-Csv`.
+
+```yaml
+Type: System.Management.Automation.PSObject[]
+Parameter Sets: (All)
+Aliases:
+
+Required: True
+Position: 0
+Default value: None
+Accept pipeline input: True (ByPropertyName, ByValue)
+Accept wildcard characters: False
+```
+
+### -UseCulture
+
+Uses the list separator for the current culture as the item delimiter. To find the list separator
+for a culture, use the following command: `(Get-Culture).TextInfo.ListSeparator`.
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: UseCulture
+Aliases:
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### CommonParameters
+
+This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable,
+-InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose,
+-WarningAction, and -WarningVariable. For more information, see
+[about_CommonParameters](https://go.microsoft.com/fwlink/?LinkID=113216).
+
+## INPUTS
+
+### System.String
+
+You can pipe CSV strings to this cmdlet.
+
+## OUTPUTS
+
+### System.Management.Automation.PSObject
+
+This cmdlet returns the objects described by the properties in the CSV strings.
+
+## NOTES
+
+In CSV format, each object is represented by a character-separated list of the property values of
+the object. The property values are converted to strings, using the `ToString()` method of the
+object. There is no way to export the methods of the object.
+
+`ConvertFrom-Csv` also supports the W3C Extended Log format. Lines starting with the hash character
+(`#`) are treated as comments and ignored unless the comment starts with `#Fields:` and contains
+comma-delimited list of column names. In that case, the cmdlet uses those column names. This is the
+standard format for Windows IIS and other web server logs. For more information, see [Extended Log
+File Format](https://www.w3.org/TR/WD-logfile.html).
+
+## RELATED LINKS
+
+[ConvertTo-Csv](ConvertTo-Csv.md)
+
+[Export-Csv](Export-Csv.md)
+
+[Import-Csv](Import-Csv.md)
+###Microsoft Learn URL###
+https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.utility/convertfrom-csv/?view=powershell-5.1
+</pre></html>

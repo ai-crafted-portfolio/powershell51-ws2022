@@ -1,0 +1,892 @@
+<!doctype html><html lang="ja"><meta charset="utf-8"><pre class="record-source">###KnowledgeNo###
+PS51-WS2022-2026-1209
+###FormatID###
+PS51-WS2022
+###CreatedAt###
+2026-08-01 00:00
+###UpdatedAt###
+2026-08-01 00:00
+###タイトル###
+New-FsrmAction
+###モジュール###
+fileserverresourcemanager
+###製品###
+Windows PowerShell 5.1
+###対応OS###
+Windows Server 2022
+###日本語訳###
+# New-FsrmActionの動きは,
+
+## SYNOPSISはFSRMアクションオブジェクトを返します.
+
+## SYNTAXは,のシンタックスです.
+
+```
+New-FsrmAction [-Type] &lt;ActionTypeEnum&gt; [-MailTo &lt;String&gt;] [-MailCC &lt;String&gt;] [-MailBCC &lt;String&gt;]
+ [-Subject &lt;String&gt;] [-Body &lt;String&gt;] [-EventType &lt;ActionEventTypeEnum&gt;] [-Command &lt;String&gt;]
+ [-WorkingDirectory &lt;String&gt;] [-CommandParameters &lt;String&gt;] [-SecurityLevel &lt;ActionSecurityLevelEnum&gt;]
+ [-KillTimeOut &lt;Int32&gt;] [-ShouldLogError] [-ReportTypes &lt;ActionReportTypeEnum[]&gt;] [-RunLimitInterval &lt;Int32&gt;]
+ [-CimSession &lt;CimSession[]&gt;] [-ThrottleLimit &lt;Int32&gt;] [-AsJob] [-WhatIf] [-Confirm] [&lt;CommonParameters&gt;]
+```
+
+## 記述 **New-FsrmAction** cmdlet はファイルサーバーリソースマネージャ (FSRM) アクションオブジェクトを返します. **FsrmAction** オブジェクトにはアクションのトリガーが含まれていません.通知と配当の限界を使用する他の cmdlet にアクションオブジェクトを転送できます.
+
+**FSrmAction**オブジェクトは,電子メールを送信などの単一のアクションを封じ込めます.他のオブジェクトの一部として使用しない限り,FSRMはアクションオブジェクトを保存しません.例えば,通知と配当の限界を作成するために **FsrmAction**オブジェクトを使用できます.保存されたオブジェクトはアクションのトリガーを提供します.
+
+**New-FsrmAction** cmdlet では以下のアクションがサポートされています.
+
+-メール:イベントが誘発されたユーザーまたは管理者にメールを送信する - イベント:イベントログエントリを作成する - コマンド:管理者が指定したコマンドを実行する - 報告: 1つまたは複数のストレージレポートを実行する
+
+## 例えは
+
+### 例1:メールを送るアクションを作成します.```
+PS C:\&gt; New-FsrmAction Email -MailCC &quot;john.smith@contosco.com&quot; -MailTo &quot;sarah.jones@contosco.com&quot; -Subject &quot;Warning: Approaching storage limit&quot; -Body &quot;You are about to reach the end of your available storage.&quot;
+```
+
+このコマンドは,サーバーが関連イベントが発生するとメールを送信することを示すオブジェクトを返します.メールの受信者は, sarah.jones@contosco.comのユーザーであり,メールのCC受信者とは,管理者, john.smith@contosco.comです.
+
+### 例2:実行制限のあるアクションを作成します.```
+PS C:\&gt; New-FsrmAction Email -MailTo &quot;john.smith@contosco.com;sarah.jones@contosco.com&quot; -Subject &quot;Warning: Approaching storage limit&quot; -Body &quot;You are about to reach the end of your available storage.&quot; -RunLimitInterval 120
+```
+
+このコマンドは,関連イベントが起こるときにサーバーが管理者とファイル所有者にメールを送信することを示すオブジェクトを返します.このコマンドは,イベントが120分ごとに1回以上発動することができないことを指定します.イベントが発動した場合,時間間隔が過ぎる前にアクションは効果がありません.
+
+### 例3:イベントを記録するアクションを作成します.```
+PS C:\&gt; New-FsrmAction Event -EventType Information -Body &quot;The user [File Owner] is about to reach the end of his available storage.&quot; -RunLimitInterval 180
+```
+
+このコマンドは,サーバーが指定されたメッセージを含むイベントをログインすることを示しているオブジェクトを返します.関連イベントが発生する際,イベントは180分ごとに1回以上触発されるべきです.イベントが触発した場合,時間間隔が過ぎる前に追加のイベントログエントリが作成されません.
+
+### 例4:コマンドを実行してエラーを記録するアクションを作成します.```
+PS C:\&gt; New-FsrmAction Command -Command &quot;c:\windows\system32\cmd.exe&quot;-CommandParameters &quot;echo [source file path] &gt;&gt; c:\log.txt&quot; -ShouldLogError
+```
+
+このコマンドは,関連するイベントが起こるときに,サーバーが指定されたパラメータでCmd.exe を実行することを示すオブジェクトを返します.コマンドは,サーバーがエラーログに命令からエラーコードを記録することを指定します.
+
+### 例5: ストレージレポートを実行するアクションを作成します.```
+PS C:\&gt; New-FsrmAction Report -ReportType @(LargeFiles, DuplicateFiles)
+```
+
+このコマンドは,サーバーが関連イベントが発生するときにLargeFilesとDuplicateFilesを実行していることを示しているオブジェクトを返します.
+
+## パラメータは
+
+### -AsJobは,背景作業としてcmdletを実行する.このパラメータを使用して,完了するのに時間がかかるコマンドを実行します. 
+
+cmdlet はすぐに,その仕事を代表するオブジェクトを返して,コマンドプロンプトを表示します.作業が完了する間,セッションで作業を続けることができます.作業を管理するには,  を使ってください.`*-Job`職の結果を入手するには, [Receive-Job] (cmdlets) を使ってください.https://go.microsoft.com/fwlink/?LinkID=113372) cmdlet. 
+
+Windows PowerShell の背景の仕事に関する詳細については, [about_Jobs] (※) を参照してください.https://go.microsoft.com/fwlink/?LinkID=113251) でした.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### メールの内容を指定するBody.このパラメータを指定する場合は, *Type*パラメータにメールまたはイベント指定を設定する必要があります.
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -CimSession は,リモートセッションまたはリモートコンピュータでcmdletを実行します.コンピュータ名またはセッションオブジェクトを入力します.例えば,[New-CimSession]の出力です.https://go.microsoft.com/fwlink/p/?LinkId=227967) または [Get-CimSession]https://go.microsoft.com/fwlink/p/?LinkId=227966標準的には,ローカルコンピュータの現在のセッションです.
+
+```yaml
+Type: CimSession[]
+Parameter Sets: (All)
+Aliases: Session
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -コマンドはプログラムまたはスクリプトへの完全な経路を指定します.このパラメータを指定する場合, *Type*パラメータのコマンドを設定する必要があります.
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -CommandParameters プログラムやスクリプトのパラメータを指定します.このパラメータを指定すると, *Type*パラメータのコマンドを設定する必要があります.
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### - 確認は,cmdletを実行する前に確認を提示します.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: cf
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -EventType はアクションのイベントタイプを指定します.このパラメータを指定する場合は,Eventを *Type*パラメータに設定する必要があります.このパラメータの受け入れ可能な値は:
+
+どれも - 情報 - 警告 - エラー
+
+```yaml
+Type: ActionEventTypeEnum
+Parameter Sets: (All)
+Aliases: 
+Accepted values: None, Information, Warning, Error
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -KillTimeOut は,作成されたアクションが終了するプロセスが数分で終了するタイムアウト期間を指定します.サーバーがプロセスを終了していないことを示すデフォルトの -1を指定します.このパラメータを指定した場合,コマンドを設定する必要があります *Type*パラメータ.
+
+```yaml
+Type: Int32
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+# New-FsrmActionの動きは,
+
+### -MailBCC は,電子メールのBcc受信者のメールアドレスの一半角別列を指定します.有効なメールアドレスとは,管理者のメールアカウントまたはファイルの所有者です.このパラメータを指定する場合,メールを *Type*パラメータに設定する必要があります.
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -MailCCは,電子メールのCc受信者のメールアドレスの一半角別列を指定します.有効なメールアドレスとは,管理者のメールアカウントまたはファイルの所有者です.このパラメータを指定する場合,メールを *Type*パラメータに設定する必要があります.
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -MailTo は,電子メールの受信者のメールアドレスの一半角別列を指定します.有効なメールアドレスとは,管理者のメールアカウントまたはファイルの所有者です.このパラメータを指定した場合,メールを *Type*パラメータに設定する必要があります.
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -ReportTypes 行動によって生成されるレポートタイプの配列を指定します.このパラメータを指定した場合, *Type*パラメータのレポートを設定する必要があります.このパラメータの受け入れ可能な値は:
+
+- デュピケートファイル - ファイルByFileGroup - ファイルByOwner - ファイルByProperty - 大きいファイル - 最最近アクセス - 最最近アクセス - QuotaUsage
+
+```yaml
+Type: ActionReportTypeEnum[]
+Parameter Sets: (All)
+Aliases: 
+Accepted values: LargeFiles, FilesByFileGroup, LeastRecentlyAccessed, MostRecentlyAccessed, QuotaUsage, FilesByOwner, DuplicateFiles, FileScreenAuditFiles, FilesByProperty
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -RunLimitInterval サーバーが再びアクションを実行する前に,数分で最小の間隔を指定します.例えば,アクションが最後に実行された時から間隔が終了した場合,サーバーはイベントに対して再びアクションを実行します.そうでなければ,サーバーは再びアクションを実行することはできません.デフォルト値は 60,制限がないことを指定します
+
+```yaml
+Type: Int32
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -SecurityLevel プログラムまたはスクリプトが実行されるコンピュータアカウントのタイプを指定します.このパラメータの受け入れ可能な値は:
+
+- ローカルサービス - ネットワークサービス - ローカルシステム
+
+```yaml
+Type: ActionSecurityLevelEnum
+Parameter Sets: (All)
+Aliases: 
+Accepted values: None, NetworkService, LocalService, LocalSystem
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -ShouldLogError サーバーがイベントログで実行されたコマンドからエラーコードを記録することを表示します.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -Subject メールの主題を指定します.主体の最大サイズは1KBです.このパラメータを指定する場合,メールを *Type*パラメータに設定する必要があります.
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -ThrottleLimit は,cmdletを実行するために設定できる最大限の同時操作数を指定します.このパラメータを省略した場合,または値が  の値である場合.`0`入力すると,Windows PowerShell(R) は,コンピュータ上で実行されている CIM cmdlets の数に基づいて cmdlet の最適な加速度制限を計算します.加速度制限は,セッションやコンピュータにではなく,現在の cmdlet にのみ適用されます.
+
+```yaml
+Type: Int32
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Type 動作の種類を指定します.この設定は,配分またはファイル画面イベントに対してサーバーが実行する動作を決定します.このパラメータの受け入れ可能な値は:
+
+メール - イベント - コマンド - 報告
+
+```yaml
+Type: ActionTypeEnum
+Parameter Sets: (All)
+Aliases: 
+Accepted values: Event, Email, Command, Report
+
+Required: True
+Position: 1
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -WhatIf が実行されればどうなるか示します.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: wi
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -WorkingDirectory プログラムまたはスクリプトが実行される作業ディレクトリを指定します.フォルダへの有効なパス指定する必要があります.FSRMはリモートコンピュータへのパスをサポートしません.
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### 共通パラメータ このcmdletは共通パラメータをサポートしています: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable.詳細については, [about_CommonParameters](を参照してください.https://go.microsoft.com/fwlink/?LinkID=113216) でした.
+
+## 輸入は
+
+### Microsoft.PowerShell.Cmdletization.GeneratedTypes.ActionTypeEnum を生成した
+
+### System.String でした.
+
+### Microsoft.PowerShell.Cmdletization.GeneratedTypes.ActionEventTypeEnum
+
+### Microsoft.PowerShell.Cmdletization.GeneratedTypes.ActionSecurityLevelEnum
+
+### System.Int32
+
+### システム管理自動化 スイッチパラメータ
+
+### Microsoft.PowerShell.Cmdletization.GeneratedTypes.ActionReportTypeEnum[]
+
+## 輸出は
+
+### Microsoft.Management.Infrastructure.CimInstance は,マイクロソフトの管理,インフラストラクチャ,CimInstance について説明しています.
+
+##  NOTES  記事ができました.
+
+## 関連リンク
+
+[New-FsrmQuotaThreshold.md](./New-FsrmQuotaThreshold.md) 
+
+[New-FsrmFileScreen](./New-FsrmFileScreen.md) 
+
+[New-FsrmStorageReport](./New-FsrmStorageReport.md) 
+
+[New-FsrmScheduledTask](./New-FsrmScheduledTask.md) 
+
+[New-FsrmFileManagementJob](./New-FsrmFileManagementJob.md) 
+
+[New-FsrmFMJNotification](./New-FsrmFMJNotification.md) について
+###英語原文###
+# New-FsrmAction
+
+## SYNOPSIS
+Returns an FSRM action object.
+
+## SYNTAX
+
+```
+New-FsrmAction [-Type] &lt;ActionTypeEnum&gt; [-MailTo &lt;String&gt;] [-MailCC &lt;String&gt;] [-MailBCC &lt;String&gt;]
+ [-Subject &lt;String&gt;] [-Body &lt;String&gt;] [-EventType &lt;ActionEventTypeEnum&gt;] [-Command &lt;String&gt;]
+ [-WorkingDirectory &lt;String&gt;] [-CommandParameters &lt;String&gt;] [-SecurityLevel &lt;ActionSecurityLevelEnum&gt;]
+ [-KillTimeOut &lt;Int32&gt;] [-ShouldLogError] [-ReportTypes &lt;ActionReportTypeEnum[]&gt;] [-RunLimitInterval &lt;Int32&gt;]
+ [-CimSession &lt;CimSession[]&gt;] [-ThrottleLimit &lt;Int32&gt;] [-AsJob] [-WhatIf] [-Confirm] [&lt;CommonParameters&gt;]
+```
+
+## DESCRIPTION
+The **New-FsrmAction** cmdlet returns a File Server Resource Manager (FSRM) action object.
+An **FsrmAction** object does not contain the trigger for the action.
+You can pass the action object to other cmdlets that use notifications and quota thresholds.
+
+An **FsrmAction** object encapsulates a single action, such as sending an email.
+FSRM does not save an action object unless it is used as part of another object.
+For example, you can use an **FsrmAction** object to create notifications and quota thresholds.
+The saved object provides the trigger for the action.
+
+The **New-FsrmAction** cmdlet supports the following actions:
+
+- Email: Send email to the user or administrator that the event triggered
+- Event: Create an event log entry
+- Command: Run a command that the administrator specifies
+- Report: Run one or more storage reports
+
+## EXAMPLES
+
+### Example 1: Create an action that sends an email
+```
+PS C:\&gt; New-FsrmAction Email -MailCC &quot;john.smith@contosco.com&quot; -MailTo &quot;sarah.jones@contosco.com&quot; -Subject &quot;Warning: Approaching storage limit&quot; -Body &quot;You are about to reach the end of your available storage.&quot;
+```
+
+This command returns an object that indicates that the server sends an email when an associated event occurs.
+The recipient of the email is the user sarah.jones@contosco.com and the CC recipient of the email is the administrator, john.smith@contosco.com.
+
+### Example 2: Create an action that has a run limit
+```
+PS C:\&gt; New-FsrmAction Email -MailTo &quot;john.smith@contosco.com;sarah.jones@contosco.com&quot; -Subject &quot;Warning: Approaching storage limit&quot; -Body &quot;You are about to reach the end of your available storage.&quot; -RunLimitInterval 120
+```
+
+This command returns an object that indicates that the server sends an email to the administrator and the file owner when an associated event occurs.
+The command specifies that the event can trigger no more than once every 120 minutes.
+If the event does trigger, the action will have no effect before the time interval passes.
+
+### Example 3: Create an action that logs an event
+```
+PS C:\&gt; New-FsrmAction Event -EventType Information -Body &quot;The user [File Owner] is about to reach the end of his available storage.&quot; -RunLimitInterval 180
+```
+
+This command returns an object that indicates the server logs an event that contains the specified message when an associated event occurs.
+The event should trigger no more than once every 180 minutes.
+If the event does trigger, no additional event log entries are created before the time interval passes.
+
+### Example 4: Create an action that runs a command and logs errors
+```
+PS C:\&gt; New-FsrmAction Command -Command &quot;c:\windows\system32\cmd.exe&quot;-CommandParameters &quot;echo [source file path] &gt;&gt; c:\log.txt&quot; -ShouldLogError
+```
+
+This command returns an object that indicates that when an associated event occurs, the server runs Cmd.exe with the specified parameters.
+The command specifies that the server records errors codes from the command in the error log.
+
+### Example 5: Create an action that runs a storage report
+```
+PS C:\&gt; New-FsrmAction Report -ReportType @(LargeFiles, DuplicateFiles)
+```
+
+This command returns an object that indicates that the server runs LargeFiles and DuplicateFiles reports when an associated event occurs.
+
+## PARAMETERS
+
+### -AsJob
+Runs the cmdlet as a background job. Use this parameter to run commands that take a long time to complete. 
+
+The cmdlet immediately returns an object that represents the job and then displays the command prompt. 
+You can continue to work in the session while the job completes. 
+To manage the job, use the `*-Job` cmdlets. 
+To get the job results, use the [Receive-Job](https://go.microsoft.com/fwlink/?LinkID=113372) cmdlet. 
+
+For more information about Windows PowerShell background jobs, see [about_Jobs](https://go.microsoft.com/fwlink/?LinkID=113251).
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Body
+Specifies the content of an email.
+If you specify this parameter, you must set Email or Event Specify for the *Type* parameter.
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -CimSession
+Runs the cmdlet in a remote session or on a remote computer.
+Enter a computer name or a session object, such as the output of a [New-CimSession](https://go.microsoft.com/fwlink/p/?LinkId=227967) or [Get-CimSession](https://go.microsoft.com/fwlink/p/?LinkId=227966) cmdlet.
+The default is the current session on the local computer.
+
+```yaml
+Type: CimSession[]
+Parameter Sets: (All)
+Aliases: Session
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Command
+Specifies the full path to the program or script.
+If you specify this parameter, you must set Command for the *Type* parameter.
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -CommandParameters
+Specifies the parameters for the program or script.
+If you specify this parameter, you must set Command for the *Type* parameter.
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -Confirm
+Prompts you for confirmation before running the cmdlet.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: cf
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -EventType
+Specifies the event type of the action.
+If you specify this parameter, you must set Event for the *Type* parameter.
+The acceptable values for this parameter are:
+
+- None
+- Information
+- Warning
+- Error
+
+```yaml
+Type: ActionEventTypeEnum
+Parameter Sets: (All)
+Aliases: 
+Accepted values: None, Information, Warning, Error
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -KillTimeOut
+Specifies the timeout period, in minutes, after which the process that the action created is ended.
+Specify the default, -1, to indicate that the server does not end the process.
+If you specify this parameter, you must set Command for the *Type* parameter.
+
+```yaml
+Type: Int32
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+# New-FsrmAction
+
+### -MailBCC
+Specifies a semicolon-separated list of email addresses for the Bcc recipients of an email.
+Valid email addresses are an administrator email account or the owner of the file.
+If you specify this parameter, you must set Email for the *Type* parameter.
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -MailCC
+Specifies a semicolon-separated list of email addresses for the Cc recipients of an email.
+Valid email addresses are an administrator email account or the owner of the file.
+If you specify this parameter, you must set Email for the *Type* parameter.
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -MailTo
+Specifies a semicolon-separated list of email addresses for the recipients of an email.
+Valid email addresses are an administrator email account or the owner of the file.
+If you specify this parameter, you must set Email for the *Type* parameter.
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -ReportTypes
+Specifies an array of report types that the action generates.
+If you specify this parameter, you must set Report for the *Type* parameter.
+The acceptable values for this parameter are:
+
+- DuplicateFiles
+- FilesByFileGroup
+- FilesByOwner
+- FilesByProperty
+- LargeFiles
+- LeastRecentlyAccessed
+- MostRecentlyAccessed
+- QuotaUsage
+
+```yaml
+Type: ActionReportTypeEnum[]
+Parameter Sets: (All)
+Aliases: 
+Accepted values: LargeFiles, FilesByFileGroup, LeastRecentlyAccessed, MostRecentlyAccessed, QuotaUsage, FilesByOwner, DuplicateFiles, FileScreenAuditFiles, FilesByProperty
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -RunLimitInterval
+Specifies the minimum interval, in minutes, before the server can run the action again.
+For example, if the interval expired since the action last ran, the server runs the action again in response to an event; otherwise, the server cannot run the action again.
+The default value, 60, specifies that there is no limit.
+
+```yaml
+Type: Int32
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -SecurityLevel
+Specifies the computer account type under which the program or script runs.
+The acceptable values for this parameter are:
+
+- LocalService
+- NetworkService
+- LocalSystem
+
+```yaml
+Type: ActionSecurityLevelEnum
+Parameter Sets: (All)
+Aliases: 
+Accepted values: None, NetworkService, LocalService, LocalSystem
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -ShouldLogError
+Indicates that the server records errors codes from running commands in the event log.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -Subject
+Specifies the subject of an email.
+The maximum size of a subject is 1 KB.
+If you specify this parameter, you must set Email for the *Type* parameter.
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -ThrottleLimit
+Specifies the maximum number of concurrent operations that can be established to run the cmdlet.
+If this parameter is omitted or a value of `0` is entered, then Windows PowerShell(R) calculates an optimum throttle limit for the cmdlet based on the number of CIM cmdlets that are running on the computer.
+The throttle limit applies only to the current cmdlet, not to the session or to the computer.
+
+```yaml
+Type: Int32
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Type
+Specifies the type of the action.
+This setting determines the action that the server takes in response to a quota or file screen event.
+The acceptable values for this parameter are:
+
+- Email
+- Event
+- Command
+- Report
+
+```yaml
+Type: ActionTypeEnum
+Parameter Sets: (All)
+Aliases: 
+Accepted values: Event, Email, Command, Report
+
+Required: True
+Position: 1
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -WhatIf
+Shows what would happen if the cmdlet runs.
+The cmdlet is not run.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: wi
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -WorkingDirectory
+Specifies the working directory in which the program or script runs.
+You must specify a valid path to a folder.
+FSRM does not support paths to remote computers.
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### CommonParameters
+This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable. For more information, see [about_CommonParameters](https://go.microsoft.com/fwlink/?LinkID=113216).
+
+## INPUTS
+
+### Microsoft.PowerShell.Cmdletization.GeneratedTypes.ActionTypeEnum
+
+### System.String
+
+### Microsoft.PowerShell.Cmdletization.GeneratedTypes.ActionEventTypeEnum
+
+### Microsoft.PowerShell.Cmdletization.GeneratedTypes.ActionSecurityLevelEnum
+
+### System.Int32
+
+### System.Management.Automation.SwitchParameter
+
+### Microsoft.PowerShell.Cmdletization.GeneratedTypes.ActionReportTypeEnum[]
+
+## OUTPUTS
+
+### Microsoft.Management.Infrastructure.CimInstance
+
+## NOTES
+
+## RELATED LINKS
+
+[New-FsrmQuotaThreshold](./New-FsrmQuotaThreshold.md)
+
+[New-FsrmFileScreen](./New-FsrmFileScreen.md)
+
+[New-FsrmStorageReport](./New-FsrmStorageReport.md)
+
+[New-FsrmScheduledTask](./New-FsrmScheduledTask.md)
+
+[New-FsrmFileManagementJob](./New-FsrmFileManagementJob.md)
+
+[New-FsrmFMJNotification](./New-FsrmFMJNotification.md)
+###Microsoft Learn URL###
+https://learn.microsoft.com/en-us/powershell/module/fileserverresourcemanager/new-fsrmaction/?view=windowsserver2022-ps
+</pre></html>

@@ -1,0 +1,775 @@
+<!doctype html><html lang="ja"><meta charset="utf-8"><pre class="record-source">###KnowledgeNo###
+PS51-WS2022-2026-3920
+###FormatID###
+PS51-WS2022
+###CreatedAt###
+2026-08-01 00:00
+###UpdatedAt###
+2026-08-01 00:00
+###タイトル###
+Out-GridView
+###モジュール###
+Microsoft.PowerShell.Utility
+###製品###
+Windows PowerShell 5.1
+###対応OS###
+Windows Server 2022
+###日本語訳###
+# Out-GridView でした.
+
+## SYNOPSIS は,別のウィンドウでインタラクティブなテーブルに輸出を送信します.
+
+## SYNTAXは,のシンタックスです.
+
+### PassThru (デフォルト) 
+
+```
+Out-GridView [-InputObject &lt;PSObject&gt;] [-Title &lt;String&gt;] [-PassThru] [&lt;CommonParameters&gt;]
+```
+
+### 待って下さい.
+
+```
+Out-GridView [-InputObject &lt;PSObject&gt;] [-Title &lt;String&gt;] [-Wait] [&lt;CommonParameters&gt;]
+```
+
+### OutputMode
+
+```
+Out-GridView [-InputObject &lt;PSObject&gt;] [-Title &lt;String&gt;] [-OutputMode &lt;OutputModeOption&gt;]
+ [&lt;CommonParameters&gt;]
+```
+
+## 記述は,
+
+   `Out-GridView`cmdlet はコマンドから出力したものをグリッドビューウィンドウに送信し,その出力がインタラクティブなテーブルで表示されます.
+
+このcmdletにはユーザーインターフェースが必要なので,Windows Server CoreやWindows Nano Serverでは動作しません.
+
+データを調べるために表の以下の機能を使用できます.
+
+隠し,表示,並べ替え列 - 行を整理する - 迅速なフィルター - 基準フィルターを追加する - コピー・アンドペストする - 
+
+詳細については,この記事の [注釈] (注釈) のセクションを参照してください.
+
+## 例えは
+
+### 例1:グリッドビューへの輸出プロセスの例
+
+この例では,ローカルコンピュータで実行されているプロセスは,グリッドビューウィンドウに送信されます.
+
+```powershell
+Get-Process | Out-GridView
+```
+
+### 例2:格里ビューにプロセスを出力するために変数を使用します
+
+この例では,ローカルコンピュータで実行されているプロセスは,グリッドビューウィンドウに送信されます.
+
+```powershell
+$P = Get-Process
+$P | Out-GridView
+```
+
+の出力量は`Get-Process`cmdlet は,cmdlet で保存されます.`$P`変数です.`$P`にパイプされている.`Out-GridView` .
+
+### 例3:格里ビューで選択したプロパティを表示する
+
+この例では,グリッドビューで実行プロセスの選択されたプロパティを表示します.
+
+```powershell
+Get-Process | Select-Object -Property Name, WorkingSet, PeakWorkingSet |
+  Sort-Object -Property WorkingSet -Descending | Out-GridView
+```
+
+ の出力量は`Get-Process`にパイプされている.`Select-Object`**Name**, **WorkingSet**, **PeakWorkingSet**のプロパティを選択します.別のパイプラインオペレーターは,フィルタ化されたオブジェクトを に送信します.`Sort-Object`cmdlet で,WorkingSet のプロパティの値によって下回順で整理します.その後,整理された結果は,パイプで  に送られます.`Out-GridView`. 格列ビューの機能を使用してデータを検索,分類,フィルタリングすることができます.
+
+### 例4: 変数に輸出を保存し,グリッドビューを表示します
+
+この例では,変数でcmdlet出力を保存し,それを  に送信します.`Out-GridView` .
+
+```powershell
+($A = Get-ChildItem -Path $PSHOME -Recurse) | Out-GridView
+```
+
+`Get-ChildItem`PowerShellのインストールディレクトリとそのサブディレクトリ内のすべてのファイルを,  を使って取得します.`$PSHOME`命令の括弧は,動作の順序を確立します.その結果,自動変数からの出力が から表示されます.`Get-ChildItem`命令は,  に保存されます.`$A`変数に送信される前に変数に送信します.`Out-GridView` .
+
+### 例5:指定されたコンピュータの輸出プロセスはグリッドビューに
+
+この例では,グリッドビューウィンドウで Server01 コンピュータで実行されているプロセスを表示します.
+
+```powershell
+Get-Process -ComputerName &quot;Server01&quot; | ogv -Title &quot;Processes - Server01&quot;
+```
+
+例は,使用する.`ogv`の名である.`Out-GridView`cmdlet. **Title** パラメータは,ウィンドウのタイトルを指定します.
+
+### 例6: リモートコンピュータからグリッドビューに輸出データを送信する
+
+この例では,遠隔コンピュータから収集されたデータを,  に送信する方法を示しています.`Out-GridView` .
+
+```powershell
+Invoke-Command -ComputerName S1, S2, S3 -ScriptBlock {Get-Culture} | Out-GridView
+```
+
+`Invoke-Command` ランス`Get-Culture`データの生成は,パイプで3つのリモートコンピュータに転送されます.`Out-GridView`遠隔コンピュータで実行されているスクリプトブロックには,  が含まれていないことに注意してください.`Out-GridView`もしそうなったら,コマンドは各リモートコンピュータのグリッドビューウィンドウを開くときに失敗します.
+
+### 例7: 複数の項目を通過して渡す`Out-GridView`
+
+この例では,複数のプロセスを選択することができます.`Out-GridView`選択したプロセスは,  に転送されます.`Export-Csv`命令を書き込み,  に書き込みます.`ProcessLog.csv`ファイル.
+
+```powershell
+Get-Process | Out-GridView -PassThru | Export-Csv -Path .\ProcessLog.csv
+```
+
+の PassThru**パラメータを表示する`Out-GridView`パイプラインに複数のアイテムを送信できる. **PassThru** パラメータは **OutputMode** パラメータの **Multiple** 値を使用する等価である.
+
+### 例8: Windows のショートカットを作成して,`Out-GridView`
+
+この例では,  の **Wait** パラメータを使用する方法を示しています.`Out-GridView`への Windows ショートカットを作成する`Out-GridView`窓.
+
+```powershell
+pwsh -Command &quot;Get-Service | Out-GridView -Wait&quot;
+```
+
+このコマンドラインはWindowsのショートカットで使用できます. **Wait**パラメータがなければ,PowerShellは, の直後に終了します.`Out-GridView`窓が開き,窓が閉ざされる.`Out-GridView`窓はほぼすぐに開いた.
+
+## パラメータは
+
+### -InputObject
+
+対象を指定すると,cmdletが入力として  を受け入れる.`Out-GridView` .
+
+入力Object パラメータを使用して,オブジェクトの集合を  に送信する際`Out-GridView`     `Out-GridView`集合を&quot;つの集合オブジェクトとして扱うので,集合を表す1行が表示されます.集合内の各オブジェクトを表示するには,パイプラインオペレーター () を使用してください.`|`) にオブジェクトを送信する.`Out-GridView` .
+
+```yaml
+Type: System.Management.Automation.PSObject
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByValue)
+Accept wildcard characters: False
+```
+
+### -OutputMode
+
+インタラクティブウィンドウがパイプラインを下に送るアイテムを他のコマンドへの入力として指定します.デフォルトでは,このcmdletは出力を生成しません.パイプラインを下に送るインタラクティブウィンドウからアイテムを送信するには,アイテムを選択し,OKをクリックします.
+
+このパラメータの値は,パイプラインにどれだけものを送れるかを決定します.
+
+ - -`None`項目はありません.これはデフォルト値です. - `Single`ゼロアイテムまたは1アイテム.次のコマンドが入力対象を1つだけ受け取れる場合,この値を使用します. - `Multiple`ゼロ,一,または複数のアイテム.次のコマンドが複数の入力オブジェクトを入れることができるときにこの値を使用します.この値は **PassThru**パラメータに相当します.
+
+このパラメータはWindows PowerShell 3.0で導入されました.
+
+```yaml
+Type: Microsoft.PowerShell.Commands.OutputModeOption
+Parameter Sets: OutputMode
+Aliases:
+Accepted values: None, Single, Multiple
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -PassThru でした.
+
+指示は,cmdletが他のコマンドへの入力として,ダイレクトウィンドウからパイプラインを下回るアイテムを送信することを示します.デフォルトでは,このcmdletは出力を生成しません.このパラメータは, **OutputMode**パラメータの **Multiple**値を使用する等価です.
+
+パイプラインの下にあるインタラクティブウィンドウからアイテムを送信するには,アイテムを選択するにはクリックし,OKをクリックします.Shift-clickとCtrl-clickがサポートされています.
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: PassThru
+Aliases:
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -タイトル
+
+のタイトルバーに表示されるテキストを指定します.`Out-GridView`デフォルトでは,タイトルバーで  を呼び出すコマンドが表示されます.`Out-GridView` .
+
+```yaml
+Type: System.String
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+# Out-GridView でした.
+
+### - 待って下さい
+
+cmdletがコマンドプロンプトを削除し,Windows PowerShellが閉じるのを防ぐことを示します.`Out-GridView`標準的には,コマンドプロンプトが返ってくるのは,  のときです.`Out-GridView`窓が開きます.
+
+この機能により,使用可能な   を使えます.`Out-GridView`Windows ショートカットにおけるcmdlets.When`Out-GridView`**Wait**パラメータのないショートカットで使用されます.`Out-GridView`PowerShellが閉じる前にウィンドウが瞬時に現れる.
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: Wait
+Aliases:
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### 共通パラメーター
+
+このcmdletは,共通パラメータをサポートしています: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable.詳細については, [about_CommonParameters](を参照してください.https://go.microsoft.com/fwlink/?LinkID=113216) でした.
+
+## 輸入は
+
+### システム管理自動化PSObject
+
+このcmdletに任意のオブジェクトをパイプすることができます.
+
+## 輸出は
+
+### どれもない
+
+デフォルトでは,このcmdletは出力返さない.
+
+### システム管理自動化PSObject
+
+**PassThru**パラメータを使用すると,このcmdletは選択された行を表すオブジェクトを返します.
+
+# Out-GridView でした.
+
+##  NOTES  記事ができました.
+
+Windows PowerShell では,次のアライスがあります.`Out-GridView`:
+
+ - -`ogv`
+
+遠隔コマンドを使用して別のコンピュータでグリッドビューウィンドウを開くことはできません.
+
+ に送信するコマンド出力です.`Out-GridView` を使ってフォーマットすることはできません.`Format`などのcmdlets.`Format-Table`    `Format-Wide`cmdlets. 属性を選択するには,  を使ってください.`Select-Object`cmdletです.
+
+リモートコマンドからのデセリア化された出力はグリッドビューウィンドウで正しくフォーマットされず,可能である.
+
+**キーボードショートカットで**`Out-GridView`
+
+このキーを使って,このアクションを実行します. カーソルをフィルターボックスからメニューに基準を追加するメニューに移動します. テーブルに並べて戻ります. 一列上を移動します. データの最初の列から列のヘッダーに移動します.d&gt;LeftArrow&lt;/kbd&gt; 列頭列に左から一列を移動します. d&gt;RightArrow&lt;/kbd&gt; 列頭列に右に一列を移動します. d&gt;ContextMenuKey&lt;/kbd&gt; 列頭列に,選択列のオプションが表示されます. d&gt;Kbd&gt;Enter&lt;/kbd&gt; または Spacebar&lt;/kbd&gt; 列頭列に,列データを並べます (toggle A-Z, Z-A).
+
+**グリッドビューウィンドウの機能を使用する方法**
+
+** 列を隠したり表示したりするには:**
+
+1.右クリックで任意の列ヘッダをクリックし, **Select Columns**をクリックします. 1.Select Columns**のダイアログボックスでは,選択した列間の列を可用列の列に移動するには矢印をクリックします.格列表示ウィンドウでは **Select Columns**の列のみが表示されます.
+
+** 列を順次に並べ替えるために:**
+
+列を望ましい場所にドラッグ・ドロップすることができます.または次の手順を使用します.
+
+1.右クリックで列のヘッダをクリックし,列を選択する*1. 列を選択する*2のダイアログボックスでは,列を並べ替えるために**上方移動**と下方移動**ボタンを使用します.列の上方にある列はグリッドビューウィンドウの列の左側に表示されます.
+
+**How to Sort Table Data**について
+
+- データを並べるために,列のヘッダーをクリックします. - 順序を変更するには,列のヘッダーを再びクリックします.同じヘッダーをクリックするたびに,順序は上から下へと切り替わります.現在の順序は,列のヘッダーで三角形で示されています.
+
+**How to Select Table Data** を選択する方法を教えてください.
+
+列を選択するには,列を選択するか,または上下矢印を使用して列にナビゲートします. - すべての列を選択するには (ヘッダ列を除く) &lt;kbd&gt;CTRL&lt;/kbd&gt;+&lt;kbd&gt;A&lt;/kbd&gt;を押してください. - 連続した列を選択するには,列をクリックしたり,矢印をクリックしたりしながら &lt;kbd&gt;SHIFT&lt;/kbd&gt; キーを押して保持してください. - 非連続した列を選択するには, &lt;kbd&gt;CTRL&lt;/kbd&gt; キーを押して,選択に列を追加します. - 列を選択することはできませんし,全列ヘッダ列を選択することはできません.
+
+**How to Copy Rows** をコピーする方法を
+
+- テーブルから一行または複数の行をコピーするには,行を選択し,Ctrl+Cを押してください.
+
+データをテキストやスプレッドシートプログラムに貼ることができます. 列や行の一部をコピーすることはできません. また,列ヘッダ行をコピーすることはできません.
+
+テーブルで検索する方法 (素早いフィルター)
+
+フィルターボックスを使用して表内のデータを検索します.このボックスに入力すると,入力されたテキストを含む項目だけが表に表示されます.
+
+-テキスト検索. フィルターボックスで表内のテキストを検索するには,検索するテキストを入力します. - 複数の単語を探します. テーブル内の複数の単語を探するには,スペースによって分離された単語を入力します. `Out-GridView`すべての単語を含む行が表示される (論理的 **AND**). - 文字通りの文を検索する. 空間や特殊文字を含む文を検索するには,文を引用符で付加します. `Out-GridView`文脈を列に並べて,その文脈に正確な一致性がある列が表示されます. - 列で検索する. 一列または複数の列でテキストを検索するには,次のフォーマットを使用します:
+
+    `&lt;column&gt;:&lt;text&gt; [&lt;column&gt;:&lt;text&gt;] ...`
+
+例えば, **DisplayName**列で&quot;ネット&quot;を見つけたい場合は, **Filter**ボックスで&quot;Net&quot;を入力してください.
+
+    `displayname:net`
+
+**DisplayName**と **Name**の列に&quot;ネット&quot;が列を表示するには, **Filter**の欄に,入力してください.
+
+    `displayname:net name:net`
+
+検索をオフにします.全表を再表示するには, **フィルター**ボックス右上角の赤いXボタンをクリックするか, **フィルター**ボックスからテキストを削除してください.
+
+**表をフィルタリングする基準を使用する**
+
+ルールや基準を使用して,表にどの項目が表示されているかを判断できます. 項目が表示されるのは,あなたが設定したすべての基準を満たしている場合にのみです. 格列ビューウィンドウで表示されるオブジェクトの属性やそれらの属性の .NET Framework タイプによって,利用可能な基準が決定されます.
+
+各基準は以下の形式で設定されています.
+
+`&lt;column&gt; &lt;operator&gt; &lt;value&gt;`
+
+異なる属性に関する基準は**AND**によって接続されている.同じ属性に関する基準は**OR**によって接続されている.論理接続を変更することはできません.
+
+基準は表示のみに影響を与え,表からアイテムを削除しない.
+
+**How to Add Criteria**** 基準をどのように追加するか
+
+1.ウィンドウの右上角にある ** 基準を追加するメニューボタンを表示するには,拡張矢印をクリックします. 1. メニューの ** 基準を追加するメニューボタンをクリックします. 1. 列 (プロパティ) を選択するにはクリックします. 1 属性を選択すると, ** 追加ボタンをクリックします. 1. 追加をキャンセルするには, ** キャンセルする. 1. 基準を追加するには, ** 基準を追加するボタンを再びクリックします.
+
+**How to Edit a Criterion****について
+
+- オペレーターを変更するには,青色のオペレーター値をクリックし,その後,下着リストから別のオペレーターを選択します. - 値を入力したり変更したりするには,値ボックスに値を入力します. 値が有効でない値を入力すると,円形Xアイコンが表示されます.それを削除するには,値を変更します. - **OR**ステートメントを作成するには,同じプロパティを持つ基準を追加します.
+
+**How to Delete Criteria****の削除方法について
+
+選択された基準を削除するには,各基準の横にある赤いXをクリックします. - すべての基準を削除するには,すべての条件を削除するボタンをクリックします.
+
+## 関連リンク
+
+[Out-File](Out-File.md) 
+
+[Out-Printer](Out-Printer.md) でした.
+
+[Out-String](Out-String.md) 
+###英語原文###
+# Out-GridView
+
+## SYNOPSIS
+Sends output to an interactive table in a separate window.
+
+## SYNTAX
+
+### PassThru (Default)
+
+```
+Out-GridView [-InputObject &lt;PSObject&gt;] [-Title &lt;String&gt;] [-PassThru] [&lt;CommonParameters&gt;]
+```
+
+### Wait
+
+```
+Out-GridView [-InputObject &lt;PSObject&gt;] [-Title &lt;String&gt;] [-Wait] [&lt;CommonParameters&gt;]
+```
+
+### OutputMode
+
+```
+Out-GridView [-InputObject &lt;PSObject&gt;] [-Title &lt;String&gt;] [-OutputMode &lt;OutputModeOption&gt;]
+ [&lt;CommonParameters&gt;]
+```
+
+## DESCRIPTION
+
+The `Out-GridView` cmdlet sends the output from a command to a grid view window where the output is
+displayed in an interactive table.
+
+Because this cmdlet requires a user interface, it does not work on Windows Server Core or Windows
+Nano Server.
+
+You can use the following features of the table to examine your data:
+
+- Hide, show, and reorder columns
+- Sort rows
+- Quick filter
+- Add criteria filter
+- Copy and paste
+
+For full instructions, see the [Notes](#notes) section of this article.
+
+## EXAMPLES
+
+### Example 1: Output processes to a grid view
+
+This example gets the processes running on the local computer and sends them to a grid view window.
+
+```powershell
+Get-Process | Out-GridView
+```
+
+### Example 2: Use a variable to output processes to a grid view
+
+This example also gets the processes running on the local computer and sends them to a grid view
+window.
+
+```powershell
+$P = Get-Process
+$P | Out-GridView
+```
+
+The output of the `Get-Process` cmdlet is saved in the `$P` variable. Then, `$P` is piped to
+`Out-GridView`.
+
+### Example 3: Display a selected properties in a grid view
+
+This example displays selected properties of the running processes in a grid view.
+
+```powershell
+Get-Process | Select-Object -Property Name, WorkingSet, PeakWorkingSet |
+  Sort-Object -Property WorkingSet -Descending | Out-GridView
+```
+
+The output of `Get-Process` is piped to `Select-Object` to select the **Name**, **WorkingSet**, and
+**PeakWorkingSet** properties. Another pipeline operator sends the filtered objects to the
+`Sort-Object` cmdlet to sort them in descending order by the value of the **WorkingSet** property.
+Then, the sorted results are piped to `Out-GridView`. You can now use the features of the grid view
+to search, sort, and filter the data.
+
+### Example 4: Save output to a variable, and then output a grid view
+
+This example saves cmdlet output in a variable then sends it to `Out-GridView`.
+
+```powershell
+($A = Get-ChildItem -Path $PSHOME -Recurse) | Out-GridView
+```
+
+`Get-ChildItem` gets all the files in the PowerShell installation directory and its subdirectories
+using the `$PSHOME` automatic variable. The parentheses in the command establish the order of
+operations. As a result, the output from the `Get-ChildItem` command is saved in the `$A` variable
+before it is sent to `Out-GridView`.
+
+### Example 5: Output processes for a specified computer to a grid view
+
+This example displays the processes that are running on the Server01 computer in a grid view window.
+
+```powershell
+Get-Process -ComputerName &quot;Server01&quot; | ogv -Title &quot;Processes - Server01&quot;
+```
+
+The example uses `ogv`, which is the alias for the `Out-GridView` cmdlet. The **Title** parameter
+specifies the window title.
+
+### Example 6: Output data from remote computers to a grid view
+
+This example shows how to send data collected from remote computers to `Out-GridView`.
+
+```powershell
+Invoke-Command -ComputerName S1, S2, S3 -ScriptBlock {Get-Culture} | Out-GridView
+```
+
+`Invoke-Command` runs `Get-Culture` on three remote computers. The resulting data is piped to
+`Out-GridView`. Notice that the scriptblock that runs on the remote computer does not include the
+`Out-GridView` command. If it did, the command would fail when it tried to open a grid view window
+on each of the remote computers.
+
+### Example 7: Pass multiple items through `Out-GridView`
+
+This example lets you select multiple processes from the `Out-GridView` window. The processes that
+you select are passed to the `Export-Csv` command and written to the `ProcessLog.csv` file.
+
+```powershell
+Get-Process | Out-GridView -PassThru | Export-Csv -Path .\ProcessLog.csv
+```
+
+The **PassThru** parameter of `Out-GridView` lets you send multiple items down the pipeline. The
+**PassThru** parameter is equivalent to using the **Multiple** value of the **OutputMode**
+parameter.
+
+### Example 8: Create a Windows shortcut to `Out-GridView`
+
+This example shows how to use the **Wait** parameter of `Out-GridView` to create a Windows shortcut
+to the `Out-GridView` window.
+
+```powershell
+pwsh -Command &quot;Get-Service | Out-GridView -Wait&quot;
+```
+
+This command line can be used in a Windows shortcut. Without the **Wait** parameter, PowerShell
+would exit as soon as the `Out-GridView` window opened, which would close the `Out-GridView` window
+almost immediately.
+
+## PARAMETERS
+
+### -InputObject
+
+Specifies object that the cmdlet accepts as input for `Out-GridView`.
+
+When you use the **InputObject** parameter to send a collection of objects to `Out-GridView`,
+`Out-GridView` treats the collection as one collection object, and it displays one row that
+represents the collection. To display the each object in the collection, use a pipeline operator
+(`|`) to send objects to `Out-GridView`.
+
+```yaml
+Type: System.Management.Automation.PSObject
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByValue)
+Accept wildcard characters: False
+```
+
+### -OutputMode
+
+Specifies the items that the interactive window sends down the pipeline as input to other commands.
+By default, this cmdlet does not generate any output. To send items from the interactive window down
+the pipeline, click to select the items and then click OK.
+
+The values of this parameter determine how many items you can send down the pipeline.
+
+- `None`.  No items. This is the default value.
+- `Single`. Zero items or one item. Use this value when the next command can take only one input
+  object.
+- `Multiple`. Zero, one, or many items. Use this value when the next command can take multiple input
+  objects. This value is equivalent to the **PassThru** parameter.
+
+This parameter was introduced in Windows PowerShell 3.0.
+
+```yaml
+Type: Microsoft.PowerShell.Commands.OutputModeOption
+Parameter Sets: OutputMode
+Aliases:
+Accepted values: None, Single, Multiple
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -PassThru
+
+Indicates that the cmdlet sends items from the interactive window down the pipeline as input to
+other commands. By default, this cmdlet does not generate any output. This parameter is equivalent
+to using the **Multiple** value of the **OutputMode** parameter.
+
+To send items from the interactive window down the pipeline, click to select the items and then
+click OK. Shift-click and Ctrl-click are supported.
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: PassThru
+Aliases:
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Title
+
+Specifies the text that appears in the title bar of the `Out-GridView` window. By default, the title
+bar displays the command that invokes `Out-GridView`.
+
+```yaml
+Type: System.String
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+# Out-GridView
+
+### -Wait
+
+Indicates that the cmdlet suppresses the command prompt and prevents Windows PowerShell from closing
+until the `Out-GridView` window is closed. By default, the command prompt returns when the
+`Out-GridView` window opens.
+
+This feature lets you use the `Out-GridView` cmdlets in Windows shortcuts. When `Out-GridView` is
+used in a shortcut without the **Wait** parameter, the `Out-GridView` window appears only
+momentarily before PowerShell closes.
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: Wait
+Aliases:
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### CommonParameters
+
+This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable,
+-InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose,
+-WarningAction, and -WarningVariable. For more information, see
+[about_CommonParameters](https://go.microsoft.com/fwlink/?LinkID=113216).
+
+## INPUTS
+
+### System.Management.Automation.PSObject
+
+You can pipe any object to this cmdlet.
+
+## OUTPUTS
+
+### None
+
+By default, this cmdlet returns no output.
+
+### System.Management.Automation.PSObject
+
+When you use the **PassThru** parameter, this cmdlet returns objects representing the selected
+rows.
+
+# Out-GridView
+
+## NOTES
+
+Windows PowerShell includes the following aliases for `Out-GridView`:
+
+- `ogv`
+
+You cannot use a remote command to open a grid view window on another computer.
+
+The command output that you send to `Out-GridView` cannot be formatted using the `Format` cmdlets,
+such as `Format-Table` or `Format-Wide` cmdlets. To select properties, use the `Select-Object`
+cmdlet.
+
+Deserialized output from remote commands might not be formatted correctly in the grid view window.
+
+**Keyboard Shortcuts for** `Out-GridView`
+
+|              Use this key:              |                                   To perform this action:                                    |
+| --------------------------------------- | -------------------------------------------------------------------------------------------- |
+| &lt;kbd&gt;Tab&lt;/kbd&gt;                          | Moves the cursor from the **Filter** box to the **Add criteria** menu to the table and back. |
+| &lt;kbd&gt;UpArrow&lt;/kbd&gt;                      | Move up one row. Moves to column headers from first row of data.                             |
+| &lt;kbd&gt;DownArrow&lt;/kbd&gt;                    | Move down one row.                                                                           |
+| &lt;kbd&gt;LeftArrow&lt;/kbd&gt;                    | In column header row, move left one column.                                                  |
+| &lt;kbd&gt;RightArrow&lt;/kbd&gt;                   | In column header row, move right one column.                                                 |
+| &lt;kbd&gt;ContextMenuKey&lt;/kbd&gt;               | In column header row, displays the Select Columns option.                                    |
+| &lt;kbd&gt;Enter&lt;/kbd&gt; or &lt;kbd&gt;Spacebar&lt;/kbd&gt; | In column header row, sort column data (toggle A-Z, Z-A).                                    |
+
+**How to Use the Grid View Window Features**
+
+**To hide or show a column:**
+
+1. Right-click any column header and click **Select Columns**.
+1. In the **Select Columns** dialog box, use the arrow keys to move the columns between the Selected
+    columns to the Available columns boxes. Only columns in the **Select Columns** box appear in the
+    grid view window.
+
+**To reorder columns:**
+
+You can drag and drop columns into the desired location. Or use the following steps:
+
+1. Right-click any column header and click **Select Columns**.
+1. In the **Select Columns** dialog box, use the **Move up** and **Move down** buttons to reorder
+   the columns. Columns at the top of the list appear to the left of columns at the bottom of the
+   list in the grid view window.
+
+**How to Sort Table Data**
+
+- To sort the data, click a column header.
+- To change the sort order, click the column header again. Each time you click the same header,
+  the sort order toggles between ascending to descending order. The current order is indicated by
+  a triangle in the column header.
+
+**How to Select Table Data**
+
+- To select a row, select the row or use the up or down arrow to navigate to the row.
+- To select all rows (except for the header row), press &lt;kbd&gt;CTRL&lt;/kbd&gt;+&lt;kbd&gt;A&lt;/kbd&gt;.
+- To select consecutive rows, press and hold the &lt;kbd&gt;SHIFT&lt;/kbd&gt; key while clicking the rows or
+  using the arrow keys.
+- To select nonconsecutive rows, press the &lt;kbd&gt;CTRL&lt;/kbd&gt; key and click to add a row to the
+  selection.
+- You cannot select columns, and you cannot select the entire column header row.
+
+**How to Copy Rows**
+
+- To copy one or more rows from the table, select the rows and then press CTRL+C.
+
+  You can paste the data into any text or spreadsheet program. You cannot copy columns or parts of
+  rows and you cannot copy the column header row.
+
+**How to Search in the Table (Quick Filter)**
+
+Use the Filter box to search for data in the table. When you type in the box, only items that
+include the typed text appear in the table.
+
+- Search for text. To search for text in the table, in the Filter box, type the text to find.
+- Search for multiple words. To search for multiple words in the table, type the words separated by
+  spaces. `Out-GridView` displays rows that include all the words (logical **AND**).
+- Search for literal phrases. To search for phrases that include spaces or special characters,
+  enclose the phrase in quotation marks. `Out-GridView` displays rows that include an exact match
+  for the phrase.
+- Search in columns. To search for text in one or more columns, use the following format:
+
+  `&lt;column&gt;:&lt;text&gt; [&lt;column&gt;:&lt;text&gt;] ...`
+
+  For example, to find &quot;Net&quot; in the **DisplayName** column, in the **Filter** box, type:
+
+  `displayname:net`
+
+  To find rows with &quot;Net&quot; in the **DisplayName** and **Name** columns, in the **Filter** box, type:
+
+  `displayname:net name:net`
+
+- Turn off search. To display the entire table again, click the red X button in the top right corner
+  of the **Filter** box or delete the text from the **Filter** box.
+
+**Use Criteria to Filter the Table**
+
+You can use rules or criteria to determine which items are displayed in the table. Items appear only
+when they satisfy all the criteria that you establish. The available criteria are determined by the
+properties of the objects displayed in the grid view window and the .NET Framework types of those
+properties.
+
+Each criterion has the following format:
+
+`&lt;column&gt; &lt;operator&gt; &lt;value&gt;`
+
+Criteria for different properties are connected by **AND**. Criteria for the same property are
+connected by **OR**. You cannot change the logical connectors.
+
+The criteria only affects the display. It does not delete items from the table.
+
+**How to Add Criteria**
+
+1. To display the **Add criteria** menu button, in the upper right corner of the window, click the
+   Expand arrow.
+1. Click the **Add Criteria** menu button.
+1. Click to select columns (properties). You can select one or many properties.
+1. When you are finished selecting properties, click the **Add** button.
+1. To cancel the additions, click **Cancel**.
+1. To add more criteria, click the **Add Criteria** button again.
+
+**How to Edit a Criterion**
+
+- To change an operator, click the blue operator value, and then select a different operator from
+  the drop-down list.
+- To enter or change a value, type a value in the value box. If you enter a value that is not valid,
+  a circular X icon appears. To remove it, change the value.
+- To create an **OR** statement, add a criteria with the same property.
+
+**How to Delete Criteria**
+
+- To delete selected criteria, click the red X beside each criterion.
+- To delete all criteria, click the **Clear All** button.
+
+## RELATED LINKS
+
+[Out-File](Out-File.md)
+
+[Out-Printer](Out-Printer.md)
+
+[Out-String](Out-String.md)
+###Microsoft Learn URL###
+https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.utility/out-gridview/?view=powershell-5.1
+</pre></html>

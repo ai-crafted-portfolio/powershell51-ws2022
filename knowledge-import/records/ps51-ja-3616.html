@@ -1,0 +1,386 @@
+<!doctype html><html lang="ja"><meta charset="utf-8"><pre class="record-source">###KnowledgeNo###
+PS51-WS2022-2026-3616
+###FormatID###
+PS51-WS2022
+###CreatedAt###
+2026-08-01 00:00
+###UpdatedAt###
+2026-08-01 00:00
+###タイトル###
+about_Script_Blocks
+###モジュール###
+Microsoft.PowerShell.Core
+###製品###
+Windows PowerShell 5.1
+###対応OS###
+Windows Server 2022
+###日本語訳###
+# about_Script_Blocksについて
+
+## 短編説明
+
+脚本ブロックとは何かと定義し,PowerShellプログラミング言語で脚本ブロックを使用する方法を説明します.
+
+## 長い説明
+
+PowerShell プログラミング言語では,スクリプトブロックは,単一の単位として使用できる記述や表現の集合である.記述の集合は,括弧に囲まれることができる ().`{}`脚本ブロックは,値を返してパラメータや議論を受け入れることができる.脚本ブロックは変数に新しい範囲を作成します.
+
+文法的には,スクリプトブロックは,以下の文法で示されているように,括弧で記述リストです.
+
+```
+{&lt;statement list&gt;}
+```
+
+スクリプトブロックは,単一のオブジェクトとしてまたはアレイとして,スクリプトブロック内のすべてのコマンドの出力を返します.
+
+また,返還値を指定することもできます.`return`キーワードは&quot;&quot;です.`return`キーワードは,スクリプトブロックから返された他の出力を影響したり抑制したりしない.`return`その行でキーワードがスクリプトブロックを出てきます.詳細については,[about_Return][04]を参照してください.
+
+機能のように,スクリプトブロックにはパラメータが含まれます.`param`キーワードで命名されたパラメータを割り当てると,次の構文で示されています:
+
+```
+{
+    param ([type]$Parameter1 [,[type]$Parameter2])
+    &lt;statement list&gt;
+}
+```
+
+機能のように,スクリプトブロックには,  が含まれます.`dynamicparam`そして,この声明は,`begin`     `process`そして,そして,`end`詳細については,[about_Functions][02]および[about_Functions_Advanced][01]を参照してください.
+
+&gt; [!IMPORTANT] &gt; 括弧に閉じ込められているブロックはすべてスクリプトブロックではない.例えば,コマンド &gt; は,  の中にある`for`ループやループを`if`&gt; 声明ブロックは,他の声明キーワードの変数,サポートパラメータの新しい範囲を創造しない.
+
+## スクリプトブロックを使用する
+
+スクリプトブロックは,Microsoft .NET Framework のインスタンスの例です.`System.Management.Automation.ScriptBlock`. コマンドにはスクリプトブロックパラメータ値がある可能性があります.例えば, `Invoke-Command`cmdlet は, を持っている.`ScriptBlock`この例で示したように,スクリプトブロック値をとるパラメータです:
+
+```powershell
+Invoke-Command -ScriptBlock { Get-Process }
+```
+
+```Output
+Handles  NPM(K)    PM(K)     WS(K) VM(M)   CPU(s)     Id ProcessName
+-------  ------    -----     ----- -----   ------     -- -----------
+999          28    39100     45020   262    15.88   1844 communicator
+721          28    32696     36536   222    20.84   4028 explorer
+...
+```
+
+`Invoke-Command`また,パラメータブロックを持つスクリプトブロックも実行できます.パラメータは**ArgumentList**パラメータを使用して位置によって割り当てられます.
+
+```powershell
+Invoke-Command -ScriptBlock { param($p1, $p2)
+&quot;p1: $p1&quot;
+&quot;p2: $p2&quot;
+} -ArgumentList &quot;First&quot;, &quot;Second&quot;
+```
+
+```Output
+p1: First
+p2: Second
+```
+
+前例のスクリプトブロックは,  を使っています.`param`キーワードでパラメータを作成する`$p1`そして,`$p2`. &quot;First&quot;の文字列は,最初のパラメータに縛られている ().`$p1`) と&quot;Second&quot;は () に結合する.`$p2`) でした.
+
+**ArgumentList**の行動について詳しくは,[about_Splatting][05]を参照してください.
+
+変数を利用してスクリプトブロックを保存し実行できます.下記の例では,変数のスクリプトブロックを保存し,それを  に転送します.`Invoke-Command` .
+
+```powershell
+$a = { Get-Service BITS }
+Invoke-Command -ScriptBlock $a
+```
+
+```Output
+Status   Name               DisplayName
+------   ----               -----------
+Running  BITS               Background Intelligent Transfer Ser...
+```
+
+コールオペレータは,変数に保存されているスクリプトブロックを実行する別の方法です.`Invoke-Command`呼び出しオペレーターは,脚本ブロックを子供範囲で実行します.呼び出しオペレーターは,脚本ブロックでパラメータを使用することを簡単にすることができます.
+
+```powershell
+$a ={ param($p1, $p2)
+&quot;p1: $p1&quot;
+&quot;p2: $p2&quot;
+}
+&amp;$a -p2 &quot;First&quot; -p1 &quot;Second&quot;
+```
+
+```Output
+p1: Second
+p2: First
+```
+
+脚本ブロックの出力を,割り当てを使用して変数に保存することができます.
+
+```
+PS&gt;  $a = { 1 + 1}
+PS&gt;  $b = &amp;$a
+PS&gt;  $b
+2
+```
+
+```
+PS&gt;  $a = { 1 + 1}
+PS&gt;  $b = Invoke-Command $a
+PS&gt;  $b
+2
+```
+
+呼び出しオペレーターに関する詳細については, [about_Operators][03] を参照してください.
+
+## パラメータを持つ遅延結合スクリプトブロックを使用します
+
+パイプライン入力を受け入れるタイプされたパラメータは,パラメータ上の _delay-bind_脚本ブロックを使用することを可能にします.実行する前にパイプラインのcmdletのパラメータを定義するために,短縮文字として遅延-bind scriptblocks を使用できます.
+
+遅延結合スクリプトブロック内では,パイプライン変数 () を使って,パイプインオブジェクトのパイプを参照できます.`$_` .
+
+```powershell
+
+# Both examples rename config.log to old_config.log
+
+# Without delay-binding
+dir config.log | ForEach-Object -Process {
+  Rename-Item -Path $_ -NewName &quot;old_$($_.Name)&quot;
+}
+
+# With delay-binding
+dir config.log | Rename-Item -NewName { &quot;old_$($_.Name)&quot; }
+```
+
+より複雑なcmdletでは,遅延結合スクリプトブロックは,他のパラメータを埋め込むためにオブジェクトにパイプされたものを再利用できるようにします.
+
+遅延結合スクリプトブロックをパラメータとして注意する:
+
+- 遅延結合スクリプトブロックで使用するパラメータ名を明確に指定する必要があります. - パラメータはアンタイピングされず,パラメータのタイプは になることはできません.`[scriptblock]`    `[Object]`- パイプライン入力を提供せずに遅延結合スクリプトブロックを使用するとエラーが表示されます.
+
+    ```powershell
+  Rename-Item -NewName {$_.Name + &quot;.old&quot;}
+  ```
+
+    ```Output
+  Rename-Item : Cannot evaluate parameter &#x27;NewName&#x27; because its argument is
+  specified as a scriptblock and there is no input. A scriptblock cannot
+  be evaluated without input.
+  At line:1 char:23
+  +  Rename-Item -NewName {$_.Name + &quot;.old&quot;}
+  +                       ~~~~~~~~~~~~~~~~~~
+      + CategoryInfo          : MetadataError: (:) [Rename-Item],
+        ParameterBindingException
+      + FullyQualifiedErrorId : ScriptBlockArgumentNoInput,
+        Microsoft.PowerShell.Commands.RenameItemCommand
+  ```
+
+## また, を参照してください.
+
+- [about_Functions][02] - [about_Functions_Advanced][01] - [about_Operators][03]
+
+&lt;!--リンク参照 --&gt; [01]: about_Functions_Advanced.md [02]: about_Functions.md [03]: about_Operators.md [04]: about_Return.md [05]: about_Splatting.md#splatting-with-arrays
+###英語原文###
+# about_Script_Blocks
+
+## Short description
+
+Defines what a scriptblock is and explains how to use scriptblocks in
+the PowerShell programming language.
+
+## Long description
+
+In the PowerShell programming language, a scriptblock is a collection of
+statements or expressions that can be used as a single unit. The collection of
+statements can be enclosed in braces (`{}`), defined as a function, or saved in
+a script file. A scriptblock can return values and accept parameters and
+arguments. Scriptblocks create a new scope for variables.
+
+Syntactically, a scriptblock is a statement list in braces, as shown in
+the following syntax:
+
+```
+{&lt;statement list&gt;}
+```
+
+A scriptblock returns the output of all the commands in the scriptblock,
+either as a single object or as an array.
+
+You can also specify a return value using the `return` keyword. The `return`
+keyword doesn&#x27;t affect or suppress other output returned from your scriptblock.
+However, the `return` keyword exits the scriptblock at that line. For more
+information, see [about_Return][04].
+
+Like functions, a scriptblock can include parameters. Use the `param`
+keyword to assign named parameters, as shown in the following syntax:
+
+```
+{
+    param ([type]$Parameter1 [,[type]$Parameter2])
+    &lt;statement list&gt;
+}
+```
+
+Like functions, scriptblocks can include the `dynamicparam` statement, and the
+`begin`, `process`, and `end` statements. For more information, see
+[about_Functions][02] and [about_Functions_Advanced][01].
+
+&gt; [!IMPORTANT]
+&gt; Not all blocks enclosed in braces are scriptblocks. For example, the commands
+&gt; in a `for` loop or an `if` statement are enclosed in a statement block.
+&gt; Statement blocks do not create a new scope for variables, support parameters
+&gt; of the other statement keywords.
+
+## Using scriptblocks
+
+A scriptblock is an instance of a Microsoft .NET Framework type
+`System.Management.Automation.ScriptBlock`. Commands can have scriptblock
+parameter values. For example, the `Invoke-Command` cmdlet has a `ScriptBlock`
+parameter that takes a scriptblock value, as shown in this example:
+
+```powershell
+Invoke-Command -ScriptBlock { Get-Process }
+```
+
+```Output
+Handles  NPM(K)    PM(K)     WS(K) VM(M)   CPU(s)     Id ProcessName
+-------  ------    -----     ----- -----   ------     -- -----------
+999          28    39100     45020   262    15.88   1844 communicator
+721          28    32696     36536   222    20.84   4028 explorer
+...
+```
+
+`Invoke-Command` can also execute scriptblocks that have parameter blocks.
+Parameters are assigned by position using the **ArgumentList** parameter.
+
+```powershell
+Invoke-Command -ScriptBlock { param($p1, $p2)
+&quot;p1: $p1&quot;
+&quot;p2: $p2&quot;
+} -ArgumentList &quot;First&quot;, &quot;Second&quot;
+```
+
+```Output
+p1: First
+p2: Second
+```
+
+The scriptblock in the preceding example uses the `param` keyword to
+create a parameters `$p1` and `$p2`. The string &quot;First&quot; is bound to the
+first parameter (`$p1`) and &quot;Second&quot; is bound to (`$p2`).
+
+For more information about the behavior of **ArgumentList**, see
+[about_Splatting][05].
+
+You can use variables to store and execute scriptblocks. The example below
+stores a scriptblock in a variable and passes it to `Invoke-Command`.
+
+```powershell
+$a = { Get-Service BITS }
+Invoke-Command -ScriptBlock $a
+```
+
+```Output
+Status   Name               DisplayName
+------   ----               -----------
+Running  BITS               Background Intelligent Transfer Ser...
+```
+
+The call operator is another way to execute scriptblocks stored in a variable.
+Like `Invoke-Command`, the call operator executes the scriptblock in a child
+scope. The call operator can make it easier for you to use parameters with your
+scriptblocks.
+
+```powershell
+$a ={ param($p1, $p2)
+&quot;p1: $p1&quot;
+&quot;p2: $p2&quot;
+}
+&amp;$a -p2 &quot;First&quot; -p1 &quot;Second&quot;
+```
+
+```Output
+p1: Second
+p2: First
+```
+
+You can store the output from your scriptblocks in a variable using
+assignment.
+
+```
+PS&gt;  $a = { 1 + 1}
+PS&gt;  $b = &amp;$a
+PS&gt;  $b
+2
+```
+
+```
+PS&gt;  $a = { 1 + 1}
+PS&gt;  $b = Invoke-Command $a
+PS&gt;  $b
+2
+```
+
+For more information about the call operator, see [about_Operators][03].
+
+## Using delay-bind scriptblocks with parameters
+
+A typed parameter that accepts pipeline input enables use of _delay-bind_
+scriptblocks on the parameter. You can use delay-bind scriptblocks as a
+shorthand to define parameters for a pipelined cmdlet before executing it.
+
+Within the delay-bind scriptblock, you can reference the piped in object
+using the pipeline variable `$_`.
+
+```powershell
+
+# Both examples rename config.log to old_config.log
+
+# Without delay-binding
+dir config.log | ForEach-Object -Process {
+  Rename-Item -Path $_ -NewName &quot;old_$($_.Name)&quot;
+}
+
+# With delay-binding
+dir config.log | Rename-Item -NewName { &quot;old_$($_.Name)&quot; }
+```
+
+In more complex cmdlets, delay-bind scriptblocks allow the reuse of one piped
+in object to populate other parameters.
+
+Notes on delay-bind scriptblocks as parameters:
+
+- You must explicitly specify any parameter names you use with delay-bind
+  scriptblocks.
+- The parameter must not be untyped, and the parameter&#x27;s type can&#x27;t be
+  `[scriptblock]` or `[Object]`.
+- You receive an error if you use a delay-bind scriptblock without providing
+  pipeline input.
+
+  ```powershell
+  Rename-Item -NewName {$_.Name + &quot;.old&quot;}
+  ```
+
+  ```Output
+  Rename-Item : Cannot evaluate parameter &#x27;NewName&#x27; because its argument is
+  specified as a scriptblock and there is no input. A scriptblock cannot
+  be evaluated without input.
+  At line:1 char:23
+  +  Rename-Item -NewName {$_.Name + &quot;.old&quot;}
+  +                       ~~~~~~~~~~~~~~~~~~
+      + CategoryInfo          : MetadataError: (:) [Rename-Item],
+        ParameterBindingException
+      + FullyQualifiedErrorId : ScriptBlockArgumentNoInput,
+        Microsoft.PowerShell.Commands.RenameItemCommand
+  ```
+
+## See also
+
+- [about_Functions][02]
+- [about_Functions_Advanced][01]
+- [about_Operators][03]
+
+&lt;!-- link references --&gt;
+[01]: about_Functions_Advanced.md
+[02]: about_Functions.md
+[03]: about_Operators.md
+[04]: about_Return.md
+[05]: about_Splatting.md#splatting-with-arrays
+###Microsoft Learn URL###
+https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_script_blocks/?view=powershell-5.1
+</pre></html>

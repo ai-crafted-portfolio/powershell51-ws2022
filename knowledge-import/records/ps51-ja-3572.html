@@ -1,0 +1,633 @@
+<!doctype html><html lang="ja"><meta charset="utf-8"><pre class="record-source">###KnowledgeNo###
+PS51-WS2022-2026-3572
+###FormatID###
+PS51-WS2022
+###CreatedAt###
+2026-08-01 00:00
+###UpdatedAt###
+2026-08-01 00:00
+###タイトル###
+about_Object_Creation
+###モジュール###
+Microsoft.PowerShell.Core
+###製品###
+Windows PowerShell 5.1
+###対応OS###
+Windows Server 2022
+###日本語訳###
+# about_Object_Creationについて
+
+## 短編説明
+
+PowerShellでオブジェクトを作成する方法を説明します.
+
+## 長い説明
+
+PowerShellでオブジェクトを作成し,自分で作成したオブジェクトをコマンドやスクリプトで利用できます.
+
+オブジェクトを作成する方法はいくつかありますが,このリストは不完全です.
+
+- [New-Object][16]: .NET Framework オブジェクトまたは COM オブジェクトのインスタンスを作成する. - [Import-Csv][15] / [ConvertFrom-Csv][11]: キャラクター別値として定義されたアイテムからカスタムオブジェクト (**PSCustomObject**) を作成する. - [ConvertFrom-Json][12]: JavaScript オブジェクト記号 (JSON) で定義されたカスタムオブジェクトを作成する. - [ConvertFrom-String][13]: [FlashExtract][07], の上に構築された.`ConvertFrom-String`構造化された文字列データからカスタムオブジェクトを作成します.このトピックではこれらの方法をそれぞれ示し,議論します. - [ConvertFrom-StringData][14]:キー値ペアとして定義されたカスタムオブジェクトを作成します. - [Add-Type][10]: PowerShellセッションでクラスを定義し, でインスタント化することができます.`New-Object`. [New-Module][08]: **AsCustomObject**パラメータは,スクリプトブロックを使用して定義したカスタムオブジェクトを作成します. - [Add-Member][09]:既存のオブジェクトにプロパティを追加します.`Add-Member`シンプルなタイプからカスタムオブジェクトを作成します.`[System.Int32]`- [Select-Object][17]: 対象のプロパティを選択します.`Select-Object`すでにインスタンスされたオブジェクトでカスタムと計算されたプロパティを作成します.
+
+この記事では,以下の追加方法について説明します.
+
+- 静的式を使ってタイプのコンストラクタを呼び出すことによって`new()`- 型付け方法により,プロパティ名とプロパティ値のハッシュテーブルをタイプします
+
+## Static new() メソッド
+
+すべての .NET タイプには,`new()`簡単にインスタンスを構築できる方法です.また,あるタイプのすべての利用可能なコンストラクタを表示できます.
+
+タイプのコンストラクタを見るには,  を指定してください.`new`タイプ名の後で方法名と押してください.`&lt;ENTER&gt;` .
+
+```powershell
+[System.Uri]::new
+```
+
+```Output
+OverloadDefinitions
+-------------------
+uri new(string uriString)
+uri new(string uriString, bool dontEscape)
+uri new(uri baseUri, string relativeUri, bool dontEscape)
+uri new(string uriString, System.UriKind uriKind)
+uri new(uri baseUri, string relativeUri)
+uri new(uri baseUri, uri relativeUri)
+```
+
+さて,適切なコンストラクタを指定することで,システム.ウリを作成できます.
+
+```powershell
+[System.Uri]::new(&quot;https://www.bing.com&quot;)
+```
+
+```Output
+AbsolutePath   : /
+AbsoluteUri    : https://www.bing.com/
+LocalPath      : /
+Authority      : www.bing.com
+...
+```
+
+ダウンロードするには,以下のサンプルを使用して,現在,どの .NET タイプがロードされているかを判断できます.
+
+```powershell
+[AppDomain]::CurrentDomain.GetAssemblies() |
+  ForEach-Object {
+    $_.GetExportedTypes() |
+      ForEach-Object { $_.FullName }
+  }
+```
+
+ を使って作成されたオブジェクト`new()`PowerShell cmdletsによって作成された同じタイプのオブジェクトと同じ性質を持つ方法が存在しない可能性があります.PowerShell cmdlets,プロバイダー,および拡張タイプシステムによりインスタンスの追加属性を追加できます.
+
+例えば,PowerShellでFileSystemプロバイダが,DirectoryInfo**オブジェクトに6つのNoteProperty**値を追加する.`Get-Item` .
+
+```powershell
+$PSDirInfo = Get-Item /
+$PSDirInfo | Get-Member | Group-Object MemberType | Select-Object Count, Name
+```
+
+```Output
+Count Name
+----- ----
+    4 CodeProperty
+   13 Property
+    6 NoteProperty
+    1 ScriptProperty
+   18 Method
+```
+
+DirectoryInfoオブジェクトを直接作成すると,その6つのNoteProperty値が表示されない.
+
+```powershell
+$NewDirInfo = [System.IO.DirectoryInfo]::new(&#x27;/&#x27;)
+$NewDirInfo | Get-Member | Group-Object MemberType | Select-Object Count, Name
+```
+
+```Output
+Count Name
+----- ----
+    4 CodeProperty
+   13 Property
+    1 ScriptProperty
+   18 Method
+```
+
+拡張型システムに関する詳細については,[about_Types.ps1xml][06]を参照してください.
+
+この機能はPowerShell 5.0で追加されました.
+
+## ハッシュテーブルからオブジェクトを作成します
+
+属性と属性値のハッシュテーブルからオブジェクトを作成できます.
+
+構文は以下の通りです.
+
+```
+[&lt;class-name&gt;]@{
+  &lt;property-name&gt;=&lt;property-value&gt;
+  &lt;property-name&gt;=&lt;property-value&gt;
+}
+```
+
+この方法は,パラメータレスコンストラクタを持つクラスのみで有効である.オブジェクトの属性は公開で設定可能である必要があります.
+
+この機能はPowerShellバージョン 3.0で追加されました.
+
+## ハッシュテーブルからカスタムオブジェクトを作成します
+
+カスタムオブジェクトは非常に有用でハッシュテーブル方法を使用して作成しやすい. **PSCustomObject** クラスは特にこの目的のために設計されています.
+
+カスタムオブジェクトは,関数またはスクリプトからカスタム化された出力を返却する優れた方法です.これは,再フォーマットまたは他のコマンドにパイプできないフォーマットされた出力を返却するよりも有用です.
+
+のコマンドは`Test-Object function`定量オブジェクトを作成するために,いくつかの変数値を設定し,その値を使用します.このオブジェクトを例のセクションで使用中を見ることができます.`Update-Help`cmdlet help topic. テーマのサポートを表示する
+
+```powershell
+function Test-Object {
+  $ModuleName = &quot;PSScheduledJob&quot;
+  $HelpCulture = &quot;en-US&quot;
+  $HelpVersion = &quot;3.1.0.0&quot;
+  [pscustomobject]@{
+    &quot;ModuleName&quot;=$ModuleName
+    &quot;UICulture&quot;=$HelpCulture
+    &quot;Version&quot;=$HelpVersion
+  }
+  $ModuleName = &quot;PSWorkflow&quot;
+  $HelpCulture = &quot;en-US&quot;
+  $HelpVersion = &quot;3.0.0.0&quot;
+  [pscustomobject]@{
+    &quot;ModuleName&quot;=$ModuleName
+    &quot;UICulture&quot;=$HelpCulture
+    &quot;Version&quot;=$HelpVersion
+  }
+}
+Test-Object
+```
+
+この関数の出力は,デフォルトでテーブルとしてフォーマットされたカスタムオブジェクトの集合です.
+
+```Output
+ModuleName        UICulture      Version
+---------         ---------      -------
+PSScheduledJob    en-US          3.1.0.0
+PSWorkflow        en-US          3.0.0.0
+```
+
+ユーザーは,標準オブジェクトのようにカスタムオブジェクトのプロパティを管理することができます.
+
+```powershell
+(Test-Object).ModuleName
+```
+
+```Output
+ PSScheduledJob
+ PSWorkflow
+```
+
+**PSObject** のオブジェクトは,オブジェクトにメンバーが追加された順にメンバーのリストを保持しています. **Hashtable** オブジェクトはキー値ペアの順序を保証していないが,文字通りハッシュテーブルを  に投げ込む.`[pscustomobject]`秩序を維持する.
+
+ハッシュテーブルは文字どおりでなければならない.ハッシュテーブルを括弧に包んで,またはハッシュテーブルを含む変数を投げると,順序が保たれる保証はありません.
+
+```powershell
+$hash = @{
+    Name      = &quot;Server30&quot;
+    System    = &quot;Server Core&quot;
+    PSVersion = &quot;4.0&quot;
+}
+$Asset = [pscustomobject]$hash
+$Asset
+```
+
+```output
+PSVersion Name     System
+--------- ----     ------
+4.0       Server30 Server Core
+
+```
+
+# about_Object_Creationについて
+
+## ハッシュテーブルからカスタムでないオブジェクトを作成します.
+
+また,ハッシュテーブルを使用して,非カスタムクラスのためのオブジェクトを作成することもできます.非カスタムクラスのためのオブジェクトを作成する際には,名前空間に適したタイプ名が求められますが,初期 **System**名前空間コンポーネントを省略することがあります.
+
+例えば,次のコマンドはセッションオプションオブジェクトを作成します.
+
+```powershell
+[System.Management.Automation.Remoting.PSSessionOption]@{
+  IdleTimeout=43200000
+  SkipCnCheck=$true
+}
+```
+
+ハッシュテーブル機能の要件,特にパラメータレスコンストラクター要件は,多くの既存のクラスを排除しています.しかし,ほとんどのPowerShell _option_クラスはこの機能と, **ProcessStartInfo**クラスなどの他の非常に有用なクラスとともに動作するように設計されています.
+
+```powershell
+[System.Diagnostics.ProcessStartInfo]@{
+  CreateNoWindow=&quot;$true&quot;
+  Verb=&quot;run as&quot;
+}
+```
+
+```Output
+Arguments               :
+ArgumentList            : {}
+CreateNoWindow          : True
+EnvironmentVariables    : {OneDriveConsumer, PROCESSOR_ARCHITECTURE,
+                           CommonProgramFiles(x86), APPDATA...}
+Environment             : {[OneDriveConsumer, C:\Users\user1\OneDrive],
+                           [PROCESSOR_ARCHITECTURE, AMD64],
+                           [CommonProgramFiles(x86),
+                           C:\Program Files (x86)\Common Files],
+                           [APPDATA, C:\Users\user1\AppData\Roaming]...}
+RedirectStandardInput   : False
+RedirectStandardOutput  : False
+RedirectStandardError   : False
+...
+```
+
+また,パラメータ値を設定する際にハッシュテーブル機能を使用することもできます.例えば, の **SessionOption**パラメータの値です.`New-PSSession`. cmdlet はハッシュテーブルになる可能性があります.
+
+```powershell
+New-PSSession -ComputerName Server01 -SessionOption @{
+  IdleTimeout=43200000
+  SkipCnCheck=$true
+}
+Register-ScheduledJob -Name Test -FilePath .\Get-Inventory.ps1 -Trigger @{
+  Frequency=&quot;Daily&quot;
+  At=&quot;15:00&quot;
+}
+```
+
+## 一般的なオブジェクト
+
+PowerShellでジェネリックオブジェクトも作成できます.ジェネリックとは,保存または使用するタイプの一かそれ以上の種類に対して,プレスホルダー (タイプパラメータ) を持つクラス,構造,インターフェース,および方法です.
+
+次の例では,単語オブジェクトを作成します.
+
+```powershell
+$dict = New-Object &#x27;System.Collections.Generic.Dictionary[String,Int]&#x27;
+$dict.Add(&quot;One&quot;, 1)
+$dict
+```
+
+```Output
+Key Value
+--- -----
+One     1
+```
+
+ジェネリックに関する詳細については, [NETのジェネリックス] を参照してください.
+
+## また, を参照してください.
+
+- [about_Methods][02] - [about_Objects][03] - [about_Pipelines][04] - [about_Properties][05] - [about_Types.ps1xml][06]
+
+&lt;!--リンク参照 --&gt; [01]: /dotnet/standard/generics [02]: about_Methods.md [03]: about_Objects.md [04]: about_Pipelines.md [05]: about_Properties.md [06]: about_Types.ps1xml.md [07]: https://www.microsoft.com/research/publication/flashextract-framework-data-extraction-examplesxref:Microsoft.PowerShell.Core.New-Module [09]: xref:Microsoft.PowerShell.Utility.Add-Member [10]: xref:Microsoft.PowerShell.Utility.Add-Type [11]: xref:Microsoft.PowerShell.Utility.ConvertFrom-Csv [12]: xref:Microsoft.PowerShell.Utility.ConvertFrom-Json [13]: xref:Microsoft.PowerShell.Utility.ConvertFrom-String [14]: xref:Microsoft.PowerShell.Utility.ConvertFrom-String [15]: xref:Microsoft.PowerShell.Utility.Import-C [16]: xref:Microsoft.PowerShell.Utility.New-Object [17]: xref:Microsoft.Utility.Utility-Object [17]:Microsoft.Utility.
+###英語原文###
+# about_Object_Creation
+
+## Short description
+
+Explains how to create objects in PowerShell.
+
+## Long description
+
+You can create objects in PowerShell and use the objects that you create in
+commands and scripts.
+
+There are many ways to create objects, this list is not definitive:
+
+- [New-Object][16]: Creates an instance of a .NET Framework object or COM
+  object.
+- [Import-Csv][15] / [ConvertFrom-Csv][11]: Creates custom objects
+  (**PSCustomObject**) from the items defined as character separated values.
+- [ConvertFrom-Json][12]: Creates custom objects defined in JavaScript Object
+  Notation (JSON).
+- [ConvertFrom-String][13]: Built on top of [FlashExtract][07],
+  `ConvertFrom-String` creates custom objects from structured string data. This
+  topic will demonstrate and discuss each of these methods.
+- [ConvertFrom-StringData][14]: Creates custom objects defined as key value
+  pairs.
+- [Add-Type][10]: Allows you to define a class in your PowerShell session that
+  you can instantiate with `New-Object`.
+- [New-Module][08]: The **AsCustomObject** parameter creates a custom object
+  you define using scriptblock.
+- [Add-Member][09]: Adds properties to existing objects. You can use
+  `Add-Member` to create a custom object out of a simple type, like
+  `[System.Int32]`.
+- [Select-Object][17]: Selects properties on an object. You can use
+  `Select-Object` to create custom and calculated properties on an already
+  instantiated object.
+
+The following additional methods are covered in this article:
+
+- By calling a type&#x27;s constructor using a static `new()` method
+- By typecasting hash tables of property names and property values
+
+## Static new() method
+
+All .NET types have a `new()` method that allows you to construct instances
+more easily. You can also see all the available constructors for a given type.
+
+To see the constructors for a type, specify the `new` method name after the
+type name and press `&lt;ENTER&gt;`.
+
+```powershell
+[System.Uri]::new
+```
+
+```Output
+OverloadDefinitions
+-------------------
+uri new(string uriString)
+uri new(string uriString, bool dontEscape)
+uri new(uri baseUri, string relativeUri, bool dontEscape)
+uri new(string uriString, System.UriKind uriKind)
+uri new(uri baseUri, string relativeUri)
+uri new(uri baseUri, uri relativeUri)
+```
+
+Now, you can create a **System.Uri** by specifying the appropriate constructor.
+
+```powershell
+[System.Uri]::new(&quot;https://www.bing.com&quot;)
+```
+
+```Output
+AbsolutePath   : /
+AbsoluteUri    : https://www.bing.com/
+LocalPath      : /
+Authority      : www.bing.com
+...
+```
+
+You can use the following sample to determine what .NET types are currently
+loaded for you to instantiate.
+
+```powershell
+[AppDomain]::CurrentDomain.GetAssemblies() |
+  ForEach-Object {
+    $_.GetExportedTypes() |
+      ForEach-Object { $_.FullName }
+  }
+```
+
+Objects created using the `new()` method may not have the same properties as
+objects of the same type that are created by PowerShell cmdlets. PowerShell
+cmdlets, providers, and Extended Type System can add extra properties to the
+instance.
+
+For example, the FileSystem provider in PowerShell adds six **NoteProperty**
+values to the **DirectoryInfo** object returned by `Get-Item`.
+
+```powershell
+$PSDirInfo = Get-Item /
+$PSDirInfo | Get-Member | Group-Object MemberType | Select-Object Count, Name
+```
+
+```Output
+Count Name
+----- ----
+    4 CodeProperty
+   13 Property
+    6 NoteProperty
+    1 ScriptProperty
+   18 Method
+```
+
+When you create a **DirectoryInfo** object directly, it does not have those six
+**NoteProperty** values.
+
+```powershell
+$NewDirInfo = [System.IO.DirectoryInfo]::new(&#x27;/&#x27;)
+$NewDirInfo | Get-Member | Group-Object MemberType | Select-Object Count, Name
+```
+
+```Output
+Count Name
+----- ----
+    4 CodeProperty
+   13 Property
+    1 ScriptProperty
+   18 Method
+```
+
+For more information about the Extended Type System, see
+[about_Types.ps1xml][06].
+
+This feature was added in PowerShell 5.0
+
+## Create objects from hash tables
+
+You can create an object from a hash table of properties and property values.
+
+The syntax is as follows:
+
+```
+[&lt;class-name&gt;]@{
+  &lt;property-name&gt;=&lt;property-value&gt;
+  &lt;property-name&gt;=&lt;property-value&gt;
+}
+```
+
+This method works only for classes that have a parameterless constructor. The
+object properties must be public and settable.
+
+This feature was added in PowerShell version 3.0
+
+## Create custom objects from hash tables
+
+Custom objects are very useful and are easy to create using the hash table
+method. The **PSCustomObject** class is designed specifically for this purpose.
+
+Custom objects are an excellent way to return customized output from a function
+or script. This is more useful than returning formatted output that cannot be
+reformatted or piped to other commands.
+
+The commands in the `Test-Object function` set some variable values and then
+use those values to create a custom object. You can see this object in use in
+the example section of the `Update-Help` cmdlet help topic.
+
+```powershell
+function Test-Object {
+  $ModuleName = &quot;PSScheduledJob&quot;
+  $HelpCulture = &quot;en-US&quot;
+  $HelpVersion = &quot;3.1.0.0&quot;
+  [pscustomobject]@{
+    &quot;ModuleName&quot;=$ModuleName
+    &quot;UICulture&quot;=$HelpCulture
+    &quot;Version&quot;=$HelpVersion
+  }
+  $ModuleName = &quot;PSWorkflow&quot;
+  $HelpCulture = &quot;en-US&quot;
+  $HelpVersion = &quot;3.0.0.0&quot;
+  [pscustomobject]@{
+    &quot;ModuleName&quot;=$ModuleName
+    &quot;UICulture&quot;=$HelpCulture
+    &quot;Version&quot;=$HelpVersion
+  }
+}
+Test-Object
+```
+
+The output of this function is a collection of custom objects formatted as a
+table by default.
+
+```Output
+ModuleName        UICulture      Version
+---------         ---------      -------
+PSScheduledJob    en-US          3.1.0.0
+PSWorkflow        en-US          3.0.0.0
+```
+
+Users can manage the properties of the custom objects just as they do with
+standard objects.
+
+```powershell
+(Test-Object).ModuleName
+```
+
+```Output
+ PSScheduledJob
+ PSWorkflow
+```
+
+**PSObject** type objects maintain the list of members in the order that the
+members were added to the object. Even though **Hashtable** objects don&#x27;t
+guarantee the order of the key-value pairs, casting a literal hashtable to
+`[pscustomobject]` maintains the order.
+
+The hashtable must be a literal. If you wrap the hashtable in parentheses or if
+you cast a variable containing a hashtable, there is no guarantee that the
+order is preserved.
+
+```powershell
+$hash = @{
+    Name      = &quot;Server30&quot;
+    System    = &quot;Server Core&quot;
+    PSVersion = &quot;4.0&quot;
+}
+$Asset = [pscustomobject]$hash
+$Asset
+```
+
+```output
+PSVersion Name     System
+--------- ----     ------
+4.0       Server30 Server Core
+
+```
+
+# about_Object_Creation
+
+## Create non-custom objects from hash tables
+
+You can also use hash tables to create objects for non-custom classes. When you
+create an object for a non-custom class, the namespace-qualified type name is
+required, although you may omit any initial **System** namespace component.
+
+For example, the following command creates a session option object.
+
+```powershell
+[System.Management.Automation.Remoting.PSSessionOption]@{
+  IdleTimeout=43200000
+  SkipCnCheck=$true
+}
+```
+
+The requirements of the hash table feature, especially the parameterless
+constructor requirement, eliminate many existing classes. However, most
+PowerShell _option_ classes are designed to work with this feature, as well as
+other very useful classes, such as the **ProcessStartInfo** class.
+
+```powershell
+[System.Diagnostics.ProcessStartInfo]@{
+  CreateNoWindow=&quot;$true&quot;
+  Verb=&quot;run as&quot;
+}
+```
+
+```Output
+Arguments               :
+ArgumentList            : {}
+CreateNoWindow          : True
+EnvironmentVariables    : {OneDriveConsumer, PROCESSOR_ARCHITECTURE,
+                           CommonProgramFiles(x86), APPDATA...}
+Environment             : {[OneDriveConsumer, C:\Users\user1\OneDrive],
+                           [PROCESSOR_ARCHITECTURE, AMD64],
+                           [CommonProgramFiles(x86),
+                           C:\Program Files (x86)\Common Files],
+                           [APPDATA, C:\Users\user1\AppData\Roaming]...}
+RedirectStandardInput   : False
+RedirectStandardOutput  : False
+RedirectStandardError   : False
+...
+```
+
+You can also use the hash table feature when setting parameter values. For
+example, the value of the **SessionOption** parameter of the `New-PSSession`.
+cmdlet can be a hash table.
+
+```powershell
+New-PSSession -ComputerName Server01 -SessionOption @{
+  IdleTimeout=43200000
+  SkipCnCheck=$true
+}
+Register-ScheduledJob -Name Test -FilePath .\Get-Inventory.ps1 -Trigger @{
+  Frequency=&quot;Daily&quot;
+  At=&quot;15:00&quot;
+}
+```
+
+## Generic objects
+
+You can also create generic objects in PowerShell. Generics are classes,
+structures, interfaces, and methods that have placeholders (type parameters)
+for one or more of the types that they store or use.
+
+The following example creates a **Dictionary** object.
+
+```powershell
+$dict = New-Object &#x27;System.Collections.Generic.Dictionary[String,Int]&#x27;
+$dict.Add(&quot;One&quot;, 1)
+$dict
+```
+
+```Output
+Key Value
+--- -----
+One     1
+```
+
+For more information on Generics, see [Generics in .NET][01].
+
+## See also
+
+- [about_Methods][02]
+- [about_Objects][03]
+- [about_Pipelines][04]
+- [about_Properties][05]
+- [about_Types.ps1xml][06]
+
+&lt;!-- link references --&gt;
+[01]: /dotnet/standard/generics
+[02]: about_Methods.md
+[03]: about_Objects.md
+[04]: about_Pipelines.md
+[05]: about_Properties.md
+[06]: about_Types.ps1xml.md
+[07]: https://www.microsoft.com/research/publication/flashextract-framework-data-extraction-examples
+[08]: xref:Microsoft.PowerShell.Core.New-Module
+[09]: xref:Microsoft.PowerShell.Utility.Add-Member
+[10]: xref:Microsoft.PowerShell.Utility.Add-Type
+[11]: xref:Microsoft.PowerShell.Utility.ConvertFrom-Csv
+[12]: xref:Microsoft.PowerShell.Utility.ConvertFrom-Json
+[13]: xref:Microsoft.PowerShell.Utility.ConvertFrom-String
+[14]: xref:Microsoft.PowerShell.Utility.ConvertFrom-StringData
+[15]: xref:Microsoft.PowerShell.Utility.Import-Csv
+[16]: xref:Microsoft.PowerShell.Utility.New-Object
+[17]: xref:Microsoft.PowerShell.Utility.Select-Object
+###Microsoft Learn URL###
+https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_object_creation/?view=powershell-5.1
+</pre></html>

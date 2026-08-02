@@ -1,0 +1,1809 @@
+<!doctype html><html lang="ja"><meta charset="utf-8"><pre class="record-source">###KnowledgeNo###
+PS51-WS2022-2026-3520
+###FormatID###
+PS51-WS2022
+###CreatedAt###
+2026-08-01 00:00
+###UpdatedAt###
+2026-08-01 00:00
+###タイトル###
+about_Classes_Properties
+###モジュール###
+Microsoft.PowerShell.Core
+###製品###
+Windows PowerShell 5.1
+###対応OS###
+Windows Server 2022
+###日本語訳###
+# about_Classes_Propertiesについて
+
+## 短編説明
+
+PowerShell クラスに属性定義する方法について説明します.
+
+## 長い説明
+
+属性は,データを含むクラスのメンバーである.属性は,クラス範囲内の変数として宣言される.属性は,任意の組み込み型または別のクラスのインスタンスのものであることができる.クラスには,ゼロまたはそれ以上の属性がある.クラスには最大値の属性数がない.
+
+クラス属性は, [隠された][01] と [静[U+6001]][02]属性を含む任意の数値を持つことができます.すべての属性定義には,属性のためのタイプが含まれなければなりません.あなたは属性のためのデフォルト値を定義することができます.
+
+## シンタックス
+
+クラスプロパティは以下の構文を使用します:
+
+### 一行単行語法です
+
+```Syntax
+[[&lt;attribute&gt;]...] [&lt;property-type&gt;] $&lt;property-name&gt; [= &lt;default-value&gt;]
+```
+
+### マルチライン構文です.
+
+```Syntax
+[[&lt;attribute&gt;]...]
+[&lt;property-type&gt;]
+$&lt;property-name&gt; [= &lt;default-value&gt;]
+```
+
+## 例文
+
+### 例1 - 最小級属性
+
+**ExampleProject1** クラスのプロパティは,任意の属性やデフォルト値のない,内蔵型を使用しています.
+
+```powershell
+class ExampleProject1 {
+    [string]   $Name
+    [int]      $Size
+    [bool]     $Completed
+    [string]   $Assignee
+    [datetime] $StartDate
+    [datetime] $EndDate
+    [datetime] $DueDate
+}
+
+[ExampleProject1]::new()
+
+$null -eq ([ExampleProject1]::new()).Name
+```
+
+```Output
+Name      :
+Size      : 0
+Completed : False
+StartDate : 1/1/0001 12:00:00 AM
+EndDate   : 1/1/0001 12:00:00 AM
+DueDate   : 1/1/0001 12:00:00 AM
+
+True
+```
+
+**Name**と **Assignee**のプロパティのデフォルト値は,`$null`他のプロパティは定義されたタイプのデフォルト値を持っているため,それは値型属性であるため.属性に関するデフォルト値については, [Default property values][03]を参照してください.
+
+### 例2 - クラスプロパティとカスタムタイプ
+
+**ExampleProject2**の属性には,ExampleProject2**のクラスより前にPowerShellで定義されたカスタム式の清算とクラスが含まれています.
+
+```powershell
+enum ProjectState {
+    NotTriaged
+    ReadyForWork
+    Committed
+    Blocked
+    InProgress
+    Done
+}
+
+class ProjectAssignee {
+    [string] $DisplayName
+    [string] $UserName
+
+    [string] ToString() {
+        return &quot;$($this.DisplayName) ($($this.UserName))&quot;
+    }
+}
+
+class ExampleProject2 {
+    [string]          $Name
+    [int]             $Size
+    [ProjectState]    $State
+    [ProjectAssignee] $Assignee
+    [datetime]        $StartDate
+    [datetime]        $EndDate
+    [datetime]        $DueDate
+}
+
+[ExampleProject2]@{
+    Name     = &#x27;Class Property Documentation&#x27;
+    Size     = 8
+    State    = &#x27;InProgress&#x27;
+    Assignee = @{
+        DisplayName = &#x27;Mikey Lombardi&#x27;
+        UserName    = &#x27;michaeltlombardi&#x27;
+    }
+    StartDate = &#x27;2023-10-23&#x27;
+    DueDate   = &#x27;2023-10-27&#x27;
+}
+```
+
+```Output
+Name      : Class Property Documentation
+Size      : 8
+State     : InProgress
+Assignee  : Mikey Lombardi (michaeltlombardi)
+StartDate : 10/23/2023 12:00:00 AM
+EndDate   : 1/1/0001 12:00:00 AM
+DueDate   : 10/27/2023 12:00:00 AM
+```
+
+### 例3 - 認証属性を持つクラスプロパティ
+
+**ExampleProject3** クラスでは, **Size** 属性を整数として定義し, 0 を大きくまたは等しく, 0 を少なくまたは等しく 16 を使います.その値は制限するために **ValidateRange** 属性を使用します.
+
+```powershell
+class ExampleProject3 {
+                           [string]   $Name
+    [ValidateRange(0, 16)] [int]      $Size
+                           [bool]     $Completed
+                           [string]   $Assignee
+                           [datetime] $StartDate
+                           [datetime] $EndDate
+                           [datetime] $DueDate
+}
+
+$project = [ExampleProject3]::new()
+$project
+```
+
+```Output
+Name      :
+Size      : 0
+Completed : False
+Assignee  :
+StartDate : 1/1/0001 12:00:00 AM
+EndDate   : 1/1/0001 12:00:00 AM
+DueDate   : 1/1/0001 12:00:00 AM
+```
+
+**ExampleProject3**がインスタンティートすると, **Size**はデフォルトで0に設定されます. 属性を有効範囲内の値に設定すると,その値は更新されます.
+
+```powershell
+$project.Size = 8
+$project
+```
+
+```Output
+Name      :
+Size      : 8
+Completed : False
+Assignee  :
+StartDate : 1/1/0001 12:00:00 AM
+EndDate   : 1/1/0001 12:00:00 AM
+DueDate   : 1/1/0001 12:00:00 AM
+```
+
+**Size**が範囲外で無効な値に設定された場合,PowerShellは例外を提示し,値が変更されない.
+
+```powershell
+$project.Size = 32
+$project.Size = -1
+
+$project
+```
+
+```Output
+Exception setting &quot;Size&quot;: &quot;The 32 argument is greater than the maximum
+allowed range of 16. Supply an argument that is less than or equal to 16
+and then try the command again.&quot;
+At line:1 char:1
++ $project.Size = 32
++ ~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (:) [], SetValueInvocationExc
+   eption
+    + FullyQualifiedErrorId : ExceptionWhenSetting
+
+Exception setting &quot;Size&quot;: &quot;The -1 argument is less than the minimum
+allowed range of 0. Supply an argument that is greater than or equal to 0
+and then try the command again.&quot;
+At line:1 char:1
++ $project.Size = -1
++ ~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (:) [], SetValueInvocationExc
+   eption
+    + FullyQualifiedErrorId : ExceptionWhenSetting
+
+Name      :
+Size      : 8
+Completed : False
+Assignee  :
+StartDate : 1/1/0001 12:00:00 AM
+EndDate   : 1/1/0001 12:00:00 AM
+DueDate   : 1/1/0001 12:00:00 AM
+```
+
+### 例4 - 明らかにデフォルト値を持つクラスプロパティ
+
+**ExampleProject4** クラスでは,現在の日付に **StartDate** 属性の値をデフォルトで設定します.
+
+```powershell
+class ExampleProject4 {
+    [string]   $Name
+    [int]      $Size
+    [bool]     $Completed
+    [string]   $Assignee
+    [datetime] $StartDate = (Get-Date).Date
+    [datetime] $EndDate
+    [datetime] $DueDate
+}
+
+[ExampleProject4]::new()
+
+[ExampleProject4]::new().StartDate -eq (Get-Date).Date
+```
+
+```Output
+Name      :
+Size      : 0
+Completed : False
+Assignee  :
+StartDate : 10/23/2023 12:00:00 AM
+EndDate   : 1/1/0001 12:00:00 AM
+DueDate   : 1/1/0001 12:00:00 AM
+
+True
+```
+
+### 例5 - 隠されたクラスプロパティ
+
+**ExampleProject5**クラスのガイド属性には,`hidden`キーワード. **Guid** 属性は,クラスのためのデフォルト出力または によって返還された属性のリストに表示されない.`Get-Member` .
+
+```powershell
+class ExampleProject5 {
+           [string]   $Name
+           [int]      $Size
+           [bool]     $Completed
+           [string]   $Assignee
+           [datetime] $StartDate
+           [datetime] $EndDate
+           [datetime] $DueDate
+    hidden [string]   $Guid      = (New-Guid).Guid
+}
+
+$project = [ExampleProject5]::new()
+
+&quot;Project GUID: $($project.Guid)&quot;
+
+$project
+
+$project | Get-Member -MemberType Properties | Format-Table
+```
+
+```Output
+Project GUID: c72cef84-057c-4649-8940-13490dcf72f0
+
+Name      :
+Size      : 0
+Completed : False
+Assignee  :
+StartDate : 1/1/0001 12:00:00 AM
+EndDate   : 1/1/0001 12:00:00 AM
+DueDate   : 1/1/0001 12:00:00 AM
+
+
+   TypeName: ExampleProject5
+
+Name      MemberType Definition
+----      ---------- ----------
+Assignee  Property   string Assignee {get;set;}
+Completed Property   bool Completed {get;set;}
+DueDate   Property   datetime DueDate {get;set;}
+EndDate   Property   datetime EndDate {get;set;}
+Name      Property   string Name {get;set;}
+Size      Property   int Size {get;set;}
+StartDate Property   datetime StartDate {get;set;}
+```
+
+# about_Classes_Propertiesについて
+
+### 例 6 - 静的クラスプロパティ
+
+**ExampleProject6** クラスでは,すべての作成されたプロジェクトの一覧として静的な **Projects** 属性を定義します.そのクラスのデフォルトコンストラクタは,新しいインスタンスをプロジェクト一覧に追加します.
+
+```powershell
+class ExampleProject6 {
+           [string]            $Name
+           [int]               $Size
+           [bool]              $Completed
+           [string]            $Assignee
+           [datetime]          $StartDate
+           [datetime]          $EndDate
+           [datetime]          $DueDate
+    hidden [string]            $Guid     = (New-Guid).Guid
+    static [ExampleProject6[]] $Projects = @()
+
+    ExampleProject6() {
+        [ExampleProject6]::Projects += $this
+    }
+}
+
+&quot;Project Count: $([ExampleProject6]::Projects.Count)&quot;
+
+$project1 = [ExampleProject6]@{ Name = &#x27;Project_1&#x27; }
+$project2 = [ExampleProject6]@{ Name = &#x27;Project_2&#x27; }
+
+[ExampleProject6]::Projects | Select-Object -Property Name, Guid
+```
+
+```Output
+Project Count: 0
+
+Name      Guid
+----      ----
+Project_1 75e7c8a0-f8d1-433a-a5be-fd7249494694
+Project_2 6c501be4-e68c-4df5-8fce-e49dd8366afe
+```
+
+### 例7 - コンストラクタでプロパティを定義する
+
+**ExampleProject7** クラスでは,静[U+6001]クラスコンストラクタで,Duration** 脚本属性を定義し,`Update-TypeData`cmdlet.  を使って.`Update-TypeData`     `Add-Member`cmdlet は,PowerShell クラスのための高度な属性を定義する唯一の方法です.
+
+**Duration**プロパティは,値の返信をします.`$null`**StartDate**と **EndDate**の両方設定され, **StartDate**は **EndDate**より早ければよいと定義されている場合を除き.
+
+```powershell
+class ExampleProject7 {
+    [string]   $Name
+    [int]      $Size
+    [bool]     $Completed
+    [string]   $Assignee
+    [datetime] $StartDate
+    [datetime] $EndDate
+    [datetime] $DueDate
+
+    static [hashtable[]] $MemberDefinitions = @(
+        @{
+            MemberName = &#x27;Duration&#x27;
+            MemberType = &#x27;ScriptProperty&#x27;
+            Value      = {
+                [datetime]$UnsetDate = 0
+
+                $StartNotSet   = $this.StartDate -eq $UnsetDate
+                $EndNotSet     = $this.EndDate   -eq $UnsetDate
+                $StartAfterEnd = $this.StartDate -gt $this.EndDate
+
+                if ($StartNotSet -or $EndNotSet -or $StartAfterEnd) {
+                    return $null
+                }
+
+                return $this.EndDate - $this.StartDate
+            }
+        }
+    )
+
+    static ExampleProject7() {
+        $TypeName = [ExampleProject7].Name
+        foreach ($Definition in [ExampleProject7]::MemberDefinitions) {
+            Update-TypeData -TypeName $TypeName @Definition
+        }
+    }
+
+    ExampleProject7() {}
+
+    ExampleProject7([string]$Name) {
+        $this.Name = $Name
+    }
+}
+
+$Project = [ExampleProject7]::new()
+$Project
+
+$null -eq $Project.Duration
+```
+
+```Output
+Duration  :
+Name      :
+Size      : 0
+Completed : False
+Assignee  :
+StartDate : 1/1/0001 12:00:00 AM
+EndDate   : 1/1/0001 12:00:00 AM
+DueDate   : 1/1/0001 12:00:00 AM
+
+True
+```
+
+**ExampleProject7**クラスのインスタンスのデフォルトビューには,期間が含まれます. **StartDate**と **EndDate**のプロパティが設定されていないため, **Duration**のプロパティは です.`$null` .
+
+```powershell
+$Project.StartDate = &#x27;2023-01-01&#x27;
+$Project.EndDate   = &#x27;2023-01-08&#x27;
+
+$Project
+```
+
+```Output
+Duration  : 7.00:00:00
+Name      :
+Size      : 0
+Completed : False
+Assignee  :
+StartDate : 1/1/2023 12:00:00 AM
+EndDate   : 1/8/2023 12:00:00 AM
+DueDate   : 1/1/0001 12:00:00 AM
+```
+
+性能が正しく設定された場合, **Duration** 性能は,プロジェクトがどのくらい続いたかを示す時間帯を返します.
+
+## デフォルトプロパティの値
+
+各クラスプロパティには,プロパティの種類によって暗黙のデフォルト値があります.
+
+属性が文字列やオブジェクトのような [参照型] [04] の場合,暗示的なデフォルト値は です.`$null`属性が [値型][05] の場合,例えば数,ブーラン,または表記のような属性であれば,その属性には,その種類によってデフォルト値がある.
+
+- 整数や浮遊点数などの数値タイプは,デフォルトで,`0`- ブール値がデフォルトで  に行われます.`$false`- 番号はデフォルトで  に設定されます.`0`リストアップでさえ,  のラベルを定義していない.`0` .
+
+.NETのデフォルト値については, [C#タイプのデフォルト値 (C#参照) ][06]を参照してください.
+
+資産の明示的なデフォルト値を定義するには,デフォルト値に割り当てを指定したプロパティを宣言します.
+
+例えば,この **ProjectTask** クラス定義では, **Guid** 属性に対して明示的なデフォルト値が定義され,各新しいインスタンスのランダムな GUID を割り当てます.
+
+```powershell
+class ProjectTask {
+    [string] $Name
+    [string] $Description
+    [string] $Guid = (New-Guid).Guid
+}
+
+[ProjectTask]::new()
+```
+
+```Output
+Name Description Guid
+---- ----------- ----
+                 aa96350c-358d-465c-96d1-a49949219eec
+```
+
+隠されたおよび静態の属性は,デフォルト値にもなる可能性があります.
+
+## 隠された性質です.
+
+クラス属性を隠すことができ,それを&quot;&quot;で宣言する.`hidden`キーワード.隠されたクラスプロパティは:
+
+- クラスのためのデフォルト出力に含まれていない. - によって返還されたクラスメンバーのリストに含まれていない.`Get-Member`cmdlet. で隠された属性を表示するには`Get-Member`**Force**パラメータを使用します. - 完成が隠された属性を定義するクラスで起こらない限りタブの完成またはIntelliSenseに表示されません. - 隠された属性を定義するクラスで完成します. - 公開された属性です. クラスにアクセスし変更できます. 属性を隠すことはそれをプライベートにはしません. 前記に説明したように,属性を隠します.
+
+について詳しい情報はこちらから`hidden`キーワード,参照 [about_Hidden][07].
+
+## 静的特性です.
+
+属性を宣言することで,そのクラスの例ではなく,属性として定義することができます.`static`ステティッククラスプロパティ:
+
+- クラスインスタンテーションに関係なく,常に利用可能です. - クラスのすべてのインスタンスの間で共有されています. - 常に利用可能です. - 変更可能です. 静[U+6001]属性が更新できます. 既定では変更できません. - セッション期間全体にわたってライブです.
+
+&gt; [!IMPORTANT] &gt; PowerShellで定義されたクラスのための静[U+6001]属性は不可変である.Static propertyの &gt;型と属性によって定義された,Static propertyの任意の有効値に覆われる.
+
+# about_Classes_Propertiesについて
+
+## 派生階級の性質
+
+クラスがベースクラスから派生されたとき,その基クラスに属する属性を継承します. ベースクラスで定義されたすべての属性,隠された属性を含むものは,派生クラスで利用可能です.
+
+派生クラスでは,派生クラス定義で再定義することで,相続財産を覆すことができる.派生クラス上の属性は,再定義されたタイプと,任意のデフォルト値を使用する. もし,相続財産が既定値を定義し,再定義された属性はそうしないなら,相続財産は既定値を持たない.
+
+導致クラスが静的属性に優位性を与えない場合,導致クラスを通じて静的属性にアクセスすることで,基の属性へのアクセスができます.導致クラスで属性値を変更すると,基の属性上の値を変更します.静的属性に優位性を与えない他の導致クラスも,基の属性上の属性上の属性値を利用します.その属性に優位性を与えないクラスで継承された静的属性の値を更新すると,同じ基の属性から導致されたクラスに対して意図しない影響が[U+0C82][U+0C9F]る可能性があります.
+
+次の例では,導致クラスにおける静態およびインスタンスの性質の振る舞いを示しています.
+
+```powershell
+class BaseClass {
+    static [string] $StaticProperty = &#x27;Static&#x27;
+    [string] $InstanceProperty = &#x27;Instance&#x27;
+}
+class DerivedClassA : BaseClass     {}
+class DerivedClassB : BaseClass     {}
+class DerivedClassC : DerivedClassB {
+    [string] $InstanceProperty
+}
+class DerivedClassD : BaseClass {
+    static [string] $StaticProperty = &#x27;Override&#x27;
+    [string] $InstanceProperty = &#x27;Override&#x27;
+}
+
+&quot;Base instance      =&gt; $([BaseClass]::new().InstanceProperty)&quot;
+&quot;Derived instance A =&gt; $([DerivedClassA]::new().InstanceProperty)&quot;
+&quot;Derived instance B =&gt; $([DerivedClassB]::new().InstanceProperty)&quot;
+&quot;Derived instance C =&gt; $([DerivedClassC]::new().InstanceProperty)&quot;
+&quot;Derived instance D =&gt; $([DerivedClassD]::new().InstanceProperty)&quot;
+```
+
+```Output
+Base instance      =&gt; Instance
+Derived instance A =&gt; Instance
+Derived instance B =&gt; Instance
+Derived instance C =&gt;
+Derived instance D =&gt; Override
+```
+
+**DerivedClassClassClass**のインスタンスのプロパティは,クラスがデフォルト値設定せずにプロパティを再定義したため,空き文字列です. **DerivedClassD**では,値が です.`Override`なぜなら,そのクラスがその文字列のプロパティをデフォルト値として再定義したからです.
+
+```powershell
+&quot;Base static        =&gt; $([BaseClass]::StaticProperty)&quot;
+&quot;Derived static A   =&gt; $([DerivedClassA]::StaticProperty)&quot;
+&quot;Derived static B   =&gt; $([DerivedClassB]::StaticProperty)&quot;
+&quot;Derived static C   =&gt; $([DerivedClassC]::StaticProperty)&quot;
+&quot;Derived static D   =&gt; $([DerivedClassD]::StaticProperty)&quot;
+```
+
+```Output
+Base static        =&gt; Static
+Derived static A   =&gt; Static
+Derived static B   =&gt; Static
+Derived static C   =&gt; Static
+Derived static D   =&gt; Override
+```
+
+**DerivedClassD**を除き,帰属クラスに対する静態性値は,帰属クラスと同じであり,その性質を再定義しないため,帰属クラスです.これは **DerivedClassClass**でも当てはまります.これは直接からではなく,直属クラスB**から受け継ぐ **DerivedClassClass**から受け継ぐ.
+
+```powershell
+[DerivedClassA]::StaticProperty = &#x27;Updated from A&#x27;
+&quot;Base static        =&gt; $([BaseClass]::StaticProperty)&quot;
+&quot;Derived static A   =&gt; $([DerivedClassA]::StaticProperty)&quot;
+&quot;Derived static B   =&gt; $([DerivedClassB]::StaticProperty)&quot;
+&quot;Derived static C   =&gt; $([DerivedClassC]::StaticProperty)&quot;
+&quot;Derived static D   =&gt; $([DerivedClassD]::StaticProperty)&quot;
+```
+
+```Output
+Base static        =&gt; Updated from A
+Derived static A   =&gt; Updated from A
+Derived static B   =&gt; Updated from A
+Derived static C   =&gt; Updated from A
+Derived static D   =&gt; Override
+```
+
+**StaticProperty** を **DerivedClassA** でアクセスし変更すると,変更された値は **DerivedClassD** を除くすべてのクラスに影響します.
+
+総合的な例を含む,クラス遺産に関する詳細については,[about_Classes_Inheritance][08]を参照してください.
+
+## 属性属性を使って
+
+PowerShellには,データ型情報を強化し,プロパティに割り当てられたデータを検証するために使用できるいくつかの属性クラスが含まれています.検証属性により,プロパティに与えられた値は定義された要件を満たしているかどうかをテストできます.値が割り当てられた瞬間,検証が起動します.
+
+入手可能な属性についての詳細については,[about_Functions_Advanced_Parameters][09]を参照してください.
+
+## インストーメントプロパティを Update-TypeDataで定義する
+
+クラス定義に直接属性宣言する以外に,静的構成要素でクラスインスタンスの属性定義を  を使って行うことができます.`Update-TypeData`cmdletです.
+
+このスニペットをパターンに出発点として使用し,必要な場合,角括弧で位置保持文字を置き換える.
+
+```powershell
+class &lt;ClassName&gt; {
+    static [hashtable[]] $MemberDefinitions = @(
+        @{
+            MemberName = &#x27;&lt;PropertyName&gt;&#x27;
+            MemberType = &#x27;&lt;PropertyType&gt;&#x27;
+            Value      = &lt;ValueDefinition&gt;
+        }
+    )
+
+    static &lt;ClassName&gt;() {
+        $TypeName = [&lt;ClassName&gt;].Name
+        foreach ($Definition in [&lt;ClassName&gt;]::MemberDefinitions) {
+            Update-TypeData -TypeName $TypeName @Definition
+        }
+    }
+}
+```
+
+&gt; [!TIP] &gt; `Add-Member`cmdlet は &gt;非静止なコンストラクターでクラスにプロパティとメソッドを追加できますが,cmdlet はコンストラクター &gt; が呼び出されたたびに実行されます.`Update-TypeData`静的コンストラクターでは,クラスにメンバーを追加するためのコードがセッションに一度のみ実行されるようにします. 静的でないコンストラクターでは,クラスに属性を追加するだけで,その属性が  で定義できない場合のみです.`Update-TypeData`読み込みのみのプロパティのようなものです.
+
+# about_Classes_Propertiesについて
+
+### 異名属性定義
+
+**Alias**属性はクラスプロパティ宣言で使用される場合,効果がない.PowerShellは,cmdlet,パラメータ,および関数名のためのニックネームを定義するためにのみその属性を使用します.
+
+クラスプロパティのアライアスを定義するには,使用します.`Update-TypeData`と一緒の`AliasProperty`**MemberType**.
+
+例えば,この定義では, **OperablePair** のクラスが2つの整数属性 **x** と **y** を定義し,それぞれ **LeftHandSide** と **RightHandSide** という名前の付属性があります.
+
+```powershell
+class OperablePair {
+    [int] $x
+    [int] $y
+
+    static [hashtable[]] $MemberDefinitions = @(
+            @{
+                MemberType = &#x27;AliasProperty&#x27;
+                MemberName = &#x27;LeftHandSide&#x27;
+                Value      = &#x27;x&#x27;
+            }
+            @{
+                MemberType = &#x27;AliasProperty&#x27;
+                MemberName = &#x27;RightHandSide&#x27;
+                Value      = &#x27;y&#x27;
+            }
+    )
+
+    static OperablePair() {
+        $TypeName = [OperablePair].Name
+        foreach ($Definition in [OperablePair]::MemberDefinitions) {
+            Update-TypeData -TypeName $TypeName @Definition
+        }
+    }
+
+    OperablePair() {}
+
+    OperablePair([int]$x, [int]$y) {
+        $this.x = $x
+        $this.y = $y
+    }
+
+    # Math methods for the pair of values
+    [int]   GetSum()        { return $this.x + $this.y }
+    [int]   GetProduct()    { return $this.x * $this.y }
+    [int]   GetDifference() { return $this.x - $this.y }
+    [float] GetQuotient()   { return $this.x / $this.y }
+    [int]   GetModulus()    { return $this.x % $this.y }
+}
+```
+
+仮名が定義された場合,ユーザーはいずれかの名前でプロパティにアクセスできます.
+
+```powershell
+$pair = [OperablePair]@{ x = 8 ; RightHandSide = 3 }
+
+&quot;$($pair.x) % $($pair.y) = $($pair.GetModulus())&quot;
+
+$pair.LeftHandSide  = 3
+$pair.RightHandSide = 2
+&quot;$($pair.x) x $($pair.y) = $($pair.GetProduct())&quot;
+```
+
+```Output
+8 % 3 = 2
+
+3 x 2 = 6
+```
+
+### 計算された性質を定義する
+
+他の属性の値を参照する属性を定義するには,  を使ってください.`Update-TypeData`のcmdletを表示する.`ScriptProperty`**MemberType**.
+
+例えば,この予算クラス定義では, **支出**と **収入**の属性を浮動点数列として定義しています.`Update-TypeData`cmdlet は,総支出,総収入,純収入の計算された属性を定義する.
+
+```powershell
+class Budget {
+    [float[]] $Expenses
+    [float[]] $Revenues
+
+    static [hashtable[]] $MemberDefinitions = @(
+        @{
+            MemberType = &#x27;ScriptProperty&#x27;
+            MemberName = &#x27;TotalExpenses&#x27;
+            Value      = { ($this.Expenses | Measure-Object -Sum).Sum }
+        }
+        @{
+            MemberType = &#x27;ScriptProperty&#x27;
+            MemberName = &#x27;TotalRevenues&#x27;
+            Value      = { ($this.Revenues | Measure-Object -Sum).Sum }
+        }
+        @{
+            MemberType = &#x27;ScriptProperty&#x27;
+            MemberName = &#x27;NetIncome&#x27;
+            Value      = { $this.TotalRevenues - $this.TotalExpenses }
+        }
+    )
+
+    static Budget() {
+        $TypeName = [Budget].Name
+        foreach ($Definition in [Budget]::MemberDefinitions) {
+            Update-TypeData -TypeName $TypeName @Definition
+        }
+    }
+
+    Budget() {}
+
+    Budget($Expenses, $Revenues) {
+        $this.Expenses = $Expenses
+        $this.Revenues = $Revenues
+    }
+}
+
+[Budget]::new()
+
+[Budget]@{
+    Expenses = @(2500, 1931, 3700)
+    Revenues = @(2400, 2100, 4150)
+}
+```
+
+```Output
+TotalExpenses : 0
+TotalRevenues : 0
+NetIncome     : 0
+Expenses      :
+Revenues      :
+
+TotalExpenses : 8131
+TotalRevenues : 8650
+NetIncome     : 519
+Expenses      : {2500, 1931, 3700}
+Revenues      : {2400, 2100, 4150}
+```
+
+### 特性定義はカスタム・ゲート・アンド・セットロジックで定義する
+
+PowerShell クラスプロパティは,カスタムゲッターとセッターの論理を直接定義することはできません. でバックアッププロパティを定義することで,この機能を近似することができます.`hidden`キーワードとキーワードを使用する`Update-TypeData`値を得るためのカスタム論理で可視性のある属性を定義する.
+
+慣例では,暗黒のバックアッププロパティ名をアンダースコアプレフィックスで定義し,ラクダの蓋を使用します.例えば,代わりに `TaskCount`隠されたバックアッププロパティの名前`_taskCount` .
+
+この例では, **ProjectSize** クラスで **_value** という隠された整数属性が定義されます.`ScriptProperty`**_value**属性を取得し設定するためのカスタム論理.Scriptblock setterは,プロジェクトの文字列表示を正しいサイズに変換します.
+
+```powershell
+class ProjectSize {
+    hidden [ValidateSet(0, 1, 2, 3)] [int] $_value
+
+    static [hashtable[]] $MemberDefinitions = @(
+        @{
+            MemberType  = &#x27;ScriptProperty&#x27;
+            MemberName  = &#x27;Value&#x27;
+            Value       = { $this._value } # Getter
+            SecondValue = {                # Setter
+                $ProposedValue = $args[0]
+
+                if ($ProposedValue -is [string]) {
+                    switch ($ProposedValue) {
+                        &#x27;Small&#x27;  { $this._value = 1 ; break }
+                        &#x27;Medium&#x27; { $this._value = 2 ; break }
+                        &#x27;Large&#x27;  { $this._value = 3 ; break }
+                        default  { throw &quot;Unknown size &#x27;$ProposedValue&#x27;&quot; }
+                    }
+                } else {
+                    $this._value = $ProposedValue
+                }
+            }
+        }
+    )
+
+    static ProjectSize() {
+        $TypeName = [ProjectSize].Name
+        foreach ($Definition in [ProjectSize]::MemberDefinitions) {
+            Update-TypeData -TypeName $TypeName @Definition
+        }
+    }
+
+    ProjectSize()              {}
+    ProjectSize([int]$Size)    { $this.Value = $Size }
+    ProjectSize([string]$Size) { $this.Value = $Size }
+
+    [string] ToString() {
+        $Output = switch ($this._value) {
+            1       { &#x27;Small&#x27;     }
+            2       { &#x27;Medium&#x27;    }
+            3       { &#x27;Large&#x27;     }
+            default { &#x27;Undefined&#x27; }
+        }
+
+        return $Output
+    }
+}
+```
+
+定番 getter と setter が定義された場合, **Value** 属性を整数または文字列として設定できます.
+
+```powershell
+$size = [ProjectSize]::new()
+&quot;The initial size is: $($size._value), $size&quot;
+
+$size.Value = 1
+&quot;The defined size is: $($size._value), $size&quot;
+
+$Size.Value += 1
+&quot;The updated size is: $($size._value), $size&quot;
+
+$Size.Value = &#x27;Large&#x27;
+&quot;The final size is:   $($size._value), $size&quot;
+```
+
+```Output
+The initial size is: 0, Undefined
+
+The defined size is: 1, Small
+
+The updated size is: 2, Medium
+
+The final size is:   3, Large
+```
+
+# about_Classes_Propertiesについて
+
+## 制限は限られている.
+
+PowerShell クラスプロパティには以下の制限があります.
+
+PowerShellクラスでは,不変な静態属性を定義することはできません.
+
+ワークラウンド:誰もいません. - 属性は**ValidateScript**属性を使用できない,なぜならクラス属性属性参数は定数である必要があります.
+
+ワークラウンド:ValidateArgumentsAttribute** タイプから継承するクラスを定義し,その代わりにその属性を使用します. - 直接宣言されたプロパティはカスタムゲッターとセットラー実装を定義することはできません.
+
+ワークラウンド:隠されたプロパティを定義し,使用する`Update-TypeData`視覚的なゲッターとセッターの論理を定義する. - 属性は **Alias**属性を使用することはできません.属性はパラメータ,cmdlets,および関数のみに適用されます.
+
+ワークラウンド:  を使って`Update-TypeData`クラスコンストラクターにおける異名詞を定義するcmdlet. - PowerShell クラスが JSON に変換される場合,`ConvertTo-Json`cmdletでは,輸出 JSON にはすべての隠された属性とその値が含まれます.
+
+ワークラウンド:誰もいない
+
+## また, を参照してください.
+
+[about_Classes][10] - [about_Classes_Constructors][11] - [about_Classes_Inheritance][12] - [about_Classes_Methods][13] -
+
+#隠された属性 [01]: #静態属性 [03]: #デフォルト属性 [04]: /dotnet/csharp/language-reference/keywords/reference-types [05]: /dotnet/csharp/language-reference/builtin-types/value-types [06]: /dotnet/csharp/language-reference/builtin-types/default-values [07]: about_Hidden.md [08]: about_Classes_Inheritance.md [09]: about_Functions_Advanced_Parameters.md#param-and-variable-validation-attributes_attributes [10]: about_Class.md: about_Class.md: about_Class.md: about_Class.md: about_Class.md: about_Class.md: about_Class.md: about_Class.md: about_[09]
+###英語原文###
+# about_Classes_Properties
+
+## Short description
+
+Describes how to define properties for PowerShell classes.
+
+## Long description
+
+Properties are members of the class that contain data. Properties are declared
+as variables in the class scope. A property can be of any built-in type or an
+instance of another class. Classes can zero or more properties. Classes don&#x27;t
+have a maximum property count.
+
+Class properties can have any number of attributes, including the [hidden][01]
+and [static][02] attributes. Every property definition must include a type for
+the property. You can define a default value for a property.
+
+## Syntax
+
+Class properties use the following syntaxes:
+
+### One-line syntax
+
+```Syntax
+[[&lt;attribute&gt;]...] [&lt;property-type&gt;] $&lt;property-name&gt; [= &lt;default-value&gt;]
+```
+
+### Multiline syntax
+
+```Syntax
+[[&lt;attribute&gt;]...]
+[&lt;property-type&gt;]
+$&lt;property-name&gt; [= &lt;default-value&gt;]
+```
+
+## Examples
+
+### Example 1 - Minimal class properties
+
+The properties of the **ExampleProject1** class use built-in types without any
+attributes or default values.
+
+```powershell
+class ExampleProject1 {
+    [string]   $Name
+    [int]      $Size
+    [bool]     $Completed
+    [string]   $Assignee
+    [datetime] $StartDate
+    [datetime] $EndDate
+    [datetime] $DueDate
+}
+
+[ExampleProject1]::new()
+
+$null -eq ([ExampleProject1]::new()).Name
+```
+
+```Output
+Name      :
+Size      : 0
+Completed : False
+StartDate : 1/1/0001 12:00:00 AM
+EndDate   : 1/1/0001 12:00:00 AM
+DueDate   : 1/1/0001 12:00:00 AM
+
+True
+```
+
+The default value for the **Name** and **Assignee** properties is `$null`
+because they&#x27;re typed as strings, which is a reference type. The other
+properties have the default value for their defined type, because they&#x27;re
+value type properties. For more information on the default values for
+properties, see [Default property values][03].
+
+### Example 2 - Class properties with custom types
+
+The properties for **ExampleProject2** include a custom enumeration and class
+defined in PowerShell before the **ExampleProject2** class.
+
+```powershell
+enum ProjectState {
+    NotTriaged
+    ReadyForWork
+    Committed
+    Blocked
+    InProgress
+    Done
+}
+
+class ProjectAssignee {
+    [string] $DisplayName
+    [string] $UserName
+
+    [string] ToString() {
+        return &quot;$($this.DisplayName) ($($this.UserName))&quot;
+    }
+}
+
+class ExampleProject2 {
+    [string]          $Name
+    [int]             $Size
+    [ProjectState]    $State
+    [ProjectAssignee] $Assignee
+    [datetime]        $StartDate
+    [datetime]        $EndDate
+    [datetime]        $DueDate
+}
+
+[ExampleProject2]@{
+    Name     = &#x27;Class Property Documentation&#x27;
+    Size     = 8
+    State    = &#x27;InProgress&#x27;
+    Assignee = @{
+        DisplayName = &#x27;Mikey Lombardi&#x27;
+        UserName    = &#x27;michaeltlombardi&#x27;
+    }
+    StartDate = &#x27;2023-10-23&#x27;
+    DueDate   = &#x27;2023-10-27&#x27;
+}
+```
+
+```Output
+Name      : Class Property Documentation
+Size      : 8
+State     : InProgress
+Assignee  : Mikey Lombardi (michaeltlombardi)
+StartDate : 10/23/2023 12:00:00 AM
+EndDate   : 1/1/0001 12:00:00 AM
+DueDate   : 10/27/2023 12:00:00 AM
+```
+
+### Example 3 - Class property with a validation attribute
+
+The **ExampleProject3** class defines the **Size** property as an integer that
+must be greater than or equal to 0 and less than or equal to 16. It uses the
+**ValidateRange** attribute to limit the value.
+
+```powershell
+class ExampleProject3 {
+                           [string]   $Name
+    [ValidateRange(0, 16)] [int]      $Size
+                           [bool]     $Completed
+                           [string]   $Assignee
+                           [datetime] $StartDate
+                           [datetime] $EndDate
+                           [datetime] $DueDate
+}
+
+$project = [ExampleProject3]::new()
+$project
+```
+
+```Output
+Name      :
+Size      : 0
+Completed : False
+Assignee  :
+StartDate : 1/1/0001 12:00:00 AM
+EndDate   : 1/1/0001 12:00:00 AM
+DueDate   : 1/1/0001 12:00:00 AM
+```
+
+When **ExampleProject3** instantiates, the **Size** defaults to 0. Setting the
+property to a value within the valid range updates the value.
+
+```powershell
+$project.Size = 8
+$project
+```
+
+```Output
+Name      :
+Size      : 8
+Completed : False
+Assignee  :
+StartDate : 1/1/0001 12:00:00 AM
+EndDate   : 1/1/0001 12:00:00 AM
+DueDate   : 1/1/0001 12:00:00 AM
+```
+
+When **Size** is set to an invalid value outside the range, PowerShell raises
+an exception and the value isn&#x27;t changed.
+
+```powershell
+$project.Size = 32
+$project.Size = -1
+
+$project
+```
+
+```Output
+Exception setting &quot;Size&quot;: &quot;The 32 argument is greater than the maximum
+allowed range of 16. Supply an argument that is less than or equal to 16
+and then try the command again.&quot;
+At line:1 char:1
++ $project.Size = 32
++ ~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (:) [], SetValueInvocationExc
+   eption
+    + FullyQualifiedErrorId : ExceptionWhenSetting
+
+Exception setting &quot;Size&quot;: &quot;The -1 argument is less than the minimum
+allowed range of 0. Supply an argument that is greater than or equal to 0
+and then try the command again.&quot;
+At line:1 char:1
++ $project.Size = -1
++ ~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (:) [], SetValueInvocationExc
+   eption
+    + FullyQualifiedErrorId : ExceptionWhenSetting
+
+Name      :
+Size      : 8
+Completed : False
+Assignee  :
+StartDate : 1/1/0001 12:00:00 AM
+EndDate   : 1/1/0001 12:00:00 AM
+DueDate   : 1/1/0001 12:00:00 AM
+```
+
+### Example 4 - Class property with an explicit default value
+
+The **ExampleProject4** class defaults the value for the **StartDate** property
+to the current date.
+
+```powershell
+class ExampleProject4 {
+    [string]   $Name
+    [int]      $Size
+    [bool]     $Completed
+    [string]   $Assignee
+    [datetime] $StartDate = (Get-Date).Date
+    [datetime] $EndDate
+    [datetime] $DueDate
+}
+
+[ExampleProject4]::new()
+
+[ExampleProject4]::new().StartDate -eq (Get-Date).Date
+```
+
+```Output
+Name      :
+Size      : 0
+Completed : False
+Assignee  :
+StartDate : 10/23/2023 12:00:00 AM
+EndDate   : 1/1/0001 12:00:00 AM
+DueDate   : 1/1/0001 12:00:00 AM
+
+True
+```
+
+### Example 5 - Hidden class property
+
+The **Guid** property of the **ExampleProject5** class has the `hidden`
+keyword. The **Guid** property doesn&#x27;t show in the default output for the
+class or in the list of properties returned by `Get-Member`.
+
+```powershell
+class ExampleProject5 {
+           [string]   $Name
+           [int]      $Size
+           [bool]     $Completed
+           [string]   $Assignee
+           [datetime] $StartDate
+           [datetime] $EndDate
+           [datetime] $DueDate
+    hidden [string]   $Guid      = (New-Guid).Guid
+}
+
+$project = [ExampleProject5]::new()
+
+&quot;Project GUID: $($project.Guid)&quot;
+
+$project
+
+$project | Get-Member -MemberType Properties | Format-Table
+```
+
+```Output
+Project GUID: c72cef84-057c-4649-8940-13490dcf72f0
+
+Name      :
+Size      : 0
+Completed : False
+Assignee  :
+StartDate : 1/1/0001 12:00:00 AM
+EndDate   : 1/1/0001 12:00:00 AM
+DueDate   : 1/1/0001 12:00:00 AM
+
+
+   TypeName: ExampleProject5
+
+Name      MemberType Definition
+----      ---------- ----------
+Assignee  Property   string Assignee {get;set;}
+Completed Property   bool Completed {get;set;}
+DueDate   Property   datetime DueDate {get;set;}
+EndDate   Property   datetime EndDate {get;set;}
+Name      Property   string Name {get;set;}
+Size      Property   int Size {get;set;}
+StartDate Property   datetime StartDate {get;set;}
+```
+
+# about_Classes_Properties
+
+### Example 6 - Static class property
+
+The **ExampleProject6** class defines the static **Projects** property as a
+list of all created projects. The default constructor for the class adds the
+new instance to the list of projects.
+
+```powershell
+class ExampleProject6 {
+           [string]            $Name
+           [int]               $Size
+           [bool]              $Completed
+           [string]            $Assignee
+           [datetime]          $StartDate
+           [datetime]          $EndDate
+           [datetime]          $DueDate
+    hidden [string]            $Guid     = (New-Guid).Guid
+    static [ExampleProject6[]] $Projects = @()
+
+    ExampleProject6() {
+        [ExampleProject6]::Projects += $this
+    }
+}
+
+&quot;Project Count: $([ExampleProject6]::Projects.Count)&quot;
+
+$project1 = [ExampleProject6]@{ Name = &#x27;Project_1&#x27; }
+$project2 = [ExampleProject6]@{ Name = &#x27;Project_2&#x27; }
+
+[ExampleProject6]::Projects | Select-Object -Property Name, Guid
+```
+
+```Output
+Project Count: 0
+
+Name      Guid
+----      ----
+Project_1 75e7c8a0-f8d1-433a-a5be-fd7249494694
+Project_2 6c501be4-e68c-4df5-8fce-e49dd8366afe
+```
+
+### Example 7 - Defining a property in the constructor
+
+The **ExampleProject7** class defines the **Duration** script property in the
+static class constructor with the `Update-TypeData` cmdlet. Using the
+`Update-TypeData` or `Add-Member` cmdlet is the only way to define advanced
+properties for PowerShell classes.
+
+The **Duration** property returns a value of `$null` unless both the
+**StartDate** and **EndDate** properties are set and **StartDate** is defined
+to be earlier than the **EndDate**.
+
+```powershell
+class ExampleProject7 {
+    [string]   $Name
+    [int]      $Size
+    [bool]     $Completed
+    [string]   $Assignee
+    [datetime] $StartDate
+    [datetime] $EndDate
+    [datetime] $DueDate
+
+    static [hashtable[]] $MemberDefinitions = @(
+        @{
+            MemberName = &#x27;Duration&#x27;
+            MemberType = &#x27;ScriptProperty&#x27;
+            Value      = {
+                [datetime]$UnsetDate = 0
+
+                $StartNotSet   = $this.StartDate -eq $UnsetDate
+                $EndNotSet     = $this.EndDate   -eq $UnsetDate
+                $StartAfterEnd = $this.StartDate -gt $this.EndDate
+
+                if ($StartNotSet -or $EndNotSet -or $StartAfterEnd) {
+                    return $null
+                }
+
+                return $this.EndDate - $this.StartDate
+            }
+        }
+    )
+
+    static ExampleProject7() {
+        $TypeName = [ExampleProject7].Name
+        foreach ($Definition in [ExampleProject7]::MemberDefinitions) {
+            Update-TypeData -TypeName $TypeName @Definition
+        }
+    }
+
+    ExampleProject7() {}
+
+    ExampleProject7([string]$Name) {
+        $this.Name = $Name
+    }
+}
+
+$Project = [ExampleProject7]::new()
+$Project
+
+$null -eq $Project.Duration
+```
+
+```Output
+Duration  :
+Name      :
+Size      : 0
+Completed : False
+Assignee  :
+StartDate : 1/1/0001 12:00:00 AM
+EndDate   : 1/1/0001 12:00:00 AM
+DueDate   : 1/1/0001 12:00:00 AM
+
+True
+```
+
+The default view for an instance of the **ExampleProject7** class includes the
+duration. Because the **StartDate** and **EndDate** properties aren&#x27;t set, the
+**Duration** property is `$null`.
+
+```powershell
+$Project.StartDate = &#x27;2023-01-01&#x27;
+$Project.EndDate   = &#x27;2023-01-08&#x27;
+
+$Project
+```
+
+```Output
+Duration  : 7.00:00:00
+Name      :
+Size      : 0
+Completed : False
+Assignee  :
+StartDate : 1/1/2023 12:00:00 AM
+EndDate   : 1/8/2023 12:00:00 AM
+DueDate   : 1/1/0001 12:00:00 AM
+```
+
+With the properties set correctly, the **Duration** property returns a timespan
+representing how long the project ran.
+
+## Default property values
+
+Every class property has an implicit default value depending on the type of the
+property.
+
+If a property is a [reference type][04], like a string or an object, the
+implicit default value is `$null`. If a property is a [value type][05], like a
+number, boolean, or enumeration, the property has a default value depending on
+the type:
+
+- Numeric types, like integers and floating-point numbers, default to `0`
+- Boolean values default to `$false`
+- Enumerations default to `0`, even the enumeration doesn&#x27;t define a label for
+  `0`.
+
+For more information about default values in .NET, see
+[Default values of C# types (C# reference)][06].
+
+To define an explicit default value for a property, declare the property with
+an assignment to the default value.
+
+For example, this definition for the **ProjectTask** class defines an explicit
+default value for the **Guid** property, assigning a random GUID to each new
+instance.
+
+```powershell
+class ProjectTask {
+    [string] $Name
+    [string] $Description
+    [string] $Guid = (New-Guid).Guid
+}
+
+[ProjectTask]::new()
+```
+
+```Output
+Name Description Guid
+---- ----------- ----
+                 aa96350c-358d-465c-96d1-a49949219eec
+```
+
+Hidden and static properties can also have default values.
+
+## Hidden properties
+
+You can hide properties of a class by declaring them with the `hidden` keyword.
+Hidden class properties are:
+
+- Not included in the default output for the class.
+- Not included in the list of class members returned by the `Get-Member`
+  cmdlet. To show hidden properties with `Get-Member`, use the **Force**
+  parameter.
+- Not displayed in tab completion or IntelliSense unless the completion occurs
+  in the class that defines the hidden property.
+- Public members of the class. They can be accessed and modified. Hiding a
+  property doesn&#x27;t make it private. It only hides the property as described in
+  the previous points.
+
+For more information about the `hidden` keyword, see [about_Hidden][07].
+
+## Static properties
+
+You can define a property as belonging to the class itself instead of instances
+of the class by declaring the property with the `static` keyword. Static class
+properties:
+
+- Are always available, independent of class instantiation.
+- Are shared across all instances of the class.
+- Are always available.
+- Are modifiable. Static properties can be updated. They aren&#x27;t immutable by
+  default.
+- Live for the entire session span.
+
+&gt; [!IMPORTANT]
+&gt; Static properties for classes defined in PowerShell aren&#x27;t immutable. They
+&gt; can be overridden to any valid value, as defined by the static property&#x27;s
+&gt; type and attributes.
+
+# about_Classes_Properties
+
+## Derived class properties
+
+When a class derives from a base class, it inherits the properties of the base
+class. Any properties defined on the base class, including hidden properties,
+are available on the derived class.
+
+A derived class can override an inherited property by redefining it in the
+class definition. The property on the derived class uses the redefined type and
+default value, if any. If the inherited property defined a default value and
+the redefined property doesn&#x27;t, the inherited property has no default value.
+
+If a derived class doesn&#x27;t override a static property, accessing the static
+property through the derived class accesses the static property of the base
+class. Modifying the property value through the derived class modifies the
+value on the base class. Any other derived class that doesn&#x27;t override the
+static property also uses the value of the property on the base class. Updating
+the value of an inherited static property in a class that doesn&#x27;t override the
+property might have unintended effects for classes derived from the same base
+class.
+
+The following example shows the behavior for static and instance properties on
+derived classes.
+
+```powershell
+class BaseClass {
+    static [string] $StaticProperty = &#x27;Static&#x27;
+    [string] $InstanceProperty = &#x27;Instance&#x27;
+}
+class DerivedClassA : BaseClass     {}
+class DerivedClassB : BaseClass     {}
+class DerivedClassC : DerivedClassB {
+    [string] $InstanceProperty
+}
+class DerivedClassD : BaseClass {
+    static [string] $StaticProperty = &#x27;Override&#x27;
+    [string] $InstanceProperty = &#x27;Override&#x27;
+}
+
+&quot;Base instance      =&gt; $([BaseClass]::new().InstanceProperty)&quot;
+&quot;Derived instance A =&gt; $([DerivedClassA]::new().InstanceProperty)&quot;
+&quot;Derived instance B =&gt; $([DerivedClassB]::new().InstanceProperty)&quot;
+&quot;Derived instance C =&gt; $([DerivedClassC]::new().InstanceProperty)&quot;
+&quot;Derived instance D =&gt; $([DerivedClassD]::new().InstanceProperty)&quot;
+```
+
+```Output
+Base instance      =&gt; Instance
+Derived instance A =&gt; Instance
+Derived instance B =&gt; Instance
+Derived instance C =&gt;
+Derived instance D =&gt; Override
+```
+
+The **InstanceProperty** for **DerivedClassC** is an empty string because the
+class redefined the property without setting a default value. For
+**DerivedClassD** the value is `Override` because the class redefined the
+property with that string as the default value.
+
+```powershell
+&quot;Base static        =&gt; $([BaseClass]::StaticProperty)&quot;
+&quot;Derived static A   =&gt; $([DerivedClassA]::StaticProperty)&quot;
+&quot;Derived static B   =&gt; $([DerivedClassB]::StaticProperty)&quot;
+&quot;Derived static C   =&gt; $([DerivedClassC]::StaticProperty)&quot;
+&quot;Derived static D   =&gt; $([DerivedClassD]::StaticProperty)&quot;
+```
+
+```Output
+Base static        =&gt; Static
+Derived static A   =&gt; Static
+Derived static B   =&gt; Static
+Derived static C   =&gt; Static
+Derived static D   =&gt; Override
+```
+
+Except for **DerivedClassD**, the value of the static property for the derived
+classes is the same as the base class, because they don&#x27;t redefine the
+property. This applies even to **DerivedClassC**, which inherits from
+**DerivedClassB** instead of directly from **BaseClass**.
+
+```powershell
+[DerivedClassA]::StaticProperty = &#x27;Updated from A&#x27;
+&quot;Base static        =&gt; $([BaseClass]::StaticProperty)&quot;
+&quot;Derived static A   =&gt; $([DerivedClassA]::StaticProperty)&quot;
+&quot;Derived static B   =&gt; $([DerivedClassB]::StaticProperty)&quot;
+&quot;Derived static C   =&gt; $([DerivedClassC]::StaticProperty)&quot;
+&quot;Derived static D   =&gt; $([DerivedClassD]::StaticProperty)&quot;
+```
+
+```Output
+Base static        =&gt; Updated from A
+Derived static A   =&gt; Updated from A
+Derived static B   =&gt; Updated from A
+Derived static C   =&gt; Updated from A
+Derived static D   =&gt; Override
+```
+
+When **StaticProperty** is accessed and modified through **DerivedClassA**, the
+changed value affects every class except for **DerivedClassD**.
+
+For more information about class inheritance, including a comprehensive
+example, see [about_Classes_Inheritance][08].
+
+## Use property attributes
+
+PowerShell includes several attribute classes that you can use to enhance data
+type information and validate the data assigned to a property. Validation
+attributes allow you to test that values given to properties meet defined
+requirements. Validation is triggered the moment that the value is assigned.
+
+For more information on available attributes, see
+[about_Functions_Advanced_Parameters][09].
+
+## Define instance properties with Update-TypeData
+
+Beyond declaring properties directly in the class definition, you can define
+properties for instances of a class in the static constructor using the
+`Update-TypeData` cmdlet.
+
+Use this snippet as a starting point for the pattern. Replace the placeholder
+text in angle brackets as needed.
+
+```powershell
+class &lt;ClassName&gt; {
+    static [hashtable[]] $MemberDefinitions = @(
+        @{
+            MemberName = &#x27;&lt;PropertyName&gt;&#x27;
+            MemberType = &#x27;&lt;PropertyType&gt;&#x27;
+            Value      = &lt;ValueDefinition&gt;
+        }
+    )
+
+    static &lt;ClassName&gt;() {
+        $TypeName = [&lt;ClassName&gt;].Name
+        foreach ($Definition in [&lt;ClassName&gt;]::MemberDefinitions) {
+            Update-TypeData -TypeName $TypeName @Definition
+        }
+    }
+}
+```
+
+&gt; [!TIP]
+&gt; The `Add-Member` cmdlet can add properties and methods to a class in
+&gt; non-static constructors, but the cmdlet is run every time the constructor
+&gt; is called. Using `Update-TypeData` in the static constructor ensures that the
+&gt; code for adding the members to the class only needs to run once in a session.
+&gt;
+&gt; Only add properties to the class in non-static constructors when they can&#x27;t
+&gt; be defined with `Update-TypeData`, like read-only properties.
+
+# about_Classes_Properties
+
+### Defining alias properties
+
+The **Alias** attribute has no effect when used on a class property
+declaration. PowerShell only uses that attribute to define aliases for cmdlet,
+parameter, and function names.
+
+To define an alias for a class property, use `Update-TypeData` with the
+`AliasProperty` **MemberType**.
+
+For example, this definition of the **OperablePair** class defines two integer
+properties **x** and **y** with the aliases **LeftHandSide** and
+**RightHandSide** respectively.
+
+```powershell
+class OperablePair {
+    [int] $x
+    [int] $y
+
+    static [hashtable[]] $MemberDefinitions = @(
+            @{
+                MemberType = &#x27;AliasProperty&#x27;
+                MemberName = &#x27;LeftHandSide&#x27;
+                Value      = &#x27;x&#x27;
+            }
+            @{
+                MemberType = &#x27;AliasProperty&#x27;
+                MemberName = &#x27;RightHandSide&#x27;
+                Value      = &#x27;y&#x27;
+            }
+    )
+
+    static OperablePair() {
+        $TypeName = [OperablePair].Name
+        foreach ($Definition in [OperablePair]::MemberDefinitions) {
+            Update-TypeData -TypeName $TypeName @Definition
+        }
+    }
+
+    OperablePair() {}
+
+    OperablePair([int]$x, [int]$y) {
+        $this.x = $x
+        $this.y = $y
+    }
+
+    # Math methods for the pair of values
+    [int]   GetSum()        { return $this.x + $this.y }
+    [int]   GetProduct()    { return $this.x * $this.y }
+    [int]   GetDifference() { return $this.x - $this.y }
+    [float] GetQuotient()   { return $this.x / $this.y }
+    [int]   GetModulus()    { return $this.x % $this.y }
+}
+```
+
+With the aliases defined, users can access the properties with either name.
+
+```powershell
+$pair = [OperablePair]@{ x = 8 ; RightHandSide = 3 }
+
+&quot;$($pair.x) % $($pair.y) = $($pair.GetModulus())&quot;
+
+$pair.LeftHandSide  = 3
+$pair.RightHandSide = 2
+&quot;$($pair.x) x $($pair.y) = $($pair.GetProduct())&quot;
+```
+
+```Output
+8 % 3 = 2
+
+3 x 2 = 6
+```
+
+### Defining calculated properties
+
+To define a property that references the values of other properties, use the
+`Update-TypeData` cmdlet with the `ScriptProperty` **MemberType**.
+
+For example, this definition of the **Budget** class defines the **Expenses**
+and **Revenues** properties as arrays of floating-point numbers. It uses the
+`Update-TypeData` cmdlet to define calculated properties for total expenses,
+total revenues, and net income.
+
+```powershell
+class Budget {
+    [float[]] $Expenses
+    [float[]] $Revenues
+
+    static [hashtable[]] $MemberDefinitions = @(
+        @{
+            MemberType = &#x27;ScriptProperty&#x27;
+            MemberName = &#x27;TotalExpenses&#x27;
+            Value      = { ($this.Expenses | Measure-Object -Sum).Sum }
+        }
+        @{
+            MemberType = &#x27;ScriptProperty&#x27;
+            MemberName = &#x27;TotalRevenues&#x27;
+            Value      = { ($this.Revenues | Measure-Object -Sum).Sum }
+        }
+        @{
+            MemberType = &#x27;ScriptProperty&#x27;
+            MemberName = &#x27;NetIncome&#x27;
+            Value      = { $this.TotalRevenues - $this.TotalExpenses }
+        }
+    )
+
+    static Budget() {
+        $TypeName = [Budget].Name
+        foreach ($Definition in [Budget]::MemberDefinitions) {
+            Update-TypeData -TypeName $TypeName @Definition
+        }
+    }
+
+    Budget() {}
+
+    Budget($Expenses, $Revenues) {
+        $this.Expenses = $Expenses
+        $this.Revenues = $Revenues
+    }
+}
+
+[Budget]::new()
+
+[Budget]@{
+    Expenses = @(2500, 1931, 3700)
+    Revenues = @(2400, 2100, 4150)
+}
+```
+
+```Output
+TotalExpenses : 0
+TotalRevenues : 0
+NetIncome     : 0
+Expenses      :
+Revenues      :
+
+TotalExpenses : 8131
+TotalRevenues : 8650
+NetIncome     : 519
+Expenses      : {2500, 1931, 3700}
+Revenues      : {2400, 2100, 4150}
+```
+
+### Defining properties with custom get and set logic
+
+PowerShell class properties can&#x27;t define custom getter and setter logic
+directly. You can approximate this functionality by defining a backing property
+with the `hidden` keyword and using `Update-TypeData` to define a visible
+property with custom logic for getting and setting the value.
+
+By convention, define the hidden backing property name with an underscore
+prefix and use camel casing. For example, instead of `TaskCount`, name the
+hidden backing property `_taskCount`.
+
+In this example, the **ProjectSize** class defines a hidden integer property
+named **_value**. It defines **Value** as a `ScriptProperty` with custom logic
+for getting and setting the **_value** property. The setter scriptblock handles
+converting the string representation of the project to the correct size.
+
+```powershell
+class ProjectSize {
+    hidden [ValidateSet(0, 1, 2, 3)] [int] $_value
+
+    static [hashtable[]] $MemberDefinitions = @(
+        @{
+            MemberType  = &#x27;ScriptProperty&#x27;
+            MemberName  = &#x27;Value&#x27;
+            Value       = { $this._value } # Getter
+            SecondValue = {                # Setter
+                $ProposedValue = $args[0]
+
+                if ($ProposedValue -is [string]) {
+                    switch ($ProposedValue) {
+                        &#x27;Small&#x27;  { $this._value = 1 ; break }
+                        &#x27;Medium&#x27; { $this._value = 2 ; break }
+                        &#x27;Large&#x27;  { $this._value = 3 ; break }
+                        default  { throw &quot;Unknown size &#x27;$ProposedValue&#x27;&quot; }
+                    }
+                } else {
+                    $this._value = $ProposedValue
+                }
+            }
+        }
+    )
+
+    static ProjectSize() {
+        $TypeName = [ProjectSize].Name
+        foreach ($Definition in [ProjectSize]::MemberDefinitions) {
+            Update-TypeData -TypeName $TypeName @Definition
+        }
+    }
+
+    ProjectSize()              {}
+    ProjectSize([int]$Size)    { $this.Value = $Size }
+    ProjectSize([string]$Size) { $this.Value = $Size }
+
+    [string] ToString() {
+        $Output = switch ($this._value) {
+            1       { &#x27;Small&#x27;     }
+            2       { &#x27;Medium&#x27;    }
+            3       { &#x27;Large&#x27;     }
+            default { &#x27;Undefined&#x27; }
+        }
+
+        return $Output
+    }
+}
+```
+
+With the custom getter and setter defined, you can set the **Value** property
+as either an integer or string.
+
+```powershell
+$size = [ProjectSize]::new()
+&quot;The initial size is: $($size._value), $size&quot;
+
+$size.Value = 1
+&quot;The defined size is: $($size._value), $size&quot;
+
+$Size.Value += 1
+&quot;The updated size is: $($size._value), $size&quot;
+
+$Size.Value = &#x27;Large&#x27;
+&quot;The final size is:   $($size._value), $size&quot;
+```
+
+```Output
+The initial size is: 0, Undefined
+
+The defined size is: 1, Small
+
+The updated size is: 2, Medium
+
+The final size is:   3, Large
+```
+
+# about_Classes_Properties
+
+## Limitations
+
+PowerShell class properties have the following limitations:
+
+- Static properties are always mutable. PowerShell classes can&#x27;t define
+  immutable static properties.
+
+  Workaround: None.
+- Properties can&#x27;t use the **ValidateScript** attribute, because class property
+  attribute arguments must be constants.
+
+  Workaround: Define a class that inherits from the
+  **ValidateArgumentsAttribute** type and use that attribute instead.
+- Directly declared properties can&#x27;t define custom getter and setter
+  implementations.
+
+  Workaround: Define a hidden property and use `Update-TypeData` to define the
+  visible getter and setter logic.
+- Properties can&#x27;t use the **Alias** attribute. The attribute only applies to
+  parameters, cmdlets, and functions.
+
+  Workaround: Use the `Update-TypeData` cmdlet to define aliases in the class
+  constructors.
+- When a PowerShell class is converted to JSON with the `ConvertTo-Json`
+  cmdlet, the output JSON includes all hidden properties and their values.
+
+  Workaround: None
+
+## See also
+
+- [about_Classes][10]
+- [about_Classes_Constructors][11]
+- [about_Classes_Inheritance][12]
+- [about_Classes_Methods][13]
+
+[01]: #hidden-properties
+[02]: #static-properties
+[03]: #default-property-values
+[04]: /dotnet/csharp/language-reference/keywords/reference-types
+[05]: /dotnet/csharp/language-reference/builtin-types/value-types
+[06]: /dotnet/csharp/language-reference/builtin-types/default-values
+[07]: about_Hidden.md
+[08]: about_Classes_Inheritance.md
+[09]: about_Functions_Advanced_Parameters.md#parameter-and-variable-validation-attributes
+[10]: about_Classes.md
+[11]: about_Classes_Constructors.md
+[12]: about_Classes_Inheritance.md
+[13]: about_Classes_Methods.md
+###Microsoft Learn URL###
+https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_classes_properties/?view=powershell-5.1
+</pre></html>

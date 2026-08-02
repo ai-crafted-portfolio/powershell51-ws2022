@@ -1,0 +1,790 @@
+<!doctype html><html lang="ja"><meta charset="utf-8"><pre class="record-source">###KnowledgeNo###
+PS51-WS2022-2026-3859
+###FormatID###
+PS51-WS2022
+###CreatedAt###
+2026-08-01 00:00
+###UpdatedAt###
+2026-08-01 00:00
+###タイトル###
+ConvertFrom-String
+###モジュール###
+Microsoft.PowerShell.Utility
+###製品###
+Windows PowerShell 5.1
+###対応OS###
+Windows Server 2022
+###日本語訳###
+# ストリングから変換する
+
+## SYNOPSISは文字列内容から構造的属性を抽出し解析する.
+
+## SYNTAXは,のシンタックスです.
+
+### ByDelimiter (デフォルト) 
+
+```
+ConvertFrom-String [-Delimiter &lt;String&gt;] [-PropertyNames &lt;String[]&gt;] [-InputObject] &lt;String&gt;
+ [&lt;CommonParameters&gt;]
+```
+
+### テンプレートパーシング
+
+```
+ConvertFrom-String [-TemplateFile &lt;String[]&gt;] [-TemplateContent &lt;String[]&gt;] [-IncludeExtent]
+ [-UpdateTemplate] [-InputObject] &lt;String&gt; [&lt;CommonParameters&gt;]
+```
+
+## 記述は,
+
+   `ConvertFrom-String`cmdlet は文字列内容から構造的属性を抽出し解析する.このcmdlet は伝統的なテキストストリームからテキストを解析することによってオブジェクトを生成します.パイプライン内の各文字列に対して,cmdlet は入力を делиミーターまたは解析式で分割し,次に生成された分割要素それぞれに属性名を割り当てます.これらの属性名を入力できます.そうでなければ,自動的にあなたのために生成されます.
+
+cmdletのデフォルトパラメータセット, **ByDelimiter**は,正規表現デリミテールで正確に分割されます.`Import-Csv`cmdlet は,行います.
+
+cmdletの代替パラメータセット,TemplateParsing**は,規則表現によって捕らえられたグループから要素を生成します.規則表現に関する詳細については, [about_Regular_Expressions]をご覧ください.
+
+このcmdletは,2つのモードをサポートします.基本的な制限解析と自動生成,例駆動解析です.
+
+デリミテッド解析は,デフォルトでは,インプットをホワイトスペースで分割し,結果となるグループにプロパティ名を割り当てます.
+
+をパイプして境界線を定めることができます.`ConvertFrom-String`結果は,その1つに成る.`Format-*`cmdlets,またはあなたは**Delimiter**パラメータを使用することができます.
+
+また,cmdlet は, [FlashExtract, Microsoft Research の研究成果]をベースに自動生成,例駆動解析をサポートしています.https://www.microsoft.com/research/publication/flashextract-framework-data-extraction-examples/) でした.
+
+## 例えは
+
+### 例1: デフォルトプロパティ名を持つオブジェクトを生成する
+
+```powershell
+&quot;Hello World&quot; | ConvertFrom-String
+```
+
+```Output
+P1    P2
+--    --
+Hello World
+```
+
+このコマンドは,デフォルトプロパティ名, **P1**と **P2**のオブジェクトを生成します.
+
+### 例1A:生成されたオブジェクトを知ろう
+
+このコマンドは, **P1**, **P2** の性質を持つ一つのオブジェクトを生成します.両属性は,デフォルトでは **String** のタイプです.
+
+```powershell
+&quot;Hello World&quot; | ConvertFrom-String | Get-Member
+```
+
+```Output
+
+   TypeName: System.Management.Automation.PSCustomObject
+
+Name        MemberType   Definition
+----        ----------   ----------
+Equals      Method       bool Equals(System.Object obj)
+GetHashCode Method       int GetHashCode()
+GetType     Method       type GetType()
+ToString    Method       string ToString()
+P1          NoteProperty string P1=Hello
+P2          NoteProperty string P2=World
+```
+
+### 例2: デリミーターを使ってデフォルトプロパティ名を持つオブジェクトを生成する
+
+このコマンドは,バックスラッシュ () を使ってドメインとユーザー名を持つオブジェクトを生成します.`\`逆向文字は,通常の表現を使用するときに別の逆向文字で回避されなければならない.
+
+```powershell
+&quot;Contoso\Administrator&quot; | ConvertFrom-String -Delimiter &quot;\\&quot;
+```
+
+```Output
+P1      P2
+--      --
+Contoso Administrator
+```
+
+### 例3:2つの名前付きのプロパティを含むオブジェクトを生成する
+
+次の例では,Windows ホストファイルエントリからオブジェクトを作成します.
+
+```powershell
+$content = Get-Content C:\Windows\System32\drivers\etc\hosts
+$content = $content -match &quot;^[^#]&quot;
+$content | ConvertFrom-String -PropertyNames IP, Server
+```
+
+```Output
+IP             Server
+--             ------
+192.168.7.10   W2012R2
+192.168.7.20   W2016
+192.168.7.101  WIN8
+192.168.7.102  WIN10
+```
+
+   `Get-Content`cmdlet では,Windows ホストファイルのコンテンツを  で保存します.`$content`第二のコマンドは,ホストファイル初期にあるコメントを削除し, () で始まる行とは一致する通常の表現を使用します.`#`) の最後のコマンドは,残ったテキストを **Server** と **IP** のプロパティを持つオブジェクトに変換します.
+
+### 例4: テンプレートコンテンツパラメータの値として表現を使用し,結果を変数に保存します.
+
+このコマンドは,表示式を **TemplateContent**パラメータの値として使用します.この表示式はシンプルさを目的とした変数に保存されます.Windows PowerShell では,パイプラインで使用される文字列が  に等しいことを理解しています.`ConvertFrom-String`3つの性質がある:
+
+- **名前** - **電話** - **年齢**
+
+```powershell
+$template = @&#x27;
+{Name*:Phoebe Cat}, {phone:425-123-6789}, {age:6}
+{Name*:Lucky Shot}, {phone:(206) 987-4321}, {age:12}
+&#x27;@
+
+$testText = @&#x27;
+Phoebe Cat, 425-123-6789, 6
+Lucky Shot, (206) 987-4321, 12
+Elephant Wise, 425-888-7766, 87
+Wild Shrimp, (111)  222-3333, 1
+&#x27;@
+
+$PersonalData = $testText | ConvertFrom-String -TemplateContent $template
+Write-Output (&quot;Pet items found: &quot; + ($PersonalData.Count))
+$PersonalData
+```
+
+```Output
+Pet items found: 4
+
+Name          phone           age
+----          -----           ---
+Phoebe Cat    425-123-6789    6
+Lucky Shot    (206) 987-4321  12
+Elephant Wise 425-888-7766    87
+Wild Shrimp   (111)  222-3333 1
+```
+
+入力中の各行はサンプルマッチによって評価されます.その行がパターンに示された例に一致する場合は,値は抽出され,輸出変数に転送されます.
+
+サンプルデータは, `$template`携帯電話の2つの異なる形式を提供している.
+
+ - -`425-123-6789` - -`(206) 987-4321`
+
+サンプルデータは,2つの異なる年齢格式も提供しています.
+
+ - -`6` - -`12`
+
+これは,電話が のようなことを意味している.`(206) 987 4321`認識されない,なぜなら,ヒファンが存在しないので,そのパターンに一致するサンプルデータは存在しないからです.
+
+### 例5:生成されたプロパティにデータタイプを指定する
+
+これは例4と同じ例です.このパターンの文字列には,望ましい各属性に対してデータタイプが含まれているという違いがあります.
+
+```powershell
+$template = @&#x27;
+{[string]Name*:Phoebe Cat}, {[string]phone:425-123-6789}, {[int]age:6}
+{[string]Name*:Lucky Shot}, {[string]phone:(206) 987-4321}, {[int]age:12}
+&#x27;@
+
+$testText = @&#x27;
+Phoebe Cat, 425-123-6789, 6
+Lucky Shot, (206) 987-4321, 12
+Elephant Wise, 425-888-7766, 87
+Wild Shrimp, (111)  222-3333, 1
+&#x27;@
+
+$PersonalData = $testText | ConvertFrom-String -TemplateContent $template
+Write-Output (&quot;Pet items found: &quot; + ($PersonalData.Count))
+$PersonalData
+```
+
+```Output
+Pet items found: 4
+
+Name          phone           age
+----          -----           ---
+Phoebe Cat    425-123-6789      6
+Lucky Shot    (206) 987-4321   12
+Elephant Wise 425-888-7766     87
+Wild Shrimp   (111)  222-3333   1
+```
+
+```powershell
+$PersonalData | Get-Member
+```
+
+```Output
+   TypeName: System.Management.Automation.PSCustomObject
+
+Name        MemberType   Definition
+----        ----------   ----------
+Equals      Method       bool Equals(System.Object obj)
+GetHashCode Method       int GetHashCode()
+GetType     Method       type GetType()
+ToString    Method       string ToString()
+age         NoteProperty int age=6
+Name        NoteProperty string Name=Phoebe Cat
+phone       NoteProperty string phone=425-123-6789
+```
+
+   `Get-Member`cmdlet は, **age** の性質が整数であることを示すために使用されます.
+
+## パラメータは
+
+# ストリングから変換する
+
+### - 境界線
+
+要素間の境界を特定する規則表現を指定します.分割によって生成される要素は,生成されたオブジェクトの属性になります. 境界線は最終的に, 型の **Split** 方法への呼び出しで使用されます.`[System.Text.RegularExpressions.RegularExpression]` .
+
+```yaml
+Type: System.String
+Parameter Sets: ByDelimiter
+Aliases: DEL
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -IncludeExtent を含む
+
+このcmdletには,標準的に削除される extent text 属性が含まれていることを示します.
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: TemplateParsing
+Aliases: IE
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -InputObject
+
+管道から受信された文字列,または文字列オブジェクトを含む変数を指定します.
+
+```yaml
+Type: System.String
+Parameter Sets: (All)
+Aliases:
+
+Required: True
+Position: 0
+Default value: None
+Accept pipeline input: True (ByValue)
+Accept wildcard characters: False
+```
+
+### -プロパティ名稱
+
+作成されたオブジェクトで分割値を割り当てられるプロパティ名列を指定します.分割または解析するテキストの各行は,プロパティ値を表示する要素を生成します.要素がキャプチャグループの結果であり,そのキャプチャグループに名前がある場合 (例えば, )`(?&lt;name&gt;)`    `(?&#x27;name&#x27;)`),その場合,そのキャプチャグループの名前は,そのプロパティに割り当てられます.
+
+**PropertyName** アレイに要素を入力すると,その名前がまだ命名されていないプロパティに割り当てられます.
+
+フィールドよりも多くのプロパティ名を示せば,PowerShell は追加のプロパティ名を無視します.すべてのフィールドに名前を与えるのに十分なプロパティ名を指定しない場合は,PowerShell は自動的に名前のないプロパティに数値的なプロパティ名を割り当てます: **P1**, **P2**,など.
+
+```yaml
+Type: System.String[]
+Parameter Sets: ByDelimiter
+Aliases: PN
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -テンプレートコンテンツ
+
+このcmdletで文字列を割り当てられる属性を記述する表現,または変数として保存された表現を指定します.テンプレートフィールド仕様の構文は以下の通りです: `{[optional-typecast]&lt;name&gt;:&lt;example-value&gt;}` .
+
+```yaml
+Type: System.String[]
+Parameter Sets: TemplateParsing
+Aliases: TC
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -テンプレートファイル
+
+文字列の望ましい解析のためのテンプレートを含むファイルをマレイとして指定します.テンプレートファイルでは,プロパティとその値は,下記のように括弧に囲まれています. **Name**プロパティなどのプロパティが複数表示された場合,あなたは星座 () を追加できます.`*`) を示すため,複数のレコードが生じる.これは複数のプロパティを単一のレコードに抽出することを避ける.
+
+```Output
+{Name*:David Chew}
+{City:Redmond}, {State:WA}
+{Name*:Evan Narvaez}    {Name*:Antonio Moreno}
+{City:Issaquah}, {State:WA}
+```
+
+```yaml
+Type: System.String[]
+Parameter Sets: TemplateParsing
+Aliases: TF
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -UpdateTemplate
+
+このcmdletは学習アルゴリズムの結果をテンプレートファイル内のコメントに保存することを示しています. これによりアルゴリズムの学習プロセスは速くなります.このパラメータを使用するには, **TemplateFile**パラメータを持つテンプレートファイルも指定する必要があります.
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: TemplateParsing
+Aliases: UT
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### 共通パラメーター
+
+このcmdletは,共通パラメータである: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction,および -WarningVariableをサポートしています.詳細については, [about_CommonParameters]をご覧ください.
+
+## 輸入は
+
+### System.String でした.
+
+## 輸出は
+
+### システム管理自動化PSCustomObject
+
+##  NOTES  記事ができました.
+
+Windows PowerShell では,次のアライスがあります.`ConvertFrom-String`:
+
+ - -`CFS`
+
+## 関連リンク
+
+[ConvertFrom-String:例に基づくテキスト解析](https://devblogs.microsoft.com/powershell/convertfrom-string-example-based-text-parsing/) 
+
+[ConvertFrom-StringData](ConvertFrom-StringData.md) は,このデータから
+
+[ConvertFrom-Csv](ConvertFrom-Csv.md) について
+
+[ConvertTo-Xml](ConvertTo-Xml.md) 
+###英語原文###
+# ConvertFrom-String
+
+## SYNOPSIS
+Extracts and parses structured properties from string content.
+
+## SYNTAX
+
+### ByDelimiter (Default)
+
+```
+ConvertFrom-String [-Delimiter &lt;String&gt;] [-PropertyNames &lt;String[]&gt;] [-InputObject] &lt;String&gt;
+ [&lt;CommonParameters&gt;]
+```
+
+### TemplateParsing
+
+```
+ConvertFrom-String [-TemplateFile &lt;String[]&gt;] [-TemplateContent &lt;String[]&gt;] [-IncludeExtent]
+ [-UpdateTemplate] [-InputObject] &lt;String&gt; [&lt;CommonParameters&gt;]
+```
+
+## DESCRIPTION
+
+The `ConvertFrom-String` cmdlet extracts and parses structured properties from string content. This
+cmdlet generates an object by parsing text from a traditional text stream. For each string in the
+pipeline, the cmdlet splits the input by either a delimiter or a parse expression, and then assigns
+property names to each of the resulting split elements. You can provide these property names; if you
+do not, they are automatically generated for you.
+
+The cmdlet&#x27;s default parameter set, **ByDelimiter**, splits exactly on the regular expression
+delimiter. It does not perform quote matching or delimiter escaping as the `Import-Csv` cmdlet does.
+
+The cmdlet&#x27;s alternate parameter set, **TemplateParsing**, generates elements from the groups that
+are captured by a regular expression. For more information on regular expressions, see [about_Regular_Expressions](../Microsoft.PowerShell.Core/About/about_Regular_Expressions.md).
+
+This cmdlet supports two modes: basic delimited parsing, and automatically-generated, example-driven
+parsing.
+
+Delimited parsing, by default, splits the input at white space, and assigns property names to the
+resulting groups.
+
+You can customize the delimiter by piping the `ConvertFrom-String` results into one of the
+`Format-*` cmdlets, or you can use the **Delimiter** parameter.
+
+The cmdlet also supports automatically-generated, example-driven parsing based on the [FlashExtract, research work by Microsoft Research](https://www.microsoft.com/research/publication/flashextract-framework-data-extraction-examples/).
+
+## EXAMPLES
+
+### Example 1: Generate an object with default property names
+
+```powershell
+&quot;Hello World&quot; | ConvertFrom-String
+```
+
+```Output
+P1    P2
+--    --
+Hello World
+```
+
+This command generates an object with default property names, **P1** and **P2**.
+
+### Example 1A: Get to know the generated object
+
+This command generates one object with properties **P1**, **P2**; both properties are of **String**
+type, by default.
+
+```powershell
+&quot;Hello World&quot; | ConvertFrom-String | Get-Member
+```
+
+```Output
+
+   TypeName: System.Management.Automation.PSCustomObject
+
+Name        MemberType   Definition
+----        ----------   ----------
+Equals      Method       bool Equals(System.Object obj)
+GetHashCode Method       int GetHashCode()
+GetType     Method       type GetType()
+ToString    Method       string ToString()
+P1          NoteProperty string P1=Hello
+P2          NoteProperty string P2=World
+```
+
+### Example 2: Generate an object with default property names using a delimiter
+
+This command generates an object with a domain and username using the backslash (`\`) as the
+delimiter. The backslash character must be escaped with another backslash when using regular
+expressions.
+
+```powershell
+&quot;Contoso\Administrator&quot; | ConvertFrom-String -Delimiter &quot;\\&quot;
+```
+
+```Output
+P1      P2
+--      --
+Contoso Administrator
+```
+
+### Example 3: Generate an object that contains two named properties
+
+The following example creates objects from Windows hosts file entries.
+
+```powershell
+$content = Get-Content C:\Windows\System32\drivers\etc\hosts
+$content = $content -match &quot;^[^#]&quot;
+$content | ConvertFrom-String -PropertyNames IP, Server
+```
+
+```Output
+IP             Server
+--             ------
+192.168.7.10   W2012R2
+192.168.7.20   W2016
+192.168.7.101  WIN8
+192.168.7.102  WIN10
+```
+
+The `Get-Content` cmdlet stores the content of a Windows hosts file in `$content`. The second
+command removes any comments at the beginning of the hosts file using a regular expression that
+matches any line that does not start with (`#`). The last command converts the remaining text into
+objects with **Server** and **IP** properties.
+
+### Example 4: Use an expression as the value of the TemplateContent parameter, save the results in a variable.
+
+This command uses an expression as the value of the **TemplateContent** parameter. The expression is
+saved in a variable for simplicity. Windows PowerShell understands now that the string that is used
+on the pipeline to `ConvertFrom-String` has three properties:
+
+- **Name**
+- **phone**
+- **age**
+
+```powershell
+$template = @&#x27;
+{Name*:Phoebe Cat}, {phone:425-123-6789}, {age:6}
+{Name*:Lucky Shot}, {phone:(206) 987-4321}, {age:12}
+&#x27;@
+
+$testText = @&#x27;
+Phoebe Cat, 425-123-6789, 6
+Lucky Shot, (206) 987-4321, 12
+Elephant Wise, 425-888-7766, 87
+Wild Shrimp, (111)  222-3333, 1
+&#x27;@
+
+$PersonalData = $testText | ConvertFrom-String -TemplateContent $template
+Write-Output (&quot;Pet items found: &quot; + ($PersonalData.Count))
+$PersonalData
+```
+
+```Output
+Pet items found: 4
+
+Name          phone           age
+----          -----           ---
+Phoebe Cat    425-123-6789    6
+Lucky Shot    (206) 987-4321  12
+Elephant Wise 425-888-7766    87
+Wild Shrimp   (111)  222-3333 1
+```
+
+Each line in the input is evaluated by the sample matches. If the line matches the examples given in
+the pattern, values are extracted and passed to the output variable.
+
+The sample data, `$template`, provides two different phone formats:
+
+- `425-123-6789`
+- `(206) 987-4321`
+
+The sample data also provides two different age formats:
+
+- `6`
+- `12`
+
+This implies that phones like `(206) 987 4321` will not be recognized, because there&#x27;s no sample
+data that matches that pattern because there are no hyphens.
+
+### Example 5: Specifying data types to the generated properties
+
+This is the same example as Example 4, above. The difference is that the pattern string includes a
+data type for each desired property.
+
+```powershell
+$template = @&#x27;
+{[string]Name*:Phoebe Cat}, {[string]phone:425-123-6789}, {[int]age:6}
+{[string]Name*:Lucky Shot}, {[string]phone:(206) 987-4321}, {[int]age:12}
+&#x27;@
+
+$testText = @&#x27;
+Phoebe Cat, 425-123-6789, 6
+Lucky Shot, (206) 987-4321, 12
+Elephant Wise, 425-888-7766, 87
+Wild Shrimp, (111)  222-3333, 1
+&#x27;@
+
+$PersonalData = $testText | ConvertFrom-String -TemplateContent $template
+Write-Output (&quot;Pet items found: &quot; + ($PersonalData.Count))
+$PersonalData
+```
+
+```Output
+Pet items found: 4
+
+Name          phone           age
+----          -----           ---
+Phoebe Cat    425-123-6789      6
+Lucky Shot    (206) 987-4321   12
+Elephant Wise 425-888-7766     87
+Wild Shrimp   (111)  222-3333   1
+```
+
+```powershell
+$PersonalData | Get-Member
+```
+
+```Output
+   TypeName: System.Management.Automation.PSCustomObject
+
+Name        MemberType   Definition
+----        ----------   ----------
+Equals      Method       bool Equals(System.Object obj)
+GetHashCode Method       int GetHashCode()
+GetType     Method       type GetType()
+ToString    Method       string ToString()
+age         NoteProperty int age=6
+Name        NoteProperty string Name=Phoebe Cat
+phone       NoteProperty string phone=425-123-6789
+```
+
+The `Get-Member` cmdlet is used to show that the **age** property is an integer.
+
+## PARAMETERS
+
+# ConvertFrom-String
+
+### -Delimiter
+
+Specifies a regular expression that identifies the boundary between elements. Elements that are
+created by the split become properties in the resulting object. The delimiter is ultimately used in
+a call to the **Split** method of the type `[System.Text.RegularExpressions.RegularExpression]`.
+
+```yaml
+Type: System.String
+Parameter Sets: ByDelimiter
+Aliases: DEL
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -IncludeExtent
+
+Indicates that this cmdlet includes an extent text property that is removed by default.
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: TemplateParsing
+Aliases: IE
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -InputObject
+
+Specifies strings received from the pipeline, or a variable that contains a string object.
+
+```yaml
+Type: System.String
+Parameter Sets: (All)
+Aliases:
+
+Required: True
+Position: 0
+Default value: None
+Accept pipeline input: True (ByValue)
+Accept wildcard characters: False
+```
+
+### -PropertyNames
+
+Specifies an array of property names to which to assign split values in the resulting object. Every
+line of text that you split or parse generates elements that represent property values. If the
+element is the result of a capture group, and that capture group is named (for example, `(?&lt;name&gt;)`
+or `(?&#x27;name&#x27;)` ), then the name of that capture group is assigned to the property.
+
+If you provide any elements in the **PropertyName** array, those names are assigned to properties
+that have not yet been named.
+
+If you provide more property names than there are fields, PowerShell ignores the extra property
+names. If you do not specify enough property names to name all fields, PowerShell automatically
+assigns numerical property names to any properties that are not named: **P1**, **P2**, etc.
+
+```yaml
+Type: System.String[]
+Parameter Sets: ByDelimiter
+Aliases: PN
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -TemplateContent
+
+Specifies an expression, or an expression saved as a variable, that describes the properties to
+which this cmdlet assigns strings. The syntax of a template field specification is the following: `{[optional-typecast]&lt;name&gt;:&lt;example-value&gt;}`.
+
+```yaml
+Type: System.String[]
+Parameter Sets: TemplateParsing
+Aliases: TC
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -TemplateFile
+
+Specifies a file, as an array, that contains a template for the desired parsing of the string. In
+the template file, properties and their values are enclosed in brackets, as shown below. If a
+property, such as the **Name** property and its associated other properties, appears multiple times,
+you can add an asterisk (`*`) to indicate that this results in multiple records. This avoids
+extracting multiple properties into a single record.
+
+```Output
+{Name*:David Chew}
+{City:Redmond}, {State:WA}
+{Name*:Evan Narvaez}    {Name*:Antonio Moreno}
+{City:Issaquah}, {State:WA}
+```
+
+```yaml
+Type: System.String[]
+Parameter Sets: TemplateParsing
+Aliases: TF
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -UpdateTemplate
+
+Indicates that this cmdlet saves the results of a learning algorithm into a comment in the template
+file. This makes the algorithm learning process faster. To use this parameter, you must also specify
+a template file with the **TemplateFile** parameter.
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: TemplateParsing
+Aliases: UT
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### CommonParameters
+
+This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable,
+-InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose,
+-WarningAction, and -WarningVariable. For more information, see
+[about_CommonParameters](../Microsoft.PowerShell.Core/About/about_CommonParameters.md).
+
+## INPUTS
+
+### System.String
+
+## OUTPUTS
+
+### System.Management.Automation.PSCustomObject
+
+## NOTES
+
+Windows PowerShell includes the following aliases for `ConvertFrom-String`:
+
+- `CFS`
+
+## RELATED LINKS
+
+[ConvertFrom-String: Example-based text parsing](https://devblogs.microsoft.com/powershell/convertfrom-string-example-based-text-parsing/)
+
+[ConvertFrom-StringData](ConvertFrom-StringData.md)
+
+[ConvertFrom-Csv](ConvertFrom-Csv.md)
+
+[ConvertTo-Xml](ConvertTo-Xml.md)
+###Microsoft Learn URL###
+https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.utility/convertfrom-string/?view=powershell-5.1
+</pre></html>

@@ -1,0 +1,500 @@
+<!doctype html><html lang="ja"><meta charset="utf-8"><pre class="record-source">###KnowledgeNo###
+PS51-WS2022-2026-3568
+###FormatID###
+PS51-WS2022
+###CreatedAt###
+2026-08-01 00:00
+###UpdatedAt###
+2026-08-01 00:00
+###タイトル###
+about_Methods
+###モジュール###
+Microsoft.PowerShell.Core
+###製品###
+Windows PowerShell 5.1
+###対応OS###
+Windows Server 2022
+###日本語訳###
+# about_Methodsについて
+
+## 短編説明
+
+PowerShellでオブジェクト上でアクションを実行するための方法を使用する方法を説明します.
+
+## 長い説明
+
+PowerShellでは,データストアやコンピュータの状態のアイテムを表示するオブジェクトを使用します.例えば,FileInfoオブジェクトはファイルシステムドライブ内のファイル,ProsesInfoオブジェクトはコンピュータ上のプロセスを表示します.
+
+対象には,その対象に関するデータを保存する性質,また,その対象を変更する方法を備えている.
+
+&quot;方法&quot;とは,オブジェクトで実行できるアクションを指定する一連の指示です.例えば,`FileInfo`というオブジェクトが含まれています.`CopyTo`のファイルをコピーする方法`FileInfo`対象を表す.
+
+対象の方法を得るには,  を使って`Get-Member`cmdlet.MemberType**の性質を&quot;メソッド&quot;の値で使用します.次のコマンドでプロセスオブジェクトのメソッドが表示されます.
+
+```powershell
+Get-Process | Get-Member -MemberType Method
+```
+
+```Output
+TypeName: System.Diagnostics.Process
+
+Name                      MemberType Definition
+----                      ---------- ----------
+BeginErrorReadLine        Method     System.Void BeginErrorReadLine()
+BeginOutputReadLine       Method     System.Void BeginOutputReadLine()
+...
+Kill                      Method     System.Void Kill()
+Refresh                   Method     System.Void Refresh()
+Start                     Method     bool Start()
+ToString                  Method     string ToString()
+WaitForExit               Method     bool WaitForExit(int milliseconds), ...
+WaitForInputIdle          Method     bool WaitForInputIdle(int millisecon...
+```
+
+方法を実行またはオブジェクトの方法を&quot;呼び出す&quot;には,点 (.),方法名,括弧の集合 &quot;(&quot;を入力してください&quot;. 方法に参数がある場合は,括弧の中に参数値を置く. 括弧は,議論がない場合でも,すべての方法呼び出しに必要である. 方法が複数の参数を取っている場合,コマで分離する必要があります.
+
+例えば,次のコマンドは,コンピュータ上のノートパッドプロセスを終了するために, Kill of processes という方法を呼び出す.
+
+```powershell
+$notepad = Get-Process notepad
+$notepad.Kill()
+```
+
+この例は,上記の記述を組み合わせることで縮短できます.
+
+```powershell
+(Get-Process Notepad).Kill()
+```
+
+   `Get-Process`命令は,キルメソッドが呼び出す前に実行されることを確認するために括弧に囲まれています.`Kill`返済された方法に呼びかける.`Process`対象.
+
+もう一つの非常に有用な方法は,です.`Replace`弦の方法. `Replace`下記の例では,ドット (.) は文字列の終尾引用の直後に置かれます.
+
+```powershell
+&#x27;this is rocket science&#x27;.Replace(&#x27;rocket&#x27;, &#x27;rock&#x27;)
+```
+
+```Output
+this is rock science
+```
+
+前例のように,コマンド,変数内のオブジェクト,またはオブジェクト (引用文字列のような) を生成する他のいずれかを使用することで得られるオブジェクトに方法を呼び出すことができます.
+
+PowerShell 4.0 から,ダイナミックな方法名を使用した方法インクレーションがサポートされています.
+
+## 方法について学ぶ
+
+対象の方法の定義を見つけるには,オブジェクトタイプのトピックの支援欄に行って,その方法ページを探します.例えば,次のページではプロセスオブジェクトの方法について説明します [System.Diagnostics.Process] (/dotnet/api/system.diagnostics.process#methods).
+
+方法の議論を決定するには,PowerShell cmdletの構文図のような方法定義をレビューしてください.
+
+方法定義には,PowerShell cmdletsのパラメータセットのような方法署名が1つまたは複数の方法署名が含まれる可能性があります.この署名は,方法を呼び出すためのすべての有効なコマンドフォーマットを表示します.
+
+例えば,は`CopyTo`の方法について`FileInfo`クラスには以下の2つの方法署名が含まれています.
+
+```
+    CopyTo(String destFileName)
+    CopyTo(String destFileName, Boolean overwrite)
+```
+
+最初の方法署名は,目的地ファイル名 (およびパス) を取る.次の例では,最初の  を使います.`CopyTo`をコピーする方法です.`Final.txt` ファイルに`C:\Bin`ディレクトリです.
+
+```powershell
+(Get-ChildItem C:\final.txt).CopyTo(&quot;C:\bin\final.txt&quot;)
+```
+
+&gt; [!NOTE] &gt; PowerShellの _argument_モードとは異なり,オブジェクトメソッドは _expression_ &gt;モードで実行されます.これは,PowerShell が構築された .NET フレームワークへのパス・パスです. _expression_モードでは,口コミ (未引用文字列) の議論が許可されていません.この違いは,パスポートとして使用するときに見ることができます. &gt;パスポートとして実行する際に,パスポートに対して.
+
+第二の方法署名は,目的地ファイル名とブール値を取り入れ,それが既に存在している場合は,目的地ファイルが覆われるかどうかを決定します.
+
+次の例では,第2の文字を使用します.`CopyTo`をコピーする方法です.`Final.txt` ファイルに`C:\Bin`ダイレクトリや既存のファイルを書き換えることができます.
+
+```powershell
+(Get-ChildItem C:\final.txt).CopyTo(&quot;C:\bin\final.txt&quot;, $true)
+```
+
+## メンバーアクセスリスト
+
+PowerShell 3.0 で起動すると,メンバーアクセスオペレーター () を使います.`.`) がリストコレクションに存在しない方法にアクセスするには,PowerShellが自動的にコレクション内のアイテムをリストアップし,各項目への方法を呼び出す.詳細については, [about_Member-Access_Enumeration] ([[about_Member-Access_Enumeration.md]]を参照してください.
+
+### 例文
+
+次の例では,オブジェクトの集合の中で個々のプロセスオブジェクトを**Kill**方法を実行します.
+
+最初のコマンドは,ノートパッドプロセスの3つのインスタンスを起動します. `Get-Process`ノートパッドプロセスの3つのインスタンスをすべて取り出し,そのすべてを に保存します.`$p`変数です.
+
+```powershell
+Notepad; Notepad; Notepad
+$p = Get-Process Notepad
+$p.Count
+```
+
+```Output
+3
+```
+
+次のコマンドは,すべての3つのプロセスで**Kill**方法を実行します.`$p`このコマンドは,プロセス集合に変数がないのに有効です.`Kill`方法.
+
+```powershell
+$p.Kill()
+Get-Process Notepad
+```
+
+   `Get-Process`コマンドは,  の命令が確認されていることを確認します.`Kill`方法が働いた.
+
+```Output
+Get-Process : Cannot find a process with the name &quot;notepad&quot;. Verify the proc
+ess name and call the cmdlet again.
+At line:1 char:12
++ Get-Process &lt;&lt;&lt;&lt;  notepad
+    + CategoryInfo          : ObjectNotFound: (notepad:String) [Get-Process]
+, ProcessCommandException
+    + FullyQualifiedErrorId : NoProcessFoundForGivenName,Microsoft.PowerShel
+l.Commands.GetProcessCommand
+```
+
+この例は,機能的に,  を使って相当する.`ForEach-Object`cmdlet は,コレクション内の各オブジェクトでメソッドを実行します.
+
+```powershell
+$p | ForEach-Object {$_.Kill()}
+```
+
+### ForEachとWhereの方法について
+
+PowerShell 4.0 から始め,方法構文を用いたコレクションフィルタリングがサポートされています.これはコレクションを扱うときに新しい2つの方法を使用することを可能にします.`ForEach`そして,`Where` .
+
+これらの方法については [about_arrays.md]で詳しく読むことができます.
+
+# about_Methodsについて
+
+## 複数のオーバーロードが存在するときに特定の方法を呼び出す
+
+.NET方法を呼び出すとき,次のシナリオを考えてください.方法がオブジェクトを採取するが,より特定のタイプを採取するインターフェースを通じて過負荷が発生した場合,PowerShellは,そのインタフェースに明示的に投下されない限り,オブジェクトを受け入れる方法を選択します.
+
+```powershell
+Add-Type -TypeDefinition @&#x27;
+
+   // Interface
+   public interface IFoo {
+     string Bar(int p);
+   }
+
+   // Type that implements the interface
+   public class Foo : IFoo {
+
+   // Direct member method named &#x27;Bar&#x27;
+   public string Bar(object p) { return $&quot;object: {p}&quot;; }
+
+   // *Explicit* implementation of IFoo&#x27;s &#x27;Bar&#x27; method().
+   string IFoo.Bar(int p) {
+       return $&quot;int: {p}&quot;;
+   }
+
+}
+&#x27;@
+```
+
+この例では,不具合な例が示されています.`object`**Bar**方法の過負荷が選択されました.
+
+```powershell
+[Foo]::new().Bar(1)
+```
+
+```Output
+object: 1
+```
+
+この例では,方法をIFooインターフェースに投げ込み,より具体的な **Bar**方法のオーバーロードを選択します.
+
+```powershell
+([IFoo] [Foo]::new()).Bar(1)
+```
+
+```Output
+int: 1
+```
+
+## ファイルシステム経路をたどる .NET方法を利用する
+
+PowerShellでは,プロセスごとに複数のランスペースをサポートします.各ランスペースには独自の _current directory_があります.これは現在のプロセスの作業ディレクトリとは同じではありません.`[System.Environment]::CurrentDirectory` .
+
+.NET方法はプロセス作業ディレクトリを使用します.PowerShell cmdletsはRunspace位置を使用します.また, .NET方法は,ネイティブファイルシステムパスのみで動作します.PowerShell Pathオブジェクトではありません. .NET方法でPowerShellパスを使用するには, .NET方法に転送する前にファイルシステムネイティブパスへのパスを解消する必要があります.
+
+## また, を参照してください.
+
+- [about_Objects] ((about_Objects.md) - [about_Member-Access_Enumeration] ((about_Member-Access_Enumeration.md) - [about_Properties] ((about_Properties.md) - [Get-Member] (xref:Microsoft.PowerShell.Utility.Get-Member) - 
+###英語原文###
+# about_Methods
+
+## Short description
+
+Describes how to use methods to perform actions on objects in PowerShell.
+
+## Long description
+
+PowerShell uses objects to represent the items in data stores or the state of
+the computer. For example, FileInfo objects represent the files in file system
+drives and ProcessInfo objects represent the processes on the computer.
+
+Objects have properties, which store data about the object, and methods that
+let you change the object.
+
+A &quot;method&quot; is a set of instructions that specify an action you can perform on
+the object. For example, the `FileInfo` object includes the `CopyTo` method
+that copies the file that the `FileInfo` object represents.
+
+To get the methods of any object, use the `Get-Member` cmdlet. Use its
+**MemberType** property with a value of &quot;Method&quot;. The following command gets
+the methods of process objects.
+
+```powershell
+Get-Process | Get-Member -MemberType Method
+```
+
+```Output
+TypeName: System.Diagnostics.Process
+
+Name                      MemberType Definition
+----                      ---------- ----------
+BeginErrorReadLine        Method     System.Void BeginErrorReadLine()
+BeginOutputReadLine       Method     System.Void BeginOutputReadLine()
+...
+Kill                      Method     System.Void Kill()
+Refresh                   Method     System.Void Refresh()
+Start                     Method     bool Start()
+ToString                  Method     string ToString()
+WaitForExit               Method     bool WaitForExit(int milliseconds), ...
+WaitForInputIdle          Method     bool WaitForInputIdle(int millisecon...
+```
+
+To perform or &quot;invoke&quot; a method of an object, type a dot (.), the method name,
+and a set of parentheses &quot;()&quot;. If the method has arguments, place the argument
+values inside the parentheses. The parentheses are required for every method
+call, even when there are no arguments. If the method takes multiple arguments,
+they should be separated by commas.
+
+For example, the following command invokes the Kill method of processes to end
+the Notepad process on the computer.
+
+```powershell
+$notepad = Get-Process notepad
+$notepad.Kill()
+```
+
+This example can be shortened by combining the above statements.
+
+```powershell
+(Get-Process Notepad).Kill()
+```
+
+The `Get-Process` command is enclosed in parentheses to ensure that it
+runs before the Kill method is invoked. The `Kill` method is then invoked
+on the returned `Process` object.
+
+Another very useful method is the `Replace` method of strings. The `Replace`
+method, replaces text within a string. In the example below, the dot (.) can
+be placed immediately after the end quote of the string.
+
+```powershell
+&#x27;this is rocket science&#x27;.Replace(&#x27;rocket&#x27;, &#x27;rock&#x27;)
+```
+
+```Output
+this is rock science
+```
+
+As shown in the previous examples, you can invoke a method on an object that
+you get by using a command, an object in a variable, or anything that
+results in an object (like a string in quotes).
+
+Starting in PowerShell 4.0, method invocation by using dynamic method names is
+supported.
+
+## Learning about methods
+
+To find definitions of the methods of an object, go to help topic for the
+object type and look for its methods page. For example, the following page
+describes the methods of process objects
+[System.Diagnostics.Process](/dotnet/api/system.diagnostics.process#methods).
+
+To determine the arguments of a method, review the method definition, which is
+like the syntax diagram of a PowerShell cmdlet.
+
+A method definition might have one or more method signatures, which are like
+the parameter sets of PowerShell cmdlets. The signatures show all of the valid
+formats of commands to invoke the method.
+
+For example, the `CopyTo` method of the `FileInfo` class contains the following
+two method signatures:
+
+```
+    CopyTo(String destFileName)
+    CopyTo(String destFileName, Boolean overwrite)
+```
+
+The first method signature takes the destination file name (and a path). The
+following example uses the first `CopyTo` method to copy the `Final.txt` file
+to the `C:\Bin` directory.
+
+```powershell
+(Get-ChildItem C:\final.txt).CopyTo(&quot;C:\bin\final.txt&quot;)
+```
+
+&gt; [!NOTE]
+&gt; Unlike PowerShell&#x27;s _argument_ mode, object methods execute in _expression_
+&gt; mode, which is a pass-through to the .NET framework that PowerShell is built
+&gt; on. In _expression_ mode **bareword** arguments (unquoted strings) are not
+&gt; allowed. You can see this difference when using the path as a parameter,
+&gt; versus the path as an argument. You can read more about parsing modes in
+&gt; [about_Parsing](about_Parsing.md)
+
+The second method signature takes a destination file name and a Boolean value
+that determines whether the destination file should be overwritten, if it
+already exists.
+
+The following example uses the second `CopyTo` method to copy the `Final.txt`
+file to the `C:\Bin` directory, and to overwrite existing files.
+
+```powershell
+(Get-ChildItem C:\final.txt).CopyTo(&quot;C:\bin\final.txt&quot;, $true)
+```
+
+## Member-access enumeration
+
+Starting in PowerShell 3.0, when you use the member-access operator (`.`) to
+access a method that does not exist on a list collection, PowerShell
+automatically enumerates the items in the collection and invokes the method on
+each item. For more information, see
+[about_Member-Access_Enumeration](about_Member-Access_Enumeration.md).
+
+### Examples
+
+The following example runs the **Kill** method of individual process objects in
+a collection of objects.
+
+The first command starts three instances of the Notepad process. `Get-Process`
+gets all three instance of the Notepad process and saves them in the `$p`
+variable.
+
+```powershell
+Notepad; Notepad; Notepad
+$p = Get-Process Notepad
+$p.Count
+```
+
+```Output
+3
+```
+
+The next command runs the **Kill** method on all three processes in the `$p`
+variable. This command works even though a collection of processes does not
+have a `Kill` method.
+
+```powershell
+$p.Kill()
+Get-Process Notepad
+```
+
+The `Get-Process` command confirms that the `Kill` method worked.
+
+```Output
+Get-Process : Cannot find a process with the name &quot;notepad&quot;. Verify the proc
+ess name and call the cmdlet again.
+At line:1 char:12
++ Get-Process &lt;&lt;&lt;&lt;  notepad
+    + CategoryInfo          : ObjectNotFound: (notepad:String) [Get-Process]
+, ProcessCommandException
+    + FullyQualifiedErrorId : NoProcessFoundForGivenName,Microsoft.PowerShel
+l.Commands.GetProcessCommand
+```
+
+This example is functionally equivalent to using the `ForEach-Object` cmdlet to
+run the method on each object in the collection.
+
+```powershell
+$p | ForEach-Object {$_.Kill()}
+```
+
+### ForEach and Where methods
+
+Beginning in PowerShell 4.0, collection filtering using a method syntax is
+supported. This allows use of two new methods when dealing with collections
+`ForEach` and `Where`.
+
+You can read more about these methods in [about_Arrays](about_arrays.md)
+
+# about_Methods
+
+## Calling a specific method when multiple overloads exist
+
+Consider the following scenario when calling .NET methods. If a method takes an
+object but has an overload via an interface taking a more specific type,
+PowerShell chooses the method that accepts the object unless you explicitly
+cast it to that interface.
+
+```powershell
+Add-Type -TypeDefinition @&#x27;
+
+   // Interface
+   public interface IFoo {
+     string Bar(int p);
+   }
+
+   // Type that implements the interface
+   public class Foo : IFoo {
+
+   // Direct member method named &#x27;Bar&#x27;
+   public string Bar(object p) { return $&quot;object: {p}&quot;; }
+
+   // *Explicit* implementation of IFoo&#x27;s &#x27;Bar&#x27; method().
+   string IFoo.Bar(int p) {
+       return $&quot;int: {p}&quot;;
+   }
+
+}
+&#x27;@
+```
+
+In this example the less specific `object` overload of the **Bar** method was
+chosen.
+
+```powershell
+[Foo]::new().Bar(1)
+```
+
+```Output
+object: 1
+```
+
+In this example we cast the method to the interface **IFoo** to select the more
+specific overload of the **Bar** method.
+
+```powershell
+([IFoo] [Foo]::new()).Bar(1)
+```
+
+```Output
+int: 1
+```
+
+## Using .NET methods that take filesystem paths
+
+PowerShell supports multiple runspaces per process. Each runspace has its own
+_current directory_. This is not the same as the working directory of the
+current process: `[System.Environment]::CurrentDirectory`.
+
+.NET methods use the process working directory. PowerShell cmdlets use the
+Runspace location. Also, .NET methods only work with native filesystem paths,
+not PowerShell Path objects. To use PowerShell paths with .NET methods, you
+must resolve the path to a filesystem-native path before passing it to the .NET
+method.
+
+## See also
+
+- [about_Objects](about_Objects.md)
+- [about_Member-Access_Enumeration](about_Member-Access_Enumeration.md)
+- [about_Properties](about_Properties.md)
+- [Get-Member](xref:Microsoft.PowerShell.Utility.Get-Member)
+###Microsoft Learn URL###
+https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_methods/?view=powershell-5.1
+</pre></html>

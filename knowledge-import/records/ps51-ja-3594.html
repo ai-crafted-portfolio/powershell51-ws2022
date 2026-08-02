@@ -1,0 +1,804 @@
+<!doctype html><html lang="ja"><meta charset="utf-8"><pre class="record-source">###KnowledgeNo###
+PS51-WS2022-2026-3594
+###FormatID###
+PS51-WS2022
+###CreatedAt###
+2026-08-01 00:00
+###UpdatedAt###
+2026-08-01 00:00
+###タイトル###
+about_PSItem
+###モジュール###
+Microsoft.PowerShell.Core
+###製品###
+Windows PowerShell 5.1
+###対応OS###
+Windows Server 2022
+###日本語訳###
+# about_PSItemについて
+
+## 短編説明
+
+パイプラインオブジェクトの現在のオブジェクトを含む自動変数.
+
+## 長い説明
+
+PowerShellには2つの[自動変数][03],`$_`&#x27;$PSItem` と,パイプライン内の現在のオブジェクトを指す.
+
+`$PSItem`PowerShellに追加され,変数の名前には明確な意味を与えるため,変更された.しかし,実際には, _dollar sign underscore_ 形式は,`$_`普段は使われています.
+
+この記事では,利用しているのに,`$PSItem`例にすると,`$PSItem`と置き換えることができる.`$_`すべての例に示しています.`$_`優先順位は使用です.
+
+の一般的な使用例はいくつかあります.`$PSItem`:
+
+- の**プロセス**パラメータの脚本ブロックに`ForEach-Object`cmdlet - の**FilterScript**パラメータのスクリプトブロックに`Where-Object`cmdlet - 内在的方法 **ForEach**と **Where**では,遅延結合スクリプトブロックパラメータで - で`switch`条件値と関連記述の条件値 -  の内`process`函数ブロックの記述 -  の記述の中で`filter`- 定義のブロックで**ValidateScript**属性 - の記述ブロックで`catch`
+
+この記事の残りは,使用方法の例を挙げています.`$PSItem`これらの使用例のために.
+
+## ForEach-Object プロセスパラメータ
+
+[ForEach-Object][15] cmdletは,パイプライン内のオブジェクトで動作するように設計されており,パイプライン内のすべてのオブジェクトに対して一度に**プロセス**パラメータのスクリプトブロックを実行します.
+
+ を使っていい.`$PSItem`**プロセス**パラメータのスクリプトブロックに載っているが, **Begin**や **End**パラメータのスクリプトブロックに載っていない.`$PSItem`**Begin**または **End**パラメータスクリプトブロックでは,値が です.`$null`なぜなら,スクリプトブロックはパイプライン内の各個に動作しないからです.
+
+```powershell
+$parameters = @{
+    Begin   = { Write-Host &quot;PSItem in Begin is: $PSItem&quot; }
+    Process = {
+        Write-Host &quot;PSItem in Process is: $PSItem&quot;
+        $PSItem + 1
+    }
+    End     = { Write-Host &quot;PSItem in End is: $PSItem&quot; }
+}
+
+$result = 1, 2, 3 | ForEach-Object @parameters
+
+Write-Host &quot;Result is: $result&quot;
+```
+
+```output
+PSItem in Begin is:
+PSItem in Process is: 1
+PSItem in Process is: 2
+PSItem in Process is: 3
+PSItem in End is:
+Result is: 2 3 4
+```
+
+## Where-Object FilterScriptは,何処に
+
+[Where-Object][16] cmdletは,パイプライン内のオブジェクトをフィルタリングするように設計されています.
+
+ を使っていい.`$PSItem`**FilterScript**パラメータのスクリプトブロックで,パイプライン内の各入力オブジェクトに対して一度実行されます.
+
+```powershell
+1, 2, 3 | Where-Object -FilterScript { ($PSItem % 2) -eq 0 }
+```
+
+```output
+2
+```
+
+この例では,FilterScriptは,現在のオブジェクトが偶数かどうかを確認し,奇数値をフィルタアウトし,ただ&quot;&quot;を返します.`2`元のリストから.
+
+## ForEachとWhereの方法について
+
+アレイの内在方法である[ForEach][01]と[Where][02]の両方が入力パラメータとしてスクリプトブロックを採用している.`$PSItem`脚本ブロックの内にある文字で,現在のオブジェクトにアクセスできます.
+
+```powershell
+@(&#x27;a&#x27;, &#x27;b&#x27;, &#x27;c&#x27;).ForEach({ $PSItem.ToUpper() }).Where({ $PSItem -ceq &#x27;B&#x27; })
+```
+
+```output
+B
+```
+
+この例では,ForEach方法のスクリプトブロックが現在のオブジェクトを上層に表示します.その後,Where方法のスクリプトブロックは,ただだけ返します.`B` .
+
+## 遅延結合の脚本ブロックです.
+
+[遅延式脚本ブロック] [12] let you use `$PSItem`実行する前に,パイプラインされたcmdletのパラメータを定義する.
+
+```powershell
+dir config.log | Rename-Item -NewName { &quot;old_$($_.Name)&quot; }
+```
+
+## Switch の声明を表示する
+
+[スイッチステートメント] [13]では,使用できる.`$PSItem`アクションスクリプトブロックとステートメント条件スクリプトブロックの両方で.
+
+```powershell
+$numbers = 1, 2, 3
+
+switch ($numbers) {
+    { ($PSItem % 2) -eq 0 } { &quot;$PSItem is even&quot; }
+    default { &quot;$PSItem is odd&quot; }
+}
+```
+
+```output
+1 is odd
+2 is even
+3 is odd
+```
+
+この例では,条件式式式ブロックは,現在のオブジェクトが偶数であるかどうかをチェックします.偶数である場合は,関連するアクション式式式式式ブロックは,現在のオブジェクトが偶数であることを示すメッセージを出します.
+
+のアクションステートメントブロック`default`条件が出力すると,現在のオブジェクトが奇数であることを示すメッセージが出ます.
+
+## 関数プロセス声明がブロックする
+
+[関数]を定義する際は,使用できる.`$PSItem`の内側にある`process`ブロック定義は,ブロック定義ではなく,ブロック定義ではありません.`begin`    `end`ブロック定義.参照すると,`$PSItem`の内側にある`begin`    `end`ブロックの値が である.`$null`なぜなら,これらのブロックはパイプライン内の各物体に動作しないからです.
+
+を使用するときに`$PSItem`の内側にある`process`ブロック定義の記述,その値は,その関数がパイプラインで呼び出された場合,現在のオブジェクトであり,他の場合でも,`$null` .
+
+```powershell
+function Add-One {
+    process { $PSItem + 1 }
+}
+
+1, 2, 3 | Add-One
+```
+
+```output
+2
+3
+4
+```
+
+&gt; [!TIP] &gt; 活用できるのに`$PSItem`[先進機能]では,その理由が少ない.パイプラインから入力を受け取ろうとするなら,パラメータを定義するには,のいずれかを使ってよい.`ValueFromPipeline`&gt;または `ValueFromPipelineByPropertyName`[パラメータ][06] &gt;属性における議論.
+
+進階関数に設定する**パラメータ**属性とcmdlet結合を使用することで,実行が現在のオブジェクトを処理して必要な値を取得するよりも明確で予測可能になります.
+
+の良い使い方です.`$PSItem`進んだ関数では,関数が複数のパラメータを持つ場合,パイプラインから入力する際に,デバッグまたはログをチェックするために現在のオブジェクトそのものを検査することです.
+
+```powershell
+function Write-JsonLog {
+    [CmdletBinding()]
+    param(
+        [Parameter(ValueFromPipelineByPropertyName)]
+        [string]$Message
+    )
+    begin {
+        $entries = @()
+    }
+    process {
+        $entries += [pscustomobject]@{
+            Message   = $Message
+            TimeStamp = [datetime]::Now
+        }
+
+        if ($PSItem) {
+            $props  = $PSItem | ConvertTo-Json
+            $number = $entries.Length
+            Write-Verbose &quot;Input object $number is:`n$props&quot;
+        }
+    }
+    end {
+        ConvertTo-Json -InputObject $entries
+    }
+}
+```
+
+この例関数は,メッセージとタイムスタンプを付いた JSON オブジェクトの配列を輸出する.パイプラインに呼び出されると,各エントリに対して現在のオブジェクトの **Message** 属性を使用する.また,現在のオブジェクトの JSON 表現をverbose ストリームに書き込むので,実際の入力を輸出ログと比較して表示できます.
+
+```powershell
+$Items = @(
+    [pscustomobject]@{
+        Name    = &#x27;First Item&#x27;
+        Message = &#x27;A simple note&#x27;
+    }
+    [pscustomobject]@{
+        Name    = &#x27;Item with extra properties&#x27;
+        Message = &#x27;Missing message, has info instead&#x27;
+        Info    = &#x27;Some metadata&#x27;
+        Source  = &#x27;Where this came from&#x27;
+    }
+    [pscustomobject]@{
+        Name    = &#x27;Last Item&#x27;
+        Message = &#x27;This also gets logged&#x27;
+    }
+)
+
+$Items | Write-JsonLog -Verbose
+```
+
+```output
+VERBOSE: Input object 1 is:
+{
+    &quot;Name&quot;:  &quot;First Item&quot;,
+    &quot;Message&quot;:  &quot;A simple note&quot;
+}
+VERBOSE: Input object 2 is:
+{
+    &quot;Name&quot;:  &quot;Item with extra properties&quot;,
+    &quot;Message&quot;:  &quot;Missing message, has info instead&quot;,
+    &quot;Info&quot;:  &quot;Some metadata&quot;,
+    &quot;Source&quot;:  &quot;Where this came from&quot;
+}
+VERBOSE: Input object 3 is:
+{
+    &quot;Name&quot;:  &quot;Last Item&quot;,
+    &quot;Message&quot;:  &quot;This also gets logged&quot;
+}
+[
+    {
+        &quot;Message&quot;:  &quot;A simple note&quot;,
+        &quot;TimeStamp&quot;:  &quot;\/Date(1670344068257)\/&quot;
+    },
+    {
+        &quot;Message&quot;:  &quot;Missing message, has info instead&quot;,
+        &quot;TimeStamp&quot;:  &quot;\/Date(1670344068259)\/&quot;
+    },
+    {
+        &quot;Message&quot;:  &quot;This also gets logged&quot;,
+        &quot;TimeStamp&quot;:  &quot;\/Date(1670344068261)\/&quot;
+    }
+]
+```
+
+# about_PSItemについて
+
+## フィルター定義
+
+ を使っていい.`$PSItem`[フィルター][10]の定義の記述リストに.
+
+を使用するときに`$PSItem` での a`filter`定義では,その値は,パイプラインでフィルターを呼び出す場合,現在のオブジェクトであり,他の場合でも,`$null` .
+
+```powershell
+filter Test-IsEven { ($PSItem % 2) -eq 0 }
+
+1, 2, 3 | Test-IsEven
+```
+
+```output
+False
+True
+False
+```
+
+この例では,の文字が`Test-IsEven`フィルター出力 `$true`もし現在のオブジェクトが偶数であり,`$false`もしそうでないなら.
+
+## 検証スクリプト属性 ScriptBlock
+
+ を使っていい.`$PSItem`[ValidateScript][07]属性のスクリプトブロックに. **ValidateScript** と使用すると,`$PSItem`当時のオブジェクトの有効化値である.変数またはパラメータ値はアレイである場合,アレイ内の各オブジェクトに対して1回スクリプトブロックが呼び出される.`$PSItem` [U+0A2E][U+0A4C][U+0A1C][U+0A42][U+0A26][U+0A3E]オブジェクトとして.
+
+```powershell
+function Add-EvenNumber {
+    param(
+        [ValidateScript({ 0 -eq ($PSItem % 2) })]
+        [int[]]$Number
+    )
+
+    begin {
+        [int]$total = 0
+    }
+
+    process {
+        foreach ($n in $Number) {
+            $total += $n
+        }
+    }
+
+    end {
+        $total
+    }
+}
+
+Add-EvenNumber -Number 2, 4, 6
+
+Add-EvenNumber -Number 1, 2
+```
+
+```output
+12
+
+Add-EvenNumber : Cannot validate argument on parameter &#x27;Number&#x27;. The
+&quot; 0 -eq ($PSItem % 2) &quot; validation script for the argument with value &quot;1&quot;
+did not return a result of True. Determine why the validation script
+failed, and then try the command again.
+At line:1 char:24
++ Add-EvenNumber -Number 1, 2
++                        ~~~~
+    + CategoryInfo          : InvalidData: (:) [Add-EvenNumber],
+   ParameterBindingValidationException
+    + FullyQualifiedErrorId : ParameterArgumentValidationError,
+   Add-EvenNumber
+```
+
+この例では**ValidateScript**属性のためのスクリプトブロックは**Number**パラメータに転送されたすべての値に対して一度実行され,任意の値が偶数でない場合はエラーが返されます.
+
+   `Add-EvenNumber`機能は有効な入力番号を追加し,合計を返します.
+
+##    `catch`ブロック ステートメントをブロックする
+
+内では,`catch`ブロックの声明文, `$PSItem`対象は **ErrorRecord** のタイプです.
+
+```powershell
+try { NonsenseString }
+catch {
+    Write-Host &quot;An error occurred:&quot;
+    Write-Host $PSItem
+}
+```
+
+このスクリプトを実行すると,次の結果が返されます:
+
+```Output
+An error occurred:
+The term &#x27;NonsenseString&#x27; is not recognized as the name of a cmdlet, function,
+script file, or operable program. Check the spelling of the name, or if a path
+was included, verify that the path is correct and try again.
+```
+
+詳細については, [about_Try_Catch_Finally][14] の _Accessing exception information_セクションを参照してください.
+
+## の値を変更する`$PSItem`
+
+の値を変更することができます.`$PSItem`しかし,そうすることで,  に依存するコードの予想される行動が変化する可能性があります.`$PSItem`例を挙げてみましょう.通常,この文字はです.`switch`この記述は,アレイ内のすべての値を処理します.`$names`の値が値上がりしているからです.`$PSItem`行動宣言ブロックの内部で変更され,`switch`記述は最初の値のみを処理します.
+
+```powershell
+$names = &#x27;Alice&#x27;, &#x27;Charlie&#x27;
+switch ($names) {
+    Alice   { &quot;$PSItem says &#x27;Hello!&#x27;&quot;; $PSItem = &#x27;Bob&#x27; }
+    Bob     { &quot;$PSItem says &#x27;Goodbye.&#x27;&quot;; $PSItem = &#x27;Charlie&#x27;; break }
+    Charlie { &quot;$PSItem says &#x27;How are you?&#x27;&quot; }
+}
+```
+
+がいつになったら`switch`声明は最初の値を評価する,`Alice`ブロック内には,値の  の値が表示されます.`$PSItem`に変更されました.`Bob`の評価にも影響する.`switch`声明.
+
+```Output
+Alice says &#x27;Hello!&#x27;
+Bob says &#x27;Goodbye.&#x27;
+```
+
+の値を変更することを避けるべきです.`$PSItem` .
+
+## また, を参照してください.
+
+- [about_Arrays][01] - [about_Automatic_Variables][03] - [about_Comparison_Operators][04] - [about_Functions][09] - [about_Script_Blocks][11] - [about_Switch][13] - [ForEach-Object][15] - [Where-Object][16]
+
+&lt;!--リンク参照 --&gt; [01]: about_Arrays.md#foreach [02]: about_Arrays.md#where [03]: about_Automatic_Variables.md [04]: about_Comparison_Operators.md#replacement-operator: about_Automatic_Variables.md [04]: about_Comparison_Operators.md#replacement-operator
+
+[06]: about_Functions_Advanced_Parameters.md#parameter-attribute [07]: about_Functions_Advanced_Parameters.md#validatescript-validation-attribute [08]: about_Functions_Advanced.md [09]: about_Functions.md [10]: about_Functions.md#filter-syntax [11]: about_Script_Blocks.md [12]: about_Script_Blocks.md: about_Script_Blocks.md [12]: about_Script_Blocks-with-parameters [13]: about_Switch.md [14]: about_Try_Catch_Full.md#accessing-ex-information [15]: x: Microsoft.Shell.Core.For-Object [16]: x:Shell.Power.Core.Where.
+###英語原文###
+# about_PSItem
+
+## Short description
+
+The automatic variable that contains the current object in the pipeline object.
+
+## Long description
+
+PowerShell includes two [automatic variables][03], `$_` and &#x27;$PSItem` that
+refer to the current object in the pipeline.
+
+`$PSItem` was added to PowerShell in an attempt to provide a clearer meaning to
+the variable name. However, in practice, the _dollar sign underscore_ form `$_`
+is most commonly used.
+
+While this article uses `$PSItem` in the examples, `$PSItem` can be replaced
+with `$_` in every example. `$_` is the preferred usage.
+
+There are a few common use cases for `$PSItem`:
+
+- In the scriptblock for the **Process** parameter of the
+  `ForEach-Object`cmdlet
+- In the scriptblock for the **FilterScript** parameter of the `Where-Object`
+  cmdlet
+- In the intrinsic methods **ForEach** and **Where**
+- with delay-bind scriptblock parameters
+- In a `switch` statement&#x27;s conditional values and associated statements
+- In the `process` statement block of a function
+- In a `filter` definition
+- In the scriptblock of the **ValidateScript** attribute
+- In the statement block of a `catch`
+
+The rest of this article includes examples of using `$PSItem` for these use
+cases.
+
+## ForEach-Object Process parameter
+
+The [ForEach-Object][15] cmdlet is designed to operate on objects in the
+pipeline, executing the **Process** parameter&#x27;s scriptblock once for every
+object in the pipeline.
+
+You can use `$PSItem` in the **Process** parameter&#x27;s scriptblock but not in the
+**Begin** or **End** parameter scriptblocks. If you reference `$PSItem` in the
+**Begin** or **End** parameter scriptblocks, the value is `$null` because those
+scriptblocks don&#x27;t operate on each object in the pipeline.
+
+```powershell
+$parameters = @{
+    Begin   = { Write-Host &quot;PSItem in Begin is: $PSItem&quot; }
+    Process = {
+        Write-Host &quot;PSItem in Process is: $PSItem&quot;
+        $PSItem + 1
+    }
+    End     = { Write-Host &quot;PSItem in End is: $PSItem&quot; }
+}
+
+$result = 1, 2, 3 | ForEach-Object @parameters
+
+Write-Host &quot;Result is: $result&quot;
+```
+
+```output
+PSItem in Begin is:
+PSItem in Process is: 1
+PSItem in Process is: 2
+PSItem in Process is: 3
+PSItem in End is:
+Result is: 2 3 4
+```
+
+## Where-Object FilterScript
+
+The [Where-Object][16] cmdlet is designed to filter objects in the pipeline.
+
+You can use `$PSItem` in the scriptblock of the **FilterScript** parameter,
+which executes once for each input object in the pipeline.
+
+```powershell
+1, 2, 3 | Where-Object -FilterScript { ($PSItem % 2) -eq 0 }
+```
+
+```output
+2
+```
+
+In this example, the **FilterScript** checks to see if the current object is
+even, filtering out any odd values, and returns only `2` from the original
+list.
+
+## ForEach and Where methods
+
+Both the [ForEach][01] and [Where][02] intrinsic methods for arrays take a
+scriptblock as an input parameter. You can use the `$PSItem` in those
+scriptblocks to access the current object.
+
+```powershell
+@(&#x27;a&#x27;, &#x27;b&#x27;, &#x27;c&#x27;).ForEach({ $PSItem.ToUpper() }).Where({ $PSItem -ceq &#x27;B&#x27; })
+```
+
+```output
+B
+```
+
+In this example, the scriptblock of the **ForEach** method uppercases the
+current object. Then the scriptblock of the **Where** method returns only `B`.
+
+## Delay-bind scriptblocks
+
+[Delay-bind scriptblocks][12] let you use `$PSItem` to define parameters for a
+pipelined cmdlet before executing it.
+
+```powershell
+dir config.log | Rename-Item -NewName { &quot;old_$($_.Name)&quot; }
+```
+
+## Switch statements
+
+In [switch statements][13], you can use `$PSItem` in both action scriptblocks
+and statement condition scriptblocks.
+
+```powershell
+$numbers = 1, 2, 3
+
+switch ($numbers) {
+    { ($PSItem % 2) -eq 0 } { &quot;$PSItem is even&quot; }
+    default { &quot;$PSItem is odd&quot; }
+}
+```
+
+```output
+1 is odd
+2 is even
+3 is odd
+```
+
+In this example, the condition statement block checks whether the current
+object is even. If it&#x27;s even, the associated action statement block outputs a
+message indicating the current object is even.
+
+The action statement block for the `default` condition outputs a message
+indicating the current object is odd.
+
+## Function process statement blocks
+
+When you define a [function][09], you can use `$PSItem` in the `process` block
+definition but not in the `begin` or `end` block definitions. If you
+reference `$PSItem` in the `begin` or `end` blocks, the value is `$null`
+because those blocks don&#x27;t operate on each object in the pipeline.
+
+When you use `$PSItem` in the `process` statement block definition, the value
+is the current object if the function is called in the pipeline and otherwise
+`$null`.
+
+```powershell
+function Add-One {
+    process { $PSItem + 1 }
+}
+
+1, 2, 3 | Add-One
+```
+
+```output
+2
+3
+4
+```
+
+&gt; [!TIP]
+&gt; While you can use `$PSItem` in [advanced functions][08], there&#x27;s little
+&gt; reason to do so. If you intend to receive input from the pipeline, it&#x27;s best
+&gt; to define parameters with using either the `ValueFromPipeline` or
+&gt; `ValueFromPipelineByPropertyName` arguments in the [Parameter][06]
+&gt; attribute.
+
+Using the **Parameter** attribute and cmdlet binding for advanced functions
+makes the implementation more explicit and predictable than processing the
+current object to get the required values.
+
+One good use of `$PSItem` in advanced functions is to inspect the current
+object itself for debugging or logging when the function has multiple
+parameters that take input from the pipeline.
+
+```powershell
+function Write-JsonLog {
+    [CmdletBinding()]
+    param(
+        [Parameter(ValueFromPipelineByPropertyName)]
+        [string]$Message
+    )
+    begin {
+        $entries = @()
+    }
+    process {
+        $entries += [pscustomobject]@{
+            Message   = $Message
+            TimeStamp = [datetime]::Now
+        }
+
+        if ($PSItem) {
+            $props  = $PSItem | ConvertTo-Json
+            $number = $entries.Length
+            Write-Verbose &quot;Input object $number is:`n$props&quot;
+        }
+    }
+    end {
+        ConvertTo-Json -InputObject $entries
+    }
+}
+```
+
+This example function outputs an array of JSON objects with a message and
+timestamp. When called in a pipeline, it uses the **Message** property of the
+current object for each entry. It also writes the JSON representation of the
+current object itself to the verbose stream, so you can see the actual input
+compared to the output logs.
+
+```powershell
+$Items = @(
+    [pscustomobject]@{
+        Name    = &#x27;First Item&#x27;
+        Message = &#x27;A simple note&#x27;
+    }
+    [pscustomobject]@{
+        Name    = &#x27;Item with extra properties&#x27;
+        Message = &#x27;Missing message, has info instead&#x27;
+        Info    = &#x27;Some metadata&#x27;
+        Source  = &#x27;Where this came from&#x27;
+    }
+    [pscustomobject]@{
+        Name    = &#x27;Last Item&#x27;
+        Message = &#x27;This also gets logged&#x27;
+    }
+)
+
+$Items | Write-JsonLog -Verbose
+```
+
+```output
+VERBOSE: Input object 1 is:
+{
+    &quot;Name&quot;:  &quot;First Item&quot;,
+    &quot;Message&quot;:  &quot;A simple note&quot;
+}
+VERBOSE: Input object 2 is:
+{
+    &quot;Name&quot;:  &quot;Item with extra properties&quot;,
+    &quot;Message&quot;:  &quot;Missing message, has info instead&quot;,
+    &quot;Info&quot;:  &quot;Some metadata&quot;,
+    &quot;Source&quot;:  &quot;Where this came from&quot;
+}
+VERBOSE: Input object 3 is:
+{
+    &quot;Name&quot;:  &quot;Last Item&quot;,
+    &quot;Message&quot;:  &quot;This also gets logged&quot;
+}
+[
+    {
+        &quot;Message&quot;:  &quot;A simple note&quot;,
+        &quot;TimeStamp&quot;:  &quot;\/Date(1670344068257)\/&quot;
+    },
+    {
+        &quot;Message&quot;:  &quot;Missing message, has info instead&quot;,
+        &quot;TimeStamp&quot;:  &quot;\/Date(1670344068259)\/&quot;
+    },
+    {
+        &quot;Message&quot;:  &quot;This also gets logged&quot;,
+        &quot;TimeStamp&quot;:  &quot;\/Date(1670344068261)\/&quot;
+    }
+]
+```
+
+# about_PSItem
+
+## Filter definitions
+
+You can use `$PSItem` in the statement list of a [filter][10]&#x27;s definition.
+
+When you use `$PSItem` in a `filter` definition, the value is the current
+object if the filter is called in the pipeline and otherwise `$null`.
+
+```powershell
+filter Test-IsEven { ($PSItem % 2) -eq 0 }
+
+1, 2, 3 | Test-IsEven
+```
+
+```output
+False
+True
+False
+```
+
+In this example, the `Test-IsEven` filter outputs `$true` if the current object
+is an even number and `$false` if it isn&#x27;t.
+
+## The ValidateScript attribute ScriptBlock
+
+You can use `$PSItem` in the scriptblock of a [ValidateScript][07] attribute.
+When used with **ValidateScript**, `$PSItem` is the value of the current object
+being validated. When the variable or parameter value is an array, the
+scriptblock is called once for each object in the array with `$PSItem` as the
+current object.
+
+```powershell
+function Add-EvenNumber {
+    param(
+        [ValidateScript({ 0 -eq ($PSItem % 2) })]
+        [int[]]$Number
+    )
+
+    begin {
+        [int]$total = 0
+    }
+
+    process {
+        foreach ($n in $Number) {
+            $total += $n
+        }
+    }
+
+    end {
+        $total
+    }
+}
+
+Add-EvenNumber -Number 2, 4, 6
+
+Add-EvenNumber -Number 1, 2
+```
+
+```output
+12
+
+Add-EvenNumber : Cannot validate argument on parameter &#x27;Number&#x27;. The
+&quot; 0 -eq ($PSItem % 2) &quot; validation script for the argument with value &quot;1&quot;
+did not return a result of True. Determine why the validation script
+failed, and then try the command again.
+At line:1 char:24
++ Add-EvenNumber -Number 1, 2
++                        ~~~~
+    + CategoryInfo          : InvalidData: (:) [Add-EvenNumber],
+   ParameterBindingValidationException
+    + FullyQualifiedErrorId : ParameterArgumentValidationError,
+   Add-EvenNumber
+```
+
+In this example the scriptblock for the **ValidateScript** attribute runs once
+for each value passed to the **Number** parameter, returning an error if any
+value isn&#x27;t even.
+
+The `Add-EvenNumber` function adds the valid input numbers and returns the
+total.
+
+## The `catch` statement block
+
+Within a `catch` statement block, `$PSItem` contains the current error. The
+object is of type **ErrorRecord**.
+
+```powershell
+try { NonsenseString }
+catch {
+    Write-Host &quot;An error occurred:&quot;
+    Write-Host $PSItem
+}
+```
+
+Running this script returns the following result:
+
+```Output
+An error occurred:
+The term &#x27;NonsenseString&#x27; is not recognized as the name of a cmdlet, function,
+script file, or operable program. Check the spelling of the name, or if a path
+was included, verify that the path is correct and try again.
+```
+
+For more examples, see the _Accessing exception information_ section in
+[about_Try_Catch_Finally][14].
+
+## Changing the value of `$PSItem`
+
+You can change the value of `$PSItem` by assigning a new value to it. However,
+doing so can change the expected behavior of any code that relies on `$PSItem`.
+Consider the following example. Normally, the `switch` statement would process
+all values in the array `$names`. Because the value of `$PSItem` is changed
+inside the action statement block, the `switch` statement processes only the
+first value.
+
+```powershell
+$names = &#x27;Alice&#x27;, &#x27;Charlie&#x27;
+switch ($names) {
+    Alice   { &quot;$PSItem says &#x27;Hello!&#x27;&quot;; $PSItem = &#x27;Bob&#x27; }
+    Bob     { &quot;$PSItem says &#x27;Goodbye.&#x27;&quot;; $PSItem = &#x27;Charlie&#x27;; break }
+    Charlie { &quot;$PSItem says &#x27;How are you?&#x27;&quot; }
+}
+```
+
+When the `switch` statement evaluates the first value, `Alice`, it matches the
+first condition and executes the associated action statement block. Inside that
+block, the value of `$PSItem` is changed to `Bob`, which also affects the
+evaluation of the `switch` statement.
+
+```Output
+Alice says &#x27;Hello!&#x27;
+Bob says &#x27;Goodbye.&#x27;
+```
+
+You should avoid changing the value of `$PSItem`.
+
+## See also
+
+- [about_Arrays][01]
+- [about_Automatic_Variables][03]
+- [about_Comparison_Operators][04]
+- [about_Functions][09]
+- [about_Script_Blocks][11]
+- [about_Switch][13]
+- [ForEach-Object][15]
+- [Where-Object][16]
+
+&lt;!-- link references --&gt;
+[01]: about_Arrays.md#foreach
+[02]: about_Arrays.md#where
+[03]: about_Automatic_Variables.md
+[04]: about_Comparison_Operators.md#replacement-operator
+
+[06]: about_Functions_Advanced_Parameters.md#parameter-attribute
+[07]: about_Functions_Advanced_Parameters.md#validatescript-validation-attribute
+[08]: about_Functions_Advanced.md
+[09]: about_Functions.md
+[10]: about_Functions.md#filter-syntax
+[11]: about_Script_Blocks.md
+[12]: about_Script_Blocks.md#using-delay-bind-scriptblocks-with-parameters
+[13]: about_Switch.md
+[14]: about_Try_Catch_Finally.md#accessing-exception-information
+[15]: xref:Microsoft.PowerShell.Core.ForEach-Object
+[16]: xref:Microsoft.PowerShell.Core.Where-Object
+###Microsoft Learn URL###
+https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_psitem/?view=powershell-5.1
+</pre></html>

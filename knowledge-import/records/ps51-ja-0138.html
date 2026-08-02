@@ -1,0 +1,1092 @@
+<!doctype html><html lang="ja"><meta charset="utf-8"><pre class="record-source">###KnowledgeNo###
+PS51-WS2022-2026-0138
+###FormatID###
+PS51-WS2022
+###CreatedAt###
+2026-08-01 00:00
+###UpdatedAt###
+2026-08-01 00:00
+###タイトル###
+Set-ADObject
+###モジュール###
+activedirectory
+###製品###
+Windows PowerShell 5.1
+###対応OS###
+Windows Server 2022
+###日本語訳###
+# セット-ADObject
+
+## SYNOPSIS は,アクティブディレクトリオブジェクトを修正する.
+
+## SYNTAXは,のシンタックスです.
+
+### アイデンティティ```
+Set-ADObject [-WhatIf] [-Confirm] [-Add &lt;Hashtable&gt;] [-AuthType &lt;ADAuthType&gt;] [-Clear &lt;String[]&gt;]
+ [-Credential &lt;PSCredential&gt;] [-Description &lt;String&gt;] [-DisplayName &lt;String&gt;] [-Identity] &lt;ADObject&gt;
+ [-Partition &lt;String&gt;] [-PassThru] [-ProtectedFromAccidentalDeletion &lt;Boolean&gt;] [-Remove &lt;Hashtable&gt;]
+ [-Replace &lt;Hashtable&gt;] [-Server &lt;String&gt;] [&lt;CommonParameters&gt;]
+```
+
+### 文脈の例です.```
+Set-ADObject [-WhatIf] [-Confirm] [-AuthType &lt;ADAuthType&gt;] [-Credential &lt;PSCredential&gt;] -Instance &lt;ADObject&gt;
+ [-PassThru] [-Server &lt;String&gt;] [&lt;CommonParameters&gt;]
+```
+
+## 記述 **Set-ADObject** cmdlet は Active Directory オブジェクトのプロパティを修正します.通常使用されているプロパティ値を cmdlet パラメータを使用して変更できます. cmdlet パラメータに関連していないプロパティ値は *Add*, *Replace*, *Clear*, *Remove* パラメータを使用して変更できます.
+
+*Identity* パラメータは,変更するアクティブディレクトリオブジェクトを指定します. 特定の名称または GUIDでオブジェクトを識別できます. また, *Identity* パラメタを, などのオブジェクト変数に設定できます.`$&lt;localObject&gt;`オーバーラインでオブジェクトを *Identity* パラメータに転送することもできます.例えば,Objectを回収するために **Get-ADObject** cmdlet を使用し,パイプラインでオブジェクトをSet-ADObject** cmdlet に転送することもできます.
+
+*インスタンスの*パラメータは,オブジェクトのコピーに変更を加えることで,オブジェクトを更新する方法を提供します.変更されたアクティブディレクトリオブジェクトのコピーに *インスタンスの*パラメータを設定すると, **Set-ADObject** cmdlet は元のオブジェクトに同じ変更を行います.変更されるオブジェクトのコピーを取得するには, **Get-ADObject**オブジェクトを使用してください. *インスタンスの*パラメータを使用する際には, *Identity*パラメータは許可されません. *インスタンスの*パラメータについての詳細については, *Instance*パラメータの説明を参照してください.
+
+アクティブディレクトリライトウェイトディレクトリサービス (AD LDS) 環境では,以下の2つの条件を除いて, *パーティション* パラメータを指定する必要があります.
+
+- AD LDS環境にはデフォルトの命名コンテキストまたはパーティションが定義されています.AD LDS環境のデフォルトの命名コンテキストを指定するには,AD LDS インスタンスのための Active Directory ディレクトリサービスエージェントオブジェクト (nTDSDSA) の **msDS-defaultNamingContext**属性を設定してください.
+
+## 例えは
+
+### 例1: 特徴的な名前で物体にプロパティを設定する```
+PS C:\&gt; Set-ADObject -Identity &#x27;CN=PattiFu Direct Reports,OU=Finance,OU=UserAccounts,DC=FABRIKAM,DC=COM&#x27; -Description &quot;Distribution List of Patti Fuller Direct Reports&quot;
+```
+
+このコマンドは, CN=PattiFu Direct Reports,OU=Finance,OU=UserAccounts,DC=FABRIKAM,DC=COMという名前のオブジェクトに **Description**属性を設定します.
+
+### 例2: 対象の属性にサイトを追加する```
+PS C:\&gt; Set-ADObject -Identity &#x27;CN=DEFAULTIPSITELINK,CN=IP,CN=Inter-Site Transports,CN=Sites,CN=Configuration,DC=FABRIKAM,DC=COM&#x27; -Add @{siteList=&#x27;CN=BO3,CN=Sites,CN=Configuration,DC=FABRIKAM,DC=COM&#x27;} -Partition &#x27;CN=Configuration,DC=FABRIKAM,DC=COM&#x27;
+```
+
+このコマンドは,区分された名称 CN=DEFAULTIPSITELINK,CN=IP,CN=Inter-Site Transports,CN=Sites,CN=Configuration,DC=FABRIKAM,DC=COMを持つオブジェクトのサイトリストにサイト CN=BO3,CN=Sites,CN=Configuration,DC=FABRIKAM,DC=COMをプロパティに追加します.
+
+### 例3: オブジェクトのプロパティにURLを追加する```
+PS C:\&gt; $UrlValues = @()
+PS C:\&gt; $UrlValues += &quot;www.contoso.com&quot;
+PS C:\&gt; $UrlValues += &quot;www.fabrikam.com&quot;
+PS C:\&gt; Set-ADObject -Identity &quot;cdadd380-d3a8-4fd1-9d30-5cf72d94a056&quot; -Add @{url=$UrlValues}
+```
+
+このコマンドは, GUID cdadd380-d3a8-4fd1-9d30-5cf72d94a056のオブジェクトの **urlValues**属性に2つの新しいURLを追加します.
+
+### 例4: 多値属性に対する値設定```
+PS C:\&gt; $UrlValues = @() 
+PS C:\&gt; $UrlValues += &quot;www.contoso.com&quot; 
+PS C:\&gt; $UrlValues += &quot;www.fabrikam.com&quot; 
+PS C:\&gt; Set-ADObject -Identity &quot;cdadd380-d3a8-4fd1-9d30-5cf72d94a056&quot; -Replace @{url=$UrlValues;description=&quot;Patti Fuller&quot;}
+```
+
+このコマンドは,マルチ値属性 **url** の古い値を新しい値に置き換えて,属性 **description**の値を設定します.
+
+### 例5:属性から値を取り除く```
+PS C:\&gt; Set-ADObject -Identity &quot;cdadd380-d3a8-4fd1-9d30-5cf72d94a056&quot; -Remove @{url=&quot;www.contoso.com&quot;} -Replace @{description=&quot;Patti Fuller (European Manager)&quot;}
+```
+
+このコマンドは **url**属性から指定された値を削除し, **description**属性の値を設定します.
+
+### 例 6: 対象にUACビットを設定する```
+PS C:\&gt; $MyComp = Get-ADObject -Identity &quot;cdadd380-d3a8-4fd1-9d30-5cf72d94a056&quot; -Properties &quot;userAccountControl&quot;,&quot;description&quot; 
+PS C:\&gt; $MyComp.userAccountControl = $MyComp.userAccountControl -bor 50 
+PS C:\&gt; $MyComp.description = &quot;Setting a new UAC on the object&quot; 
+PS C:\&gt; Set-ADObject -Instance $MyComp
+```
+
+このコマンドは, **userAccountControl**属性を更新することで,オブジェクトに新しいユーザーアクセス制御 (UAC) ビットを設定し, **description**属性の値を設定します.
+
+### 例7: 偶然の削除から物体を保護する```
+PS C:\&gt; Set-ADObject -Identity &quot;CN=InternalApps,DC=AppNC&quot; -protectedFromAccidentalDeletion $True -Server &quot;FABRIKAM-SRV1:60000&quot;
+```
+
+このコマンドは,AD LDS インスタンスのコンテナ CN=InternalApps,DC=AppNC を意外な削除から保護するように設定します.
+
+### 例8:オブジェクトを取得してプロパティを変更する```
+PS C:\&gt; Get-ADObject -Identity &quot;SecurityLevel2AccessGroup&quot; | Set-ADObject -DisplayName &quot;Security Level 2&quot;
+```
+
+このコマンドは **SecurityLevel2AccessGroup** オブジェクトの **DisplayName** 属性を修正します.このコマンドは,オブジェクトを取得するために **Get-ADObject** cmdlet を使用し,パイプライン操作符を使用してオブジェクトを現在の cmdlet に転送します.
+
+## パラメータは
+
+### -Add 対象属性に追加する値を指定します.このパラメータを使用して,cmdlet 参数を使用して変更できない属性に1つまたは複数の値を追加します.オブジェクト属性を変更するには,ライトウェイトディレクトリ アクセス プロトコル (LDAP) ディスプレイ名を使用する必要があります. 逗号別列値リストと半角でそれらを分離することによって複数の値を指定することで,複数の値を指定できます.このパラメータのフォーマットは:
+
+`-Add @{Attribute1LDAPDisplayName=value1, value2, ...;   Attribute2LDAPDisplayName=value1, value2, ...; AttributeNLDAPDisplayName=value1, value2, ...}`
+
+例えば555-222-2222の値を削除し,電話・オフィス・その他属性 (LDAP表示名 otherTelephone) に555-222-222-2222と555-222-3333を追加し,電話・モバイル・その他 (LDAP表示名 otherMobile) に555-222-9999を追加したい場合は, *Add* と *Remove* のパラメータを以下の通り設定します.
+
+`-Add @{otherTelephone=&#x27;555-222-1111&#x27;, &#x27;555-222-3333&#x27;; otherMobile=&#x27;555-222-9999&#x27; } -Remove @{otherTelephone=&#x27;555-222-2222&#x27;}`
+
+*追加*, *交換*, *クリア*, *削除* パラメータを組み合わせると,操作は次の順に行われます.
+
+**削除** - **追加** - **交換** - **クリア** - **
+
+```yaml
+Type: Hashtable
+Parameter Sets: Identity
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+# セット-ADObject
+
+### -AuthType は,使用する認証方法を指定します.このパラメータの受け入れ可能な値は:です.
+
+- 交渉するまたは0 - 基本または1
+
+デフォルト認証方法は,交渉です.
+
+基本認証方法には,セキュアソケットレイヤ (SSL) 接続が必要となります.
+
+```yaml
+Type: ADAuthType
+Parameter Sets: (All)
+Aliases: 
+Accepted values: Negotiate, Basic
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Clear は,ディレクトリでクリアされたオブジェクトプロパティのアレイを指定します.このパラメータを使用して,cmdletパラメータを使用して変更できないプロパティの1つまたは複数の値をクリアします.オブジェクトプロパティを変更するには,LDAP表示名を使用する必要があります. 逗号別列を指定することによって複数のプロパティを変更できます.このパラメータのフォーマットは:
+
+`-Clear Attribute1LDAPDisplayName, Attribute2LDAPDisplayName`
+
+例えば,電話・オフィス・その他属性 (LDAP表示名 otherTelephone) の値をクリアしたい場合は,以下のように *Clear* パラメータを設定します.
+
+`-Clear otherTelephone`
+
+*追加*, *交換*, *クリア*, *削除* パラメータを組み合わせると,操作は次の順に行われます.
+
+**削除** - **追加** - **交換** - **クリア** - **
+
+```yaml
+Type: String[]
+Parameter Sets: Identity
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### - 確認は,cmdletを実行する前に確認を提示します.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: cf
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Credential この作業を実行するために使用するユーザーアカウントの認証を指定します.当時はログインしているユーザーに,Cmdlet がWindows PowerShell プロバイダードライブのアクティブディレクトリ モジュールから実行されていない限り,デフォルトで実行される認証です.Cmdlet がそのようなプロバイダードライブから実行されている場合,ドライブに関連したアカウントはデフォルトです.
+
+このパラメータを指定するには,ユーザー名,例えば User1 または Domain01\User01 を入力するか,PSCredential** オブジェクトを指定することもできます.このパラメータのユーザー名を指定すると,cmdlet はパスワードを提示します.
+
+また,スクリプトを使用して **PSCredential** オブジェクトを作成したり, **Get-Credential** cmdlet を使用したりできます.その後, **PSCredential** オブジェクトに *Credential* パラメータを設定できます.
+
+実行する認証がタスクを実行するためのディレクトリレベルの許可がない場合,Windows PowerShell用のアクティブディレクトリモジュールでは終了エラーが返されます.
+
+```yaml
+Type: PSCredential
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Description 対象の記述を指定する.このパラメータは,対象の **Description** 属性の値を設定する.この属性のLDAP表示名 (**ldapDisplayName**) は説明です.
+
+次の例では,このパラメータをサンプル説明に設定する方法を示しています.
+
+`-Description &quot;Description of the object&quot;`
+
+```yaml
+Type: String
+Parameter Sets: Identity
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -DisplayName 対象の表示名を指定する.このパラメータは,オブジェクトの **DisplayName** 属性を設定する.この属性のLDAP表示名称 (**ldapDisplayName**) は displayName.
+
+次の例では,このパラメータを設定する方法を示しています.
+
+`-DisplayName &quot;Patti Fuller Laptop&quot;`
+
+```yaml
+Type: String
+Parameter Sets: Identity
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Identity Active Directory オブジェクトを指定する際には,以下のプロパティ値のうちの1つを指定します.括弧の識別子は,属性に対するLDAP表示名です.このパラメータの受け入れ可能な値は:です.
+
+- 優秀な名前 - GUID (オブジェクトGUID)
+
+cmdlet は,オブジェクトを見つけるためにデフォルトの命名コンテキストまたはパーティションを探します.もし2つ以上のオブジェクトが見つかったら,cmdlet は,終了しないエラーを返します.
+
+このパラメータは,このオブジェクトをパイプラインを通過させることもできます.または,このパラメータをオブジェクトインスタンスの設定でもできます.
+
+下記のような衍生品も受け入れられる:
+
+**Microsoft.ActiveDirectory.Management.ADGroup** - **Microsoft.ActiveDirectory.Management.ADUser** - **Microsoft.ActiveDirectory.Management.ADComputer** - **Microsoft.ActiveDirectory.Management.ADServiceAccount** - **Microsoft.ActiveDirectory.Management.ADFineGrainedPasswordPolicy** - **Microsoft.ActiveDirectory.Management.ADDomain**
+
+この例では,ADObjectInstance というADObject オブジェクトインスタンスのこのパラメータを設定する方法を示しています.
+
+`-Identity $ADObjectInstance`
+
+```yaml
+Type: ADObject
+Parameter Sets: Identity
+Aliases: 
+
+Required: True
+Position: 0
+Default value: None
+Accept pipeline input: True (ByValue)
+Accept wildcard characters: False
+```
+
+### -インスタンスは,実際のアクティブディレクトリオブジェクトを更新するために使用するアクティブディレクトリオブジェクトの変更されたコピーを指定します.このパラメータを指定すると,オブジェクトの変更されたコピーに変更されたものは,対応するアクティブディレクトリオブジェクトにも変更されます.cmdletは変更されたオブジェクトのプロパティのみを更新します.
+
+*インスタンスの*パラメータは, **Get-ADObject** cmdletを使用して取得したアクティブディレクトリオブジェクトのみを更新できます. *インスタンスの*パラメータを指定すると,オブジェクトにプロパティを設定する他のパラメータを指定することはできません.
+
+以下は,オブジェクトのインスタンスを取得するために **Get-ADObject** cmdlet を使用する方法の一例です.オブジェクトはPowerShellコマンドラインを使用して変更されます.その後, **Set-ADObject** cmdlet は,アクティブディレクトリオブジェクトへの変更を保存します.
+
+ステップ1:オブジェクトのローカルインスタンスを取得します:
+
+`$ObjectInstance = Get-ADObject -Identity  &quot;CN=someObject, DC=contoso,DC=com&quot;`
+
+ステップ2:オブジェクトインスタンスの1つまたは複数のプロパティを変更する:
+
+`$ObjectInstance.Description = &quot;New Description&quot;`
+
+ステップ3: 変更をオブジェクトに保存する:
+
+`Set-ADObject -Instance $ObjectInstance`
+
+```yaml
+Type: ADObject
+Parameter Sets: Instance
+Aliases: 
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+# セット-ADObject
+
+### -Partition Active Directory のパーティションの名前の指定.この名前の指定は,現在のディレクトリサーバーの名前設定のいずれかである必要があります. cmdlet はこのパーティションで検索して, *Identity* パラメータで定義されたオブジェクトを見つける.
+
+次の2つの例では,このパラメータの値を指定する方法を示しています.
+
+`-Partition &quot;CN=Configuration,DC=EUROPE,DC=TEST,DC=CONTOSO,DC=COM&quot;`
+
+`-Partition &quot;CN=Schema,CN=Configuration,DC=EUROPE,DC=TEST,DC=CONTOSO,DC=COM&quot;`
+
+多くの場合,デフォルト値が指定されていない場合, *Partition* パラメータにデフォルト値が使用されます.デフォルト値の決定のためのルールが下記に記載されています.最初にリストされたルールが最初に評価され,デフォルト値が決定されると,他のルールが評価されないことに注意してください.
+
+アクティブディレクトリ ドメインサービス (AD DS) 環境では,以下の場合, *パーティション* のデフォルト値は設定されます.
+
+- *Identity* パラメータが別名に設定されている場合, *Partition* のデフォルト値は自動的にこの別名から生成されます. - Active Directory プロバイダードライブからcmdletsを実行している場合は, *Partition* のデフォルト値は自動的にドライブ内の現在のパスから生成されます. - 前例のいずれも適用されない場合, *Partition* のデフォルト値は目標ドメインのデフォルトパーティションまたは命名コンテキストに設定されます.
+
+AD LDS環境では,以下の場合, *Partition* のデフォルト値は設定されます.
+
+*Identity*パラメータが別名に設定されている場合, *Partition* のデフォルト値は自動的にこの別名から生成されます. - Active Directory プロバイダードライブから cmdlets を実行している場合は, *Partition* のデフォルト値は自動的にドライブ内の現在のパスから生成されます. - ターゲット AD LDS インスタンスのデフォルトの命名コンテキストがある場合, *Partition* のデフォルト値はデフォルトの命名コンテキストに設定されます. AD LDS 環境のデフォルトの命名コンテキストを指定するには,LDS インスタンスの Active Directory Directory サービスエージェント (DSA) オブジェクト (nTDSA) の **msDS-defaultNamingContext** 属性 (nTDSA) を設定してください. - 前述のいずれも適用されない場合は, *Partiti ADDS のデフォルトの設定が適用されます.on* パラメータは,デフォルト値を受け付けていません.
+
+```yaml
+Type: String
+Parameter Sets: Identity
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -PassThru は,あなたが取り組んでいるアイテムを表すオブジェクトを返します.デフォルトでは,このcmdlet は出力を生成しません.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -ProtectedFromAccidentalDeletion 削除されたオブジェクトを削除するのを防ぐかどうかを指定します.このプロパティが true に設定された場合,そのプロパティの値を変更せずに対応するオブジェクトを削除することはできません.このパラメータの受け入れ可能な値は:
+
+$ -False or 0 - $True or 1
+
+次の例では,このパラメータを$Trueに設定する方法を示しています.
+
+`-ProtectedFromAccidentalDeletion $True`
+
+```yaml
+Type: Boolean
+Parameter Sets: Identity
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Remove は,cmdlet がオブジェクト属性の値を削除することを指定します.このパラメータを使用して,cmdlet パラメータを使用して変更できない属性の1つまたは複数の値を削除します.オブジェクト属性を削除するには,LDAP ディスプレイ名を使用する必要があります.半角別列リストを指定することによって,1以上の属性を削除できます.このパラメータのフォーマットは:
+
+`-Remove @{Attribute1LDAPDisplayName=value[];   Attribute2LDAPDisplayName=value[]}`
+
+例えば,青と緑の値を追加し,FavColorsのLDAP表示名を持つプロパティからピンク値を削除したい場合は,以下のように *Add* と *Remove* パラメータを設定してください.
+
+`-Add @{FavColors=Blue,Green} -Remove {FavColors=Pink}`
+
+*追加*, *交換*, *削除*, *削除* パラメータを組み合わせると,操作は次の順に行われます.
+
+**削除** - **追加** - **交換** - **クリア** - **
+
+```yaml
+Type: Hashtable
+Parameter Sets: Identity
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Cmdlet パラメータを使用して変更できない属性の1つまたは複数の値を置き換えるためにこのパラメータを使用します.オブジェクト属性を変更するには,LDAP ディスプレイ名を使用する必要があります. 逗号別値リストを指定することによって,複数の属性値を指定し,半角を用いることで複数の属性を分離します.このパラメータのフォーマットは:
+
+`-Replace @{Attribute1LDAPDisplayName=value1, value2, ...;   Attribute2LDAPDisplayName=value1, value2, ...; AttributeNLDAPDisplayName=value1, value2, ...}`
+
+*追加*, *削除*, *交換*, *クリア* パラメータを一緒に使用すると,操作は次の順に実行されます.
+
+**削除** - **追加** - **交換** - **クリア** - **
+
+```yaml
+Type: Hashtable
+Parameter Sets: Identity
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Serverは,対応するドメイン名またはディレクトリサーバーに以下の値のうちの1つを提供することで,接続するAD DSインスタンスを指定します.サービスは,以下のいずれかである可能性があります:AD LDS,AD DS,またはアクティブディレクトリスナップショットインスタンスの.
+
+ドメイン名値:
+
+- 完全資格ドメイン名 (FQDN) - NetBIOS名
+
+ディレクトリサーバーの値:
+
+- 完全資格のあるディレクトリサーバー名 - A NetBIOS名 - 完全資格のあるディレクトリサーバー名とポート
+
+*サーバー*パラメータのデフォルト値は,次の方法のうちの1つによって,列挙された順序で決定されます.
+
+- パイプラインを通過したオブジェクトから *Server* 値を利用する. - Active Directory PowerShell プロバイダードライブに関連したサーバー情報を利用する. - PowerShell を実行しているコンピュータのドメインを使用して.
+
+次の例では,FQDNをパラメータ値として指定する方法を示しています.
+
+`-Server &quot;corp.contoso.com&quot;`
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -WhatIf が実行されればどうなるか示します.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: wi
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### 共通パラメータ このcmdletは共通パラメータをサポートしています: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable.詳細については, [about_CommonParameters](を参照してください.https://go.microsoft.com/fwlink/?LinkID=113216) でした.
+
+## 輸入は
+
+# セット-ADObject
+
+### Microsoft.ActiveDirectory.Management.ADObject のいずれもない.ActiveDirectory.ADObject のオブジェクトは, *Identity* パラメータで受信されます.以下のような衍生型も受け入れられます:
+
+**Microsoft.ActiveDirectory.Management.ADGroup** - **Microsoft.ActiveDirectory.Management.ADUser** - **Microsoft.ActiveDirectory.Management.ADComputer** - **Microsoft.ActiveDirectory.Management.ADServiceAccount** - **Microsoft.ActiveDirectory.Management.ADOrganizationalUnit** - **Microsoft.ActiveDirectory.Management.ADFineGrainedPasswordPolicy** - **Microsoft.ActiveDirectory.Management.ADDomain**
+
+**Get-ADObject** cmdletを使用して取得し,修正されたオブジェクトは, *Instance* パラメータで受信されます.
+
+## 輸出は
+
+### None.ActiveDirectory.Management.ADObject は,変更されたオブジェクトを返して, *PassThru*  параметрが指定されたときに返します.デフォルトでは,このcmdlet は出力を生成しません.
+
+## 注 * このcmdlet は Active Directory のスナップショットで動作しません. * このcmdlet は読み込みのみのドメインコントローラで動作しません.
+
+## 関連リンク
+
+[Get-ADObject](./Get-ADObject.md) 
+
+[Move-ADObject](./Move-ADObject.md) 
+
+[New-ADObject](./New-ADObject.md) 
+
+[Remove-ADObject](./Remove-ADObject.md) を削除する
+
+[Rename-ADObject](./Rename-ADObject.md) は,この項目の変更について説明します.
+
+[Restore-ADObject](./Restore-ADObject.md) を回復する
+###英語原文###
+# Set-ADObject
+
+## SYNOPSIS
+Modifies an Active Directory object.
+
+## SYNTAX
+
+### Identity
+```
+Set-ADObject [-WhatIf] [-Confirm] [-Add &lt;Hashtable&gt;] [-AuthType &lt;ADAuthType&gt;] [-Clear &lt;String[]&gt;]
+ [-Credential &lt;PSCredential&gt;] [-Description &lt;String&gt;] [-DisplayName &lt;String&gt;] [-Identity] &lt;ADObject&gt;
+ [-Partition &lt;String&gt;] [-PassThru] [-ProtectedFromAccidentalDeletion &lt;Boolean&gt;] [-Remove &lt;Hashtable&gt;]
+ [-Replace &lt;Hashtable&gt;] [-Server &lt;String&gt;] [&lt;CommonParameters&gt;]
+```
+
+### Instance
+```
+Set-ADObject [-WhatIf] [-Confirm] [-AuthType &lt;ADAuthType&gt;] [-Credential &lt;PSCredential&gt;] -Instance &lt;ADObject&gt;
+ [-PassThru] [-Server &lt;String&gt;] [&lt;CommonParameters&gt;]
+```
+
+## DESCRIPTION
+The **Set-ADObject** cmdlet modifies the properties of an Active Directory object.
+You can modify commonly used property values by using the cmdlet parameters.
+Property values that are not associated with cmdlet parameters can be modified by using the *Add*, *Replace*, *Clear*, and *Remove* parameters.
+
+The *Identity* parameter specifies the Active Directory object to modify.
+You can identify an object by its distinguished name or GUID.
+You can also set the *Identity* parameter to an object variable such as `$&lt;localObject&gt;`, or you can pass an object through the pipeline to the *Identity* parameter.
+For example, you can use the **Get-ADObject** cmdlet to retrieve an object and then pass the object through the pipeline to the **Set-ADObject** cmdlet.
+
+The *Instance* parameter provides a way to update an object by applying the changes made to a copy of the object.
+When you set the *Instance* parameter to a copy of an Active Directory object that has been modified, the **Set-ADObject** cmdlet makes the same changes to the original object.
+To get a copy of the object to modify, use the **Get-ADObject** object.
+The *Identity* parameter is not allowed when you use the *Instance* parameter.
+For more information about the *Instance* parameter, see the *Instance* parameter description.
+
+For Active Directory Lightweight Directory Services (AD LDS) environments, the *Partition* parameter must be specified except in the following two conditions:
+
+- The cmdlet is run from an Active Directory provider drive. 
+- A default naming context or partition is defined for the AD LDS environment.
+To specify a default naming context for an AD LDS environment, set the **msDS-defaultNamingContext** property of the Active Directory directory service agent object (nTDSDSA) for the AD LDS instance.
+
+## EXAMPLES
+
+### Example 1: Set a property on an object by distinguished name
+```
+PS C:\&gt; Set-ADObject -Identity &#x27;CN=PattiFu Direct Reports,OU=Finance,OU=UserAccounts,DC=FABRIKAM,DC=COM&#x27; -Description &quot;Distribution List of Patti Fuller Direct Reports&quot;
+```
+
+This command sets the **Description** property on the object with the distinguished name CN=PattiFu Direct Reports,OU=Finance,OU=UserAccounts,DC=FABRIKAM,DC=COM.
+
+### Example 2: Add a site to a property for an object
+```
+PS C:\&gt; Set-ADObject -Identity &#x27;CN=DEFAULTIPSITELINK,CN=IP,CN=Inter-Site Transports,CN=Sites,CN=Configuration,DC=FABRIKAM,DC=COM&#x27; -Add @{siteList=&#x27;CN=BO3,CN=Sites,CN=Configuration,DC=FABRIKAM,DC=COM&#x27;} -Partition &#x27;CN=Configuration,DC=FABRIKAM,DC=COM&#x27;
+```
+
+This command adds the site CN=BO3,CN=Sites,CN=Configuration,DC=FABRIKAM,DC=COM to the property **siteList** on the object with the distinguished name CN=DEFAULTIPSITELINK,CN=IP,CN=Inter-Site Transports,CN=Sites,CN=Configuration,DC=FABRIKAM,DC=COM.
+
+### Example 3: Add URLs to an object property
+```
+PS C:\&gt; $UrlValues = @()
+PS C:\&gt; $UrlValues += &quot;www.contoso.com&quot;
+PS C:\&gt; $UrlValues += &quot;www.fabrikam.com&quot;
+PS C:\&gt; Set-ADObject -Identity &quot;cdadd380-d3a8-4fd1-9d30-5cf72d94a056&quot; -Add @{url=$UrlValues}
+```
+
+This command adds two new URLs to the **urlValues** property in the object with the GUID cdadd380-d3a8-4fd1-9d30-5cf72d94a056.
+
+### Example 4: Set values for a multi-valued attribute
+```
+PS C:\&gt; $UrlValues = @() 
+PS C:\&gt; $UrlValues += &quot;www.contoso.com&quot; 
+PS C:\&gt; $UrlValues += &quot;www.fabrikam.com&quot; 
+PS C:\&gt; Set-ADObject -Identity &quot;cdadd380-d3a8-4fd1-9d30-5cf72d94a056&quot; -Replace @{url=$UrlValues;description=&quot;Patti Fuller&quot;}
+```
+
+This command replaces the old values of the multi-valued attribute **url** with the new values and sets the value of the attribute **description**.
+
+### Example 5: Remove a value from an attribute
+```
+PS C:\&gt; Set-ADObject -Identity &quot;cdadd380-d3a8-4fd1-9d30-5cf72d94a056&quot; -Remove @{url=&quot;www.contoso.com&quot;} -Replace @{description=&quot;Patti Fuller (European Manager)&quot;}
+```
+
+This command removes the specified value from the **url** attribute and sets the value of the **description** attribute.
+
+### Example 6: Set a UAC bit on an object
+```
+PS C:\&gt; $MyComp = Get-ADObject -Identity &quot;cdadd380-d3a8-4fd1-9d30-5cf72d94a056&quot; -Properties &quot;userAccountControl&quot;,&quot;description&quot; 
+PS C:\&gt; $MyComp.userAccountControl = $MyComp.userAccountControl -bor 50 
+PS C:\&gt; $MyComp.description = &quot;Setting a new UAC on the object&quot; 
+PS C:\&gt; Set-ADObject -Instance $MyComp
+```
+
+This command sets a new User Access Control (UAC) bit on an object by updating the **userAccountControl** attribute, and sets the value of the **description** attribute.
+
+### Example 7: Protect an object from accidental deletion
+```
+PS C:\&gt; Set-ADObject -Identity &quot;CN=InternalApps,DC=AppNC&quot; -protectedFromAccidentalDeletion $True -Server &quot;FABRIKAM-SRV1:60000&quot;
+```
+
+This command sets container CN=InternalApps,DC=AppNC in an AD LDS instance to be protected from accidental deletion.
+
+### Example 8: Get an object and modify a property
+```
+PS C:\&gt; Get-ADObject -Identity &quot;SecurityLevel2AccessGroup&quot; | Set-ADObject -DisplayName &quot;Security Level 2&quot;
+```
+
+This command modifies the **DisplayName** property for the **SecurityLevel2AccessGroup** object.
+The command uses the **Get-ADObject** cmdlet to get the object, and then passes the object to the current cmdlet by using the pipeline operator.
+
+## PARAMETERS
+
+### -Add
+Specifies values to add to an object property.
+Use this parameter to add one or more values to a property that cannot be modified using a cmdlet parameter.
+To modify an object property, you must use the Lightweight Directory Access Protocol (LDAP) display name.
+You can specify multiple values to a property by specifying a comma-separated list of values and more than one property by separating them using a semicolon.
+The format for this parameter is:
+
+`-Add @{Attribute1LDAPDisplayName=value1, value2, ...;   Attribute2LDAPDisplayName=value1, value2, ...; AttributeNLDAPDisplayName=value1, value2, ...}`
+
+For example, if you want to remove the value 555-222-2222 and add the values 555-222-1111 and 555-222-3333 to Phone-Office-Other attribute (LDAP display name otherTelephone), and add the value 555-222-9999 to Phone-Mobile-Other (LDAP display name otherMobile), set the *Add* and *Remove* parameters as follows:
+
+`-Add @{otherTelephone=&#x27;555-222-1111&#x27;, &#x27;555-222-3333&#x27;; otherMobile=&#x27;555-222-9999&#x27; } -Remove @{otherTelephone=&#x27;555-222-2222&#x27;}`
+
+When you use the *Add*, *Replace*, *Clear*, and *Remove* parameters together, the operations are performed in the following order:
+
+- **Remove**
+- **Add**
+- **Replace**
+- **Clear**
+
+```yaml
+Type: Hashtable
+Parameter Sets: Identity
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+# Set-ADObject
+
+### -AuthType
+Specifies the authentication method to use.
+The acceptable values for this parameter are:
+
+- Negotiate or 0
+- Basic or 1
+
+The default authentication method is Negotiate.
+
+A Secure Sockets Layer (SSL) connection is required for the Basic authentication method.
+
+```yaml
+Type: ADAuthType
+Parameter Sets: (All)
+Aliases: 
+Accepted values: Negotiate, Basic
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Clear
+Specifies an array of object properties that are cleared in the directory.
+Use this parameter to clear one or more values of a property that cannot be modified using a cmdlet parameter.
+To modify an object property, you must use the LDAP display name.
+You can modify more than one property by specifying a comma-separated list.
+The format for this parameter is:
+
+`-Clear Attribute1LDAPDisplayName, Attribute2LDAPDisplayName`
+
+For example, if you want to clear the value for the Phone-Office-Other attribute (LDAP display name otherTelephone) set the *Clear* parameter as follows:
+
+`-Clear otherTelephone`
+
+When you use the *Add*, *Replace*, *Clear*, and *Remove* parameters together, the operations are performed in the following order:
+
+- **Remove**
+- **Add**
+- **Replace**
+- **Clear**
+
+```yaml
+Type: String[]
+Parameter Sets: Identity
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Confirm
+Prompts you for confirmation before running the cmdlet.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: cf
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Credential
+Specifies the user account credentials to use to perform this task.
+The default credentials are the credentials of the currently logged on user unless the cmdlet is run from an Active Directory module for Windows PowerShell provider drive.
+If the cmdlet is run from such a provider drive, the account associated with the drive is the default.
+
+To specify this parameter, you can type a user name, such as User1 or Domain01\User01 or you can specify a **PSCredential** object.
+If you specify a user name for this parameter, the cmdlet prompts for a password.
+
+You can also create a **PSCredential** object by using a script or by using the **Get-Credential** cmdlet.
+You can then set the *Credential* parameter to the **PSCredential** object.
+
+If the acting credentials do not have directory-level permission to perform the task, Active Directory module for Windows PowerShell returns a terminating error.
+
+```yaml
+Type: PSCredential
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Description
+Specifies a description of the object.
+This parameter sets the value of the **Description** property for the object.
+The LDAP display name (**ldapDisplayName**) for this property is description.
+
+The following example shows how to set this parameter to a sample description.
+
+`-Description &quot;Description of the object&quot;`
+
+```yaml
+Type: String
+Parameter Sets: Identity
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -DisplayName
+Specifies the display name of the object.
+This parameter sets the **DisplayName** property of the object.
+The LDAP display name (**ldapDisplayName**) for this property is displayName.
+
+The following example shows how to set this parameter:
+
+`-DisplayName &quot;Patti Fuller Laptop&quot;`
+
+```yaml
+Type: String
+Parameter Sets: Identity
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Identity
+Specifies an Active Directory object by providing one of the following property values.
+The identifier in parentheses is the LDAP display name for the attribute.
+The acceptable values for this parameter are:
+
+- Distinguished name
+- GUID (objectGUID)
+
+The cmdlet searches the default naming context or partition to find the object.
+If two or more objects are found, the cmdlet returns a non-terminating error.
+
+This parameter can also get this object through the pipeline or you can set this parameter to an object instance.
+
+Derived types, such as the following, are also accepted:
+
+- **Microsoft.ActiveDirectory.Management.ADGroup**
+- **Microsoft.ActiveDirectory.Management.ADUser**
+- **Microsoft.ActiveDirectory.Management.ADComputer**
+- **Microsoft.ActiveDirectory.Management.ADServiceAccount**
+- **Microsoft.ActiveDirectory.Management.ADFineGrainedPasswordPolicy**
+- **Microsoft.ActiveDirectory.Management.ADDomain**
+
+This example shows how to set this parameter to an **ADObject** object instance named ADObjectInstance:
+
+`-Identity $ADObjectInstance`
+
+```yaml
+Type: ADObject
+Parameter Sets: Identity
+Aliases: 
+
+Required: True
+Position: 0
+Default value: None
+Accept pipeline input: True (ByValue)
+Accept wildcard characters: False
+```
+
+### -Instance
+Specifies a modified copy of an Active Directory object to use to update the actual Active Directory object.
+When you specify this parameter, any modifications made to the modified copy of the object are also made to the corresponding Active Directory object.
+The cmdlet only updates the object properties that have changed.
+
+The *Instance* parameter can only update Active Directory objects that have been retrieved by using the **Get-ADObject** cmdlet.
+When you specify the *Instance* parameter, you cannot specify other parameters that set properties on the object.
+
+The following is an example of how to use the **Get-ADObject** cmdlet to retrieve an instance of the object.
+The object is modified by using the PowerShell command line.
+Then the **Set-ADObject** cmdlet saves the changes to the Active Directory object.
+
+Step 1: Get a local instance of the object:
+
+`$ObjectInstance = Get-ADObject -Identity  &quot;CN=someObject, DC=contoso,DC=com&quot;`
+
+Step 2: Modify one or more properties of the object instance:
+
+`$ObjectInstance.Description = &quot;New Description&quot;`
+
+Step3: Save your changes to the object:
+
+`Set-ADObject -Instance $ObjectInstance`
+
+```yaml
+Type: ADObject
+Parameter Sets: Instance
+Aliases: 
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+# Set-ADObject
+
+### -Partition
+Specifies the distinguished name of an Active Directory partition.
+The distinguished name must be one of the naming contexts on the current directory server.
+The cmdlet searches this partition to find the object defined by the *Identity* parameter.
+
+The following two examples show how to specify a value for this parameter.
+
+`-Partition &quot;CN=Configuration,DC=EUROPE,DC=TEST,DC=CONTOSO,DC=COM&quot;`
+
+`-Partition &quot;CN=Schema,CN=Configuration,DC=EUROPE,DC=TEST,DC=CONTOSO,DC=COM&quot;`
+
+In many cases, a default value is used for the *Partition* parameter if no value is specified.
+The rules for determining the default value are given below.
+Note that rules listed first are evaluated first and once a default value can be determined, no further rules are evaluated.
+
+In Active Directory Domain Services (AD DS) environments, a default value for *Partition* is set in the following cases: 
+
+- If the *Identity* parameter is set to a distinguished name, the default value of *Partition* is automatically generated from this distinguished name.
+- If running cmdlets from an Active Directory provider drive, the default value of *Partition* is automatically generated from the current path in the drive.
+- If none of the previous cases apply, the default value of *Partition* is set to the default partition or naming context of the target domain.
+
+In AD LDS environments, a default value for *Partition* is set in the following cases:
+
+- If the *Identity* parameter is set to a distinguished name, the default value of *Partition* is automatically generated from this distinguished name.
+- If running cmdlets from an Active Directory provider drive, the default value of *Partition* is automatically generated from the current path in the drive.
+- If the target AD LDS instance has a default naming context, the default value of *Partition* is set to the default naming context. To specify a default naming context for an AD LDS environment, set the **msDS-defaultNamingContext** property of the Active Directory directory service agent (DSA) object (nTDSDSA) for the AD LDS instance.
+- If none of the previous cases apply, the *Partition* parameter does not take any default value.
+
+```yaml
+Type: String
+Parameter Sets: Identity
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -PassThru
+Returns an object representing the item with which you are working.
+By default, this cmdlet does not generate any output.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -ProtectedFromAccidentalDeletion
+Specifies whether to prevent the object from being deleted.
+When this property is set to true, you cannot delete the corresponding object without changing the value of the property.
+The acceptable values for this parameter are:
+
+- $False or 0
+- $True or 1
+
+The following example shows how to set this parameter to $True.
+
+`-ProtectedFromAccidentalDeletion $True`
+
+```yaml
+Type: Boolean
+Parameter Sets: Identity
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Remove
+Specifies that the cmdlet remove values of an object property.
+Use this parameter to remove one or more values of a property that cannot be modified using a cmdlet parameter.
+To remove an object property, you must use the LDAP display name.
+You can remove more than one property by specifying a semicolon-separated list.
+The format for this parameter is:
+
+`-Remove @{Attribute1LDAPDisplayName=value[];   Attribute2LDAPDisplayName=value[]}`
+
+For example, if you want to add the values blue and green and remove the value pink from a property with a LDAP display name of FavColors, set the *Add* and *Remove* parameters as follows:
+
+`-Add @{FavColors=Blue,Green} -Remove {FavColors=Pink}`
+
+When you use the *Add*, *Replace*, *Clear*, and *Remove* parameters together, the operations are performed in the following order:
+
+- **Remove**
+- **Add**
+- **Replace**
+- **Clear**
+
+```yaml
+Type: Hashtable
+Parameter Sets: Identity
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Replace
+Specifies values for an object property that will replace the current values.
+Use this parameter to replace one or more values of a property that cannot be modified using a cmdlet parameter.
+To modify an object property, you must use the LDAP display name.
+You can specify multiple values to a property by specifying a comma-separated list of values, and more than one property by separating them using a semicolon.
+The format for this parameter is:
+
+`-Replace @{Attribute1LDAPDisplayName=value1, value2, ...;   Attribute2LDAPDisplayName=value1, value2, ...; AttributeNLDAPDisplayName=value1, value2, ...}`
+
+When you use the *Add*, *Remove*, *Replace*, and *Clear* parameters together, the operations will be performed in the following order:
+
+- **Remove**
+- **Add**
+- **Replace**
+- **Clear**
+
+```yaml
+Type: Hashtable
+Parameter Sets: Identity
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Server
+Specifies the AD DS instance to connect to, by providing one of the following values for a corresponding domain name or directory server.
+The service may be any of the following: AD LDS, AD DS, or Active Directory snapshot instance.
+
+Domain name values:
+
+- Fully qualified domain name (FQDN)
+- NetBIOS name
+
+Directory server values:
+
+- Fully qualified directory server name
+- A NetBIOS name
+- Fully qualified directory server name and port
+
+The default value for the *Server* parameter is determined by one of the following methods in the order that they are listed:
+
+- By using *Server* value from objects passed through the pipeline.
+- By using the server information associated with the Active Directory PowerShell provider drive, when running under that drive.
+- By using the domain of the computer running PowerShell.
+
+The following example shows how to specify a FQDN as the parameter value.
+
+`-Server &quot;corp.contoso.com&quot;`
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -WhatIf
+Shows what would happen if the cmdlet runs.
+The cmdlet is not run.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: wi
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### CommonParameters
+This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable. For more information, see [about_CommonParameters](https://go.microsoft.com/fwlink/?LinkID=113216).
+
+## INPUTS
+
+# Set-ADObject
+
+### None or Microsoft.ActiveDirectory.Management.ADObject
+An Active Directory object is received by the *Identity* parameter.
+Derived types, such as the following are also accepted:
+
+- **Microsoft.ActiveDirectory.Management.ADGroup**
+- **Microsoft.ActiveDirectory.Management.ADUser**
+- **Microsoft.ActiveDirectory.Management.ADComputer**
+- **Microsoft.ActiveDirectory.Management.ADServiceAccount**
+- **Microsoft.ActiveDirectory.Management.ADOrganizationalUnit**
+- **Microsoft.ActiveDirectory.Management.ADFineGrainedPasswordPolicy**
+- **Microsoft.ActiveDirectory.Management.ADDomain**
+
+An object that was retrieved by using the **Get-ADObject** cmdlet and then modified is received by the *Instance* parameter.
+
+## OUTPUTS
+
+### None or Microsoft.ActiveDirectory.Management.ADObject
+Returns the modified object when the *PassThru* parameter is specified.
+By default, this cmdlet does not generate any output.
+
+## NOTES
+* This cmdlet does not work with an Active Directory snapshot.
+* This cmdlet does not work with a read-only domain controller.
+
+## RELATED LINKS
+
+[Get-ADObject](./Get-ADObject.md)
+
+[Move-ADObject](./Move-ADObject.md)
+
+[New-ADObject](./New-ADObject.md)
+
+[Remove-ADObject](./Remove-ADObject.md)
+
+[Rename-ADObject](./Rename-ADObject.md)
+
+[Restore-ADObject](./Restore-ADObject.md)
+###Microsoft Learn URL###
+https://learn.microsoft.com/en-us/powershell/module/activedirectory/set-adobject/?view=windowsserver2022-ps
+</pre></html>

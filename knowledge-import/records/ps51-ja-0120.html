@@ -1,0 +1,1038 @@
+<!doctype html><html lang="ja"><meta charset="utf-8"><pre class="record-source">###KnowledgeNo###
+PS51-WS2022-2026-0120
+###FormatID###
+PS51-WS2022
+###CreatedAt###
+2026-08-01 00:00
+###UpdatedAt###
+2026-08-01 00:00
+###タイトル###
+Set-ADAccountControl
+###モジュール###
+activedirectory
+###製品###
+Windows PowerShell 5.1
+###対応OS###
+Windows Server 2022
+###日本語訳###
+# セット-ADAccountControlを設定する
+
+## SYNOPSISは,アクティブディレクトリアカウントのユーザーアカウント制御 (UAC) 値を修正します.
+
+## SYNTAXは,のシンタックスです.
+
+```
+Set-ADAccountControl [-WhatIf] [-Confirm] [-AccountNotDelegated &lt;Boolean&gt;]
+ [-AllowReversiblePasswordEncryption &lt;Boolean&gt;] [-AuthType &lt;ADAuthType&gt;] [-CannotChangePassword &lt;Boolean&gt;]
+ [-Credential &lt;PSCredential&gt;] [-DoesNotRequirePreAuth &lt;Boolean&gt;] [-Enabled &lt;Boolean&gt;]
+ [-HomedirRequired &lt;Boolean&gt;] [-Identity] &lt;ADAccount&gt; [-MNSLogonAccount &lt;Boolean&gt;] [-Partition &lt;String&gt;]
+ [-PassThru] [-PasswordNeverExpires &lt;Boolean&gt;] [-PasswordNotRequired &lt;Boolean&gt;] [-Server &lt;String&gt;]
+ [-TrustedForDelegation &lt;Boolean&gt;] [-TrustedToAuthForDelegation &lt;Boolean&gt;] [-UseDESKeyOnly &lt;Boolean&gt;]
+ [&lt;CommonParameters&gt;]
+```
+
+## 記述 **Set-ADAccountControl** cmdlet は Active Directory ユーザーまたはコンピュータアカウントのユーザーアカウント制御 (UAC) 値を修正します. UAC 値は cmdlet パラメータで表現されます.例えば,アカウントパスワードが有効期限を経過するか否かを変更するために *PasswordNeverExpires* パラメータを設定し, **ADS_UF_DONT_EXPIRE_PASSWD** UAC 値を変更します.
+
+*Identity* パラメータは,変更するアクティブディレクトリアカウントを指定します.
+
+アカウントを識別する際には,その名,GUIID,セキュリティ識別子 (SID),またはセキュリティアカウントマネージャ (SAM) のアカウント名によって識別することができます.また,その *Identity* パラメータをオブジェクト変数に設定できます.例えば, `$&lt;localADAccountObject&gt;`口座オブジェクトをパイプラインから *Identity* パラメータに転送することもできます.例えば,アカウントオブジェクトを検索する **Search-ADAccount** cmdlet を使用して,パイプラインを通過して **Set-ADAccountControl** cmdlet に転送することもできます.同様に,このパイプラインを通過してこの cmdlet に転送できるアカウントオブジェクトを回収するために **Get-ADUser**, **Get-ADComputer**,または **Get-ADServiceAccount** cmdlets を使用することもできます.
+
+アクティブディレクトリ軽量ディレクトリサービス (AD LDS) 環境では,以下の2つの条件を除いて, *パーティション* パラメータを指定する必要があります.
+
+- cmdlet は Active Directory プロバイダードライブから実行されます. - AD LDS 環境にデフォルトの命名コンテキストまたはパーティションが定義されています. 
+
+AD LDS環境のデフォルト命名コンテキストを指定するには,AD LDS インスタンスの Active Directory Directory Directory Service Agent (DSA) オブジェクト (**nTDSDSA**) の **msDS-defaultNamingContext** 属性を設定します.
+
+## 例えは
+
+### 例1: ユーザがログインするにはパスワードを要求します.```
+PS C:\&gt; Set-ADAccountControl -Identity ElisaD -PasswordNotRequired $False
+```
+
+このコマンドは,ログインするにはパスワードが必要であることを確認するために,userAccountControlにフラグを設定します.
+
+### 例2: ユーザーアカウントのパスワードを変更することを禁じる```
+PS C:\&gt; Set-ADAccountControl -Identity &#x27;CN=Elisa Daugherty,OU=HumanResources,OU=UserAccounts,DC=FABRIKAM,DC=COM&#x27; -CannotChangePassword $True
+```
+
+このコマンドは,ユーザーのパスワードを変更できないようにユーザーのセキュリティディスクリプターを設定します.
+
+### 例3:ユーザーアカウントのデレグレーションを無効にします.```
+PS C:\&gt; Set-ADAccountControl -Identity SQLAdmin1 -AccountNotDelegated $True
+```
+
+このコマンドは,アカウントを代入できないことを確認するために,userAccountControlにフラグを設定します.
+
+### 例4: 信頼されるユーザーアカウントを設定して,代入を認証します.```
+PS C:\&gt; Set-ADAccountControl -Identity &#x27;CN=IIS01 SvcAccount,OU=ServiceAccounts,OU=Managed,DC=FABRIKAM,DC=COM&#x27; -TrustedToAuthForDelegation $True
+```
+
+このコマンドは,userAccountControlにフラグを設定して,アカウントが現在代入を認証するために信頼されていることを確認します.
+
+### 例5: 委託に信頼される指定されたコンピュータを設定します.```
+PS C:\&gt; Set-ADAccountControl -Identity &quot;FABRIKAM-SRV1&quot; -TrustedForDelegation $True
+```
+
+このコマンドは,委託を信頼する特定のコンピュータを設定します.
+
+### 例 6: ユーザーパスワードを設定して,決して期限切れしないようにします.```
+PS C:\&gt; Set-ADAccountControl -Identity EvanNa -PasswordNeverExpires $True
+```
+
+このコマンドは,ユーザーのパスワードを有効期限に設定します.
+
+### 例7:ホームディレクトリを必要とするユーザーアカウントを設定します.```
+PS C:\&gt; Set-ADAccountControl -Identity &#x27;CN=Evan Narvaez,OU=HumanResources,OU=UserAccounts,DC=FABRIKAM,DC=COM&#x27; -HomedirRequired $True
+```
+
+このコマンドは,ユーザーアカウントにホームディレクトリが必要とするように設定します.
+
+## パラメータは
+
+### -AccountNotDelegated は,ユーザーのセキュリティコンテキストがサービスにデレガードされているかどうかを表示します.このパラメータが true に設定された場合,サービスアカウントが Kerberos デレガードのために信頼されているように設定された場合でも,アカウントのセキュリティコンテキストがサービスにデレガードされません.このパラメータは,アクティブディレクトリアカウントの **AccountNotDelegated** 属性を設定します.このパラメータは,アクティブディレクトリ UAC アトリブートの **ADS_UF_NOT_DELEGATED** 旗を設定します.
+
+```yaml
+Type: Boolean
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -AllowReversiblePasswordEncryption アカウントに逆転可能なパスワード暗号化が許可されているかどうかを表示します.このパラメータは,アカウントの **AllowReversiblePasswordEncryption** 属性を設定します.このパラメータは,また,アクティブディレクトリ UAC属性の **ADS_UF_ENCRYPTED_TEXT_PASSWORD_ALLOWED** 旗を設定します.
+
+```yaml
+Type: Boolean
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -AuthType は,使用する認証方法を指定します.このパラメータの受け入れ可能な値は:です.
+
+- 交渉するまたは0 - 基本または1
+
+デフォルト認証方法は,交渉です.
+
+基本認証方法には,セキュアソケットレイヤ (SSL) 接続が必要となります.
+
+```yaml
+Type: ADAuthType
+Parameter Sets: (All)
+Aliases: 
+Accepted values: Negotiate, Basic
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -CannotChangePassword アカウントがパスワードを変更できるかどうかを表示します.アカウントによるパスワード変更を許可しない場合は,これを$Trueに設定します.このパラメータは,アカウントのCannotChangePassword**属性のブル値を変更します.
+
+```yaml
+Type: Boolean
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### - 確認は,cmdletを実行する前に確認を提示します.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: cf
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+# セット-ADAccountControlを設定する
+
+### -Credential この作業を実行するために使用するユーザーアカウントの認証を指定します.当時はログインしているユーザーに,Cmdlet がWindows PowerShell プロバイダードライブのアクティブディレクトリ モジュールから実行されていない限り,デフォルトで実行される認証です.Cmdlet がそのようなプロバイダードライブから実行されている場合,ドライブに関連したアカウントはデフォルトです.
+
+このパラメータを指定するには,ユーザー名,例えば User1 または Domain01\User01 を入力するか,PSCredential** オブジェクトを指定することもできます.このパラメータのユーザー名を指定すると,cmdlet はパスワードを提示します.
+
+また,スクリプトを使用して **PSCredential** オブジェクトを作成したり, **Get-Credential** cmdlet を使用したりできます.その後, **PSCredential** オブジェクトに *Credential* パラメータを設定できます.
+
+実行する認証がタスクを実行するためのディレクトリレベルの許可がない場合,Windows PowerShell用のアクティブディレクトリモジュールでは終了エラーが返されます.
+
+```yaml
+Type: PSCredential
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -DoesNotRequirePreAuth は,ユーザーまたはコンピュータアカウントを使用してログインするにはKerberosの事前認証が必要かどうかを表示します.このパラメータは,Active Directory UAC属性の **ADS_UF_DONT_REQUIRE_PREAUTH**フラグを設定します.このパラメータの受け入れ可能な値は:
+
+$ -False or 0 - $True or 1
+
+```yaml
+Type: Boolean
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Enabled はアカウントが有効かどうかを指定します.有効なアカウントにはパスワードが必要です.このパラメータは,アカウントオブジェクトの **Enabled** 属性を設定します.このパラメータは,また,Active Directory UAC属性の **ADS_UF_ACCOUNTDISABLE** 旗を設定します.このパラメータの受け入れ可能な値は:
+
+$ -False or 0 - $True or 1
+
+```yaml
+Type: Boolean
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -HomedirRequired アカウントにホームディレクトリが必要かどうか表示します.このパラメータは,Active Directory UAC属性の **ADS_UF_HOMEDIR_REQUIRED**フラグを設定します.このパラメータの受け入れ可能な値は:
+
+$ -False or 0 - $True or 1
+
+```yaml
+Type: Boolean
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Identity は,以下のプロパティ値のうちの1つを提供することで,アクティブディレクトリアカウントオブジェクトを指定します.括弧の識別子は,属性に対するライトウェイトディレクトリ アクセス プロトコル (LDAP) の表示名です.このパラメータの受け入れ可能な値は:です.
+
+特徴的な名前 - GUID (objectGUID) - セキュリティ識別子 (objectSid) - SAMアカウント名 (sAMAccountName)
+
+cmdlet は,オブジェクトを見つけるためにデフォルトの命名コンテキストまたはパーティションを探します.もし2つ以上のオブジェクトが見つかったら,cmdlet は,終了しないエラーを返します.
+
+このパラメータは,このオブジェクトをパイプラインを通過させることもできます.または,このパラメータをアカウントオブジェクトインスタンスの設定でもできます.
+
+また,以下のような衍生品も受け入れられる:
+
+**Microsoft.ActiveDirectory.Management.ADServiceAccount** - **Microsoft.ActiveDirectory.Management.ADComputer** - **Microsoft.ActiveDirectory.Management.ADUser**
+
+```yaml
+Type: ADAccount
+Parameter Sets: (All)
+Aliases: 
+
+Required: True
+Position: 0
+Default value: None
+Accept pipeline input: True (ByValue)
+Accept wildcard characters: False
+```
+
+### -MNSLogonAccount アカウントがMNS (Majority Node Set) ログオンアカウントかどうか表示します.このパラメータは,また,Active Directory UAC属性の **ADS_UF_MNS_LOGON_ACCOUNT**フラグを設定します.このパラメータの受け入れられる値は:
+
+$ -False or 0 - $True or 1
+
+MNSログオンアカウントを使用して,共有ディスクドライブを使用せずにマルチノードクラスタを構成することができます.
+
+```yaml
+Type: Boolean
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Partition Active Directory のパーティションの名前の指定.この名前の指定は,現在のディレクトリサーバーの名前設定のいずれかである必要があります. cmdlet はこのパーティションで検索して, *Identity* パラメータで定義されたオブジェクトを見つける.
+
+多くの場合,デフォルト値が指定されていない場合, *Partition* パラメータにデフォルト値が使用されます.デフォルト値の決定のためのルールが下記に記載されています.最初にリストされたルールが最初に評価され,デフォルト値が決定されると,他のルールが評価されないことに注意してください.
+
+アクティブディレクトリ ドメインサービス (AD DS) 環境では,以下の場合, *パーティション* のデフォルト値は設定されます.
+
+- *Identity* パラメータが別名に設定されている場合, *Partition* のデフォルト値は自動的にこの別名から生成されます. - Active Directory プロバイダードライブからcmdletsを実行している場合は, *Partition* のデフォルト値は自動的にドライブ内の現在のパスから生成されます. - 前例のいずれも適用されない場合, *Partition* のデフォルト値は目標ドメインのデフォルトパーティションまたは命名コンテキストに設定されます.
+
+AD LDS環境では,以下の場合, *Partition* のデフォルト値は設定されます.
+
+*Identity* パラメータが指定された場合,この指定された名前から自動的に *Partition* のデフォルト値は生成されます. - Active Directory プロバイダードライブから cmdlets を実行している場合は,ドライブ内の現在のパスから自動的に *Partition* のデフォルト値は生成されます. - ターゲット AD LDS インスタンスのデフォルトの命名コンテキストがある場合, *Partition* のデフォルト値はデフォルトの命名コンテキストに設定されます. AD LDS 環境のデフォルトの命名コンテキストを指定するには,AD LDS のための **msDS If-defaultNamingContext** 属性を設定します. - 前回のインスタンスのいずれも適用されません.ion*パラメータは,デフォルト値を取らない.
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -PassThru は,あなたが取り組んでいるアイテムを表すオブジェクトを返します.デフォルトでは,このcmdlet は出力を生成しません.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -PasswordNeverExpires アカウントのパスワードが有効期限を満了するか否かを表示する.このパラメータは,アカウントオブジェクトの **PasswordNeverExpires** 属性を設定します.このパラメータは,また,Active Directory UAC属性の **ADS_UF_DONT_EXPIRE_PASSWD** 旗を設定します.このパラメータの受け入れられる値は:
+
+$ -False or 0 - $True or 1
+
+注:このパラメータは,また **ChangePasswordAtLogon** 属性をもっているアカウントでは$True に設定できない.
+
+```yaml
+Type: Boolean
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+# セット-ADAccountControlを設定する
+
+### -PasswordNotRequired アカウントにパスワードが必要かどうか表示します.このパラメータは,ユーザーまたはコンピュータアカウントなどのアカウントの **PasswordNotRequired** 属性を設定します.このパラメータは,また,Active Directory UAC属性の **ADS_UF_PASSWD_NOTREQD** 旗を設定します.このパラメータの受け入れ可能な値は:
+
+$ -False or 0 - $True or 1
+
+```yaml
+Type: Boolean
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Serverは,対応するドメイン名またはディレクトリサーバーに以下の値のうちの1つを提供することで,接続するアクティブディレクトリ ドメインサービスインスタンスを指定します.サービスは以下のいずれかかもしれません.
+
+次の方法の一つで,アクティブディレクトリ ドメインサービスインスタンスを指定してください.
+
+ドメイン名値:
+
+- 完全資格ドメイン名 - NetBIOS名
+
+ディレクトリサーバーの値: 
+
+- 完全資格のあるディレクトリサーバー名 - NetBIOS名 - 完全資格のあるディレクトリサーバー名とポート
+
+このパラメータのデフォルト値は,次の方法のうちの1つによって,列挙された順序で決定されます:
+
+パイプラインを通過したオブジェクトから *Server* 値を利用することで - Active Directory Domain Services Windows PowerShell プロバイダードライブに関連したサーバー情報を利用することで,当ドライブでcmdlet が実行される場合 - Windows PowerShell を実行しているコンピュータのドメインを使用して -
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -TrustedForDelegation は,Kerberos デレグレーションに信頼されているアカウントが,アカウントを信頼しているかどうかを表示します.Kerberos デレグレーションに信頼されているアカウントの下で実行されているサービスは,サービスを要求するクライアントのアイデンティティを想定できます.このパラメータは,アカウントオブジェクトの **TrustedForDelegation** 属性を設定します.この値は,また,Active Directory UAC属性の **ADS_UF_TRUSTED_FOR_DELEGATION** 旗を設定します.このパラメータの受け入れ値は:
+
+$ -False or 0 - $True or 1
+
+```yaml
+Type: Boolean
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -TrustedToAuthForDelegation アカウントがデレグレーションに有効かどうかを表示します.このパラメータが true に設定された場合,そのようなアカウントの下で実行されているサービスはネットワーク上の他のリモートサーバー上のクライアントを偽装することができます.このパラメータは,アクティブディレクトリ UAC属性の **ADS_UF_TRUSTED_TO_AUTHENTICATE_FOR_DELEGATION**フラグを設定します.このパラメータの受け入れ可能な値は:
+
+$ -False or 0 - $True or 1
+
+```yaml
+Type: Boolean
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -UseDESKeyOnly は,アカウントが鍵の暗号化タイプのみを使用することを制限されているかどうかを表示します.このパラメータは,アクティブディレクトリ UAC属性の **ADS_UF_USE_DES_KEY_ONLY**フラグを設定します.このパラメータの受け入れ可能な値は:
+
+$ -False or 0 - $True or 1
+
+```yaml
+Type: Boolean
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -WhatIf が実行されればどうなるか示します.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: wi
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### 共通パラメータ このcmdletは共通パラメータをサポートしています: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable.詳細については, [about_CommonParameters](を参照してください.https://go.microsoft.com/fwlink/?LinkID=113216) でした.
+
+## 輸入は
+
+### Microsoft.ActiveDirectory.Management.ADAccount アカウントオブジェクトは, *Identity* パラメータで受信されます.
+
+派生型も受け入れられる.例えば以下の類型:
+
+**Microsoft.ActiveDirectory.Management.ADUser** - **Microsoft.ActiveDirectory.Management.ADComputer** - **Microsoft.ActiveDirectory.Management.ADServiceAccount** - 
+
+## 輸出は
+
+### どれもない
+
+## 注記 * このcmdlet は Active Directory のスナップショットで動作しません. * このcmdlet は読み込みのみのドメインコントローラで動作しません. * このcmdlet はグローバルカタログポートに接続されたときに動作しません.
+
+## 関連リンク
+
+[Get-ADComputer](./Get-ADComputer.md) 
+
+[Get-ADServiceAccount](./Get-ADServiceAccount.md) について
+
+[Get-ADUser](./Get-ADUser.md) 
+
+[AD DS Administration Cmdlets in Windows PowerShell](./activedirectory.md) は,Windowsの管理のCmdletsを表示しています.
+###英語原文###
+# Set-ADAccountControl
+
+## SYNOPSIS
+Modifies user account control (UAC) values for an Active Directory account.
+
+## SYNTAX
+
+```
+Set-ADAccountControl [-WhatIf] [-Confirm] [-AccountNotDelegated &lt;Boolean&gt;]
+ [-AllowReversiblePasswordEncryption &lt;Boolean&gt;] [-AuthType &lt;ADAuthType&gt;] [-CannotChangePassword &lt;Boolean&gt;]
+ [-Credential &lt;PSCredential&gt;] [-DoesNotRequirePreAuth &lt;Boolean&gt;] [-Enabled &lt;Boolean&gt;]
+ [-HomedirRequired &lt;Boolean&gt;] [-Identity] &lt;ADAccount&gt; [-MNSLogonAccount &lt;Boolean&gt;] [-Partition &lt;String&gt;]
+ [-PassThru] [-PasswordNeverExpires &lt;Boolean&gt;] [-PasswordNotRequired &lt;Boolean&gt;] [-Server &lt;String&gt;]
+ [-TrustedForDelegation &lt;Boolean&gt;] [-TrustedToAuthForDelegation &lt;Boolean&gt;] [-UseDESKeyOnly &lt;Boolean&gt;]
+ [&lt;CommonParameters&gt;]
+```
+
+## DESCRIPTION
+The **Set-ADAccountControl** cmdlet modifies the user account control (UAC) values for an Active Directory user or computer account.
+UAC values are represented by cmdlet parameters.
+For example, set the *PasswordNeverExpires* parameter to change whether an account password could expire and to modify the **ADS_UF_DONT_EXPIRE_PASSWD** UAC value.
+
+The *Identity* parameter specifies the Active Directory account to modify.
+
+You can identify an account by its distinguished name, GUID, security identifier (SID), or security accounts manager (SAM) account name.
+You can also set the *Identity* parameter to an object variable such as `$&lt;localADAccountObject&gt;`, or you can pass an account object through the pipeline to the *Identity* parameter.
+For example, you can use the **Search-ADAccount** cmdlet to retrieve an account object and then pass the object through the pipeline to the **Set-ADAccountControl** cmdlet.
+Similarly, you can use **Get-ADUser**, **Get-ADComputer**, or **Get-ADServiceAccount** cmdlets to retrieve account objects that you can pass through the pipeline to this cmdlet.
+
+For Active Directory Lightweight Directory Services (AD LDS) environments, the *Partition* parameter must be specified except in the following two conditions:
+
+- The cmdlet is run from an Active Directory provider drive.
+- A default naming context or partition is defined for the AD LDS environment. 
+
+To specify a default naming context for an AD LDS environment, set the **msDS-defaultNamingContext** property of the Active Directory directory service agent (DSA) object (**nTDSDSA**) for the AD LDS instance.
+
+## EXAMPLES
+
+### Example 1: Require that a user use a password to logon
+```
+PS C:\&gt; Set-ADAccountControl -Identity ElisaD -PasswordNotRequired $False
+```
+
+This command sets the flag on userAccountControl to make sure that a password is required for logon.
+
+### Example 2: Disable change password on a user account
+```
+PS C:\&gt; Set-ADAccountControl -Identity &#x27;CN=Elisa Daugherty,OU=HumanResources,OU=UserAccounts,DC=FABRIKAM,DC=COM&#x27; -CannotChangePassword $True
+```
+
+This command sets the security descriptor of the user to make sure they cannot change their own password.
+
+### Example 3: Disable delegation on a user account
+```
+PS C:\&gt; Set-ADAccountControl -Identity SQLAdmin1 -AccountNotDelegated $True
+```
+
+This command sets the flag on userAccountControl to make sure that the account cannot be delegated.
+
+### Example 4: Set a user account to be trusted to authenticate for delegation
+```
+PS C:\&gt; Set-ADAccountControl -Identity &#x27;CN=IIS01 SvcAccount,OU=ServiceAccounts,OU=Managed,DC=FABRIKAM,DC=COM&#x27; -TrustedToAuthForDelegation $True
+```
+
+This command sets the flag on userAccountControl to make sure that the account is now trusted to authenticate for delegation.
+
+### Example 5: Set a specified computer to be trusted for delegation
+```
+PS C:\&gt; Set-ADAccountControl -Identity &quot;FABRIKAM-SRV1&quot; -TrustedForDelegation $True
+```
+
+This command sets specified computer to be trusted for delegation.
+
+### Example 6: Set a user password to never expire
+```
+PS C:\&gt; Set-ADAccountControl -Identity EvanNa -PasswordNeverExpires $True
+```
+
+This command sets the password of the user to never expire.
+
+### Example 7: Set a user account to require a home directory
+```
+PS C:\&gt; Set-ADAccountControl -Identity &#x27;CN=Evan Narvaez,OU=HumanResources,OU=UserAccounts,DC=FABRIKAM,DC=COM&#x27; -HomedirRequired $True
+```
+
+This command sets the user account to require a Home Directory.
+
+## PARAMETERS
+
+### -AccountNotDelegated
+Indicates whether the security context of the user is delegated to a service.
+When this parameter is set to true, the security context of the account is not delegated to a service even when the service account is set as trusted for Kerberos delegation.
+This parameter sets the **AccountNotDelegated** property for an Active Directory account.
+This parameter also sets the **ADS_UF_NOT_DELEGATED** flag of the Active Directory UAC attribute.
+
+```yaml
+Type: Boolean
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -AllowReversiblePasswordEncryption
+Indicates whether reversible password encryption is allowed for the account.
+This parameter sets the **AllowReversiblePasswordEncryption** property of the account.
+This parameter also sets the **ADS_UF_ENCRYPTED_TEXT_PASSWORD_ALLOWED** flag of the Active Directory UAC attribute.
+
+```yaml
+Type: Boolean
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -AuthType
+Specifies the authentication method to use.
+The acceptable values for this parameter are:
+
+- Negotiate or 0
+- Basic or 1
+
+The default authentication method is Negotiate.
+
+A Secure Sockets Layer (SSL) connection is required for the Basic authentication method.
+
+```yaml
+Type: ADAuthType
+Parameter Sets: (All)
+Aliases: 
+Accepted values: Negotiate, Basic
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -CannotChangePassword
+Indicates whether an account can change its password.
+To disallow password change by the account set this to $True.
+This parameter changes the Boolean value of the **CannotChangePassword** property of an account.
+
+```yaml
+Type: Boolean
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Confirm
+Prompts you for confirmation before running the cmdlet.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: cf
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+# Set-ADAccountControl
+
+### -Credential
+Specifies the user account credentials to use to perform this task.
+The default credentials are the credentials of the currently logged on user unless the cmdlet is run from an Active Directory module for Windows PowerShell provider drive.
+If the cmdlet is run from such a provider drive, the account associated with the drive is the default.
+
+To specify this parameter, you can type a user name, such as User1 or Domain01\User01 or you can specify a **PSCredential** object.
+If you specify a user name for this parameter, the cmdlet prompts for a password.
+
+You can also create a **PSCredential** object by using a script or by using the **Get-Credential** cmdlet.
+You can then set the *Credential* parameter to the **PSCredential** object.
+
+If the acting credentials do not have directory-level permission to perform the task, Active Directory module for Windows PowerShell returns a terminating error.
+
+```yaml
+Type: PSCredential
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -DoesNotRequirePreAuth
+Indicates whether Kerberos pre-authentication is required to logon using the user or computer account.
+This parameter sets the **ADS_UF_DONT_REQUIRE_PREAUTH** flag of the Active Directory UAC attribute.
+The acceptable values for this parameter are:
+
+- $False or 0
+- $True or 1
+
+```yaml
+Type: Boolean
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Enabled
+Specifies whether an account is enabled.
+An enabled account requires a password.
+This parameter sets the **Enabled** property for an account object.
+This parameter also sets the **ADS_UF_ACCOUNTDISABLE** flag of the Active Directory UAC attribute.The acceptable values for this parameter are:
+
+- $False or 0
+- $True or 1
+
+```yaml
+Type: Boolean
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -HomedirRequired
+Indicates whether a home directory is required for the account.
+This parameter sets the **ADS_UF_HOMEDIR_REQUIRED** flag of the Active Directory UAC attribute.The acceptable values for this parameter are:
+
+- $False or 0
+- $True or 1
+
+```yaml
+Type: Boolean
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Identity
+Specifies an Active Directory account object by providing one of the following property values.
+The identifier in parentheses is the Lightweight Directory Access Protocol (LDAP) display name for the attribute.
+The acceptable values for this parameter are:
+
+- A distinguished name
+- A GUID (objectGUID) 
+- A Security Identifier (objectSid) 
+- A SAM Account Name (sAMAccountName)
+
+The cmdlet searches the default naming context or partition to find the object.
+If two or more objects are found, the cmdlet returns a non-terminating error.
+
+This parameter can also get this object through the pipeline or you can set this parameter to an account object instance.
+
+Derived types such as the following are also accepted:
+
+- **Microsoft.ActiveDirectory.Management.ADServiceAccount**
+- **Microsoft.ActiveDirectory.Management.ADComputer**
+- **Microsoft.ActiveDirectory.Management.ADUser**
+
+```yaml
+Type: ADAccount
+Parameter Sets: (All)
+Aliases: 
+
+Required: True
+Position: 0
+Default value: None
+Accept pipeline input: True (ByValue)
+Accept wildcard characters: False
+```
+
+### -MNSLogonAccount
+Indicates whether the account is a Majority Node Set (MNS) logon account.
+This parameter also sets the **ADS_UF_MNS_LOGON_ACCOUNT** flag of the Active Directory UAC attribute.
+The acceptable values for this parameter are:
+
+- $False or 0
+- $True or 1
+
+You can use MNS logon accounts to configure a multi-node cluster without using a shared disk drive.
+
+```yaml
+Type: Boolean
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Partition
+Specifies the distinguished name of an Active Directory partition.
+The distinguished name must be one of the naming contexts on the current directory server.
+The cmdlet searches this partition to find the object defined by the *Identity* parameter.
+
+In many cases, a default value is used for the *Partition* parameter if no value is specified.
+The rules for determining the default value are given below.
+Note that rules listed first are evaluated first and once a default value can be determined, no further rules are evaluated.
+
+In Active Directory Domain Services (AD DS) environments, a default value for *Partition* is set in the following cases: 
+
+- If the *Identity* parameter is set to a distinguished name, the default value of *Partition* is automatically generated from this distinguished name.
+- If running cmdlets from an Active Directory provider drive, the default value of *Partition* is automatically generated from the current path in the drive. 
+- If none of the previous cases apply, the default value of *Partition* is set to the default partition or naming context of the target domain.
+
+In AD LDS environments, a default value for *Partition* is set in the following cases:
+
+- If the *Identity* parameter is set to a distinguished name, the default value of *Partition* is automatically generated from this distinguished name. 
+- If running cmdlets from an Active Directory provider drive, the default value of *Partition* is automatically generated from the current path in the drive. 
+- If the target AD LDS instance has a default naming context, the default value of *Partition* is set to the default naming context.
+To specify a default naming context for an AD LDS environment, set the **msDS-defaultNamingContext** property of the Active Directory directory service agent object (**nTDSDSA**) for the AD LDS instance. 
+- If none of the previous cases apply, the *Partition* parameter will not take any default value.
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -PassThru
+Returns an object representing the item with which you are working.
+By default, this cmdlet does not generate any output.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -PasswordNeverExpires
+Indicates whether the password of an account can expire.
+This parameter sets the **PasswordNeverExpires** property of an account object.
+This parameter also sets the **ADS_UF_DONT_EXPIRE_PASSWD** flag of the Active Directory UAC attribute.
+The acceptable values for this parameter are:
+
+- $False or 0
+- $True or 1
+
+Note: This parameter cannot be set to $True for an account that also has the **ChangePasswordAtLogon** property set to $True.
+
+```yaml
+Type: Boolean
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+# Set-ADAccountControl
+
+### -PasswordNotRequired
+Indicates whether the account requires a password.
+This parameter sets the **PasswordNotRequired** property of an account, such as a user or computer account.
+This parameter also sets the **ADS_UF_PASSWD_NOTREQD** flag of the Active Directory UAC attribute.
+The acceptable values for this parameter are:
+
+- $False or 0
+- $True or 1
+
+```yaml
+Type: Boolean
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Server
+Specifies the Active Directory Domain Services instance to connect to, by providing one of the following values for a corresponding domain name or directory server.
+The service may be any of the following: Active Directory Lightweight Domain Services, Active Directory Domain Services or Active Directory snapshot instance.
+
+Specify the Active Directory Domain Services instance in one of the following ways:  
+
+Domain name values:
+
+- Fully qualified domain name
+- NetBIOS name
+
+Directory server values: 
+
+- Fully qualified directory server name
+- NetBIOS name
+- Fully qualified directory server name and port
+
+The default value for this parameter is determined by one of the following methods in the order that they are listed:
+
+- By using the *Server* value from objects passed through the pipeline
+- By using the server information associated with the Active Directory Domain Services Windows PowerShell provider drive, when the cmdlet runs in that drive
+- By using the domain of the computer running Windows PowerShell
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -TrustedForDelegation
+Indicates whether an account is trusted for Kerberos delegation.
+A service that runs under an account that is trusted for Kerberos delegation can assume the identity of a client requesting the service.
+This parameter sets the **TrustedForDelegation** property of an account object.
+This value also sets the **ADS_UF_TRUSTED_FOR_DELEGATION** flag of the Active Directory UAC attribute.
+The acceptable values for this parameter are:
+
+- $False or 0
+- $True or 1
+
+```yaml
+Type: Boolean
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -TrustedToAuthForDelegation
+Indicates whether an account is enabled for delegation.
+When this parameter is set to true, a service running under such an account can impersonate a client on other remote servers on the network.
+This parameter sets the **ADS_UF_TRUSTED_TO_AUTHENTICATE_FOR_DELEGATION** flag of the Active Directory UAC attribute.
+The acceptable values for this parameter are:
+
+- $False or 0
+- $True or 1
+
+```yaml
+Type: Boolean
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -UseDESKeyOnly
+Indicates whether an account is restricted to use only Data Encryption Standard encryption types for keys.
+This parameter sets the **ADS_UF_USE_DES_KEY_ONLY** flag of the Active Directory UAC attribute. 
+The acceptable values for this parameter are:
+
+- $False or 0
+- $True or 1
+
+```yaml
+Type: Boolean
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -WhatIf
+Shows what would happen if the cmdlet runs.
+The cmdlet is not run.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: wi
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### CommonParameters
+This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable. For more information, see [about_CommonParameters](https://go.microsoft.com/fwlink/?LinkID=113216).
+
+## INPUTS
+
+### Microsoft.ActiveDirectory.Management.ADAccount
+An account object is received by the *Identity* parameter.
+
+Derived types, such as the following are also accepted:
+
+- **Microsoft.ActiveDirectory.Management.ADUser**
+- **Microsoft.ActiveDirectory.Management.ADComputer**
+- **Microsoft.ActiveDirectory.Management.ADServiceAccount**
+
+## OUTPUTS
+
+### None
+
+## NOTES
+* This cmdlet does not work with an Active Directory snapshot.
+* This cmdlet does not work with a read-only domain controller.
+* This cmdlet does not work when connected to global catalog port.
+
+## RELATED LINKS
+
+[Get-ADComputer](./Get-ADComputer.md)
+
+[Get-ADServiceAccount](./Get-ADServiceAccount.md)
+
+[Get-ADUser](./Get-ADUser.md)
+
+[AD DS Administration Cmdlets in Windows PowerShell](./activedirectory.md)
+###Microsoft Learn URL###
+https://learn.microsoft.com/en-us/powershell/module/activedirectory/set-adaccountcontrol/?view=windowsserver2022-ps
+</pre></html>

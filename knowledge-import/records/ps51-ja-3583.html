@@ -1,0 +1,236 @@
+<!doctype html><html lang="ja"><meta charset="utf-8"><pre class="record-source">###KnowledgeNo###
+PS51-WS2022-2026-3583
+###FormatID###
+PS51-WS2022
+###CreatedAt###
+2026-08-01 00:00
+###UpdatedAt###
+2026-08-01 00:00
+###タイトル###
+about_Path_Syntax
+###モジュール###
+Microsoft.PowerShell.Core
+###製品###
+Windows PowerShell 5.1
+###対応OS###
+Windows Server 2022
+###日本語訳###
+# about_Path_Syntaxについて
+
+## 短編説明
+
+PowerShellで完全なパスと相対的なパスフォーマットを記述します.
+
+## 長い説明
+
+PowerShell プロバイダーでアクセスできるデータストア内のすべてのアイテムは,パス名によってユニークに識別できます.パスとは,アイテムの名前,アイテムの所在地となるコンテナとサブコンテナ,コンテナにアクセスできるPowerShellドライブの組み合わせです.
+
+PowerShellで,パス名には _fully qualified_と _relative_という2つの種類がある.完全に合格したパスには,パス構成するすべての要素が含まれている.次の構文では,完全に合格したパス内の要素を表示します:
+
+```Syntax
+[&lt;provider&gt;::]&lt;drive&gt;:[\&lt;container&gt;[\&lt;subcontainer&gt;...]]\&lt;item&gt;
+```
+
+   `&lt;provider&gt;`ファイルシステムプロバイダは,コンピュータ上のファイルやディレクトリにアクセスできるようにします.この構文の要素はオプションで,すべてのプロバイダーにドライブ名がユニークであるため,必要ありません.
+
+   `&lt;drive&gt;`場所保持者は特定の PowerShell プロバイダーがサポートする PowerShell ドライブを指します.ファイルシステム プロバイダーの場合,PowerShell はシステムに設定されている Windows ドライブにマップを移動します.例えば,システムに  が含まれている場合.`A:`ドライブとドライブを`C:`FileSystem プロバイダーがPowerShellで同じドライブを作成する.
+
+ドライブを指定した後,そのアイテムを含むコンテナやサブコンテナを指定する必要があります.コンテナは,データストレージに存在する階層順で指定する必要があります.つまり,母コンテナから始め,母コンテナ内の子供コンテナから始め,それぞれの子供コンテナのパターンを繰り返す必要があります.さらに,各コンテナにはバックスラッシュが先行する必要があります.
+
+&gt; [!NOTE] &gt; PowerShellでは,他のプラットフォームで PowerShell との互換性のためにバックスラッシュまたはフォアワードスラッシュを使用することができます.これは PowerShell コマンドで動作しますが,ネイティブ &gt; ディレクトリ分離器を期待するネイティブアプリケーションで使用すると動作しない可能性があります.`[System.IO.Path]::DirectorySeparatorChar`プラットフォームで使用された文字を検索する.
+
+コンテナとサブコンテナが指定された後,アイテム名,バックスラッシュが先行する項目名を入力する必要があります.例えば,完全に合格したパス名です.`Shell.dll`のファイルに載っている.`C:\Windows\System32`ダイレクトリは以下の通りです:
+
+```powershell
+C:\Windows\System32\Shell.dll
+```
+
+この場合,容器へのアクセスが可能なドライブは, です.`C:`ドライブ,トップレベルのコンテナは`Windows`副容器は,`System32`項目が&quot;&quot;である.`Shell.dll` .
+
+いくつかの状況では,完全に合格した経路を指定する必要はありませんが,相対的な経路を使用することができます.PowerShellでは,現在の作業場所と比較して,その位置に基づいてアイテムを識別することができます.
+
+PowerShellでは,相対的な経路を指定するために以下の文字列を使用します.
+
+( - - -`.`) - 現在の位置 - ()`..`) - 現在の位置の親 - ()`\`) - 現在の位置のルーツ
+
+以下は,現在の作業ディレクトリが  に設定されていることをベースにした例です.`C:\Windows` .
+
+- 相対的な経路`.\System` のように解消されます.`C:\Windows\System`- 相対的な経路`..\Program Files` のように解消されます.`C:\Program Files`- 相対的な経路`\Program Files` のように解消されます.`C:\Program Files`- 相対的な経路`System` のように解消されます.`C:\Windows\System`
+
+コマンドでパスを使用する際には,完全に合格したパスまたは相対的なパスを使用できます.例えば,現在の作業ディレクトリが&quot;&quot;と仮定します.`C:\Windows`.次のもの.`Get-ChildItem`のすべての項目を取り出すコマンドです.`C:\TechDocs`ディレクトリ:
+
+```powershell
+Get-ChildItem \TechDocs
+```
+
+バックスラッシュは,現在の作業場所のドライブルーツを使用すべきであることを示します.作業ディレクトリが であるため.`C:\Windows`,ドライブルーツは, です.`C:`ドライブが  ドライブだから.`TechDocs`ディレクトリはルートから離れているので,バックスラッシュのみを指定する必要があります.
+
+完全合格のパスを使って同じ結果が得られます.
+
+```powershell
+Get-ChildItem C:\TechDocs
+```
+
+完全に合格したパスまたは相対的なパス名を使用するかどうかは別として,パスは,あるアイテムを位置するだけでなく,別のコンテナで同じ名前を持つ他のアイテムと同じアイテムを共有している場合でも,そのアイテムをユニークに識別するため,重要である.
+
+例えば,それぞれに名前がある2つのファイルがあると仮定しましょう.`Results.txt`最初のファイルは, という名前のディレクトリにあります.`C:\TechDocs\Jan`2番目のファイルは, という名前のディレクトリに存在します.`C:\TechDocs\Feb`最初のファイルへのパス ()`C:\TechDocs\Jan\Results.txt`) と2番目のファイルへのパス ()`C:\TechDocs\Feb\Results.txt`) は,両ファイルを明確に区別することができます.
+
+## Win32ファイル名空間のサポートです.
+
+Windowsでは,FileSystemプロバイダーをサポートするcmdletsは Win32ファイル名空間フォーマットを使用するパスもサポートしています.このパスを使用することは,cmdletsのLiteralPath**パラメータのみでできます.
+
+Win32ファイル名空間におけるパスには,前記に&quot;&quot;と記されています.`\\?\`プレフィックスは,Windows APIにすべての文字列解析を無効にし,その文字列をファイルシステムに直接送るように指示します.例えば,ファイルシステムは大きなパスとファイル名をサポートしている場合は,Windows APIが強制する **MAX_PATH** 制限を上回ることができます.
+
+詳細については,[ファイル名,経路,および名前空間名]で _Win32ファイル名空間を参照してください.
+
+## また, を参照してください.
+
+[about_Locations][02] - [Convert-Path][03] - [Join-Path][04] - [Resolve-Path][05] - [Split-Path][06] - [Test-Path][07] -
+
+リンク参照 --&gt; [01]: /windows/win32/fileio/naming-a-file#win32-file-namespaces [02]: about_Locations.md [03]: xref:Microsoft.PowerShell.Management.Convert-Path [04]: xref:Microsoft.PowerShell.Management.Join-Path [05]: xref:Microsoft.PowerShell.Management.Resolve-Path [06]: xref:Microsoft.PowerShell.Management.Split-Path [07]: xref:Microsoft.PowerShell.Management.Test-Path
+###英語原文###
+# about_Path_Syntax
+
+## Short description
+
+Describes the full and relative path formats in  PowerShell.
+
+## Long description
+
+All items in a data store accessible through a PowerShell provider can be
+uniquely identified by their path names. A path is a combination of the
+item name, the container and subcontainers in which the item is located, and
+the PowerShell drive through which the containers are accessed.
+
+In PowerShell, path names can be one of two types: _fully qualified_ and
+_relative_. A fully qualified path consists of all elements that make up a
+path. The following syntax shows the elements in a fully qualified path:
+
+```Syntax
+[&lt;provider&gt;::]&lt;drive&gt;:[\&lt;container&gt;[\&lt;subcontainer&gt;...]]\&lt;item&gt;
+```
+
+The `&lt;provider&gt;` placeholder refers to the PowerShell provider through which
+you access the data store. For example, the FileSystem provider allows you to
+access the files and directories on your computer. This element of the syntax
+is optional and is never needed because the drive names are unique across all
+providers.
+
+The `&lt;drive&gt;` placeholder refers to the PowerShell drive that&#x27;s supported by a
+particular PowerShell provider. In the case of the FileSystem provider, the
+PowerShell drives map to the Windows drives that are configured on your system.
+For example, if your system includes an `A:` drive and a `C:` drive, the
+FileSystem provider creates the same drives in PowerShell.
+
+After you have specified the drive, you must specify any containers and
+subcontainers that contain the item. The containers must be specified in the
+hierarchical order in which they exist in the data store. In other words, you
+must start with the parent container, then the child container in that parent
+container, repeating the pattern for each child container. In addition, each
+container must be preceded by a backslash.
+
+&gt; [!NOTE]
+&gt; PowerShell allows you to use backslash or forward slash for compatibility
+&gt; with PowerShell on other platforms. This works for PowerShell commands, but
+&gt; may not work when used with native applications that only expect the native
+&gt; directory separator. Use `[System.IO.Path]::DirectorySeparatorChar` to find
+&gt; the character used for your platform.
+
+After the container and subcontainers have been specified, you must provide
+the item name, preceded by a backslash. For example, the fully qualified path
+name for the `Shell.dll` file in the `C:\Windows\System32` directory is as
+follows:
+
+```powershell
+C:\Windows\System32\Shell.dll
+```
+
+In this case, the drive through which the containers are accessed is the `C:`
+drive, the top-level container is `Windows`, the subcontainer is `System32`,
+and the item is `Shell.dll`.
+
+In some situations, you don&#x27;t need to specify a fully qualified path and can
+instead use a relative path. PowerShell allows you to identify an item based on
+its location relative to the current working location.
+
+PowerShell uses the following character sequences to specify relative paths.
+
+- (`.`) - Current location
+- (`..`) - Parent of current location
+- (`\`) - Root of current location
+
+The following examples are based on the current working directory being set to
+`C:\Windows`.
+
+- The relative path `.\System` resolves as `C:\Windows\System`
+- The relative path `..\Program Files` resolves as `C:\Program Files`
+- The relative path `\Program Files` resolves as `C:\Program Files`
+- The relative path `System` resolves as `C:\Windows\System`
+
+When using a path in a command, you can use a fully qualified path or a
+relative one. For example, suppose that your current working directory is
+`C:\Windows`. The following `Get-ChildItem` command retrieves all items in the
+`C:\TechDocs` directory:
+
+```powershell
+Get-ChildItem \TechDocs
+```
+
+The backslash indicates that the drive root of the current working location
+should be used. Because the working directory is `C:\Windows`, the drive root
+is the `C:` drive. Because the `TechDocs` directory is located off the root,
+you need to specify only the backslash.
+
+You get the same results using the fully qualified path:
+
+```powershell
+Get-ChildItem C:\TechDocs
+```
+
+Regardless of whether you use a fully qualified path or a relative path name, a
+path is important not only because it locates an item but also because it
+uniquely identifies the item even if that item shares the same name as another
+item in a different container.
+
+For instance, suppose that you have two files that are each named
+`Results.txt`. The first file is in a directory named `C:\TechDocs\Jan`, and
+the second file is in a directory named `C:\TechDocs\Feb`. The path for the
+first file (`C:\TechDocs\Jan\Results.txt`) and the path for the second file
+(`C:\TechDocs\Feb\Results.txt`) allow you to clearly distinguish between the
+two files.
+
+## Support for the Win32 file namespace
+
+On Windows, the cmdlets that support the FileSystem provider also support the
+paths that use the Win32 File namespace format. You can only use these paths
+with the **LiteralPath** parameter of the cmdlets.
+
+Paths in Win32 File namespace are prefixed with `\\?\`. The prefix tells the
+Windows APIs to disable all string parsing and send the string that follows
+directly to the file system. For example, if the file system supports large
+paths and file names, you can exceed the **MAX_PATH** limits that are otherwise
+enforced by the Windows APIs.
+
+For more information, see _Win32 File Namespaces_ in
+[Naming Files, Paths, and Namespaces][01].
+
+## See also
+
+- [about_Locations][02]
+- [Convert-Path][03]
+- [Join-Path][04]
+- [Resolve-Path][05]
+- [Split-Path][06]
+- [Test-Path][07]
+
+&lt;!-- link references --&gt;
+[01]: /windows/win32/fileio/naming-a-file#win32-file-namespaces
+[02]: about_Locations.md
+[03]: xref:Microsoft.PowerShell.Management.Convert-Path
+[04]: xref:Microsoft.PowerShell.Management.Join-Path
+[05]: xref:Microsoft.PowerShell.Management.Resolve-Path
+[06]: xref:Microsoft.PowerShell.Management.Split-Path
+[07]: xref:Microsoft.PowerShell.Management.Test-Path
+###Microsoft Learn URL###
+https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_path_syntax/?view=powershell-5.1
+</pre></html>

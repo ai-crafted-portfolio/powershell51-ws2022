@@ -1,0 +1,811 @@
+<!doctype html><html lang="ja"><meta charset="utf-8"><pre class="record-source">###KnowledgeNo###
+PS51-WS2022-2026-3809
+###FormatID###
+PS51-WS2022
+###CreatedAt###
+2026-08-01 00:00
+###UpdatedAt###
+2026-08-01 00:00
+###タイトル###
+Set-Service
+###モジュール###
+Microsoft.PowerShell.Management
+###製品###
+Windows PowerShell 5.1
+###対応OS###
+Windows Server 2022
+###日本語訳###
+# セットサービス
+
+## SYNOPSISはサービスを起動し,停止し,停止し,その性質を変更します.
+
+## SYNTAXは,のシンタックスです.
+
+### 名前 (デフォルト) 
+
+```
+Set-Service [-ComputerName &lt;String[]&gt;] [-Name] &lt;String&gt; [-DisplayName &lt;String&gt;]
+ [-Description &lt;String&gt;] [-StartupType &lt;ServiceStartMode&gt;] [-Status &lt;String&gt;]
+ [-PassThru] [-WhatIf] [-Confirm] [&lt;CommonParameters&gt;]
+```
+
+### InputObject
+
+```
+Set-Service [-ComputerName &lt;String[]&gt;] [-DisplayName &lt;String&gt;] [-Description &lt;String&gt;]
+ [-StartupType &lt;ServiceStartMode&gt;] [-Status &lt;String&gt;] [-InputObject &lt;ServiceController&gt;]
+ [-PassThru] [-WhatIf] [-Confirm] [&lt;CommonParameters&gt;]
+```
+
+## 記述は,
+
+   `Set-Service`cmdlet は, **Status**, **Description**, **DisplayName**, **StartupType** などのサービスのプロパティを変更します.`Set-Service`サービスを起動,停止,停止,または停止することができます.サービスを特定するには,そのサービス名を入力するか,サービスオブジェクトを提出するか. または,サービス名またはサービスオブジェクトをパイプラインを下に,  に送信してください.`Set-Service` .
+
+## 例えは
+
+### 例1:ディスプレイ名を変更する
+
+この例では,サービスの表示名が変更されます.元の表示名を見るには,  を使います.`Get-Service` .
+
+```powershell
+Set-Service -Name LanmanWorkstation -DisplayName &quot;LanMan Workstation&quot;
+```
+
+`Set-Service`**Name** パラメタは,サービス名, **LanmanWorkstation**を指定するために使用されます. **DisplayName** パラメタは,新しいディスプレイ名, **LanMan Workstation**を指定します.
+
+### 例2:サービス開始のタイプを変更する
+
+この例では,サービスの起動タイプを変更する方法を示しています.
+
+```powershell
+Set-Service -Name BITS -StartupType Automatic
+Get-Service BITS | Select-Object -Property Name, StartType, Status
+```
+
+```Output
+Name  StartType   Status
+----  ---------   ------
+BITS  Automatic  Running
+```
+
+`Set-Service`**Name** パラメタを使用して,サービスの名前, **BITS**を指定します. **StartupType** パラメタは,サービスを **Automatic** に設定します.
+
+`Get-Service`**BITS**サービスを指定するために **Name**パラメータを使用し,パイプラインを下にオブジェクトを送信します. `Select-Object`**BITS**サービスの状態を表示するために,プロパティ**パラメータを使用します.
+
+### 例3:サービスの説明を変更する
+
+この例ではBITSサービスの説明を変更し,結果を表示します.
+
+   `Get-CimInstance`cmdlet は,サービスが**記述**を含む **Win32_Service** オブジェクトを返してくるため使用されます.
+
+```powershell
+Get-CimInstance Win32_Service -Filter &#x27;Name = &quot;BITS&quot;&#x27;  | Format-List  Name, Description
+```
+
+```Output
+Name        : BITS
+Description : Transfers files in the background using idle network bandwidth. If the service is
+              disabled, then any applications that depend on BITS, such as Windows Update or MSN
+              Explorer, will be unable to automatically download programs and other information.
+```
+
+```powershell
+Set-Service -Name BITS -Description &quot;Transfers files in the background using idle network bandwidth.&quot;
+Get-CimInstance Win32_Service -Filter &#x27;Name = &quot;BITS&quot;&#x27; | Format-List  Name, Description
+```
+
+```Output
+Name        : BITS
+Description : Transfers files in the background using idle network bandwidth.
+```
+
+`Get-CimInstance`管道に沿って,そのオブジェクトを へ送ります.`Format-List`比較目的では,説明が更新される前に,その後にコマンドが実行されます.
+
+`Set-Service`**BITS**サービスを指定するには **Name**パラメータを使用します. **Description**パラメータは,サービス説明の更新されたテキストを指定します.
+
+### 例4:サービスを開始する
+
+この例では,サービスが開始される.
+
+```powershell
+Set-Service -Name WinRM -Status Running -PassThru
+```
+
+```Output
+Status   Name               DisplayName
+------   ----               -----------
+Running  WinRM              Windows Remote Management (WS-Manag...
+```
+
+`Set-Service`**Name** パラメタを使用してサービスを指定します. **WinRM****. **Status** パラメタでは,サービスを開始するには **Running** 値を使用します. **PassThru** パラメタでは,結果を表示する **ServiceController** オブジェクトが出力されます.
+
+### 例5:サービスを停止する
+
+この例では,パイプラインを使ってサービスに一時停止します.
+
+```powershell
+Get-Service -Name Schedule | Set-Service -Status Paused
+```
+
+`Get-Service`**Name**パラメータを使用して **Schedule**サービスを指定し,パイプラインを下にオブジェクトを送信します. `Set-Service`**Status**パラメータを使用して,サービスを **Paused** に設定します.
+
+### 例 6:サービスを停止する
+
+この例では,サービスを停止するために変数を使用します.
+
+```powershell
+$S = Get-Service -Name Schedule
+Set-Service -InputObject $S -Status Stopped
+```
+
+`Get-Service`**Name**のパラメータを使用して,サービスを指定します. **Schedule**. 対象は変数に保存されます. `$S`  `Set-Service`**InputObject** パラメータを使用し,保存されたオブジェクトを指定します.`$S`**ステータス**のパラメータは,サービスを **Stopped**に設定します.
+
+### 例7:複数のサービスに起動タイプを設定する
+
+   `Set-Service`cmdlet は一度に1つのサービス名だけを受け入れる.しかし,複数のサービスを  にパイプすることができます.`Set-Service`複数のサービスの設定を変更する.
+
+```powershell
+Get-Service SQLWriter,spooler |
+    Set-Service -StartupType Automatic -PassThru |
+    Select-Object Name, StartType
+```
+
+```Output
+Name      StartType
+----      ---------
+spooler   Automatic
+SQLWriter Automatic
+```
+
+## パラメータは
+
+### -コンピュータ名
+
+コンピュータの1つまたは複数のコンピュータを指定します.リモートコンピュータでは,NetBIOS名,IPアドレス,または完全に資格のあるドメイン名を入力してください. **ComputerName**パラメータが指定されていない場合は,コマンドはローカルコンピュータで実行されます.
+
+このパラメータはPowerShellのリモート操作に依存しません.コンピュータがリモートコマンドを実行するように設定されていない場合でも, **ComputerName**パラメータを使用できます.
+
+```yaml
+Type: System.String[]
+Parameter Sets: (All)
+Aliases: cn
+
+Required: False
+Position: Named
+Default value: Local computer
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -Description について説明します.
+
+サービスに関する新しい説明を指定します.
+
+サービス説明は,コンピュータ管理,サービス**で表示されます. **記述**は,  の属性ではありません.`Get-Service`**ServiceController**オブジェクト. サービス説明を見るには,使用する`Get-CimInstance`サービスを表す **Win32_Service**オブジェクトを返します.
+
+```yaml
+Type: System.String
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -DisplayName
+
+サービス用の新しい表示名を指定します.
+
+&gt; [!NOTE] &gt; 通常,`Set-Service`ドライバではなく,Windowsサービスのみで動作します.しかし,あなたが&gt;ドライバの名前を指定した場合,`Set-Service`ドライバーをターゲットにすることができます.
+
+```yaml
+Type: System.String
+Parameter Sets: (All)
+Aliases: DN
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -InputObject
+
+変更されるサービスを代表する**ServiceController**オブジェクトを指定します.オブジェクトを含む変数を入力するか,オブジェクトを得るコマンドまたは表情を入力します.例えば, `Get-Service`パイプラインを使用して,サービスオブジェクトを  に送信できます.`Set-Service` .
+
+```yaml
+Type: System.ServiceProcess.ServiceController
+Parameter Sets: InputObject
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByValue)
+Accept wildcard characters: False
+```
+
+# セットサービス
+
+### -名字は
+
+変更されるサービスのサービス名を指定します.ワイルドカード文字は許されません.パイプラインを使用してサービス名を  に送信できます.`Set-Service` .
+
+&gt; [!NOTE] &gt; 通常,`Set-Service`ドライバではなく,Windowsサービスのみで動作します.しかし,あなたが&gt;ドライバの名前を指定した場合,`Set-Service`ドライバーをターゲットにすることができます.
+
+```yaml
+Type: System.String
+Parameter Sets: Name
+Aliases: ServiceName, SN
+
+Required: True
+Position: 0
+Default value: None
+Accept pipeline input: True (ByPropertyName, ByValue)
+Accept wildcard characters: False
+```
+
+### -PassThru でした.
+
+変更されたサービスを表示するサービスコントローラーオブジェクトを返します.デフォルトでは, `Set-Service`輸出を生成しない.
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -スタートアップタイプ
+
+サービス開始タイプを設定します.このパラメータの受け入れ可能な値は:
+
+ - -`Automatic`自動開始サービスが手動開始サービスに依存している場合,手動開始サービスもシステム起動時に自動的に開始されます.`Disabled`- サービスが無効で,ユーザーまたはアプリケーションによって起動することはできません. - `Manual`- サービスが手動で,ユーザーによって,サービス制御管理者を利用し,アプリケーションによってのみ起動されます. - `Boot`- サービスがシステムロードで起動されたデバイスドライバーであることを表示します.この値はデバイスドライバーのみで有効です. - `System`- サービスが&quot;IOInitSystem() &quot;関数で起動されたデバイスドライバーであることを表示します.この値はデバイスドライバーのみで有効です.
+
+デフォルト値は です.`Automatic` .
+
+```yaml
+Type: System.ServiceProcess.ServiceStartMode
+Parameter Sets: (All)
+Aliases: StartMode, SM, ST
+Accepted values: Boot, System, Automatic, Manual, Disabled
+
+Required: False
+Position: Named
+Default value: Automatic
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### - ステータス
+
+サービスの状態を指定します.
+
+このパラメータの受け入れられる値は以下の通りです.
+
+ - -`Paused`サービスが停止します.`Running`サービスを開始します.`Stopped`サービスが停止します.
+
+```yaml
+Type: System.String
+Parameter Sets: (All)
+Aliases:
+Accepted values: Paused, Running, Stopped
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -確認する
+
+実行する前に確認を提示します.`Set-Service` .
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases: cf
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -WhatIf
+
+ だったらどうなるか示しています.`Set-Service`実行する.cmdletは実行されない.
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases: wi
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### 共通パラメーター
+
+このcmdletは,共通パラメータをサポートしています: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable.詳細については, [about_CommonParameters](を参照してください.https://go.microsoft.com/fwlink/?LinkID=113216) でした.
+
+## 輸入は
+
+### システム.サービスプロセス.サービスコントローラー
+
+このcmdletにサービスオブジェクトをパイプすることができます.
+
+### System.String でした.
+
+このcmdletにサービス名を含む文字列をパイプすることができます.
+
+## 輸出は
+
+### どれもない
+
+デフォルトでは,このcmdletは出力返さない.
+
+### システム.サービスプロセス.サービスコントローラー
+
+**PassThru**パラメータを使用すると,このcmdletは **ServiceController**オブジェクトを返します.
+
+##  NOTES  記事ができました.
+
+`Set-Service`高い権限が必要になります. **管理者として実行する**オプションを使用します.
+
+`Set-Service`現在のユーザーがサービスを管理する権限を持っている場合にのみサービスを制御できます.コマンドが正しく動作しない場合は,必要な権限がなくなることがあります.
+
+サービス名または表示名を見つけるには,使用する`Get-Service`サービス名は**Name**列に,表示名は**DisplayName**列に記載されています.
+
+## 関連リンク
+
+[Get-Service](Get-Service.md) について
+
+[New-Service](New-Service.md) でした.
+
+[Restart-Service](Restart-Service.md) 
+
+[リニューアルサービス](リニューアルサービス.md)
+
+[Start-Service](Start-Service.md) について
+
+[Stop-Service](Stop-Service.md) 
+
+[Suspend-Service](Suspend-Service.md) 
+###英語原文###
+# Set-Service
+
+## SYNOPSIS
+Starts, stops, and suspends a service, and changes its properties.
+
+## SYNTAX
+
+### Name (Default)
+
+```
+Set-Service [-ComputerName &lt;String[]&gt;] [-Name] &lt;String&gt; [-DisplayName &lt;String&gt;]
+ [-Description &lt;String&gt;] [-StartupType &lt;ServiceStartMode&gt;] [-Status &lt;String&gt;]
+ [-PassThru] [-WhatIf] [-Confirm] [&lt;CommonParameters&gt;]
+```
+
+### InputObject
+
+```
+Set-Service [-ComputerName &lt;String[]&gt;] [-DisplayName &lt;String&gt;] [-Description &lt;String&gt;]
+ [-StartupType &lt;ServiceStartMode&gt;] [-Status &lt;String&gt;] [-InputObject &lt;ServiceController&gt;]
+ [-PassThru] [-WhatIf] [-Confirm] [&lt;CommonParameters&gt;]
+```
+
+## DESCRIPTION
+
+The `Set-Service` cmdlet changes the properties of a service such as the **Status**,
+**Description**, **DisplayName**, and **StartupType**. `Set-Service` can start, stop, suspend, or
+pause a service. To identify a service, enter its service name or submit a service object. Or, send
+a service name or service object down the pipeline to `Set-Service`.
+
+## EXAMPLES
+
+### Example 1: Change a display name
+
+In this example, a service&#x27;s display name is changed. To view the original display name, use
+`Get-Service`.
+
+```powershell
+Set-Service -Name LanmanWorkstation -DisplayName &quot;LanMan Workstation&quot;
+```
+
+`Set-Service` uses the **Name** parameter to specify the service&#x27;s name, **LanmanWorkstation**. The
+**DisplayName** parameter specifies the new display name, **LanMan Workstation**.
+
+### Example 2: Change the startup type of services
+
+This example shows how to change a service&#x27;s startup type.
+
+```powershell
+Set-Service -Name BITS -StartupType Automatic
+Get-Service BITS | Select-Object -Property Name, StartType, Status
+```
+
+```Output
+Name  StartType   Status
+----  ---------   ------
+BITS  Automatic  Running
+```
+
+`Set-Service` uses the **Name** parameter to specify the service&#x27;s name, **BITS**. The
+**StartupType** parameter sets the service to **Automatic**.
+
+`Get-Service` uses the **Name** parameter to specify the **BITS** service and sends the object down
+the pipeline. `Select-Object` uses the **Property** parameter to display the **BITS** service&#x27;s
+status.
+
+### Example 3: Change the description of a service
+
+This example changes the BITS service&#x27;s description and displays the result.
+
+The `Get-CimInstance` cmdlet is used because it returns a **Win32_Service** object that includes the
+service&#x27;s **Description**.
+
+```powershell
+Get-CimInstance Win32_Service -Filter &#x27;Name = &quot;BITS&quot;&#x27;  | Format-List  Name, Description
+```
+
+```Output
+Name        : BITS
+Description : Transfers files in the background using idle network bandwidth. If the service is
+              disabled, then any applications that depend on BITS, such as Windows Update or MSN
+              Explorer, will be unable to automatically download programs and other information.
+```
+
+```powershell
+Set-Service -Name BITS -Description &quot;Transfers files in the background using idle network bandwidth.&quot;
+Get-CimInstance Win32_Service -Filter &#x27;Name = &quot;BITS&quot;&#x27; | Format-List  Name, Description
+```
+
+```Output
+Name        : BITS
+Description : Transfers files in the background using idle network bandwidth.
+```
+
+`Get-CimInstance` sends the object down the pipeline to `Format-List` and displays the service&#x27;s
+name and description. For comparison purposes, the command is run before and after the description
+is updated.
+
+`Set-Service` uses the **Name** parameter to specify the **BITS** service. The **Description**
+parameter specifies the updated text for the services&#x27; description.
+
+### Example 4: Start a service
+
+In this example, a service is started.
+
+```powershell
+Set-Service -Name WinRM -Status Running -PassThru
+```
+
+```Output
+Status   Name               DisplayName
+------   ----               -----------
+Running  WinRM              Windows Remote Management (WS-Manag...
+```
+
+`Set-Service` uses the **Name** parameter to specify the service, **WinRM**. The **Status**
+parameter uses the value **Running** to start the service. The **PassThru** parameter outputs a
+**ServiceController** object that displays the results.
+
+### Example 5: Suspend a service
+
+This example uses the pipeline to pause to service.
+
+```powershell
+Get-Service -Name Schedule | Set-Service -Status Paused
+```
+
+`Get-Service` uses the **Name** parameter to specify the **Schedule** service, and sends the object
+down the pipeline. `Set-Service` uses the **Status** parameter to set the service to **Paused**.
+
+### Example 6: Stop a service
+
+This example uses a variable to stop a service.
+
+```powershell
+$S = Get-Service -Name Schedule
+Set-Service -InputObject $S -Status Stopped
+```
+
+`Get-Service` uses the **Name** parameter to specify the service, **Schedule**. The object is stored
+in the variable, `$S`. `Set-Service` uses the **InputObject** parameter and specifies the object
+stored `$S`. The **Status** parameter sets the service to **Stopped**.
+
+### Example 7: Set the startup type for multiple services
+
+The `Set-Service` cmdlet only accepts one service name at a time. However, you can pipe multiple
+services to `Set-Service` to change the configuration of multiple services.
+
+```powershell
+Get-Service SQLWriter,spooler |
+    Set-Service -StartupType Automatic -PassThru |
+    Select-Object Name, StartType
+```
+
+```Output
+Name      StartType
+----      ---------
+spooler   Automatic
+SQLWriter Automatic
+```
+
+## PARAMETERS
+
+### -ComputerName
+
+Specifies one or more computers. For remote computers, type the NetBIOS name, an IP address, or a
+fully qualified domain name. If the **ComputerName** parameter isn&#x27;t specified, the command runs on
+the local computer.
+
+This parameter doesn&#x27;t rely on PowerShell remoting. You can use the **ComputerName** parameter even
+if your computer isn&#x27;t configured to run remote commands.
+
+```yaml
+Type: System.String[]
+Parameter Sets: (All)
+Aliases: cn
+
+Required: False
+Position: Named
+Default value: Local computer
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -Description
+
+Specifies a new description for the service.
+
+The service description appears in **Computer Management, Services**. The **Description** isn&#x27;t a
+property of the `Get-Service` **ServiceController** object. To see the service description, use
+`Get-CimInstance` that returns a **Win32_Service** object that represents the service.
+
+```yaml
+Type: System.String
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -DisplayName
+
+Specifies a new display name for the service.
+
+&gt; [!NOTE]
+&gt; Typically, `Set-Service` only operates on Windows services and not drivers. However, if you
+&gt; specify the name of a driver, `Set-Service` can target the driver.
+
+```yaml
+Type: System.String
+Parameter Sets: (All)
+Aliases: DN
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -InputObject
+
+Specifies a **ServiceController** object that represents the service to change. Enter a variable
+that contains the object, or type a command or expression that gets the object, such as a
+`Get-Service` command. You can use the pipeline to send a service object to `Set-Service`.
+
+```yaml
+Type: System.ServiceProcess.ServiceController
+Parameter Sets: InputObject
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByValue)
+Accept wildcard characters: False
+```
+
+# Set-Service
+
+### -Name
+
+Specifies the service name of the service to be changed. Wildcard characters aren&#x27;t permitted. You
+can use the pipeline to send a service name to `Set-Service`.
+
+&gt; [!NOTE]
+&gt; Typically, `Set-Service` only operates on Windows services and not drivers. However, if you
+&gt; specify the name of a driver, `Set-Service` can target the driver.
+
+```yaml
+Type: System.String
+Parameter Sets: Name
+Aliases: ServiceName, SN
+
+Required: True
+Position: 0
+Default value: None
+Accept pipeline input: True (ByPropertyName, ByValue)
+Accept wildcard characters: False
+```
+
+### -PassThru
+
+Returns a **ServiceController** object that represents the services that were changed. By default,
+`Set-Service` doesn&#x27;t generate any output.
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -StartupType
+
+Sets the startup type of the service. The acceptable values for this parameter are:
+
+- `Automatic` - The service is started or was started by the operating system, at system start-up.
+  If an automatically started service depends on a manually started service, the manually started
+  service is also started automatically at system startup.
+- `Disabled` - The service is disabled and cannot be started by a user or application.
+- `Manual` - The service is started only manually, by a user, using the Service Control Manager,
+  or by an application.
+- `Boot` - Indicates that the service is a device driver started by the system loader. This
+  value is valid only for device drivers.
+- `System` - Indicates that the service is a device driver started by the &#x27;IOInitSystem()&#x27;
+  function. This value is valid only for device drivers.
+
+ The default value is `Automatic`.
+
+```yaml
+Type: System.ServiceProcess.ServiceStartMode
+Parameter Sets: (All)
+Aliases: StartMode, SM, ST
+Accepted values: Boot, System, Automatic, Manual, Disabled
+
+Required: False
+Position: Named
+Default value: Automatic
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Status
+
+Specifies the status for the service.
+
+The acceptable values for this parameter are as follows:
+
+- `Paused`. Suspends the service.
+- `Running`. Starts the service.
+- `Stopped`. Stops the service.
+
+```yaml
+Type: System.String
+Parameter Sets: (All)
+Aliases:
+Accepted values: Paused, Running, Stopped
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Confirm
+
+Prompts you for confirmation before running `Set-Service`.
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases: cf
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -WhatIf
+
+Shows what would happen if `Set-Service` runs. The cmdlet isn&#x27;t run.
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases: wi
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### CommonParameters
+
+This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable,
+-InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose,
+-WarningAction, and -WarningVariable. For more information, see
+[about_CommonParameters](https://go.microsoft.com/fwlink/?LinkID=113216).
+
+## INPUTS
+
+### System.ServiceProcess.ServiceController
+
+You can pipe a service object to this cmdlet.
+
+### System.String
+
+You can pipe a string that contains a service name to this cmdlet.
+
+## OUTPUTS
+
+### None
+
+By default, this cmdlet returns no output.
+
+### System.ServiceProcess.ServiceController
+
+When you use the **PassThru** parameter, this cmdlet returns a **ServiceController** object.
+
+## NOTES
+
+`Set-Service` requires elevated permissions. Use the **Run as administrator** option.
+
+`Set-Service` can only control services when the current user has permissions to manage services. If
+a command doesn&#x27;t work correctly, you might not have the required permissions.
+
+To find a service&#x27;s service name or display name, use `Get-Service`. The service names are in the
+**Name** column and the display names are in the **DisplayName** column.
+
+## RELATED LINKS
+
+[Get-Service](Get-Service.md)
+
+[New-Service](New-Service.md)
+
+[Restart-Service](Restart-Service.md)
+
+[Resume-Service](Resume-Service.md)
+
+[Start-Service](Start-Service.md)
+
+[Stop-Service](Stop-Service.md)
+
+[Suspend-Service](Suspend-Service.md)
+###Microsoft Learn URL###
+https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.management/set-service/?view=powershell-5.1
+</pre></html>

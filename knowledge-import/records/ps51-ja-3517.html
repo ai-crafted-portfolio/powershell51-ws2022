@@ -1,0 +1,1018 @@
+<!doctype html><html lang="ja"><meta charset="utf-8"><pre class="record-source">###KnowledgeNo###
+PS51-WS2022-2026-3517
+###FormatID###
+PS51-WS2022
+###CreatedAt###
+2026-08-01 00:00
+###UpdatedAt###
+2026-08-01 00:00
+###タイトル###
+about_Classes_Constructors
+###モジュール###
+Microsoft.PowerShell.Core
+###製品###
+Windows PowerShell 5.1
+###対応OS###
+Windows Server 2022
+###日本語訳###
+# about_Classes_Constructorsについて
+
+## 短編説明
+
+PowerShell クラスのためのコンストラクタを定義する方法について説明します.
+
+## 長い説明
+
+構成要素は,クラスインスタンスを作成する時点で,デフォルト値を設定し,オブジェクト論理を検証できるようにします.構成要素はクラスと同じ名前を持っています.構成要素は,新しいオブジェクトのデータメンバーを初期化するためにパラメータを持つ可能性があります.
+
+PowerShellクラスコンストラクターは,クラス上の特殊方法として定義されています.以下の例外を除いて,PowerShellクラス方法と同じ振る舞いをします.
+
+- 建設者は出力型を持っていない.彼らは,  を使用することはできません.`return`キーワード. - 構成要素は常にクラスと同じ名前を持っている. - 構成要素は直接呼び出せません. 構成要素はインスタンスの作成時にのみ実行されます. - 構成要素は,決して  の出力に表示されません.`Get-Member`cmdletです.
+
+PowerShellクラスメソッドについての詳細については,[about_Classes_Methods][01] を参照してください.
+
+クラスにはゼロまたは複数のコンストラクタが定義される可能性があります.コンストラクタが定義されていない場合は,クラスにデフォルトのパラメータレスコンストラクタが与えられます.このコンストラクタはすべてのメンバーをデフォルト値に初期化します.オブジェクトタイプと文字列はゼロ値を与えられます.コンストラクタを定義すると,デフォルトのパラメータレスコンストラクタが作成されません.必要に応じてパラメータレスコンストラクタを作成します.
+
+また,パラメータレス [静止構成器] を定義することもできます.
+
+## シンタックス
+
+クラスコンストラクターは以下の構文を使用します:
+
+### デフォルトコンストラクター構文です.
+
+```Syntax
+&lt;class-name&gt; () [: base([&lt;params&gt;])] {
+    &lt;body&gt;
+}
+```
+
+### 静的コンストラクター構文
+
+```Syntax
+static &lt;class-name&gt; () [: base([&lt;params&gt;])] {
+    &lt;body&gt;
+}
+```
+
+### パーメテリ化されたコンストラクター構文 (単行)
+
+```Syntax
+&lt;class-name&gt; ([[&lt;parameter-type&gt;]$&lt;parameter-name&gt;[, [&lt;parameter-type&gt;]$&lt;parameter-name&gt;...]]) [: base([&lt;params&gt;])] {
+    &lt;body&gt;
+}
+```
+
+### パーメテリ化されたコンストラクター構文 (多行)
+
+```Syntax
+&lt;class-name&gt; (
+    [&lt;parameter-type&gt;]$&lt;parameter-name&gt;[,
+    [&lt;parameter-type&gt;]$&lt;parameter-name&gt;...]
+) [: base([&lt;params&gt;])] {
+    &lt;body&gt;
+}
+```
+
+## 例文
+
+### 例1 - クラスを定義するデフォルトコンストラクタ
+
+**ExampleBook1** クラスではコンストラクタを定義していないが,自動的にデフォルトコンストラクタを使用している.
+
+```powershell
+class ExampleBook1 {
+    [string]   $Name
+    [string]   $Author
+    [int]      $Pages
+    [datetime] $PublishedOn
+}
+
+[ExampleBook1]::new()
+```
+
+```Output
+Name Author Pages PublishedOn
+---- ------ ----- -----------
+                0 1/1/0001 12:00:00 AM
+```
+
+**Name**と **Author**のプロパティのデフォルト値は,`$null`&gt;は文字列として入力されているので,参照タイプです.他の &gt;属性は定義されたタイプのデフォルト値を持っているので,その属性は &gt;値タイプです. &gt;属性のデフォルト値については,約_クラス_属性における [&quot;デフォルトプロパティ値&quot;を参照してください.
+
+### 例2 - デフォルトコンストラクタをオーバーリディングする
+
+**ExampleBook2**は,デフォルトコンストラクタを明確に定義し, **PublishedOn**の値を現在の日付に, **Pages**の値を に設定します.`1` .
+
+```powershell
+class ExampleBook2 {
+    [string]   $Name
+    [string]   $Author
+    [int]      $Pages
+    [datetime] $PublishedOn
+
+    ExampleBook2() {
+        $this.PublishedOn = (Get-Date).Date
+        $this.Pages       = 1
+    }
+}
+
+[ExampleBook2]::new()
+```
+
+```Output
+Name Author Pages PublishedOn
+---- ------ ----- -----------
+                1 11/1/2023 12:00:00 AM
+```
+
+### 例3 - コンストラクター過負荷を定義する
+
+**ExampleBook3** クラスでは,3つのコンストラクターオーバーロードを定義し,すべてのプロパティ値を入力し,本と作家の名前を入力することで,ハッシュテーブルからクラスのインスタンスを作成できます.このクラスではデフォルトコンストラクタを定義しません.
+
+```powershell
+class ExampleBook3 {
+    [string]   $Name
+    [string]   $Author
+    [int]      $Pages
+    [datetime] $PublishedOn
+
+    ExampleBook3([hashtable]$Info) {
+        switch ($Info.Keys) {
+            &#x27;Name&#x27;        { $this.Name        = $Info.Name }
+            &#x27;Author&#x27;      { $this.Author      = $Info.Author }
+            &#x27;Pages&#x27;       { $this.Pages       = $Info.Pages }
+            &#x27;PublishedOn&#x27; { $this.PublishedOn = $Info.PublishedOn }
+        }
+    }
+
+    ExampleBook3(
+        [string]   $Name,
+        [string]   $Author,
+        [int]      $Pages,
+        [datetime] $PublishedOn
+    ) {
+        $this.Name        = $Name
+        $this.Author      = $Author
+        $this.Pages       = $Pages
+        $this.PublishedOn = $PublishedOn
+    }
+
+    ExampleBook3([string]$Name, [string]$Author) {
+        $this.Name   = $Name
+        $this.Author = $Author
+    }
+}
+
+[ExampleBook3]::new(@{
+    Name        = &#x27;The Hobbit&#x27;
+    Author      = &#x27;J.R.R. Tolkien&#x27;
+    Pages       = 310
+    PublishedOn = &#x27;1937-09-21&#x27;
+})
+[ExampleBook3]::new(&#x27;The Hobbit&#x27;, &#x27;J.R.R. Tolkien&#x27;, 310, &#x27;1937-09-21&#x27;)
+[ExampleBook3]::new(&#x27;The Hobbit&#x27;, &#x27;J.R.R. Tolkien&#x27;)
+[ExampleBook3]::new()
+```
+
+```Output
+Name       Author         Pages PublishedOn
+----       ------         ----- -----------
+The Hobbit J.R.R. Tolkien   310 9/21/1937 12:00:00 AM
+The Hobbit J.R.R. Tolkien   310 9/21/1937 12:00:00 AM
+The Hobbit J.R.R. Tolkien     0 1/1/0001 12:00:00 AM
+
+Cannot find an overload for &quot;new&quot; and the argument count: &quot;0&quot;.
+At C:\code\classes.examples.ps1:42 char:1
++ [ExampleBook3]::new()
++ ~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (:) [], MethodException
+    + FullyQualifiedErrorId : MethodCountCouldNotFindBes
+```
+
+デフォルトコンストラクタを呼び出すと方法例外が返されます. 自動的にデフォルトコンストラクタは,クラスにコンストラクタを定義していない場合にのみ定義されます. **ExampleBook3** は複数のオーバーロードを定義しているので,デフォルトコンストラクタは自動的にクラスに追加されません.
+
+# about_Classes_Constructorsについて
+
+### 例4 - 共有方法による構造物を鎖に連結する
+
+この例では,コンストラクター向けに再利用可能な共有コードを書ける方法が示されています.PowerShellクラスではコンストラクターチェーンを使用することはできません.したがって,この例クラスでは,  を定義します.`Init()`方法にはいくつかの過負荷がある.パラメータが少ない過負荷は,未指定パラメータのデフォルト値でより明示的な過負荷を呼びます.
+
+```powershell
+class ExampleBook4 {
+    [string]   $Name
+    [string]   $Author
+    [datetime] $PublishedOn
+    [int]      $Pages
+
+    ExampleBook4() {
+        $this.Init()
+    }
+    ExampleBook4([string]$Name) {
+        $this.Init($Name)
+    }
+    ExampleBook4([string]$Name, [string]$Author) {
+        $this.Init($Name, $Author)
+    }
+    ExampleBook4([string]$Name, [string]$Author, [datetime]$PublishedOn) {
+        $this.Init($Name, $Author, $PublishedOn)
+    }
+    ExampleBook4(
+      [string]$Name,
+      [string]$Author,
+      [datetime]$PublishedOn,
+      [int]$Pages
+    ) {
+        $this.Init($Name, $Author, $PublishedOn, $Pages)
+    }
+
+    hidden Init() {
+        $this.Init(&#x27;Unknown&#x27;)
+    }
+    hidden Init([string]$Name) {
+        $this.Init($Name, &#x27;Unknown&#x27;)
+    }
+    hidden Init([string]$Name, [string]$Author) {
+        $this.Init($Name, $Author, (Get-Date).Date)
+    }
+    hidden Init([string]$Name, [string]$Author, [datetime]$PublishedOn) {
+        $this.Init($Name, $Author, $PublishedOn, 1)
+    }
+    hidden Init(
+        [string]$Name,
+        [string]$Author,
+        [datetime]$PublishedOn,
+        [int]$Pages
+      ) {
+        $this.Name        = $Name
+        $this.Author      = $Author
+        $this.PublishedOn = $PublishedOn
+        $this.Pages       = $Pages
+    }
+}
+
+[ExampleBook4]::new()
+[ExampleBook4]::new(&#x27;The Hobbit&#x27;)
+[ExampleBook4]::new(&#x27;The Hobbit&#x27;, &#x27;J.R.R. Tolkien&#x27;)
+[ExampleBook4]::new(&#x27;The Hobbit&#x27;, &#x27;J.R.R. Tolkien&#x27;, (Get-Date &#x27;1937-9-21&#x27;))
+[ExampleBook4]::new(
+    &#x27;The Hobbit&#x27;,
+    &#x27;J.R.R. Tolkien&#x27;,
+    (Get-Date &#x27;1937-9-21&#x27;),
+    310
+)
+```
+
+```Output
+Name       Author         PublishedOn           Pages
+----       ------         -----------           -----
+Unknown    Unknown        11/1/2023 12:00:00 AM     1
+The Hobbit Unknown        11/1/2023 12:00:00 AM     1
+The Hobbit J.R.R. Tolkien 11/1/2023 12:00:00 AM     1
+The Hobbit J.R.R. Tolkien 9/21/1937 12:00:00 AM     1
+The Hobbit J.R.R. Tolkien 9/21/1937 12:00:00 AM   310
+```
+
+### 例5 - 派生クラス構成員
+
+次の例では,ベースクラスとベースクラスから継承する派生クラスに対する静的,デフォルト,およびパラメータ化されたコンストラクタを定義するクラスを使用します.
+
+```powershell
+class BaseExample {
+    static [void] DefaultMessage([type]$Type) {
+        Write-Verbose &quot;[$($Type.Name)] default constructor&quot;
+    }
+
+    static [void] StaticMessage([type]$Type) {
+        Write-Verbose &quot;[$($Type.Name)] static constructor&quot;
+    }
+
+    static [void] ParamMessage([type]$Type, [Object]$Value) {
+        Write-Verbose &quot;[$($Type.Name)] param constructor ($Value)&quot;
+    }
+
+    static BaseExample() { [BaseExample]::StaticMessage([BaseExample])  }
+    BaseExample()        { [BaseExample]::DefaultMessage([BaseExample]) }
+    BaseExample($Value)  { [BaseExample]::ParamMessage([BaseExample], $Value) }
+}
+
+class DerivedExample : BaseExample {
+    static DerivedExample() { [BaseExample]::StaticMessage([DerivedExample])  }
+           DerivedExample() { [BaseExample]::DefaultMessage([DerivedExample]) }
+
+    DerivedExample([int]$Number) : base($Number) {
+        [BaseExample]::ParamMessage([DerivedExample], $Number)
+    }
+    DerivedExample([string]$String) {
+        [BaseExample]::ParamMessage([DerivedExample], $String)
+    }
+}
+```
+
+次のブロックは,ベースクラスコンストラクターに呼びかける verbose メッセージを示しています.静[U+6001]コンストラクターメッセージは,クラスの一例が初めて作成されたときにのみ送信されます.
+
+```powershell
+PS&gt; $VerbosePreference = &#x27;Continue&#x27;
+PS&gt; $b = [BaseExample]::new()
+
+VERBOSE: [BaseExample] static constructor
+VERBOSE: [BaseExample] default constructor
+
+PS&gt; $b = [BaseExample]::new()
+
+VERBOSE: [BaseExample] default constructor
+
+PS&gt; $b = [BaseExample]::new(1)
+
+VERBOSE: [BaseExample] param constructor (1)
+```
+
+次のブロックは,新しいセッションで導致クラス構成要素を呼び出すための verbose メッセージが表示されます.最初の Derived Class 構成要素が呼び出されたとき,Base Class と Derived Class の静的な構成要素が呼び出される.セッション中にそれらの構成要素を呼び戻すことはありません.Base Class の構成要素は常に,導致クラス の構成要素よりも前に実行されます.
+
+```powershell
+PS&gt; $VerbosePreference = &#x27;Continue&#x27;
+PS&gt; $c = [DerivedExample]::new()
+
+VERBOSE: [BaseExample] static constructor
+VERBOSE: [DerivedExample] static constructor
+VERBOSE: [BaseExample] default constructor
+VERBOSE: [DerivedExample] default constructor
+
+PS&gt; $c = [DerivedExample]::new()
+
+VERBOSE: [BaseExample] default constructor
+VERBOSE: [DerivedExample] default constructor
+
+PS&gt; $c = [DerivedExample]::new(1)
+
+VERBOSE: [BaseExample] param constructor (1)
+VERBOSE: [DerivedExample] param constructor (1)
+
+PS&gt; $c = [DerivedExample]::new(&#x27;foo&#x27;)
+
+VERBOSE: [BaseExample] default constructor
+VERBOSE: [DerivedExample] param constructor (foo)
+```
+
+## 建設者ランオーダーリング
+
+クラスがインスタンシアートすると,コンストラクター&quot;つまたは複数のコンストラクタのコードが実行されます.
+
+他のクラスから相続しないクラスについては,次の順序が表示されます.
+
+1.クラスに対する静的コンストラクタ. 1.クラスに対する適用可能なコンストラクタオーバーロード.
+
+別のクラスから相続する派生クラスについては,次の順序が表示されます.
+
+1.帰属クラスの静的構成要素がベースクラスに依存しない場合,帰属クラスの静的構成要素が最初に呼び出される. 1.帰属クラスの静的構成要素がベースクラスに依存している場合,帰属クラスの静的構成要素はベースに依存する帰属クラス内のコードラインを実行する前に呼び出される. 1.帰属クラスの構成要素が明らかにベース構成要素オーバーロードを呼びかけた場合,その構成要素をベースクラスに実行する.もし直接ベース構成要素を呼び出さない場合,ベースクラスのためのデフォルト構成要素を実行する. 1.帰属クラスの適用可能な構成要素が,帰属クラスのためのオーバーロードを実行する.
+
+すべての場合,静止コンストラクターはセッションで一度だけ実行されます.
+
+構成者の行動と秩序の例については[例 5][06]を参照してください.
+
+## 隠されたコンストラクター
+
+クラスのコンストラクタを隠すことができ,それらを&quot;&quot;で宣言する.`hidden`隠されたクラスコンストラクターは:
+
+- クラスのためのデフォルト出力に含まれていない. - によって返還されたクラスメンバーのリストに含まれていない.`Get-Member`cmdlet. で隠された属性を表示するには`Get-Member`**Force**パラメータを使用します. - 完成が隠された属性を定義するクラスで起こらない限りタブの完成またはIntelliSenseに表示されません. - 隠された属性を定義するクラスで完成します. - 公開された属性です. クラスにアクセスし変更できます. 属性を隠すことはそれをプライベートにはしません. 前記に説明したように,属性を隠します.
+
+&gt; [!NOTE] &gt; 構成要素を隠すときは,その  を隠す.`new()`オプションは&gt;IntelliSense and completion resultsから削除されます.
+
+について詳しい情報はこちらから`hidden`キーワード,参照 [about_Hidden][04].
+
+# about_Classes_Constructorsについて
+
+## 静的コンストラクター
+
+構成要素を定義することで,構成要素を&quot;&quot;で宣言することで,構成要素をクラスそのものではなく,クラス自身に属するものと定義できます.`static`ステティッククラスコンストラクター:
+
+- セッションでクラスの一例が初めて作成されたときのみ呼び出します. - パラメータを持っていけません. - でインスタンスのプロパティやメソッドにアクセスできません.`$this`変数です.
+
+## 派生クラスのための構成要素
+
+クラスが他のクラスから相続するときは,コンストラクターは基クラスから構成要素を で呼び出すことができます.`base`導致クラスがベースクラスからコンストラクタを明示的に呼び出さない場合,代わりにベースクラスのためのデフォルトコンストラクタを呼び出します.
+
+既定でないベースコンストラクタを呼び出すために,追加する`: base(&lt;parameters&gt;)`コンストラクターパラメータの後とボディブロックの前に.
+
+```Syntax
+class &lt;derived-class&gt; : &lt;base-class&gt; {
+    &lt;derived-class&gt;(&lt;derived-parameters&gt;) : &lt;base&gt;(&lt;base-parameters&gt;) {
+        # initialization code
+    }
+}
+```
+
+基礎クラス構成要素を呼ぶコンストラクタを定義する際には,パラメータは以下のいずれかである:
+
+- 派生クラスコンストラクターの任意のパラメータの変数. - 任意の静数値. - 任意の表現で,パラメータタイプの値に評価される.
+
+派生クラスにおける構成要素の例については,[例 5][06]を参照してください.
+
+## チェーンコンストラクター
+
+C#とは異なり,PowerShellクラスコンストラクターは,鎖を使用できない.`: this(&lt;parameters&gt;)`コード複製を減らすために,隠された文字を用いてください.`Init()`同じ効果を及ぼす複数の過負荷を持つ方法である. [例 4][05] は,このパターンを使ったクラスを示します.
+
+## インストーメントプロパティとメソッドを Update-TypeDataで追加する
+
+クラス定義に直接属性と方法を宣言する以外に,静[U+6001]コンストラクターでクラスインスタンスの属性を定義できるのは,  を使ってです.`Update-TypeData`cmdletです.
+
+このスニペットをパターンに出発点として使用し,必要なように角括弧でプレスホルダーテキストを置き換える.
+
+```powershell
+class &lt;class-name&gt; {
+    static [hashtable[]] $MemberDefinitions = @(
+        @{
+            Name       = &#x27;&lt;member-name&gt;&#x27;
+            MemberType = &#x27;&lt;member-type&gt;&#x27;
+            Value      = &lt;member-definition&gt;
+        }
+    )
+
+    static &lt;class-name&gt;() {
+        $TypeName = [&lt;class-name&gt;].Name
+        foreach ($Definition in [&lt;class-name&gt;]::MemberDefinitions) {
+            Update-TypeData -TypeName $TypeName @Definition
+        }
+    }
+}
+```
+
+&gt; [!TIP] &gt; `Add-Member`cmdlet は &gt;非静止なコンストラクターでクラスにプロパティとメソッドを追加できますが,cmdlet はコンストラクター &gt; が呼び出されたたびに実行されます.`Update-TypeData`静的コンストラクターでは,クラスにメンバーを追加するためのコードがセッションに一度のみ実行されるようにします. 静的でないコンストラクターでは,クラスに属性を追加するだけで,その属性が  で定義できない場合のみです.`Update-TypeData`読み込みのみのプロパティのようなものです.
+
+でインスタンスの方法を定義する情報については,`Update-TypeData` のインスタンスのプロパティを定義する詳細については,[about_Classes_Methods] を参照してください.`Update-TypeData`[about_Classes_Properties] を参照.
+
+## 制限は限られている.
+
+PowerShell クラスコンストラクタには以下の制限があります.
+
+- 建設者鎖は実装されていません.
+
+ワークラウンド:隠されたことを定義する`Init()`構成要素は検証属性を含む属性を使用することはできません.
+
+解消: 構成要素のパラメータを検証属性で再割り当て - 構成要素はデフォルト値を定義できない. 構成要素は常に必須です.
+
+解消:何もない. - 構成要素の過負荷が隠されている場合,構成要素の過負荷も隠されているものとみなされます.
+
+ワークラウンド: どれもありません.
+
+## また, を参照してください.
+
+- [about_Classes][10] - [about_Classes_Inheritance][11] - [about_Classes_Methods][01] - [about_Classes_Properties][09]
+
+リンク参照 --&gt; [01]: about_Classes_Methods.md [02]: #static-constructors [03]: about_Classes_Properties.md#default-property-values [04]: about_Hidden.md [05]: #example-4---chaining-constructors-with-a-shared-method [06]: #example-5---derived-class-constructors [07]: about_Classes_Methods.md#define-instance-methods-with-update-typedata [08]: about_Classes_Properties.md#define-properties-with-update-typedata [09]: about_Classes_Properties.md [10]: about_Classes_Class.md_Inh_lasses [11]: about__[md]
+###英語原文###
+# about_Classes_Constructors
+
+## Short description
+
+Describes how to define constructors for PowerShell classes.
+
+## Long description
+
+Constructors enable you to set default values and validate object logic at the
+moment of creating the instance of the class. Constructors have the same name
+as the class. Constructors might have parameters, to initialize the data
+members of the new object.
+
+PowerShell class constructors are defined as special methods on the class. They
+behave the same as PowerShell class methods with the following exceptions:
+
+- Constructors don&#x27;t have an output type. They can&#x27;t use the `return` keyword.
+- Constructors always have the same name as the class.
+- Constructors can&#x27;t be called directly. They only run when an instance is
+  created.
+- Constructors never appear in the output for the `Get-Member` cmdlet.
+
+For more information about PowerShell class methods, see
+[about_Classes_Methods][01].
+
+The class can have zero or more constructors defined. If no constructor is
+defined, the class is given a default parameterless constructor. This
+constructor initializes all members to their default values. Object types and
+strings are given null values. When you define constructor, no default
+parameterless constructor is created. Create a parameterless constructor if one
+is needed.
+
+You can also define a parameterless [static constructor][02].
+
+## Syntax
+
+Class constructors use the following syntaxes:
+
+### Default constructor syntax
+
+```Syntax
+&lt;class-name&gt; () [: base([&lt;params&gt;])] {
+    &lt;body&gt;
+}
+```
+
+### Static constructor syntax
+
+```Syntax
+static &lt;class-name&gt; () [: base([&lt;params&gt;])] {
+    &lt;body&gt;
+}
+```
+
+### Parameterized constructor syntax (one-line)
+
+```Syntax
+&lt;class-name&gt; ([[&lt;parameter-type&gt;]$&lt;parameter-name&gt;[, [&lt;parameter-type&gt;]$&lt;parameter-name&gt;...]]) [: base([&lt;params&gt;])] {
+    &lt;body&gt;
+}
+```
+
+### Parameterized constructor syntax (multiline)
+
+```Syntax
+&lt;class-name&gt; (
+    [&lt;parameter-type&gt;]$&lt;parameter-name&gt;[,
+    [&lt;parameter-type&gt;]$&lt;parameter-name&gt;...]
+) [: base([&lt;params&gt;])] {
+    &lt;body&gt;
+}
+```
+
+## Examples
+
+### Example 1 - Defining a class with the default constructor
+
+The **ExampleBook1** class doesn&#x27;t define a constructor. Instead, it uses the
+automatic default constructor.
+
+```powershell
+class ExampleBook1 {
+    [string]   $Name
+    [string]   $Author
+    [int]      $Pages
+    [datetime] $PublishedOn
+}
+
+[ExampleBook1]::new()
+```
+
+```Output
+Name Author Pages PublishedOn
+---- ------ ----- -----------
+                0 1/1/0001 12:00:00 AM
+```
+
+&gt; [!NOTE]
+&gt; The default value for the **Name** and **Author** properties is `$null`
+&gt; because they&#x27;re typed as strings, which is a reference type. The other
+&gt; properties have the default value for their defined type, because they&#x27;re
+&gt; value type properties. For more information on the default values for
+&gt; properties, see [&quot;Default property values&quot; in about_Classes_Properties][03].
+
+### Example 2 - Overriding the default constructor
+
+**ExampleBook2** explicitly defines the default constructor, setting the values
+for **PublishedOn** to the current date and **Pages** to `1`.
+
+```powershell
+class ExampleBook2 {
+    [string]   $Name
+    [string]   $Author
+    [int]      $Pages
+    [datetime] $PublishedOn
+
+    ExampleBook2() {
+        $this.PublishedOn = (Get-Date).Date
+        $this.Pages       = 1
+    }
+}
+
+[ExampleBook2]::new()
+```
+
+```Output
+Name Author Pages PublishedOn
+---- ------ ----- -----------
+                1 11/1/2023 12:00:00 AM
+```
+
+### Example 3 - Defining constructor overloads
+
+The **ExampleBook3** class defines three constructor overloads, enabling users
+to create an instance of the class from a hashtable, by passing every property
+value, and by passing the name of the book and author. The class doesn&#x27;t define
+the default constructor.
+
+```powershell
+class ExampleBook3 {
+    [string]   $Name
+    [string]   $Author
+    [int]      $Pages
+    [datetime] $PublishedOn
+
+    ExampleBook3([hashtable]$Info) {
+        switch ($Info.Keys) {
+            &#x27;Name&#x27;        { $this.Name        = $Info.Name }
+            &#x27;Author&#x27;      { $this.Author      = $Info.Author }
+            &#x27;Pages&#x27;       { $this.Pages       = $Info.Pages }
+            &#x27;PublishedOn&#x27; { $this.PublishedOn = $Info.PublishedOn }
+        }
+    }
+
+    ExampleBook3(
+        [string]   $Name,
+        [string]   $Author,
+        [int]      $Pages,
+        [datetime] $PublishedOn
+    ) {
+        $this.Name        = $Name
+        $this.Author      = $Author
+        $this.Pages       = $Pages
+        $this.PublishedOn = $PublishedOn
+    }
+
+    ExampleBook3([string]$Name, [string]$Author) {
+        $this.Name   = $Name
+        $this.Author = $Author
+    }
+}
+
+[ExampleBook3]::new(@{
+    Name        = &#x27;The Hobbit&#x27;
+    Author      = &#x27;J.R.R. Tolkien&#x27;
+    Pages       = 310
+    PublishedOn = &#x27;1937-09-21&#x27;
+})
+[ExampleBook3]::new(&#x27;The Hobbit&#x27;, &#x27;J.R.R. Tolkien&#x27;, 310, &#x27;1937-09-21&#x27;)
+[ExampleBook3]::new(&#x27;The Hobbit&#x27;, &#x27;J.R.R. Tolkien&#x27;)
+[ExampleBook3]::new()
+```
+
+```Output
+Name       Author         Pages PublishedOn
+----       ------         ----- -----------
+The Hobbit J.R.R. Tolkien   310 9/21/1937 12:00:00 AM
+The Hobbit J.R.R. Tolkien   310 9/21/1937 12:00:00 AM
+The Hobbit J.R.R. Tolkien     0 1/1/0001 12:00:00 AM
+
+Cannot find an overload for &quot;new&quot; and the argument count: &quot;0&quot;.
+At C:\code\classes.examples.ps1:42 char:1
++ [ExampleBook3]::new()
++ ~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (:) [], MethodException
+    + FullyQualifiedErrorId : MethodCountCouldNotFindBes
+```
+
+Calling the default constructor returns a method exception. The automatic
+default constructor is only defined for a class when the class doesn&#x27;t define
+any constructors. Because **ExampleBook3** defines multiple overloads, the
+default constructor isn&#x27;t automatically added to the class.
+
+# about_Classes_Constructors
+
+### Example 4 - Chaining constructors with a shared method
+
+This example shows how you can write reusable shared code for constructors.
+PowerShell classes can&#x27;t use constructor chaining, so this example class
+defines an `Init()` method instead. The method has several overloads. The
+overloads with fewer parameters call the more explicit overloads with default
+values for the unspecified parameters.
+
+```powershell
+class ExampleBook4 {
+    [string]   $Name
+    [string]   $Author
+    [datetime] $PublishedOn
+    [int]      $Pages
+
+    ExampleBook4() {
+        $this.Init()
+    }
+    ExampleBook4([string]$Name) {
+        $this.Init($Name)
+    }
+    ExampleBook4([string]$Name, [string]$Author) {
+        $this.Init($Name, $Author)
+    }
+    ExampleBook4([string]$Name, [string]$Author, [datetime]$PublishedOn) {
+        $this.Init($Name, $Author, $PublishedOn)
+    }
+    ExampleBook4(
+      [string]$Name,
+      [string]$Author,
+      [datetime]$PublishedOn,
+      [int]$Pages
+    ) {
+        $this.Init($Name, $Author, $PublishedOn, $Pages)
+    }
+
+    hidden Init() {
+        $this.Init(&#x27;Unknown&#x27;)
+    }
+    hidden Init([string]$Name) {
+        $this.Init($Name, &#x27;Unknown&#x27;)
+    }
+    hidden Init([string]$Name, [string]$Author) {
+        $this.Init($Name, $Author, (Get-Date).Date)
+    }
+    hidden Init([string]$Name, [string]$Author, [datetime]$PublishedOn) {
+        $this.Init($Name, $Author, $PublishedOn, 1)
+    }
+    hidden Init(
+        [string]$Name,
+        [string]$Author,
+        [datetime]$PublishedOn,
+        [int]$Pages
+      ) {
+        $this.Name        = $Name
+        $this.Author      = $Author
+        $this.PublishedOn = $PublishedOn
+        $this.Pages       = $Pages
+    }
+}
+
+[ExampleBook4]::new()
+[ExampleBook4]::new(&#x27;The Hobbit&#x27;)
+[ExampleBook4]::new(&#x27;The Hobbit&#x27;, &#x27;J.R.R. Tolkien&#x27;)
+[ExampleBook4]::new(&#x27;The Hobbit&#x27;, &#x27;J.R.R. Tolkien&#x27;, (Get-Date &#x27;1937-9-21&#x27;))
+[ExampleBook4]::new(
+    &#x27;The Hobbit&#x27;,
+    &#x27;J.R.R. Tolkien&#x27;,
+    (Get-Date &#x27;1937-9-21&#x27;),
+    310
+)
+```
+
+```Output
+Name       Author         PublishedOn           Pages
+----       ------         -----------           -----
+Unknown    Unknown        11/1/2023 12:00:00 AM     1
+The Hobbit Unknown        11/1/2023 12:00:00 AM     1
+The Hobbit J.R.R. Tolkien 11/1/2023 12:00:00 AM     1
+The Hobbit J.R.R. Tolkien 9/21/1937 12:00:00 AM     1
+The Hobbit J.R.R. Tolkien 9/21/1937 12:00:00 AM   310
+```
+
+### Example 5 - Derived class constructors
+
+The following examples use classes that define the static, default, and
+parameterized constructors for a base class and a derived class that inherits
+from the base class.
+
+```powershell
+class BaseExample {
+    static [void] DefaultMessage([type]$Type) {
+        Write-Verbose &quot;[$($Type.Name)] default constructor&quot;
+    }
+
+    static [void] StaticMessage([type]$Type) {
+        Write-Verbose &quot;[$($Type.Name)] static constructor&quot;
+    }
+
+    static [void] ParamMessage([type]$Type, [Object]$Value) {
+        Write-Verbose &quot;[$($Type.Name)] param constructor ($Value)&quot;
+    }
+
+    static BaseExample() { [BaseExample]::StaticMessage([BaseExample])  }
+    BaseExample()        { [BaseExample]::DefaultMessage([BaseExample]) }
+    BaseExample($Value)  { [BaseExample]::ParamMessage([BaseExample], $Value) }
+}
+
+class DerivedExample : BaseExample {
+    static DerivedExample() { [BaseExample]::StaticMessage([DerivedExample])  }
+           DerivedExample() { [BaseExample]::DefaultMessage([DerivedExample]) }
+
+    DerivedExample([int]$Number) : base($Number) {
+        [BaseExample]::ParamMessage([DerivedExample], $Number)
+    }
+    DerivedExample([string]$String) {
+        [BaseExample]::ParamMessage([DerivedExample], $String)
+    }
+}
+```
+
+The following block shows the verbose messaging for calling the base class
+constructors. The static constructor message is only emitted the first time an
+instance of the class is created.
+
+```powershell
+PS&gt; $VerbosePreference = &#x27;Continue&#x27;
+PS&gt; $b = [BaseExample]::new()
+
+VERBOSE: [BaseExample] static constructor
+VERBOSE: [BaseExample] default constructor
+
+PS&gt; $b = [BaseExample]::new()
+
+VERBOSE: [BaseExample] default constructor
+
+PS&gt; $b = [BaseExample]::new(1)
+
+VERBOSE: [BaseExample] param constructor (1)
+```
+
+The next block shows the verbose messaging for calling the derived class
+constructors in a new session. The first time a derived class constructor is
+called, the static constructors for the base class and derived class are
+called. Those constructors aren&#x27;t called again in the session. The constructors
+for the base class always run before the constructors for the derived class.
+
+```powershell
+PS&gt; $VerbosePreference = &#x27;Continue&#x27;
+PS&gt; $c = [DerivedExample]::new()
+
+VERBOSE: [BaseExample] static constructor
+VERBOSE: [DerivedExample] static constructor
+VERBOSE: [BaseExample] default constructor
+VERBOSE: [DerivedExample] default constructor
+
+PS&gt; $c = [DerivedExample]::new()
+
+VERBOSE: [BaseExample] default constructor
+VERBOSE: [DerivedExample] default constructor
+
+PS&gt; $c = [DerivedExample]::new(1)
+
+VERBOSE: [BaseExample] param constructor (1)
+VERBOSE: [DerivedExample] param constructor (1)
+
+PS&gt; $c = [DerivedExample]::new(&#x27;foo&#x27;)
+
+VERBOSE: [BaseExample] default constructor
+VERBOSE: [DerivedExample] param constructor (foo)
+```
+
+## Constructor run ordering
+
+When a class instantiates, the code for one or more constructors executes.
+
+For classes that don&#x27;t inherit from another class, the ordering is:
+
+1. The static constructor for the class.
+1. The applicable constructor overload for the class.
+
+For derived classes that inherit from another class, the ordering is:
+
+1. If the static constructor of the derived class doesn&#x27;t depend on the base
+   class, the static constructor of the derived class is called first.
+1. If the static constructor of the derived class depends on the base class,
+   the static constructor of the base class is called before executing the line
+   of code in the derived class that depends on base.
+1. If the derived class constructor explicitly calls a base constructor
+   overload, it runs that constructor for the base class. If it doesn&#x27;t
+   explicitly call a base constructor, it runs the default constructor for the
+   base class.
+1. The applicable constructor overload for the derived class.
+
+In all cases, static constructors only run once in a session.
+
+For an example of constructor behavior and ordering, see [Example 5][06].
+
+## Hidden constructors
+
+You can hide constructors of a class by declaring them with the `hidden`
+keyword. Hidden class constructors are:
+
+- Not included in the default output for the class.
+- Not included in the list of class members returned by the `Get-Member`
+  cmdlet. To show hidden properties with `Get-Member`, use the **Force**
+  parameter.
+- Not displayed in tab completion or IntelliSense unless the completion occurs
+  in the class that defines the hidden property.
+- Public members of the class. They can be accessed and modified. Hiding a
+  property doesn&#x27;t make it private. It only hides the property as described in
+  the previous points.
+
+&gt; [!NOTE]
+&gt; When you hide any constructor, the `new()` option is removed from
+&gt; IntelliSense and completion results.
+
+For more information about the `hidden` keyword, see [about_Hidden][04].
+
+# about_Classes_Constructors
+
+## Static constructors
+
+You can define a constructor as belonging to the class itself instead of
+instances of the class by declaring the constructor with the `static` keyword.
+Static class constructors:
+
+- Only invoke the first time an instance of the class is created in the
+  session.
+- Can&#x27;t have any parameters.
+- Can&#x27;t access instance properties or methods with the `$this` variable.
+
+## Constructors for derived classes
+
+When a class inherits from another class, constructors can invoke a constructor
+from the base class with the `base` keyword. If the derived class doesn&#x27;t
+explicitly invoke a constructor from the base class, it invokes the default
+constructor for the base class instead.
+
+To invoke a nondefault base constructor, add `: base(&lt;parameters&gt;)` after the
+constructor parameters and before the body block.
+
+```Syntax
+class &lt;derived-class&gt; : &lt;base-class&gt; {
+    &lt;derived-class&gt;(&lt;derived-parameters&gt;) : &lt;base&gt;(&lt;base-parameters&gt;) {
+        # initialization code
+    }
+}
+```
+
+When defining a constructor that calls a base class constructor, the parameters
+can be any of the following items:
+
+- The variable of any parameter on the derived class constructor.
+- Any static value.
+- Any expression that evaluates to a value of the parameter type.
+
+For an example of constructors on a derived class, see [Example 5][06].
+
+## Chaining constructors
+
+Unlike C#, PowerShell class constructors can&#x27;t use chaining with the
+`: this(&lt;parameters&gt;)` syntax. To reduce code duplication, use a hidden
+`Init()` method with multiple overloads to the same effect. [Example 4][05]
+shows a class using this pattern.
+
+## Adding instance properties and methods with Update-TypeData
+
+Beyond declaring properties and methods directly in the class definition, you
+can define properties for instances of a class in the static constructor using
+the `Update-TypeData` cmdlet.
+
+Use this snippet as a starting point for the pattern. Replace the placeholder
+text in angle brackets as needed.
+
+```powershell
+class &lt;class-name&gt; {
+    static [hashtable[]] $MemberDefinitions = @(
+        @{
+            Name       = &#x27;&lt;member-name&gt;&#x27;
+            MemberType = &#x27;&lt;member-type&gt;&#x27;
+            Value      = &lt;member-definition&gt;
+        }
+    )
+
+    static &lt;class-name&gt;() {
+        $TypeName = [&lt;class-name&gt;].Name
+        foreach ($Definition in [&lt;class-name&gt;]::MemberDefinitions) {
+            Update-TypeData -TypeName $TypeName @Definition
+        }
+    }
+}
+```
+
+&gt; [!TIP]
+&gt; The `Add-Member` cmdlet can add properties and methods to a class in
+&gt; non-static constructors, but the cmdlet is run every time the constructor
+&gt; is called. Using `Update-TypeData` in the static constructor ensures that the
+&gt; code for adding the members to the class only needs to run once in a session.
+&gt;
+&gt; Only add properties to the class in non-static constructors when they can&#x27;t
+&gt; be defined with `Update-TypeData`, like read-only properties.
+
+For more information about defining instance methods with `Update-TypeData`,
+see [about_Classes_Methods][07]. For more information about defining instance
+properties with `Update-TypeData`, see [about_Classes_Properties][08].
+
+## Limitations
+
+PowerShell class constructors have the following limitations:
+
+- Constructor chaining isn&#x27;t implemented.
+
+  Workaround: Define hidden `Init()` methods and call them from within the
+  constructors.
+- Constructor parameters can&#x27;t use any attributes, including validation
+  attributes.
+
+  Workaround: Reassign the parameters in the constructor body with the
+  validation attribute.
+- Constructor parameters can&#x27;t define default values. The parameters are always
+  mandatory.
+
+  Workaround: None.
+- If any overload of a constructor is hidden, every overload for the
+  constructor is treated as hidden too.
+
+  Workaround: None.
+
+## See also
+
+- [about_Classes][10]
+- [about_Classes_Inheritance][11]
+- [about_Classes_Methods][01]
+- [about_Classes_Properties][09]
+
+&lt;!-- link references --&gt;
+[01]: about_Classes_Methods.md
+[02]: #static-constructors
+[03]: about_Classes_Properties.md#default-property-values
+[04]: about_Hidden.md
+[05]: #example-4---chaining-constructors-with-a-shared-method
+[06]: #example-5---derived-class-constructors
+[07]: about_Classes_Methods.md#define-instance-methods-with-update-typedata
+[08]: about_Classes_Properties.md#define-instance-properties-with-update-typedata
+[09]: about_Classes_Properties.md
+[10]: about_Classes.md
+[11]: about_Classes_Inheritance.md
+###Microsoft Learn URL###
+https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_classes_constructors/?view=powershell-5.1
+</pre></html>

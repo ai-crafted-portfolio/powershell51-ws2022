@@ -1,0 +1,775 @@
+<!doctype html><html lang="ja"><meta charset="utf-8"><pre class="record-source">###KnowledgeNo###
+PS51-WS2022-2026-0189
+###FormatID###
+PS51-WS2022
+###CreatedAt###
+2026-08-01 00:00
+###UpdatedAt###
+2026-08-01 00:00
+###タイトル###
+Test-ADDSForestInstallation
+###モジュール###
+addsdeployment
+###製品###
+Windows PowerShell 5.1
+###対応OS###
+Windows Server 2022
+###日本語訳###
+# テスト-ADDSForestInstallation
+
+## SYNOPSISは,アクティブディレクトリに新しい森をインストールする前提条件を実行します.
+
+## SYNTAXは,のシンタックスです.
+
+```
+Test-ADDSForestInstallation -DomainName &lt;String&gt;
+ [-SafeModeAdministratorPassword &lt;SecureString&gt;] [-CreateDnsDelegation]
+ [-DatabasePath &lt;String&gt;] [-DnsDelegationCredential &lt;PSCredential&gt;] [-NoDnsOnNetwork]
+ [-DomainMode &lt;DomainMode&gt;] [-DomainNetbiosName &lt;String&gt;] [-ForestMode &lt;ForestMode&gt;]
+ [-InstallDns] [-LogPath &lt;String&gt;] [-NoRebootOnCompletion] [-SkipAutoConfigureDns]
+ [-SysvolPath &lt;String&gt;] [-Force] [&lt;CommonParameters&gt;]
+```
+
+## 記述は,
+
+   `Test-ADDSForestInstallation`cmdlet では,前提条件のチェックが実行されます.`Install-ADDSForest`アクティブディレクトリに新しい森をインストールするcmdletは, と **WhatIf** パラメータを使用するとは異なります.`Install-ADDSForest`cmdletとは,インストールプロセス中に起こる変更を概要する代わりに,この cmdlet は,現在の環境を考えると,これらの変更が可能かどうかを実際にテストするということです.
+
+このcmdletを使用するときにADDSDeploymentモジュールが実行するこれらの前提チェックの範囲に関する詳細については,AD DS 簡易化管理のADDPrepと前提チェックアーキテクチャのセクションを参照してください.https://go.microsoft.com/fwlink/?LinkID=237244) でした.
+
+## 例えは
+
+### 例1: 森林の設置をテストして,それが可能かどうか確認してください.
+
+```powershell
+Test-ADDSForestInstallation -DomainName &quot;corp.contoso.com&quot; -NoRebootOnCompletion
+```
+
+このコマンドは,新しい森林を設置するための前提条件を実行します.`corp.contoso.com`新しい森林が作成された後,再起動しないように指定します.ユーザーは,ディレクトリサービス復旧モード (DSRM) パスワードを入力して確認するよう求められます.
+
+### 例2: 森林の設置をテストして,それが可能かどうか確認してください.
+
+```powershell
+$HashArguments = @{
+    CreateDNSDelegation = $true
+    DatabasePath        = &quot;D:\NTDS&quot;
+    DomainMode          = Win2008
+    DomainName          = &quot;corp.contoso.com&quot;
+    ForestMode          = Win2008R2
+    LogPath             = &quot;E:\Logs&quot;
+    SysvolPath          = &quot;D:\SYSVOL&quot;
+}
+Test-ADDSForestInstallation @HashArguments
+```
+
+このコマンドは,新しい森林をインストールするための前提条件を実行します.この命令は,DNSデレグレーションを に作成します.`contoso.com`ドメインをWindows Server 2008 R2に設定し,森林機能レベルをWindows Server 2008 R2に設定します.このコマンドは,また,アクティブディレクトリデータベースとSYSVOLをインストールします.`D:`ドライブにログファイルをインストールし,ログファイルを にインストールします.`E:`AD DS のインストール後,サーバーが自動的に再起動され,ユーザはDSRM パスワードを入力して確認するよう求められます.
+
+## パラメータは
+
+### -CreateDnsDelegation を作成する
+
+cmdletが新しいDNSサーバを参照するDNSデレグレーションを作成すると表示します.ドメインコントローラとインストールします.Active Directory-integrated DNSのみで有効です.デフォルトは環境に基づいて自動的に計算されます.
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: NULL
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -DatabasePath
+
+域名データベースを含むローカルコンピュータの固定ディスクにあるディレクトリへの完全資格のある,非普遍的な命名条約 (UNC) 経路を指定します.`C:\Windows\NTDS`デフォルトは です.`%SYSTEMROOT%\NTDS` .
+
+```yaml
+Type: System.String
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: NULL
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -DnsDelegationCredential
+
+DNS代引きを作成するためのユーザー名とパスワード (アカウント認証) を指定します.このパラメータをcmdlet はスキップします **CreateDnsDelegation**パラメータの値は指定または計算された場合.`$false` .
+
+```yaml
+Type: System.Management.Automation.PSCredential
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: NULL
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -ドメインモード
+
+新しい森林を作成する際に最初のドメインのドメイン機能レベルを指定します.このパラメータのサポートされた値は有効な整数または対応するリスト列値である可能性があります.例えば,ドメインモードレベルをWindows Server 2008 R2に設定するには,値のいずれかを指定できます.`4`    `Win2008R2` .
+
+このパラメータの受け入れられる値は:
+
+Windows Server 2003: 2またはWin2003 - Windows Server 2008: 3またはWin2008 - Windows Server 2008 R2: 4またはWin2008R2 - Windows Server 2012: 5またはWin2012 - Windows Server 2012 R2: 6またはWin2012R2 - Windows Server 2012: 5またはWin2012 - Windows Server 2012 R2: 6またはWin2012R2
+
+ドメイン機能レベルは,森林機能レベルよりも低いが,より高い可能性があります.デフォルトは自動的に計算され設定されます.
+
+```yaml
+Type: System.DirectoryServices.ActiveDirectory.DomainMode
+Parameter Sets: (All)
+Aliases: 
+Accepted values: Win2008, Win2008R2, Win2012, Win2012R2, WinThreshold, Default
+
+Required: False
+Position: Named
+Default value: Windows2008R2
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -ドメイン名
+
+森内のルートドメインの完全資格ドメイン名 (FQDN) を指定します.
+
+```yaml
+Type: System.String
+Parameter Sets: (All)
+Aliases: 
+
+Required: True
+Position: Named
+Default value: &lt;mandatory&gt;
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -ドメインネットバイオスName
+
+新しい森のルーツドメインのNetBIOS名前を指定します.このパラメータで使用するために有効になるためには,NetBIOS名々は15文字以下の単一のラベル名である必要があります.
+
+このパラメータが有効なNetBIOS名値で設定されている場合,森のインストールが指定された名前で続きます.このパラメータが設定されていない場合,デフォルトは自動的に **DomainName**パラメータの値から計算されます.
+
+例えば,このパラメータが指定されていない場合,および**DomainName**パラメータの値内に15文字以下の単一のレーベルプレフィックスドメイン名が指定されている場合,プロモーションは自動的に生成されるNetBIOSドメイン名で継続されます.例えば,プレフィックスラベルは`corp`の全域名値内にあります.`corp.contoso.com`名前選択が成功する.
+
+このパラメータに与えられた名前値は,16文字以上の名前である場合,森林の設置が失敗すると注意してください.
+
+```yaml
+Type: System.String
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: NULL
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -フォース
+
+ユーザの確認を要求せずにコマンドを実行するように強制します.
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+# テスト-ADDSForestInstallation
+
+### -ForestMode
+
+新しい森林の森林機能レベルを指定します.このパラメータのサポートされた値は有効な整数または対応したリスト列値である可能性があります.例えば,森林モードレベルをWindows Server 2008 R2に設定するには,値のいずれかを指定できます.`4`    `Win2008R2` .
+
+このパラメータの受け入れられる値は:
+
+Windows Server 2003:2またはWin2003 - Windows Server 2008:3またはWin2008 - Windows Server 2008 R2: 4またはWin2008R2 - Windows Server 2012: `5`    `Win2012`- Windows Server 2012 R2 - `6`    `Win2012R2`
+
+Windows Serverのデフォルトフォレスト機能レベルは,通常,あなたが実行しているバージョンと同じです.しかし,新しいフォレストを作成するときに,Windows Server 2008 R2のデフォルトフォレスト機能レベルは,Windows Server 2003または です.`2` .
+
+```yaml
+Type: System.DirectoryServices.ActiveDirectory.ForestMode
+Parameter Sets: (All)
+Aliases: 
+Accepted values: Win2008, Win2008R2, Win2012, Win2012R2, WinThreshold, Default
+
+Required: False
+Position: Named
+Default value: Windows2008R2
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -InstallDns
+
+cmdlet が新しい森林のDNS Serverサービスをインストールし設定すると表示します.森林のインストールでは,デフォルトは です.`$true` .
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: NULL
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -LogPath
+
+この操作のログファイルが書き込まれたローカルコンピュータの固定ディスクにあるディレクトリへの完全合格でUNC以外のパス指定します.`C:\Logs`このパラメータで他のパスが指定されていない場合,デフォルトログファイル経路は です.`%SYSTEMROOT%\NTDS` .
+
+```yaml
+Type: System.String
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: NULL
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -NoDnsOnNetwork
+
+このパラメータは,このコンピュータのネットワークアダプターのIP設定が名前解析のためのDNSサーバの名前で設定されていない場合にのみ使用されます.このコンピュータに名前解析のためのDNSサーバがインストールされていることを意味します.そうでなければ,ネットワークアダプターのIP設定はまずDNSサーバのアドレスで設定する必要があります.
+
+このパラメータを省略すると,このサーバーコンピュータのネットワークアダプターのTCP/IPクライアント設定がDNSサーバーと連絡するために使用されていることを示している.したがって,このパラメータを指定していない場合は,まず TCP/IPクライアント設定が優先されたDNSサーバーアドレスで設定されることを確認してください.
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -NoRebootOnCompletion 完成していない
+
+cmdletがコマンドを完了するとコンピュータをリ起動しないことを示す.
+
+このパラメータを削除すると,コマンドが完了するとコンピュータが成功または失敗に関わらず再起動するところである.一般的ルールとして,Microsoftサポートは,テストまたはトラブルシューティングの目的を除いてこのパラメータを使用することを推奨している.設定が完了すると,サーバーが再起動するまでメンバーサーバーまたはDCとして正しく動作しないため,このパラメータを使用することを推奨します.
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -SafeModeAdministrator パスワード
+
+コンピュータが安全なモードまたはディレクトリサービス復元モードなどの安全なモードの変異で起動する際に管理者アカウントのパスワードを指定します.ドメインのパスワード複雑性のルールを満たすパスワードを入力する必要があります.パスワードは空白でできません.値で指定された場合,値は安全な文字列でなければなりません.
+
+このパラメータが指定されていない場合,cmdletは,あなたがマスクされたパスワードを入力して確認するよう求めます.これは,インタラクティブで cmdlet を実行する際に使用される好みのものです.このパラメータで指定された他の議論がない場合,あなたはこのパラメータのためのマスクされたパスワードを入力するよう求められますが,入力されたパスワードの確認はありません.これは誤ったパスワードを設定できるようにすることが推奨されません.利用可能な別の先進オプションは,入力されたパスワードの設定です.`ConvertTo-SecureString`cmdlet を入力して,パスワード文字列をアンマスクされたコンソール入力として入力してください.これは生産部署における推奨のセキュリティベストプラクティスでもありません.
+
+```yaml
+Type: System.Security.SecureString
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: &lt;mandatory&gt;
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -SkipAutoConfigureDns
+
+cmdlet は,DNS クライアント設定,転送者,ルーツヒントの自動設定をスキップすると示します.このパラメータは,既にDNS Server サービスをインストールしている場合にのみ有効です.
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: NULL
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -SysvolPath でした
+
+Sysvolファイルが書かれたローカルコンピュータの固定ディスクにあるディレクトリへの完全資格のある,UNC以外のパス指定します.`C:\Logs\SYSVOL`このパラメータで他のパスが指定されていない場合,デフォルトパスは です.`%SYSTEMROOT%\SYSVOL` .
+
+```yaml
+Type: System.String
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: NULL
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### 共通パラメーター
+
+このcmdletは,共通パラメータをサポートしています: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable.詳細については, [about_CommonParameters](を参照してください.https://go.microsoft.com/fwlink/?LinkID=113216) でした.
+
+## 輸入は
+
+## 輸出は
+
+##  NOTES  記事ができました.
+
+## 関連リンク
+
+[AD DS 簡易化管理]https://go.microsoft.com/fwlink/?LinkID=237244) 
+
+[Install-ADDSForest](./Install-ADDSForest.md) 
+
+[Test-ADDSDomainInstallation.md](./Test-ADDSDomainInstallation.md) 
+
+[Test-ADDSDomainControllerInstallation](./Test-ADDSDomainControllerInstallation.md) 
+
+[Install-ADDSDomainController](./Install-ADDSDomainController.md) 
+
+[ConvertTo-SecureString]は,安全性のある文字列を変換する.https://go.microsoft.com/fwlink/p/?LinkId=113291) 
+###英語原文###
+# Test-ADDSForestInstallation
+
+## SYNOPSIS
+Runs the prerequisites for installing a new forest in Active Directory.
+
+## SYNTAX
+
+```
+Test-ADDSForestInstallation -DomainName &lt;String&gt;
+ [-SafeModeAdministratorPassword &lt;SecureString&gt;] [-CreateDnsDelegation]
+ [-DatabasePath &lt;String&gt;] [-DnsDelegationCredential &lt;PSCredential&gt;] [-NoDnsOnNetwork]
+ [-DomainMode &lt;DomainMode&gt;] [-DomainNetbiosName &lt;String&gt;] [-ForestMode &lt;ForestMode&gt;]
+ [-InstallDns] [-LogPath &lt;String&gt;] [-NoRebootOnCompletion] [-SkipAutoConfigureDns]
+ [-SysvolPath &lt;String&gt;] [-Force] [&lt;CommonParameters&gt;]
+```
+
+## DESCRIPTION
+
+The `Test-ADDSForestInstallation` cmdlet runs those prerequisite checks which would be performed if
+you were to use the `Install-ADDSForest` cmdlet to install a new forest in Active Directory. It
+differs from using the **WhatIf** parameter with the `Install-ADDSForest` cmdlet in that instead of
+summarizing the changes that would occur during the installation process, this cmdlet actually
+tests whether those changes are possible given the current environment.
+
+For more information on the scope of these prerequisite checks that the **ADDSDeployment** module
+performs when using this cmdlet see the section ADPrep and Prerequisite Checking Architecture in
+[AD DS Simplified Administration](https://go.microsoft.com/fwlink/?LinkID=237244).
+
+## EXAMPLES
+
+### Example 1: Test the install of a forest to confirm if it is possible
+
+```powershell
+Test-ADDSForestInstallation -DomainName &quot;corp.contoso.com&quot; -NoRebootOnCompletion
+```
+
+This command runs the prerequisites for installing a new forest named `corp.contoso.com` and
+specifies not to reboot after the new forest is created. The user is prompted to provide and
+confirm the Directory Services Restore Mode (DSRM) password.
+
+### Example 2: Test the install of a forest to confirm if it is possible
+
+```powershell
+$HashArguments = @{
+    CreateDNSDelegation = $true
+    DatabasePath        = &quot;D:\NTDS&quot;
+    DomainMode          = Win2008
+    DomainName          = &quot;corp.contoso.com&quot;
+    ForestMode          = Win2008R2
+    LogPath             = &quot;E:\Logs&quot;
+    SysvolPath          = &quot;D:\SYSVOL&quot;
+}
+Test-ADDSForestInstallation @HashArguments
+```
+
+This command runs the prerequisites for installing a new forest that will create a DNS delegation
+in the `contoso.com` domain, set the domain functional level to Windows Server 2008 R2 and sets
+forest functional level to Windows Server 2008 R2. The command also installs the Active Directory
+database and SYSVOL on the `D:` drive, installs the log files on the `E:` drive and has the server
+automatically restart after AD DS installation. The user is prompted to provide and confirm the
+DSRM password.
+
+## PARAMETERS
+
+### -CreateDnsDelegation
+
+Indicates that the cmdlet creates a DNS delegation that references the new DNS server that you
+install along with the domain controller. Valid for Active Directory-integrated DNS only. The
+default is computed automatically based on the environment.
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: NULL
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -DatabasePath
+
+Specifies the fully qualified, non-Universal Naming Convention (UNC) path to a directory on a fixed
+disk of the local computer that contains the domain database, for example, `C:\Windows\NTDS`. The
+default is `%SYSTEMROOT%\NTDS`.
+
+```yaml
+Type: System.String
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: NULL
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -DnsDelegationCredential
+
+Specifies the user name and password (account credentials) for creating DNS delegation. The cmdlet
+will skip this parameter if the value for the **CreateDnsDelegation** parameter is either specified
+or computed to be `$false`.
+
+```yaml
+Type: System.Management.Automation.PSCredential
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: NULL
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -DomainMode
+
+Specifies the domain functional level of the first domain in the creation of a new forest. Supported
+values for this parameter can be either a valid integer or a corresponding enumerated string value.
+For instance, to set the domain mode level to Windows Server 2008 R2, you can specify either a value
+of `4` or `Win2008R2`.
+
+The acceptable values for this parameter are:
+
+- Windows Server 2003:  2 or Win2003
+- Windows Server 2008:  3 or Win2008
+- Windows Server 2008 R2:  4 or Win2008R2
+- Windows Server 2012:  5 or Win2012
+- Windows Server 2012 R2:  6 or Win2012R2
+
+The domain functional level cannot be lower than the forest functional level, but it can be higher.
+The default is automatically computed and set.
+
+```yaml
+Type: System.DirectoryServices.ActiveDirectory.DomainMode
+Parameter Sets: (All)
+Aliases: 
+Accepted values: Win2008, Win2008R2, Win2012, Win2012R2, WinThreshold, Default
+
+Required: False
+Position: Named
+Default value: Windows2008R2
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -DomainName
+
+Specifies the fully qualified domain name (FQDN) for the root domain in the forest.
+
+```yaml
+Type: System.String
+Parameter Sets: (All)
+Aliases: 
+
+Required: True
+Position: Named
+Default value: &lt;mandatory&gt;
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -DomainNetbiosName
+
+Specifies the NetBIOS name for the root domain in the new forest. For NetBIOS names to be valid for
+use with this parameter they must be single label names of 15 characters or less.
+
+If this parameter is set with a valid NetBIOS name value, then forest installation continues with
+the name specified. If this parameter is not set, then the default is automatically computed from
+the value of the **DomainName** parameter.
+
+For instance, if this parameter is not specified and a single-label prefix domain name of 15
+characters or less is specified within the value of the **DomainName** parameter, then promotion
+continues with an automatically generated NetBIOS domain name. For example, the prefix label `corp`
+within a full domain name value of `corp.contoso.com` would be a successful name choice.
+
+Note that if the name value given for this parameter is a name of 16 characters or more, then the
+forest installation fails.
+
+```yaml
+Type: System.String
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: NULL
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Force
+
+Forces the command to run without asking for user confirmation.
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+# Test-ADDSForestInstallation
+
+### -ForestMode
+
+Specifies the forest functional level for the new forest. Supported values for this parameter can be
+either a valid integer or a corresponding enumerated string value. For example, to set the forest
+mode level to Windows Server 2008 R2, you can specify either a value of `4` or `Win2008R2`.
+
+The acceptable values for this parameter are:
+
+- Windows Server 2003:  2 or Win2003
+- Windows Server 2008:  3 or Win2008
+- Windows Server 2008 R2:  4 or Win2008R2
+- Windows Server 2012:  `5` or `Win2012`
+- Windows Server 2012 R2:  `6` or `Win2012R2`
+
+The default forest functional level in Windows Server is typically the same as the version you are
+running. However, the default forest functional level in Windows Server 2008 R2 when you create a
+new forest is Windows Server 2003 or `2`.
+
+```yaml
+Type: System.DirectoryServices.ActiveDirectory.ForestMode
+Parameter Sets: (All)
+Aliases: 
+Accepted values: Win2008, Win2008R2, Win2012, Win2012R2, WinThreshold, Default
+
+Required: False
+Position: Named
+Default value: Windows2008R2
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -InstallDns
+
+Indicates that the cmdlet installs and configures the DNS Server service for the new forest. For
+forest installation, the default is `$true`.
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: NULL
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -LogPath
+
+Specifies the fully qualified, non-UNC path to a directory on a fixed disk of the local computer
+where the log file for this operation is written. For instance, `C:\Logs`. The default log file path
+if no other path is specified with this parameter is `%SYSTEMROOT%\NTDS`.
+
+```yaml
+Type: System.String
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: NULL
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -NoDnsOnNetwork
+
+Indicates that the DNS service is not available on the network. This parameter is used only when the
+IP setting of the network adapter for this computer is not configured with the name of a DNS server
+for name resolution. It indicates that a DNS server is installed on this computer for name
+resolution. Otherwise, the IP settings of the network adapter must first be configured with the
+address of a DNS server.
+
+Omitting this parameter indicates that the TCP/IP client settings of the network adapter on this
+server computer is used to contact a DNS server. Therefore, if you are not specifying this
+parameter, ensure that TCP/IP client settings are first configured with a preferred DNS server
+address.
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -NoRebootOnCompletion
+
+Indicates that the cmdlet does not reboot the computer upon completion of the command.
+
+Omitting this parameter indicates the computer is rebooted upon completion of the command,
+regardless of success or failure. As a general rule, Microsoft support recommends that you not use
+this parameter except for testing or troubleshooting purposes because once configuration has
+completed the server will not function correctly as either a member server or a DC until it is
+rebooted.
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -SafeModeAdministratorPassword
+
+Specifies the password for the administrator account when the computer is started in Safe Mode or a
+variant of Safe Mode, such as Directory Services Restore Mode. You must supply a password that meets
+the password complexity rules of the domain and the password cannot be blank. If specified with a
+value, the value must be a secure string.
+
+If this parameter is not specified, the cmdlet prompts you to enter and confirm a masked password.
+This is the preferred usage when running the cmdlet interactively. If there are no other arguments
+specified with the cmdlet, you are prompted to enter a masked password for this parameter but no
+confirmation of the password entered is made. This is not recommended as it could allow a mistyped
+password to be configured. Another available advanced option is to use the
+`ConvertTo-SecureString` cmdlet and specify the password string inline as unmasked console input,
+which is also not a recommended security best practice in production deployments.
+
+```yaml
+Type: System.Security.SecureString
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: &lt;mandatory&gt;
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -SkipAutoConfigureDns
+
+Indicates that the cmdlet skips automatic configuration of DNS client settings, forwarders, and root
+hints. This parameter is in effect only if the DNS Server service is already installed.
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: NULL
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -SysvolPath
+
+Specifies the fully qualified, non-UNC path to a directory on a fixed disk of the local computer
+where the Sysvol file is written. For example, `C:\Logs\SYSVOL`. The default path if no other path
+is specified with this parameter is `%SYSTEMROOT%\SYSVOL`.
+
+```yaml
+Type: System.String
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: NULL
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### CommonParameters
+
+This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable,
+-InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose,
+-WarningAction, and -WarningVariable. For more information, see
+[about_CommonParameters](https://go.microsoft.com/fwlink/?LinkID=113216).
+
+## INPUTS
+
+## OUTPUTS
+
+## NOTES
+
+## RELATED LINKS
+
+[AD DS Simplified Administration](https://go.microsoft.com/fwlink/?LinkID=237244)
+
+[Install-ADDSForest](./Install-ADDSForest.md)
+
+[Test-ADDSDomainInstallation](./Test-ADDSDomainInstallation.md)
+
+[Test-ADDSDomainControllerInstallation](./Test-ADDSDomainControllerInstallation.md)
+
+[Install-ADDSDomainController](./Install-ADDSDomainController.md)
+
+[ConvertTo-SecureString](https://go.microsoft.com/fwlink/p/?LinkId=113291)
+###Microsoft Learn URL###
+https://learn.microsoft.com/en-us/powershell/module/addsdeployment/test-addsforestinstallation/?view=windowsserver2022-ps
+</pre></html>

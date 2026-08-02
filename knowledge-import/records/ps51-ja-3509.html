@@ -1,0 +1,231 @@
+<!doctype html><html lang="ja"><meta charset="utf-8"><pre class="record-source">###KnowledgeNo###
+PS51-WS2022-2026-3509
+###FormatID###
+PS51-WS2022
+###CreatedAt###
+2026-08-01 00:00
+###UpdatedAt###
+2026-08-01 00:00
+###タイトル###
+about_Booleans
+###モジュール###
+Microsoft.PowerShell.Core
+###製品###
+Windows PowerShell 5.1
+###対応OS###
+Windows Server 2022
+###日本語訳###
+# about_Booleansについて
+
+## 短編説明
+
+ボーラン式表現が評価される方法を説明します.
+
+## 長い説明
+
+PowerShellは,任意のタイプを**Boolean**として暗示的に扱える.PowerShellが他のタイプを**Boolean**に変換するために使用するルールを理解することが重要です.
+
+## スカラー型から変換する
+
+[scalar][02]型は,一度に1つの値しか持たない原子量である.以下のタイプは,に評価される.`$false`:
+
+- のような空き文字列`&#x27;&#x27;`    `&quot;&quot;`- のようなゼロ値`$null`- の値を持つ任意の数字タイプ`0`
+
+例:
+
+```powershell
+PS&gt; $false -eq &#x27;&#x27;
+True
+PS&gt; if (&quot;&quot;) { $true } else { $false }
+False
+PS&gt; if ($null) { $true } else { $false }
+False
+PS&gt; if ([int]0) { $true } else { $false }
+False
+PS&gt; if ([double]0.0) { $true } else { $false }
+False
+```
+
+次のタイプは,評価をにします.`$true`:
+
+- 文字列は空き文字列ではない - 他の集合でない種類の例
+
+例:
+
+```powershell
+
+# a non-collection type
+PS&gt; [bool]@{value = 0}
+True
+
+# non-empty strings
+PS&gt; if (&#x27;hello&#x27;) { $true } else { $false }
+True
+PS&gt; [bool]&#x27;False&#x27;
+True
+```
+
+これは _explicit string parsing_とは異なることに注意してください.
+
+```powershell
+PS&gt; [bool]::Parse(&#x27;false&#x27;)
+False
+PS&gt; [bool]::Parse(&#x27;True&#x27;)
+True
+PS&gt; [bool]::Parse(&#x27;Not True&#x27;)
+MethodInvocationException: Exception calling &quot;Parse&quot; with &quot;1&quot; argument(s):
+&quot;String &#x27;Not True&#x27; was not recognized as a valid Boolean.&quot;
+```
+
+## コレクションタイプから変換する
+
+アレイはPowerShellで最も一般的なコレクションタイプです.これらの規則は, [IList][01]インターフェースを実装するすべてのコレクションのようなタイプに適用されます.
+
+- 空きコレクションは常に空いている`$false`- 命令からの出力が存在しないことを示す特別なゼロ値,`[System.Management.Automation.Internal.AutomationNull]::Value`いつもはいつもです.`$false`- 単要素集合は,その単要素のブルール値に評価されます. - 1以上の要素を持つ集合は,常にです.`$true` .
+
+例:
+
+```powershell
+
+# Empty collections
+PS&gt; [bool]@()
+False
+PS&gt; [bool](Get-ChildItem | Where-Object Name -EQ &#x27;Non-existent-File.txt&#x27;)
+False
+
+# Single-element collections
+PS&gt; $a = @(0)
+PS&gt; [bool]$a
+False
+PS&gt; $b = @(1)
+PS&gt; [bool]$b
+True
+
+# Multi-element collections
+PS&gt; $c = @(0,0)
+PS&gt; [bool]$c
+True
+```
+
+## また, を参照してください.
+
+- [about_Arrays][03]
+
+&lt;!--リンク参照 --&gt; [01]: /dotnet/api/system.collections.ilist [02]: /powershell/scripting/learn/glossary#scalar-value [03]: about_Arrays.md#whereについて
+###英語原文###
+# about_Booleans
+
+## Short description
+
+Describes how boolean expressions are evaluated.
+
+## Long description
+
+PowerShell can implicitly treat any type as a **Boolean**. It is important to
+understand the rules that PowerShell uses to convert other types to **Boolean**
+values.
+
+## Converting from scalar types
+
+A [scalar][02] type is an atomic quantity that can hold only one value at a
+time. The following types evaluate to `$false`:
+
+- Empty strings like `&#x27;&#x27;` or `&quot;&quot;`
+- Null values like `$null`
+- Any numeric type with the value of `0`
+
+Examples:
+
+```powershell
+PS&gt; $false -eq &#x27;&#x27;
+True
+PS&gt; if (&quot;&quot;) { $true } else { $false }
+False
+PS&gt; if ($null) { $true } else { $false }
+False
+PS&gt; if ([int]0) { $true } else { $false }
+False
+PS&gt; if ([double]0.0) { $true } else { $false }
+False
+```
+
+The following types evaluate to `$true`:
+
+- Non-empty strings
+- Instances of any other non-collection type
+
+Examples:
+
+```powershell
+
+# a non-collection type
+PS&gt; [bool]@{value = 0}
+True
+
+# non-empty strings
+PS&gt; if (&#x27;hello&#x27;) { $true } else { $false }
+True
+PS&gt; [bool]&#x27;False&#x27;
+True
+```
+
+Note that this differs from _explicit string parsing_:
+
+```powershell
+PS&gt; [bool]::Parse(&#x27;false&#x27;)
+False
+PS&gt; [bool]::Parse(&#x27;True&#x27;)
+True
+PS&gt; [bool]::Parse(&#x27;Not True&#x27;)
+MethodInvocationException: Exception calling &quot;Parse&quot; with &quot;1&quot; argument(s):
+&quot;String &#x27;Not True&#x27; was not recognized as a valid Boolean.&quot;
+```
+
+## Converting from collection types
+
+Arrays are the most common collection type in PowerShell. These rules apply to
+any collection-like types that implement the [IList][01] interface.
+
+- Empty collections are always `$false`
+- The special null value indicating the absence of output from a command,
+  `[System.Management.Automation.Internal.AutomationNull]::Value` is always
+  `$false`.
+- Single-element collections evaluate to the **Boolean** value of their one and
+  only element.
+- Collections with more than 1 element are always `$true`.
+
+Examples:
+
+```powershell
+
+# Empty collections
+PS&gt; [bool]@()
+False
+PS&gt; [bool](Get-ChildItem | Where-Object Name -EQ &#x27;Non-existent-File.txt&#x27;)
+False
+
+# Single-element collections
+PS&gt; $a = @(0)
+PS&gt; [bool]$a
+False
+PS&gt; $b = @(1)
+PS&gt; [bool]$b
+True
+
+# Multi-element collections
+PS&gt; $c = @(0,0)
+PS&gt; [bool]$c
+True
+```
+
+## See also
+
+- [about_Arrays][03]
+
+&lt;!-- link references --&gt;
+[01]: /dotnet/api/system.collections.ilist
+[02]: /powershell/scripting/learn/glossary#scalar-value
+[03]: about_Arrays.md#where
+###Microsoft Learn URL###
+https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_booleans/?view=powershell-5.1
+</pre></html>

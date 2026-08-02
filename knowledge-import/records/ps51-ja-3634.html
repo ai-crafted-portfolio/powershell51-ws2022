@@ -1,0 +1,442 @@
+<!doctype html><html lang="ja"><meta charset="utf-8"><pre class="record-source">###KnowledgeNo###
+PS51-WS2022-2026-3634
+###FormatID###
+PS51-WS2022
+###CreatedAt###
+2026-08-01 00:00
+###UpdatedAt###
+2026-08-01 00:00
+###タイトル###
+about_Type_Operators
+###モジュール###
+Microsoft.PowerShell.Core
+###製品###
+Windows PowerShell 5.1
+###対応OS###
+Windows Server 2022
+###日本語訳###
+# about_Type_Operatorsについて
+
+## 短編説明
+
+Microsoft .NET タイプで動作するオペレーターについて説明します.
+
+## 長い説明
+
+ブール型オペレータ ()`-is`そして,`-isnot`) が指定された .NET タイプのインスタンスのオブジェクトかどうかを教えて下さい.`-is`タイプが一致する場合は **TRUE** と **FALSE** の値を返します.`-isnot`オペレーターは,タイプが一致する場合は **FALSE** の値と,他の場合の **TRUE** の値を返します.
+
+   `-as`入力オブジェクトを指定された .NET タイプに変換しようとすると,操作者は成功すると変換されたオブジェクトを返します.失敗すると返します.`$null`誤差を返さない.
+
+PowerShell では以下のタイプオペレータが用意されています.
+
+ - -`-is`[U+8F93]入が指定された .NET タイプのインスタンスのとき,True を返します.
+
+    ```powershell
+  (Get-Date) -is [datetime]     # Result is True
+  ```
+
+ - -`-isnot`◎入力が指定.NET タイプのインスタンスのものではない場合 TRUE を返します.
+
+    ```powershell
+  (Get-Date) -isnot [datetime]  # Result is False
+  ```
+
+ - -`-as`入力を指定された .NET タイプに変換します.
+
+    ```powershell
+  &quot;5/7/07&quot; -as [datetime]       # Result is Monday, May 7, 2007 12:00:00 AM
+  ```
+
+タイプオペレータの構文は以下の通りです.
+
+```powershell
+&lt;input&gt; &lt;operator&gt; [.NET type]
+```
+
+また,次の構文も使えます.
+
+```powershell
+&lt;input&gt; &lt;operator&gt; &quot;.NET type&quot;
+```
+
+.NET タイプは括弧でタイプ名または文字列として書き換えることができます.`[datetime]`    `&quot;DateTime&quot;`** for System.DateTime**. 型がシステム名空の根にある場合,オブジェクト型の完全な名前を指定してください. &quot;System.for&quot; を省略できます.例えば, **System.Diagnostics.Process** を指定するには,  を入力してください.`[System.Diagnostics.Process]`     `[Diagnostics.Process]`       `&quot;Diagnostics.Process&quot;` .
+
+タイプオペレータは常に,入力オブジェクト全体で動作します.つまり,入力オブジェクトが集合である場合,集合の _elements_ の種類ではなく, _collection_ タイプがテストされます.
+
+### -is/isnot オペレーターです
+
+ブルール型操作員 ()`-is`そして,`-isnot`) は,入力がオブジェクトの集合である場合でも,常に**ブル値を返します.
+
+If  でした.`&lt;input&gt;`型は,NET Type,  の __ に等しいまたは __ から派生した型です.`-is` operator が返ってくる`$true` .
+
+例えば,ディレクトリ情報型は,ファイルシステム情報型から派生されているので,この2つの例は,True**を返します.
+
+```powershell
+PS&gt; (Get-Item /) -is [System.IO.DirectoryInfo]
+True
+PS&gt; (Get-Item /) -is [System.IO.FileSystemInfo]
+True
+```
+
+   `-is`操作者は,もし  が接続された場合,インターフェースも一致することができます.`&lt;input&gt;`比較のインターフェースを実装します.この例では,入力はアレイです.アレイは**System.Collections.IList**インターフェイスを実装します.
+
+```powershell
+PS&gt; 1, 2 -is [System.Collections.IList]
+True
+```
+
+### -操作者として
+
+   `-as`入力オブジェクトを指定された .NET タイプに変換しようとすると,操作者が成功した場合,変換されたオブジェクトを返します.失敗した場合,返します.`$null`誤差を返さない.
+
+もし,その `&lt;input&gt;`型は .NET Typeから _derived_ になっている.`-as`_passes through_ は,入力オブジェクトを変更なく返します.例えば, **DirectoryInfo** タイプは **FileSystemInfo** タイプから派生されています.したがって,以下の例ではオブジェクトタイプは変更なく表示されます.
+
+```powershell
+PS&gt; $fsroot = (Get-Item /) -as [System.IO.FileSystemInfo]
+PS&gt; $fsroot.GetType().FullName
+System.IO.DirectoryInfo
+```
+
+#### DateTime タイプを変換することは文化に敏感です
+
+タイプキャスティングとは異なり,変換は  に変換されます.`[datetime]` 字符を用いることでタイプします.`-as`オペレーターは,現在の文化のルールに従ってフォーマットされた文字列のみで動作します.
+
+```powershell
+PS&gt; [cultureinfo]::CurrentCulture = &#x27;fr-FR&#x27;
+PS&gt; &#x27;13/5/20&#x27; -as [datetime]
+
+mercredi 13 mai 2020 00:00:00
+
+PS&gt; &#x27;05/13/20&#x27; -as [datetime]
+PS&gt; [datetime]&#x27;05/13/20&#x27;
+
+mercredi 13 mai 2020 00:00:00
+
+PS&gt; [datetime]&#x27;13/05/20&#x27;
+InvalidArgument: Cannot convert value &quot;13/05/20&quot; to type &quot;System.DateTime&quot;.
+Error: &quot;String &#x27;13/05/20&#x27; was not recognized as a valid DateTime.&quot;
+```
+
+対象の .NET型を見つけるには,  を使います.`Get-Member`または,すべてのオブジェクトの **GetType** 方法を使用して,この方法の **FullName** 属性と一緒に使用します.例えば,次の記述は,返還値の種類を  の返還値にします.`Get-Culture`コマンド:
+
+```powershell
+PS&gt; (Get-Culture).GetType().FullName
+System.Globalization.CultureInfo
+```
+
+## 例文
+
+以下は,Type operatorのいくつかの用途を示しています.
+
+```powershell
+PS&gt; 32 -is [float]
+False
+
+PS&gt; 32 -is &quot;int&quot;
+True
+
+PS&gt; (Get-Date) -is [datetime]
+True
+
+PS&gt; &quot;12/31/2007&quot; -is [datetime]
+False
+
+PS&gt; &quot;12/31/2007&quot; -is [string]
+True
+
+PS&gt; (Get-Process powershell)[0] -is [System.Diagnostics.Process]
+True
+
+PS&gt; (Get-Command Get-Member) -is [System.Management.Automation.CmdletInfo]
+True
+```
+
+次の例では,入力がオブジェクトの集合である場合,マッチングタイプは集合内の個々のオブジェクトのタイプではなく,集合の .NETタイプであることを示しています.
+
+この例では,両者ともをとすると,`Get-Culture`そして,`Get-UICulture`cmdlets return **System.Globalization.CultureInfo** オブジェクト,これらのオブジェクトの集合は,システム.オブジェクトアレイです.
+
+```powershell
+PS&gt; (Get-Culture) -is [System.Globalization.CultureInfo]
+True
+
+PS&gt; (Get-UICulture) -is [System.Globalization.CultureInfo]
+True
+
+PS&gt; (Get-Culture), (Get-UICulture) -is [System.Globalization.CultureInfo]
+False
+
+PS&gt; (Get-Culture), (Get-UICulture) -is [array]
+True
+
+PS&gt; (Get-Culture), (Get-UICulture) | foreach {
+  $_ -is [System.Globalization.CultureInfo])
+}
+True
+True
+
+PS&gt; (Get-Culture), (Get-UICulture) -is [Object]
+True
+```
+
+次の例では,  の使い方を示しています.`-as`操作員です.
+
+```powershell
+PS&gt; &quot;12/31/07&quot; -is [datetime]
+False
+
+PS&gt; &quot;12/31/07&quot; -as [datetime]
+Monday, December 31, 2007 12:00:00 AM
+
+PS&gt; $date = &quot;12/31/07&quot; -as [datetime]
+
+C:\PS&gt;$a -is [datetime]
+True
+
+PS&gt; 1031 -as [System.Globalization.CultureInfo]
+
+LCID      Name      DisplayName
+----      ----      -----------
+1031      de-DE     German (Germany)
+```
+
+次の例では,このときの が`-as`入力オブジェクトを .NET タイプに変換できない操作者は返します.`$null` .
+
+```powershell
+PS&gt; 1031 -as [System.Diagnostics.Process]
+PS&gt;
+```
+
+## また, を参照してください.
+
+- [about_Operators](about_Operators.md) について
+###英語原文###
+# about_Type_Operators
+
+## Short description
+
+Describes the operators that work with Microsoft .NET types.
+
+## Long description
+
+The Boolean type operators (`-is` and `-isnot`) tell whether an object is an
+instance of a specified .NET type. The `-is` operator returns a value of
+**TRUE** if the type matches and a value of **FALSE** otherwise. The `-isnot`
+operator returns a value of **FALSE** if the type matches and a value of
+**TRUE** otherwise.
+
+The `-as` operator tries to convert the input object to the specified .NET
+type. If it succeeds, it returns the converted object. If it fails, it returns
+`$null`. It does not return an error.
+
+PowerShell has the  following type operators:
+
+- `-is`   |Returns TRUE when the input is an instance of the specified .NET type.
+
+  ```powershell
+  (Get-Date) -is [datetime]     # Result is True
+  ```
+
+- `-isnot`|Returns TRUE when the input not an instance of the specified.NET type.
+
+  ```powershell
+  (Get-Date) -isnot [datetime]  # Result is False
+  ```
+
+- `-as`   |Converts the input to the   specified .NET type.
+
+  ```powershell
+  &quot;5/7/07&quot; -as [datetime]       # Result is Monday, May 7, 2007 12:00:00 AM
+  ```
+
+The syntax of the type operators is as follows:
+
+```powershell
+&lt;input&gt; &lt;operator&gt; [.NET type]
+```
+
+You can also use the following syntax:
+
+```powershell
+&lt;input&gt; &lt;operator&gt; &quot;.NET type&quot;
+```
+
+The .NET type can be written as a type name in brackets or a string, such as
+`[datetime]` or `&quot;DateTime&quot;` for **System.DateTime**. If the type is not at the
+root of the system namespace, specify the full name of the object type. You can
+omit &quot;System.&quot;. For example, to specify **System.Diagnostics.Process**, enter
+`[System.Diagnostics.Process]`, `[Diagnostics.Process]`, or
+`&quot;Diagnostics.Process&quot;`.
+
+The type operators always operate on the input object as a whole. That is, if
+the input object is a collection, it is the _collection_ type that is tested,
+not the types of the collection&#x27;s _elements_.
+
+### -is/isnot operators
+
+The **Boolean** type operators (`-is` and `-isnot`) always return a **Boolean**
+value, even if the input is a collection of objects.
+
+If `&lt;input&gt;` is a type that is the same as or is _derived_ from the .NET Type,
+the `-is` operator returns `$true`.
+
+For example, the **DirectoryInfo** type is derived from the **FileSystemInfo**
+type. Therefore, both of these examples return **True**.
+
+```powershell
+PS&gt; (Get-Item /) -is [System.IO.DirectoryInfo]
+True
+PS&gt; (Get-Item /) -is [System.IO.FileSystemInfo]
+True
+```
+
+The `-is` operator can also match interfaces if the `&lt;input&gt;` implements the
+interface in the comparison. In this example, the input is an array. Arrays
+implement the **System.Collections.IList** interface.
+
+```powershell
+PS&gt; 1, 2 -is [System.Collections.IList]
+True
+```
+
+### -as operator
+
+The `-as` operator tries to convert the input object to the specified .NET
+type. If it succeeds, it returns the converted object. It if fails, it returns
+`$null`. It does not return an error.
+
+If the `&lt;input&gt;` is a type that is _derived_ from the .NET Type `-as` _passes
+through_ returns input object unchanged. For example, the **DirectoryInfo**
+type is derived from the **FileSystemInfo** type. Therefore, the object type is
+unchanged in the following example:
+
+```powershell
+PS&gt; $fsroot = (Get-Item /) -as [System.IO.FileSystemInfo]
+PS&gt; $fsroot.GetType().FullName
+System.IO.DirectoryInfo
+```
+
+#### Converting the DateTime type is culture-sensitive
+
+Unlike type casting, converting to `[datetime]` type using the `-as` operator
+only works with strings that are formatted according to the rules of the
+current culture.
+
+```powershell
+PS&gt; [cultureinfo]::CurrentCulture = &#x27;fr-FR&#x27;
+PS&gt; &#x27;13/5/20&#x27; -as [datetime]
+
+mercredi 13 mai 2020 00:00:00
+
+PS&gt; &#x27;05/13/20&#x27; -as [datetime]
+PS&gt; [datetime]&#x27;05/13/20&#x27;
+
+mercredi 13 mai 2020 00:00:00
+
+PS&gt; [datetime]&#x27;13/05/20&#x27;
+InvalidArgument: Cannot convert value &quot;13/05/20&quot; to type &quot;System.DateTime&quot;.
+Error: &quot;String &#x27;13/05/20&#x27; was not recognized as a valid DateTime.&quot;
+```
+
+To find the .NET type of an object, use the `Get-Member` cmdlet. Or, use the
+**GetType** method of all the objects together with the **FullName** property
+of this method. For example, the following statement gets the type of the
+return value of a `Get-Culture` command:
+
+```powershell
+PS&gt; (Get-Culture).GetType().FullName
+System.Globalization.CultureInfo
+```
+
+## Examples
+
+The following examples show some uses of the Type operators:
+
+```powershell
+PS&gt; 32 -is [float]
+False
+
+PS&gt; 32 -is &quot;int&quot;
+True
+
+PS&gt; (Get-Date) -is [datetime]
+True
+
+PS&gt; &quot;12/31/2007&quot; -is [datetime]
+False
+
+PS&gt; &quot;12/31/2007&quot; -is [string]
+True
+
+PS&gt; (Get-Process powershell)[0] -is [System.Diagnostics.Process]
+True
+
+PS&gt; (Get-Command Get-Member) -is [System.Management.Automation.CmdletInfo]
+True
+```
+
+The following example shows that when the input is a collection of objects, the
+matching type is the .NET type of the collection, not the type of the
+individual objects in the collection.
+
+In this example, although both the `Get-Culture` and `Get-UICulture` cmdlets
+return **System.Globalization.CultureInfo** objects, a collection of these
+objects is a System.Object array.
+
+```powershell
+PS&gt; (Get-Culture) -is [System.Globalization.CultureInfo]
+True
+
+PS&gt; (Get-UICulture) -is [System.Globalization.CultureInfo]
+True
+
+PS&gt; (Get-Culture), (Get-UICulture) -is [System.Globalization.CultureInfo]
+False
+
+PS&gt; (Get-Culture), (Get-UICulture) -is [array]
+True
+
+PS&gt; (Get-Culture), (Get-UICulture) | foreach {
+  $_ -is [System.Globalization.CultureInfo])
+}
+True
+True
+
+PS&gt; (Get-Culture), (Get-UICulture) -is [Object]
+True
+```
+
+The following examples show how to use the `-as` operator.
+
+```powershell
+PS&gt; &quot;12/31/07&quot; -is [datetime]
+False
+
+PS&gt; &quot;12/31/07&quot; -as [datetime]
+Monday, December 31, 2007 12:00:00 AM
+
+PS&gt; $date = &quot;12/31/07&quot; -as [datetime]
+
+C:\PS&gt;$a -is [datetime]
+True
+
+PS&gt; 1031 -as [System.Globalization.CultureInfo]
+
+LCID      Name      DisplayName
+----      ----      -----------
+1031      de-DE     German (Germany)
+```
+
+The following example shows that when the `-as` operator cannot convert the
+input object to the .NET type, it returns `$null`.
+
+```powershell
+PS&gt; 1031 -as [System.Diagnostics.Process]
+PS&gt;
+```
+
+## See also
+
+- [about_Operators](about_Operators.md)
+###Microsoft Learn URL###
+https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_type_operators/?view=powershell-5.1
+</pre></html>

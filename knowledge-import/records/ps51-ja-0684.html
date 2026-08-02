@@ -1,0 +1,715 @@
+<!doctype html><html lang="ja"><meta charset="utf-8"><pre class="record-source">###KnowledgeNo###
+PS51-WS2022-2026-0684
+###FormatID###
+PS51-WS2022
+###CreatedAt###
+2026-08-01 00:00
+###UpdatedAt###
+2026-08-01 00:00
+###タイトル###
+Add-DfsrConnection
+###モジュール###
+dfsr
+###製品###
+Windows PowerShell 5.1
+###対応OS###
+Windows Server 2022
+###日本語訳###
+# Add-DfsrConnection を追加する
+
+## シンプシス (SYNOPSIS) は,複製グループのメンバーとの間に接続を確立します.
+
+## SYNTAXは,のシンタックスです.
+
+```
+Add-DfsrConnection [-GroupName] &lt;String[]&gt; [-SourceComputerName] &lt;String&gt; [-DestinationComputerName] &lt;String&gt;
+ [-DisableConnection] [-DisableRDC] [-DisableCrossFileRDC] [[-Description] &lt;String&gt;]
+ [[-MinimumRDCFileSizeInKB] &lt;Int64&gt;] [-CreateOneWay] [[-DomainName] &lt;String&gt;] [-WhatIf] [-Confirm]
+ [&lt;CommonParameters&gt;]
+```
+
+## 記述 追加DfsrConnection* cmdlet は複製グループのメンバー間で接続を作成します.
+
+分散ファイルシステム (DFS) 複製接続は,複製グループ内のメンバー間の論理的パートナーシップです.DFS複製サービスは,サーバー間の通信のためにリモート プロシージャ コール (RPC) プロトコルを使用します.DFS複製サービスは複製を開始する前に,コンピュータペア間の接続を作成する必要があります.あなたは常に2つのサーバー間の双方向接続を作成する必要があります.あなたが読み込みのみ複製を使用している場合でもです.この場合の例外は,三つ以上のサーバー間のリングトポロジーを作成した場合です.すべてのメンバーがすべてのパートナーに移行的に複製し,すべてのサーバーが書き込みのみ複製されたフォルダーをホストしている場合です.
+
+このcmdletは,通常変更を必要としない接続帯域幅またはスケジュールを変更することをサポートしません.
+
+## 例えは
+
+### 例1: 複製グループのメンバー間の二方向接続を作成する```
+PS C:\&gt; Add-DfsrConnection -GroupName &quot;RG24&quot; -SourceComputerName &quot;SRV01&quot; -DestinationComputerName &quot;SRV02&quot;
+
+GroupName               : RG24
+SourceComputerName      : SRV01
+DestinationComputerName : SRV02
+DomainName              : corp.contoso.com
+Identifier              : c33eaaf1-9e50-4510-8484-68271bf93b25c33eaaf1-9e50-4510-8484-68271bf93b25
+Enabled                 : True 
+RdcEnabled              : True 
+CrossFileRdcEnabled     : True
+Description             : 
+MinimumRDCFileSizeInKB  : 64
+State                   : Normal
+
+GroupName               : RG24
+SourceComputerName      : SRV02
+DestinationComputerName : SRV01
+DomainName              : corp.contoso.com
+Identifier              : 97c3603a-7828-4403-adac-49575c9e5921
+Enabled                 : True
+RdcEnabled              : True
+CrossFileRdcEnabled     : True
+Description             : 
+MinimumRDCFileSizeInKB  : 64
+State                   : 
+
+NormalGroupName         : RG24
+SourceComputerName      : SRV02
+DestinationComputerName : SRV01
+DomainName              : corp.contoso.com
+Identifier              : 97c3603a-7828-4403-adac-49575c9e5921
+Enabled                 : True
+RdcEnabled              : True
+CrossFileRdcEnabled     : True
+Description             : 
+MinimumRDCFileSizeInKB  : 64
+State                   : Normal
+```
+
+このコマンドは,SRV01というコンピュータとRG24という複製グループでSRV02というコンピュータの間に二方向複製接続を作成します.
+
+### 例2: 複製グループのメンバーとの単向接続を作成します.```
+PS C:\&gt; Add-DfsrConnection -GroupName &quot;RG24&quot; -SourceComputerName SRV02 -DestinationComputerName &quot;SRV01&quot; -CreateOneWay
+
+GroupName               : rg24
+SendingComputerName     : SRV02
+ReceivingComputerName   : SRV01
+DomainName              : corp.contoso.com
+Identifier              : c33eaaf1-9e50-4510-8484-68271bf93b25
+Enabled                 : True
+RdcEnabled              : true
+CrossFileRdcEnabled     : True
+Description             : 
+MinimumRDCFileSizeInKB  : 64
+State                   : Normal
+```
+
+このコマンドは,RG24という複製グループにあるコンピュータのSRV02から1つの方向性複製接続を作成します.1つの方向性複製接続を作成するには,複製グループのメンバー間で1回ごとにcmdletを実行する必要があります.DFS複製は3個以上のサーバーでリングトポロジー構成のみで1つの方向性接続をサポートします.
+
+# Add-DfsrConnection を追加する
+
+### 例3: データ分布複製トーポロジーを作成する```
+The first command uses the **New-DfsReplicationGroup** cmdlet to create a replication group object named Branch Office 1, and passes the object to the **New-DfsReplicatedFolder** cmdlet by using the pipe operator. The **New-DfsReplicatedFolder** cmdlet creates a replication folder object named Data Distribution 1, and passes the object to the **Add-DfsrMember** cmdlet by using the pipe operator. The **Add-DfsrMember** cmdlet adds the computers named SRV01, SRV02, and SRV03 to the replication group named Branch Office 1.
+PS C:\&gt; New-DfsReplicationGroup -GroupName &quot;Branch Office 1&quot; | New-DfsReplicatedFolder -FolderName &quot;Data Distribution 1&quot; | Add-DfsrMember -ComputerName &quot;SRV01&quot;,&quot;SRV02&quot;,&quot;SRV03&quot; | Format-Table dnsname,groupname -auto -wrap
+DnsName                 GroupName
+-------               ---------
+SRV01.corp.contoso.com Branch Office 1
+SRV02.corp.contoso.com Branch Office 1
+SRV03.corp.contoso.com Branch Office 1
+
+The second command creates a bidirectional replication connection between the computer named SRV01 and the computer named SRV02 in the replication group named Branch Office 1.
+PS C:\&gt; Add-DfsrConnection -GroupName &quot;Branch Office 1&quot; -SourceComputerName SRV01 -DestinationComputerName SRV02 | Format-Table *name -wrap -auto
+GroupName       SourceComputerName DestinationComputerName
+---------       ------------------ -----------------------
+Branch Office 1 SRV01               SRV02
+Branch Office 1 SRV02               SRV01
+
+The third command creates a bidirectional replication connection between the computer named SRV01 and the computer named SRV03 in the replication group named Branch Office 1.
+PS C:\&gt; Add-DfsrConnection -GroupName &quot;Branch Office 1&quot; -SourceComputerName SRV01 -DestinationComputerName SRV03 | Format-Table *name -wrap -auto
+GroupName       SourceComputerName DestinationComputerName
+---------       ------------------ -----------------------
+Branch Office 1 SRV01               SRV03
+Branch Office 1 SRV03               SRV01
+
+The fourth command uses the **Set-DfsrMembership** cmdlet to configure membership settings for the primary member of the replication group named Branch Office 1. The command specifies that the computer named SRV01 is the primary member of the group. The command sets an appropriate quota size of the staging folder instead of the lower default.
+PS C:\&gt; Set-DfsrMembership -GroupName &quot;Branch Office 1&quot; -FolderName &quot;Data Distribution 1&quot; -ContentPath c:\rf1 -ComputerName SRV01 -PrimaryMember $True -StagingPathQuotaInMB 16384 -Force | Format-Table *name,*path,primary* -auto -wrap
+DomainName       GroupName       FolderName          ComputerName ContentPath StagingPath                PrimaryMember
+----------       ---------       ----------          ------------ ----------- -----------                -------------
+corp.contoso.com Branch Office 1 Data Distribution 1 SRV01         c:\rf1      c:\rf1\DfsrPrivate\Staging          True
+
+The last command uses the **Set-DfsrMembership** cmdlet to configure membership settings for the members of the replication group named Branch Office 1. The command specifies that the computers named SRV02 and SRV03 are members of the group. The command sets an appropriate quota size of the staging folder instead of the lower default.
+PS C:\&gt; Set-DfsrMembership -GroupName &quot;Branch Office 1&quot; -FolderName &quot;Data Distribution 1&quot; -ContentPath c:\rf1 -ComputerName SRV02,SRV03 -StagingPathQuotaInMB 16384 -Force | Format-Table *name,*path,primary* -auto -wrap
+DomainName       GroupName       FolderName          ComputerName ContentPath StagingPath                PrimaryMember
+----------       ---------       ----------          ------------ ----------- -----------                -------------
+corp.contoso.com Branch Office 1 Data Distribution 1 SRV02         c:\rf1      c:\rf1\DfsrPrivate\Staging         False
+corp.contoso.com Branch Office 1 Data Distribution 1 SRV03         c:\rf1      c:\rf1\DfsrPrivate\Staging         False
+```
+
+この例では,ハブとスピーチデータ分布複製トポロジーを作成します.
+
+## パラメータは
+
+### - 確認は,cmdletを実行する前に確認を提示します.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: cf
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -CreateOneWay は,DFSR サービスが両コンピュータ間の反対方向に一致する接続を作成しないことを指定します.
+
+通常,このパラメータを指定する必要はありません.DFS複製は完全に接続された複製トーポロジーを必要とします.つまりすべてのサーバーは直接パートナーごとに入入および出入接続または移行複製を通じての両方に接続します.これは, **Set-DfsrMembership** cmdletを使用して読み込みのみ複製を指定し, *ReadOnly* パラメータを $True に設定する場合でも必要です.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: 8
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Description 接続の説明を指定します.
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: 6
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### 受信コンピュータは,入入または下流コンピュータとも呼ばれています.
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases: ReceivingMember, RMem
+
+Required: True
+Position: 2
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -DisableConnection DFSR サービスが接続を無効にするという指定です.
+
+通常,接続を無効にする必要はありません.このパラメータを指定して,一時的に複製を停止します.また,コンピュータ間の複製を停止するために **Suspend-DfsReplicationGroup** cmdlet を使用できます.DFS Replication サービスが複製を開始する前に,コンピュータ間の接続を有効にする必要があります.
+
+重要: **Set-DfsrMembership** cmdlet を使用して,複製グループへのコンピュータの会員権を無効にする代わりに,このパラメータを指定してください.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: 3
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+# Add-DfsrConnection を追加する
+
+### -DisableCrossFileRDC DFSR サービスがこの接続でクロスファイル類似性 リモート・ディファレンシャル・コンプレッション (RDC) アルゴリズムを無効にすると表示します.
+
+横断ファイルRDCは,新しい複製ファイルを種植するために,ボリューム上の既存の5つの以前複製されたファイルを使用します.非常に低い帯域幅ネットワーク接続に,非常に類似したファイルにクロスファイルRDCを適用すると,非常に大きな帯域幅の節約と,潜在的な大きな時間の節約が得られます.非常に高い帯域幅ネットワーク接続でクロスファイルRDCを使用すると,クロスファイルRDCは,局部処理時間を過剰に追加し,パフォーマンスを悪影響する可能性があります.非常に大きなデータセット (大量に似た数百万のファイル) では,クロスファイルRDCは,CPUとディスク利用量にも悪影響を与える可能性があります.初期同期中にクロスファイルRDCを無効にすることを考慮してください.LANと非常に高いパフォーマンス WAN.この設定はWindows Server 2012 R2以降の Windows Server 2012 R2 でのみサポートされています.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: 5
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -DisableRDC DFS Replication サービスがリモート・ディファレンシャル・コンプレッション (RDC) を無効にすると表示します.
+
+通常,より低い帯域幅,より高い遅延接続を使用する際,このパラメータを指定する必要はありません.接続がLANまたは非常に高いパフォーマンス WAN接続を介して接続されている場合,このパラメータを指定することを検討してください.デフォルトでは,DFS複製接続でRDCが有効です.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: 4
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -DomainName 複製グループを含むアクティブディレクトリ ドメインサービス (AD DS) ドメインの NetBIOS名または完全資格ドメイン名 (FQDN) を指定します.このパラメータを指定していない場合は,cmdlet では現在のユーザーのドメインを使用します.
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: 100
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -GroupName 複製グループ名列を指定する. 逗号別列とワイルドカード文字 (*) を使用できます.
+
+```yaml
+Type: String[]
+Parameter Sets: (All)
+Aliases: RG, RgName
+
+Required: True
+Position: 0
+Default value: None
+Accept pipeline input: True (ByPropertyName, ByValue)
+Accept wildcard characters: False
+```
+
+### -MinimumRDCFileSizeInKBは,RDCが適用するファイルサイズの限界をキロバイトで指定します.
+
+通常,このパラメータを指定する必要はありません.より低い帯域幅/より高い遅延接続を使用する場合.このパラメータを指定するのは,LANまたは非常に高い性能のWAN接続を介して接続されている場合にのみ考慮してください.デフォルトでは,64KB以上のファイルは,RDCによって割られている.
+
+```yaml
+Type: Int64
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: 7
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### 送信コンピュータは,出向または上向コンピュータとも呼ばれます.
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases: SendingMember, SMem
+
+Required: True
+Position: 1
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -WhatIf が実行されればどうなるか示します.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: wi
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### 共通パラメータ このcmdletは共通パラメータをサポートしています: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable.詳細については, [about_CommonParameters](を参照してください.https://go.microsoft.com/fwlink/?LinkID=113216) でした.
+
+## 輸入は
+
+### Microsoft.DistributedFileSystemReplication.DfsReplicationGroup を配布している.
+
+## 輸出は
+
+### Microsoft.DistributedFileSystemReplication.DfsrConnection を配布している
+
+##  NOTES  記事ができました.
+
+## 関連リンク
+
+[Get-DfsrConnection](./Get-DfsrConnection.md) 
+
+[Set-DfsrConnection](./Set-DfsrConnection.md) 
+
+[DfsrConnection.md]を削除する.
+###英語原文###
+# Add-DfsrConnection
+
+## SYNOPSIS
+Creates a connection between members of a replication group.
+
+## SYNTAX
+
+```
+Add-DfsrConnection [-GroupName] &lt;String[]&gt; [-SourceComputerName] &lt;String&gt; [-DestinationComputerName] &lt;String&gt;
+ [-DisableConnection] [-DisableRDC] [-DisableCrossFileRDC] [[-Description] &lt;String&gt;]
+ [[-MinimumRDCFileSizeInKB] &lt;Int64&gt;] [-CreateOneWay] [[-DomainName] &lt;String&gt;] [-WhatIf] [-Confirm]
+ [&lt;CommonParameters&gt;]
+```
+
+## DESCRIPTION
+The **Add-DfsrConnection** cmdlet creates a connection between members of a replication group.
+
+Distributed File System (DFS) Replication connections are the logical partnerships between members in a replication group.
+The DFS Replication service uses the Remote Procedure Call (RPC) protocol to communicate between servers.
+You must create a connection between a pair of computers before the DFS Replication service can initiate replication.
+You should always create connections bidirectionally between two servers, even if you are using read-only replication.
+The exception to this case is if you create a ring topology between three or more servers, where all members transitively replicate to all partners, and where all servers are hosting only writable replicated folders.
+
+This cmdlet does not support modifying connection bandwidth or schedules, which typically do not require changes.
+
+## EXAMPLES
+
+### Example 1: Create a bidirectional connection between members of a replication group
+```
+PS C:\&gt; Add-DfsrConnection -GroupName &quot;RG24&quot; -SourceComputerName &quot;SRV01&quot; -DestinationComputerName &quot;SRV02&quot;
+
+GroupName               : RG24
+SourceComputerName      : SRV01
+DestinationComputerName : SRV02
+DomainName              : corp.contoso.com
+Identifier              : c33eaaf1-9e50-4510-8484-68271bf93b25c33eaaf1-9e50-4510-8484-68271bf93b25
+Enabled                 : True 
+RdcEnabled              : True 
+CrossFileRdcEnabled     : True
+Description             : 
+MinimumRDCFileSizeInKB  : 64
+State                   : Normal
+
+GroupName               : RG24
+SourceComputerName      : SRV02
+DestinationComputerName : SRV01
+DomainName              : corp.contoso.com
+Identifier              : 97c3603a-7828-4403-adac-49575c9e5921
+Enabled                 : True
+RdcEnabled              : True
+CrossFileRdcEnabled     : True
+Description             : 
+MinimumRDCFileSizeInKB  : 64
+State                   : 
+
+NormalGroupName         : RG24
+SourceComputerName      : SRV02
+DestinationComputerName : SRV01
+DomainName              : corp.contoso.com
+Identifier              : 97c3603a-7828-4403-adac-49575c9e5921
+Enabled                 : True
+RdcEnabled              : True
+CrossFileRdcEnabled     : True
+Description             : 
+MinimumRDCFileSizeInKB  : 64
+State                   : Normal
+```
+
+This command creates a bidirectional replication connection between the computer named SRV01 and the computer named SRV02 in the replication group named RG24.
+
+### Example 2: Create a one-way connection between members of a replication group
+```
+PS C:\&gt; Add-DfsrConnection -GroupName &quot;RG24&quot; -SourceComputerName SRV02 -DestinationComputerName &quot;SRV01&quot; -CreateOneWay
+
+GroupName               : rg24
+SendingComputerName     : SRV02
+ReceivingComputerName   : SRV01
+DomainName              : corp.contoso.com
+Identifier              : c33eaaf1-9e50-4510-8484-68271bf93b25
+Enabled                 : True
+RdcEnabled              : true
+CrossFileRdcEnabled     : True
+Description             : 
+MinimumRDCFileSizeInKB  : 64
+State                   : Normal
+```
+
+This command creates a one-way replication connection from computer named SRV02 to the computer named SRV01 in the replication group named RG24.
+To create a one-way replication connection, you must run the cmdlet once in each direction between members of the replication group.
+DFS Replication supports one-way connections only for a ring topology configuration on three or more servers.
+
+# Add-DfsrConnection
+
+### Example 3: Create a data distribution replication topology
+```
+The first command uses the **New-DfsReplicationGroup** cmdlet to create a replication group object named Branch Office 1, and passes the object to the **New-DfsReplicatedFolder** cmdlet by using the pipe operator. The **New-DfsReplicatedFolder** cmdlet creates a replication folder object named Data Distribution 1, and passes the object to the **Add-DfsrMember** cmdlet by using the pipe operator. The **Add-DfsrMember** cmdlet adds the computers named SRV01, SRV02, and SRV03 to the replication group named Branch Office 1.
+PS C:\&gt; New-DfsReplicationGroup -GroupName &quot;Branch Office 1&quot; | New-DfsReplicatedFolder -FolderName &quot;Data Distribution 1&quot; | Add-DfsrMember -ComputerName &quot;SRV01&quot;,&quot;SRV02&quot;,&quot;SRV03&quot; | Format-Table dnsname,groupname -auto -wrap
+DnsName                 GroupName
+-------               ---------
+SRV01.corp.contoso.com Branch Office 1
+SRV02.corp.contoso.com Branch Office 1
+SRV03.corp.contoso.com Branch Office 1
+
+The second command creates a bidirectional replication connection between the computer named SRV01 and the computer named SRV02 in the replication group named Branch Office 1.
+PS C:\&gt; Add-DfsrConnection -GroupName &quot;Branch Office 1&quot; -SourceComputerName SRV01 -DestinationComputerName SRV02 | Format-Table *name -wrap -auto
+GroupName       SourceComputerName DestinationComputerName
+---------       ------------------ -----------------------
+Branch Office 1 SRV01               SRV02
+Branch Office 1 SRV02               SRV01
+
+The third command creates a bidirectional replication connection between the computer named SRV01 and the computer named SRV03 in the replication group named Branch Office 1.
+PS C:\&gt; Add-DfsrConnection -GroupName &quot;Branch Office 1&quot; -SourceComputerName SRV01 -DestinationComputerName SRV03 | Format-Table *name -wrap -auto
+GroupName       SourceComputerName DestinationComputerName
+---------       ------------------ -----------------------
+Branch Office 1 SRV01               SRV03
+Branch Office 1 SRV03               SRV01
+
+The fourth command uses the **Set-DfsrMembership** cmdlet to configure membership settings for the primary member of the replication group named Branch Office 1. The command specifies that the computer named SRV01 is the primary member of the group. The command sets an appropriate quota size of the staging folder instead of the lower default.
+PS C:\&gt; Set-DfsrMembership -GroupName &quot;Branch Office 1&quot; -FolderName &quot;Data Distribution 1&quot; -ContentPath c:\rf1 -ComputerName SRV01 -PrimaryMember $True -StagingPathQuotaInMB 16384 -Force | Format-Table *name,*path,primary* -auto -wrap
+DomainName       GroupName       FolderName          ComputerName ContentPath StagingPath                PrimaryMember
+----------       ---------       ----------          ------------ ----------- -----------                -------------
+corp.contoso.com Branch Office 1 Data Distribution 1 SRV01         c:\rf1      c:\rf1\DfsrPrivate\Staging          True
+
+The last command uses the **Set-DfsrMembership** cmdlet to configure membership settings for the members of the replication group named Branch Office 1. The command specifies that the computers named SRV02 and SRV03 are members of the group. The command sets an appropriate quota size of the staging folder instead of the lower default.
+PS C:\&gt; Set-DfsrMembership -GroupName &quot;Branch Office 1&quot; -FolderName &quot;Data Distribution 1&quot; -ContentPath c:\rf1 -ComputerName SRV02,SRV03 -StagingPathQuotaInMB 16384 -Force | Format-Table *name,*path,primary* -auto -wrap
+DomainName       GroupName       FolderName          ComputerName ContentPath StagingPath                PrimaryMember
+----------       ---------       ----------          ------------ ----------- -----------                -------------
+corp.contoso.com Branch Office 1 Data Distribution 1 SRV02         c:\rf1      c:\rf1\DfsrPrivate\Staging         False
+corp.contoso.com Branch Office 1 Data Distribution 1 SRV03         c:\rf1      c:\rf1\DfsrPrivate\Staging         False
+```
+
+This example creates a hub and spoke data distribution replication topology.
+
+## PARAMETERS
+
+### -Confirm
+Prompts you for confirmation before running the cmdlet.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: cf
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -CreateOneWay
+Specifies that the DFSR service does not create a matching connection in the opposite direction between the two computers.
+
+You do not typically need to specify this parameter.
+DFS Replication requires a fully-connected replication topology, which means that all servers have both an inbound and outbound connection between each of its direct partners, or through transitive replication.
+This is required even when you specify read-only replication by using the **Set-DfsrMembership** cmdlet and setting the *ReadOnly* parameter to $True.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: 8
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Description
+Specifies a description for the connection.
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: 6
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -DestinationComputerName
+Specifies the name of the receiving computer.
+A receiving computer is also called an inbound or downstream computer.
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases: ReceivingMember, RMem
+
+Required: True
+Position: 2
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -DisableConnection
+Specifies that the DFSR service disables the connection.
+
+You do not typically need to disable a connection.
+Specify this parameter to temporarily pause replication.
+You can also use the **Suspend-DfsReplicationGroup** cmdlet to halt replication between computers.
+You must enable a connection between the computers before the DFS Replication service can initiate replication.
+
+Important: Specify this parameter instead of disabling a computer&#x27;s membership in the replication group by using the **Set-DfsrMembership** cmdlet.
+Disabling and enabling a computer&#x27;s membership will cause non-authoritative inbound replication.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: 3
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+# Add-DfsrConnection
+
+### -DisableCrossFileRDC
+Indicates that the DFSR service disables the cross-file similarity Remote Differential Compression (RDC) algorithm on this connection.
+
+Cross-file RDC uses up to five existing previously replicated files on a volume to seed a new replicating file.
+Applying cross-file RDC over very low-bandwidth network connections with files that are very similar results in very large bandwidth savings and potentially large time savings.
+When you use cross-file RDC on very high-bandwidth network connections, cross-file RDC may add too much local processing time and negatively affect performance.
+In extremely large datasets (millions of files on a volume with a great deal of similarity), cross-file RDC may also negatively affect CPU and disk utilization.
+Consider disabling cross-file RDC during initial synchronization when you replicate over LANs and very high performance WANs.
+This setting is only supported on Windows Server 2012 R2 and later.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: 5
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -DisableRDC
+Indicates that the DFS Replication service creates the connection with Remote Differential Compression (RDC) disabled.
+
+You do not typically need to specify this parameter when you use lower bandwidth, higher latency connections.
+Consider specifying this parameter if the connection is over a LAN or very high performance WAN connection.
+By default, RDC is enabled on DFS Replication connections.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: 4
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -DomainName
+Specifies the NetBIOS name or fully qualified domain name (FQDN) for the Active Directory Domain Service (AD DS) domain that contains the replication group.
+If you do not specify this parameter, the cmdlet uses the domain of the current user.
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: 100
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -GroupName
+Specifies an array of names of replication groups.
+You can use a comma separated list and the wildcard character (*).
+
+```yaml
+Type: String[]
+Parameter Sets: (All)
+Aliases: RG, RgName
+
+Required: True
+Position: 0
+Default value: None
+Accept pipeline input: True (ByPropertyName, ByValue)
+Accept wildcard characters: False
+```
+
+### -MinimumRDCFileSizeInKB
+Specifies the file size threshold, in kilobytes, for RDC to apply.
+
+You do not typically need to specify this parameter when you use lower bandwidth/higher latency connections.
+Consider specifying this parameter only if the connection is over a LAN or a very high performance WAN connection.
+By default, any files equal to or greater than 64KB are chunked by RDC.
+
+```yaml
+Type: Int64
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: 7
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -SourceComputerName
+Specifies the name of the sending computer.
+A sending computer is also called an outbound or upstream computer.
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases: SendingMember, SMem
+
+Required: True
+Position: 1
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -WhatIf
+Shows what would happen if the cmdlet runs.
+The cmdlet is not run.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: wi
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### CommonParameters
+This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable. For more information, see [about_CommonParameters](https://go.microsoft.com/fwlink/?LinkID=113216).
+
+## INPUTS
+
+### Microsoft.DistributedFileSystemReplication.DfsReplicationGroup
+
+## OUTPUTS
+
+### Microsoft.DistributedFileSystemReplication.DfsrConnection
+
+## NOTES
+
+## RELATED LINKS
+
+[Get-DfsrConnection](./Get-DfsrConnection.md)
+
+[Set-DfsrConnection](./Set-DfsrConnection.md)
+
+[Remove-DfsrConnection](./Remove-DfsrConnection.md)
+###Microsoft Learn URL###
+https://learn.microsoft.com/en-us/powershell/module/dfsr/add-dfsrconnection/?view=windowsserver2022-ps
+</pre></html>

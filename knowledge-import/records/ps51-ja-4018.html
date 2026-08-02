@@ -1,0 +1,160 @@
+<!doctype html><html lang="ja"><meta charset="utf-8"><pre class="record-source">###KnowledgeNo###
+PS51-WS2022-2026-4018
+###FormatID###
+PS51-WS2022
+###CreatedAt###
+2026-08-01 00:00
+###UpdatedAt###
+2026-08-01 00:00
+###タイトル###
+about_Checkpoint-Workflow
+###モジュール###
+PSWorkflow
+###製品###
+Windows PowerShell 5.1
+###対応OS###
+Windows Server 2022
+###日本語訳###
+# about_Checkpoint-Workflowについて
+
+## 簡略説明 チェックポイントワークフローのアクティビティを記述する.このアクティビティはワークフローのチェックポイントを対象とする.
+
+## 長い説明
+
+チェックポイントワークフローの活動はチェックポイントを担当し,その状態とワークフローのデータを保存します.ワークフローが停止または中断された場合,再起動する必要ではなく,最新のチェックポイントから再開することができます.
+
+チェックポイントワークフローの活動は,ワークフローの中でのみ有効です.
+
+### シンタックス
+
+```
+workflow &lt;Verb-Noun&gt; {
+    Checkpoint-Workflow
+}
+```
+
+チェックポイントワークフローの活動は,共通パラメータやワークフロー共通パラメータを含む,いかなるパラメータも受け入れません.
+
+チェックポイント-アクティビティチェックポイントは,CmdletBinding または 以降のワークフローのどこでも配置できます.`param`しかし,チェックポイントを配置する際には,データを収集して,ワークフローを実行しているコンピュータのディスクに書き込むためのパフォーマンスコストを考えてください.
+
+チェックポイント状態とデータをディスクに書き込むのにかかる時間よりも,ワークフローの部分が断片される場合,再起動するのにかかる時間が大きいことを確認してください.
+
+重要なステップの後,チェックポイントを取ることを検討してください.例えば,無効なコマンドの後,チェックポイントを取ることができます.
+
+### チェックポイントについてです.
+
+チェックポイントは,変数の現在の値,その時点までの生成された出力を含むワークフローの現在の状態の瞬時に撮られ,ディスクに保存されます.
+
+ワークフローが故意または不故に中断された場合,Windows PowerShell Workflowは最新のチェックポイントのデータを自動的に使用してワークフローを回復し再開します.
+
+ワークフローを仕事として実行する際,例えば,AsJobワークフロー共通パラメータを使用して,ワークフローチェックポイントは,削除するまでの作業を保持します.例えば,削除する-仕事 cmdlet を使用します.そうでなければ,ワークフローが完了するとワークフローチェックポイントが削除されます.
+
+### 他のチェックポイント技術も使用しています.
+
+チェックポイントワークフローの活動に加えて,Windows PowerShell Workflowは以下のチェックポイント技術など,他のチェックポイント技術をサポートしています.
+
+- PSPersistワークフローの共通パラメータ - PSPersist活動共通パラメータ - PSPersistPreference変数 (ワークフローで)
+
+ワークフローにチェックポイントを追加する際の詳細については&quot;,ワークフローにチェックポイントを追加する方法&quot;を参照してください.
+
+## 例文
+
+次のワークフローには,長年の機能の完了後にチェックポイントワークフローの活動に呼び出しとデータを共有するスクリプトが含まれています.
+
+```powershell
+workflow Test-Workflow {
+    $a = Invoke-LongRunningFunction
+    inlinescript { \\Server\Share\Get-DataPacks.ps1 $Using:a}
+    Checkpoint-Workflow
+
+    Invoke-LongRunningFunction {
+        ...
+    }
+}
+```
+
+## また,参照してください
+
+[Windows PowerShell Workflowの書き込み](/previous-versions/powershell/scripting/developer/workflow/writing-a-windows-powershell-workflow) -
+###英語原文###
+# about_Checkpoint-Workflow
+
+## Short description
+Describes the Checkpoint-Workflow activity, which takes a checkpoint in a workflow.
+
+## Long description
+
+The Checkpoint-Workflow activity takes a checkpoint, which saves state and data in the workflow. If
+the workflow is suspended or interrupted, it can be resumed from the most recent checkpoint, rather
+than having to be restarted.
+
+The Checkpoint-Workflow activity is valid only in a workflow.
+
+### Syntax
+
+```
+workflow &lt;Verb-Noun&gt; {
+    Checkpoint-Workflow
+}
+```
+
+The Checkpoint-Workflow activity does not accept any parameters, including common parameters and
+workflow common parameters.
+
+You can place the Checkpoint-Activity checkpoint anywhere in a workflow after the CmdletBinding or
+`param` statement. However, when placing checkpoints, consider the performance cost of collecting the
+data and writing it to disk on the computer that is running the workflow.
+
+Be sure that the time it takes to rerun a section of the workflow if it is interrupted is greater
+than the time it takes to write the checkpoint state and data to disk.
+
+Consider taking checkpoints after critical steps so the workflow can be resumed rather than
+restarted. For example, take a checkpoint after commands that are not idempotent.
+
+### About checkpoints
+
+A checkpoint is a snapshot of the current state of the workflow, including the current values of
+variables, and any output generated up to that point, and it saves it to disk.
+
+If a workflow is interrupted, intentionally or unintentionally, Windows PowerShell Workflow
+automatically uses the data in newest checkpoint to recover and resume the workflow.
+
+When you run the workflow as a job, such as by using the AsJob workflow common parameter, the
+workflow checkpoints are retained until you delete the job, such as by using the Remove-Job cmdlet.
+Otherwise, workflow checkpoints are deleted when the workflow completes.
+
+### Other checkpointing techniques
+
+In addition to the Checkpoint-Workflow activity, Windows PowerShell Workflow supports other
+checkpointing techniques, including the following:
+
+- PSPersist workflow common parameter
+- PSPersist activity common parameter
+- PSPersistPreference variable (in a workflow)
+
+For more information about adding a checkpoint to a workflow, see &quot;How to Add Checkpoints to a
+Workflow.&quot;
+
+## Examples
+
+The following workflow includes a call to the Checkpoint-Workflow activity after completing a
+long-running function and a script that share data.
+
+```powershell
+workflow Test-Workflow {
+    $a = Invoke-LongRunningFunction
+    inlinescript { \\Server\Share\Get-DataPacks.ps1 $Using:a}
+    Checkpoint-Workflow
+
+    Invoke-LongRunningFunction {
+        ...
+    }
+}
+```
+
+## See Also
+
+- [Writing a Windows PowerShell Workflow](/previous-versions/powershell/scripting/developer/workflow/writing-a-windows-powershell-workflow)
+###Microsoft Learn URL###
+https://learn.microsoft.com/en-us/powershell/module/psworkflow/about/about_checkpoint-workflow/?view=powershell-5.1
+</pre></html>

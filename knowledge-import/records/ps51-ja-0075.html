@@ -1,0 +1,777 @@
+<!doctype html><html lang="ja"><meta charset="utf-8"><pre class="record-source">###KnowledgeNo###
+PS51-WS2022-2026-0075
+###FormatID###
+PS51-WS2022
+###CreatedAt###
+2026-08-01 00:00
+###UpdatedAt###
+2026-08-01 00:00
+###タイトル###
+New-ADDCCloneConfigFile
+###モジュール###
+activedirectory
+###製品###
+Windows PowerShell 5.1
+###対応OS###
+Windows Server 2022
+###日本語訳###
+# New-ADDCCloneConfigFile 
+
+## SYNOPSISはドメインコントローラをクローンする前提のチェックを実行し,すべてのチェックが成功した場合,クローン設定ファイルを生成します.
+
+## SYNTAXは,のシンタックスです.
+
+### IPv4DynamicSettings (デフォルト) ```
+New-ADDCCloneConfigFile [-CloneComputerName &lt;String&gt;] [-IPv4DNSResolver &lt;String[]&gt;] [-Path &lt;String&gt;]
+ [-SiteName &lt;String&gt;] [&lt;CommonParameters&gt;]
+```
+
+### OfflineExecution  オンライン・エクシューション```
+New-ADDCCloneConfigFile [-AlternateWINSServer &lt;String&gt;] [-CloneComputerName &lt;String&gt;] [-IPv4Address &lt;String&gt;]
+ [-IPv4DefaultGateway &lt;String&gt;] [-IPv4DNSResolver &lt;String[]&gt;] [-IPv4SubnetMask &lt;String&gt;]
+ [-IPv6DNSResolver &lt;String[]&gt;] [-Offline] -Path &lt;String&gt; [-PreferredWINSServer &lt;String&gt;] [-SiteName &lt;String&gt;]
+ [-Static] [&lt;CommonParameters&gt;]
+```
+
+### IPv4StaticSettings ```
+New-ADDCCloneConfigFile [-AlternateWINSServer &lt;String&gt;] [-CloneComputerName &lt;String&gt;] -IPv4Address &lt;String&gt;
+ [-IPv4DefaultGateway &lt;String&gt;] -IPv4DNSResolver &lt;String[]&gt; -IPv4SubnetMask &lt;String&gt; [-Path &lt;String&gt;]
+ [-PreferredWINSServer &lt;String&gt;] [-SiteName &lt;String&gt;] [-Static] [&lt;CommonParameters&gt;]
+```
+
+### IPv6DynamicSettings ```
+New-ADDCCloneConfigFile [-CloneComputerName &lt;String&gt;] [-IPv6DNSResolver &lt;String[]&gt;] [-Path &lt;String&gt;]
+ [-SiteName &lt;String&gt;] [&lt;CommonParameters&gt;]
+```
+
+### IPv6StaticSettings ```
+New-ADDCCloneConfigFile [-CloneComputerName &lt;String&gt;] -IPv6DNSResolver &lt;String[]&gt; [-Path &lt;String&gt;]
+ [-SiteName &lt;String&gt;] [-Static] [&lt;CommonParameters&gt;]
+```
+
+## 記述 **New-ADDCCloneConfigFile** cmdlet は,クローンのために準備されているドメインコントローラでローカルに実行されたときにドメインコントローラをクローンするための前提条件をチェックします.この cmdlet は,すべての前提条件のチェックが成功した場合,適切な場所にクローン構成ファイル DCCloneConfig.xml を生成します.
+
+このcmdletの動作モードは2つあります.実行される場所によって異なります.クローンに準備されているドメインコントローラで実行すると,このドメインコントローラがクローンに適当に準備されていることを確認するために次の先制チェックを実行します.
+
+- PDC エミュレーター FSMO ロールが Windows Server 2012 を実行しているドメインコントローラにホストされているか? - このコンピュータはドメインコントローラクローン (つまり,コンピュータはクローン可能なドメインコントローラグループの一員) に許可されているか? - Get-ADDCCloningExcludedApplicationListの出力でリストされているすべてのプログラムとサービスは CustomDCCloneAllowList.xml でキャプチャされているか?
+
+これらの前提チェックがすべて合格した場合, **New-ADDCCloneConfigFile** cmdlet は,提供されたパラメータ値に基づいて適切な場所に DCCloneConfig.xml ファイルを作成します.この cmdlet は,リモートサーバー管理ツールを使用してクライアントから実行され,クローンされているドメインコントローラのオフラインメディアに対して DCCloneConfig.xml を生成するために使用されます.しかし,この使用モードでは,前提チェックは実行されません.この使用は,オフラインメディアのコピー上の各クローンに特定の設定値を持つ DCCloneConfig.xml ファイルを生成することを意図しています.
+
+## 例えは
+
+### 例1:静止IPv4アドレスでドメインコントローラをクローンする```
+PS C:\&gt; New-ADDCCloneConfigFile -Static -IPv4Address &quot;10.0.0.2&quot; -IPv4DNSResolver &quot;10.0.0.1&quot; -IPv4SubnetMask &quot;255.255.255.0&quot; -CloneComputerName &quot;VirtualDC2&quot; -IPv4DefaultGateway &quot;10.0.0.3&quot; -PreferredWINSServer &quot;10.0.0.1&quot; -SiteName &quot;REDMOND&quot;
+```
+
+このコマンドは,静止IPv4アドレスを持つ VirtualDC2というドメインコントローラをクローンする.
+
+### 例2:静止IPv6設定でドメインコントローラをクローンする```
+PS C:\&gt; New-ADDCCloneConfigFile -Static -CloneComputerName &quot;Clone1&quot; -IPv6DNSResolver &quot;FEC0:0:0:FFFF::1&quot;
+```
+
+このコマンドは,静止IPv6設定を持つClone1というドメインコントローラをクローンします.
+
+### 例3: ダイナミックなIPv4設定でドメインコントローラをクローンする```
+PS C:\&gt; New-ADDCCloneConfigFile -AlternateWINSServer &quot;10.0.0.3&quot; -CloneComputerName &quot;Clone2&quot;-IPv4DNSResolver &quot;10.0.0.1&quot; -PreferredWINSServer &quot;10.0.0.1&quot;
+```
+
+このコマンドは,動的なIPv4設定を持つClone2というドメインコントローラをクローンします.
+
+### 例4: ダイナミックなIPv6設定でドメインコントローラをクローンする```
+PS C:\&gt; New-ADDCCloneConfigFile -IPv6DNSResolver &quot;FEC0:0:0:FFFF::1&quot; -SiteName &quot;REDMOND&quot;
+```
+
+このコマンドは,ダイナミックなIPv6設定を持つドメインコントローラをクローンします.
+
+### 例5:静止IPv4とIPv6設定でドメインコントローラをクローンする```
+PS C:\&gt; New-ADDCCloneConfigFile -Static -IPv4Address &quot;10.0.0.2&quot; -IPv4DNSResolver &quot;10.0.0.1&quot; -IPv4SubnetMask &quot;255.255.255.0&quot; -Static -IPv6DNSResolver &quot;FEC0:0:0:FFFF::1&quot; -CloneComputerName &quot;Clone2&quot; -PreferredWINSServer &quot;10.0.0.1&quot;
+```
+
+このコマンドは,静止IPv4と静止IPv6設定を持つClone2というクローンドメインコントローラを作成します.
+
+### 例 6:静[U+6001]IPv4とダイナミックIPv6設定でドメインコントローラをクローンする```
+PS C:\&gt; New-ADDCCloneConfigFile -IPv4Address &quot;10.0.0.2&quot; -IPv4DNSResolver &quot;10.0.0.1&quot; -IPv4SubnetMask &quot;255.255.255.0&quot; -IPv4DefaultGateway &quot;10.0.0.3&quot; -IPv6DNSResolver &quot;FEC0:0:0:FFFF::1&quot;
+```
+
+このコマンドは,静的なIPv4とダイナミックなIPv6設定を持つClone2というドメインコントローラをクローンします.
+
+### 例7: ダイナミック IPv4 と静止 IPv6 設定でドメインコントローラをクローンする```
+PS C:\&gt; New-ADDCCloneConfigFile -Static -IPv6DNSResolver &quot;FEC0:0:0:FFFF::1&quot; -CloneComputerName &quot;Clone1&quot; -PreferredWINSServer &quot;10.0.0.1&quot; -SiteName &quot;REDMOND&quot;
+```
+
+このコマンドは,動的なIPv4と静的なIPv6設定を持つClone1というドメインコントローラをクローンします.
+
+### 例8:指定サイトでオフラインモードでドメインコントローラをクローンする作成```
+PS C:\&gt; New-DCCloneConfig -Offline -CloneComputerName &quot;CloneDC1&quot; -SiteName CONTOSO -Path F:\Windows\NTDS -Force
+```
+
+このコマンドは,オフラインモードでCloneDC1というドメインコントローラをクローンする,ダイナミックなIPv4アドレスを持つ CONTOSOというサイトで作成します.このコマンドは,F:\Windows\NTDSで指定されたパスで作成された以前のすべてのDCCloneConfig.xmlファイルの書き換えを強制するために, *Force*パラメータを使用します.
+
+## パラメータは
+
+### -AlternateWINSServer 選択したWINS Serverが利用できない場合,クローンされたドメインコントローラが使用する代替 Windows Internet Naming Service (WINS) サーバの名前を指定します.
+
+```yaml
+Type: String
+Parameter Sets: OfflineExecution, IPv4StaticSettings
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -CloneComputerName クローンされたドメインコントローラのためのコンピュータ名を指定します.このパラメータが15文字以下のエンタープライズ内のユニークな名前として指定されていない場合は,次の式を使用してプログラム的に名前を生成します.
+
+例えば,SourceComputerのソースコンピュータ名は,SourceCoのプレフィックス文字列に縮小されます. - - - プレフィックス文字列に格式 **-CL**nnnnのユニークな命名サフィックスが付加されます. nnnnは,プライマリドメインコントローラー (PDC) が決定する 0001-9999から次の利用可能値である.当時は使用されていない.例えば,0047が許容範囲内の次の利用可能番号である場合,上記のソースコンピュータプレフィックスを使用すると,クロンコンピュータの使用する下属名は SourceCoの SourceCo-CL0047になります.
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases: cn
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+# New-ADDCCloneConfigFile 
+
+### -IPv4Address 網際網路プロトコルバージョン4 (IPv4) アドレスを指定し,クローンされたドメインコントローラに割り当てます.
+
+```yaml
+Type: String
+Parameter Sets: OfflineExecution
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+```yaml
+Type: String
+Parameter Sets: IPv4StaticSettings
+Aliases: 
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -IPv4DefaultGateway クローンドメインコントローラが使用するデフォルトゲートウェイのインターネットプロトコルバージョン4 (IPv4) アドレスを指定します.
+
+```yaml
+Type: String
+Parameter Sets: OfflineExecution, IPv4StaticSettings
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -IPv4DNSResolver は,クローンされたドメインコントローラーが名前解決のために使用するDNSサーバのインターネットプロトコルバージョン4 (IPv4) アドレスを指定します.最大4つの文字列値が提供できます.
+
+```yaml
+Type: String[]
+Parameter Sets: IPv4DynamicSettings, OfflineExecution
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+```yaml
+Type: String[]
+Parameter Sets: IPv4StaticSettings
+Aliases: 
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -IPv4SubnetMask 網際網路プロトコルバージョン4 (IPv4) のサブネットマスクを指定し,クローンドメインコントローラが所在するサブネットに使用します.
+
+```yaml
+Type: String
+Parameter Sets: OfflineExecution
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+```yaml
+Type: String
+Parameter Sets: IPv4StaticSettings
+Aliases: 
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -IPv6DNSResolver は,クローンされたドメインコントローラによって使用される DNS サーバのインターネット プロトコル バージョン 6 (IPv6) アドレスを指定して,名前を解決します.
+
+```yaml
+Type: String[]
+Parameter Sets: OfflineExecution, IPv6DynamicSettings
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+```yaml
+Type: String[]
+Parameter Sets: IPv6StaticSettings
+Aliases: 
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -オフライン 表示する,cmdletがオフラインメディアに対して実行されているか,またはクローンのために準備されているドメインコントローラに実行されているか.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: OfflineExecution
+Aliases: 
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Path は,クローン構成ファイルを書き出すときに使用するフォルダ経路を指定します.もし,cmdletが実行され,すべての前提チェックが成功した場合,DCCloneConfig.xml ファイルが書き込まれ,この場所から出力として表示されます.クローンのために準備されているドメインコントローラでcmdletを実行する際には, *Path* パラメータがオプションです.この場合は,DITフォルダのデフォルト位置が使用され,このパラメータを指定する必要はありません.オフラインモードで **New-ADCCLoneConfigFile** cmdletを実行する際 (つまり,オフライン* パラメータが指定された場合),しかし, *Path* パラメータが要求されます.
+
+```yaml
+Type: String
+Parameter Sets: IPv4DynamicSettings, IPv4StaticSettings, IPv6DynamicSettings, IPv6StaticSettings
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+```yaml
+Type: String
+Parameter Sets: OfflineExecution
+Aliases: 
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -WINSServerの優先順位は,クローンドメインコントローラに優先順位のWINSサーバーとして使用する主要な Windows Internet Naming Service (WINS) サーバの名前を指定します.
+
+```yaml
+Type: String
+Parameter Sets: OfflineExecution, IPv4StaticSettings
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -SiteName クローンドメインコントローラを配置するアクティブディレクトリサイトの名前を指定します.
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -スタティック クローンドメインコントローラに指定されたTCP/IP設定が静かまたは動的なIP設定かどうかを表示します.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: OfflineExecution
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: IPv4StaticSettings, IPv6StaticSettings
+Aliases: 
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### 共通パラメータ このcmdletは共通パラメータをサポートしています: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable.詳細については, [about_CommonParameters](を参照してください.https://go.microsoft.com/fwlink/?LinkID=113216) でした.
+
+## 輸入は
+
+### どれもない
+
+## 輸出は
+
+### どれもない
+
+##  NOTES  記事ができました.
+
+## 関連リンク
+
+[Get-ADDCCloningExcludedApplicationList](./Get-ADDCCloningExcludedApplicationList.md) を表示する
+
+[AD DS Administration Cmdlets in Windows PowerShell](./activedirectory.md) を表示する
+###英語原文###
+# New-ADDCCloneConfigFile
+
+## SYNOPSIS
+Performs prerequisite checks for cloning a domain controller and generates a clone configuration file if all checks succeed.
+
+## SYNTAX
+
+### IPv4DynamicSettings (Default)
+```
+New-ADDCCloneConfigFile [-CloneComputerName &lt;String&gt;] [-IPv4DNSResolver &lt;String[]&gt;] [-Path &lt;String&gt;]
+ [-SiteName &lt;String&gt;] [&lt;CommonParameters&gt;]
+```
+
+### OfflineExecution
+```
+New-ADDCCloneConfigFile [-AlternateWINSServer &lt;String&gt;] [-CloneComputerName &lt;String&gt;] [-IPv4Address &lt;String&gt;]
+ [-IPv4DefaultGateway &lt;String&gt;] [-IPv4DNSResolver &lt;String[]&gt;] [-IPv4SubnetMask &lt;String&gt;]
+ [-IPv6DNSResolver &lt;String[]&gt;] [-Offline] -Path &lt;String&gt; [-PreferredWINSServer &lt;String&gt;] [-SiteName &lt;String&gt;]
+ [-Static] [&lt;CommonParameters&gt;]
+```
+
+### IPv4StaticSettings
+```
+New-ADDCCloneConfigFile [-AlternateWINSServer &lt;String&gt;] [-CloneComputerName &lt;String&gt;] -IPv4Address &lt;String&gt;
+ [-IPv4DefaultGateway &lt;String&gt;] -IPv4DNSResolver &lt;String[]&gt; -IPv4SubnetMask &lt;String&gt; [-Path &lt;String&gt;]
+ [-PreferredWINSServer &lt;String&gt;] [-SiteName &lt;String&gt;] [-Static] [&lt;CommonParameters&gt;]
+```
+
+### IPv6DynamicSettings
+```
+New-ADDCCloneConfigFile [-CloneComputerName &lt;String&gt;] [-IPv6DNSResolver &lt;String[]&gt;] [-Path &lt;String&gt;]
+ [-SiteName &lt;String&gt;] [&lt;CommonParameters&gt;]
+```
+
+### IPv6StaticSettings
+```
+New-ADDCCloneConfigFile [-CloneComputerName &lt;String&gt;] -IPv6DNSResolver &lt;String[]&gt; [-Path &lt;String&gt;]
+ [-SiteName &lt;String&gt;] [-Static] [&lt;CommonParameters&gt;]
+```
+
+## DESCRIPTION
+The **New-ADDCCloneConfigFile** cmdlet performs prerequisite checks for cloning a domain controller when run locally on the domain controller being prepared for cloning.
+This cmdlet generates a clone configuration file, DCCloneConfig.xml, at an appropriate location, if all prerequisite checks succeed.
+
+There are two modes of operation for this cmdlet, depending on where it is executed.
+When run on the domain controller that is being prepared for cloning, it will run the following pre-requisite checks to make sure this domain controller is adequately prepared for cloning: 
+
+- Is the PDC emulator FSMO role hosted on a domain controller running Windows Server 2012? 
+- Is this computer authorized for domain controller cloning (i.e.
+is the computer a member of the Cloneable Domain Controllers group)?
+- Are all program and services listed in the output of the Get-ADDCCloningExcludedApplicationList cmdlet captured in CustomDCCloneAllowList.xml?
+
+If these pre-requisite checks all pass, the **New-ADDCCloneConfigFile** cmdlet will generate a DCCloneConfig.xml file at a suitable location based on the parameter values supplied.
+This cmdlet can also be run from a client, with Remote Server Administration Tools, and used to generate a DCCloneConfig.xml against offline media of the domain controller being cloned; however, none of the pre-requisite checks is performed in this usage mode.
+This usage is intended to generate DCCloneConfig.xml files with specific configuration values for each clone on copies of the offline media.
+
+## EXAMPLES
+
+### Example 1: Create a clone domain controller with a static IPv4 address
+```
+PS C:\&gt; New-ADDCCloneConfigFile -Static -IPv4Address &quot;10.0.0.2&quot; -IPv4DNSResolver &quot;10.0.0.1&quot; -IPv4SubnetMask &quot;255.255.255.0&quot; -CloneComputerName &quot;VirtualDC2&quot; -IPv4DefaultGateway &quot;10.0.0.3&quot; -PreferredWINSServer &quot;10.0.0.1&quot; -SiteName &quot;REDMOND&quot;
+```
+
+This command creates a clone domain controller named VirtualDC2 with a static IPv4 address.
+
+### Example 2: Create a clone domain controller with a static IPv6 settings
+```
+PS C:\&gt; New-ADDCCloneConfigFile -Static -CloneComputerName &quot;Clone1&quot; -IPv6DNSResolver &quot;FEC0:0:0:FFFF::1&quot;
+```
+
+This command creates a clone domain controller named Clone1 with a static IPv6 setting.
+
+### Example 3: Create a clone domain controller with a dynamic IPv4 settings
+```
+PS C:\&gt; New-ADDCCloneConfigFile -AlternateWINSServer &quot;10.0.0.3&quot; -CloneComputerName &quot;Clone2&quot;-IPv4DNSResolver &quot;10.0.0.1&quot; -PreferredWINSServer &quot;10.0.0.1&quot;
+```
+
+This command creates a clone domain controller named Clone2 with dynamic IPv4 settings.
+
+### Example 4: Create a clone domain controller with a dynamic IPv6 settings
+```
+PS C:\&gt; New-ADDCCloneConfigFile -IPv6DNSResolver &quot;FEC0:0:0:FFFF::1&quot; -SiteName &quot;REDMOND&quot;
+```
+
+This command creates a clone domain controller with dynamic IPv6 settings.
+
+### Example 5: Create a clone domain controller with a static IPv4 and IPv6 settings
+```
+PS C:\&gt; New-ADDCCloneConfigFile -Static -IPv4Address &quot;10.0.0.2&quot; -IPv4DNSResolver &quot;10.0.0.1&quot; -IPv4SubnetMask &quot;255.255.255.0&quot; -Static -IPv6DNSResolver &quot;FEC0:0:0:FFFF::1&quot; -CloneComputerName &quot;Clone2&quot; -PreferredWINSServer &quot;10.0.0.1&quot;
+```
+
+This command creates a clone domain controller named Clone2 with static IPv4 and static IPv6 settings.
+
+### Example 6: Create a clone domain controller with a static IPv4 and dynamic IPv6 settings
+```
+PS C:\&gt; New-ADDCCloneConfigFile -IPv4Address &quot;10.0.0.2&quot; -IPv4DNSResolver &quot;10.0.0.1&quot; -IPv4SubnetMask &quot;255.255.255.0&quot; -IPv4DefaultGateway &quot;10.0.0.3&quot; -IPv6DNSResolver &quot;FEC0:0:0:FFFF::1&quot;
+```
+
+This command creates a clone domain controller named Clone2 with static IPv4 and dynamic IPv6 settings.
+
+### Example 7: Create a clone domain controller with a dynamic IPv4 and static IPv6 settings
+```
+PS C:\&gt; New-ADDCCloneConfigFile -Static -IPv6DNSResolver &quot;FEC0:0:0:FFFF::1&quot; -CloneComputerName &quot;Clone1&quot; -PreferredWINSServer &quot;10.0.0.1&quot; -SiteName &quot;REDMOND&quot;
+```
+
+This command creates a clone domain controller named Clone1 with dynamic IPv4 and static IPv6 settings.
+
+### Example 8: Create a clone domain controller in offline mode in a specified site
+```
+PS C:\&gt; New-DCCloneConfig -Offline -CloneComputerName &quot;CloneDC1&quot; -SiteName CONTOSO -Path F:\Windows\NTDS -Force
+```
+
+This command creates a clone domain controller named CloneDC1 in offline mode, in a site called CONTOSO with a dynamic IPv4 address.
+This command also uses the *Force* parameter to force overwrite of any previous DCCloneConfig.xml file created at the specified path, F:\Windows\NTDS.
+
+## PARAMETERS
+
+### -AlternateWINSServer
+Specifies the name of the alternate Windows Internet Naming Service (WINS) server for the cloned domain controller to use if the preferred WINS Server is not available.
+
+```yaml
+Type: String
+Parameter Sets: OfflineExecution, IPv4StaticSettings
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -CloneComputerName
+Specifies the computer name for the cloned domain controller.
+If this parameter is not specified as a unique name within the enterprise of 15 characters or less, the following formula is used to programmatically generate a name: 
+
+- The first eight characters of the source domain controller computer name.
+For instance, a source computer name of SourceComputer is truncated to a prefix string of SourceCo.
+- A unique naming suffix of the format **-CL**nnnn is appended to the prefix string where nnnn is the next available value from 0001-9999 that the primary domain controller (PDC) determines is not currently in use.
+For example, if 0047 is the next available number within the allowed range, using the above source computer prefix of SourceCo the derived name to use for the clone computer will be SourceCo-CL0047.
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases: cn
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+# New-ADDCCloneConfigFile
+
+### -IPv4Address
+Specifies the Internet Protocol version 4 (IPv4) address to be assigned to the cloned domain controller.
+
+```yaml
+Type: String
+Parameter Sets: OfflineExecution
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+```yaml
+Type: String
+Parameter Sets: IPv4StaticSettings
+Aliases: 
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -IPv4DefaultGateway
+Specifies the Internet Protocol version 4 (IPv4) address for the default gateway to be used by the cloned domain controller.
+
+```yaml
+Type: String
+Parameter Sets: OfflineExecution, IPv4StaticSettings
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -IPv4DNSResolver
+Specifies the Internet Protocol version 4 (IPv4) address for the DNS server to be used by the cloned domain controller to resolve names.
+A maximum of four string values can be provided.
+
+```yaml
+Type: String[]
+Parameter Sets: IPv4DynamicSettings, OfflineExecution
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+```yaml
+Type: String[]
+Parameter Sets: IPv4StaticSettings
+Aliases: 
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -IPv4SubnetMask
+Specifies the Internet Protocol version 4 (IPv4) subnet mask to use for the subnet where the cloned domain controller is to be located.
+
+```yaml
+Type: String
+Parameter Sets: OfflineExecution
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+```yaml
+Type: String
+Parameter Sets: IPv4StaticSettings
+Aliases: 
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -IPv6DNSResolver
+Specifies the Internet Protocol version 6 (IPv6) address for the DNS server to be used by the cloned domain controller to resolve names.
+
+```yaml
+Type: String[]
+Parameter Sets: OfflineExecution, IPv6DynamicSettings
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+```yaml
+Type: String[]
+Parameter Sets: IPv6StaticSettings
+Aliases: 
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Offline
+Indicates whether the cmdlet is being run against an offline media or on the domain controller being prepared for cloning.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: OfflineExecution
+Aliases: 
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Path
+Specifies the folder path to use when writing the clone configuration file.
+If the cmdlet is run and all prerequisite checks succeed, a DCCloneConfig.xml file will be written and appear in this location as output.
+The *Path* parameter is optional when running the cmdlet on the domain controller being prepared for cloning.
+In this case, the default location of the DIT folder will be used and this parameter does not need to be specified.
+When running the **New-ADCCLoneConfigFile** cmdlet in offline mode (i.e.
+when the *Offline* parameter is specified), however, the *Path* parameter is required.
+
+```yaml
+Type: String
+Parameter Sets: IPv4DynamicSettings, IPv4StaticSettings, IPv6DynamicSettings, IPv6StaticSettings
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+```yaml
+Type: String
+Parameter Sets: OfflineExecution
+Aliases: 
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -PreferredWINSServer
+Specifies the name of the primary Windows Internet Naming Service (WINS) server to use as the preferred WINS Server for the cloned domain controller.
+
+```yaml
+Type: String
+Parameter Sets: OfflineExecution, IPv4StaticSettings
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -SiteName
+Specifies the name of the Active Directory site in which to place the cloned domain controller.
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Static
+Indicates whether the TCP/IP configuration specified for the cloned domain controller is static or dynamic IP configuration.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: OfflineExecution
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: IPv4StaticSettings, IPv6StaticSettings
+Aliases: 
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### CommonParameters
+This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable. For more information, see [about_CommonParameters](https://go.microsoft.com/fwlink/?LinkID=113216).
+
+## INPUTS
+
+### None
+
+## OUTPUTS
+
+### None
+
+## NOTES
+
+## RELATED LINKS
+
+[Get-ADDCCloningExcludedApplicationList](./Get-ADDCCloningExcludedApplicationList.md)
+
+[AD DS Administration Cmdlets in Windows PowerShell](./activedirectory.md)
+###Microsoft Learn URL###
+https://learn.microsoft.com/en-us/powershell/module/activedirectory/new-addccloneconfigfile/?view=windowsserver2022-ps
+</pre></html>

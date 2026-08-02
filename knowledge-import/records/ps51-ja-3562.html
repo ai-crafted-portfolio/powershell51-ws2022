@@ -1,0 +1,516 @@
+<!doctype html><html lang="ja"><meta charset="utf-8"><pre class="record-source">###KnowledgeNo###
+PS51-WS2022-2026-3562
+###FormatID###
+PS51-WS2022
+###CreatedAt###
+2026-08-01 00:00
+###UpdatedAt###
+2026-08-01 00:00
+###タイトル###
+about_Language_Modes
+###モジュール###
+Microsoft.PowerShell.Core
+###製品###
+Windows PowerShell 5.1
+###対応OS###
+Windows Server 2022
+###日本語訳###
+# about_Language_Modesについて
+
+## 短編説明
+
+PowerShellセッションに対する言語モードとその影響を説明します.
+
+## 長い説明
+
+PowerShellセッションの言語モードは,セッションで PowerShell言語の要素がどの部分で使用できるかを決定します.
+
+PowerShellでは以下の言語モードがサポートされています.
+
+ - -`FullLanguage` - -`RestrictedLanguage` - -`ConstrainedLanguage`(PowerShell 3.0で導入されました) - `NoLanguage`
+
+## 言語モードとは?
+
+言語モードはセッションで許可されている言語要素を決定します.
+
+言語モードは,セッション構成 (または&quot;エンドポイント&quot;) の属性であり,セッションを作成するために使用されます.特定のセッション構成を使用するすべてのセッションにはセッション構成の言語モードがあります.
+
+すべてのPowerShellセッションには言語モードがあります.セッションはターゲットコンピュータのセッション設定を使用して作成されます.セッション設定に設定された言語モードはセッションの言語モードを決定します.PSSセッションのセッション設定を指定するには,セッションを作成するcmdletの **ConfigurationName**パラメータを使用します.
+
+## セッションの言語モードを見つける
+
+の言語モードを見つけることができます.`FullLanguage`     `ConstrainedLanguage`セッション状態の **LanguageMode**属性の値を取得する.
+
+例えば:
+
+```powershell
+$ExecutionContext.SessionState.LanguageMode
+```
+
+```Output
+ConstrainedLanguage
+```
+
+しかし,とのセッションでは,`RestrictedLanguage`そして,`NoLanguage`モードでは[member-access operator][02] () を使えない.`.`) をプロパティ値を得るために,代わりにエラーメッセージは言語モードを明らかにします.
+
+アクセスするときに`$ExecutionContext.SessionState.LanguageMode` で a  に`RestrictedLanguage`PowerShellで,プロパティリファレンスのNotSupportedInDataSection と **VariableReferenceNotSupportedInDataSection** のエラーメッセージが返されます.
+
+**PropertyReferenceNotSupportedInDataSection**: 制限言語モードやデータセクションではプロパティ参照が許可されていません. - **VariableReferenceNotSupportedInDataSection**: 制限言語モードやデータセクションでは参照できない変数が参照されています.
+
+アクセスするときに`$ExecutionContext.SessionState.LanguageMode` で a  に`NoLanguage`PowerShellで,ScriptsNotAllowed**のエラーメッセージが返されます.
+
+-ScriptsNotAllowed**:このランスペースでは文法がサポートされていない.これは言語なしモードにあるからかもしれない.
+
+## セッション構成の言語モードを見つける
+
+セッション設定はセッション設定ファイルを使用して設定された場合,セッション設定には **LanguageMode**属性があります. **LanguageMode**属性の値を取得することによって,言語モードを見つけることができます.
+
+```powershell
+(Get-PSSessionConfiguration -Name Test).LanguageMode
+```
+
+```Output
+FullLanguage
+```
+
+他のセッション設定では,セッション設定を使用して作成されたセッションの言語モードを検索することによって間接的に言語モードを見つけることができます.
+
+## 言語モードの設定です
+
+PowerShellセッションの言語モードは,内蔵の  を介して設定できます.`$ExecutionContext`変数です.
+
+```powershell
+$ExecutionContext.SessionState.LanguageMode = &quot;ConstrainedLanguage&quot;
+```
+
+しかし,これを行うことは言語モードでの実験にのみ役立つ.言語モードは特定の文脈でPowerShellセッションに追加的なセキュリティを提供することを目的としています.
+
+システムアプリケーション制御ポリシーを使用したり,セッション設定を作成するときに言語モードが設定されます.
+
+### システムアプリケーション制御ポリシーを使用します.
+
+PowerShell は自動的に  で実行されます.`ConstrainedLanguage`システムアプリケーション制御ポリシーで実行されている場合.検出されたアプリケーション制御ポリシーは,Windowsプラットフォーム上のAppLockerとWindows Defender Application Control (WDAC) モードです.
+
+PowerShell はアプリケーション制御ポリシーを検出する際には,言語モード以外の制限を適用します.例えば,ポリシーの下でドットソースとモジュール輸入に追加的な制限があります.
+
+PowerShell セッションがポリシーで起動すると,実行されます.`ConstrainedLanguage`このモードでは,ユーザが使えるインタラクティブなシェル体験,CMdletとネイティブコマンドを実行し,基本的な言語要素にアクセスできます.しかし,ユーザは悪意のあるアクターによって悪用されるPowerShell, .NET,またはCOM APIにアクセスできません.
+
+このセッションで実行されたスクリプトまたはスクリプトベースのモジュールはすべて,  で実行されます.`ConstrainedLanguage`しかし,ポリシーによって許可されたスクリプトまたはスクリプトベースのモジュールはすべて,  で実行されます.`FullLanguage`この方法で,ポリシーによってロックされたシステムは,ポリシーによって信頼され,制限が少ないスクリプトを持つことができます.
+
+### セッション構成を使用します
+
+PowerShell リモートでは,カスタムセッション設定を作成することをオプションでサポートします.そのカスタム設定のために必要な言語モードを設定できます.PowerShell Just Enough Administration (JEA) の設定は,使用します.`NoLanguage`JEAでは,リモートセッションは特定のユーザーに限定されることができます.JEAユーザーは定義されたコマンドセットを実行することに限定され,API,ファイルシステム,または他のシステムリソースに直接アクセスすることはできません.
+
+詳細については,JEA Session configurations[01]と[New-PSSessionConfigurationFile][05]を参照してください.
+
+## 言語モードの特徴と制限は
+
+このセクションでは,PowerShellセッションにおける言語モードを記述します.
+
+### `FullLanguage`モード
+
+   `FullLanguage`セッションの言語要素をすべて使用できるようにする. `FullLanguage`Windows のすべてのバージョンでデフォルトセッションのデフォルト言語モードです.
+
+### `RestrictedLanguage`モード
+
+        `RestrictedLanguage`モードでは,ユーザーはコマンド (cmdlets, functions, CIM コマンド,ワークフロー) を実行できますが,スクリプトブロックを使用することはできません.このモードは, によってロードされたモジュールマニフェストを処理するために使用されます.`Import-Module` .
+
+PowerShell 7.2 から始まって,`New-Object`cmdlet は  で無効化されています.`RestrictedLanguage`システムロックダウンが設定された時モードです.
+
+デフォルトでは,以下の変数はのみ許容されます.`RestrictedLanguage`モード:
+
+ - -`$PSCulture` - -`$PSUICulture` - -`$true` - -`$false` - -`$null`
+
+模組マニフェストは,  で読み込まれています.`RestrictedLanguage`モードで,これらの追加の変数を使用することができます:
+
+ - -`$PSScriptRoot` - -`$PSEdition`- 環境変数,例えば`$env:TEMP`
+
+比較オペレーターは以下の通りです.
+
+ - -`-eq`(等) - `-gt`(より大きい) - `-lt`(より少ない) 
+
+割り当て声明,プロパティ参照,方法呼び出しは許されません.
+
+# about_Language_Modesについて
+
+### `ConstrainedLanguage`モード
+
+`ConstrainedLanguage`モードはループ,条件,文字列拡張,オブジェクトのプロパティへのアクセスなどの基本的な言語要素を許可するように設計されています.この制限は,悪意のあるアクターによって悪用される操作を防ぐことができます.
+
+   `ConstrainedLanguage`PowerShell言語要素のサブセットとすべてのcmdletsを許可するモードが使用できるオブジェクトタイプを制限する.
+
+の特徴は`ConstrainedLanguage`モードは以下の通りです:
+
+- Windows モジュール内のすべてのcmdletは完全に機能しており,注釈されたように限り,システムリソースへの完全なアクセスを有します. - PowerShell スクリプト言語のすべての要素が許可されています. - Windows に含まれるすべてのモジュールが輸入され,モジュールがセッションで輸出されるすべてのコマンドが実行されます. - PowerShell ワークフローでは,スクリプトワークフロー (PowerShell 言語で書かれたワークフロー) を書き,実行できます. - XAMLベースのワークフローはサポートされていません.`Invoke-Expression -Language XAML`また,ワークフローは他のワークフローに呼び出すことはできませんが,巣のワークフローは許可されています. - `Add-Type`cmdlet は署名されたアセンブリをロードできるが,任意のC#コードやWin32 APIをロードすることはできません. - The `New-Object`cmdlet は許容されたタイプのみで使用できます (下記に記載されています). - PowerShell で許容されたタイプのみを使用できます.他のタイプは許容されません. タイプ変換は許容されるタイプである場合のみです. - 文字列入力をタイプに変換する Cmdlet パラメータは,生成されたタイプが許容されたタイプである場合にのみ動作します. - `ToString()`許可されたタイプの方法と .NET方法が呼び出されることができます. - ユーザーは許可されたタイプのすべての属性を得ることができます. ユーザーは許可されたタイプの属性の値を設定することができます.
+
+では以下の .NET タイプが許可されています.`ConstrainedLanguage`ユーザはプロパティを取得し,メソッドを呼び出し,オブジェクトをこれらのタイプに変換することができます.
+
+許容される種類:
+
+ - -`[adsi]` - -`[adsisearcher]` - -`[Alias]` - -`[AllowEmptyCollection]` - -`[AllowEmptyString]` - -`[AllowNull]` - -`[ArgumentCompleter]` - -`[array]` - -`[bigint]` - -`[bool]` - -`[byte]` - -`[char]` - -`[cimclass]` - -`[cimconverter]` - -`[ciminstance]` - -`[CimSession]` - -`[cimtype]` - -`[CmdletBinding]` - -`[cultureinfo]` - -`[datetime]` - -`[decimal]` - -`[double]` - -`[DscLocalConfigurationManager]` - -`[DscProperty]` - -`[DscResource]` - -`[float]` - -`[guid]` - -`[hashtable]` - -`[int]` - -`[int16]` - -`[int32]` - -`[int64]` - -`[ipaddress]` - -`[IPEndpoint]` - -`[long]` - -`[mailaddress]` - -`[Microsoft.PowerShell.Commands.ModuleSpecification]` - -`[NullString]` - -`[Object[]]` - -`[ObjectSecurity]` - -`[OutputType]` - -`[Parameter]` - -`[PhysicalAddress]` - -`[pscredential]` - -`[pscustomobject]` - -`[PSDefaultValue]` - -`[pslistmodifier]` - -`[psobject]` - -`[psprimitivedictionary]` - -`[PSTypeNameAttribute]` - -`[regex]` - -`[sbyte]` - -`[securestring]` - -`[single]` - -`[string]` - -`[SupportsWildcards]` - -`[switch]` - -`[timespan]` - -`[uint16]` - -`[uint32]` - -`[uint64]` - -`[uri]` - -`[ValidateCount]` - -`[ValidateDrive]` - -`[ValidateLength]` - -`[ValidateNotNull]` - -`[ValidateNotNullOrEmpty]` - -`[ValidatePattern]` - -`[ValidateRange]` - -`[ValidateScript]` - -`[ValidateSet]` - -`[ValidateTrustedData]` - -`[ValidateUserDrive]` - -`[version]` - -`[void]` - -`[WildcardPattern]` - -`[wmi]` - -`[wmiclass]` - -`[wmisearcher]` - -`[X500DistinguishedName]` - -`[X509Certificate]` - -`[xml]`
+
+以下のようなCOMオブジェクトタイプのみが許可されています.
+
+ - -`Scripting.Dictionary` - -`Scripting.FileSystemObject` - -`VBScript.RegExp`
+
+特殊なケース:
+
+ - -`[ref]`- タイプするオブジェクトをキャスティングする`[ref]`    `[Management.Automation.PSReference]`許されない.他の用途は許される. - `[ordered]`-  - `[ordered] @{}`表現が許され,型のオブジェクトを作成します.`[Collections.Specialized.OrderedDictionary]`しかし,オブジェクトのメソッドにアクセスしたり,オーダーされた辞書を直接インスタンスティングしたりすることは許されません.
+
+### `NoLanguage`モード
+
+PowerShell  を使用します.`NoLanguage`PowerShell のスクリプト言語を完全に無効にするモードです.スクリプトを実行したり変数を使用したりすることはできません.ネイティブコマンドとcmdletsのみを実行できます.
+
+PowerShell 7.2 から始まって,`New-Object`cmdlet は  で無効化されています.`NoLanguage`システムロックダウンが設定された時モードです.
+
+## また, を参照してください.
+
+- [about_Session_Configuration_Files][03] - [about_Session_Configurations][04]
+
+&lt;!--リンク参照 --&gt; [01]: /powershell/scripting/learn/remoting/jea/session-configurations [02]: about_Member-Access_Enumeration.md [03]: about_Session_Configuration_Files.md [04]: about_Session_Configurations.md [05]: xref:Microsoft.PowerShell.Core.New-PSSessionConfigurationFile
+###英語原文###
+# about_Language_Modes
+
+## Short description
+
+Explains language modes and their effect on PowerShell sessions.
+
+## Long description
+
+The language mode of a PowerShell session determines which elements of the
+PowerShell language can be used in the session.
+
+PowerShell supports the following language modes:
+
+- `FullLanguage`
+- `RestrictedLanguage`
+- `ConstrainedLanguage` (introduced in PowerShell 3.0)
+- `NoLanguage`
+
+## What is a language mode?
+
+The language mode determines the language elements that are permitted in the
+session.
+
+The language mode is a property of the session configuration (or &quot;endpoint&quot;)
+that&#x27;s used to create the session. All sessions that use a particular session
+configuration have the language mode of the session configuration.
+
+All PowerShell sessions have a language mode. Sessions are created using the
+session configurations on the target computer. The language mode set in the
+session configuration determines the language mode of the session. To specify
+the session configuration of a PSSession, use the **ConfigurationName**
+parameter of cmdlets that create a session.
+
+## Finding the language mode of a session
+
+You can find the language mode of a `FullLanguage` or `ConstrainedLanguage`
+session by getting the value of the **LanguageMode** property of the session
+state.
+
+For example:
+
+```powershell
+$ExecutionContext.SessionState.LanguageMode
+```
+
+```Output
+ConstrainedLanguage
+```
+
+However, in sessions with `RestrictedLanguage` and `NoLanguage` modes, you
+can&#x27;t use the [member-access operator][02] (`.`) to get property values.
+Instead, the error message reveals the language mode.
+
+When you access `$ExecutionContext.SessionState.LanguageMode` in a
+`RestrictedLanguage` session, PowerShell returns the
+**PropertyReferenceNotSupportedInDataSection** and
+**VariableReferenceNotSupportedInDataSection** error messages.
+
+- **PropertyReferenceNotSupportedInDataSection**: Property references aren&#x27;t
+  allowed in restricted language mode or a Data section.
+- **VariableReferenceNotSupportedInDataSection**: A variable that can&#x27;t be
+  referenced in restricted language mode or a Data section is being
+  referenced.
+
+When you access `$ExecutionContext.SessionState.LanguageMode` in a
+`NoLanguage` session, PowerShell returns the **ScriptsNotAllowed** error
+message.
+
+- **ScriptsNotAllowed**: The syntax isn&#x27;t supported by this runspace. This
+  might be because it&#x27;s in no-language mode.
+
+## Finding the language mode of a session configuration
+
+When a session configuration is created using a session configuration file, the
+session configuration has a **LanguageMode** property. You can find the
+language mode by getting the value of the **LanguageMode** property.
+
+```powershell
+(Get-PSSessionConfiguration -Name Test).LanguageMode
+```
+
+```Output
+FullLanguage
+```
+
+On other session configurations, you can find the language mode indirectly by
+finding the language mode of a session that&#x27;s created using the session
+configuration.
+
+## Setting the language mode
+
+The language mode in a PowerShell session can be set through the built-in
+`$ExecutionContext` variable.
+
+```powershell
+$ExecutionContext.SessionState.LanguageMode = &quot;ConstrainedLanguage&quot;
+```
+
+However, doing this is only useful for experimenting with language modes.
+Language modes are intended to provide added security to PowerShell sessions
+for specific contexts.
+
+Languages modes are set when you use a system application control policy or
+create a session configuration.
+
+### Using a system application control policy
+
+PowerShell automatically runs in `ConstrainedLanguage` mode when it&#x27;s running
+under a system application control policy. The application control
+policies detected are AppLocker and Windows Defender Application Control (WDAC)
+on Windows platforms.
+
+PowerShell applies other restrictions besides language modes when it detects an
+application control policy. For example, there are additional restrictions to
+dot-sourcing and module importing under a policy.
+
+When a PowerShell session is started under a policy, it runs in
+`ConstrainedLanguage` mode. This mode allows users to have a usable interactive
+shell experience, running cmdlets and native commands, as well as access to
+basic language elements. But the user can&#x27;t access PowerShell, .NET, or COM
+APIs that could be abused by a malicious actor.
+
+Any script or script-based module executed in this session runs in
+`ConstrainedLanguage` mode. However, any script or script-based module allowed
+by the policy runs in `FullLanguage` mode without any constraints. This way, a
+system locked down by policy can have scripts that are trusted by the policy
+and run with few constraints.
+
+### Using a session configuration
+
+PowerShell remoting optionally supports creating custom session configurations.
+You can set the language mode you want for that custom configuration.
+PowerShell Just Enough Administration (JEA) configurations use `NoLanguage`
+mode to restrict sessions to command invocations only. With JEA, the remote
+session can be restricted to specific users. The JEA users are limited to
+running a defined set of commands and can&#x27;t directly access APIs, the file
+system, or other system resources.
+
+For more information, see [JEA Session configurations][01] and
+[New-PSSessionConfigurationFile][05].
+
+## Language mode features and limitations
+
+This section describes the language modes in PowerShell sessions.
+
+### `FullLanguage` mode
+
+The `FullLanguage` mode permits all language elements in the session.
+`FullLanguage` is the default language mode for default sessions on all
+versions of Windows.
+
+### `RestrictedLanguage` mode
+
+In `RestrictedLanguage` mode, users can run commands (cmdlets, functions, CIM
+commands, and workflows), but can&#x27;t use scriptblocks. This mode is also used
+to process modules manifests loaded by `Import-Module`.
+
+Beginning in PowerShell 7.2, the `New-Object` cmdlet is disabled in
+`RestrictedLanguage` mode when system lockdown is configured.
+
+By default, only the following variables are permitted in `RestrictedLanguage`
+mode:
+
+- `$PSCulture`
+- `$PSUICulture`
+- `$true`
+- `$false`
+- `$null`
+
+Module manifests are loaded in `RestrictedLanguage` mode and may use these
+additional variables:
+
+- `$PSScriptRoot`
+- `$PSEdition`
+- Any environment variable, like `$env:TEMP`
+
+Only the following comparison operators are permitted:
+
+- `-eq` (equal)
+- `-gt` (greater-than)
+- `-lt` (less-than)
+
+Assignment statements, property references, and method calls aren&#x27;t permitted.
+
+# about_Language_Modes
+
+### `ConstrainedLanguage` mode
+
+`ConstrainedLanguage` mode is designed to allow basic language elements such as
+loops, conditionals, string expansion, and access to object properties. The
+restrictions prevent operations that could be abused by a malicious actor.
+
+The `ConstrainedLanguage` mode permits all cmdlets and a subset of PowerShell
+language elements, but limits the object types that can be used.
+
+The features of `ConstrainedLanguage` mode are as follows:
+
+- All cmdlets in Windows modules are fully functional and have complete access
+  to system resources, except as noted.
+- All elements of the PowerShell scripting language are permitted.
+- All modules included in Windows can be imported and all commands that the
+  modules export run in the session.
+- In PowerShell Workflow, you can write and run script workflows (workflows
+  written in the PowerShell language).
+- XAML-based workflows aren&#x27;t supported and you can&#x27;t run XAML in a script
+  workflow using `Invoke-Expression -Language XAML`. Also, workflows can&#x27;t call
+  other workflows, although nested workflows are permitted.
+- The `Add-Type` cmdlet can load signed assemblies, but it can&#x27;t load arbitrary
+  C# code or Win32 APIs.
+- The `New-Object` cmdlet can be used only on allowed types (listed below).
+- Only allowed types can be used in PowerShell. Other types aren&#x27;t permitted.
+  Type conversion is permitted, but only when the result is an allowed type.
+- Cmdlet parameters that convert string input to types work only when the
+  resulting type is an allowed type.
+- The `ToString()` method and the .NET methods of allowed types can be invoked.
+- Users can get all properties of allowed types. Users can set the values of
+  properties only on allowed types.
+
+The following .NET types are permitted in `ConstrainedLanguage` mode. Users can
+get properties, invoke methods, and convert objects to these types.
+
+Allowed types:
+
+- `[adsi]`
+- `[adsisearcher]`
+- `[Alias]`
+- `[AllowEmptyCollection]`
+- `[AllowEmptyString]`
+- `[AllowNull]`
+- `[ArgumentCompleter]`
+- `[array]`
+- `[bigint]`
+- `[bool]`
+- `[byte]`
+- `[char]`
+- `[cimclass]`
+- `[cimconverter]`
+- `[ciminstance]`
+- `[CimSession]`
+- `[cimtype]`
+- `[CmdletBinding]`
+- `[cultureinfo]`
+- `[datetime]`
+- `[decimal]`
+- `[double]`
+- `[DscLocalConfigurationManager]`
+- `[DscProperty]`
+- `[DscResource]`
+- `[float]`
+- `[guid]`
+- `[hashtable]`
+- `[int]`
+- `[int16]`
+- `[int32]`
+- `[int64]`
+- `[ipaddress]`
+- `[IPEndpoint]`
+- `[long]`
+- `[mailaddress]`
+- `[Microsoft.PowerShell.Commands.ModuleSpecification]`
+- `[NullString]`
+- `[Object[]]`
+- `[ObjectSecurity]`
+- `[OutputType]`
+- `[Parameter]`
+- `[PhysicalAddress]`
+- `[pscredential]`
+- `[pscustomobject]`
+- `[PSDefaultValue]`
+- `[pslistmodifier]`
+- `[psobject]`
+- `[psprimitivedictionary]`
+- `[PSTypeNameAttribute]`
+- `[regex]`
+- `[sbyte]`
+- `[securestring]`
+- `[single]`
+- `[string]`
+- `[SupportsWildcards]`
+- `[switch]`
+- `[timespan]`
+- `[uint16]`
+- `[uint32]`
+- `[uint64]`
+- `[uri]`
+- `[ValidateCount]`
+- `[ValidateDrive]`
+- `[ValidateLength]`
+- `[ValidateNotNull]`
+- `[ValidateNotNullOrEmpty]`
+- `[ValidatePattern]`
+- `[ValidateRange]`
+- `[ValidateScript]`
+- `[ValidateSet]`
+- `[ValidateTrustedData]`
+- `[ValidateUserDrive]`
+- `[version]`
+- `[void]`
+- `[WildcardPattern]`
+- `[wmi]`
+- `[wmiclass]`
+- `[wmisearcher]`
+- `[X500DistinguishedName]`
+- `[X509Certificate]`
+- `[xml]`
+
+Only the following COM object types are permitted:
+
+- `Scripting.Dictionary`
+- `Scripting.FileSystemObject`
+- `VBScript.RegExp`
+
+Special cases:
+
+- `[ref]` - Casting an object to type `[ref]` or
+  `[Management.Automation.PSReference]` is not permitted. Other uses are
+  permitted.
+- `[ordered]` - The `[ordered] @{}` expression is permitted and creates an
+  object of type `[Collections.Specialized.OrderedDictionary]`. However,
+  accessing methods of the object or directly instantiating an
+  **OrderedDictionary** is not permitted.
+
+### `NoLanguage` mode
+
+PowerShell `NoLanguage` mode disables PowerShell scripting language completely.
+You can&#x27;t run scripts or use variables. You can only run native commands and
+cmdlets.
+
+Beginning in PowerShell 7.2, the `New-Object` cmdlet is disabled in
+`NoLanguage` mode when system lockdown is configured.
+
+## See also
+
+- [about_Session_Configuration_Files][03]
+- [about_Session_Configurations][04]
+
+&lt;!-- link references --&gt;
+[01]: /powershell/scripting/learn/remoting/jea/session-configurations
+[02]: about_Member-Access_Enumeration.md
+[03]: about_Session_Configuration_Files.md
+[04]: about_Session_Configurations.md
+[05]: xref:Microsoft.PowerShell.Core.New-PSSessionConfigurationFile
+###Microsoft Learn URL###
+https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_language_modes/?view=powershell-5.1
+</pre></html>

@@ -1,0 +1,1108 @@
+<!doctype html><html lang="ja"><meta charset="utf-8"><pre class="record-source">###KnowledgeNo###
+PS51-WS2022-2026-3960
+###FormatID###
+PS51-WS2022
+###CreatedAt###
+2026-08-01 00:00
+###UpdatedAt###
+2026-08-01 00:00
+###タイトル###
+about_WSMan_Provider
+###モジュール###
+Microsoft.WSMan.Management
+###製品###
+Windows PowerShell 5.1
+###対応OS###
+Windows Server 2022
+###日本語訳###
+# about_WSMan_Providerについて
+
+## プロバイダの名前
+
+WSMan について
+
+## ドライブです.
+
+`WSMan:`
+
+## 短編説明
+
+Web Services for Management (WS-Management) の構成情報へのアクセスを提供します.
+
+## 詳細な説明
+
+PowerShellのWSManプロバイダは,ローカルまたはリモートコンピュータのWS-Management設定データを追加,変更,削除,削除することができます.
+
+**WSMan** プロバイダーは,WS-Managementの設定を論理的にグループ化したコンディレクトリ構造を持つPowerShellドライブを公開します.これらのグループ化はコンテナとして知られています.
+
+Windows PowerShell 3.0からスタートして, **WSMan** プロバイダーは **OutputBufferingMode**などのセッション構成の新しいプロパティをサポートするために更新されました.セッション構成は, のプラグインディレクトリに項目として表示されます.`WSMan:`ドライブとプロパティは,各セッション設定のアイテムとして表示されます.
+
+**WSMan**プロバイダーは,この記事に記載されている以下のcmdletsをサポートしています.
+
+[Get-Location][05] - [Set-Location][08] - [Get-Item][04] - [Get-ChildItem][03] - [New-Item][06] - [Remove-Item][07]
+
+&gt; [!NOTE] &gt;  のコマンドを使用することができます.`WSMan:`新しい &gt; 属性の値を変更するドライブです.しかし,あなたは  を使えません.`WSMan:`PowerShell 2.0でWindows PowerShell 3.0で導入された &gt;変更プロパティをドライブする.エラーが発生しないが,コマンドは有効ではありません.これらの設定を変更するには, Windows PowerShell 3.0で **WSMan**ドライブを使用します.
+
+### WSManの組織:ドライブ
+
+- **クライアント**:WS-Managementクライアントのさまざまな側面を設定できます.設定情報はレジストリに保存されます.
+
+**サービス**:WS-Managementサービスの様々な側面を設定できます.設定情報はレジストリに保存されます.
+
+&gt; [!NOTE] &gt;サービス設定は,サーバー設定とも呼ばれています.
+
+**Shell**:WS-Management shellの様々な側面を設定できます.例えば,リモートシェルアクセス (**AllowRemoteShellAccess**) を許可する設定や最大限の同時利用者 (**MaxConcurrentUsers**) を設定できます.
+
+リスナーとは,メッセージを送信・受信するためにWS-Managementプロトコルを実装する管理サービスです.
+
+**プラグイン**:プラグインは,WS-Managementサービスによってロードされ,さまざまな機能を提供するために使用されます.
+
+- イベント転送プラグイン - Microsoft.PowerShellプラグイン - Windows Management Instrumentation (WMI) プロバイダープラグイン
+
+この3つのプラグインはイベント転送,構成,およびWMIアクセスをサポートします.
+
+**ClientCertificate**: クライアント証明書を作成して設定できます.WS-Management クライアントが証明書認証を使用するように設定されたときにクライアント証明書は使用されます.
+
+### WSMan Provider のディレクトリ・ヒエラルキ
+
+ローカルコンピュータのWSManプロバイダのディレクトリ階層は以下の通りです.
+
+```
+WSMan:\localhost
+   \Client
+   \Service
+   \Shell
+   \Listener
+      \&lt;Specific_Listener&gt;
+   \Plugin
+      \Event Forwarding Plugin
+         \InitializationParameters
+         \Resources
+             \Security
+      \Microsoft.PowerShell
+         \InitializationParameters
+         \Resources
+             \Security
+      \WMI Provider
+         \InitializationParameters
+         \Resources
+             \Security
+   \ClientCertificate
+```
+
+遠隔コンピュータのWSManプロバイダのディレクトリ階層は,ローカルコンピュータと同じです.しかし,遠隔コンピュータの設定設定にアクセスするには, [Connect-WSMan][09] を使用して遠隔コンピュータに接続する必要があります.遠隔コンピュータに接続すると,遠隔コンピュータの名前がプロバイダーに表示されます.
+
+```
+WSMan:\&lt;Remote_Computer_Name&gt;
+```
+
+## WSManをナビゲートする:ドライブ
+
+このコマンドは,という文字を使用します.`Set-Location`cmdletで現在の位置を  に変更します.`WSMan:`ドライブです.
+
+```powershell
+Set-Location WSMan:
+```
+
+ファイルシステムドライブに戻るには,ドライブ名を入力します.例えば,入力します.
+
+```powershell
+Set-Location C:
+```
+
+### 遠隔システムストアへのナビゲーション
+
+このコマンドは,という文字を使用します.`Set-Location`現在の位置をリモートシステムストア位置のルーツ位置に変更するには,バックスラッシュを使用します.`\`進めるか,進めるか.`/`のレベルを示唆する.`WSMan:`ドライブです.
+
+```powershell
+Set-Location -Path  WSMan:\SERVER01
+```
+
+&gt;!NOTE] &gt;上記のコマンドは,リモートシステムへの接続が既に存在していると仮定します.
+
+## WSManのコンテンツを表示する:ドライブ
+
+このコマンドは,という文字を使用します.`Get-ChildItem`ローカルホストのストア位置にあるWS-Managementストアを表示するにはcmdletを表示します.
+
+```powershell
+Get-ChildItem -Path WSMan:\Localhost
+```
+
+に居るなら`WSMan:`ドライブ名も省略できます.
+
+このコマンドは,という文字を使用します.`Get-ChildItem`CMdlet は,リモートコンピュータ&quot;SERVER01&quot;のストア位置でWS-Management ストアを表示する.
+
+```powershell
+Get-ChildItem -Path WSMan:\SERVER01
+```
+
+&gt;!NOTE] &gt;上記のコマンドは,リモートシステムへの接続が既に存在していると仮定します.
+
+## WSMan のアイテム値設定:ドライブ
+
+を用いることができます.`Set-Item` の設定を変更するcmdlet`WSMan:`次の例では,すべてのホストを&quot;contoso.com&quot;と補足した&quot;contoso.com&quot;で受け入れられるように**TrustedHosts**の値を設定します.
+
+```powershell
+
+# You do not need to specify the -Path parameter name when using Set-Item.
+PS WSMan:\localhost\Client&gt; Set-Item .\TrustedHosts -Value &quot;*.contoso.com&quot;
+```
+
+   `Set-Item`cmdlet は追加のパラメータをサポートします.`-Concatenate`次の例では,旧値に新しい値&quot;*.domain2.com&quot;を添加します.`TrustedHost:`
+
+```powershell
+Set-Item WSMan:\localhost\Client\TrustedHosts *.domain2.com -Concatenate
+```
+
+## WSMan のアイテムを作成する:ドライブ
+
+### 新しい聴衆を創り出すこと
+
+   `New-Item`cmdlet はプロバイダードライブ内のアイテムを作成します.各プロバイダには,あなたが作成できる異なるアイテムタイプがあります.  内の`WSMan:`ドライブでは, _Listeners_ を作成できますが,リモートリクエストを受け取り応答するように設定します.次のコマンドは,  を使って新しいHTTP リスナーを作成します.`New-Item`cmdletです.
+
+```powershell
+New-Item -Path WSMan:\localhost\Listener -Address * -Transport http -Force
+```
+
+### 新しいプラグインを作成する
+
+このコマンドは,WS-Managementサービスのためのプラグインを作成します.
+
+```powershell
+$newItemSplat = @{
+    Path = &#x27;WSMan:\localhost\Plugin&#x27;
+    Plugin = &#x27;TestPlugin&#x27;
+    FileName = &quot;$Env:SystemRoot\system32\WsmWmiPl.dll&quot;
+    Resource = &#x27;http://schemas.dmtf.org/wbem/wscim/2/cim-schema&#x27;
+    SDKVersion = 1
+    Capability = &#x27;Get&#x27;, &#x27;Put&#x27;, &#x27;Invoke&#x27;, &#x27;Enumerate&#x27;
+    XMLRenderingType = &#x27;text&#x27;
+}
+New-Item @newItemSplat
+```
+
+### 新しいリソースエントリを作成する
+
+このコマンドは,  のリソース入力を作成します.`Resources`のディレクトリの目録`TestPlugin`このコマンドは,a  を仮定する.`TestPlugin`独立コマンドを使用して作成されました.
+
+```powershell
+$newItemSplat = @{
+    Path = &#x27;WSMan:\localhost\Plugin\TestPlugin\Resources&#x27;
+    ResourceUri = &#x27;http://schemas.dmtf.org/wbem/wscim/3/cim-schema&#x27;
+    Capability = &quot;Enumerate&quot;
+}
+New-Item @newItemSplat
+```
+
+# about_WSMan_Providerについて
+
+### 資源のための新しいセキュリティエントリを作成する
+
+このコマンドは,セキュリティディレクトリにセキュリティエントリを作成します.`Resource_5967683`このコマンドでは,リソース入力が別のコマンドを使用して作成されたと仮定します.
+
+```powershell
+$path = &quot;WSMan:\localhost\Plugin\TestPlugin\Resources\Resource_5967683&quot;
+$newItemSplat = @{
+    Path = &quot;$path\Security&quot;
+    Sddl = &quot;O:NSG:BAD:P(A;;GA;;;BA)S:P(AU;FA;GA;;;WD)(AU;SA;GWGX;;;WD)&quot;
+}
+New-Item @newItemSplat
+```
+
+### 新しいクライアント証明書を作成する
+
+このコマンドは,WS-Management クライアントが使用できる **ClientCertificate** エントリを作成します.新しい **ClientCertificate** は, **ClientCertificate** ディレクトリの下に として表示されます.`ClientCertificate_1234567890`すべてのパラメータは必須です.発行者は発行証明書の指紋である必要があります.
+
+```powershell
+$cred = Get-Credential
+$newItemSplat = @{
+    Path = &#x27;WSMan:\localhost\ClientCertificate&#x27;
+    Issuer = &#x27;1b3fd224d66c6413fe20d21e38b304226d192dfe&#x27;
+    URI = &#x27;wmicimv2/*&#x27;
+    Credential = $cred
+}
+New-Item @newItemSplat
+```
+
+### 新しい初期化パラメータを作成する
+
+このコマンドは,初期化パラメータを作成し, という名前で命名します.`testparametername`の内側にある`InitializationParameters`このコマンドは,  の文字が  の文字であることを前提としています.`TestPlugin`独立コマンドを使用して作成されました.
+
+```powershell
+$newItemSplat = @{
+    Path = &#x27;WSMan:\localhost\Plugin\TestPlugin\InitializationParameters&#x27;
+    ParamName = &#x27;testparametername&#x27;
+    ParamValue = &#x27;testparametervalue&#x27;
+}
+New-Item @newItemSplat
+```
+
+## ダイナミックパラメータ
+
+ダイナミックパラメータは,PowerShellプロバイダーによって追加されるcmdletパラメータであり,プロバイダーが有効なドライブでcmdletが使用されている場合にのみ利用可能である.
+
+### アドレス \&lt;String\&gt;
+
+このオーディエンスが作成されたアドレスを指定します.値は以下のいずれかかもしれません.
+
+文字列&quot;*&quot; (ワイルドカード文字 ()`*`) は,すべてのネットワークアダプターのすべてのIPアドレスを結合させるようにします.) -文字文字列&quot;IP:&quot;が IPv4 ドットドット-デシマルの形式または IPv6 クローンされたヘクサデシマルの形式で有効なIPアドレスに続く. -文字列&quot;MAC:&quot;がアダプターの MACアドレスに続く.例えば: MAC:32-a3-58-90-be-cc.
+
+&gt; [!NOTE] &gt; Listener を作成する際に Address 値が設定されます.
+
+#### Cmdlets はサポートされています
+
+- [新項目] [06]
+
+### 能力 \&lt;数値数\&gt;
+
+_Plug-ins_で作業する際,このパラメータは,このUniform Resource Identifier (URI) でサポートされている操作を指定します.URIがサポートする各種類の操作に対して,一つ入力を作成する必要があります.操作がサポートしている場合,特定の操作のための有効な属性を指定できます.
+
+これらの属性には **SupportsFiltering**と **SupportsFragment**が含まれています.
+
+- **Create**: URIで作成操作がサポートされています. - **SupportFragment**属性は,作成操作がコンセプトをサポートしている場合で使用されます. - **SupportFiltering**属性は,作成操作には有効ではありませんし, &quot;誤り&quot;に設定する必要があります.
+
+&gt; [!NOTE] &gt;この操作は,Shell操作もサポートされている場合,URIでは有効ではありません.
+
+- **Delete**: URIでは削除操作がサポートされています. - **SupportFragment**属性は,削除操作がコンセプトをサポートしている場合で使用されます. - **SupportFiltering**属性は,削除操作には有効ではありませんし, &quot;誤り&quot;に設定する必要があります.
+
+&gt; [!NOTE] &gt;この操作は,Shell操作もサポートされている場合,URIでは有効ではありません.
+
+- **数値化**:URIでは数値化操作がサポートされています. - **SupportFragment**属性は,数値化操作ではサポートされていませんが,偽に設定する必要があります. - **SupportFiltering**属性は有効で,プラグインがフィルタリングをサポートしている場合は,この属性は&quot;True&quot;に設定する必要があります.
+
+&gt; [!NOTE] &gt;この操作は,Shell操作もサポートされている場合,URIでは有効ではありません.
+
+- **Get**:URIでGet操作がサポートされています. - **SupportFragment**属性は,Get操作がコンセプトをサポートしている場合で使用されます. - **SupportFiltering**属性はGet操作には有効ではなく&quot;,誤り&quot;に設定する必要があります.
+
+&gt; [!NOTE] &gt;この操作は,Shell操作もサポートされている場合,URIでは有効ではありません.
+
+**Invoke**:URIでは,呼び出し操作がサポートされています. - **SupportFragment**属性は,呼び出し操作ではサポートされていませんが,偽りに設定されるべきです. - **SupportFiltering**属性は有効ではなく&quot;,偽り&quot;に設定する必要があります.
+
+&gt; [!NOTE] &gt;この操作は,Shell操作もサポートされている場合,URIでは有効ではありません.
+
+**Put**:URIではPut操作がサポートされています. - **SupportFragment**属性は,Put操作がコンセプトをサポートしている場合で使用されます. - **SupportFiltering**属性は,Put操作で有効ではなく&quot;,False&quot;に設定する必要があります.
+
+&gt; [!NOTE] &gt;この操作は,Shell操作もサポートされている場合,URIでは有効ではありません.
+
+- ** サブスクライブ**: URIでは サブスクライブ操作がサポートされています. - ** サブスクライブ操作ではSupportFragment**属性はサポートされていませんが,Falseに設定する必要があります. - ** サブスクライブ操作ではSupportFiltering**属性は有効ではなく&quot;,False&quot;に設定する必要があります.
+
+&gt; [!NOTE] &gt;この操作は,Shell操作もサポートされている場合,URIでは有効ではありません.
+
+- **Shell**:URIでシェル操作がサポートされています. - **SupportFragment**属性はシェル操作ではサポートされていませんが, &quot;False&quot; に設定する必要があります. - **SupportFiltering**属性はシェル操作では有効ではなく&quot;,False&quot;に設定する必要があります.
+
+[!NOTE] &gt;この操作は,他の操作もサポートされている場合,URIに対して有効ではありません.Shell操作が URIのために設定されている場合,Get, Put, Create, &gt; Delete, Invoke, and Enumerate操作は,Shellを管理するためにWS-Management (WinRM) サービス内で内部で処理されます.その結果, &gt;プラグインは操作を処理することはできません.
+
+#### Cmdlets はサポートされています
+
+- [新項目] [06]
+
+### 証明書指紋 \&lt;String\&gt;
+
+サービス証明書の指紋を指定します.
+
+この値は,証明書の指紋フィールドの2桁の六桁の文字列を表しています.この動作を実行する許可を有するユーザーアカウントのデジタル公開鍵証明書 (X509) を指定します.証明書はクライアント証明書ベースの認証で使用されます.彼らはローカルユーザーアカウントにのみマッピングできますし,ドメインアカウントでは動作しません.証明書の指紋を取得するには,  を使用します.`Get-Item`    `Get-ChildItem`PowerShell のcmdlets を表示します.`Cert:`ドライブです.
+
+#### Cmdlets はサポートされています
+
+- [新項目] [06]
+
+### 有効に\&lt;Boolean\&gt;
+
+オーディナーが有効か無効か指定します.デフォルトは Trueです.
+
+#### Cmdlets サポートされている
+
+- [新項目] [06]
+
+### ファイル名 (プラグイン) \&lt;String\&gt;
+
+このエントリに挿入された環境変数は,要求が受信されたときにユーザーの文脈に拡張されます.各ユーザーが同じ環境変数の異なるバージョンを持つ可能性があるので,各ユーザーは異なるプラグインを持つ可能性があります.このエントリは空白であり,有効なプラグインを指さなければなりません.
+
+#### Cmdlets サポートされている
+
+- [新項目] [06]
+
+### ホスト名 \&lt;String\&gt;
+
+WS-Management (WinRM) サービスを実行しているコンピュータのホスト名を指定します.
+
+値は完全に資格のあるドメイン名,IPv4またはIPv6文字列,またはワイルドカード文字でなければならない.
+
+#### Cmdlets サポートされている
+
+- [新項目] [06]
+
+# about_WSMan_Providerについて
+
+### 発行者 \&lt;String\&gt;
+
+証明書を発行した認証機関の名前を指定します.
+
+#### Cmdlets サポートされている
+
+- [新項目] [06]
+
+### プラグイン \&lt;\&gt;WS-Management プラグインはネイティブダイナミックリンクライブラリ (DLL) です.
+
+WSW-Management Plug-in APIは,サポートされているリソースURIと操作のための特定のAPIを実装することによってプラグインを書き込む機能を提供します.プラグインがWS-Management (WinRM) サービスまたはInternet Information Services (IIS) に設定された後,プラグインはそれぞれWS-Management ホストまたはIIS ホストにロードされます.リモートリモートリクエストは,これらのプラグインエントリーポイントに転送され,操作を実行します.
+
+#### Cmdlets サポートされている
+
+- [新項目] [06]
+
+### ポート \&lt;未署名短整数\&gt;
+
+このリスナーが作成されたTCPポートを指定します. 1から65535までの任意の値を指定できます.
+
+#### Cmdlets サポートされている
+
+- [新項目] [06]
+
+### 資源 \&lt;String\&gt;
+
+管理操作または値を代表するエンドポイントを指定します.サービスが1つまたは複数のリソースを暴露し,一部のリソースには1つ以上のインスタンスを含むことができます.管理リソースはWMIクラスまたはデータベーステーブルに類似し,インスタンスはクラスのインスタンスのようなもの,またはテーブル内の行に類似します.例えば, **Win32_LogicalDisk**クラスがリソースを表します. `Win32_LogicalDisk=&quot;C:\\&quot;`資源の特定の例です.
+
+統一リソース識別子 (URI) には,前文字とリソースへの経路が含まれています.例えば:
+
+`http://schemas.microsoft.com/wbem/wsman/1/wmi/root/cimv2/Win32_LogicalDisk`
+
+`http://schemas.dmtf.org/wbem/wscim/1/cim-schema/2/CIM_NumericSensor`
+
+#### Cmdlets サポートされている
+
+- [新項目] [06]
+
+### 資源 \&lt;String\&gt;
+
+コンピュータ上のディスクやプロセスなどの特定の種類のリソースを識別するユニフォーム・リソース識別子 (URI) を指定します.
+
+A URIは,前音とリソースへの経路で構成されています.例えば:
+
+`http://schemas.microsoft.com/wbem/wsman/1/wmi/root/cimv2/Win32_LogicalDisk`
+
+`http://schemas.dmtf.org/wbem/wscim/1/cim-schema/2/CIM_NumericSensor`
+
+#### Cmdlets サポートされている
+
+- [新項目] [06]
+
+### SDKVersion \&lt;String\&gt;
+
+WS-ManagementのプラグインSDKのバージョンを指定します.唯一の有効値は1.です.
+
+#### Cmdlets サポートされている
+
+- [新項目] [06]
+
+### テーマ \&lt;String\&gt;
+
+証明書で識別されたエンティティを指定します.
+
+#### Cmdlets サポートされている
+
+- [新項目] [06]
+
+### 輸送 \&lt;String\&gt;
+
+WS-Management プロトコルのリクエストと応答を送信・受信に使用する輸送を指定します.値は **http**または **https**である必要があります.
+
+注: リスナーを作成するときに,輸送値が設定されます.
+
+#### Cmdlets サポートされている
+
+- [新項目] [06]
+
+### URI \&lt;String\&gt;
+
+Sddlパラメータの値に基づいてアクセスが許可されている URIを識別します.
+
+#### Cmdlets サポートされている
+
+- [新項目] [06]
+
+### URLPrefix \&lt;String\&gt;
+
+HTTPまたはHTTPSの要求を受け入れるURL前文字です.これは文字列のみを含む文字列です.`[a-z]`     `[A-Z]`     `[9-0]`強調 () をする.`_`) とバックスラッシュ () をしている.`/`文字列はバックスラッシュ () で始まるか終わらない.`/`コンピュータの名前が&quot;サンプルのコンピュータ&quot;である場合,WS-Management クライアントは&quot;&quot;を指定します.`http://SampleMachine/URLPrefix`目的地アドレスに記載されています.
+
+#### Cmdlets サポートされている
+
+- [新項目] [06]
+
+### 値 \&lt;String\&gt;
+
+初期化パラメータの値を指定します.これは設定オプションを指定するために使用されるプラグイン特有の値です.
+
+#### Cmdlets サポートされている
+
+- [新項目] [06]
+
+### XMLRenderingType \&lt;String\&gt;
+
+XMLが**WSMAN_DATA**オブジェクトを通じてプラグインに転送されるフォーマットを指定します.以下の値は有効です:
+
+テキスト: XML への入ってくるデータは **WSMAN_DATA_TYPE_TEXT** 構造に含まれています.これは XML を **PCWSTR** メモリーバッファとして表現しています. - XMLReader: XML への入ってくるデータは **WSMAN_DATA_TYPE_WS_XML_READER** 構造に含まれています.これは XML を **XmlReader** オブジェクトとして表現しています.これは&quot;WebServices.h&quot;ヘッダーファイルで定義されています.
+
+#### Cmdlets サポートされている
+
+- [新項目] [06]
+
+## パイプラインを利用して
+
+プロバイダー・cmdlets はパイプライン入力を受け入れます.あなたは,プロバイダーデータを1cmdlet から別のプロバイダー・cmdlet に送信することによって,パイプラインを使用して作業を簡素化できます.プロバイダー・cmdlets でパイプラインを使用する方法については,この記事全体に cmdlet 参照を参照してください.
+
+## 支援を受けること
+
+Windows PowerShell 3.0 から始め,ファイルシステムドライブでそれらのcmdletsがどのように振る舞うかを説明するプロバイダー cmdlets のためのカスタマイズされたヘルプトピックを取得できます.
+
+ファイルシステムドライブに定番化されたヘルプトピックを取得するには,ファイルシステムドライブに [Get-Help][02] コマンドを実行するか,  を使用してください.`-Path`[Get-Help][02]のパラメータを指定するファイルシステムドライブ.
+
+```powershell
+Get-Help Get-ChildItem
+```
+
+```powershell
+Get-Help Get-ChildItem -Path WSMan:
+```
+
+## また, を参照してください.
+
+- [about_Providers][01]
+
+リンク参照 --&gt; [01]: ../..//Microsoft.PowerShell.Core/About/about_Providers.md [02]: xref:Microsoft.PowerShell.Core.Get-Help [03]: xref:Microsoft.PowerShell.Management.Get-ChildItem [04]: xref:Microsoft.PowerShell.Management.Get-Item [05]: xref:Microsoft.PowerShell.Management.Get-Location [06]: xref:Microsoft.PowerShell.Management.New-Item [07]: xref:Microsoft.ManMan.PowerShell.Management.Remove-Item [08]: xref:Microsoft.PowerShell.Management.Set-Location [09]: xref:Microsoft.WS.Management.Connect-
+###英語原文###
+# about_WSMan_Provider
+
+## Provider name
+
+WSMan
+
+## Drives
+
+`WSMan:`
+
+## Short description
+
+Provides access to Web Services for Management (WS-Management) configuration
+information.
+
+## Detailed description
+
+The **WSMan** provider for PowerShell lets you add, change, clear, and delete
+WS-Management configuration data on local or remote computers.
+
+The **WSMan** provider exposes a PowerShell drive with a directory structure
+that corresponds to a logical grouping of WS-Management configuration settings.
+These groupings are known as containers.
+
+Beginning in Windows PowerShell 3.0, the **WSMan** provider has been updated to
+support new properties for session configurations, such as
+**OutputBufferingMode**. The session configurations appear as items in the
+Plugin directory of the `WSMan:` drive and the properties appear as items in
+each session configuration.
+
+The **WSMan** provider supports the following cmdlets, which are covered in
+this article.
+
+- [Get-Location][05]
+- [Set-Location][08]
+- [Get-Item][04]
+- [Get-ChildItem][03]
+- [New-Item][06]
+- [Remove-Item][07]
+
+&gt; [!NOTE]
+&gt; You can use commands in the `WSMan:` drive to change the values of the new
+&gt; properties. However, you cannot use the `WSMan:` drive in PowerShell 2.0 to
+&gt; change properties that are introduced in Windows PowerShell 3.0. Although no
+&gt; error is generated, the commands are not effective To change these settings,
+&gt; use the **WSMan** drive in Windows PowerShell 3.0.
+
+### Organization of the WSMan: Drive
+
+- **Client**: You can configure various aspects of the WS-Management client.
+  The configuration information is stored in the registry.
+
+- **Service**: You can configure various aspects of the WS-Management service.
+  The configuration information is stored in the registry.
+
+  &gt; [!NOTE]
+  &gt; Service configuration is sometimes referred to as Server configuration.
+
+- **Shell**: You can configure various aspects of the WS-Management shell, such
+  as the setting to allow remote shell access (**AllowRemoteShellAccess**) and
+  the maximum number of concurrent users allowed (**MaxConcurrentUsers**).
+
+- **Listener**: You can create and configure a listener. A listener is a
+  management service that implements the WS-Management protocol to send and to
+  receive messages.
+
+- **Plugin**: Plug-ins are loaded and used by the WS-Management service to
+  provide various functions. By default, PowerShell provides three plug-ins:
+
+  - The Event Forwarding plug-in.
+  - The Microsoft.PowerShell plug-in.
+  - The Windows Management Instrumentation (WMI) Provider plug-in.
+
+  These three plug-ins support event forwarding, configuration, and WMI access.
+
+- **ClientCertificate**: You can create and configure a client certificate. A
+  client certificate is used when the WS-Management client is configured to use
+  certificate authentication.
+
+### Directory Hierarchy of the WSMan Provider
+
+The directory hierarchy of the WSMan provider for the local computer is as
+follows.
+
+```
+WSMan:\localhost
+   \Client
+   \Service
+   \Shell
+   \Listener
+      \&lt;Specific_Listener&gt;
+   \Plugin
+      \Event Forwarding Plugin
+         \InitializationParameters
+         \Resources
+             \Security
+      \Microsoft.PowerShell
+         \InitializationParameters
+         \Resources
+             \Security
+      \WMI Provider
+         \InitializationParameters
+         \Resources
+             \Security
+   \ClientCertificate
+```
+
+The directory hierarchy of the WSMan provider for a remote computer is the same
+as a local computer. However, in order to access the configuration settings of
+a remote computer, you need to make a connection to the remote computer using
+[Connect-WSMan][09]. Once a
+connection is made to a remote computer, the name of the remote computer shows
+up in the provider.
+
+```
+WSMan:\&lt;Remote_Computer_Name&gt;
+```
+
+## Navigating the WSMan: drive
+
+This command uses the `Set-Location` cmdlet to change the current location to
+the `WSMan:` drive.
+
+```powershell
+Set-Location WSMan:
+```
+
+To return to a file system drive, type the drive name. For example, type.
+
+```powershell
+Set-Location C:
+```
+
+### Navigating to a remote system store location
+
+This command uses the `Set-Location` command to change the current location to
+the root location in the remote system store location. Use a backslash `\` or
+forward slash `/` to indicate a level of the `WSMan:` drive.
+
+```powershell
+Set-Location -Path  WSMan:\SERVER01
+```
+
+&gt; [!NOTE]
+&gt; The above command assume that a connection to the remote system already
+&gt; exists.
+
+## Displaying the contents of the WSMan: drive
+
+This command uses the `Get-ChildItem` cmdlet to display the WS-Management
+stores in the Localhost store location.
+
+```powershell
+Get-ChildItem -Path WSMan:\Localhost
+```
+
+If you are in the `WSMan:` drive, you can omit the drive name.
+
+This command uses the `Get-ChildItem` cmdlet to display the WS-Management
+stores in the remote computer &quot;SERVER01&quot; store location.
+
+```powershell
+Get-ChildItem -Path WSMan:\SERVER01
+```
+
+&gt; [!NOTE]
+&gt; The above command assume that a connection to the remote system already
+&gt; exists.
+
+## Setting the value of items in the WSMan: drive
+
+You can use the `Set-Item` cmdlet to change configuration settings in the
+`WSMan:` drive. The following example sets the **TrustedHosts** value to accept
+all hosts with the suffix &quot;contoso.com&quot;.
+
+```powershell
+
+# You do not need to specify the -Path parameter name when using Set-Item.
+PS WSMan:\localhost\Client&gt; Set-Item .\TrustedHosts -Value &quot;*.contoso.com&quot;
+```
+
+The `Set-Item` cmdlet supports an additional parameter `-Concatenate` that
+appends a value instead of changing it. The following example will append a new
+value &quot;*.domain2.com&quot; to the old value stored in `TrustedHost:`
+
+```powershell
+Set-Item WSMan:\localhost\Client\TrustedHosts *.domain2.com -Concatenate
+```
+
+## Creating items in the WSMan: drive
+
+### Creating a new listener
+
+The `New-Item` cmdlet creates items within a provider drive. Each provider has
+different item types that you can create. In the `WSMan:` drive, you can create
+_Listeners_ which you configure to receive and respond to remote requests. The
+following command creates a new HTTP listener using the `New-Item` cmdlet.
+
+```powershell
+New-Item -Path WSMan:\localhost\Listener -Address * -Transport http -Force
+```
+
+### Creating a new plug-in
+
+This command creates (registers) a plug-in for the WS-Management service.
+
+```powershell
+$newItemSplat = @{
+    Path = &#x27;WSMan:\localhost\Plugin&#x27;
+    Plugin = &#x27;TestPlugin&#x27;
+    FileName = &quot;$Env:SystemRoot\system32\WsmWmiPl.dll&quot;
+    Resource = &#x27;http://schemas.dmtf.org/wbem/wscim/2/cim-schema&#x27;
+    SDKVersion = 1
+    Capability = &#x27;Get&#x27;, &#x27;Put&#x27;, &#x27;Invoke&#x27;, &#x27;Enumerate&#x27;
+    XMLRenderingType = &#x27;text&#x27;
+}
+New-Item @newItemSplat
+```
+
+### Creating a new resource entry
+
+This command creates a resource entry in the `Resources` directory of a
+`TestPlugin`. This command assumes that a `TestPlugin` has been created using a
+separate command.
+
+```powershell
+$newItemSplat = @{
+    Path = &#x27;WSMan:\localhost\Plugin\TestPlugin\Resources&#x27;
+    ResourceUri = &#x27;http://schemas.dmtf.org/wbem/wscim/3/cim-schema&#x27;
+    Capability = &quot;Enumerate&quot;
+}
+New-Item @newItemSplat
+```
+
+# about_WSMan_Provider
+
+### Creating a new security entry for a resource
+
+This command creates a security entry in the Security directory of
+`Resource_5967683` (a specific resource). This command assumes that the
+resource entry has been created using a separate command.
+
+```powershell
+$path = &quot;WSMan:\localhost\Plugin\TestPlugin\Resources\Resource_5967683&quot;
+$newItemSplat = @{
+    Path = &quot;$path\Security&quot;
+    Sddl = &quot;O:NSG:BAD:P(A;;GA;;;BA)S:P(AU;FA;GA;;;WD)(AU;SA;GWGX;;;WD)&quot;
+}
+New-Item @newItemSplat
+```
+
+### Creating a new Client Certificate
+
+This command creates **ClientCertificate** entry that can be used by the
+WS-Management client. The new **ClientCertificate** will show up under the
+**ClientCertificate** directory as `ClientCertificate_1234567890`. All of the
+parameters are mandatory. The **Issuer** needs to be thumbprint of the issuers
+certificate.
+
+```powershell
+$cred = Get-Credential
+$newItemSplat = @{
+    Path = &#x27;WSMan:\localhost\ClientCertificate&#x27;
+    Issuer = &#x27;1b3fd224d66c6413fe20d21e38b304226d192dfe&#x27;
+    URI = &#x27;wmicimv2/*&#x27;
+    Credential = $cred
+}
+New-Item @newItemSplat
+```
+
+### Creating a new Initialization Parameter
+
+This command creates an Initialization parameter named `testparametername`
+in the `InitializationParameters` directory. This command assumes that the
+`TestPlugin` has been created using a separate command.
+
+```powershell
+$newItemSplat = @{
+    Path = &#x27;WSMan:\localhost\Plugin\TestPlugin\InitializationParameters&#x27;
+    ParamName = &#x27;testparametername&#x27;
+    ParamValue = &#x27;testparametervalue&#x27;
+}
+New-Item @newItemSplat
+```
+
+## Dynamic parameters
+
+Dynamic parameters are cmdlet parameters that are added by a PowerShell
+provider and are available only when the cmdlet is being used in the
+provider-enabled drive.
+
+### Address \&lt;String\&gt;
+
+Specifies the address for which this listener was created. The value can be one
+of the following:
+
+- The literal string &quot;*&quot;. (The wildcard character (`*`) makes the command bind
+  all the IP addresses on all the network adapters.)
+- The literal string &quot;IP:&quot; followed by a valid IP address in either IPv4
+  dotted-decimal format or in IPv6 cloned-hexadecimal format.
+- The literal string &quot;MAC:&quot; followed by the MAC address of an adapter.
+  For example: MAC:32-a3-58-90-be-cc.
+
+&gt; [!NOTE]
+&gt; The Address value is set when creating a Listener.
+
+#### Cmdlets supported
+
+- [New-Item][06]
+
+### Capability \&lt;Enumeration\&gt;
+
+When working with _Plug-ins_ this parameter specifies an operation that is
+supported on this Uniform Resource Identifier (URI). You have to create one
+entry for each type of operation that the URI supports. You can specify
+any valid attributes for a given operation, if the operation supports it.
+
+These attributes include **SupportsFiltering** and **SupportsFragment**.
+
+- **Create**: Create operations are supported on the URI.
+  - The **SupportFragment**  attribute is used if the Create operation
+    supports the concept.
+  - The **SupportFiltering** attribute is NOT valid for Create operations and
+    should be set to &quot;False&quot;.
+
+  &gt; [!NOTE]
+  &gt; This operation is not valid for a URI if Shell operations are also
+  &gt; supported.
+
+- **Delete**: Delete operations are supported on the URI.
+  - The **SupportFragment** attribute is used if the Delete operation supports
+    the concept.
+  - The **SupportFiltering** attribute is NOT valid for Delete operations and
+    should be set to &quot;False&quot;.
+
+  &gt; [!NOTE]
+  &gt; This operation is not valid for a URI if Shell operations are also
+  &gt; supported.
+
+- **Enumerate**: Enumerate operations are supported on the URI.
+  - The **SupportFragment** attribute is NOT supported for Enumerate operations
+    and should be set to False.
+  - The **SupportFiltering** attribute is valid, and if the plug-in supports
+    filtering, this attribute should be set to &quot;True&quot;.
+
+  &gt; [!NOTE]
+  &gt; This operation is not valid for a URI if Shell operations are also
+  &gt; supported.
+
+- **Get**: Get operations are supported on the URI.
+  - The **SupportFragment** attribute is used if the Get operation supports the
+    concept.
+  - The **SupportFiltering** attribute is NOT valid for Get operations and
+    should be set to &quot;False&quot;.
+
+  &gt; [!NOTE]
+  &gt; This operation is not valid for a URI if Shell operations are also
+  &gt; supported.
+
+- **Invoke**: Invoke operations are supported on the URI.
+  - The **SupportFragment** attribute is not supported for Invoke operations
+    and should be set to False.
+  - The **SupportFiltering** attribute is not valid and should be set to
+    &quot;False&quot;.
+
+  &gt; [!NOTE]
+  &gt; This operation is not valid for a URI if Shell operations are also
+  &gt; supported.
+
+- **Put**: Put operations are supported on the URI.
+  - The **SupportFragment** attribute is used if the Put operation supports the
+    concept.
+  - The **SupportFiltering** attribute is not valid for Put operations and
+    should be set to &quot;False&quot;.
+
+  &gt; [!NOTE]
+  &gt; This operation is not valid for a URI if Shell operations are also
+  &gt; supported.
+
+- **Subscribe**: Subscribe operations are supported on the URI.
+  - The **SupportFragment** attribute is not supported for Subscribe operations
+    and should be set to False.
+  - The **SupportFiltering** attribute is not valid for Subscribe operations
+    and should be set to &quot;False&quot;.
+
+  &gt; [!NOTE]
+  &gt; This operation is not valid for a URI if Shell operations are also
+  &gt; supported.
+
+- **Shell**: Shell operations are supported on the URI.
+  - The **SupportFragment** attribute is not supported for Shell operations and
+    should be set to &quot;False&quot;.
+  - The **SupportFiltering** attribute is not valid for Shell operations and
+    should be set to &quot;False&quot;.
+
+  &gt; [!NOTE]
+  &gt; This operation is not valid for a URI if ANY other operation is also
+  &gt; supported. If a Shell operation is configured for a URI, Get, Put, Create,
+  &gt; Delete, Invoke, and Enumerate operations are processed internally within
+  &gt; the WS-Management (WinRM) service to manage shells. As a result, the
+  &gt; plug-in cannot handle the operations.
+
+#### Cmdlets supported
+
+- [New-Item][06]
+
+### CertificateThumbprint \&lt;String\&gt;
+
+Specifies the thumbprint of the service certificate.
+
+This value represents the string of two-digit hexadecimal values in the
+Thumbprint field of the certificate. It specifies the digital public key
+certificate (X509) of a user account that has permission to perform this
+action. Certificates are used in client certificate-based authentication. They
+can be mapped only to local user accounts, and they do not work with domain
+accounts. To get a certificate thumbprint, use the `Get-Item` or
+`Get-ChildItem` cmdlets in the PowerShell `Cert:` drive.
+
+#### Cmdlets supported
+
+- [New-Item][06]
+
+### Enabled \&lt;Boolean\&gt;
+
+Specifies whether the listener is enabled or disabled. The default is True.
+
+#### Cmdlets Supported
+
+- [New-Item][06]
+
+### FileName (Plugin) \&lt;String\&gt;
+
+Specifies the file name of the operations plug-in. Any environment variables
+that are put in this entry will be expanded in the users&#x27; context when a
+request is received. Because each user could have a different version of the
+same environment variable, each user could have a different plug-in. This entry
+cannot be blank and must point to a valid plug-in.
+
+#### Cmdlets Supported
+
+- [New-Item][06]
+
+### HostName \&lt;String\&gt;
+
+Specifies the host name of the computer on which the WS-Management (WinRM)
+service is running.
+
+The value must be a fully qualified domain name, an IPv4 or IPv6 literal
+string, or a wildcard character.
+
+#### Cmdlets Supported
+
+- [New-Item][06]
+
+# about_WSMan_Provider
+
+### Issuer \&lt;String\&gt;
+
+Specifies the name of the certification authority that issued the certificate.
+
+#### Cmdlets Supported
+
+- [New-Item][06]
+
+### Plugin \&lt;\&gt; WS-Management plug-ins are native dynamic link libraries (DLLs)
+
+that plug in to and extend the functionality of WS-Management . The
+WSW-Management Plug-in API provides functionality that enables a user to write
+plug-ins by implementing certain APIs for supported resource URIs and
+operations. After the plug-ins are configured for either the WS-Management
+(WinRM) service or for Internet Information Services (IIS), the plug-ins are
+loaded in the WS-Management host or in the IIS host, respectively. Remote
+requests are routed to these plug-in entry points to perform operations.
+
+#### Cmdlets Supported
+
+- [New-Item][06]
+
+### Port \&lt;Unsigned Short Integer\&gt;
+
+Specifies the TCP port for which this listener is created. You can specify any
+value from 1 through 65535.
+
+#### Cmdlets Supported
+
+- [New-Item][06]
+
+### Resource \&lt;String\&gt;
+
+Specifies an endpoint that represents a distinct type of management operation
+or value. A service exposes one or more resources, and some resources can have
+more than one instance. A management resource is similar to a WMI class or to a
+database table, and an instance is similar to an instance of the class or to a
+row in the table. For example, the **Win32_LogicalDisk** class represents a
+resource. `Win32_LogicalDisk=&quot;C:\\&quot;` is a specific instance of the resource.
+
+A Uniform Resource Identifier (URI) contains a prefix and a path to a resource.
+For example:
+
+`http://schemas.microsoft.com/wbem/wsman/1/wmi/root/cimv2/Win32_LogicalDisk`
+
+`http://schemas.dmtf.org/wbem/wscim/1/cim-schema/2/CIM_NumericSensor`
+
+#### Cmdlets Supported
+
+- [New-Item][06]
+
+### Resource \&lt;String\&gt;
+
+Specifies the Uniform Resource Identifier (URI) that identifies a specific type
+of resource, such as a disk or a process, on a computer.
+
+A URI consists of a prefix and a path to a resource. For example:
+
+`http://schemas.microsoft.com/wbem/wsman/1/wmi/root/cimv2/Win32_LogicalDisk`
+
+`http://schemas.dmtf.org/wbem/wscim/1/cim-schema/2/CIM_NumericSensor`
+
+#### Cmdlets Supported
+
+- [New-Item][06]
+
+### SDKVersion \&lt;String\&gt;
+
+Specifies the version of the WS-Management plug-in SDK. The only valid value is
+1.
+
+#### Cmdlets Supported
+
+- [New-Item][06]
+
+### Subject \&lt;String\&gt;
+
+Specifies the entity that is identified by the certificate.
+
+#### Cmdlets Supported
+
+- [New-Item][06]
+
+### Transport \&lt;String\&gt;
+
+Specifies the transport to use to send and receive WS-Management protocol
+requests and responses. The value must be either **http** or **https**.
+
+Note: The Transport value is set when creating a Listener.
+
+#### Cmdlets Supported
+
+- [New-Item][06]
+
+### URI \&lt;String\&gt;
+
+Identifies the URI for which access is authorized based on the value of the
+Sddl parameter.
+
+#### Cmdlets Supported
+
+- [New-Item][06]
+
+### URLPrefix \&lt;String\&gt;
+
+A URL prefix on which to accept HTTP or HTTPS requests. This is a string
+containing only the characters `[a-z]`, `[A-Z]`, `[9-0]`,
+underscore (`_`) and backslash (`/`). The string must not start with or end
+with a backslash (`/`). For example, if the computer name is &quot;SampleComputer&quot;,
+the WS-Management client would specify `http://SampleMachine/URLPrefix`
+in the destination address.
+
+#### Cmdlets Supported
+
+- [New-Item][06]
+
+### Value \&lt;String\&gt;
+
+Specifies the value of an initialization parameter, which is a plug-in-specific
+value that is used to specify configuration options.
+
+#### Cmdlets Supported
+
+- [New-Item][06]
+
+### XMLRenderingType \&lt;String\&gt;
+
+Specifies the format in which XML is passed to plug-ins through the
+**WSMAN_DATA** object. The following are valid values:
+
+- Text: Incoming XML data is contained in a **WSMAN_DATA_TYPE_TEXT** structure,
+  which represents the XML as a **PCWSTR** memory buffer.
+- XMLReader: Incoming XML data is contained in a
+  **WSMAN_DATA_TYPE_WS_XML_READER** structure, which represents the XML as an
+  **XmlReader** object, which is defined in the &quot;WebServices.h&quot; header file.
+
+#### Cmdlets Supported
+
+- [New-Item][06]
+
+## Using the pipeline
+
+Provider cmdlets accept pipeline input. You can use the pipeline to simplify
+task by sending provider data from one cmdlet to another provider cmdlet.
+To read more about how to use the pipeline with provider cmdlets, see the
+cmdlet references provided throughout this article.
+
+## Getting help
+
+Beginning in Windows PowerShell 3.0, you can get customized help topics for
+provider cmdlets that explain how those cmdlets behave in a file system drive.
+
+To get the help topics that are customized for the file system drive, run a
+[Get-Help][02] command in a file system drive or use the `-Path` parameter of
+[Get-Help][02] to specify a file system drive.
+
+```powershell
+Get-Help Get-ChildItem
+```
+
+```powershell
+Get-Help Get-ChildItem -Path WSMan:
+```
+
+## See also
+
+- [about_Providers][01]
+
+&lt;!-- link references --&gt;
+[01]: ../../Microsoft.PowerShell.Core/About/about_Providers.md
+[02]: xref:Microsoft.PowerShell.Core.Get-Help
+[03]: xref:Microsoft.PowerShell.Management.Get-ChildItem
+[04]: xref:Microsoft.PowerShell.Management.Get-Item
+[05]: xref:Microsoft.PowerShell.Management.Get-Location
+[06]: xref:Microsoft.PowerShell.Management.New-Item
+[07]: xref:Microsoft.PowerShell.Management.Remove-Item
+[08]: xref:Microsoft.PowerShell.Management.Set-Location
+[09]: xref:Microsoft.WSMan.Management.Connect-WSMan
+###Microsoft Learn URL###
+https://learn.microsoft.com/en-us/powershell/module/microsoft.wsman.management/about/about_wsman_provider/?view=powershell-5.1
+</pre></html>

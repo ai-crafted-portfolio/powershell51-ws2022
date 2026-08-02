@@ -1,0 +1,941 @@
+<!doctype html><html lang="ja"><meta charset="utf-8"><pre class="record-source">###KnowledgeNo###
+PS51-WS2022-2026-0624
+###FormatID###
+PS51-WS2022
+###CreatedAt###
+2026-08-01 00:00
+###UpdatedAt###
+2026-08-01 00:00
+###タイトル###
+New-DedupSchedule
+###モジュール###
+deduplication
+###製品###
+Windows PowerShell 5.1
+###対応OS###
+Windows Server 2022
+###日本語訳###
+# 新教課程のスケジュール
+
+## SYNOPSISは,データデプリカレーションスケジュールを作成します.
+
+## SYNTAXは,のシンタックスです.
+
+```
+New-DedupSchedule [-Name] &lt;String&gt; [-Type] &lt;Type&gt; [-DurationHours &lt;UInt32&gt;] [-Disable]
+ [-StopWhenSystemBusy] [-Memory &lt;UInt32&gt;] [-Cores &lt;UInt32&gt;] [-Priority &lt;Priority&gt;]
+ [-InputOutputThrottle &lt;UInt32&gt;] [-InputOutputThrottleLevel &lt;InputOutputThrottleLevel&gt;]
+ [-Start &lt;DateTime&gt;] [-Days &lt;DayOfWeek[]&gt;] [-Full] [-ReadOnly]
+ [-CimSession &lt;CimSession[]&gt;] [-ThrottleLimit &lt;Int32&gt;] [-AsJob] [&lt;CommonParameters&gt;]
+```
+
+## 記述は,
+
+   `New-DedupSchedule`cmdlet はデータデプリカレーションスケジュールを作成します.このcmdlet は,データデプリカレーションスケジュールをカスタマイズするために使用できる **DeduplicationSchedule** オブジェクトを返します.このcmdlet は,デプリカレーションスケジュールを作成するためにデフォルト設定を使用します.指定していないパラメータのために.
+
+データのデプリカレーションの次のタイプの仕事を実行するスケジュールを作成できます.
+
+ - -`Optimization`この作業は,ボリュームのデータデプリカルネーションポリシーに従ってファイルのデプリカルネーションと圧縮を実行します.ファイルの最初の最適化後に,そのファイルが修正され,再び最適化のためのデータデプリカルネーションポリシーの限界を満たす場合は,ファイルは再び最適化されます. - `GarbageCollection`この仕事は,ボリュームのデータを削除または変更して処理し,もはや参照されていないデータ塊をクリアします.ゴミ収集の仕事は,以前削除または論理的にオーバーライトされた最適化されたコンテンツを処理し,利用可能なボリュームフリースペースを作成します.最適化されたファイルが削除または新しいデータによってオーバーライトされた場合,ボリュームストアにある古いデータはすぐに削除されません.ゴミ収集はデフォルトで毎週実行されます.ゴミ収集は処理密集した作業です.したがって,削除負荷が限界に達し,この作業タイプを手動で実行するか,またはオフ時間のためにスケジュールする必要があります. - `Scrubbing`この仕事は,データ完整性の検証中に発見されるデータ腐敗を処理し,可能な腐敗修復を行い,スクラッシングレポートを作成します. - `Unoptimization`この作業は,ボリューム上のすべての最適化されたファイルでデータのデデプリケーションを解除します.成功したデプリケーション作業の終了後,サーバーはボリュームからすべてのデータデプリケーションメタデータを削除します.
+
+詳細については, [データデドプリカレーションをインストールして設定する]を参照してください.https://technet.microsoft.com/library/hh831434.aspx) をTechNetで公開しました.
+
+## 例えは
+
+### 例1: ゴミ収集の仕事のためにデータデプリカレーションスケジュールを作成します.
+
+```powershell
+$params = @{
+    Days          = &#x27;Sunday&#x27;
+    DurationHours = 5
+    Name          = &#x27;OffHoursGC&#x27;
+    Priority      = &#x27;Normal&#x27;
+    Start         = &#x27;08:00&#x27;
+    Type          = &#x27;GarbageCollection&#x27;
+}
+New-DedupSchedule @params
+```
+
+このコマンドは,データデプリカレーションスケジュールを作成し, の **Name** を表示します.`OffHoursGC`減倍作業のタイプは`GarbageCollection`仕事は毎週実行される予定です.`Sunday`**日**パラメータで,仕事が ** スタート** になります.`08:00`そして,走って行け`Normal`**優先度**.コマンドは, の **DurationHours**を指定します.`5`サーバーが5時間後に仕事をキャンセルさせる場合,プロセスが終わっていない場合.
+
+### 例2:スクラブ作業のためにデータデプリカレーションスケジュールを作成します.
+
+```powershell
+$params = @{
+    Days               = @(
+        &#x27;Monday&#x27;
+        &#x27;Tuesday&#x27;
+        &#x27;Wednesday&#x27;
+        &#x27;Thursday&#x27;
+        &#x27;Friday&#x27;
+    )
+    DurationHours      = 6
+    Name               = &#x27;OffHoursScrub&#x27;
+    Priority           = &#x27;Normal&#x27;
+    Start              = &#x27;23:00&#x27;
+    StopWhenSystemBusy = $true
+    Type               = &#x27;Scrubbing&#x27;
+}
+New-DedupSchedule @params
+```
+
+このコマンドは,データデプリカレーションスケジュールを作成します.`Scrubbing`**Type** job name という名前で`OffHoursScrub`命令は,スクラブ作業を で開始します.`23:00`**StopWhenSystemBusy** パラメータは,システムが忙しいときにサーバーが仕事を停止し,後で再起動することを指定します. **DurationHours** パラメータは,サーバーが 以降の仕事をキャンセルすることを指定します.`6`プロセスが終わっていない場合,時間です. 仕事は時間によって実行されます.`Normal`**優先順位**
+
+### 例3:最適化作業のためのデータデプリカレーションスケジュールを作成します.
+
+```powershell
+$params = @{
+    Days          = @(
+        &#x27;Mon&#x27;
+        &#x27;Tues&#x27;
+        &#x27;Wed&#x27;
+        &#x27;Thurs&#x27;
+        &#x27;Fri&#x27;
+    )
+    DurationHours = 9
+    Name          = &#x27;MyWeekdayOptimization&#x27;
+    Start         = &#x27;08:00&#x27;
+    Type          = &#x27;Optimization&#x27;
+}
+New-DedupSchedule @params
+```
+
+このコマンドは,データデプリカレーションスケジュールを作成します.`Optimization`**Type** job name という名前で`MyWeekdayOptimization`最適化作業は,平日の夕方毎に通常の優先順位で実行されます.`08:00`**DurationHours** パラメータは,サーバーが 以降の仕事をキャンセルすることを指定します.`9`プロセスが終わっていない場合,数時間です.
+
+## パラメータは
+
+### - バイトとして
+
+このパラメータを使用して,完成するのに時間がかかるコマンドを実行します.
+
+cmdlet はすぐに,その仕事を代表するオブジェクトを返して,コマンドプロンプトを表示します.作業が完了する間,セッションで作業を続けることができます.作業を管理するには,  を使ってください.`*-Job`職の結果を入手するには, [Receive-Job] (cmdlets) を使ってください.https://go.microsoft.com/fwlink/?LinkID=113372) cmdlet.
+
+Windows PowerShell の背景の仕事に関する詳細については, [about_Jobs] (※) を参照してください.https://go.microsoft.com/fwlink/?LinkID=113251) でした.
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -CimSession でした
+
+遠隔セッションまたは遠隔コンピュータでcmdletを実行します.コンピュータ名またはセッションオブジェクトを入力してください.例えば,[New-CimSession] (/powershell/module/cimcmdlets/new-cimsession) または [Get-CimSession]の出力です.https://go.microsoft.com/fwlink/p/?LinkId=227966標準的には,ローカルコンピュータの現在のセッションです.
+
+```yaml
+Type: Microsoft.Management.Infrastructure.CimSession[]
+Parameter Sets: (All)
+Aliases: Session
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Cores
+
+作業所で使用される物理核の最大割合の数列を指定します.
+
+```yaml
+Type: System.UInt32
+Parameter Sets: (All)
+Aliases: MaximumCoresPercentage
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### - 日々
+
+サーバがデータデプリカレーション作業を実行する週間の数列を指定します.このパラメータの受け入れ可能な値は:
+
+ - -`Monday` - -`Tuesday` - -`Wednesday` - -`Thursday` - -`Friday` - -`Saturday` - -`Sunday`
+
+```yaml
+Type: System.DayOfWeek[]
+Parameter Sets: (All)
+Aliases: 
+Accepted values: Sunday, Monday, Tuesday, Wednesday, Thursday, Friday, Saturday
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+# 新教課程のスケジュール
+
+### - 障害者
+
+サーバーは,あなたが作成した直後にデータデプリカスケジュールを無効にすることを示します.サーバーは,あなたが**Start**パラメータで指定した時点でデータデプリカスケジュールを実行しません.データデプリカスケジュールを無効にした後,スケジュールを有効にするには**Set-DedupSchedule** cmdlet を使用できます.
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -DurationHours
+
+サーバーがタスクをキャンセルする前に実行する時間数を指定します.`0`このcmdletは,データデプリカレーション作業を安全に停止し,作業をキャンセルするとサーバーが処理しているファイルに影響を与えない.
+
+```yaml
+Type: System.UInt32
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -Full
+
+廃棄物収集の仕事は,その値を指定した場合,ボリューム上の削除されたまたは参照されていないすべてのデータを解放することを示します.`GarbageCollection`**Type**パラメータでは,このパラメータを指定しない場合,システムで削除されたデータ制限が超えられた後,ゴミ収集の仕事が空き放つ.このパラメータを指定せずに定期的にゴミ収集を実行することをお勧めします.そして,月に一度このパラメータを指定して再びゴミ収集を実行します.
+
+値を指定すると,`Scrubbing`**Type**パラメータでは,スクロール作業がボリューム上のすべてのデータの整体性を検証することを表示します.このパラメータを指定していない場合は,スクロール作業は,データデプリカレーションが以前に遭遇した重要なメタデータとデータ整体性の問題をのみ検証します.このパラメータを指定せずに定期的にスクロールを実行することをお勧めします.そして,月に一度このパラメータを指定して再びスクロールを実行してください.
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -InputOutputThrottle
+
+推移作業に適用される入力/出力推移の量を指定します.推移は,推移が他のI/O密集型プロセスに干渉しないことを保証します.このパラメータの受け入れ可能な値は:0から100までの整数です.このパラメータと**InputOutputThrottleLevel**パラメータを指定すると, **InputOutputThrottle**が優先されます.
+
+```yaml
+Type: System.UInt32
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -InputOutputThrottleLevel
+
+作業が他のI/O密集型プロセスに干渉しないようにするために提供されるI/Oの量を指定します.このパラメータの受け入れ可能な値は:
+
+ - -`None` - -`Low` - -`Medium` - -`High`
+
+```yaml
+Type: InputOutputThrottleLevel
+Parameter Sets: (All)
+Aliases: 
+Accepted values: None, Low, Medium, High, Maximum
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -メモリ
+
+データデプリカレーションの作業が利用できる物理的なコンピュータメモリの最大割合を指定します.
+
+最適化職に就く場合は, から範囲を設定することをお勧めします.`15`へ`50`処理時間で実行する予定のゴミ収集とスクロール作業では,より高いメモリ消費を設定できます.`50` .
+
+```yaml
+Type: System.UInt32
+Parameter Sets: (All)
+Aliases: MaximumMemoryPercentage
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -名字は
+
+データデプリカレーションの仕事のスケジュールに名前を指定します.
+
+```yaml
+Type: System.String
+Parameter Sets: (All)
+Aliases: 
+
+Required: True
+Position: 0
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -優先順位
+
+このcmdletを使用して実行する最適化作業のCPUとI/O優先順位を設定します.StopWhenSystemBusy**パラメータを指定すると実行する作業では,このパラメータを  に設定することをお勧めします.`Low`典型的な最適化作業では,このパラメータを  に設定することをお勧めします.`Normal` .
+
+```yaml
+Type: Priority
+Parameter Sets: (All)
+Aliases: 
+Accepted values: Low, Normal, High
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -ReadOnly
+
+スクロール作業が処理し,発見した腐敗を報告するが,修理をしていないことを示します.
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -スタート
+
+この作業を開始する時間を指定します.デフォルト値は1時45分です. システムローカルに標準的な形式で日付を入力してください. 例えば `dd-MM-yyyy`(ドイツ語 \[ドイツ\]) or `MM/dd/yyyy`(英語 \[アメリカ\]).
+
+```yaml
+Type: System.DateTime
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -StopWhenSystemBusy について
+
+システムが忙しくて,サーバーが仕事を停止し,後で再起動することを表示します.このパラメータを設定すると,作業の優先順位が低いことをお勧めします.
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -ThrottleLimit
+
+cmdletを実行するために設定できる最大限の同時操作数を指定します.このパラメータを省略した場合,または の値が省略された場合.`0`入力すると,Windows PowerShell(R) は,コンピュータ上で実行されている CIM cmdlets の数に基づいて cmdlet の最適な加速度制限を計算します.加速度制限は,セッションやコンピュータにではなく,現在の cmdlet にのみ適用されます.
+
+```yaml
+Type: Int32
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Type
+
+データデプリカレーションの作業の種類を指定します.このパラメータの受け入れられる値は:です.
+
+ - -`Optimization` - -`GarbageCollection` - -`Scrubbing` - -`Unoptimization`
+
+```yaml
+Type: Type
+Parameter Sets: (All)
+Aliases: 
+Accepted values: Optimization, GarbageCollection, Scrubbing, Unoptimization
+
+Required: True
+Position: 1
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### 共通パラメーター
+
+このcmdletは,共通パラメータをサポートしています: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable.詳細については, [about_CommonParameters](を参照してください.https://go.microsoft.com/fwlink/?LinkID=113216) でした.
+
+## 輸入は
+
+### System.DateTimeは,時間についてです.
+
+### System.DayOfWeek[]
+
+### システム管理自動化 スイッチパラメータ
+
+# 新教課程のスケジュール
+
+### System.UInt32
+
+### Microsoft.PowerShell.Cmdletization.GeneratedTypes.DedupSchedule.Priority
+
+### Microsoft.PowerShell.Cmdletization.GeneratedTypes.DedupSchedule.Type
+
+## 輸出は
+
+### Microsoft.Management.Infrastructure.CimInstance は,マイクロソフトの管理,インフラストラクチャ,CimInstance について説明しています.
+
+**Microsoft.Management.Infrastructure.CimInstance** オブジェクトは,Windows Management Instrumentation (WMI) オブジェクトを表示する包装クラスです.`#`) は,元々のWMIオブジェクトの名前空間とクラス名を提供します.
+
+##  NOTES  記事ができました.
+
+## 関連リンク
+
+[Get-DedupSchedule](./Get-DedupSchedule.md) 
+
+[Remove-DedupSchedule](./Remove-DedupSchedule.md) 
+
+[Set-DedupSchedule](./Set-DedupSchedule.md) 
+###英語原文###
+# New-DedupSchedule
+
+## SYNOPSIS
+Creates a data deduplication schedule.
+
+## SYNTAX
+
+```
+New-DedupSchedule [-Name] &lt;String&gt; [-Type] &lt;Type&gt; [-DurationHours &lt;UInt32&gt;] [-Disable]
+ [-StopWhenSystemBusy] [-Memory &lt;UInt32&gt;] [-Cores &lt;UInt32&gt;] [-Priority &lt;Priority&gt;]
+ [-InputOutputThrottle &lt;UInt32&gt;] [-InputOutputThrottleLevel &lt;InputOutputThrottleLevel&gt;]
+ [-Start &lt;DateTime&gt;] [-Days &lt;DayOfWeek[]&gt;] [-Full] [-ReadOnly]
+ [-CimSession &lt;CimSession[]&gt;] [-ThrottleLimit &lt;Int32&gt;] [-AsJob] [&lt;CommonParameters&gt;]
+```
+
+## DESCRIPTION
+
+The `New-DedupSchedule` cmdlet creates a data deduplication schedule. This cmdlet returns a
+**DeduplicationSchedule** object that you can use to customize the data deduplication schedule. This
+cmdlet uses default settings to create a data deduplication schedule for the parameters that you do
+not specify.
+
+You can create a schedule to run the following types data deduplication jobs:
+
+- `Optimization` This job performs both deduplication and compression of files according data
+  deduplication policy for the volume. After initial optimization of a file, if that file is then
+  modified and again meets the data deduplication policy threshold for optimization, the file is
+  optimized again.
+- `GarbageCollection` This job processes deleted or modified data on the volume so that any data
+  chunks that are no longer referenced are cleaned up. Garbage collection jobs process previously
+  deleted or logically overwritten optimized content to create usable volume free space. When an
+  optimized file is deleted or overwritten by new data, the old data in the chunk store is not
+  immediately deleted. Garbage collection is scheduled to run weekly by default. Garbage collection
+  is a processing-intensive operation, so you should allow the deletion load to reach a threshold
+  and then manually run this job type, or schedule it for off hours.
+- `Scrubbing` This job processes data corruptions it finds during data integrity validation,
+  performs possible corruption repair, and generates a scrubbing report.
+- `Unoptimization` This job undoes data deduplication on all of the optimized files on the volume.
+  At the end of a successful unoptimization job, the server deletes all of the data deduplication
+  metadata from the volume.
+
+For more information, see
+[Install and Configure Data Deduplication](https://technet.microsoft.com/library/hh831434.aspx) on
+TechNet.
+
+## EXAMPLES
+
+### Example 1: Create a data deduplication schedule for a garbage collection job
+
+```powershell
+$params = @{
+    Days          = &#x27;Sunday&#x27;
+    DurationHours = 5
+    Name          = &#x27;OffHoursGC&#x27;
+    Priority      = &#x27;Normal&#x27;
+    Start         = &#x27;08:00&#x27;
+    Type          = &#x27;GarbageCollection&#x27;
+}
+New-DedupSchedule @params
+```
+
+This command creates a data deduplication schedule with a **Name** of `OffHoursGC`. The
+deduplication job **Type** is `GarbageCollection`. The job is scheduled to run every `Sunday` via
+the **Days** Parameter. The job will **Start** at `08:00` and run at `Normal` **Priority**. The
+command specifies **DurationHours** of `5` causing the server to cancel the job after 5 hours if the
+process has not ended.
+
+### Example 2: Create a data deduplication schedule for a scrubbing job
+
+```powershell
+$params = @{
+    Days               = @(
+        &#x27;Monday&#x27;
+        &#x27;Tuesday&#x27;
+        &#x27;Wednesday&#x27;
+        &#x27;Thursday&#x27;
+        &#x27;Friday&#x27;
+    )
+    DurationHours      = 6
+    Name               = &#x27;OffHoursScrub&#x27;
+    Priority           = &#x27;Normal&#x27;
+    Start              = &#x27;23:00&#x27;
+    StopWhenSystemBusy = $true
+    Type               = &#x27;Scrubbing&#x27;
+}
+New-DedupSchedule @params
+```
+
+This command creates a data deduplication schedule for a `Scrubbing` **Type** job named
+`OffHoursScrub`. The command starts the scrubbing job at `23:00` on each day Monday through Friday.
+The **StopWhenSystemBusy** parameter specifies that the server stops the job when the system is busy
+and retries later. The **DurationHours** parameter specifies that the server cancels the job after
+`6` hours if the process has not ended. The job will run at `Normal` **Priority**
+
+### Example 3: Create a data deduplication schedule for an optimization job
+
+```powershell
+$params = @{
+    Days          = @(
+        &#x27;Mon&#x27;
+        &#x27;Tues&#x27;
+        &#x27;Wed&#x27;
+        &#x27;Thurs&#x27;
+        &#x27;Fri&#x27;
+    )
+    DurationHours = 9
+    Name          = &#x27;MyWeekdayOptimization&#x27;
+    Start         = &#x27;08:00&#x27;
+    Type          = &#x27;Optimization&#x27;
+}
+New-DedupSchedule @params
+```
+
+This command creates a data deduplication schedule for an `Optimization` **Type** job named
+`MyWeekdayOptimization`. The optimization job runs at a normal **Priority** every weekday evening at
+`08:00`. The **DurationHours** parameter specifies that the server cancels the job after `9` hours
+if the process has not ended.
+
+## PARAMETERS
+
+### -AsJob
+
+Runs the cmdlet as a background job. Use this parameter to run commands that take a long time to
+complete.
+
+The cmdlet immediately returns an object that represents the job and then displays the command
+prompt. You can continue to work in the session while the job completes. To manage the job, use the
+`*-Job` cmdlets. To get the job results, use the
+[Receive-Job](https://go.microsoft.com/fwlink/?LinkID=113372) cmdlet.
+
+For more information about Windows PowerShell background jobs, see
+[about_Jobs](https://go.microsoft.com/fwlink/?LinkID=113251).
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -CimSession
+
+Runs the cmdlet in a remote session or on a remote computer. Enter a computer name or a session
+object, such as the output of a [New-CimSession](/powershell/module/cimcmdlets/new-cimsession) or
+[Get-CimSession](https://go.microsoft.com/fwlink/p/?LinkId=227966) cmdlet. The default is the
+current session on the local computer.
+
+```yaml
+Type: Microsoft.Management.Infrastructure.CimSession[]
+Parameter Sets: (All)
+Aliases: Session
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Cores
+
+Specifies an array of maximum percentages of physical cores that a job uses.
+
+```yaml
+Type: System.UInt32
+Parameter Sets: (All)
+Aliases: MaximumCoresPercentage
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -Days
+
+Specifies an array of days of the week on which the server runs the data deduplication job. The
+acceptable values for this parameter are:
+
+- `Monday`
+- `Tuesday`
+- `Wednesday`
+- `Thursday`
+- `Friday`
+- `Saturday`
+- `Sunday`
+
+```yaml
+Type: System.DayOfWeek[]
+Parameter Sets: (All)
+Aliases: 
+Accepted values: Sunday, Monday, Tuesday, Wednesday, Thursday, Friday, Saturday
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+# New-DedupSchedule
+
+### -Disable
+
+Indicates that the server disables the data deduplication schedule immediately after you create it.
+The server does not run the data deduplication schedule at the time that you specify in the
+**Start** parameter. After you disable a data deduplication schedule, you can use the
+**Set-DedupSchedule** cmdlet to enable the schedule.
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -DurationHours
+
+Specifies the number of hours that the server runs the task before canceling it. The value `0`
+indicates that the server runs the job to completion. This cmdlet safely stops a data deduplication
+job and does not affect the files that the server is processing when it cancels the job.
+
+```yaml
+Type: System.UInt32
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -Full
+
+Indicates that garbage collection jobs free up all deleted or unreferenced data on the volume, if
+you specify the value `GarbageCollection` for the **Type** parameter. If you do not specify this
+parameter, garbage collection jobs free up space after a system threshold of delete data is
+exceeded. We recommend that you run garbage collection regularly without specifying this parameter,
+and then once a month specify this parameter and run garbage collection again.
+
+If you specify the value `Scrubbing` for the **Type** parameter, this parameter indicates that
+scrubbing jobs validate the integrity of all data on the volume. If you do not specify this
+parameter, the scrubbing job validates only critical metadata and data integrity issues that data
+deduplication previously encountered. We recommend that you run scrubbing regularly without
+specifying this parameter, and then once a month specify this parameter and run scrubbing again.
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -InputOutputThrottle
+
+Specifies the amount of input/output throttling applied to the deduplication job. Throttling ensures
+that deduplication does not interfere with other I/O intensive processes. The acceptable values for
+this parameter are: integers from 0 to 100. If you specify this parameter and the
+**InputOutputThrottleLevel** parameter, **InputOutputThrottle** takes precedence.
+
+```yaml
+Type: System.UInt32
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -InputOutputThrottleLevel
+
+Specifies the amount of I/O throttling that the job provides to ensure that the job does not
+interfere with other I/O intensive processes. The acceptable values for this parameter are:
+
+- `None`
+- `Low`
+- `Medium`
+- `High`
+
+```yaml
+Type: InputOutputThrottleLevel
+Parameter Sets: (All)
+Aliases: 
+Accepted values: None, Low, Medium, High, Maximum
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Memory
+
+Specifies the maximum percentage of physical computer memory that the data deduplication job can
+use.
+
+For optimization jobs, we recommend that you set a range from `15` to `50`, and a higher memory
+consumption for jobs that you schedule to run when you specify the **StopWhenSystemBusy** parameter.
+For garbage collection and scrubbing jobs, which you typically schedule to run in off hours, you can
+set a higher memory consumption, such as `50`.
+
+```yaml
+Type: System.UInt32
+Parameter Sets: (All)
+Aliases: MaximumMemoryPercentage
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -Name
+
+Specifies a name for the data deduplication job schedule.
+
+```yaml
+Type: System.String
+Parameter Sets: (All)
+Aliases: 
+
+Required: True
+Position: 0
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Priority
+
+Sets the CPU and I/O priority for the optimization job that you run by using this cmdlet. For jobs
+that you run when you specify the **StopWhenSystemBusy** parameter, we recommend that you set this
+parameter to `Low`. For typical optimization jobs, we recommend that you set this parameter to
+`Normal`.
+
+```yaml
+Type: Priority
+Parameter Sets: (All)
+Aliases: 
+Accepted values: Low, Normal, High
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -ReadOnly
+
+Indicates that the scrubbing job processes and reports on corruptions that it finds but does not run
+any repair actions.
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -Start
+
+Specifies a time to start this job. The default value is 1:45am.
+Type the date in a format that is standard for the system locale, such as `dd-MM-yyyy` (German
+\[Germany\]) or `MM/dd/yyyy` (English \[United States\]).
+
+```yaml
+Type: System.DateTime
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -StopWhenSystemBusy
+
+Indicates that the server stops the job when the system is busy and retries later. We recommend that
+you specify this parameter when you set a low priority for the job.
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -ThrottleLimit
+
+Specifies the maximum number of concurrent operations that can be established to run the cmdlet. If
+this parameter is omitted or a value of `0` is entered, then Windows PowerShell(R) calculates an
+optimum throttle limit for the cmdlet based on the number of CIM cmdlets that are running on the
+computer. The throttle limit applies only to the current cmdlet, not to the session or to the
+computer.
+
+```yaml
+Type: Int32
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Type
+
+Specifies the type of data deduplication job. The acceptable values for this parameter are:
+
+- `Optimization`
+- `GarbageCollection`
+- `Scrubbing`
+- `Unoptimization`
+
+```yaml
+Type: Type
+Parameter Sets: (All)
+Aliases: 
+Accepted values: Optimization, GarbageCollection, Scrubbing, Unoptimization
+
+Required: True
+Position: 1
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### CommonParameters
+
+This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable,
+-InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose,
+-WarningAction, and -WarningVariable. For more information, see
+[about_CommonParameters](https://go.microsoft.com/fwlink/?LinkID=113216).
+
+## INPUTS
+
+### System.DateTime
+
+### System.DayOfWeek[]
+
+### System.Management.Automation.SwitchParameter
+
+# New-DedupSchedule
+
+### System.UInt32
+
+### Microsoft.PowerShell.Cmdletization.GeneratedTypes.DedupSchedule.Priority
+
+### Microsoft.PowerShell.Cmdletization.GeneratedTypes.DedupSchedule.Type
+
+## OUTPUTS
+
+### Microsoft.Management.Infrastructure.CimInstance
+
+The **Microsoft.Management.Infrastructure.CimInstance** object is a wrapper class that displays
+Windows Management Instrumentation (WMI) objects. The path after the pound sign (`#`) provides the
+namespace and class name for the underlying WMI object.
+
+## NOTES
+
+## RELATED LINKS
+
+[Get-DedupSchedule](./Get-DedupSchedule.md)
+
+[Remove-DedupSchedule](./Remove-DedupSchedule.md)
+
+[Set-DedupSchedule](./Set-DedupSchedule.md)
+###Microsoft Learn URL###
+https://learn.microsoft.com/en-us/powershell/module/deduplication/new-dedupschedule/?view=windowsserver2022-ps
+</pre></html>

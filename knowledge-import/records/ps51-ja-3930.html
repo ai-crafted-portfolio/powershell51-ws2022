@@ -1,0 +1,1385 @@
+<!doctype html><html lang="ja"><meta charset="utf-8"><pre class="record-source">###KnowledgeNo###
+PS51-WS2022-2026-3930
+###FormatID###
+PS51-WS2022
+###CreatedAt###
+2026-08-01 00:00
+###UpdatedAt###
+2026-08-01 00:00
+###タイトル###
+Select-Object
+###モジュール###
+Microsoft.PowerShell.Utility
+###製品###
+Windows PowerShell 5.1
+###対応OS###
+Windows Server 2022
+###日本語訳###
+# Select-Object を選択する
+
+## SYNOPSISは,物体または物体属性を選択します.
+
+## SYNTAXは,のシンタックスです.
+
+### デフォルトパラメーター (デフォルト)
+
+```
+Select-Object [[-Property] &lt;Object[]&gt;] [-InputObject &lt;psobject&gt;]
+ [-ExcludeProperty &lt;string[]&gt;] [-ExpandProperty &lt;string&gt;] [-Unique] [-Last &lt;int&gt;]
+ [-First &lt;int&gt;] [-Skip &lt;int&gt;] [-Wait] [&lt;CommonParameters&gt;]
+```
+
+### SkipLastParameter は,SkipLastParameter を表示する
+
+```
+Select-Object [[-Property] &lt;Object[]&gt;] [-InputObject &lt;psobject&gt;]
+ [-ExcludeProperty &lt;string[]&gt;] [-ExpandProperty &lt;string&gt;] [-Unique] [-SkipLast &lt;int&gt;]
+ [&lt;CommonParameters&gt;]
+```
+
+### IndexParameter について
+
+```
+Select-Object [-InputObject &lt;psobject&gt;] [-Unique] [-Wait] [-Index &lt;int[]&gt;]
+ [&lt;CommonParameters&gt;]
+```
+
+## 記述は,
+
+   `Select-Object`cmdlet は,オブジェクトまたはオブジェクトの集合の指定された性質を選択します.また,ユニークなオブジェクト,指定されたオブジェクト数,またはアレイ内の指定された位置にあるオブジェクトを選択することができます.
+
+コレクションからオブジェクトを選択するには, **First**, **Last**, **Unique**, **Skip**, **Index** パラメータを使用します.オブジェクトのプロパティを選択するには, **Property** パラメータを使用します.プロパティを選択すると, `Select-Object`指定された性質のみを有する新しいオブジェクトを返します.
+
+Windows PowerShell 3.0 から始め,`Select-Object`命令が使用されていないオブジェクトを作成し処理するのを防ぐ最適化機能が含まれています.
+
+を使用するときに`Select-Object`コマンドパイプライン内の **First**または **Index**パラメータで,PowerShellは,選択された数値に達するとすぐにオブジェクトを生成するコマンドを停止します.この最適化行動をオフにするには, **Wait**パラメータを使用します.
+
+## 例えは
+
+### 例1: 属性によってオブジェクトを選択します
+
+この例では,プロセスオブジェクトの **Name**, **Id**,およびワーキングセット (**WS**) 属性を持つオブジェクトを作成します.
+
+```powershell
+Get-Process | Select-Object -Property ProcessName, Id, WS
+```
+
+### 例2: 属性によってオブジェクトを選択し,結果をフォーマットします
+
+この例では,コンピュータのプロセスが使用するモジュールに関する情報を入手します.`Get-Process`コンピュータに処理を入れる cmdlet.
+
+という文字を使っています.`Select-Object`cmdlet で,数列を入力する`[System.Diagnostics.ProcessModule]`各  の **Modules** 属性に含まれるインスタンスのように.`System.Diagnostics.Process`によるインスタンスの出力です.`Get-Process` .
+
+のプロパティパラメータを表示する`Select-Object`cmdlet ではプロセス名も選択します.これは,  を追加します.`ProcessName`**NoteProperty** to every  において,すべての 資産を注目にします.`[System.Diagnostics.ProcessModule]`インスタンスを埋め,現在のプロセスに含まれる **ProcessName**の値に記入します.
+
+そして,ついに,`Format-List`cmdlet はリスト内の各プロセスの名前とモジュールを表示するために使用されます.
+
+```powershell
+Get-Process Explorer |
+    Select-Object -Property ProcessName -ExpandProperty Modules |
+    Format-List
+```
+
+```Output
+ProcessName       : explorer
+ModuleName        : explorer.exe
+FileName          : C:\WINDOWS\explorer.exe
+BaseAddress       : 140697278152704
+ModuleMemorySize  : 3919872
+EntryPointAddress : 140697278841168
+FileVersionInfo   : File:             C:\WINDOWS\explorer.exe
+                    InternalName:     explorer
+                    OriginalFilename: EXPLORER.EXE.MUI
+                    FileVersion:      10.0.17134.1 (WinBuild.160101.0800)
+                    FileDescription:  Windows Explorer
+                    Product:          Microsoft Windows Operating System
+                    ProductVersion:   10.0.17134.1
+...
+```
+
+### 例3: 最も多くのメモリを使用するプロセスを選択します.
+
+この例では,最も多くのメモリを使用している5つのプロセスを得ます.`Get-Process`cmdlet はコンピュータ上のプロセスを入手します.`Sort-Object`cmdlet はメモリ (ワークセット) の利用に応じてプロセスを分類し,`Select-Object`cmdlet は,生成されたオブジェクトの数列の最後の5つのメンバーのみを選択します.
+
+ を含むコマンドでは,TheWait**パラメータが要求されません.`Sort-Object`cmdlet because  というのは`Sort-Object`すべてのオブジェクトを処理し,コレクションを返します.`Select-Object`最適化は,処理時に個別にオブジェクトを返却するコマンドのみで利用できます.
+
+```powershell
+Get-Process | Sort-Object -Property WS | Select-Object -Last 5
+```
+
+```Output
+Handles  NPM(K)    PM(K)      WS(K) VS(M)   CPU(s)     Id ProcessName
+-------  ------    -----      ----- -----   ------     -- -----------
+2866     320       33432      45764   203   222.41   1292 svchost
+577      17        23676      50516   265    50.58   4388 WINWORD
+826      11        75448      76712   188    19.77   3780 Ps
+1367     14        73152      88736   216    61.69    676 Ps
+1612     44        66080      92780   380   900.59   6132 INFOPATH
+```
+
+### 例4: アレンジからユニークな文字を選択します
+
+この例では,  の **Unique** パラメータを使用しています.`Select-Object`文字の配列からユニークな文字を得るために.
+
+```powershell
+&quot;a&quot;,&quot;b&quot;,&quot;c&quot;,&quot;a&quot;,&quot;a&quot;,&quot;a&quot; | Select-Object -Unique
+```
+
+```Output
+a
+b
+c
+```
+
+### 例5:  を使って示例5`-Unique`他のパラメータで
+
+**Unique**パラメータは,他の値をフィルタリングする`Select-Object`例えば,数列の最初の数項を選択するために**First**パラメータを使用すると, **Unique** は数列全体ではなく,選択された値のみに適用されます.
+
+```powershell
+&quot;a&quot;,&quot;a&quot;,&quot;b&quot;,&quot;c&quot; | Select-Object -First 2 -Unique
+```
+
+```Output
+a
+```
+
+この例では, **First** は,  を選択します.`&quot;a&quot;,&quot;a&quot;`アレイの最初の2つの項として使用します. **Unique**は,`&quot;a&quot;,&quot;a&quot;`そして返還します.`a`唯一の値として.
+
+### 例 6:イベントログで最新のイベントと古いイベントを選択します.
+
+この例では,Windows PowerShellイベントログに最初の (最新の) と最後の (古い) イベントが表示されます.
+
+`Get-EventLog`Windows PowerShell ログですべてのイベントが記録され,Windows PowerShell ログに保存されます.`$a`変数です.`$a`にパイプを通してきます.`Select-Object`cmdlet. のcmdlet.`Select-Object` のイベントの配列からイベントを選択するには, **Index** パラメータを使用します.`$a`最初のイベントのインデックスは0で,最後のイベントのインデックスは,  の項目の数である.`$a`1.マイナス1
+
+```powershell
+$a = Get-EventLog -LogName &quot;Windows PowerShell&quot;
+$a | Select-Object -Index 0, ($A.Count - 1)
+```
+
+### 例7:最初のオブジェクトを除くすべてのものを選択します.
+
+この例では,Servers.txtファイルに記載されている各コンピュータに,最初のものを除く新しいPSSessionが作成されます.
+
+`Select-Object`コンピュータ名リストの最初のコンピュータを除いてすべてのコンピュータを選択します.結果となるコンピュータ名リストは,  の **ComputerName** パラメータの値として設定されます.`New-PSSession`cmdletです.
+
+```powershell
+New-PSSession -ComputerName (Get-Content Servers.txt | Select-Object -Skip 1)
+```
+
+### 例8: ファイル名を変更して,複数のファイルを選択してレビューする
+
+この例では,読み込みのみ属性を持つテキストファイルの基名に &quot;-ro&quot;サフイクスを追加し,最初の5つのファイルを表示し,ユーザが効果のサンプルを見ることができる.
+
+`Get-ChildItem`**ReadOnly**のダイナミックパラメータを使用して読み込みのみのファイルを取得します.`Rename-Item`cmdletで,ファイルに名前変更ができます.このファイルは,  の **PassThru** パラメータを使用します.`Rename-Item`改名したファイルを送信するには,  に転送します.`Select-Object`cmdletで,最初の5を表示する.
+
+の等候パラメータを表示する`Select-Object`PowerShell が  を停止することを妨げる.`Get-ChildItem`このパラメータがなければ,最初の5つの読み込みのみファイルのみが改名される.
+
+```powershell
+Get-ChildItem *.txt -ReadOnly |
+    Rename-Item -NewName {$_.BaseName + &quot;-ro.txt&quot;} -PassThru |
+    Select-Object -First 5 -Wait
+```
+
+# Select-Object を選択する
+
+### 例 9: -ExpandPropertyパラメータの複雑さを表示します
+
+この例では **ExpandProperty**パラメータの複雑さを示しています.
+
+発生した出力は,数列のであったことに注意してください.`[System.Int32]`インスタンスは **Output View**の標準フォーマットルに適合する.これは任意の _Expanded_ 属性に適用されます.出力されたオブジェクトが特定の標準フォーマットを持っている場合,拡張された属性は表示されない可能性があります.
+
+```powershell
+
+# Create a custom object to use for the Select-Object example.
+$object = [pscustomobject]@{Name=&quot;CustomObject&quot;;List=@(1,2,3,4,5)}
+
+# Use the ExpandProperty parameter to Expand the property.
+$object | Select-Object -ExpandProperty List -Property Name
+```
+
+```Output
+1
+2
+3
+4
+5
+```
+
+```powershell
+
+# The output did not contain the Name property, but it was added successfully.
+
+# Use Get-Member to confirm the Name property was added and populated.
+$object | Select-Object -ExpandProperty List -Property Name | Get-Member -MemberType Properties
+```
+
+```Output
+   TypeName: System.Int32
+
+Name        MemberType   Definition
+----        ----------   ----------
+Name        NoteProperty string Name=CustomObject
+```
+
+### 例10: 物件にカスタムプロパティを作成する
+
+次の例では,使用する例を示しています.`Select-Object`任意のオブジェクトにカスタムプロパティを追加する.存在しないプロパティ名を指定すると,`Select-Object`送信されたすべてのオブジェクトにNotePropertyとしてそのプロパティを作成します.
+
+```powershell
+$customObject = 1 | Select-Object -Property MyCustomProperty
+$customObject.MyCustomProperty = &quot;New Custom Property&quot;
+$customObject
+```
+
+```Output
+MyCustomProperty
+----------------
+New Custom Property
+```
+
+### 例 11: 各InputObjectの計算されたプロパティを作成する.
+
+この例では,使用する例を示しています.`Select-Object`入力に計算された属性を追加する. 設定された属性に **ScriptBlock** を渡すと,  が発生します.`Select-Object`通過した各オブジェクトの表現を評価し,結果を輸出に追加する. **ScriptBlock** の内では,  を使えます.`$_`パイプライン内の現在のオブジェクトを参照する変数です.
+
+デフォルトでは, `Select-Object`資産の名前として**ScriptBlock**文字列を使用します.Hashtable** を使用して,各オブジェクトに追加されたカスタムプロパティとして **ScriptBlock** の出力をラベル付けることができます. 対象に複数の計算されたプロパティを追加できます.  に転送された各オブジェクトに複数の計算されたプロパティを追加できます.`Select-Object` .
+
+```powershell
+
+# Create a calculated property called $_.StartTime.DayOfWeek
+Get-Process | Select-Object -Property ProcessName,{$_.StartTime.DayOfWeek}
+```
+
+```Output
+ProcessName  $_.StartTime.DayOfWeek
+----         ----------------------
+alg                       Wednesday
+ati2evxx                  Wednesday
+ati2evxx                   Thursday
+...
+```
+
+```powershell
+
+# Add a custom property to calculate the size in KiloBytes of each FileInfo
+
+# object you pass in. Use the pipeline variable to divide each file&#x27;s length by
+
+# 1 KiloBytes
+$size = @{Label=&quot;Size(KB)&quot;;Expression={$_.Length/1KB}}
+
+# Create an additional calculated property with the number of Days since the
+
+# file was last accessed. You can also shorten the key names to be &#x27;l&#x27;, and &#x27;e&#x27;,
+
+# or use Name instead of Label.
+$days = @{l=&quot;Days&quot;;e={((Get-Date) - $_.LastAccessTime).Days}}
+
+# You can also shorten the name of your label key to &#x27;l&#x27; and your expression key
+
+# to &#x27;e&#x27;.
+Get-ChildItem $PSHOME -File | Select-Object Name, $size, $days
+```
+
+```Output
+Name                        Size(KB)        Days
+----                        --------        ----
+Certificate.format.ps1xml   12.5244140625   223
+Diagnostics.Format.ps1xml   4.955078125     223
+DotNetTypes.format.ps1xml   134.9833984375  223
+```
+
+### 例 12: 計算された性質を使用せずにハッシュテーブルキーを選択します.
+
+この例では,どのように利用できるかを示しています.`Select-Object`計算された性質を持つハッシュタブルオブジェクトのキー-値ペアを表示する.各計算された性質は,新しい性質のラベルをキーの表示名と,そのキーの値を回収する表現として指定します.
+
+```powershell
+@{ name = &#x27;a&#x27; ; weight = 7 } | Select-Object -Property @(
+    @{ Label = &#x27;Name&#x27; ; Expression = { $_.name } }
+    @{ Label = &#x27;Weight&#x27; ; Expression = { $_.weight } }
+)
+```
+
+```output
+Name Weight
+---- ------
+a         7
+```
+
+### 例 13 - ExpandProperty は元のオブジェクトを変更します
+
+この例では **ExpandProperty**パラメータを使用する副作用を示しています.`Select-Object`**NoteProperty**メンバーとして,選択したプロパティをオリジナルのオブジェクトに追加します.
+
+```powershell
+PS&gt; $object = [pscustomobject]@{
+    name = &#x27;USA&#x27;
+    children = [pscustomobject]@{
+        name = &#x27;Southwest&#x27;
+    }
+}
+PS&gt; $object
+
+name children
+---- --------
+USA  @{name=Southwest}
+
+# Use the ExpandProperty parameter to expand the children property
+PS&gt; $object | Select-Object @{n=&quot;country&quot;; e={$_.name}} -ExpandProperty children
+
+name      country
+----      -------
+Southwest USA
+
+# The original object has been altered
+PS&gt; $object
+
+name children
+---- --------
+USA  @{name=Southwest; country=USA}
+```
+
+ご覧の通り, **国**のプロパティは **ExpandProperty**のパラメータを使用した後に **children**オブジェクトに追加されました.
+
+### 例14 - 入力オブジェクトを変更せずに拡張性を持つ新しいオブジェクトを作成します
+
+**ExpandProperty** パラメータを使用する副作用を回避するには,新しいオブジェクトを作成し,入力オブジェクトからプロパティをコピーします.
+
+```powershell
+PS&gt; $object = [pscustomobject]@{
+    name = &#x27;USA&#x27;
+    children = [pscustomobject]@{
+        name = &#x27;Southwest&#x27;
+    }
+}
+PS&gt; $object
+
+name children
+---- --------
+USA  @{name=Southwest}
+
+# Create a new object with selected properties
+PS&gt; $newObject = [pscustomobject]@{
+    country = $object.name
+    children = $object.children
+}
+
+PS&gt; $newObject
+
+country children
+------- --------
+USA     @{name=Southwest}
+
+# $object remains unchanged
+PS&gt; $object
+
+name children
+---- --------
+USA  @{name=Southwest}
+```
+
+### 例15: -ExpandPropertyパラメータを持つワイルドカードを使用します.
+
+この例では,ワイルドカードが **ExpandProperty**パラメータを持つワイルドカードを使用することを示しています.ワイルドカード文字は単一のプロパティ名に解決する必要があります.ワイルドカード文字が複数のプロパティ名に解決した場合, `Select-Object`誤差が発生します.
+
+```powershell
+
+# Create a custom object.
+$object = [pscustomobject]@{
+    Label   = &quot;MyObject&quot;
+    Names   = @(&quot;John&quot;,&quot;Jane&quot;,&quot;Joe&quot;)
+    Numbers = @(1,2,3,4,5)
+}
+
+# Try to expand multiple properties using a wildcard.
+$object | Select-Object -ExpandProperty N*
+Select-Object: Multiple properties cannot be expanded.
+
+# Use a wildcard that resolves to a single property.
+$object | Select-Object -ExpandProperty Na*
+John
+Jane
+Joe
+```
+
+## パラメータは
+
+### -ExcludeProperty を排除する
+
+このcmdletが操作から排除する属性を指定します.ワイルドカードは許可されています.このパラメータは,コマンドに **プロパティ**パラメータも含まれている場合にのみ有効です.
+
+```yaml
+Type: System.String[]
+Parameter Sets: DefaultParameter, SkipLastParameter
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: True
+```
+
+# Select-Object を選択する
+
+### -ExpandProperty
+
+選択するプロパティを指定し,そのプロパティを拡大しようとすると表示します.入力オブジェクトパイプラインに名前がない場合は, `Select-Object`このパラメータはワイルドカードをサポートします.しかし,ワイルドカード文字は単一のプロパティ名に解決する必要があります.ワイルドカード文字が複数のプロパティ名に解決した場合, `Select-Object`誤差が発生します.
+
+**ExpandProperty**を使用する際には,`Select-Object`指定されたプロパティを拡張する試みは,各の場合は,
+
+- 指定された属性がマレイである場合,マレイの各値は出力に含まれます. - 指定された属性がオブジェクトである場合,オブジェクト属性が **InputObject**ごとに拡張されます.
+
+いずれの場合も,出力オブジェクトの **Type** は拡張プロパティの **Type** に一致する.ExpandProperty** を使用する際に副作用があります.`Select-Object`**NoteProperty**メンバーとして,選択したプロパティをオリジナルのオブジェクトに追加します.
+
+**プロパティ**パラメータが指定されている場合,`Select-Object`選択したプロパティを **NoteProperty** として,すべてのアウトプットされたオブジェクトに追加しようと試みます.
+
+&gt; [!WARNING] &gt; その名前のプロパティが既に存在しているため,プロパティが処理できないというエラーが受信された場合,次のことを考慮してください. **ExpandProperty** を使用する際,`Select-Object`&gt; &gt; は既存のプロパティを置き換えることはできません.つまり: &gt; &gt; - 拡張オブジェクトが同じ名前を持つプロパティを持っている場合,コマンドはエラーを返します. &gt; - _Selected_オブジェクトが _Expanded_オブジェクトのプロパティと同じ名前を持つ場合, &gt;コマンドはエラーを返します.
+
+```yaml
+Type: System.String
+Parameter Sets: DefaultParameter, SkipLastParameter
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: True
+```
+
+### -First ファースト
+
+入力オブジェクトの集合の開始から選択するオブジェクトの数を指定します.このパラメータを **Skip**パラメータで使用すると, `Select-Object`**Skip**で指定されたオブジェクト数をスキップした後,最初のオブジェクト数を選択します.
+
+```yaml
+Type: System.Int32
+Parameter Sets: DefaultParameter
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -インデックス
+
+索引値に基づいて数列からオブジェクトを選択します.コマ別列のリストにインデックスを入力します.数列のインデックスは0から始まる. 0 は最初の値を表し, (n-1) は最後の値を表します.
+
+```yaml
+Type: System.Int32[]
+Parameter Sets: IndexParameter
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -InputObject
+
+管道を通ってcmdletに送るオブジェクトを指定します.このパラメータは,オブジェクトをパイプして に送ることができます.`Select-Object` .
+
+オーブジェクトをInputObject**パラメータに転送する際には,パイプラインを使用する代わりに,`Select-Object`**InputObject** を単一のオブジェクトとして扱います.その値は集合であるとしても,その値は集合である.`Select-Object` .
+
+```yaml
+Type: System.Management.Automation.PSObject
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByValue)
+Accept wildcard characters: False
+```
+
+### -最後の
+
+入力オブジェクトの集合の終わりから選択するオブジェクトの数を指定します.コマンドが**Skip**パラメータを使用すると,集合の終了からオブジェクトをスキップし,スキップした後, **Last**パラメータで指定された最後のオブジェクト数を返します.
+
+```yaml
+Type: System.Int32
+Parameter Sets: DefaultParameter
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -プロパティ
+
+選択する属性を指定します.これらの属性は,出力オブジェクトに **NoteProperty** のメンバーとして追加されます.ワイルドカードは許可されています.入力オブジェクトに名前がない場合は,新しい **NoteProperty** の値は  に設定されます.`$null` .
+
+**プロパティ**パラメータの値は新しい計算されたプロパティである可能性があります.計算されたプロパティを作成するには,ハッシュテーブルを使用します.
+
+有効なキーとは:
+
+- 名前 (またはラベル) - `&lt;string&gt;`- 表現 - `&lt;string&gt;`    `&lt;scriptblock&gt;`
+
+詳細については, [about_Calculated_Properties.md] を参照してください.
+
+```yaml
+Type: System.Object[]
+Parameter Sets: DefaultParameter, SkipLastParameter
+Aliases:
+
+Required: False
+Position: 0
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: True
+```
+
+### -Skip 
+
+指定された数値をスキップする (選択しない).デフォルトでは,オブジェクトの集合開始から**Skip**パラメータがカウントされます. 0でカウントを開始する**Index**パラメータとは異なり,**Skip**パラメータは 1.から開始します.
+
+このパラメータを**First**パラメータで使うとき,`Select-Object`**Skip**で指定されたオブジェクト数をスキップした後,最初のオブジェクト数を選択します.
+
+コマンドが **Last**パラメータを使用した場合,コレクションの終わりからアイテムをスキップし,スキップした後, **Last**パラメータで指定された最後のオブジェクト数を返します.
+
+```yaml
+Type: System.Int32
+Parameter Sets: DefaultParameter
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -SkipLast でした
+
+リストまたはアレイの終わりから指定された数値をスキップする (選択しない).これは **Last**パラメータと **Skip** を使ったように動作します.
+
+計算開始は0で始まる**Index**パラメータとは異なり,SkipLast**パラメータは1から始まる.
+
+```yaml
+Type: System.Int32
+Parameter Sets: SkipLastParameter
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### - ユニーク
+
+入力オブジェクトのサブセットが同一の性質と値を持っている場合,サブセットの単一のメンバーのみを選択すべきであると指定します.
+
+**Unique** は,他のフィルタリングパラメータが適用される後に _after_ の値を選択します.
+
+このパラメータはケースに敏感です.その結果,文字蓋にしか異なっていない文字列はユニークとみなされます.
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### - 待って下さい
+
+図表は,cmdletで最適化をオフにすることを示します.PowerShellでコマンドはコマンドパイプラインに表示される順に実行され,すべてのオブジェクトを生成することができます.デフォルトでは,もし  を含む場合,`Select-Object`コマンドパイプライン内の **First**または **Index**パラメータを入力したコマンドでは,選択したオブジェクト数が生成されるとすぐに,PowerShellでオブジェクトを生成するコマンドを停止します.
+
+このパラメータはWindows PowerShell 3.0で導入されました.
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: DefaultParameter, IndexParameter
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### 共通パラメーター
+
+このcmdletは,共通パラメータである: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction,および -WarningVariableをサポートしています.詳細については, [about_CommonParameters]をご覧ください.
+
+# Select-Object を選択する
+
+## 輸入は
+
+### システム管理自動化PSObject
+
+対象をこのcmdletにパイプすることができます.
+
+## 輸出は
+
+### システム管理自動化PSObject
+
+このcmdletは,選択したプロパティのみを持つ入力オブジェクトを返します.
+
+##  NOTES  記事ができました.
+
+Windows PowerShell では,次のアライスがあります.`Select-Object`:
+
+ - -`select`
+
+の最適化機能`Select-Object`処理されたオブジェクトをバッファーして収集として書くコマンドには影響はありません.オブジェクトをすぐに書き込むことは,cmdlet設計のベストプラクティスです.詳細については, [強く推奨された開発ガイドライン]で _Write Single Records to the Pipeline_ を参照してください.
+
+## 関連リンク
+
+[about_Calculated_Properties](../Microsoft.PowerShell.Core/About/about_Calculated_Properties.md) について
+
+[Group-Object](Group-Object.md) について
+
+[Sort-Object](Sort-Object.md) 
+
+[Where-Object](../Microsoft.PowerShell.Core/Where-Object.md) について
+###英語原文###
+# Select-Object
+
+## SYNOPSIS
+Selects objects or object properties.
+
+## SYNTAX
+
+### DefaultParameter (Default)
+
+```
+Select-Object [[-Property] &lt;Object[]&gt;] [-InputObject &lt;psobject&gt;]
+ [-ExcludeProperty &lt;string[]&gt;] [-ExpandProperty &lt;string&gt;] [-Unique] [-Last &lt;int&gt;]
+ [-First &lt;int&gt;] [-Skip &lt;int&gt;] [-Wait] [&lt;CommonParameters&gt;]
+```
+
+### SkipLastParameter
+
+```
+Select-Object [[-Property] &lt;Object[]&gt;] [-InputObject &lt;psobject&gt;]
+ [-ExcludeProperty &lt;string[]&gt;] [-ExpandProperty &lt;string&gt;] [-Unique] [-SkipLast &lt;int&gt;]
+ [&lt;CommonParameters&gt;]
+```
+
+### IndexParameter
+
+```
+Select-Object [-InputObject &lt;psobject&gt;] [-Unique] [-Wait] [-Index &lt;int[]&gt;]
+ [&lt;CommonParameters&gt;]
+```
+
+## DESCRIPTION
+
+The `Select-Object` cmdlet selects specified properties of an object or set of objects. It can also
+select unique objects, a specified number of objects, or objects in a specified position in an
+array.
+
+To select objects from a collection, use the **First**, **Last**, **Unique**, **Skip**, and
+**Index** parameters. To select object properties, use the **Property** parameter. When you select
+properties, `Select-Object` returns new objects that have only the specified properties.
+
+Beginning in Windows PowerShell 3.0, `Select-Object` includes an optimization feature that prevents
+commands from creating and processing objects that aren&#x27;t used.
+
+When you use `Select-Object` with the **First** or **Index** parameters in a command pipeline,
+PowerShell stops the command that generates the objects as soon as the selected number of objects is
+reached. To turn off this optimizing behavior, use the **Wait** parameter.
+
+## EXAMPLES
+
+### Example 1: Select objects by property
+
+This example creates objects that have the **Name**, **Id**, and working set (**WS**) properties of
+process objects.
+
+```powershell
+Get-Process | Select-Object -Property ProcessName, Id, WS
+```
+
+### Example 2: Select objects by property and format the results
+
+This example gets information about the modules used by the processes on the computer. It uses
+`Get-Process` cmdlet to get the process on the computer.
+
+It uses the `Select-Object` cmdlet to output an array of `[System.Diagnostics.ProcessModule]`
+instances as contained in the **Modules** property of each `System.Diagnostics.Process` instance
+output by `Get-Process`.
+
+The **Property** parameter of the `Select-Object` cmdlet selects the process names. This adds a
+`ProcessName` **NoteProperty** to every `[System.Diagnostics.ProcessModule]` instance and populates
+it with the value of current process&#x27;s **ProcessName** property.
+
+Finally, `Format-List` cmdlet is used to display the name and modules of each process in a list.
+
+```powershell
+Get-Process Explorer |
+    Select-Object -Property ProcessName -ExpandProperty Modules |
+    Format-List
+```
+
+```Output
+ProcessName       : explorer
+ModuleName        : explorer.exe
+FileName          : C:\WINDOWS\explorer.exe
+BaseAddress       : 140697278152704
+ModuleMemorySize  : 3919872
+EntryPointAddress : 140697278841168
+FileVersionInfo   : File:             C:\WINDOWS\explorer.exe
+                    InternalName:     explorer
+                    OriginalFilename: EXPLORER.EXE.MUI
+                    FileVersion:      10.0.17134.1 (WinBuild.160101.0800)
+                    FileDescription:  Windows Explorer
+                    Product:          Microsoft Windows Operating System
+                    ProductVersion:   10.0.17134.1
+...
+```
+
+### Example 3: Select processes using the most memory
+
+This example gets the five processes that are using the most memory. The `Get-Process` cmdlet gets
+the processes on the computer. The `Sort-Object` cmdlet sorts the processes according to memory
+(working set) usage, and the `Select-Object` cmdlet selects only the last five members of the
+resulting array of objects.
+
+The **Wait** parameter isn&#x27;t required in commands that include the `Sort-Object` cmdlet because
+`Sort-Object` processes all objects and then returns a collection. The `Select-Object` optimization
+is available only for commands that return objects individually as they&#x27;re processed.
+
+```powershell
+Get-Process | Sort-Object -Property WS | Select-Object -Last 5
+```
+
+```Output
+Handles  NPM(K)    PM(K)      WS(K) VS(M)   CPU(s)     Id ProcessName
+-------  ------    -----      ----- -----   ------     -- -----------
+2866     320       33432      45764   203   222.41   1292 svchost
+577      17        23676      50516   265    50.58   4388 WINWORD
+826      11        75448      76712   188    19.77   3780 Ps
+1367     14        73152      88736   216    61.69    676 Ps
+1612     44        66080      92780   380   900.59   6132 INFOPATH
+```
+
+### Example 4: Select unique characters from an array
+
+This example uses the **Unique** parameter of `Select-Object` to get unique characters from an array
+of characters.
+
+```powershell
+&quot;a&quot;,&quot;b&quot;,&quot;c&quot;,&quot;a&quot;,&quot;a&quot;,&quot;a&quot; | Select-Object -Unique
+```
+
+```Output
+a
+b
+c
+```
+
+### Example 5: Using `-Unique` with other parameters
+
+The **Unique** parameter filters values after other `Select-Object` parameters are applied. For
+example, if you use the **First** parameter to select the first number of items in an array,
+**Unique** is only applied to the selected values and not the entire array.
+
+```powershell
+&quot;a&quot;,&quot;a&quot;,&quot;b&quot;,&quot;c&quot; | Select-Object -First 2 -Unique
+```
+
+```Output
+a
+```
+
+In this example, **First** selects `&quot;a&quot;,&quot;a&quot;` as the first 2 items in the array. **Unique** is
+applied to `&quot;a&quot;,&quot;a&quot;` and returns `a` as the unique value.
+
+### Example 6: Select newest and oldest events in the event log
+
+This example gets the first (newest) and last (oldest) events in the Windows PowerShell event log.
+
+`Get-EventLog` gets all events in the Windows PowerShell log and saves them in the `$a` variable.
+Then, `$a` is piped to the `Select-Object` cmdlet. The `Select-Object` command uses the **Index**
+parameter to select events from the array of events in the `$a` variable. The index of the first
+event is 0. The index of the last event is the number of items in `$a` minus 1.
+
+```powershell
+$a = Get-EventLog -LogName &quot;Windows PowerShell&quot;
+$a | Select-Object -Index 0, ($A.Count - 1)
+```
+
+### Example 7: Select all but the first object
+
+This example creates a new PSSession on each of the computers listed in the Servers.txt files,
+except for the first one.
+
+`Select-Object` selects all but the first computer in a list of computer names. The resulting list
+of computers is set as the value of the **ComputerName** parameter of the `New-PSSession` cmdlet.
+
+```powershell
+New-PSSession -ComputerName (Get-Content Servers.txt | Select-Object -Skip 1)
+```
+
+### Example 8: Rename files and select several to review
+
+This example adds a &quot;-ro&quot; suffix to the base names of text files that have the read-only attribute
+and then displays the first five files so the user can see a sample of the effect.
+
+`Get-ChildItem` uses the **ReadOnly** dynamic parameter to get read-only files. The resulting files
+are piped to the `Rename-Item` cmdlet, which renames the file. It uses the **PassThru** parameter of
+`Rename-Item` to send the renamed files to the `Select-Object` cmdlet, which selects the first 5 for
+display.
+
+The **Wait** parameter of `Select-Object` prevents PowerShell from stopping the `Get-ChildItem`
+cmdlet after it gets the first five read-only text files. Without this parameter, only the first
+five read-only files would be renamed.
+
+```powershell
+Get-ChildItem *.txt -ReadOnly |
+    Rename-Item -NewName {$_.BaseName + &quot;-ro.txt&quot;} -PassThru |
+    Select-Object -First 5 -Wait
+```
+
+# Select-Object
+
+### Example 9: Show the intricacies of the -ExpandProperty parameter
+
+This example shows the intricacies of the **ExpandProperty** parameter.
+
+Note that the output generated was an array of `[System.Int32]` instances. The instances conform to
+standard formatting rules of the **Output View**. This is true for any _Expanded_ properties. If the
+outputted objects have a specific standard format, the expanded property might not be visible.
+
+```powershell
+
+# Create a custom object to use for the Select-Object example.
+$object = [pscustomobject]@{Name=&quot;CustomObject&quot;;List=@(1,2,3,4,5)}
+
+# Use the ExpandProperty parameter to Expand the property.
+$object | Select-Object -ExpandProperty List -Property Name
+```
+
+```Output
+1
+2
+3
+4
+5
+```
+
+```powershell
+
+# The output did not contain the Name property, but it was added successfully.
+
+# Use Get-Member to confirm the Name property was added and populated.
+$object | Select-Object -ExpandProperty List -Property Name | Get-Member -MemberType Properties
+```
+
+```Output
+   TypeName: System.Int32
+
+Name        MemberType   Definition
+----        ----------   ----------
+Name        NoteProperty string Name=CustomObject
+```
+
+### Example 10: Create custom properties on objects
+
+The following example demonstrates using `Select-Object` to add a custom property to any object.
+When you specify a property name that doesn&#x27;t exist, `Select-Object` creates that property as a
+**NoteProperty** on each object passed.
+
+```powershell
+$customObject = 1 | Select-Object -Property MyCustomProperty
+$customObject.MyCustomProperty = &quot;New Custom Property&quot;
+$customObject
+```
+
+```Output
+MyCustomProperty
+----------------
+New Custom Property
+```
+
+### Example 11: Create calculated properties for each InputObject
+
+This example demonstrates using `Select-Object` to add calculated properties to your input. Passing
+a **ScriptBlock** to the **Property** parameter causes `Select-Object` to evaluate the expression on
+each object passed and add the results to the output. Within the **ScriptBlock**, you can use the
+`$_` variable to reference the current object in the pipeline.
+
+By default, `Select-Object` uses the **ScriptBlock** string as the name of the property. Using a
+**Hashtable**, you can label the output of your **ScriptBlock** as a custom property added to each
+object. You can add multiple calculated properties to each object passed to `Select-Object`.
+
+```powershell
+
+# Create a calculated property called $_.StartTime.DayOfWeek
+Get-Process | Select-Object -Property ProcessName,{$_.StartTime.DayOfWeek}
+```
+
+```Output
+ProcessName  $_.StartTime.DayOfWeek
+----         ----------------------
+alg                       Wednesday
+ati2evxx                  Wednesday
+ati2evxx                   Thursday
+...
+```
+
+```powershell
+
+# Add a custom property to calculate the size in KiloBytes of each FileInfo
+
+# object you pass in. Use the pipeline variable to divide each file&#x27;s length by
+
+# 1 KiloBytes
+$size = @{Label=&quot;Size(KB)&quot;;Expression={$_.Length/1KB}}
+
+# Create an additional calculated property with the number of Days since the
+
+# file was last accessed. You can also shorten the key names to be &#x27;l&#x27;, and &#x27;e&#x27;,
+
+# or use Name instead of Label.
+$days = @{l=&quot;Days&quot;;e={((Get-Date) - $_.LastAccessTime).Days}}
+
+# You can also shorten the name of your label key to &#x27;l&#x27; and your expression key
+
+# to &#x27;e&#x27;.
+Get-ChildItem $PSHOME -File | Select-Object Name, $size, $days
+```
+
+```Output
+Name                        Size(KB)        Days
+----                        --------        ----
+Certificate.format.ps1xml   12.5244140625   223
+Diagnostics.Format.ps1xml   4.955078125     223
+DotNetTypes.format.ps1xml   134.9833984375  223
+```
+
+### Example 12: Select hashtable keys without using calculated properties
+
+This example shows how you can use `Select-Object` to display the key-value pairs of a
+**hashtable** object with calculated properties. Each calculated property **hashtable** specifies
+the label of the new property as the display name for the key and an expression that retrieves the
+value for that key.
+
+```powershell
+@{ name = &#x27;a&#x27; ; weight = 7 } | Select-Object -Property @(
+    @{ Label = &#x27;Name&#x27; ; Expression = { $_.name } }
+    @{ Label = &#x27;Weight&#x27; ; Expression = { $_.weight } }
+)
+```
+
+```output
+Name Weight
+---- ------
+a         7
+```
+
+### Example 13 - ExpandProperty alters the original object
+
+This example demonstrates the side-effect of using the **ExpandProperty** parameter. When you use
+**ExpandProperty**, `Select-Object` adds the selected properties to the original object as
+**NoteProperty** members.
+
+```powershell
+PS&gt; $object = [pscustomobject]@{
+    name = &#x27;USA&#x27;
+    children = [pscustomobject]@{
+        name = &#x27;Southwest&#x27;
+    }
+}
+PS&gt; $object
+
+name children
+---- --------
+USA  @{name=Southwest}
+
+# Use the ExpandProperty parameter to expand the children property
+PS&gt; $object | Select-Object @{n=&quot;country&quot;; e={$_.name}} -ExpandProperty children
+
+name      country
+----      -------
+Southwest USA
+
+# The original object has been altered
+PS&gt; $object
+
+name children
+---- --------
+USA  @{name=Southwest; country=USA}
+```
+
+As you can see, the **country** property was added to the **children** object after using the
+**ExpandProperty** parameter.
+
+### Example 14 - Create a new object with expanded properties without altering the input object
+
+You can avoid the side-effect of using the **ExpandProperty** parameter by creating a new object and
+copying the properties from the input object.
+
+```powershell
+PS&gt; $object = [pscustomobject]@{
+    name = &#x27;USA&#x27;
+    children = [pscustomobject]@{
+        name = &#x27;Southwest&#x27;
+    }
+}
+PS&gt; $object
+
+name children
+---- --------
+USA  @{name=Southwest}
+
+# Create a new object with selected properties
+PS&gt; $newObject = [pscustomobject]@{
+    country = $object.name
+    children = $object.children
+}
+
+PS&gt; $newObject
+
+country children
+------- --------
+USA     @{name=Southwest}
+
+# $object remains unchanged
+PS&gt; $object
+
+name children
+---- --------
+USA  @{name=Southwest}
+```
+
+### Example 15: Use wildcards with the -ExpandProperty parameter
+
+This example demonstrates using wildcards with the **ExpandProperty** parameter. The wildcard
+character must resolve to a single property name. If the wildcard character resolves to more than
+one property name, `Select-Object` returns an error.
+
+```powershell
+
+# Create a custom object.
+$object = [pscustomobject]@{
+    Label   = &quot;MyObject&quot;
+    Names   = @(&quot;John&quot;,&quot;Jane&quot;,&quot;Joe&quot;)
+    Numbers = @(1,2,3,4,5)
+}
+
+# Try to expand multiple properties using a wildcard.
+$object | Select-Object -ExpandProperty N*
+Select-Object: Multiple properties cannot be expanded.
+
+# Use a wildcard that resolves to a single property.
+$object | Select-Object -ExpandProperty Na*
+John
+Jane
+Joe
+```
+
+## PARAMETERS
+
+### -ExcludeProperty
+
+Specifies the properties that this cmdlet excludes from the operation. Wildcards are permitted. This
+parameter is effective only when the command also includes the **Property** parameter.
+
+```yaml
+Type: System.String[]
+Parameter Sets: DefaultParameter, SkipLastParameter
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: True
+```
+
+# Select-Object
+
+### -ExpandProperty
+
+Specifies a property to select, and indicates that an attempt should be made to expand that
+property. If the input object pipeline doesn&#x27;t have the property named, `Select-Object` returns an
+error. This parameter supports wildcards. However, the wildcard character must resolve to a single
+property name. If the wildcard character resolves to more than one property name, `Select-Object`
+returns an error.
+
+When you use **ExpandProperty**, `Select-Object` attempts to expand the specified property for every
+
+- If the specified property is an array, each value of the array is included in the output.
+- If the specified property is an object, the objects properties are expanded for every
+  **InputObject**
+
+In either case, the output objects&#x27; **Type** matches the expanded property&#x27;s **Type**. There is a
+side-effect when using **ExpandProperty**. The `Select-Object` adds the selected properties to the
+original object as **NoteProperty** members.
+
+If the **Property** parameter is specified, `Select-Object` attempts to add each selected property
+as a **NoteProperty** to every outputted object.
+
+&gt; [!WARNING]
+&gt; If you receive an error that a property can&#x27;t be processed because a property with that name
+&gt; already exists, consider the following. Note that when using **ExpandProperty**, `Select-Object`
+&gt; can&#x27;t replace an existing property. This means:
+&gt;
+&gt; - If the expanded object has a property of the same name, the command returns an error.
+&gt; - If the _Selected_ object has a property of the same name as an _Expanded_ object&#x27;s property, the
+&gt;   command returns an error.
+
+```yaml
+Type: System.String
+Parameter Sets: DefaultParameter, SkipLastParameter
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: True
+```
+
+### -First
+
+Specifies the number of objects to select from the beginning of a collection of input objects. When
+you use this parameter with the **Skip** parameter, `Select-Object` selects the first number of
+objects after skipping the number of objects specified by **Skip**.
+
+```yaml
+Type: System.Int32
+Parameter Sets: DefaultParameter
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Index
+
+Selects objects from an array based on their index values. Enter the indexes in a comma-separated
+list. Indexes in an array begin with 0, where 0 represents the first value and (n-1) represents the
+last value.
+
+```yaml
+Type: System.Int32[]
+Parameter Sets: IndexParameter
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -InputObject
+
+Specifies objects to send to the cmdlet through the pipeline. This parameter enables you to pipe
+objects to `Select-Object`.
+
+When you pass objects to the **InputObject** parameter, instead of using the pipeline,
+`Select-Object` treats the **InputObject** as a single object, even if the value is a collection. It
+is recommended that you use the pipeline when passing collections to `Select-Object`.
+
+```yaml
+Type: System.Management.Automation.PSObject
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByValue)
+Accept wildcard characters: False
+```
+
+### -Last
+
+Specifies the number of objects to select from the end of a collection of input objects. If the
+command uses the **Skip** parameter it skips items from the end of the collection, then returns the
+last number of objects specified by the **Last** parameter after skipping.
+
+```yaml
+Type: System.Int32
+Parameter Sets: DefaultParameter
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Property
+
+Specifies the properties to select. These properties are added as **NoteProperty** members to the
+output objects. Wildcards are permitted. If the input object doesn&#x27;t have the property named, the
+value of the new **NoteProperty** is set to `$null`.
+
+The value of the **Property** parameter can be a new calculated property. To create a calculated,
+property, use a hash table.
+
+Valid keys are:
+
+- Name (or Label) - `&lt;string&gt;`
+- Expression - `&lt;string&gt;` or `&lt;scriptblock&gt;`
+
+For more information, see
+[about_Calculated_Properties](../Microsoft.PowerShell.Core/About/about_Calculated_Properties.md).
+
+```yaml
+Type: System.Object[]
+Parameter Sets: DefaultParameter, SkipLastParameter
+Aliases:
+
+Required: False
+Position: 0
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: True
+```
+
+### -Skip
+
+Skips (doesn&#x27;t select) the specified number of items. By default, the **Skip** parameter counts from
+the beginning of the collection of objects. Unlike the **Index** parameter, which starts counting at
+0, the **Skip** parameter begins at 1.
+
+When you use this parameter with the **First** parameter, `Select-Object` selects the first number
+of objects after skipping the number of objects specified by **Skip**.
+
+If the command uses the **Last** parameter it skips items from the end of the collection, then
+returns the last number of objects specified by the **Last** parameter after skipping.
+
+```yaml
+Type: System.Int32
+Parameter Sets: DefaultParameter
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -SkipLast
+
+Skips (doesn&#x27;t select) the specified number of items from the end of the list or array. Works in
+the same way as using **Skip** together with **Last** parameter.
+
+Unlike the **Index** parameter, which starts counting at 0, the **SkipLast** parameter begins at 1.
+
+```yaml
+Type: System.Int32
+Parameter Sets: SkipLastParameter
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Unique
+
+Specifies that if a subset of the input objects has identical properties and values, only a single
+member of the subset should be selected.
+
+**Unique** selects values _after_ other filtering parameters are applied.
+
+This parameter is case-sensitive. As a result, strings that differ only in character casing are
+considered to be unique.
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Wait
+
+Indicates that the cmdlet turns off optimization. PowerShell runs commands in the order that they
+appear in the command pipeline and lets them generate all objects. By default, if you include a
+`Select-Object` command with the **First** or **Index** parameters in a command pipeline, PowerShell
+stops the command that generates the objects as soon as the selected number of objects is generated.
+
+This parameter was introduced in Windows PowerShell 3.0.
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: DefaultParameter, IndexParameter
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### CommonParameters
+
+This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable,
+-InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose,
+-WarningAction, and -WarningVariable. For more information, see
+[about_CommonParameters](../Microsoft.PowerShell.Core/About/about_CommonParameters.md).
+
+# Select-Object
+
+## INPUTS
+
+### System.Management.Automation.PSObject
+
+You can pipe objects to this cmdlet.
+
+## OUTPUTS
+
+### System.Management.Automation.PSObject
+
+This cmdlet returns the input objects with only the selected properties.
+
+## NOTES
+
+Windows PowerShell includes the following aliases for `Select-Object`:
+
+- `select`
+
+The optimization feature of `Select-Object` is available only for commands that write objects to
+the pipeline as they&#x27;re processed. It has no effect on commands that buffer processed objects and
+write them as a collection. Writing objects immediately is a cmdlet design best practice. For more
+information, see _Write Single Records to the Pipeline_ in
+[Strongly Encouraged Development Guidelines](/powershell/scripting/developer/windows-powershell).
+
+## RELATED LINKS
+
+[about_Calculated_Properties](../Microsoft.PowerShell.Core/About/about_Calculated_Properties.md)
+
+[Group-Object](Group-Object.md)
+
+[Sort-Object](Sort-Object.md)
+
+[Where-Object](../Microsoft.PowerShell.Core/Where-Object.md)
+###Microsoft Learn URL###
+https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.utility/select-object/?view=powershell-5.1
+</pre></html>

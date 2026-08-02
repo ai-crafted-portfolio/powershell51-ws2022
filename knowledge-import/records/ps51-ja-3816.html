@@ -1,0 +1,596 @@
+<!doctype html><html lang="ja"><meta charset="utf-8"><pre class="record-source">###KnowledgeNo###
+PS51-WS2022-2026-3816
+###FormatID###
+PS51-WS2022
+###CreatedAt###
+2026-08-01 00:00
+###UpdatedAt###
+2026-08-01 00:00
+###タイトル###
+Start-Service
+###モジュール###
+Microsoft.PowerShell.Management
+###製品###
+Windows PowerShell 5.1
+###対応OS###
+Windows Server 2022
+###日本語訳###
+# スタートサービス
+
+## SYNOPSIS は,一度または複数の停止されたサービスを起動します.
+
+## SYNTAXは,のシンタックスです.
+
+### InputObject (デフォルト) 
+
+```
+Start-Service [-InputObject] &lt;ServiceController[]&gt; [-PassThru] [-Include &lt;String[]&gt;]
+ [-Exclude &lt;String[]&gt;] [-WhatIf] [-Confirm] [&lt;CommonParameters&gt;]
+```
+
+### デフォルトでは
+
+```
+Start-Service [-Name] &lt;String[]&gt; [-PassThru] [-Include &lt;String[]&gt;] [-Exclude &lt;String[]&gt;]
+ [-WhatIf] [-Confirm] [&lt;CommonParameters&gt;]
+```
+
+### 表示名
+
+```
+Start-Service [-PassThru] -DisplayName &lt;String[]&gt; [-Include &lt;String[]&gt;]
+ [-Exclude &lt;String[]&gt;] [-WhatIf] [-Confirm] [&lt;CommonParameters&gt;]
+```
+
+## 記述は,
+
+   `Start-Service`cmdlet は指定されたサービスごとに Windows Service Controller にスタートメッセージを送信します.サービスが既に実行されている場合,メッセージはエラーなしで無視されます.サービス名をサービス名または表示名で指定できます.または,入力Object** パラメータを使用して,起動したいサービスを表示するサービスオブジェクトを供給できます.
+
+## 例えは,
+
+### 例1: サービスを起動してその名前を使うこと
+
+この例では,地元のコンピュータでEventLogサービスを起動します. **Name**パラメータは,そのサービス名によってサービスを識別します.
+
+```powershell
+Start-Service -Name &quot;eventlog&quot;
+```
+
+### 例2: サービスを開始せずに情報を表示します.
+
+この例では&quot;,リモート&quot;を含む表示名を持つサービスを起動した場合はどうなるか示しています.
+
+```powershell
+Start-Service -DisplayName *remote* -WhatIf
+```
+
+**DisplayName** パラメータは,サービス名ではなく,表示名によってサービスを識別する. **WhatIf** パラメータは,コマンドを実行するとどうなるかをCMdletに表示させるが,変更を行わない.
+
+### 例3:サービスを起動して,テキストファイルにアクションを記録する
+
+この例では,コンピュータ上でWindows管理機器 (WMI) サービスを起動し,そのアクションの記録を services.txt ファイルに追加します.
+
+```powershell
+$s = Get-Service wmi
+Start-Service -InputObject $s -PassThru | Format-List &gt;&gt; services.txt
+```
+
+まず,私たちは使用します.`Get-Service`WMI サービスを表現するオブジェクトを取得し,それを  に保存する.`$s`次に,サービスを起動します. **PassThru** 変数パラメータなしでは,`Start-Service`輸出を創造しない.パイプラインオペレーター ()`|`) は,輸出オブジェクトを  で過ぎます.`Start-Service`へ`Format-List`cmdlet は,オブジェクトをその性質のリストとしてフォーマットする.`&gt;&gt;`) は,輸出を services.txt ファイルに転送します.輸出は既存のファイルの末端に追加されます.
+
+### 例4:障害者サービスを起動する
+
+この例では,サービス開始タイプが **Disabled**であるときにサービスを起動する方法を示しています.
+
+```
+PS&gt; Start-Service tlntsvr
+Start-Service : Service &#x27;Telnet (TlntSvr)&#x27; cannot be started due to the following error: Cannot
+start service TlntSvr on computer &#x27;.&#x27;.
+At line:1 char:14
++ Start-Service  &lt;&lt;&lt;&lt; tlntsvr
+
+PS&gt; Get-CimInstance Win32_Service | Where-Object Name -EQ &quot;tlntsvr&quot;
+ExitCode  : 0
+Name      : TlntSvr
+ProcessId : 0
+StartMode : Disabled
+State     : Stopped
+Status    : OK
+
+PS&gt; Set-Service tlntsvr -StartupType manual
+PS&gt; Start-Service tlntsvr
+```
+
+テルネットサービスを開始する最初の試み (tlntsvr) は失敗した.`Get-CimInstance`命令は, Tlntsvr サービスの **StartMode** 属性が **Disabled** であることを示します.`Set-Service`cmdlet は開始タイプを **Manual** に変更します.`Start-Service`今回は,コマンドが成功しました.コマンドが成功したことを確認するには,コマンドを実行します.`Get-Service` .
+
+## パラメータは
+
+### -DisplayName
+
+起動するサービスの表示名を指定します.ワイルドカード文字が許可されています.
+
+```yaml
+Type: System.String[]
+Parameter Sets: DisplayName
+Aliases:
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: True
+```
+
+### - 排除する
+
+このcmdletで省略されたサービスを指定します.このパラメータの値は**Name**パラメータを対象とします. 名前要素またはパターンを入力してください.例えば `s*`ワイルドカード文字は許される.
+
+```yaml
+Type: System.String[]
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: True
+```
+
+### - 含めること
+
+このcmdletが起動するサービスを指定します.このパラメータの値は **Name**パラメータを対象とします. などの名前要素またはパターンを入力します.`s*`ワイルドカード文字は許される.
+
+```yaml
+Type: System.String[]
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: True
+```
+
+### -InputObject
+
+**ServiceController**が起動するサービスを表示するオブジェクトを指定します.オブジェクトを含む変数を入力するか,オブジェクトを入手するコマンドまたは表情を入力します.
+
+```yaml
+Type: System.ServiceProcess.ServiceController[]
+Parameter Sets: InputObject
+Aliases:
+
+Required: True
+Position: 0
+Default value: None
+Accept pipeline input: True (ByValue)
+Accept wildcard characters: False
+```
+
+### -名字は
+
+開始されるサービスにサービス名を指定します.
+
+パラメータ名はオプションです. **Name**またはそのニックネーム, **ServiceName**を使用するか,またはパラメータ名を省略することができます.
+
+```yaml
+Type: System.String[]
+Parameter Sets: Default
+Aliases: ServiceName
+
+Required: True
+Position: 0
+Default value: None
+Accept pipeline input: True (ByPropertyName, ByValue)
+Accept wildcard characters: False
+```
+
+### -PassThru でした.
+
+サービスを表すオブジェクトを返します.デフォルトでは,このcmdletは出力を生成しません.
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -確認
+
+cmdletを実行する前に確認を提示します.
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases: cf
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -WhatIf
+
+cmdletが実行されなければどうなるかを示しています.
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases: wi
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### 共通パラメーター
+
+このcmdletは,共通パラメータをサポートしています: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable.詳細については, [about_CommonParameters](を参照してください.https://go.microsoft.com/fwlink/?LinkID=113216) でした.
+
+## 輸入は
+
+### システム.サービスプロセス.サービスコントローラー
+
+このcmdletにサービスオブジェクトをパイプすることができます.
+
+### System.String でした.
+
+サービス名を含む文字列をこのcmdletにパイプすることができます.
+
+## 輸出は
+
+### どれもない
+
+デフォルトでは,このcmdletは出力返さない.
+
+### システム.サービスプロセス.サービスコントローラー
+
+**PassThru**パラメータを使用すると,このcmdletは,サービスを表示する **ServiceController**オブジェクトを返します.
+
+# スタートサービス
+
+##  NOTES  記事ができました.
+
+Windows PowerShell では,次のアライスがあります.`Start-Service`:
+
+ - -`sasv`
+
+- 既定では,管理者グループのメンバーだけがサービスを起動,停止,停止,再開,再起動することができます.`Start-Service`PowerShell を起動するには, ** Administrator として実行する** を使ってください. - システム上のサービス名とサービス名を示すために,  を入力してください.`Get-Service`サービス名は**Name**列に表示され,表示名は**DisplayName**列に表示される. - 手動,自動,または自動 (遅延開始) のスタートタイプを持つサービスのみを起動できます. 障害のあるスタートタイプを持つサービスを起動することはできません.`Start-Service`メッセージのコマンドが失敗します.`Cannot start service \&lt;service-name\&gt; on computer` , use  を使用する`Get-CimInstance`サービス開始タイプを見つけ,必要に応じて&quot;&quot;を使用します.`Set-Service`- サービス開始タイプを変更するには,cmdletを入力します. - 性能ログとアラート (SysmonLog) などのサービスが,作業が終わらない場合,自動的に停止します.PowerShellが自動停止するサービスを起動すると,すぐに自動的に停止する場合は,次のメッセージが表示されます.`Service \&lt;display-name\&gt; start failed.`
+
+## 関連リンク
+
+[Get-Service](Get-Service.md) について
+
+[New-Service](New-Service.md) でした.
+
+[Restart-Service](Restart-Service.md) 
+
+[リニューアルサービス](リニューアルサービス.md)
+
+[Set-Service](Set-Service.md) 
+
+[Stop-Service](Stop-Service.md) 
+
+[Suspend-Service](Suspend-Service.md) 
+###英語原文###
+# Start-Service
+
+## SYNOPSIS
+Starts one or more stopped services.
+
+## SYNTAX
+
+### InputObject (Default)
+
+```
+Start-Service [-InputObject] &lt;ServiceController[]&gt; [-PassThru] [-Include &lt;String[]&gt;]
+ [-Exclude &lt;String[]&gt;] [-WhatIf] [-Confirm] [&lt;CommonParameters&gt;]
+```
+
+### Default
+
+```
+Start-Service [-Name] &lt;String[]&gt; [-PassThru] [-Include &lt;String[]&gt;] [-Exclude &lt;String[]&gt;]
+ [-WhatIf] [-Confirm] [&lt;CommonParameters&gt;]
+```
+
+### DisplayName
+
+```
+Start-Service [-PassThru] -DisplayName &lt;String[]&gt; [-Include &lt;String[]&gt;]
+ [-Exclude &lt;String[]&gt;] [-WhatIf] [-Confirm] [&lt;CommonParameters&gt;]
+```
+
+## DESCRIPTION
+
+The `Start-Service` cmdlet sends a start message to the Windows Service Controller for each of the
+specified services. If a service is already running, the message is ignored without error. You can
+specify the services by their service names or display names, or you can use the **InputObject**
+parameter to supply a service object that represents the services that you want to start.
+
+## EXAMPLES
+
+### Example 1: Start a service by using its name
+
+This example starts the EventLog service on the local computer. The **Name** parameter identifies
+the service by its service name.
+
+```powershell
+Start-Service -Name &quot;eventlog&quot;
+```
+
+### Example 2: Display information without starting a service
+
+This example shows what would occur if you started the services that have a display name that
+includes &quot;remote&quot;.
+
+```powershell
+Start-Service -DisplayName *remote* -WhatIf
+```
+
+The **DisplayName** parameter identifies the services by their display name instead of their service
+name. The **WhatIf** parameter causes the cmdlet to display what would happen when you run the
+command but does not make changes.
+
+### Example 3: Start a service and record the action in a text file
+
+This example starts the Windows Management Instrumentation (WMI) service on the computer and adds a
+record of the action to the services.txt file.
+
+```powershell
+$s = Get-Service wmi
+Start-Service -InputObject $s -PassThru | Format-List &gt;&gt; services.txt
+```
+
+First we use `Get-Service` to get an object that represent the WMI service and store it in the `$s`
+variable. Next, we start the service. Without the **PassThru** parameter, `Start-Service` does not
+create any output. The pipeline operator (`|`) passes the object output by `Start-Service` to the
+`Format-List` cmdlet to format the object as a list of its properties. The append redirection
+operator (`&gt;&gt;`) redirects the output to the services.txt file. The output is added to the end of the
+existing file.
+
+### Example 4: Start a disabled service
+
+This example shows how to start a service when the start type of the service is **Disabled**.
+
+```
+PS&gt; Start-Service tlntsvr
+Start-Service : Service &#x27;Telnet (TlntSvr)&#x27; cannot be started due to the following error: Cannot
+start service TlntSvr on computer &#x27;.&#x27;.
+At line:1 char:14
++ Start-Service  &lt;&lt;&lt;&lt; tlntsvr
+
+PS&gt; Get-CimInstance Win32_Service | Where-Object Name -EQ &quot;tlntsvr&quot;
+ExitCode  : 0
+Name      : TlntSvr
+ProcessId : 0
+StartMode : Disabled
+State     : Stopped
+Status    : OK
+
+PS&gt; Set-Service tlntsvr -StartupType manual
+PS&gt; Start-Service tlntsvr
+```
+
+The first attempt to start the Telnet service (tlntsvr) fails. The `Get-CimInstance` command shows
+that the **StartMode** property of the Tlntsvr service is **Disabled**. The `Set-Service` cmdlet
+changes the start type to **Manual**. Now, we can resubmit the `Start-Service` command. This time,
+the command succeeds. To verify that the command succeeded, run `Get-Service`.
+
+## PARAMETERS
+
+### -DisplayName
+
+Specifies the display names of the services to start. Wildcard characters are permitted.
+
+```yaml
+Type: System.String[]
+Parameter Sets: DisplayName
+Aliases:
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: True
+```
+
+### -Exclude
+
+Specifies services that this cmdlet omits. The value of this parameter qualifies the **Name**
+parameter. Enter a name element or pattern, such as `s*`. Wildcard characters are permitted.
+
+```yaml
+Type: System.String[]
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: True
+```
+
+### -Include
+
+Specifies services that this cmdlet starts. The value of this parameter qualifies the **Name**
+parameter. Enter a name element or pattern, such as `s*`. Wildcard characters are permitted.
+
+```yaml
+Type: System.String[]
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: True
+```
+
+### -InputObject
+
+Specifies **ServiceController** objects representing the services to be started. Enter a variable
+that contains the objects, or type a command or expression that gets the objects.
+
+```yaml
+Type: System.ServiceProcess.ServiceController[]
+Parameter Sets: InputObject
+Aliases:
+
+Required: True
+Position: 0
+Default value: None
+Accept pipeline input: True (ByValue)
+Accept wildcard characters: False
+```
+
+### -Name
+
+Specifies the service names for the service to be started.
+
+The parameter name is optional. You can use **Name** or its alias, **ServiceName**, or you can omit
+the parameter name.
+
+```yaml
+Type: System.String[]
+Parameter Sets: Default
+Aliases: ServiceName
+
+Required: True
+Position: 0
+Default value: None
+Accept pipeline input: True (ByPropertyName, ByValue)
+Accept wildcard characters: False
+```
+
+### -PassThru
+
+Returns an object that represents the service. By default, this cmdlet does not generate any output.
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Confirm
+
+Prompts you for confirmation before running the cmdlet.
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases: cf
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -WhatIf
+
+Shows what would happen if the cmdlet runs.
+The cmdlet is not run.
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases: wi
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### CommonParameters
+
+This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable,
+-InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose,
+-WarningAction, and -WarningVariable. For more information, see
+[about_CommonParameters](https://go.microsoft.com/fwlink/?LinkID=113216).
+
+## INPUTS
+
+### System.ServiceProcess.ServiceController
+
+You can pipe a service object to this cmdlet.
+
+### System.String
+
+You can pipe a string that contains the service name to this cmdlet.
+
+## OUTPUTS
+
+### None
+
+By default, this cmdlet returns no output.
+
+### System.ServiceProcess.ServiceController
+
+When you use the **PassThru** parameter, this cmdlet returns a **ServiceController** object
+representing the service.
+
+# Start-Service
+
+## NOTES
+
+Windows PowerShell includes the following aliases for `Start-Service`:
+
+- `sasv`
+
+- By default, only members of the Administrators group can start, stop, pause, resume, or restart a
+  service. If you are a member of the Administrators group, you need to run `Start-Service` from an
+  elevated PowerShell session. Use the **Run as Administrator** option to start PowerShell.
+- To find the service names and display names of the services on your system, type `Get-Service`.
+  The service names appear in the **Name** column, and the display names appear in the
+  **DisplayName** column.
+- You can start only the services that have a start type of Manual, Automatic, or Automatic (Delayed
+  Start). You cannot start the services that have a start type of Disabled. If a `Start-Service`
+  command fails with the message `Cannot start service \&lt;service-name\&gt; on computer`, use
+  `Get-CimInstance` to find the start type of the service and, if you have to, use the `Set-Service`
+  cmdlet to change the start type of the service.
+- Some services, such as Performance Logs and Alerts (SysmonLog) stop automatically if they have no
+  work to do. When PowerShell starts a service that stops itself almost immediately, it displays the
+  following message: `Service \&lt;display-name\&gt; start failed.`
+
+## RELATED LINKS
+
+[Get-Service](Get-Service.md)
+
+[New-Service](New-Service.md)
+
+[Restart-Service](Restart-Service.md)
+
+[Resume-Service](Resume-Service.md)
+
+[Set-Service](Set-Service.md)
+
+[Stop-Service](Stop-Service.md)
+
+[Suspend-Service](Suspend-Service.md)
+###Microsoft Learn URL###
+https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.management/start-service/?view=powershell-5.1
+</pre></html>

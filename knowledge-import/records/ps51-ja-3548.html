@@ -1,0 +1,2280 @@
+<!doctype html><html lang="ja"><meta charset="utf-8"><pre class="record-source">###KnowledgeNo###
+PS51-WS2022-2026-3548
+###FormatID###
+PS51-WS2022
+###CreatedAt###
+2026-08-01 00:00
+###UpdatedAt###
+2026-08-01 00:00
+###タイトル###
+about_Functions_Advanced_Parameters
+###モジュール###
+Microsoft.PowerShell.Core
+###製品###
+Windows PowerShell 5.1
+###対応OS###
+Windows Server 2022
+###日本語訳###
+# about_Functions_Advanced_Parametersについて
+
+## 短編説明
+
+進んだ関数にパラメータを追加する方法を説明します.
+
+## 長い説明
+
+書き込んだ高度な関数にパラメータを追加し,パラメータ属性や参数を使用して,関数ユーザーがパラメータで送信するパラメータ値を制限することができます.
+
+を使うとき`CmdletBinding`PowerShellで自動的に共通パラメータを追加する.共通パラメータと同じ名前を使用するパラメータを作成することはできません.詳細については,[about_CommonParameters][06]を参照してください.
+
+PowerShell 3.0 から始めると,splatting を使用できます.`@args`命令でパラメータを表現する. 単純と高度な関数で有効なスプラッティングです. 詳細については,[about_Functions][14] と[about_Splatting][17] を参照してください.
+
+## パラメーター宣言
+
+パラメータは,  で宣言された変数です.`param()`函数やスクリプトブロックの記述.オプションの記述を使用できます.`[Parameter()]`属性単独で,または結合して,  と結合する.`[Alias()]`属性またはパラメータ認証属性のうちのいずれかを.
+
+パラメーター名には変数名に関するルールが適用される.パラメーター名には,数値,アルファベット文字,アンダースが含まれる.名前付けのルールの一般的なリストについては,[about_Variables][20]を参照してください.
+
+&gt; [!IMPORTANT] &gt; 十桁から始まるパラメータを定義することは可能である. &gt; 位数でパラメータ名を起動することは推奨されません,なぜならPowerShellで &gt; 文字列値を位置パラメータとして受け渡すように処理するからです.
+
+次の例を見てみましょう.
+
+```powershell
+function TestFunction {
+    param (
+        [switch] $100,
+        [string] $200
+    )
+
+    &quot;100: $100&quot;
+    &quot;200: $200&quot;
+}
+```
+
+パラメータを使用しようとすると,PowerShellは位置パラメータとして送信された文字列として解釈します.
+
+```powershell
+PS&gt; TestFunction -100 -200 Hello
+100: False
+200: -100
+$args: -200 Hello
+```
+
+輸出はPowerShellで値を結びつけてしまったことを示します.`-100`へ`$200`参数変数.残った位置値は,  に結合する.`$args`問題を解決するには,パラメータ値を通過するためにスプラッティングを使用できます.
+
+```powershell
+PS&gt; $ht = @{100 = $true; 200 = &#x27;Hello&#x27;}
+PS&gt; TestFunction @ht
+100: True
+200: Hello
+$args:
+```
+
+詳細については[about_Splatting][17]. を参照してください.
+
+## パラメータ値の変換タイプ
+
+異なるタイプを期待するパラメータに参数として文字列を入力すると,PowerShellは暗示的に文字列をパラメータターゲットタイプに変換します.高度な機能はパラメータ値のカルトインバリアント解析を実行します.
+
+文化に敏感な変換は,コンパイルされたcmdletsのパラメータ結合中に行われます.
+
+この例では,cmdletとスクリプト関数を作成し,その関数はです.`[datetime]`設定はドイツ語でフォーマットされた日付がパラメータに転送されます.
+
+```powershell
+
+# Create a cmdlet that accepts a [datetime] argument.
+Add-Type @&#x27;
+  using System;
+  using System.Management.Automation;
+  [Cmdlet(&quot;Get&quot;, &quot;Date_Cmdlet&quot;)]
+  public class GetFooCmdlet : Cmdlet {
+
+    [Parameter(Position=0)]
+    public DateTime Date { get; set; }
+
+    protected override void ProcessRecord() {
+      WriteObject(Date);
+    }
+  }
+&#x27;@ -PassThru | % Assembly | Import-Module
+
+[cultureinfo]::CurrentCulture = &#x27;de-DE&#x27;
+$dateStr = &#x27;19-06-2018&#x27;
+
+Get-Date_Cmdlet $dateStr
+```
+
+```Output
+Dienstag, 19. Juni 2018 00:00:00
+```
+
+上記のように,cmdletsは文字列を変換するために文化に敏感な解析を使用します.
+
+```powershell
+
+# Define an equivalent function.
+function Get-Date_Func {
+  param(
+    [datetime] $Date
+  )
+  process {
+    $Date
+  }
+}
+
+[cultureinfo]::CurrentCulture = &#x27;de-DE&#x27;
+
+# This German-format date string doesn&#x27;t work with the invariant culture.
+
+# E.g., [datetime] &#x27;19-06-2018&#x27; breaks.
+$dateStr = &#x27;19-06-2018&#x27;
+
+Get-Date_Func $dateStr
+```
+
+進階関数は,カルト-インバリアント解析を使用し,次のエラーが発生します.
+
+```Output
+Get-Date_Func: Cannot process argument transformation on parameter &#x27;Date&#x27;.
+Cannot convert value &quot;19-06-2018&quot; to type &quot;System.DateTime&quot;. Error:
+&quot;String &#x27;19-06-2018&#x27; was not recognized as a valid DateTime.&quot;
+At line:13 char:15
++ Get-Date_Func $dateStr
++               ~~~~~~~~
+    + CategoryInfo          : InvalidData: (:) [Get-Date_Func], ParameterBindingArgumentTransformationException
+    + FullyQualifiedErrorId : ParameterArgumentTransformationError,Get-Date_Func
+```
+
+詳細については, [about_Type_Conversion.md] を参照してください.
+
+## 静態パラメータ
+
+静的パラメータは,関数で常に利用可能なパラメータです.PowerShell cmdletsとスクリプトのほとんどのパラメータは静的パラメータです.
+
+次の例では,以下の特徴を持つ**ComputerName**パラメータの宣言が示されています.
+
+必須 (必須) であり,パイプラインから入力を受け,入力を数列の文字列でします.
+
+```powershell
+param(
+    [Parameter(Mandatory=$true, ValueFromPipeline=$true)]
+    [string[]]$ComputerName
+)
+```
+
+## `[switch]`パラメータ
+
+`[switch]`パラメータはパラメータ値を持たないパラメータです.代わりに,存在または不在を通じてブルースの真実または偽の値を伝達します.`[switch]`パラメーターが存在している場合,それは **true**値を持ち,不在の場合,それは **false**値を持ちます.
+
+例えば,リコールパラメータは,`Get-ChildItem`a は a  です.`[switch]`パラメーターです.
+
+次の例では, a の定義を示しています.`[switch]`バイトアレイとしてデータを出力するオプションを提供するために使用できるパラメータです.
+
+```powershell
+param([switch]$AsByteArray)
+```
+
+`[switch]`パラメータは使いやすいため,PowerShellの自然な構文が少ないブルンパラメータよりも好ましい.
+
+ を使って`[switch]`設定のパラメータをコマンドに追加します.例えば:
+
+`-IncludeAll`
+
+ブールパラメータを使用するには,そのパラメータとブルール値を入力する必要があります.
+
+`-IncludeAll $true`
+
+作成時に作成するときに`[switch]`パラメータ名を選んでください.パラメータ名がパラメータの効果をユーザーに伝えていることを確認してください. **フィルター**や **最大**のような曖昧な用語を避ける必要があります.これは,値が必要であることを意味している可能性があります.
+
+# about_Functions_Advanced_Parametersについて
+
+### `[switch]`パラメータデザインの考慮事項
+
+-  のデフォルト値を設定しないでください.`[switch]`パラメータです.`[switch]`パラメータは常にデフォルトで false にします.`[switch]`位置的パラメータです.デフォルトでは, `[switch]`位置パラメータはパラメータから除外されています.あなたは**パラメータ**属性でそれを _can_ オーバーライドすることができますが,それはユーザーを混乱させることができます. - デザイン `[switch]`設定されたパラメータを用いることで,コマンドのデフォルト行動がより少ないまたはより複雑なモードに変更される.コマンドの最も単純な行動は,使用しないデフォルト行動であるべきです.`[switch]`- パーマテリーを作らないで下さい`[switch]`必須のパラメータ. を出すことが役に立つ唯一のケースです.`[switch]`パラメータを区別するために必要なときのパラメータは,必須です. -  を使って`[switch]`条件式表現で直接変数パラメータを変えます.`SwitchParameter`暗黙にブルール語に変換される.例えば:
+
+    ```powershell
+  if ($MySwitch) { ... }
+  ```
+
+- によって制御される行動を常にベースにする`[switch]`参数 _ 存在_ではなく,その _ 値_ のパラメータに表示される.  の存在を検証するいくつかの方法があります.`[switch]`パラメータ:
+
+ - -`$PSBoundParameters` を含んでいる.`[switch]`キーとしてパラメータの名前 - `$MyInvocation.BoundParameters` を含んでいる.`[switch]`キーとしてパラメータの名前 - `$PSCmdlet.ParameterSetName`スイッチがユニークなパラメータセットを定義するときに
+
+例えば,スイッチの明示的な値を  を使用して提供することが可能です.`-MySwitch:$false`パラメータの存在のみをテストすると,コマンドはスイッチ値が  のように振る舞う.`$true`ではなく`$false` .
+
+## ダイナミックパラメータ
+
+ダイナミックパラメータは,特定の条件下でのみ利用可能なcmdlet,関数,またはスクリプトのパラメータです.
+
+例えば,複数のプロバイダー・cmdlet には,そのcmdletがプロバイダードライブで使用される場合のみ,またはプロバイダードライブの特定のパスで使用される場合のみ,利用可能なパラメータがあります.例えば,**Encoding**パラメータは, の上で利用可能です.`Add-Content`     `Get-Content`そして,そして,`Set-Content`cmdletsはファイルシステムドライブで使用される場合にのみです.
+
+また,関数コマンドで別のパラメータを使用した場合,または別のパラメータが特定の値を持っている場合にのみ表示されます.
+
+ダイナミックパラメータは有用だが,必要に応じて使うだけ,なぜなら,ユーザが発見するのが難しいかもしれない.ダイナミックパラメータを見つけるには,ユーザがプロバイダーパスにいる必要があります.`Get-Command`cmdlet または,  の **Path** パラメータを使用します.`Get-Help` .
+
+機能やスクリプトのダイナミックパラメータを作成するには,  を使ってください.`dynamicparam`キーワードです.
+
+構文は以下の通りです.
+
+`dynamicparam {&lt;statement-list&gt;}`
+
+声明リストでは,  を使って表示します.`if`函数でパラメータが利用可能な条件を指定する記述です.
+
+次の例では,標準パラメータの関数が表示され,その名と歩道が表示され,オプションのダイナミックパラメータが表示され,キーカウントが表示される.`ByRegistryPath`パラメータセットがあり,タイプの があります.`Int32`**KeyCount**のパラメータは, で利用できます.`Get-Sample`函数は, **Path** パラメータの値が  で始まる場合にのみです.`HKLM:`で使用されていることを示す.`HKEY_LOCAL_MACHINE`登録ドライブです.
+
+```powershell
+function Get-Sample {
+  [CmdletBinding()]
+  param([string]$Name, [string]$Path)
+
+  dynamicparam
+  {
+    if ($Path.StartsWith(&quot;HKLM:&quot;))
+    {
+      $parameterAttribute = [System.Management.Automation.ParameterAttribute]@{
+          ParameterSetName = &quot;ByRegistryPath&quot;
+          Mandatory = $false
+      }
+
+      $attributeCollection = [System.Collections.ObjectModel.Collection[System.Attribute]]::new()
+      $attributeCollection.Add($parameterAttribute)
+
+      $dynParam1 = [System.Management.Automation.RuntimeDefinedParameter]::new(
+        &#x27;KeyCount&#x27;, [int32], $attributeCollection
+      )
+
+      $paramDictionary = [System.Management.Automation.RuntimeDefinedParameterDictionary]::new()
+      $paramDictionary.Add(&#x27;KeyCount&#x27;, $dynParam1)
+      return $paramDictionary
+    }
+  }
+}
+```
+
+詳細については, [RuntimeDefinedParameter][02] タイプのドキュメントを参照してください.
+
+## パラメータの属性
+
+このセクションでは,関数パラメータに追加できる属性を説明します.
+
+すべての属性はオプションです.しかし,CmdletBinding**属性を省略した場合,高度な関数として認識されるためには,関数は**パラメータ**属性を含む必要があります.
+
+各パラメータ宣言に1つまたは複数の属性を追加することができます.パラメータ宣言に追加できる属性の数には制限はありません.
+
+### パラメーター属性
+
+**パラメーター**属性は,関数パラメータの属性を宣言するために使用されます.
+
+**パラメータ属性はオプションで,あなたの関数のパラメータに属性が必要とされない場合は省略できます.しかし,単に機能ではなく,高度な関数として認識されるためには,関数は**CmdletBinding**属性または**Parameter**属性,または両方を持つ必要があります.
+
+**パラメータ**属性は,パラメータが必須かオプションかといったパラメータの特徴を定義する議論を持っています.
+
+**パラメータ**属性,論点,論点値を宣言するには,次の構文を使用します.その論点とその値を囲む括弧は,間接スペースがない**パラメータ**をフォローする必要があります.
+
+```powershell
+param(
+    [Parameter(Argument=value)]
+    $ParameterName
+)
+```
+
+括弧内の引数を分離するために逗号を使用します. **パラメータ**属性の2つの引数を宣言するには,次の構文を使用します.
+
+```powershell
+param(
+    [Parameter(Argument1=value1, Argument2=value2)]
+    $ParameterName
+)
+```
+
+**パラメータ**属性のブルール式引数タイプは, **パラメータ**属性から省略された場合,デフォルトで **False** に設定されます.`$true`例えば,以下の**パラメータ**属性は等価である.
+
+```powershell
+param(
+    [Parameter(Mandatory=$true)]
+)
+
+# Boolean arguments can be defined using this shorthand syntax
+
+param(
+    [Parameter(Mandatory)]
+)
+```
+
+**CmdletBinding**属性を使う代わりに,議論なしに**パラメータ**属性を使用すると,属性の名前をフォローする括弧は依然として必要になります.
+
+```powershell
+param(
+    [Parameter()]
+    $ParameterName
+)
+```
+
+#### 強制的な議論です.
+
+   `Mandatory`この参数が指定されていない場合は,パラメータはオプションです.
+
+次の例では, **ComputerName** パラメータを宣言します.`Mandatory`参数を強制的にする参数です.
+
+```powershell
+param(
+    [Parameter(Mandatory)]
+    [string[]]$ComputerName
+)
+```
+
+#### ポジションの議論
+
+   `Position`参数名がコマンドで使用される場合,パラメータ名が必要かどうかを判断する.パラメータ宣言に&quot;&quot;が含まれている場合,`Position`PowerShell は,コマンドの名前のないパラメータ値リストの位置,または順序によって名前のないパラメータ値を識別します.
+
+もし,その `Position`参数名,またはパラメータ名アライアスまたは略称は,コマンドでパラメータを使用するたびに,パラメータ値の前になければならない.
+
+デフォルトでは,すべての関数パラメータは位置性です.PowerShellで,パラメータに位置番号を設定する.パラメータが関数で宣言される順に設定されます.この機能を無効にするには, の値を設定します.`PositionalBinding`へのCmdletBinding**属性の議論`$false`           `Position`の値よりも,議論が優先される.`PositionalBinding`**CmdletBinding**属性の議論について詳しくは,  を参照してください.`PositionalBinding`in [about_Functions_CmdletBindingAttribute][12].
+
+の値が`Position`位置値 **0**はコマンドの第1位置を表し,位置値 **1**はコマンドの第2位置を表す.
+
+機能がポジショナルのパラメータがない場合,PowerShellでパラメータが宣言される順に合わせて各パラメータにポジションを割り当てます.しかし,ベストプラクティとして,この割り当てに頼らないでください.パラメータがポジショナルのようにしたい場合は,  を使用してください.`Position`議論.
+
+次の例では, **ComputerName** パラメータを宣言します.`Position`**0**の値を持つ議論です.その結果,当時は`-ComputerName`命令から省略されている場合は,その値は命令の最初のまたは唯一の未知パラメータ値である必要があります.
+
+```powershell
+param(
+    [Parameter(Position=0)]
+    [string[]]$ComputerName
+)
+```
+
+#### パラメーターセットName argument
+
+   `ParameterSetName`参数集合は,パラメータが属するパラメータ集合を指定する.パラメータ集合が指定されていない場合,パラメータは関数によって定義されたすべてのパラメータ集合に属する.ユニークになるためには,各パラメータ集合は,他のパラメータ集合に属していない少なくとも1つのパラメータを備えている必要があります.
+
+&gt; [!NOTE] &gt; cmdletや関数に対して,パラメータセット32の制限があります.
+
+次の例では,  のコンピュータ名値に**のパラメータを宣言します.`Computer`設定されたパラメータ,  のユーザー名 パラメータです.`User`参数セットと両参数セットの総括パラメータ.
+
+```powershell
+param(
+    [Parameter(Mandatory, ParameterSetName=&quot;Computer&quot;)]
+    [string[]]$ComputerName,
+
+    [Parameter(Mandatory, ParameterSetName=&quot;User&quot;)]
+    [string[]]$UserName,
+
+    [Parameter()]
+    [switch]$Summary
+)
+```
+
+指定できるのは1つだけです.`ParameterSetName`各参数で1つの値しかありません.`ParameterSetName`各パラメータ属性における argument. 複数のパラメータセットにパラメータを組み込むには,追加的なパラメータ属性を追加してください.
+
+次の例では,概要パラメータを&quot;&quot;に明示的に追加します.`Computer`そして,`User`**Summary**パラメータは, でオプションです.`Computer`設定されたパラメータと必須のパラメータは, で設定されます.`User`設定されたパラメータです.
+
+```powershell
+param(
+    [Parameter(Mandatory, ParameterSetName=&quot;Computer&quot;)]
+    [string[]]$ComputerName,
+
+    [Parameter(Mandatory, ParameterSetName=&quot;User&quot;)]
+    [string[]]$UserName,
+
+    [Parameter(ParameterSetName=&quot;Computer&quot;)]
+    [Parameter(Mandatory, ParameterSetName=&quot;User&quot;)]
+    [switch]$Summary
+)
+```
+
+パラメーターセットに関する詳細については,[パラメーターセットについて]を参照してください.
+
+#### ValueFromPipeline argumentは,Pipelineの値からなる
+
+   `ValueFromPipeline`参数がパイプラインオブジェクトからの入力を受け入れることを示す.この関数がオブジェクトの属性だけでなく,全体的なオブジェクトを受け入れている場合,この参数を指定してください.
+
+次の例では,必須の**ComputerName**パラメータを宣言し,パイプラインから関数に転送されたオブジェクトを承認します.
+
+```powershell
+param(
+    [Parameter(Mandatory, ValueFromPipeline)]
+    [string[]]$ComputerName
+)
+```
+
+#### ValueFromPipelineByPropertyName argumentからプロパティ名前の表示
+
+   `ValueFromPipelineByPropertyName`参数がパイプラインオブジェクトのプロパティから入力を受け入れてくれるという議論です.オブジェクトプロパティはパラメータと同じ名前またはニックネームを持つ必要があります.
+
+例えば,関数が**ComputerName**パラメータを持ち,パイプされたオブジェクトが**ComputerName**プロパティを持っている場合,その値が**ComputerName**プロパティに割り当てられます.
+
+次の例では,必須のコンピュータ名**パラメータを宣言し,パイプラインを通じて関数に伝わるオブジェクトのコンピュータ名**属性からの入力を受け入れます.
+
+```powershell
+param(
+    [Parameter(Mandatory, ValueFromPipelineByPropertyName)]
+    [string[]]$ComputerName
+)
+```
+
+この議論を使って関数の実装を考えてみましょう.
+
+```powershell
+function Test-ValueFromPipelineByPropertyName{
+  param(
+      [Parameter(Mandatory, ValueFromPipelineByPropertyName)]
+      [string[]]$ComputerName
+  )
+  Write-Output -InputObject &quot;Saw that ComputerName was &#x27;$ComputerName&#x27;&quot;
+}
+```
+
+その場合,コンピュータ名という属性を持つオブジェクトをパイプする示範は,次のようになります.
+
+```powershell
+[pscustomobject]@{ ComputerName = &quot;HelloWorld&quot; } |
+    Test-ValueFromPipelineByPropertyName
+```
+
+```Output
+Saw that ComputerName was &#x27;HelloWorld&#x27;
+```
+
+&gt; [!NOTE] &gt;パイプライン入力を受け入れるタイプされたパラメータ ()`by Value`) または &gt; ()`by PropertyName`&gt; &gt; _delay-bind_ scriptblock が自動的に実行されます.結果は,パラメータに結合されます. 遅延結合は,タイプ **ScriptBlock** または &gt; **System.Object** として定義されたパラメータでは動作しません. 脚本ブロックは, _without_ being &gt; invoked を通じて行われます. _delay-bind_ scriptblocks に関する詳細については, &gt; [about_Script_Blocks][16] を参照してください.
+
+#### ValueFromRemainingArgumentsの議論
+
+   `ValueFromRemainingArguments`参数が関数の他のパラメータに割り当てられていないコマンドのすべてのパラメータの値を受け入れることを示す.
+
+**ValueFromRemainingArguments** に渡されたコレクションは,常に単一の要素として扱われます.
+
+```powershell
+function Test-Remainder {
+    param(
+        [Parameter(Mandatory, Position=0)]
+        [string]$Value,
+
+        [Parameter(ValueFromRemainingArguments, Position=1)]
+        [string[]]$Remaining
+    )
+
+    &quot;Value = $Value&quot;
+    &quot;Found $($Remaining.Count) remaining values&quot;
+
+    for ($i = 0; $i -lt $Remaining.Count; $i++) {
+        &quot;${i}: $($Remaining[$i])&quot;
+    }
+}
+```
+
+```powershell
+PS&gt; Test-Remainder first one two, three
+
+Value = first
+Found 2 remaining values
+0: one
+1: two three
+```
+
+# about_Functions_Advanced_Parametersについて
+
+#### メッセージの議論です.
+
+   `HelpMessage`参数またはその値の簡略な説明を含む文字列をアーグメントで指定します.必須パラメータなしでコマンドを実行すると,PowerShellが入力を提示します. サポートメッセージを見るには,  を入力してください.`!?`promptで &lt;kbd&gt;Enter&lt;/kbd&gt; を押します.
+
+次の例では,必須の**ComputerName**パラメータと,期待されるパラメータ値を説明するヘルプメッセージが宣言されています.
+
+```powershell
+param(
+    [Parameter(Mandatory,
+    HelpMessage=&quot;Enter one or more computer names separated by commas.&quot;)]
+    [string[]]$ComputerName
+)
+```
+
+輸出例:
+
+```Output
+cmdlet  at command pipeline position 1
+Supply values for the following parameters:
+(Type !? for Help.)
+ComputerName[0]: !?
+Enter one or more computer names separated by commas.
+ComputerName[0]: localhost
+ComputerName[1]:
+```
+
+機能に[コメントベースのサポート][01] が存在しない場合,このメッセージは  に表示されます.`Get-Help -Full` 輸出.
+
+この引数はオプションパラメータに何の影響も及ぼさない.
+
+#### DontShowの議論を
+
+   `DontShow`古いパラメータが削除できないコマンドのバックバース互換性をサポートするために通常使用されます.`DontShow` に`True`タブ拡張やIntelliSenseのパラメータをユーザーから隠す.
+
+PowerShell v7 (および上) は使用します.`DontShow`次の過年パラメータを隠すために:
+
+- のNoTypeInformationのパラメータ`ConvertTo-Csv`そして,`Export-Csv`- のののののののののののののののののののののののののののののののののののののののののののののののののののののののののののののののののののののののののののののののののののののののののののののののののののののののののののののののののののののののののののののののののの`Format-Hex`- のパラメータの **UseBasicParsing**`Invoke-RestMethod`そして,`Invoke-WebRequest`
+
+   `DontShow`議論には以下の副作用がある.
+
+- 関連パラメータのパラメータセット全体に影響を与えます.`DontShow`- タブ完成とIntelliSenseから共通のパラメータを隠す. `DontShow`オプションの共通パラメータを隠さない: **WhatIf**, **Confirm**, or **UseTransaction**.
+
+# about_Functions_Advanced_Parametersについて
+
+### アリアス属性
+
+**Alias**属性は,パラメータに代替名称を設定する.パラメータに割り当てられるアライアスの数には制限はありません.
+
+次の例では,必須の**ComputerName**パラメータに **CN**と **MachineName**のニックネームを追加するパラメータ宣言が示されています.
+
+```powershell
+param(
+    [Parameter(Mandatory)]
+    [Alias(&quot;CN&quot;,&quot;MachineName&quot;)]
+    [string[]]$ComputerName
+)
+```
+
+### 資格属性
+
+**Credential**属性は,パラメータが認証を受け入れたことを示している.次の例では**Credential**属性を使ったパラメータ宣言が表示されます.
+
+```powershell
+param(
+    [Parameter()]
+    [System.Management.Automation.Credential()]
+    [PSCredential]$Credential
+)
+```
+
+### PSDefaultValue属性
+
+**PSDefaultValue**は,スクリプト内のコマンドパラメータのデフォルト値を指定します.この情報は, によって表示されます.`Get-Help`cmdlet.デフォルト値情報を表示するには,関数はコメントベースのサポートを含む必要があります.例えば:
+
+```powershell
+&lt;#
+    .SYNOPSIS
+     This is a test script that has a parameter with a default value.
+#&gt;
+function TestDefaultValue {
+    param(
+        [PSDefaultValue(Help=&#x27;Current directory&#x27;)]
+        [string]$Name = $PWD.Path
+    )
+
+    $Name
+}
+```
+
+活用する`Get-Help`標準値情報を表示するには.
+
+```powershell
+Get-Help TestDefaultValue -Parameter Name
+```
+
+```Output
+-Name &lt;String&gt;
+
+    Required?                    false
+    Position?                    1
+    Default value                Current directory
+    Accept pipeline input?       false
+    Accept wildcard characters?  false
+```
+
+#### PSDefaultValue属性参数
+
+**PSDefaultValue**属性は,二つの議論を持っています.
+
+- **Help** - デフォルト値を記述する文字列.この情報は, で表示されます.`Get-Help`cmdlet. - **Value** - パラメータのデフォルト値.
+
+両方ともオプションです.任意の議論を指定していない場合は,`Get-Help`パラメータに割り当てられた値を表示します.
+
+### PSTypeName属性
+
+タイプ宣言では拡張型名を使用することはできません. *PSTypeName**属性は,パラメータのタイプを拡張型に制限することができます.
+
+この例では,のが`Test-Connection`cmdlet では拡張型が返されます.パラメータのタイプを拡張型に制限するために **PSTypeName** 属性を使用できます.
+
+```powershell
+function TestType {
+    param(
+        [PSTypeName(&#x27;System.Management.ManagementObject#root\cimv2\Win32_PingStatus&#x27;)]
+        [psobject]$PingStatus
+    )
+
+    $PingStatus
+}
+
+$ping = Test-Connection bing.com -Count 1
+TestType $ping
+```
+
+### System.Obsolete attributを使用していない
+
+**System.Obsolete**属性を使って,もはやサポートされていないパラメータをマークします.この方法は,関数からパラメータを削除したいのですが,関数を使用する既存のスクリプトを壊したくない場合,有用です.
+
+例えば,NoTypeInformation を持つ関数を考えてみましょう.`[switch]`[U+8F93]出にタイプ情報が含まれていないかどうかを制御するパラメータです.その行動をデフォルトにしたいと,関数からパラメータを削除します.しかし,関数を使用する既存のスクリプトを壊したくない.パラメータを時代遅れとマークし,変更を説明するメッセージを追加できます.
+
+```powershell
+param(
+    [System.Obsolete(&quot;The NoTypeInformation parameter is obsolete.&quot;)]
+    [switch]$NoTypeInformation
+)
+```
+
+### ワイルドカード属性をサポートします.
+
+**SupportsWildcards**属性は,パラメータがワイルドカード値を受け入れていることを示します.次の例ではワイルドカード値をサポートする義務的な **Path**パラメータのパラメータ宣言が表示されます.
+
+```powershell
+param(
+    [Parameter(Mandatory)]
+    [SupportsWildcards()]
+    [string[]]$Path
+)
+```
+
+この属性を利用すると,ワイルドカードのサポートが自動的に有効化されない.Cmdletの開発者はワイルドカード入力処理のためにコードを実装する必要があります.サポートされているワイルドカードは,基底のAPIまたはPowerShellプロバイダーによって異なります.詳細については,[about_Wildcards][19]を参照してください.
+
+### ArgumentCompleter属性
+
+**ArgumentCompleter**属性は,特定のパラメータにタブの完了値を追加することを可能にする.タブの完了が必要とする各パラメータに対して, **ArgumentCompleter**属性は定義されなければならない. **dynamicparameters**と同様に,利用者がパラメータ名後に &lt;kbd&gt;Tab&lt;/kbd&gt; を押すと,実行時に利用可能な値は計算されます.
+
+詳細については,[about_Functions_Argument_Completion]を参照してください.
+
+## パラメーターと変数認証属性
+
+検証属性は,PowerShellを直接 PowerShell に転送して,高度な関数を呼び出すときにユーザーが送信するパラメータ値をテストします.パラメータ値はテストに失敗した場合,エラーが生成され,関数が呼び出されなくなります.パラメータ認証は提供された入力のみに適用され,デフォルト値などの他の値は検証されません.
+
+また,認証属性を利用して,ユーザーが変数に指定できる値を制限することもできます.
+
+```powershell
+[AllowNull()] [int]$number = 7
+```
+
+検証属性は,パラメータだけでなく,任意の変数に適用できます.スクリプト内の任意の変数に検証を定義できます.
+
+&gt; [!NOTE] &gt; タイプされた変数を持つ属性を使用する際には,タイプの前に属性を宣言することがベストプラクティスです. &gt; &gt; 属性と変数 &gt; 名前の前に行間断断点を持つタイプを宣言した場合,タイプは独自の記述として扱われます. &gt; &gt; ```powershell
+&gt; [string]
+&gt; [ValidateLength(1,5)] $Text = &#x27;Okay&#x27;
+&gt; ```&gt;  &gt; ```Output
+&gt; IsPublic IsSerial Name                                     BaseType
+&gt; -------- -------- ----                                     --------
+&gt; True     True     String                                   System.Object
+&gt; ```&gt; &gt; タイプの後で検証属性を宣言すると,割り当てられている値が &gt; タイプ変換前に検証されるので,予期せぬ検証 &gt; 失敗につながる. &gt; &gt; ```powershell
+&gt; [string] [ValidateLength(1,5)]$TicketIDFromInt        = 43
+&gt; [string] [ValidateLength(1,5)]$TicketIDFromString     = &#x27;43&#x27;
+&gt; [ValidateLength(1,5)] [string]$TicketIDAttributeFirst = 43
+&gt; ```&gt;  &gt; ```Output
+&gt; The attribute cannot be added because variable TicketIDFromInt with
+&gt; value 43 would no longer be valid.
+&gt; At line:1 char:1
+&gt; + [string][ValidateLength(1,5)]$TicketIDFromInt        = 43
+&gt; + ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+&gt;     + CategoryInfo          : MetadataError: (:) [], ValidationMetadata
+&gt;    Exception
+&gt;     + FullyQualifiedErrorId : ValidateSetFailure
+&gt; ```
+
+### AllowNull validation attribut を許可する
+
+**AllowNull**属性は,必須パラメータの値を  とすることを可能にする.`$null`次の例では,ハッシュテーブル **ComputerInfo** パラメータを宣言し, **null**値を持つことができます.
+
+```powershell
+param(
+    [Parameter(Mandatory)]
+    [AllowNull()]
+    [hashtable]$ComputerInfo
+)
+```
+
+[!NOTE] &gt; 文字列タイプがゼロ値を受け入れないため,タイプ変換が &gt;文字列に設定されている場合, **AllowNull**属性は動作しません.このシナリオでは, &gt; **AllowEmptyString**属性を使用できます.
+
+### AllowEmptyStringの認証属性
+
+**AllowEmptyString**属性は,必須パラメータの値を空文字列 () にすることを可能にする.`&quot;&quot;`) 以下の例では,空文字列値を持つことができる**ComputerName**パラメータを宣言します.
+
+```powershell
+param(
+    [Parameter(Mandatory)]
+    [AllowEmptyString()]
+    [string]$ComputerName
+)
+```
+
+# about_Functions_Advanced_Parametersについて
+
+### AllowEmptyCollection の認証属性を許可する
+
+**AllowEmptyCollection**属性は,必須パラメータの値を空きコレクションにすることを可能にする.`@()`.次の例では,空のコレクション値を持つことができる**ComputerName**パラメータを宣言します.
+
+```powershell
+param(
+    [Parameter(Mandatory)]
+    [AllowEmptyCollection()]
+    [string[]]$ComputerName
+)
+```
+
+### ValidateCountの認証属性
+
+**ValidateCount**属性は,パラメータが受け入れられる最小および最大限のパラメータ値を指定します.この関数を呼び出すコマンドのパラメータ値数がその範囲の外にある場合,PowerShellでエラーが生じます.
+
+次のパラメータ宣言は,1~5つのパラメータ値を取る **ComputerName**パラメータを作成します.
+
+```powershell
+param(
+    [Parameter(Mandatory)]
+    [ValidateCount(1,5)]
+    [string[]]$ComputerName
+)
+```
+
+### ValidateLength validation attributについて
+
+**ValidateLength**属性は,パラメータまたは変数値内の最小および最大文字数を指定します.PowerShellで,パラメータまたは変数に指定された値の長さが範囲の外にある場合,エラーが生成されます.
+
+次の例では,各コンピュータの名前には1～10文字が含まれる必要があります.
+
+```powershell
+param(
+    [Parameter(Mandatory)]
+    [ValidateLength(1,10)]
+    [string[]]$ComputerName
+)
+```
+
+次の例では,変数の値が `$text`文字は少なくとも1文字,文字は最大10文字でなければならない.
+
+```powershell
+[ValidateLength(1,10)] [string] $text = &#x27;valid&#x27;
+```
+
+### ValidatePatternの検証属性
+
+**ValidatePattern**属性は,パラメータまたは変数値と比較される通常の表現を指定します.PowerShellでは,値が通常の表現パターンと一致しない場合はエラーを生成します.
+
+次の例では,パラメータ値は4桁の数字を含み,各桁は0から9までの数字である必要があります.
+
+```powershell
+param(
+    [Parameter(Mandatory)]
+    [ValidatePattern(&quot;[0-9]{4}&quot;)]
+    [string[]]$ComputerName
+)
+```
+
+次の例では,変数の値が `$ticketID`4桁の数字が正確に 4桁の数字で,各桁は 0から9までの数字でなければならない.
+
+```powershell
+[ValidatePattern(&quot;^[0-9]{4}$&quot;)] [string]$ticketID = 1111
+```
+
+### ValidateRangeの認証属性
+
+**ValidateRange**属性は,各パラメータまたは変数値のための数値範囲を指定します.PowerShellで,その範囲の外にある値がエラーを生成します.
+
+次の例では, ** 試行錯誤** パラメータの値は0から10の間でなければならない.
+
+```powershell
+param(
+    [Parameter(Mandatory)]
+    [ValidateRange(0,10)]
+    [int]$Attempts
+)
+```
+
+次の例では,変数の値が `$number`0から10の間でなければならない.
+
+```powershell
+[ValidateRange(0,10)] [int]$number = 5
+```
+
+### ValidateScriptの認証属性
+
+**ValidateScript**属性は,パラメータまたは変数値を検証するために使用されるスクリプトを指定します.PowerShellは,その値をスクリプトにパイプし,スクリプトが返信した場合エラーを生成します.`$false`あるいは脚本が例外を提示している場合.
+
+**ValidateScript**属性を使用すると,検証される値は,  にマッピングされます.`$_`変数を使うことができます.`$_`脚本内の値に言及する変数です.
+
+次の例では,EventDate**パラメータの値は,現在の日付より大きいまたはそれと同等である必要があります.
+
+```powershell
+param(
+    [Parameter(Mandatory)]
+    [ValidateScript({$_ -ge (Get-Date)})]
+    [datetime]$EventDate
+)
+```
+
+次の例では,変数の値が `$date`該当する日付と時間よりも小さいか等しいものとする.
+
+```powershell
+[ValidateScript({$_ -le (Get-Date)})] [datetime]$date = (Get-Date)
+```
+
+&gt; [!NOTE] &gt;ValidateScriptを使用している場合は,合格できません.`$null`値を &gt;パラメータにします. null value を渡すと,ValidateScript** は &gt; 論点を検証できません.
+
+### ValidateSet属性
+
+**ValidateSet**属性は,パラメータまたは変数のための有効値の集合を指定し,タブの完了を可能にします.PowerShellで,パラメータまたは変数値がセット内の値と一致しない場合はエラーを生成します.次の例では, **Detail**パラメータの値は,Low, Average, or Highのみで設定できます.
+
+```powershell
+param(
+    [Parameter(Mandatory)]
+    [ValidateSet(&quot;Low&quot;, &quot;Average&quot;, &quot;High&quot;)]
+    [string[]]$Detail
+)
+```
+
+次の例では,変数の値が `$flavor`チョコレート,ストロベリー,バニラでなければならない.
+
+```powershell
+[ValidateSet(&quot;Chocolate&quot;, &quot;Strawberry&quot;, &quot;Vanilla&quot;)]
+[string]$flavor = &quot;Strawberry&quot;
+```
+
+検証は,スクリプト内でもその変数を割り当てるときに起こる.例えば,次の結果が実行時にエラーをもたらす:
+
+```powershell
+param(
+    [ValidateSet(&quot;hello&quot;, &quot;world&quot;)]
+    [string]$Message
+)
+
+$Message = &quot;bye&quot;
+```
+
+この例では,実行時に次のエラーが返されます.
+
+```Output
+The attribute cannot be added because variable Message with value bye would no
+longer be valid.
+At line:1 char:1
++ [ValidateSet(&quot;hello&quot;, &quot;world&quot;)][string]$Message = &#x27;bye&#x27;
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : MetadataError: (:) [], ValidationMetadataException
+    + FullyQualifiedErrorId : ValidateSetFailure
+
+```
+
+ を使って`ValidateSet`また,そのパラメータの値のタブ拡張を有効にします.詳細については,[about_Tab_Expansion][18]を参照してください.
+
+#### クラスを使用するDynamic ValidateSet 値を表示します
+
+を用いることができる.`class`実行時に **ValidateSet** の値を動的に生成する.次の例では,変数  の有効値は示します.`$Sound` を介して生成されます.`class`**SoundNames**は,利用可能なサウンドファイルに3つのファイルシステムパスを確認する: named
+
+```powershell
+class SoundNames : System.Management.Automation.IValidateSetValuesGenerator {
+    [string[]] GetValidValues() {
+        $SoundPaths = &#x27;/System/Library/Sounds/&#x27;,
+            &#x27;/Library/Sounds&#x27;,&#x27;~/Library/Sounds&#x27;
+        $SoundNames = foreach ($SoundPath in $SoundPaths) {
+            if (Test-Path $SoundPath) {
+                (Get-ChildItem $SoundPath).BaseName
+            }
+        }
+        return [string[]] $SoundNames
+    }
+}
+```
+
+   `[SoundNames]`クラスはその後,動態 **ValidateSet**値として次のように実装されます:
+
+```powershell
+param(
+    [ValidateSet([SoundNames])]
+    [string]$Sound
+)
+```
+
+&gt; [!NOTE] &gt;  `IValidateSetValuesGenerator`class は PowerShell 6.0 で導入されました.
+
+### ValidateNotNull validation attribut を表示する
+
+**ValidateNotNull**属性は,パラメータ値は  になれないことを指定します.`$null`値が であるとき.`$null`PowerShellは例外を挙げています.
+
+**ValidateNotNull**属性は,パラメータがオプションで,タイプが定義されていない場合,または **object**のような無効値を暗示 [U+0AB0][U+0AC2][U+0AAA][U+0ABE][U+0A82][U+0AA4][U+0AB0]させることができないタイプ変換者がいた場合,使用するように設計されています. **string**などの無効値を暗示 [U+0AB0][U+0AC2][U+0AAA][U+0ABE][U+0A82][U+0AA4][U+0AB0]させるタイプを指定すると,無効値は**ValidateNotNull**属性を使用するときにさえ空っぽの文字列に変換されます.このシナリオでは **ValidateNotNull**属性を使用します.Or
+
+次の例では, **Id** パラメータの値は  になれない.`$null` .
+
+```powershell
+param(
+    [Parameter()]
+    [ValidateNotNull()]
+    $Id
+)
+```
+
+# about_Functions_Advanced_Parametersについて
+
+### ValidateNotNullOrEmpty 認証属性です
+
+**ValidateNotNullOrEmpty**属性は,割り当てられた値は以下の値に該当できないことを指定します:
+
+ - -`$null`- 空き文字列 ()`&quot;&quot;`) - 空のアレイ ()`@()`) 
+
+値が無効である場合,PowerShellは例外を提示します.
+
+```powershell
+param(
+    [Parameter(Mandatory)]
+    [ValidateNotNullOrEmpty()]
+    [string[]]$UserName
+)
+```
+
+### ValidateDriveの認証属性です.
+
+**ValidateDrive**属性は,パラメータ値がパスを表す必要があることを指定し,それは許可されたドライブのみを指している.PowerShellでパラメータ値が許可されていないドライブ以外のドライブを指す場合はエラーを生成します.パスの存在は,ドライブ自体を除く,確認されていません.
+
+相対路線を使用する場合,現在のドライブは許容されたドライブリストに含まれなければならない.
+
+```powershell
+param(
+    [ValidateDrive(&quot;C&quot;, &quot;D&quot;, &quot;Variable&quot;, &quot;Function&quot;)]
+    [string]$Path
+)
+```
+
+### ValidateUserDriveの認証属性
+
+**ValidateUserDrive**属性は,パラメータ値は, で表示されなければならないことを指定します.`User`PowerShellでエラーが発生する.パスポートが別のドライブを指している場合.検証属性はパスポートのドライブプレフィックスの存在をテストするのみです.
+
+相対路線を使用すると,現在のドライブが  になる必要があります.`User` .
+
+```powershell
+function Test-UserDrivePath{
+    [OutputType([bool])]
+    param(
+        [Parameter(Mandatory, Position=0)]
+        [ValidateUserDrive()]
+        [string]$Path
+    )
+    $true
+}
+
+Test-UserDrivePath -Path C:\
+```
+
+```Output
+Test-UserDrivePath: Cannot validate argument on parameter &#x27;Path&#x27;. The path
+argument drive C does not belong to the set of approved drives: User.
+Supply a path argument with an approved drive.
+```
+
+```powershell
+Test-UserDrivePath -Path &#x27;User:\A_folder_that_does_not_exist&#x27;
+```
+
+```Output
+Test-UserDrivePath: Cannot validate argument on parameter &#x27;Path&#x27;. Cannot
+find drive. A drive with the name &#x27;User&#x27; does not exist.
+```
+
+定義できるのです.`User`Just Enough Administration (JEA) セッション設定のドライブで,この例では,ユーザー:ドライブを作成します.
+
+```powershell
+New-PSDrive -Name &#x27;User&#x27; -PSProvider FileSystem -Root $Env:HOMEPATH
+```
+
+```Output
+Name           Used (GB)     Free (GB) Provider      Root
+----           ---------     --------- --------      ----
+User               75.76         24.24 FileSystem    C:\Users\ExampleUser
+```
+
+```powershell
+Test-UserDrivePath -Path &#x27;User:\A_folder_that_does_not_exist&#x27;
+```
+
+```Output
+True
+```
+
+## また, を参照してください.
+
+[about_Automatic_Variables][05] - [about_Functions][14] - [about_Functions_Advanced][09] - [about_Functions_Advanced_Methods][08] - [about_Functions_CmdletBindingAttribute][12] - [about_Functions_OutputTypeAttribute][13]
+
+リンク参照 --&gt; [01]: about_Comment_Based_Help.md [02]: /dotnet/api/system.management.automation.runtimedefinedparameter [05]: about_Automatic_Variables.md [06]: about_CommonParameters.md [08]: about_Functions_Advanced_Methods.md [09]: about_Functions_Advanced.md [10]: about_Functions_Argument_Completion.md#argumentcompleter-attribute [12]: about_Functions_CmdletBindingAttribute.md [13]: about_Functions_OutputTypeAttribute.md [14]: about_Functions.md [15]: about_parameter_s.md_s.16]: about_Blocks.md: about_s.md: about_s.md: about_s.md: about_s.md: about_s.md: about_s.md: about_s.md: about_s.md: about_s.md: about_s.md: about_s.md: about_s.md: about_s.s.md: about_s: about_s.md: about_s.s: about_s.s.md: about_s:s.s:s.s:s.s:s:s:s:s:s:s:s:s:s:s:s:s:s:s:s:s:s:s:s:s:s:s:s:s:s:s:s:s:s:s:s:s:s:s:s:s:s:s:s:s:s:s:s:s:s:s:s:s:s:s:s:s:s:s:s:s:s:s:s:s:s:s:s:s:s:s:s:s:s: about_s:s:s:s:s:s:s:s:s:s:s:s:s:s:s:s:s:s:s:s:s:s:s:s:s:s:s
+###英語原文###
+# about_Functions_Advanced_Parameters
+
+## Short description
+
+Explains how to add parameters to advanced functions.
+
+## Long description
+
+You can add parameters to the advanced functions that you write, and use
+parameter attributes and arguments to limit the parameter values that function
+users submit with the parameter.
+
+When you use the `CmdletBinding` attribute, PowerShell automatically adds the
+Common Parameters. You can&#x27;t create any parameters that use the same names as
+the Common Parameters. For more information, see [about_CommonParameters][06].
+
+Beginning in PowerShell 3.0, you can use splatting with `@args` to represent
+the parameters in a command. Splatting is valid on simple and advanced
+functions. For more information, see [about_Functions][14] and
+[about_Splatting][17].
+
+## Parameter declaration
+
+Parameters are variables declared in the `param()` statement of a function or
+scriptblock. You can use the optional `[Parameter()]` attribute alone or in
+combination with the `[Alias()]` attribute or any of the parameter validation
+attributes.
+
+Parameter names follow the rules for variable names. Parameter names consist of
+decimal digits, alphabetical characters, and underscores. For a complete list
+of naming rules, see [about_Variables][20].
+
+&gt; [!IMPORTANT]
+&gt; It&#x27;s possible to define a parameter that starts with a decimal digit.
+&gt; Starting parameter names with a digit isn&#x27;t recommended because PowerShell
+&gt; treats them as string values passed as positional parameters.
+
+Consider the following example:
+
+```powershell
+function TestFunction {
+    param (
+        [switch] $100,
+        [string] $200
+    )
+
+    &quot;100: $100&quot;
+    &quot;200: $200&quot;
+}
+```
+
+If you try to use the parameters, PowerShell interprets them as strings passed
+as positional parameter.
+
+```powershell
+PS&gt; TestFunction -100 -200 Hello
+100: False
+200: -100
+$args: -200 Hello
+```
+
+The output shows that PowerShell has bound the value `-100` to the `$200`
+parameter variable. The remaining positional values are bound to `$args`. To
+work around the issue, you can use splatting to pass the parameter values.
+
+```powershell
+PS&gt; $ht = @{100 = $true; 200 = &#x27;Hello&#x27;}
+PS&gt; TestFunction @ht
+100: True
+200: Hello
+$args:
+```
+
+For more information, see [about_Splatting][17].
+
+## Type conversion of parameter values
+
+When you supply strings as arguments to parameters that expect a different
+type, PowerShell implicitly converts the strings to the parameter target type.
+Advanced functions perform culture-invariant parsing of parameter values.
+
+By contrast, a culture-sensitive conversion is performed during parameter
+binding for compiled cmdlets.
+
+In this example, we create a cmdlet and a script function that take a
+`[datetime]` parameter. The current culture is changed to use German settings.
+A German-formatted date is passed to the parameter.
+
+```powershell
+
+# Create a cmdlet that accepts a [datetime] argument.
+Add-Type @&#x27;
+  using System;
+  using System.Management.Automation;
+  [Cmdlet(&quot;Get&quot;, &quot;Date_Cmdlet&quot;)]
+  public class GetFooCmdlet : Cmdlet {
+
+    [Parameter(Position=0)]
+    public DateTime Date { get; set; }
+
+    protected override void ProcessRecord() {
+      WriteObject(Date);
+    }
+  }
+&#x27;@ -PassThru | % Assembly | Import-Module
+
+[cultureinfo]::CurrentCulture = &#x27;de-DE&#x27;
+$dateStr = &#x27;19-06-2018&#x27;
+
+Get-Date_Cmdlet $dateStr
+```
+
+```Output
+Dienstag, 19. Juni 2018 00:00:00
+```
+
+As shown above, cmdlets use culture-sensitive parsing to convert the string.
+
+```powershell
+
+# Define an equivalent function.
+function Get-Date_Func {
+  param(
+    [datetime] $Date
+  )
+  process {
+    $Date
+  }
+}
+
+[cultureinfo]::CurrentCulture = &#x27;de-DE&#x27;
+
+# This German-format date string doesn&#x27;t work with the invariant culture.
+
+# E.g., [datetime] &#x27;19-06-2018&#x27; breaks.
+$dateStr = &#x27;19-06-2018&#x27;
+
+Get-Date_Func $dateStr
+```
+
+Advanced functions use culture-invariant parsing, which results in the
+following error.
+
+```Output
+Get-Date_Func: Cannot process argument transformation on parameter &#x27;Date&#x27;.
+Cannot convert value &quot;19-06-2018&quot; to type &quot;System.DateTime&quot;. Error:
+&quot;String &#x27;19-06-2018&#x27; was not recognized as a valid DateTime.&quot;
+At line:13 char:15
++ Get-Date_Func $dateStr
++               ~~~~~~~~
+    + CategoryInfo          : InvalidData: (:) [Get-Date_Func], ParameterBindingArgumentTransformationException
+    + FullyQualifiedErrorId : ParameterArgumentTransformationError,Get-Date_Func
+```
+
+For more information, see [about_Type_Conversion](about_Type_Conversion.md).
+
+## Static parameters
+
+Static parameters are parameters that are always available in the function.
+Most parameters in PowerShell cmdlets and scripts are static parameters.
+
+The following example shows the declaration of a **ComputerName** parameter
+that has the following characteristics:
+
+- It&#x27;s mandatory (required).
+- It takes input from the pipeline.
+- It takes an array of strings as input.
+
+```powershell
+param(
+    [Parameter(Mandatory=$true, ValueFromPipeline=$true)]
+    [string[]]$ComputerName
+)
+```
+
+## `[switch]` parameters
+
+`[switch]` parameters are parameters that take no parameter value. Instead,
+they convey a Boolean true-or-false value through their presence or absence, so
+that when a `[switch]` parameter is present it has a **true** value and when
+absent it has a **false** value.
+
+For example, the **Recurse** parameter of `Get-ChildItem` is a `[switch]`
+parameter.
+
+The following example shows the definition of a `[switch]` parameter that could
+be used to provide an option to output data as a byte array:
+
+```powershell
+param([switch]$AsByteArray)
+```
+
+`[switch]` parameters are easy to use and are preferred over Boolean parameters
+that have a less natural syntax for PowerShell.
+
+To use a `[switch]` parameter, include the parameter in the command. For
+example:
+
+`-IncludeAll`
+
+To use a Boolean parameter, you must provide the parameter and a Boolean value.
+
+`-IncludeAll $true`
+
+When creating `[switch]` parameters, choose the parameter name carefully. Be
+sure that the parameter name communicates the effect of the parameter to the
+user. Avoid ambiguous terms, such as **Filter** or **Maximum** that might imply
+a value is required.
+
+# about_Functions_Advanced_Parameters
+
+### `[switch]` parameter design considerations
+
+- Don&#x27;t set a default value for a `[switch]` parameter. `[switch]` parameters
+  always default to false.
+- Don&#x27;t make `[switch]` parameters positional. By default, `[switch]`
+  parameters are excluded from positional parameters. You _can_ override that
+  in the **Parameter** attribute, but it can confuse users.
+- Design `[switch]` parameters so that using them changes the default behavior
+  of the command to a less common or more complicated mode. The simplest
+  behavior of a command should be the default behavior that doesn&#x27;t require the
+  use of `[switch]` parameters.
+- Don&#x27;t make `[switch]` parameters mandatory. The only case where it&#x27;s helpful
+  to make a `[switch]` parameter mandatory is when it&#x27;s needed to differentiate
+  a parameter set.
+- Use the `[switch]` parameter variable directly in a conditional expression.
+  The `SwitchParameter` type implicitly converts to Boolean. For example:
+
+  ```powershell
+  if ($MySwitch) { ... }
+  ```
+
+- Always base the behavior controlled by the `[switch]` parameter on the
+  _value_ of the parameter, not its _presence_. There are several ways to test
+  for the presence of a `[switch]` parameters:
+
+  - `$PSBoundParameters` contains the `[switch]` parameter name as a key
+  - `$MyInvocation.BoundParameters` contains the `[switch]` parameter name as a
+    key
+  - `$PSCmdlet.ParameterSetName` when the switch defines a unique parameter set
+
+  For example, it&#x27;s possible to provide an explicit value for the switch using
+  `-MySwitch:$false` or splatting. If you only test for the presence of the
+  parameter, the command behaves as if the switch value is `$true` instead of
+  `$false`.
+
+## Dynamic parameters
+
+Dynamic parameters are parameters of a cmdlet, function, or script that are
+available only under certain conditions.
+
+For example, several provider cmdlets have parameters that are available only
+when the cmdlet is used in the provider drive, or in a particular path of the
+provider drive. For example, the **Encoding** parameter is available on the
+`Add-Content`, `Get-Content`, and `Set-Content` cmdlets only when it&#x27;s used in
+a file system drive.
+
+You can also create a parameter that appears only when another parameter is
+used in the function command or when another parameter has a certain value.
+
+Dynamic parameters can be useful, but use them only when necessary, because
+they can be difficult for users to discover. To find a dynamic parameter, the
+user must be in the provider path, use the **ArgumentList** parameter of the
+`Get-Command` cmdlet, or use the **Path** parameter of `Get-Help`.
+
+To create a dynamic parameter for a function or script, use the `dynamicparam`
+keyword.
+
+The syntax is as follows:
+
+`dynamicparam {&lt;statement-list&gt;}`
+
+In the statement list, use an `if` statement to specify the conditions under
+which the parameter is available in the function.
+
+The following example shows a function with standard parameters named **Name**
+and **Path**, and an optional dynamic parameter named **KeyCount**. The
+**KeyCount** parameter is in the `ByRegistryPath` parameter set and has a type
+of `Int32`. The **KeyCount** parameter is available in the `Get-Sample`
+function only when the value of the **Path** parameter starts with `HKLM:`,
+indicating that it&#x27;s being used in the `HKEY_LOCAL_MACHINE` registry drive.
+
+```powershell
+function Get-Sample {
+  [CmdletBinding()]
+  param([string]$Name, [string]$Path)
+
+  dynamicparam
+  {
+    if ($Path.StartsWith(&quot;HKLM:&quot;))
+    {
+      $parameterAttribute = [System.Management.Automation.ParameterAttribute]@{
+          ParameterSetName = &quot;ByRegistryPath&quot;
+          Mandatory = $false
+      }
+
+      $attributeCollection = [System.Collections.ObjectModel.Collection[System.Attribute]]::new()
+      $attributeCollection.Add($parameterAttribute)
+
+      $dynParam1 = [System.Management.Automation.RuntimeDefinedParameter]::new(
+        &#x27;KeyCount&#x27;, [int32], $attributeCollection
+      )
+
+      $paramDictionary = [System.Management.Automation.RuntimeDefinedParameterDictionary]::new()
+      $paramDictionary.Add(&#x27;KeyCount&#x27;, $dynParam1)
+      return $paramDictionary
+    }
+  }
+}
+```
+
+For more information, see the documentation for the
+[RuntimeDefinedParameter][02] type.
+
+## Attributes of parameters
+
+This section describes the attributes that you can add to function parameters.
+
+All attributes are optional. However, if you omit the **CmdletBinding**
+attribute, then to be recognized as an advanced function, the function must
+include the **Parameter** attribute.
+
+You can add one or multiple attributes in each parameter declaration. There&#x27;s
+no limit to the number of attributes that you can add to a parameter
+declaration.
+
+### Parameter attribute
+
+The **Parameter** attribute is used to declare the attributes of function
+parameters.
+
+The **Parameter** attribute is optional, and you can omit it if none of the
+parameters of your functions need attributes. But, to be recognized as an
+advanced function, rather than a simple function, a function must have either
+the **CmdletBinding** attribute or the **Parameter** attribute, or both.
+
+The **Parameter** attribute has arguments that define the characteristics of
+the parameter, such as whether the parameter is mandatory or optional.
+
+Use the following syntax to declare the **Parameter** attribute, an argument,
+and an argument value. The parentheses that enclose the argument and its value
+must follow **Parameter** with no intervening space.
+
+```powershell
+param(
+    [Parameter(Argument=value)]
+    $ParameterName
+)
+```
+
+Use commas to separate arguments within the parentheses. Use the following
+syntax to declare two arguments of the **Parameter** attribute.
+
+```powershell
+param(
+    [Parameter(Argument1=value1, Argument2=value2)]
+    $ParameterName
+)
+```
+
+The boolean argument types of the **Parameter** attribute default to **False**
+when omitted from the **Parameter** attribute. Set the argument value to
+`$true` or just list the argument by name. For example, the following
+**Parameter** attributes are equivalent.
+
+```powershell
+param(
+    [Parameter(Mandatory=$true)]
+)
+
+# Boolean arguments can be defined using this shorthand syntax
+
+param(
+    [Parameter(Mandatory)]
+)
+```
+
+If you use the **Parameter** attribute without arguments, as an alternative to
+using the **CmdletBinding** attribute, the parentheses that follow the
+attribute name are still required.
+
+```powershell
+param(
+    [Parameter()]
+    $ParameterName
+)
+```
+
+#### Mandatory argument
+
+The `Mandatory` argument indicates that the parameter is required. If this
+argument isn&#x27;t specified, the parameter is optional.
+
+The following example declares the **ComputerName** parameter. It uses the
+`Mandatory` argument to make the parameter mandatory.
+
+```powershell
+param(
+    [Parameter(Mandatory)]
+    [string[]]$ComputerName
+)
+```
+
+#### Position argument
+
+The `Position` argument determines whether the parameter name is required when
+the parameter is used in a command. When a parameter declaration includes the
+`Position` argument, the parameter name can be omitted and PowerShell
+identifies the unnamed parameter value by its position, or order, in the list
+of unnamed parameter values in the command.
+
+If the `Position` argument isn&#x27;t specified, the parameter name, or a parameter
+name alias or abbreviation, must precede the parameter value whenever the
+parameter is used in a command.
+
+By default, all function parameters are positional. PowerShell assigns position
+numbers to parameters in the order the parameters are declared in the function.
+To disable this feature, set the value of the `PositionalBinding` argument of
+the **CmdletBinding** attribute to `$false`. The `Position` argument takes
+precedence over the value of the `PositionalBinding` argument of the
+**CmdletBinding** attribute. For more information, see `PositionalBinding` in
+[about_Functions_CmdletBindingAttribute][12].
+
+The value of the `Position` argument is specified as an integer. A position
+value of **0** represents the first position in the command, a position value
+of **1** represents the second position in the command, and so on.
+
+If a function has no positional parameters, PowerShell assigns positions to
+each parameter based on the order the parameters are declared. However, as a
+best practice, don&#x27;t rely on this assignment. When you want parameters to be
+positional, use the `Position` argument.
+
+The following example declares the **ComputerName** parameter. It uses the
+`Position` argument with a value of **0**. As a result, when `-ComputerName` is
+omitted from command, its value must be the first or only unnamed parameter
+value in the command.
+
+```powershell
+param(
+    [Parameter(Position=0)]
+    [string[]]$ComputerName
+)
+```
+
+#### ParameterSetName argument
+
+The `ParameterSetName` argument specifies the parameter set a parameter belongs
+to. If no parameter set is specified, the parameter belongs to all the
+parameter sets defined by the function. To be unique, each parameter set must
+have at least one parameter that isn&#x27;t a member of any other parameter set.
+
+&gt; [!NOTE]
+&gt; For a cmdlet or function, there is a limit of 32 parameter sets.
+
+The following example declares a **ComputerName** parameter in the `Computer`
+parameter set, a **UserName** parameter in the `User` parameter set, and a
+**Summary** parameter in both parameter sets.
+
+```powershell
+param(
+    [Parameter(Mandatory, ParameterSetName=&quot;Computer&quot;)]
+    [string[]]$ComputerName,
+
+    [Parameter(Mandatory, ParameterSetName=&quot;User&quot;)]
+    [string[]]$UserName,
+
+    [Parameter()]
+    [switch]$Summary
+)
+```
+
+You can specify only one `ParameterSetName` value in each argument and only one
+`ParameterSetName` argument in each **Parameter** attribute. To include a
+parameter in more than one parameter set, add additional **Parameter**
+attributes.
+
+The following example explicitly adds the **Summary** parameter to the
+`Computer` and `User` parameter sets. The **Summary** parameter is optional in
+the `Computer` parameter set and mandatory in the `User` parameter set.
+
+```powershell
+param(
+    [Parameter(Mandatory, ParameterSetName=&quot;Computer&quot;)]
+    [string[]]$ComputerName,
+
+    [Parameter(Mandatory, ParameterSetName=&quot;User&quot;)]
+    [string[]]$UserName,
+
+    [Parameter(ParameterSetName=&quot;Computer&quot;)]
+    [Parameter(Mandatory, ParameterSetName=&quot;User&quot;)]
+    [switch]$Summary
+)
+```
+
+For more information about parameter sets, see [About Parameter Sets][15].
+
+#### ValueFromPipeline argument
+
+The `ValueFromPipeline` argument indicates that the parameter accepts input
+from a pipeline object. Specify this argument if the function accepts the
+entire object, not just a property of the object.
+
+The following example declares a **ComputerName** parameter that&#x27;s mandatory
+and accepts an object that&#x27;s passed to the function from the pipeline.
+
+```powershell
+param(
+    [Parameter(Mandatory, ValueFromPipeline)]
+    [string[]]$ComputerName
+)
+```
+
+#### ValueFromPipelineByPropertyName argument
+
+The `ValueFromPipelineByPropertyName` argument indicates that the parameter
+accepts input from a property of a pipeline object. The object property must
+have the same name or alias as the parameter.
+
+For example, if the function has a **ComputerName** parameter, and the piped
+object has a **ComputerName** property, the value of the **ComputerName**
+property is assigned to the function&#x27;s **ComputerName** parameter.
+
+The following example declares a **ComputerName** parameter that&#x27;s mandatory
+and accepts input from the object&#x27;s **ComputerName** property that&#x27;s passed to
+the function through the pipeline.
+
+```powershell
+param(
+    [Parameter(Mandatory, ValueFromPipelineByPropertyName)]
+    [string[]]$ComputerName
+)
+```
+
+Consider an implementation of a function using this argument:
+
+```powershell
+function Test-ValueFromPipelineByPropertyName{
+  param(
+      [Parameter(Mandatory, ValueFromPipelineByPropertyName)]
+      [string[]]$ComputerName
+  )
+  Write-Output -InputObject &quot;Saw that ComputerName was &#x27;$ComputerName&#x27;&quot;
+}
+```
+
+Then a demonstration of piping an object with the **ComputerName** property
+would be:
+
+```powershell
+[pscustomobject]@{ ComputerName = &quot;HelloWorld&quot; } |
+    Test-ValueFromPipelineByPropertyName
+```
+
+```Output
+Saw that ComputerName was &#x27;HelloWorld&#x27;
+```
+
+&gt; [!NOTE]
+&gt; A typed parameter that accepts pipeline input (`by Value`) or
+&gt; (`by PropertyName`) enables use of _delay-bind_ scriptblocks on the
+&gt; parameter.
+&gt;
+&gt; The _delay-bind_ scriptblock is run automatically during
+&gt; **ParameterBinding**. The result is bound to the parameter. Delay binding
+&gt; doesn&#x27;t work for parameters defined as type **ScriptBlock** or
+&gt; **System.Object**. The scriptblock is passed through _without_ being
+&gt; invoked. For more information about _delay-bind_ scriptblocks, see
+&gt; [about_Script_Blocks][16].
+
+#### ValueFromRemainingArguments argument
+
+The `ValueFromRemainingArguments` argument indicates that the parameter accepts
+all the parameter&#x27;s values in the command that aren&#x27;t assigned to other
+parameters of the function.
+
+Collections passed to **ValueFromRemainingArguments** are always treated as a
+single element.
+
+```powershell
+function Test-Remainder {
+    param(
+        [Parameter(Mandatory, Position=0)]
+        [string]$Value,
+
+        [Parameter(ValueFromRemainingArguments, Position=1)]
+        [string[]]$Remaining
+    )
+
+    &quot;Value = $Value&quot;
+    &quot;Found $($Remaining.Count) remaining values&quot;
+
+    for ($i = 0; $i -lt $Remaining.Count; $i++) {
+        &quot;${i}: $($Remaining[$i])&quot;
+    }
+}
+```
+
+```powershell
+PS&gt; Test-Remainder first one two, three
+
+Value = first
+Found 2 remaining values
+0: one
+1: two three
+```
+
+# about_Functions_Advanced_Parameters
+
+#### HelpMessage argument
+
+The `HelpMessage` argument specifies a string that contains a brief description
+of the parameter or its value. If you run the command without the mandatory
+parameter, PowerShell prompts you for input. To see the help message, type `!?`
+at the prompt and hit &lt;kbd&gt;Enter&lt;/kbd&gt;.
+
+The following example declares a mandatory **ComputerName** parameter and a
+help message that explains the expected parameter value.
+
+```powershell
+param(
+    [Parameter(Mandatory,
+    HelpMessage=&quot;Enter one or more computer names separated by commas.&quot;)]
+    [string[]]$ComputerName
+)
+```
+
+Example output:
+
+```Output
+cmdlet  at command pipeline position 1
+Supply values for the following parameters:
+(Type !? for Help.)
+ComputerName[0]: !?
+Enter one or more computer names separated by commas.
+ComputerName[0]: localhost
+ComputerName[1]:
+```
+
+If there is no [comment-based help][01] for the function then this message is
+displayed in the `Get-Help -Full` output.
+
+This argument has no effect on optional parameters.
+
+#### DontShow argument
+
+The `DontShow` value is typically used to assist backwards compatibility for a
+command where an obsolete parameter cannot be removed. Setting `DontShow` to
+`True` hides the parameter from the user for tab expansion and IntelliSense.
+
+PowerShell v7 (and higher) uses `DontShow` to hide the following obsolete
+parameters:
+
+- The **NoTypeInformation** parameter of `ConvertTo-Csv` and `Export-Csv`
+- The **Raw** parameter of `Format-Hex`
+- The **UseBasicParsing** parameter of `Invoke-RestMethod` and
+  `Invoke-WebRequest`
+
+The `DontShow` argument has the following side effects:
+
+- Affects all parameter sets for the associated parameter, even if there&#x27;s a
+  parameter set in which `DontShow` is unused.
+- Hides common parameters from tab completion and IntelliSense. `DontShow`
+  doesn&#x27;t hide the optional common parameters: **WhatIf**, **Confirm**, or
+  **UseTransaction**.
+
+# about_Functions_Advanced_Parameters
+
+### Alias attribute
+
+The **Alias** attribute establishes an alternate name for the parameter.
+There&#x27;s no limit to the number of aliases that you can assign to a parameter.
+
+The following example shows a parameter declaration that adds the **CN** and
+**MachineName** aliases to the mandatory **ComputerName** parameter.
+
+```powershell
+param(
+    [Parameter(Mandatory)]
+    [Alias(&quot;CN&quot;,&quot;MachineName&quot;)]
+    [string[]]$ComputerName
+)
+```
+
+### Credential attribute
+
+The **Credential** attribute is used to indicate that the parameter accepts
+credentials. The following example shows a parameter declaration that uses the
+**Credential** attribute.
+
+```powershell
+param(
+    [Parameter()]
+    [System.Management.Automation.Credential()]
+    [PSCredential]$Credential
+)
+```
+
+### PSDefaultValue attribute
+
+The **PSDefaultValue** specifies the default value of a command parameter in a
+script. This information is displayed by the `Get-Help` cmdlet. To see the
+default value information, the function must include comment-based help. For
+example:
+
+```powershell
+&lt;#
+    .SYNOPSIS
+     This is a test script that has a parameter with a default value.
+#&gt;
+function TestDefaultValue {
+    param(
+        [PSDefaultValue(Help=&#x27;Current directory&#x27;)]
+        [string]$Name = $PWD.Path
+    )
+
+    $Name
+}
+```
+
+Use `Get-Help` to see the default value information.
+
+```powershell
+Get-Help TestDefaultValue -Parameter Name
+```
+
+```Output
+-Name &lt;String&gt;
+
+    Required?                    false
+    Position?                    1
+    Default value                Current directory
+    Accept pipeline input?       false
+    Accept wildcard characters?  false
+```
+
+#### PSDefaultValue attribute arguments
+
+The **PSDefaultValue** attribute has two arguments:
+
+- **Help** - A string that describes the default value. This information is
+  displayed by the `Get-Help` cmdlet.
+- **Value** - The default value of the parameter.
+
+Both arguments are optional. If you don&#x27;t specify any arguments, then
+`Get-Help` shows the value assigned to the parameter.
+
+### PSTypeName attribute
+
+You can&#x27;t use extended type names in a type declaration. The *PSTypeName**
+attribute allows you to restrict the type of the parameter to the extended
+type.
+
+In this example, the `Test-Connection` cmdlet returns an extended type. You can
+use the **PSTypeName** attribute to restrict the type of the parameter to the
+extended type.
+
+```powershell
+function TestType {
+    param(
+        [PSTypeName(&#x27;System.Management.ManagementObject#root\cimv2\Win32_PingStatus&#x27;)]
+        [psobject]$PingStatus
+    )
+
+    $PingStatus
+}
+
+$ping = Test-Connection bing.com -Count 1
+TestType $ping
+```
+
+### System.Obsolete attribute
+
+Use the **System.Obsolete** attribute to mark parameters that are no longer
+supported. This can be useful when you want to remove a parameter from a
+function but you don&#x27;t want to break existing scripts that use the function.
+
+For example, consider a function that has a **NoTypeInformation** `[switch]`
+parameter that controls whether type information is included in the output. You
+want to make that behavior the default and remove the parameter from the
+function. However, you don&#x27;t want to break existing scripts that use the
+function. You can mark the parameter as obsolete and add a message that
+explains the change.
+
+```powershell
+param(
+    [System.Obsolete(&quot;The NoTypeInformation parameter is obsolete.&quot;)]
+    [switch]$NoTypeInformation
+)
+```
+
+### SupportsWildcards attribute
+
+The **SupportsWildcards** attribute is used to indicate that the parameter
+accepts wildcard values. The following example shows a parameter declaration
+for a mandatory **Path** parameter that supports wildcard values.
+
+```powershell
+param(
+    [Parameter(Mandatory)]
+    [SupportsWildcards()]
+    [string[]]$Path
+)
+```
+
+Using this attribute doesn&#x27;t automatically enable wildcard support. The cmdlet
+developer must implement the code to handle the wildcard input. The wildcards
+supported can vary according to the underlying API or PowerShell provider. For
+more information, see [about_Wildcards][19].
+
+### ArgumentCompleter attribute
+
+The **ArgumentCompleter** attribute allows you to add tab completion values to
+a specific parameter. An **ArgumentCompleter** attribute must be defined for
+each parameter that needs tab completion. Like **dynamicparameters**, the
+available values are calculated at runtime when the user presses &lt;kbd&gt;Tab&lt;/kbd&gt;
+after the parameter name.
+
+For more information, see [about_Functions_Argument_Completion][10].
+
+## Parameter and variable validation attributes
+
+Validation attributes direct PowerShell to test the parameter values that users
+submit when they call the advanced function. If the parameter values fail the
+test, an error is generated and the function isn&#x27;t called. Parameter validation
+is only applied to the input provided and any other values like default values
+aren&#x27;t validated.
+
+You can also use the validation attributes to restrict the values that users
+can specify for variables.
+
+```powershell
+[AllowNull()] [int]$number = 7
+```
+
+Validation attributes can be applied to any variable, not just parameters. You
+can define validation for any variable within a script.
+
+&gt; [!NOTE]
+&gt; When using any attributes with a typed variable, it&#x27;s best practice to
+&gt; declare the attribute before the type.
+&gt;
+&gt; If you declare a type with a line break before the attribute and variable
+&gt; name, the type is treated as its own statement.
+&gt;
+&gt; ```powershell
+&gt; [string]
+&gt; [ValidateLength(1,5)] $Text = &#x27;Okay&#x27;
+&gt; ```
+&gt;
+&gt; ```Output
+&gt; IsPublic IsSerial Name                                     BaseType
+&gt; -------- -------- ----                                     --------
+&gt; True     True     String                                   System.Object
+&gt; ```
+&gt;
+&gt; If you declare a validation attribute after a type, the value being assigned
+&gt; is validated before type conversion, which can lead to unexpected validation
+&gt; failures.
+&gt;
+&gt; ```powershell
+&gt; [string] [ValidateLength(1,5)]$TicketIDFromInt        = 43
+&gt; [string] [ValidateLength(1,5)]$TicketIDFromString     = &#x27;43&#x27;
+&gt; [ValidateLength(1,5)] [string]$TicketIDAttributeFirst = 43
+&gt; ```
+&gt;
+&gt; ```Output
+&gt; The attribute cannot be added because variable TicketIDFromInt with
+&gt; value 43 would no longer be valid.
+&gt; At line:1 char:1
+&gt; + [string][ValidateLength(1,5)]$TicketIDFromInt        = 43
+&gt; + ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+&gt;     + CategoryInfo          : MetadataError: (:) [], ValidationMetadata
+&gt;    Exception
+&gt;     + FullyQualifiedErrorId : ValidateSetFailure
+&gt; ```
+
+### AllowNull validation attribute
+
+The **AllowNull** attribute allows the value of a mandatory parameter to be
+`$null`. The following example declares a hashtable **ComputerInfo** parameter
+that can have a **null** value.
+
+```powershell
+param(
+    [Parameter(Mandatory)]
+    [AllowNull()]
+    [hashtable]$ComputerInfo
+)
+```
+
+&gt; [!NOTE]
+&gt; The **AllowNull** attribute doesn&#x27;t work if the type converter is set to
+&gt; string as the string type won&#x27;t accept a null value. You can use the
+&gt; **AllowEmptyString** attribute for this scenario.
+
+### AllowEmptyString validation attribute
+
+The **AllowEmptyString** attribute allows the value of a mandatory parameter to
+be an empty string (`&quot;&quot;`). The following example declares a **ComputerName**
+parameter that can have an empty string value.
+
+```powershell
+param(
+    [Parameter(Mandatory)]
+    [AllowEmptyString()]
+    [string]$ComputerName
+)
+```
+
+# about_Functions_Advanced_Parameters
+
+### AllowEmptyCollection validation attribute
+
+The **AllowEmptyCollection** attribute allows the value of a mandatory
+parameter to be an empty collection `@()`. The following example declares a
+**ComputerName** parameter that can have an empty collection value.
+
+```powershell
+param(
+    [Parameter(Mandatory)]
+    [AllowEmptyCollection()]
+    [string[]]$ComputerName
+)
+```
+
+### ValidateCount validation attribute
+
+The **ValidateCount** attribute specifies the minimum and maximum number of
+parameter values that a parameter accepts. PowerShell generates an error if the
+number of parameter values in the command that calls the function is outside
+that range.
+
+The following parameter declaration creates a **ComputerName** parameter that
+takes one to five parameter values.
+
+```powershell
+param(
+    [Parameter(Mandatory)]
+    [ValidateCount(1,5)]
+    [string[]]$ComputerName
+)
+```
+
+### ValidateLength validation attribute
+
+The **ValidateLength** attribute specifies the minimum and maximum number of
+characters in a parameter or variable value. PowerShell generates an error if
+the length of a value specified for a parameter or a variable is outside of the
+range.
+
+In the following example, each computer name must have one to ten characters.
+
+```powershell
+param(
+    [Parameter(Mandatory)]
+    [ValidateLength(1,10)]
+    [string[]]$ComputerName
+)
+```
+
+In the following example, the value of the variable `$text` must be a minimum
+of one character in length, and a maximum of ten characters.
+
+```powershell
+[ValidateLength(1,10)] [string] $text = &#x27;valid&#x27;
+```
+
+### ValidatePattern validation attribute
+
+The **ValidatePattern** attribute specifies a regular expression that&#x27;s
+compared to the parameter or variable value. PowerShell generates an error if
+the value doesn&#x27;t match the regular expression pattern.
+
+In the following example, the parameter value must contain a four-digit number,
+and each digit must be a number zero to nine.
+
+```powershell
+param(
+    [Parameter(Mandatory)]
+    [ValidatePattern(&quot;[0-9]{4}&quot;)]
+    [string[]]$ComputerName
+)
+```
+
+In the following example, the value of the variable `$ticketID` must be exactly
+a four-digit number, and each digit must be a number zero to nine.
+
+```powershell
+[ValidatePattern(&quot;^[0-9]{4}$&quot;)] [string]$ticketID = 1111
+```
+
+### ValidateRange validation attribute
+
+The **ValidateRange** attribute specifies a numeric range for each parameter or
+variable value. PowerShell generates an error if any value is outside that
+range.
+
+In the following example, the value of the **Attempts** parameter must be
+between zero and ten.
+
+```powershell
+param(
+    [Parameter(Mandatory)]
+    [ValidateRange(0,10)]
+    [int]$Attempts
+)
+```
+
+In the following example, the value of the variable `$number` must be between
+zero and ten.
+
+```powershell
+[ValidateRange(0,10)] [int]$number = 5
+```
+
+### ValidateScript validation attribute
+
+The **ValidateScript** attribute specifies a script that&#x27;s used to validate a
+parameter or variable value. PowerShell pipes the value to the script, and
+generates an error if the script returns `$false` or if the script throws an
+exception.
+
+When you use the **ValidateScript** attribute, the value that&#x27;s being validated
+is mapped to the `$_` variable. You can use the `$_` variable to refer to the
+value in the script.
+
+In the following example, the value of the **EventDate** parameter must be
+greater than or equal to the current date.
+
+```powershell
+param(
+    [Parameter(Mandatory)]
+    [ValidateScript({$_ -ge (Get-Date)})]
+    [datetime]$EventDate
+)
+```
+
+In the following example, the value of the variable `$date` must be less than
+or equal to the current date and time.
+
+```powershell
+[ValidateScript({$_ -le (Get-Date)})] [datetime]$date = (Get-Date)
+```
+
+&gt; [!NOTE]
+&gt; If you use **ValidateScript**, you can&#x27;t pass a `$null` value to the
+&gt; parameter. When you pass a null value **ValidateScript** can&#x27;t validate the
+&gt; argument.
+
+### ValidateSet attribute
+
+The **ValidateSet** attribute specifies a set of valid values for a parameter
+or variable and enables tab completion. PowerShell generates an error if a
+parameter or variable value doesn&#x27;t match a value in the set. In the following
+example, the value of the **Detail** parameter can only be Low, Average, or
+High.
+
+```powershell
+param(
+    [Parameter(Mandatory)]
+    [ValidateSet(&quot;Low&quot;, &quot;Average&quot;, &quot;High&quot;)]
+    [string[]]$Detail
+)
+```
+
+In the following example, the value of the variable `$flavor` must be either
+Chocolate, Strawberry, or Vanilla.
+
+```powershell
+[ValidateSet(&quot;Chocolate&quot;, &quot;Strawberry&quot;, &quot;Vanilla&quot;)]
+[string]$flavor = &quot;Strawberry&quot;
+```
+
+The validation occurs whenever that variable is assigned even within the
+script. For example, the following results in an error at runtime:
+
+```powershell
+param(
+    [ValidateSet(&quot;hello&quot;, &quot;world&quot;)]
+    [string]$Message
+)
+
+$Message = &quot;bye&quot;
+```
+
+This example returns the following error at runtime:
+
+```Output
+The attribute cannot be added because variable Message with value bye would no
+longer be valid.
+At line:1 char:1
++ [ValidateSet(&quot;hello&quot;, &quot;world&quot;)][string]$Message = &#x27;bye&#x27;
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : MetadataError: (:) [], ValidationMetadataException
+    + FullyQualifiedErrorId : ValidateSetFailure
+
+```
+
+Using `ValidateSet` also enable tab expansion of values for that parameter. For
+more information, see [about_Tab_Expansion][18].
+
+#### Dynamic ValidateSet values using classes
+
+You can use a `class` to dynamically generate the values for **ValidateSet**
+at runtime. In the following example, the valid values for the variable
+`$Sound` are generated via a `class` named **SoundNames** that checks three
+filesystem paths for available sound files:
+
+```powershell
+class SoundNames : System.Management.Automation.IValidateSetValuesGenerator {
+    [string[]] GetValidValues() {
+        $SoundPaths = &#x27;/System/Library/Sounds/&#x27;,
+            &#x27;/Library/Sounds&#x27;,&#x27;~/Library/Sounds&#x27;
+        $SoundNames = foreach ($SoundPath in $SoundPaths) {
+            if (Test-Path $SoundPath) {
+                (Get-ChildItem $SoundPath).BaseName
+            }
+        }
+        return [string[]] $SoundNames
+    }
+}
+```
+
+The `[SoundNames]` class is then implemented as a dynamic **ValidateSet** value
+as follows:
+
+```powershell
+param(
+    [ValidateSet([SoundNames])]
+    [string]$Sound
+)
+```
+
+&gt; [!NOTE]
+&gt; The `IValidateSetValuesGenerator` class was introduced in PowerShell 6.0
+
+### ValidateNotNull validation attribute
+
+The **ValidateNotNull** attribute specifies that the parameter value can&#x27;t be
+`$null`. When the value is `$null`, PowerShell raises an exception.
+
+The **ValidateNotNull** attribute is designed to be used when the parameter is
+optional and the type is undefined or has a type converter that can&#x27;t
+implicitly convert a null value like **object**. If you specify a type that
+that implicitly converts a null value, such as a **string**, the null value is
+converted to an empty string even when using the **ValidateNotNull** attribute.
+For this scenario use the **ValidateNotNullOrEmpty** attribute.
+
+In the following example, the value of the **Id** parameter can&#x27;t be `$null`.
+
+```powershell
+param(
+    [Parameter()]
+    [ValidateNotNull()]
+    $Id
+)
+```
+
+# about_Functions_Advanced_Parameters
+
+### ValidateNotNullOrEmpty validation attribute
+
+The **ValidateNotNullOrEmpty** attribute specifies that the assigned value
+can&#x27;t be any of the following values:
+
+- `$null`
+- an empty string (`&quot;&quot;`)
+- an empty array (`@()`)
+
+When the value is invalid, PowerShell raises an exception.
+
+```powershell
+param(
+    [Parameter(Mandatory)]
+    [ValidateNotNullOrEmpty()]
+    [string[]]$UserName
+)
+```
+
+### ValidateDrive validation attribute
+
+The **ValidateDrive** attribute specifies that the parameter value must
+represent the path, that&#x27;s referring to allowed drives only. PowerShell
+generates an error if the parameter value refers to drives other than the
+allowed. Existence of the path, except for the drive itself, isn&#x27;t verified.
+
+If you use relative path, the current drive must be in the allowed drive list.
+
+```powershell
+param(
+    [ValidateDrive(&quot;C&quot;, &quot;D&quot;, &quot;Variable&quot;, &quot;Function&quot;)]
+    [string]$Path
+)
+```
+
+### ValidateUserDrive validation attribute
+
+The **ValidateUserDrive** attribute specifies that the parameter value must
+represent in the `User` drive. PowerShell generates an error if the path refers
+to a different drive. The validation attribute only tests for the existence of
+the drive prefix of the path.
+
+If you use relative path, the current drive must be `User`.
+
+```powershell
+function Test-UserDrivePath{
+    [OutputType([bool])]
+    param(
+        [Parameter(Mandatory, Position=0)]
+        [ValidateUserDrive()]
+        [string]$Path
+    )
+    $true
+}
+
+Test-UserDrivePath -Path C:\
+```
+
+```Output
+Test-UserDrivePath: Cannot validate argument on parameter &#x27;Path&#x27;. The path
+argument drive C does not belong to the set of approved drives: User.
+Supply a path argument with an approved drive.
+```
+
+```powershell
+Test-UserDrivePath -Path &#x27;User:\A_folder_that_does_not_exist&#x27;
+```
+
+```Output
+Test-UserDrivePath: Cannot validate argument on parameter &#x27;Path&#x27;. Cannot
+find drive. A drive with the name &#x27;User&#x27; does not exist.
+```
+
+You can define `User` drive in Just Enough Administration (JEA) session
+configurations. For this example, we create the User: drive.
+
+```powershell
+New-PSDrive -Name &#x27;User&#x27; -PSProvider FileSystem -Root $Env:HOMEPATH
+```
+
+```Output
+Name           Used (GB)     Free (GB) Provider      Root
+----           ---------     --------- --------      ----
+User               75.76         24.24 FileSystem    C:\Users\ExampleUser
+```
+
+```powershell
+Test-UserDrivePath -Path &#x27;User:\A_folder_that_does_not_exist&#x27;
+```
+
+```Output
+True
+```
+
+## See also
+
+- [about_Automatic_Variables][05]
+- [about_Functions][14]
+- [about_Functions_Advanced][09]
+- [about_Functions_Advanced_Methods][08]
+- [about_Functions_CmdletBindingAttribute][12]
+- [about_Functions_OutputTypeAttribute][13]
+
+&lt;!-- link references --&gt;
+[01]: about_Comment_Based_Help.md
+[02]: /dotnet/api/system.management.automation.runtimedefinedparameter
+[05]: about_Automatic_Variables.md
+[06]: about_CommonParameters.md
+[08]: about_Functions_Advanced_Methods.md
+[09]: about_Functions_Advanced.md
+[10]: about_Functions_Argument_Completion.md#argumentcompleter-attribute
+[12]: about_Functions_CmdletBindingAttribute.md
+[13]: about_Functions_OutputTypeAttribute.md
+[14]: about_Functions.md
+[15]: about_parameter_sets.md
+[16]: about_Script_Blocks.md#using-delay-bind-scriptblocks-with-parameters
+[17]: about_Splatting.md
+[18]: about_Tab_Expansion.md
+[19]: about_Wildcards.md
+[20]: about_Variables.md
+###Microsoft Learn URL###
+https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_functions_advanced_parameters/?view=powershell-5.1
+</pre></html>

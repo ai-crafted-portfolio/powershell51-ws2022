@@ -1,0 +1,717 @@
+<!doctype html><html lang="ja"><meta charset="utf-8"><pre class="record-source">###KnowledgeNo###
+PS51-WS2022-2026-1276
+###FormatID###
+PS51-WS2022
+###CreatedAt###
+2026-08-01 00:00
+###UpdatedAt###
+2026-08-01 00:00
+###タイトル###
+Get-GPPrefRegistryValue
+###モジュール###
+grouppolicy
+###製品###
+Windows PowerShell 5.1
+###対応OS###
+Windows Server 2022
+###日本語訳###
+# Get-GPPrefRegistryValue を取得する
+
+## シノプシスです.
+
+GPOでコンピュータ設定またはユーザー設定のいずれかの下にあるレジストリ・優先順位項目を1つまたは複数の取得します.
+
+## SYNTAX 
+
+### GetByGUID (デフォルト) を取得する
+
+```
+Get-GPPrefRegistryValue -Guid &lt;Guid&gt; -Context &lt;GpoConfiguration&gt; -Key &lt;String&gt;
+ [-ValueName &lt;String&gt;] [-Order &lt;Int32&gt;] [-Domain &lt;String&gt;] [-Server &lt;String&gt;] [&lt;CommonParameters&gt;]
+```
+
+### GetByName を取得する
+
+```
+Get-GPPrefRegistryValue [-Name] &lt;String&gt; -Context &lt;GpoConfiguration&gt; -Key &lt;String&gt;
+ [-ValueName &lt;String&gt;] [-Order &lt;Int32&gt;] [-Domain &lt;String&gt;] [-Server &lt;String&gt;] [&lt;CommonParameters&gt;]
+```
+
+## 記述は,
+
+   `Get-GPPrefRegistryValue`cmdlet は,グループポリシーオブジェクト (GPO) のコンピュータ構成またはユーザー構成のいずれかの下にあるレジストリ・優先順位項目を1つまたは複数の項目に取得します.ユーザまたはコンピュータの設定またはユーザー構成からレジストリ・優先順位項目を取得するか否かを示すために,ユーザーまたはコンピュータのための *コンテキスト* パラメータを指定する必要があります.GPOはディスプレイ名または GUID によって指定できます.
+
+特定のレジストリ値,またはキーとその最初のレベルレジストリ値のいずれかを対象としたレジストリ・優先順位項目を入手できます.
+
+- 特定のレジストリ値を設定するレジストリ・優先順位項目を取得するには, **Key** と *ValueName* の両方のパラメータを指定してください.
+
+- 登録キーを構成するすべてのレジストリ・優先順位項目を直接鍵の下から入手するには, *ValueName* 項目を指定せずに **Key** 項目を指定します.
+
+鍵だけ指定すると,cmdletは,そのサブキー,その値,またはそのサブキーまたはその値を構成するレジストリ・プライベンスアイテムがある最初のレベルサブキーも返します.この情報を利用してレジストリ・プライベンスアイテムを閲覧できます.
+
+## 例えは,
+
+### 例1:登録の好みの項目の値を取得する
+
+```powershell
+$params = @{
+    ValueName = &#x27;ValueOne&#x27;
+    Context   = &#x27;User&#x27;
+    Key       = &#x27;HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\ExampleKey&#x27;
+    Name      = &#x27;TestGPO&#x27;
+}
+Get-GPPrefRegistryValue @params
+```
+
+```Output
+KeyPath            : SOFTWARE\Microsoft\ExampleKey 
+FullKeyPath        : HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\ExampleKey 
+Hive               : LocalMachine 
+Action             : Create 
+Order              : 1 
+DisabledDirectly   : False 
+DisabledByAncestor : False 
+Value              : TestGPO 
+Type               : String 
+ValueName          : ValueOne 
+HasValue           : True
+```
+
+このコマンドは,レジストリ値に設定されたレジストリ・好みの項目を取得します.`HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\ExampleKey`GPOのユーザー設定から ValueOneという値名を持つGPOに名付けました.`TestGPO` .
+
+### 例2:すべてのレジストリ・優先順位項目を取得する
+
+```powershell
+$params = @{
+    Context = &#x27;User&#x27;
+    Key     = &#x27;HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\ExampleKey&#x27;
+    Name    = &#x27;TestGPO&#x27;
+}
+Get-GPPrefRegistryValue @params
+```
+
+```Output
+KeyPath            : SOFTWARE\Microsoft\ExampleKey 
+FullKeyPath        : HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\ExampleKey 
+Hive               : LocalMachine 
+Action             : Create 
+Order              : 1 
+DisabledDirectly   : False 
+DisabledByAncestor : False 
+Value              : NewData1 
+Type               : String 
+ValueName          : ValueOne 
+HasValue           : True 
+
+KeyPath            : SOFTWARE\Microsoft\ExampleKey 
+FullKeyPath        : HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\ExampleKey 
+Hive               : LocalMachine 
+Action             : Create 
+Order              : 2 
+DisabledDirectly   : False 
+DisabledByAncestor : False 
+Value              : NewData2 
+Type               : String 
+ValueName          : Valuetwo 
+HasValue           : True 
+
+
+
+KeyPath     : SOFTWARE\Microsoft\ExampleKey\Subkey1 
+FullKeyPath : HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\ExampleKey\Subkey1 
+Hive        : LocalMachine 
+
+KeyPath     : SOFTWARE\Microsoft\ExampleKey\SubKey2 
+FullKeyPath : HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\ExampleKey\SubKey2 
+Hive        : LocalMachine
+```
+
+このコマンドは,登録キーHKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\ExampleKeyとTestGPOと呼ばれるGPOのユーザー設定から最初のレベル値のいずれかを設定したレジストリ・プライベンスアイテムすべてを取得します.
+
+この例では,レジストリ・プライベンスアイテムが返されます.レジストリ・キーの最初の2つの値を設定します. ValueOneと ValueTwo. また,キー内の2つのサブキーが返されます.これは,ユーザー設定に各サブキーに関連したレジストリ・プライベンスアイテムがあるからです.
+
+## パラメータは
+
+### -文脈
+
+cmdletがGPOのユーザー設定またはコンピュータ設定からレジストリの好みの項目を取得するか否かを指定します.
+
+このパラメータの受け入れられる値は,ユーザーまたはコンピュータです.
+
+```yaml
+Type: GpoConfiguration
+Parameter Sets: (All)
+Aliases: 
+Accepted values: User, Computer
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -ドメイン
+
+このcmdletのドメインを指定します.ドメインの完全資格ドメイン名 (FQDN) を指定する必要があります.
+
+のために`Get-GPPrefRegistryValue`cmdlet,レジストリの好みの項目を入手するためのGPOは,このドメインで存在する必要があります.
+
+**Domain**パラメータを指定していない場合は,現在のセッションを実行しているユーザーのドメインが使用されます.もし,cmdletがコンピュータの起動またはシャットダウンスクリプトから実行されている場合は,コンピュータのドメインが使用されます.詳細については,完全なヘルプのメモセクションを参照してください.
+
+特定のドメインが現在のセッションを実行しているユーザーのドメイン (または起動またはシャットダウンスクリプトの場合,コンピュータ) と異なることを指定した場合,そのドメインとユーザーのドメインまたはコンピュータの間に信頼が存在する必要があります.
+
+また,内蔵の名前の **DomainName**によって**Domain**パラメータを参照することもできます.詳細については, [about_Aliases] (/powershell/module/microsoft.powershell.core/about/about_aliases) を参照してください.
+
+```yaml
+Type: System.String
+Parameter Sets: (All)
+Aliases: DomainName
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -ガイド
+
+このcmdletがレジストリの好みの項目を獲得するGPOをグローバル・ユニキュイ・ID (GUID) によって指定する.
+
+また,内蔵の名前名, **Id**によって **Guid** パラメタを参照することもできます.詳細については, [about_Aliases] (/powershell/module/microsoft.powershell.core/about/about_aliases) を参照してください.
+
+```yaml
+Type: Guid
+Parameter Sets: GetByGUID
+Aliases: Id
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+# Get-GPPrefRegistryValue を取得する
+
+### -キー
+
+このcmdletが取得するRegistryの好みの項目のレジストリキーを指定します.例えば: `HKEY_CURRENT_USER\Control Panel\Colors` .
+
+このパラメータの受け入れられる値は:
+
+- HKEY_CLASSES_ROOT (HKCR) - HKEY_CURRENT_USER (HKCU) - HKEY_LOCAL_MACHINE (HKLM) - HKEY_USERS (HKU) - HKEY_CURRENT_CONFIG (HKCC) - HKEY_CURRENT_CONFIG (HKCC) - HKEY_LOCAL_MACHINE (HKLM) - HKEY_USERS (HKU) - HKEY_CURRENT_CONFIG (HKCC) - HKEY_CURRENT_CONFIG (HKCC) - HKEY_CURRENT_CONFIG (HKCC) - HKEY_CURRENT_ROOT (HKCR) - HKEY_CURRENT_USER (HKCU) - HKEY_CURRENT_ROOT (HKCC) - HKEY_CURRENT_ROOT (HK) - HKEY_C) - HKEY_C -HK -HK -HK -H -H -H -H -H -H -H -H -H -H -H -H -H -H -H -H -H -H -H -H -H -H -H -H -H -H -H -H -H -H -H -H -H -H -H -H -H -H -H -H -H -H -H -H -H -H -H -H -H -H -H -H -H -H -H -H -H -H -H -H -H -H -H -H -H -H -H -H -H -H -H -H -H -H -H -H -H -H -H -H -H -H -H -H -H -H -H -H -H -H -H -H -H -H -H -H -H -H -H -H -H -H -H -H -H -H -H -H -H -H -H -H -H -H -H -H -H -H -H -H -H -
+
+これらの巣のどれでも,コンピュータ設定とユーザー設定の両方でレジストリ・プライベンス項目に指定できます.
+
+**Key** パラメータは, *ValueName* パラメータでまたはそれなしで指定できます.
+
+- **ValueName**パラメータが指定されている場合,レジストリ値を設定するすべてのレジストリ・優先順位項目を取得します.
+
+- **ValueName**パラメータが指定されていない場合,レジストリキーとその最初のレベル値のいずれかを構成するすべてのレジストリ・優先順位項目を取得します.
+
+また,キーパラメータを,フルキーパースという内蔵の名前で参照することもできます.詳細については, [about_Aliases] (/powershell/module/microsoft.powershell.core/about/about_aliases) を参照してください.
+
+```yaml
+Type: System.String
+Parameter Sets: (All)
+Aliases: FullKeyPath
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -名字は
+
+このcmdletが登録の好みの項目を表示名によって取得するGPOを指定します.
+
+画面名はドメインでユニークであることを保証することはできません.同じ表示名を持つ別のGPOがドメインで存在した場合,エラーが発生します.GPOをユニークに識別するために**Guid**パラメータを使用できます.
+
+また,内蔵の名前, **DisplayName**によって **Name**パラメータを参照することもできます.詳細については, [about_Aliases] (/powershell/module/microsoft.powershell.core/about/about_aliases) を参照してください.
+
+```yaml
+Type: System.String
+Parameter Sets: GetByName
+Aliases: DisplayName
+
+Required: True
+Position: 0
+Default value: None
+Accept pipeline input: True (ByValue)
+Accept wildcard characters: False
+```
+
+### -オーダー
+
+登録器の優先順位がGPO内の他の登録器の優先順位に比べてクライアントに適用される順序を指定します.
+
+```yaml
+Type: Int32
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -サーバー
+
+このcmdletが操作を完了するために連絡するドメインコントローラの名前を指定します.完全に資格のあるドメイン名 (FQDN) またはホスト名を指定することができます.
+
+**Server**パラメータで名前を指定しない場合は,プライマリ ドメインコントローラー (PDC) エミュレーターに連絡されます.
+
+また,内蔵のニックネーム **DC**によって **Server** パラメータを参照することもできます.詳細については, [about_Aliases] (/powershell/module/microsoft.powershell.core/about/about_aliases) を参照してください.
+
+```yaml
+Type: System.String
+Parameter Sets: (All)
+Aliases: DC
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -ValueName
+
+このcmdletがすべてのレジストリ・優先順位項目を得ているレジストリ・値の名前を指定します.例えば,レジストリ・キー `HKEY_CURRENT_USER\Control Panel\Colors`ActiveTitleという名前を持つ値が可能である.レジストリキーのデフォルト値については&quot;,default&quot;または空文字列 (&quot;&quot;).
+
+登録キーとそのすべてのファーストレベル値のレジストリ・プライベリー・アイテムを取得したい場合は,このパラメータを指定しないでください.特定のレジストリ・値のみのレジストリ・プライベリー・アイテムを取得したい場合は,このパラメータを **Key**パラメータと指定してください.
+
+```yaml
+Type: System.String
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### 共通パラメーター
+
+このcmdletは,共通パラメータをサポートしています: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable.詳細については, [about_CommonParameters](を参照してください.https://go.microsoft.com/fwlink/?LinkID=113216) でした.
+
+## 輸入は
+
+### Microsoft.GroupPolicy.Gpo
+
+このcmdletはGPOを入力として受け取る.異なるドメインからGPOを含むコレクションはサポートされません.
+
+## 輸出は
+
+### Microsoft.GroupPolicy.PreferenceRegistrySetting を設定する
+
+このcmdletは**PreferenceRegistrySetting**オブジェクトを返します.これらのオブジェクトを以下のcmdletsにパイプすることができます:
+
+ - -`Set-GPPrefRegistryValue`
+
+ - -`Remove-GPPrefRegistryValue`
+
+##  NOTES  記事ができました.
+
+*指定されたレジストリキーまたは値に対するレジストリ・優先順位項が見つからない場合,非終結エラーが発生します.
+
+**Domain**パラメータを使用して,このcmdletのドメインを明確に指定することができます.
+
+域を明示的に指定しない場合は,cmdletはデフォルトドメインを使用します.デフォルトドメインは,現在のセッションが実行されているセキュリティコンテキストによってネットワークリソースにアクセスするために使用されるドメインです.このドメインは,通常,セッションを実行しているユーザーのドメインです.例えば,Windows PowerShellを開きセッションを開始したユーザーのドメインまたはルーンコマンドで指定されたユーザーのドメインです.しかし,コンピュータの起動とシャットダウンスクリプトは,ローカルシステムアカウントのコンテキストで実行されます.ローカルシステムアカウントは,内蔵のローカルアカウントであり,コンピュータアカウントのコンテキストでネットワークリソースにアクセスします.このcmdletが起動またはシャットダウンスクリプトから実行される場合,デフォルトドメインはコンピュータが接続されているドメインです.
+
+## 関連リンク
+
+[Remove-GPPrefRegistryValue](./Remove-GPPrefRegistryValue.md) を削除する
+
+[Set-GPPrefRegistryValue](./Set-GPPrefRegistryValue.md) は,GPPrefRegistryValue.md を表示する
+###英語原文###
+# Get-GPPrefRegistryValue
+
+## SYNOPSIS
+
+Gets one or more Registry preference items under either Computer Configuration or User Configuration
+in a GPO.
+
+## SYNTAX
+
+### GetByGUID (Default)
+
+```
+Get-GPPrefRegistryValue -Guid &lt;Guid&gt; -Context &lt;GpoConfiguration&gt; -Key &lt;String&gt;
+ [-ValueName &lt;String&gt;] [-Order &lt;Int32&gt;] [-Domain &lt;String&gt;] [-Server &lt;String&gt;] [&lt;CommonParameters&gt;]
+```
+
+### GetByName
+
+```
+Get-GPPrefRegistryValue [-Name] &lt;String&gt; -Context &lt;GpoConfiguration&gt; -Key &lt;String&gt;
+ [-ValueName &lt;String&gt;] [-Order &lt;Int32&gt;] [-Domain &lt;String&gt;] [-Server &lt;String&gt;] [&lt;CommonParameters&gt;]
+```
+
+## DESCRIPTION
+
+The `Get-GPPrefRegistryValue` cmdlet gets one or more Registry preference items under either
+Computer Configuration or User Configuration in a Group Policy Object (GPO). You must specify the
+*Context* parameter, for the user or computer, to indicate whether to get the Registry preference
+item from Computer Configuration or User Configuration. You can specify the GPO by its display name
+or by its GUID.
+
+You can get Registry preference items for a specific registry value, or for a key and any of its
+first-level registry values:
+
+- To get any Registry preference items that configure a specific registry value, specify both the
+  **Key** and the *ValueName* parameters.
+
+- To get all the Registry preference items that configure a registry key and any first-level
+  registry values directly under the key, specify the **Key** parameter without the *ValueName*
+  parameter.
+
+If you specify only a key, the cmdlet also returns its first-level subkeys for which there are
+Registry preference items that configure the subkey, its values, or any of its subkeys or their
+values. You can use this information to browse for Registry preference items.
+
+## EXAMPLES
+
+### Example 1: Get the Registry preference item value
+
+```powershell
+$params = @{
+    ValueName = &#x27;ValueOne&#x27;
+    Context   = &#x27;User&#x27;
+    Key       = &#x27;HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\ExampleKey&#x27;
+    Name      = &#x27;TestGPO&#x27;
+}
+Get-GPPrefRegistryValue @params
+```
+
+```Output
+KeyPath            : SOFTWARE\Microsoft\ExampleKey 
+FullKeyPath        : HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\ExampleKey 
+Hive               : LocalMachine 
+Action             : Create 
+Order              : 1 
+DisabledDirectly   : False 
+DisabledByAncestor : False 
+Value              : TestGPO 
+Type               : String 
+ValueName          : ValueOne 
+HasValue           : True
+```
+
+This command gets the Registry preference item that is configured for the registry value
+`HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\ExampleKey` with value name ValueOne from User Configuration
+in the GPO named `TestGPO`.
+
+### Example 2: Get all Registry preference items
+
+```powershell
+$params = @{
+    Context = &#x27;User&#x27;
+    Key     = &#x27;HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\ExampleKey&#x27;
+    Name    = &#x27;TestGPO&#x27;
+}
+Get-GPPrefRegistryValue @params
+```
+
+```Output
+KeyPath            : SOFTWARE\Microsoft\ExampleKey 
+FullKeyPath        : HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\ExampleKey 
+Hive               : LocalMachine 
+Action             : Create 
+Order              : 1 
+DisabledDirectly   : False 
+DisabledByAncestor : False 
+Value              : NewData1 
+Type               : String 
+ValueName          : ValueOne 
+HasValue           : True 
+
+KeyPath            : SOFTWARE\Microsoft\ExampleKey 
+FullKeyPath        : HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\ExampleKey 
+Hive               : LocalMachine 
+Action             : Create 
+Order              : 2 
+DisabledDirectly   : False 
+DisabledByAncestor : False 
+Value              : NewData2 
+Type               : String 
+ValueName          : Valuetwo 
+HasValue           : True 
+
+
+
+KeyPath     : SOFTWARE\Microsoft\ExampleKey\Subkey1 
+FullKeyPath : HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\ExampleKey\Subkey1 
+Hive        : LocalMachine 
+
+KeyPath     : SOFTWARE\Microsoft\ExampleKey\SubKey2 
+FullKeyPath : HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\ExampleKey\SubKey2 
+Hive        : LocalMachine
+```
+
+This command gets all the Registry preference items that are configured for the registry key
+HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\ExampleKey and any of its first-level values from User
+Configuration in the GPO named TestGPO.
+
+In this example, Registry preference items that configure the following two first-level values of
+the registry key are returned: ValueOne and ValueTwo. Two subkeys of the key are also returned. This
+is because there are Registry preference items in User Configuration associated with each subkey.
+
+## PARAMETERS
+
+### -Context
+
+Specifies whether the cmdlet gets the Registry preference item from User Configuration or Computer
+Configuration in the GPO.
+
+The acceptable values for this parameter are: User or Computer.
+
+```yaml
+Type: GpoConfiguration
+Parameter Sets: (All)
+Aliases: 
+Accepted values: User, Computer
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Domain
+
+Specifies the domain for this cmdlet. You must specify the fully qualified domain name (FQDN) of the
+domain.
+
+For the `Get-GPPrefRegistryValue` cmdlet, the GPO for which to get the Registry preference item
+must exist in this domain.
+
+If you do not specify the **Domain** parameter, the domain of the user that is running the current
+session is used. If the cmdlet is being run from a computer startup or shutdown script, the domain
+of the computer is used. For more information, see the Notes section in the full Help.
+
+If you specify a domain that is different from the domain of the user that is running the current
+session (or, for a startup or shutdown script, the computer), a trust must exist between that domain
+and the domain of the user or the computer.
+
+You can also refer to the **Domain** parameter by its built-in alias, **DomainName**. For more
+information, see [about_Aliases](/powershell/module/microsoft.powershell.core/about/about_aliases).
+
+```yaml
+Type: System.String
+Parameter Sets: (All)
+Aliases: DomainName
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -Guid
+
+Specifies the GPO from which this cmdlet gets the Registry preference item by its globally unique
+identifier (GUID). The GUID uniquely identifies the GPO.
+
+You can also refer to the **Guid** parameter by its built-in alias, **Id**. For more information,
+see [about_Aliases](/powershell/module/microsoft.powershell.core/about/about_aliases).
+
+```yaml
+Type: Guid
+Parameter Sets: GetByGUID
+Aliases: Id
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+# Get-GPPrefRegistryValue
+
+### -Key
+
+Specifies the registry key for the Registry preference item that this cmdlet gets; for instance:
+`HKEY_CURRENT_USER\Control Panel\Colors`.
+
+The acceptable values for this parameter are:
+
+- HKEY_CLASSES_ROOT (HKCR) 
+- HKEY_CURRENT_USER (HKCU) 
+- HKEY_LOCAL_MACHINE (HKLM) 
+- HKEY_USERS (HKU) 
+- HKEY_CURRENT_CONFIG (HKCC)
+
+Any of these hives can be specified for Registry preference items in both Computer Configuration and
+User Configuration.
+
+The **Key** parameter can be specified with or without the *ValueName* parameter:
+
+- If the **ValueName** parameter is specified, all Registry preference items that configure the
+  registry value are retrieved.
+
+- If the **ValueName** parameter is not specified, all Registry preference items that configure the
+  registry key and any of its first-level values are retrieved.
+
+You can also refer to the Key parameter by its built-in alias, FullKeyPath. For more information,
+see [about_Aliases](/powershell/module/microsoft.powershell.core/about/about_aliases).
+
+```yaml
+Type: System.String
+Parameter Sets: (All)
+Aliases: FullKeyPath
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Name
+
+Specifies the GPO from which this cmdlet gets the Registry preference item by its display name.
+
+The display name is not guaranteed to be unique in the domain. If another GPO with the same display
+name exists in the domain an error occurs. You can use the **Guid** parameter to uniquely identify a
+GPO.
+
+You can also refer to the **Name** parameter by its built-in alias, **DisplayName**. For more
+information, see [about_Aliases](/powershell/module/microsoft.powershell.core/about/about_aliases).
+
+```yaml
+Type: System.String
+Parameter Sets: GetByName
+Aliases: DisplayName
+
+Required: True
+Position: 0
+Default value: None
+Accept pipeline input: True (ByValue)
+Accept wildcard characters: False
+```
+
+### -Order
+
+Specifies the order in which the Registry preference item is applied, relative to the other Registry
+preference items in the GPO, on a client.
+
+```yaml
+Type: Int32
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -Server
+
+Specifies the name of the domain controller that this cmdlet contacts to complete the operation. You
+can specify either the fully qualified domain name (FQDN) or the host name.
+
+If you do not specify the name through the **Server** parameter, the primary domain controller (PDC)
+emulator is contacted.
+
+You can also refer to the **Server** parameter by its built-in alias, **DC**. For more information,
+see [about_Aliases](/powershell/module/microsoft.powershell.core/about/about_aliases).
+
+```yaml
+Type: System.String
+Parameter Sets: (All)
+Aliases: DC
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -ValueName
+
+Specifies the name of a registry value for which this cmdlet gets all Registry preference items. For
+instance, the registry key `HKEY_CURRENT_USER\Control Panel\Colors` can have a value with the
+following name: ActiveTitle. For the default value of a registry key, specify either &quot;(default)&quot; or
+an empty string (&quot;&quot;).
+
+When you want to gets Registry preference items for a registry key and all its first-level values,
+do not specify this parameter. When you want to get Registry preference items only for a specific
+registry value, specify this parameter together with the **Key** parameter.
+
+```yaml
+Type: System.String
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### CommonParameters
+
+This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable,
+-InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose,
+-WarningAction, and -WarningVariable. For more information, see
+[about_CommonParameters](https://go.microsoft.com/fwlink/?LinkID=113216).
+
+## INPUTS
+
+### Microsoft.GroupPolicy.Gpo
+
+This cmdlet takes a GPO as input. Collections that contain GPOs from different domains are not
+supported.
+
+## OUTPUTS
+
+### Microsoft.GroupPolicy.PreferenceRegistrySetting
+
+This cmdlet returns **PreferenceRegistrySetting** objects. You can pipe these objects to the
+following cmdlets:
+
+- `Set-GPPrefRegistryValue`
+
+- `Remove-GPPrefRegistryValue`
+
+## NOTES
+
+* If a Registry preference item for the specified registry key or value is not found, a
+  non-terminating error occurs.
+
+  You can use the **Domain** parameter to explicitly specify the domain for this cmdlet.
+
+  If you do not explicitly specify the domain, the cmdlet uses a default domain. The default domain
+  is the domain that is used to access network resources by the security context under which the
+  current session is running. This domain is typically the domain of the user that is running the
+  session. For instance, the domain of the user who started the session by opening Windows
+  PowerShell or the domain of a user that is specified in a runas command. However, computer startup
+  and shutdown scripts run under the context of the LocalSystem account. The LocalSystem account is
+  a built-in local account, and it accesses network resources under the context of the computer
+  account. Therefore, when this cmdlet is run from a startup or shutdown script, the default domain
+  is the domain to which the computer is joined.
+
+## RELATED LINKS
+
+[Remove-GPPrefRegistryValue](./Remove-GPPrefRegistryValue.md)
+
+[Set-GPPrefRegistryValue](./Set-GPPrefRegistryValue.md)
+###Microsoft Learn URL###
+https://learn.microsoft.com/en-us/powershell/module/grouppolicy/get-gpprefregistryvalue/?view=windowsserver2022-ps
+</pre></html>

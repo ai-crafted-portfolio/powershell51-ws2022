@@ -1,0 +1,1546 @@
+<!doctype html><html lang="ja"><meta charset="utf-8"><pre class="record-source">###KnowledgeNo###
+PS51-WS2022-2026-0147
+###FormatID###
+PS51-WS2022
+###CreatedAt###
+2026-08-01 00:00
+###UpdatedAt###
+2026-08-01 00:00
+###タイトル###
+Set-ADServiceAccount
+###モジュール###
+activedirectory
+###製品###
+Windows PowerShell 5.1
+###対応OS###
+Windows Server 2022
+###日本語訳###
+# セット-ADサービスアカウントを設定する
+
+## SYNOPSIS は Active Directory 管理サービスアカウントまたはグループ管理サービスアカウントオブジェクトを修正します.
+
+## SYNTAXは,のシンタックスです.
+
+### アイデンティティ```
+Set-ADServiceAccount [-WhatIf] [-Confirm] [-AccountExpirationDate &lt;DateTime&gt;] [-AccountNotDelegated &lt;Boolean&gt;]
+ [-Add &lt;Hashtable&gt;] [-AuthenticationPolicy &lt;ADAuthenticationPolicy&gt;]
+ [-AuthenticationPolicySilo &lt;ADAuthenticationPolicySilo&gt;] [-AuthType &lt;ADAuthType&gt;] [-Certificates &lt;String[]&gt;]
+ [-Clear &lt;String[]&gt;] [-CompoundIdentitySupported &lt;Boolean&gt;] [-Credential &lt;PSCredential&gt;]
+ [-Description &lt;String&gt;] [-DisplayName &lt;String&gt;] [-DNSHostName &lt;String&gt;] [-Enabled &lt;Boolean&gt;]
+ [-HomePage &lt;String&gt;] [-Identity] &lt;ADServiceAccount&gt; [-KerberosEncryptionType &lt;ADKerberosEncryptionType&gt;]
+ [-Partition &lt;String&gt;] [-PassThru] [-PrincipalsAllowedToDelegateToAccount &lt;ADPrincipal[]&gt;]
+ [-PrincipalsAllowedToRetrieveManagedPassword &lt;ADPrincipal[]&gt;] [-Remove &lt;Hashtable&gt;] [-Replace &lt;Hashtable&gt;]
+ [-SamAccountName &lt;String&gt;] [-Server &lt;String&gt;] [-ServicePrincipalNames &lt;Hashtable&gt;]
+ [-TrustedForDelegation &lt;Boolean&gt;] [&lt;CommonParameters&gt;]
+```
+
+### 文脈の例です.```
+Set-ADServiceAccount [-WhatIf] [-Confirm] [-AuthType &lt;ADAuthType&gt;] [-Credential &lt;PSCredential&gt;]
+ -Instance &lt;ADServiceAccount&gt; [-PassThru] [-Server &lt;String&gt;] [&lt;CommonParameters&gt;]
+```
+
+## 記述 **Set-ADServiceAccount** cmdlet は,アクティブディレクトリ管理サービスアカウント (MSA) の属性を修正する.あなたは,cmdlet パラメータを使用して一般的に使用されるプロパティ値を修正することができます.cmdlet パラメータに関連していないプロパティ値は, *Add*, *Remove*, *Replace*, *Clear* パラメータを使用して変更することができます.
+
+*Identity* パラメータは,変更する Active Directory MSAを指定します.MSAを特徴的な名前,GUID,セキュリティ識別子 (SID) またはセキュリティアカウントマネージャ (SAM) アカウント名によって識別できます.また, *Identity* パラメタをオブジェクト変数に設定できます.例えば,`$&lt;localServiceAccountObject&gt;`図書,またはパイプラインを通過して *Identity* パラメータにオブジェクトを送信できます.例えば,MSAオブジェクトを回収するために **Get-ADServiceAccount** cmdlet を使用し,パイプラインを通過して **Set-ADServiceAccount** cmdlet に転送できます.
+
+*インスタンスの*パラメータは,そのオブジェクトのコピーに変更を加えた上で,MSAオブジェクトを更新する方法を提供します.変更されたアクティブディレクトリ MSAオブジェクトのコピーに *インスタンスの*パラメータを設定すると, **Set-ADServiceAccount** cmdlet は元のMSAオブジェクトに同じ変更を行います.変更されるオブジェクトのコピーを取得するには, **Get-ADServiceAccount**オブジェクトを使用します. *インスタンスの*パラメータを指定すると, *Identity*パラメータを過ぎません. *インスタンスの*パラメータについての詳細については, *Instance*パラメータ説明を参照してください.
+
+## 例えは
+
+### 例1:MSAの説明を設定する```
+PS C:\&gt; Set-ADServiceAccount -Identity Service1 -Description &quot;Secretive Data Server&quot;
+```
+
+このコマンドは,Secretive Data Server に Service1 と識別された MSA の記述を設定します.
+
+### 例2: 資産の値をMSAに置き換える```
+PS C:\&gt; Set-ADServiceAccount -Identity Mongol01ADAM -ServicePrincipalNames @{replace=&quot;ADAMwdb/a.contoso.com&quot;, &quot;ADAMbdb/a.contoso.com&quot;}
+```
+
+このコマンドは,プロパティの値を **ServicePrincipalNames** と置き換えるので,ADAMwdb/a.contoso.com,ADAMbdb/a.contoso.com を入力します.
+
+### 例3:MSAのパスワードを復元するために許可されたプリンタントを設定します.```
+PS C:\&gt; Set-ADServiceAccount -Identity Service1 -PrincipalsAllowedToRetrieveManagedPassword &quot;MsaAdmins.corp.contoso.com&quot;
+```
+
+このコマンドは,このMSAのパスワードを特定したアクティブディレクトリグループアカウントの会員に限定するために,復元する許可のプリンタルを設定します.
+
+### 例4: サービスプリンシパルネームのプロパティを設定する```
+PS C:\&gt; Set-ADServiceAccount -Identity AccessTSQA -ServicePrincipalNames @{Add=ACCESSAPP/TSQA.contoso.com}
+```
+
+このコマンドは,AccessTSQA MSAの **ServicePrincipalNames**属性を変更して, *Identity* と *ServicePrincipalNames* のパラメータを指定します.
+
+### 例5:指定されたMSAを取得し,その ServicePrincipalNames属性を変更する```
+PS C:\&gt; Get-ADServiceAccount -Identity &quot;AccessTSQA&quot; | Set-ADServiceAccount -ServicePrincipalNames @{Add=ACCESSAPP/TSQA.contoso.com}
+```
+
+このコマンドは,AccessTSQA MSAの **ServicePrincipalNames**属性を修正します.このコマンドは,AccessTSQA MSAを取得するために **Get-ADServiceAccount** cmdlet を使用し,パイプラインオペレーターを使用して,AccessTSQA MSA を現在の cmdlet に転送します.
+
+### 例 6: 地元のインスタンスのMSAを設定する```
+PS C:\&gt; $ServiceAccount = Get-ADServiceAccount -Identity &quot;AccessTSQA&quot;
+PS C:\&gt; $ServiceAccount.ServicePrincipalNames = @{Add=ACCESSAPP/TSQA.contoso.com}
+PS C:\&gt; Set-ADServiceAccount -Instance $ServiceAccount
+```
+
+この例では,AccessTSQA MSAの **ServicePrincipalNames**属性を修正します.この例ではAccessTSQA MSAのローカルインスタンスを修正し,その後ローカルインスタンスのように現在のcmdletの *Instance*パラメータを指定します.
+
+## パラメータは
+
+### -AccountExpirationDate アカウントの有効期限を指定します.このパラメータは,アカウントオブジェクトの **AccountExpirationDate** 属性を設定します.この属性のLightweight Directory Access Protocol (LDAP) 表示名 (**ldapDisplayName**) は, accountExpires です.
+
+このパラメータを指定する際には**DateTime**構文を使用します.時間とは,別途指定されていない限り,現地時間と考えられます.時間値は指定されていない場合,現地時間12:00 AMと推定されます.日付が指定されていない場合,日付は現在の日付と考えられます.
+
+```yaml
+Type: DateTime
+Parameter Sets: Identity
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -AccountNotDelegated は,ユーザーのセキュリティコンテキストがサービスにデレガードされているかどうかを示す.このパラメータが true に設定された場合,サービスアカウントが Kerberos デレガードのために信頼されているように設定された場合でも,アカウントのセキュリティコンテキストがサービスにデレガードされない.このパラメータは,アクティブディレクトリアカウントの **AccountNotDelegated** 属性を設定します.このパラメータは,アクティブディレクトリユーザーアカウント制御 (UAC) アトリブートの **ADS_UF_NOT_DELEGATED** 旗を設定します.
+
+```yaml
+Type: Boolean
+Parameter Sets: Identity
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Add は,オブジェクト属性に追加する値を指定します.このパラメータを使用して,cmdlet パラメータを使用して変更できない属性に1つまたは複数の値を追加します.オブジェクト属性を変更するには,LDAP ディスプレイ名を使用する必要があります. 逗号別列の値リストと半角を用いることで複数の値と複数の属性を指定することで,複数の値を指定できます.このパラメータのフォーマットは:
+
+`-Add @{Attribute1LDAPDisplayName=value1, value2, ...;   Attribute2LDAPDisplayName=value1, value2, ...; AttributeNLDAPDisplayName=value1, value2, ...}`
+
+*追加*, *削除*, *交換*, *クリア* パラメータを一緒に使用すると,操作は次の順に実行されます.
+
+**削除** - **追加** - **交換** - **クリア** - **
+
+```yaml
+Type: Hashtable
+Parameter Sets: Identity
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+# セット-ADサービスアカウントを設定する
+
+### -AuthenticationPolicy Active Directory Domain Services (AD DS) の認証ポリシーオブジェクトを指定します.以下の形式のいずれかに認証ポリシーオブジェクトを指定します.
+
+- 優秀な名前 - GUID - Name
+
+このパラメータは,このオブジェクトをパイプラインを通過させることもできます.または,このパラメータをオブジェクトインスタンスの設定でもできます.
+
+cmdlet は,オブジェクトを見つけるためにデフォルトの命名コンテキストまたはパーティションを検索します.もし cmdlet が2つ以上のオブジェクトを見つけると, cmdlet は終了しないエラーを返します.
+
+```yaml
+Type: ADAuthenticationPolicy
+Parameter Sets: Identity
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -AuthenticationPolicySilo AD DS認証ポリシーシロオブジェクトを指定します.以下の形式のいずれかに認証ポリシーシロオブジェクトを指定します. 
+
+- 優秀な名前 - GUID - Name
+
+このパラメータは,このオブジェクトをパイプラインを通過させることもできます.または,このパラメータをオブジェクトインスタンスの設定でもできます.
+
+cmdlet は,オブジェクトを見つけるためにデフォルトの命名コンテキストまたはパーティションを検索します.もし cmdlet が2つ以上のオブジェクトを見つけると, cmdlet は終了しないエラーを返します.
+
+```yaml
+Type: ADAuthenticationPolicySilo
+Parameter Sets: Identity
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -AuthType は,使用する認証方法を指定します.このパラメータの受け入れ可能な値は:です.
+
+- 交渉するまたは0 - 基本または1
+
+デフォルト認証方法は,交渉です.
+
+基本認証方法には,セキュアソケットレイヤ (SSL) 接続が必要となります.
+
+```yaml
+Type: ADAuthType
+Parameter Sets: (All)
+Aliases: 
+Accepted values: Negotiate, Basic
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Certificates 証明書の配列を指定する.cmdletはアカウントのDERコードされたX.509v3証明書を修正する.これらの証明書には,Microsoft証明書サービスによってこのアカウントに発行された公開鍵証明書が含まれます.このパラメータはアカウントオブジェクトの **Certificates**属性を設定します.この属性のLightweight Directory Access Protocol (LDAP) ディスプレイ名 (**ldapDisplayName**) はuserCertificateです.
+
+追加する値:
+
+`-Certificates @{Add=value1,value2,...}`
+
+値を取り除くために:
+
+`-Certificates @{Remove=value3,value4,...}`
+
+値を変更するには:
+
+`-Certificates @{Replace=value1,value2,...}`
+
+すべての値をクリアするには:
+
+`-Certificates $Null`
+
+半柱で分離したリストを使用して複数の操作を指定できます.例えば,次の構文を使用して **Certificates**の値を追加して削除します.
+
+`-Certificates @{Add=value1,value2,...};@{Remove=value3,value4,...}`
+
+操作者は次の順序で適用されます.
+
+- 削除 - 追加 - 置き換え
+
+```yaml
+Type: String[]
+Parameter Sets: Identity
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Clear は,ディレクトリでクリアされたオブジェクトプロパティのアレイを指定します.このパラメータを使用して,cmdletパラメータを使用して変更できないプロパティの1つまたは複数の値をクリアします.オブジェクトプロパティを変更するには,LDAP表示名を使用する必要があります. 逗号別列を指定することによって複数のプロパティを変更できます.このパラメータのフォーマットは:
+
+`-Clear Attribute1LDAPDisplayName, Attribute2LDAPDisplayName`
+
+*追加*, *削除*, *交換*, *削除* と *クリア* パラメータを組み合わせると,操作は次の順に実行されます.
+
+**削除** - **追加** - **交換** - **クリア** - **
+
+```yaml
+Type: String[]
+Parameter Sets: Identity
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -CompoundIdentitySupported アカウントがユーザーデバイスの権限データを含むKerberosサービスチケットをサポートしているか否かを表示します.この値は,Active Directory **msDS-SupportedEncryptionTypes**属性のコンパウンドアイデンティティサポートフラグを設定します.
+
+警告:ドメインに組み込まれたWindowsシステムやクラスタリングなどのサービスが独自の **msDS-SupportedEncryptionTypes**属性を管理する.したがって,msDS-SupportedEncryptionTypes**属性の旗に変更は,設定を管理するサービスまたはシステムによって覆われる.
+
+```yaml
+Type: Boolean
+Parameter Sets: Identity
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### - 確認は,cmdletを実行する前に確認を提示します.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: cf
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Credential この作業を実行するために使用するユーザーアカウントの認証を指定します.当時はログインしているユーザーに,Cmdlet がWindows PowerShell プロバイダードライブのアクティブディレクトリ モジュールから実行されていない限り,デフォルトで実行される認証です.Cmdlet がそのようなプロバイダードライブから実行されている場合,ドライブに関連したアカウントはデフォルトです.
+
+このパラメータを指定するには,ユーザー名,例えば User1 または Domain01\User01 を入力するか,PSCredential** オブジェクトを指定することもできます.このパラメータのユーザー名を指定すると,cmdlet はパスワードを提示します.
+
+また,スクリプトを使用して **PSCredential** オブジェクトを作成したり, **Get-Credential** cmdlet を使用したりできます.その後, **PSCredential** オブジェクトに *Credential* パラメータを設定できます.
+
+実行する認証がタスクを実行するためのディレクトリレベルの許可がない場合,Windows PowerShell用のアクティブディレクトリモジュールでは終了エラーが返されます.
+
+```yaml
+Type: PSCredential
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Description 対象の記述を指定する.このパラメータは,対象の **Description** 属性の値を設定する.この属性のLDAP表示名 (**ldapDisplayName**) は説明です.
+
+```yaml
+Type: String
+Parameter Sets: Identity
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -DisplayName 対象の表示名を指定する.このパラメータは,オブジェクトの **DisplayName** 属性を設定する.この属性のLDAP表示名称 (**ldapDisplayName**) は displayName.
+
+```yaml
+Type: String
+Parameter Sets: Identity
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -DNSHostName は,DNSホスト名を指定します.
+
+```yaml
+Type: String
+Parameter Sets: Identity
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Enabled はアカウントが有効になっている場合を指定します.有効なアカウントにはパスワードが必要です.このパラメータはアカウントオブジェクトの **Enabled** 属性を設定します.このパラメータは,アクティブディレクトリユーザーアカウント制御 (UAC) 属性の **ADS_UF_ACCOUNTDISABLE** 旗を設定します.
+
+```yaml
+Type: Boolean
+Parameter Sets: Identity
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+# セット-ADサービスアカウントを設定する
+
+### -HomePage 対象のホームページのURLを指定します.このパラメータは,アクティブディレクトリオブジェクトの **homePage**属性を設定します.この属性のLDAP表示名 (**ldapDisplayName**) はwWWHomePageです.
+
+```yaml
+Type: String
+Parameter Sets: Identity
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Identity Active Directory アカウントオブジェクトを次のプロパティ値のうちの1つを提供することで指定します.括弧の識別子は属性のLDAP表示名です.このパラメータの受け入れ可能な値は:です.
+
+特徴ある名前 - GUID (objectGUID) - セキュリティ識別子 (objectSid) - SAMアカウント名 (sAMAccountName)
+
+cmdlet は,オブジェクトを見つけるためにデフォルトの命名コンテキストまたはパーティションを探します.もし2つ以上のオブジェクトが見つかったら,cmdlet は,終了しないエラーを返します.
+
+このパラメータは,このオブジェクトをパイプラインを通過させることもできます.または,このパラメータをオブジェクトインスタンスの設定でもできます.
+
+```yaml
+Type: ADServiceAccount
+Parameter Sets: Identity
+Aliases: 
+
+Required: True
+Position: 0
+Default value: None
+Accept pipeline input: True (ByValue)
+Accept wildcard characters: False
+```
+
+### -インスタンスは,実際の Active Directory サービスアカウントオブジェクトを更新するために使用するサービスアカウントオブジェクトの変更されたコピーを指定します.このパラメータを使用すると,オブジェクトの変更されたコピーに変更されたものは,対応するアクティブディレクトリオブジェクトにも変更されます.cmdletは変更されたオブジェクトのプロパティのみ更新します.
+
+*インスタンスの*パラメータは, **Get-ADServiceAccount** cmdlet を使用して回収されたサービスアカウントオブジェクトを更新するのみです. *インスタンスの*パラメータを指定すると,オブジェクトにプロパティを設定する他のパラメータを指定することはできません.
+
+```yaml
+Type: ADServiceAccount
+Parameter Sets: Instance
+Aliases: 
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -KerberosEncryptionType アカウントがサービスチケットを作成する際に使用されるKerberos暗号化タイプをサポートしているか否かを指定します.この値は,アクティブディレクトリ **msDS-SupportedEncryptionTypes**属性のサポートされている暗号化タイプフラグを設定します.このパラメータの受け入れ可能な値は:
+
+どれも - DES - RC4 - AES128 - AES256
+
+暗号化には一切なく,KDCはアカウントを利用したサービスへのサービスチケットを発行できない可能性があります.
+
+DESは,デフォルトでサポートされていない弱い暗号化タイプであり,Windows 7とWindows Server 2008 R2からサポートされていません.
+
+警告:ドメインに組み込まれたWindowsシステムやクラスタリングなどのサービスが独自の **msDS-SupportedEncryptionTypes**属性を管理する.したがって,msDS-SupportedEncryptionTypes**属性の旗に変更は,設定を管理するサービスまたはシステムによって覆われる.
+
+```yaml
+Type: ADKerberosEncryptionType
+Parameter Sets: Identity
+Aliases: 
+Accepted values: None, DES, RC4, AES128, AES256
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Partition Active Directory のパーティションの名前の指定.この名前の指定は,現在のディレクトリサーバーの名前設定のいずれかである必要があります. cmdlet はこのパーティションで検索して, *Identity* パラメータで定義されたオブジェクトを見つける.
+
+多くの場合,デフォルト値が指定されていない場合, *Partition* パラメータにデフォルト値が使用されます.デフォルト値の決定のためのルールが下記に記載されています.最初にリストされたルールが最初に評価され,デフォルト値が決定されると,他のルールが評価されないことに注意してください.
+
+アクティブディレクトリ ドメインサービス (AD DS) 環境では,以下の場合, *パーティション* のデフォルト値は設定されます.
+
+- *Identity* パラメータが別名に設定されている場合, *Partition* のデフォルト値は自動的にこの別名から生成されます. - Active Directory プロバイダードライブからcmdletsを実行している場合は, *Partition* のデフォルト値は自動的にドライブ内の現在のパスから生成されます. - 前例のいずれも適用されない場合, *Partition* のデフォルト値は目標ドメインのデフォルトパーティションまたは命名コンテキストに設定されます.
+
+AD LDS環境では,以下の場合, *Partition* のデフォルト値は設定されます.
+
+*Identity*パラメータが別名に設定されている場合, *Partition* のデフォルト値は自動的にこの別名から生成されます. - Active Directory プロバイダードライブから cmdlets を実行している場合, *Partition* のデフォルト値は自動的にドライブ内の現在のパスから生成されます. - ターゲット AD LDS インスタンスのデフォルトの命名コンテキストがある場合, *Partition* のデフォルト値はデフォルトの命名コンテキストに設定されます. AD LDS 環境のデフォルトの命名コンテキストを指定するには,LDS インスタンスの Active Directory Directory Service Agent (DSA) オブジェクト (nTDS ADDSA) の **msDS-defaultNamingContext** 属性 (nTDS ADDSA**) を設定します. - 前述のいずれも適用されない場合は, *thePartition* パラメータは,デフォルト値を受け付けません.
+
+```yaml
+Type: String
+Parameter Sets: Identity
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -PassThru は,あなたが取り組んでいるアイテムを表すオブジェクトを返します.デフォルトでは,このcmdlet は出力を生成しません.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -PrincipalsAllowedToDelegateToAccount この管理サービスアカウントまたはグループ管理サービスアカウントとして実行されているサービスにユーザーの代わって行動できるアカウントを指定します.このパラメータは,オブジェクトの **msDS-AllowedToActOnBehalfOfOtherIdentity**属性を設定します.
+
+```yaml
+Type: ADPrincipal[]
+Parameter Sets: Identity
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -PrincipalsAllowedToRetrieveManagedPassword グループ管理サービスアカウントを使用できるシステムへの会員制ポリシーを指定します.グループ管理サービスアカウントでサービスが実行されるためには,システムはアカウントの会員制ポリシーに含まれなければなりません.このパラメータは,グループ管理サービスアカウントのオブジェクトの **msDS-GroupMSAMembership**属性を設定します.このパラメータは,グループ管理サービスアカウントを使用する許可のある原則に設定する必要があります.
+
+```yaml
+Type: ADPrincipal[]
+Parameter Sets: Identity
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+# セット-ADサービスアカウントを設定する
+
+### -Remove は,cmdlet がオブジェクト属性の値を削除することを指定します.このパラメータを使用して,cmdlet パラメータを使用して変更できない属性の1つまたは複数の値を削除します.オブジェクト属性を削除するには,LDAP ディスプレイ名を使用する必要があります.半角別列リストを指定することによって,1以上の属性を削除できます.このパラメータのフォーマットは:
+
+`-Remove @{Attribute1LDAPDisplayName=value[];   Attribute2LDAPDisplayName=value[]}`
+
+*追加*, *削除*, *交換*, *クリア* パラメータを組み合わせると,以下の順序でパラメータが適用されます.
+
+**削除** - **追加** - **交換** - **クリア** - **
+
+```yaml
+Type: Hashtable
+Parameter Sets: Identity
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Cmdlet パラメータを使用して変更できない属性の1つまたは複数の値を置き換えるためにこのパラメータを使用します.オブジェクト属性を変更するには,LDAP ディスプレイ名を使用する必要があります. 逗号別値リストを指定することによって,複数の属性値を指定し,半角を用いることで複数の属性を分離します.このパラメータのフォーマットは:
+
+`-Replace @{Attribute1LDAPDisplayName=value1, value2, ...;   Attribute2LDAPDisplayName=value1, value2, ...; AttributeNLDAPDisplayName=value1, value2, ...}`
+
+*追加*, *削除*, *交換*, *クリア* パラメータを一緒に使用すると,操作は次の順に実行されます.
+
+**削除** - **追加** - **交換** - **クリア** - **
+
+```yaml
+Type: Hashtable
+Parameter Sets: Identity
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -SamAccountNameは,ユーザー,グループ,コンピュータ,またはサービスアカウントのセキュリティアカウント管理者 (SAM) アカウント名を指定します.説明の最大長さは256文字です.古いオペレーティングシステムと互換性があるため,20文字以下のSAMアカウント名を作成してください.このパラメータは,アカウントオブジェクトの **SAMAccountName**を設定します.このプロパティのLDAP表示名称 (**ldapDisplayName**) は,sAMAccountNameです.
+
+注: 与えられた文字列の値は $文字で終わらない場合は,システムが必要に応じて1つ追加します.
+
+```yaml
+Type: String
+Parameter Sets: Identity
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Serverは,対応するドメイン名またはディレクトリサーバーに以下の値のうちの1つを提供することで,接続するアクティブディレクトリ ドメインサービスインスタンスを指定します.サービスは以下のいずれかかもしれません.
+
+ドメイン名値:
+
+- 完全資格ドメイン名 (FQDN) - NetBIOS名
+
+ディレクトリサーバーの値:
+
+- 完全資格のあるディレクトリサーバー名 - NetBIOS名 - 完全資格のあるディレクトリサーバー名とポート
+
+*サーバー*パラメータのデフォルト値は,次の方法のうちの1つによって,列挙された順序で決定されます.
+
+- パイプラインを通過したオブジェクトから *Server* 値を利用する. - Active Directory PowerShell プロバイダードライブに関連したサーバー情報を利用する. - PowerShell を実行しているコンピュータのドメインを使用して.
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -ServicePrincipalNames アカウントのサービスメインネームを指定します.このパラメータは,アカウントの **ServicePrincipalNames** 属性を設定します.この属性に対する LDAP表示名 (**ldapDisplayName**) は, servicePrincipalName です.このパラメータは,次の構文を使用して,サービスメインネームの値を追加,削除,交換,またはクリアします.
+
+追加する値:
+
+`-ServicePrincipalNames @{Add=value1,value2,...}`
+
+値を取り除くために:
+
+`-ServicePrincipalNames @{Remove=value3,value4,...}`
+
+値を変更するには:
+
+`-ServicePrincipalNames @{Replace=value1,value2,...}`
+
+すべての値をクリアするには:
+
+`-ServicePrincipalNames $Null`
+
+半柱で別々のリストを使用して,1 以上の変更を指定できます.例えば,次の構文を使用してサービス主名を追加し削除します.
+
+`@{Add=value1,value2,...};@{Remove=value3,value4,...}`
+
+操作者は次の順序で適用されます.
+
+- 削除 - 追加 - 置き換え
+
+次の例では,サービス主名を追加して削除する方法を示しています.
+
+```powershell
+ -ServicePrincipalNames @{Add=&quot;SQLservice\accounting.corp.contoso.com:1456&quot;};{Remove=&quot;SQLservice\finance.corp.contoso.com:1456&quot;}
+```
+
+```yaml
+Type: Hashtable
+Parameter Sets: Identity
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -TrustedForDelegation は,Kerberos 代弁に対してアカウントが信頼されているかどうかを示す.Kerberos 代弁に対して信頼されているアカウントの下で実行されるサービスは,サービスを要求するクライアントのアイデンティティを想定することができます.このパラメータは,アカウントオブジェクトの **TrustedForDelegation** 属性を設定します.この値は,また, Active Directory User Account Control属性の **ADS_UF_TRUSTED_FOR_DELEGATION** 旗を設定します.このパラメータの受け入れ可能な値は:
+
+$ -False or 0 - $True or 1
+
+```yaml
+Type: Boolean
+Parameter Sets: Identity
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -WhatIf が実行されればどうなるか示します.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: wi
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### 共通パラメータ このcmdletは共通パラメータをサポートしています: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable.詳細については, [about_CommonParameters](を参照してください.https://go.microsoft.com/fwlink/?LinkID=113216) でした.
+
+## 輸入は
+
+### Microsoft.ActiveDirectory.Management.ADServiceAccount None.ActiveDirectory.AdServiceAccount 管理サービスアカウントオブジェクトは, *Identity* パラメータで受信されます.
+
+**Get-ADServiceAccount** cmdletを使用して取得し,変更された管理サービスアカウントオブジェクトは, *Instance* パラメータで受信されます.
+
+## 輸出は
+
+### Microsoft.ActiveDirectory.Management.ADServiceAccount None.ActiveDirectory.ADServiceAccount は, *PassThru* パラメータが指定されたときに変更された管理サービスアカウントオブジェクトを返します.デフォルトでは,このcmdlet は出力を生成しません.
+
+## 注記 * このcmdlet は AD LDS で動作しません. * このcmdlet は Active Directory のスナップショット で動作しません. * このcmdlet は読み込みのみのドメインコントローラで動作しません.
+
+## 関連リンク
+
+[Get-ADServiceAccount](./Get-ADServiceAccount.md) について
+
+[Install-ADServiceAccount](./Install-ADServiceAccount.md) 
+
+[New-ADServiceAccount](./New-ADServiceAccount.md) 
+
+[ADServiceAccount.md]を削除する.
+
+[Uninstall-ADServiceAccount](./Uninstall-ADServiceAccount.md) 
+###英語原文###
+# Set-ADServiceAccount
+
+## SYNOPSIS
+Modifies an Active Directory managed service account or group managed service account object.
+
+## SYNTAX
+
+### Identity
+```
+Set-ADServiceAccount [-WhatIf] [-Confirm] [-AccountExpirationDate &lt;DateTime&gt;] [-AccountNotDelegated &lt;Boolean&gt;]
+ [-Add &lt;Hashtable&gt;] [-AuthenticationPolicy &lt;ADAuthenticationPolicy&gt;]
+ [-AuthenticationPolicySilo &lt;ADAuthenticationPolicySilo&gt;] [-AuthType &lt;ADAuthType&gt;] [-Certificates &lt;String[]&gt;]
+ [-Clear &lt;String[]&gt;] [-CompoundIdentitySupported &lt;Boolean&gt;] [-Credential &lt;PSCredential&gt;]
+ [-Description &lt;String&gt;] [-DisplayName &lt;String&gt;] [-DNSHostName &lt;String&gt;] [-Enabled &lt;Boolean&gt;]
+ [-HomePage &lt;String&gt;] [-Identity] &lt;ADServiceAccount&gt; [-KerberosEncryptionType &lt;ADKerberosEncryptionType&gt;]
+ [-Partition &lt;String&gt;] [-PassThru] [-PrincipalsAllowedToDelegateToAccount &lt;ADPrincipal[]&gt;]
+ [-PrincipalsAllowedToRetrieveManagedPassword &lt;ADPrincipal[]&gt;] [-Remove &lt;Hashtable&gt;] [-Replace &lt;Hashtable&gt;]
+ [-SamAccountName &lt;String&gt;] [-Server &lt;String&gt;] [-ServicePrincipalNames &lt;Hashtable&gt;]
+ [-TrustedForDelegation &lt;Boolean&gt;] [&lt;CommonParameters&gt;]
+```
+
+### Instance
+```
+Set-ADServiceAccount [-WhatIf] [-Confirm] [-AuthType &lt;ADAuthType&gt;] [-Credential &lt;PSCredential&gt;]
+ -Instance &lt;ADServiceAccount&gt; [-PassThru] [-Server &lt;String&gt;] [&lt;CommonParameters&gt;]
+```
+
+## DESCRIPTION
+The **Set-ADServiceAccount** cmdlet modifies the properties of an Active Directory managed service account (MSA).
+You can modify commonly used property values by using the cmdlet parameters.
+Property values that are not associated with cmdlet parameters can be modified by using the *Add*, *Remove*, *Replace*, and *Clear* parameters.
+
+The *Identity* parameter specifies the Active Directory MSA to modify.
+You can identify an MSA by its distinguished name, GUID, security identifier (SID), or Security Account Manager (SAM) account name.
+You can also set the *Identity* parameter to an object variable such as `$&lt;localServiceAccountObject&gt;`, or you can pass an object through the pipeline to the *Identity* parameter.
+For example, you can use the **Get-ADServiceAccount** cmdlet to retrieve a MSA object and then pass the object through the pipeline to the **Set-ADServiceAccount** cmdlet.
+
+The *Instance* parameter provides a way to update an MSA object by applying the changes made to a copy of the object.
+When you set the *Instance* parameter to a copy of an Active Directory MSA object that has been modified, the **Set-ADServiceAccount** cmdlet makes the same changes to the original MSA object.
+To get a copy of the object to modify, use the **Get-ADServiceAccount** object.
+When you specify the *Instance* parameter you should not pass the *Identity* parameter.
+For more information about the *Instance* parameter, see the *Instance* parameter description.
+
+## EXAMPLES
+
+### Example 1: Set the description for an MSA
+```
+PS C:\&gt; Set-ADServiceAccount -Identity Service1 -Description &quot;Secretive Data Server&quot;
+```
+
+This command sets the description of the MSA identified as Service1 to Secretive Data Server.
+
+### Example 2: Replace the value of a property for an MSA
+```
+PS C:\&gt; Set-ADServiceAccount -Identity Mongol01ADAM -ServicePrincipalNames @{replace=&quot;ADAMwdb/a.contoso.com&quot;, &quot;ADAMbdb/a.contoso.com&quot;}
+```
+
+This command replaces the value of property **ServicePrincipalNames** with ADAMwdb/a.contoso.com, ADAMbdb/a.contoso.com.
+
+### Example 3: Set the principals allowed to retrieve the password for an MSA
+```
+PS C:\&gt; Set-ADServiceAccount -Identity Service1 -PrincipalsAllowedToRetrieveManagedPassword &quot;MsaAdmins.corp.contoso.com&quot;
+```
+
+This command sets the principals allowed to retrieve the password for this MSA to be limited to members of the specified Active Directory group account.
+
+### Example 4: Set the ServicePrincipalNames property
+```
+PS C:\&gt; Set-ADServiceAccount -Identity AccessTSQA -ServicePrincipalNames @{Add=ACCESSAPP/TSQA.contoso.com}
+```
+
+This command modifies the **ServicePrincipalNames** property for the AccessTSQA MSA by specifying the *Identity* and *ServicePrincipalNames* parameters.
+
+### Example 5: Get a specified MSA and modify its ServicePrincipalNames property
+```
+PS C:\&gt; Get-ADServiceAccount -Identity &quot;AccessTSQA&quot; | Set-ADServiceAccount -ServicePrincipalNames @{Add=ACCESSAPP/TSQA.contoso.com}
+```
+
+This command modifies the **ServicePrincipalNames** property for the AccessTSQA MSA.
+The command uses the **Get-ADServiceAccount** cmdlet to get the AccessTSQA MSA, and then passes the AccessTSQA MSA to the current cmdlet by using the pipeline operator.
+
+### Example 6: Set an MSA from a local instance
+```
+PS C:\&gt; $ServiceAccount = Get-ADServiceAccount -Identity &quot;AccessTSQA&quot;
+PS C:\&gt; $ServiceAccount.ServicePrincipalNames = @{Add=ACCESSAPP/TSQA.contoso.com}
+PS C:\&gt; Set-ADServiceAccount -Instance $ServiceAccount
+```
+
+This example modifies the **ServicePrincipalNames** property for the AccessTSQA MSA.
+The example modifies a local instance of the AccessTSQA MSA, and then specifies the *Instance* parameter for the current cmdlet as the local instance.
+
+## PARAMETERS
+
+### -AccountExpirationDate
+Specifies the expiration date for an account.
+This parameter sets the **AccountExpirationDate** property of an account object.
+The Lightweight Directory Access Protocol (LDAP) display name (**ldapDisplayName**) for this property is accountExpires.
+
+Use the **DateTime** syntax when you specify this parameter.
+Time is assumed to be local time unless otherwise specified.
+When a time value is not specified, the time is assumed to 12:00:00 AM local time.
+When a date is not specified, the date is assumed to be the current date.
+
+```yaml
+Type: DateTime
+Parameter Sets: Identity
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -AccountNotDelegated
+Indicates whether the security context of the user is delegated to a service.
+When this parameter is set to true, the security context of the account is not delegated to a service even when the service account is set as trusted for Kerberos delegation.
+This parameter sets the **AccountNotDelegated** property for an Active Directory account.
+This parameter also sets the **ADS_UF_NOT_DELEGATED** flag of the Active Directory User Account Control (UAC) attribute.
+
+```yaml
+Type: Boolean
+Parameter Sets: Identity
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Add
+Specifies values to add to an object property.
+Use this parameter to add one or more values to a property that cannot be modified using a cmdlet parameter.
+To modify an object property, you must use the LDAP display name.
+You can specify multiple values to a property by specifying a comma-separated list of values and more than one property by separating them using a semicolon.
+The format for this parameter is:
+
+`-Add @{Attribute1LDAPDisplayName=value1, value2, ...;   Attribute2LDAPDisplayName=value1, value2, ...; AttributeNLDAPDisplayName=value1, value2, ...}`
+
+When you use the *Add*, *Remove*, *Replace*, and *Clear* parameters together, the operations will be performed in the following order:
+
+- **Remove**
+- **Add**
+- **Replace**
+- **Clear**
+
+```yaml
+Type: Hashtable
+Parameter Sets: Identity
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+# Set-ADServiceAccount
+
+### -AuthenticationPolicy
+Specifies an Active Directory Domain Services (AD DS) authentication policy object.
+Specify the authentication policy object in one of the following formats: 
+
+- Distinguished name
+- GUID
+- Name
+
+This parameter can also get this object through the pipeline or you can set this parameter to an object instance.
+
+The cmdlet searches the default naming context or partition to find the object.
+If the cmdlet finds two or more objects, the cmdlet returns a non-terminating error.
+
+```yaml
+Type: ADAuthenticationPolicy
+Parameter Sets: Identity
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -AuthenticationPolicySilo
+Specifies an AD DS authentication policy silo object.
+Specify the authentication policy silo object in one of the following formats: 
+
+- Distinguished name
+- GUID
+- Name
+
+This parameter can also get this object through the pipeline or you can set this parameter to an object instance.
+
+The cmdlet searches the default naming context or partition to find the object.
+If the cmdlet finds two or more objects, the cmdlet returns a non-terminating error.
+
+```yaml
+Type: ADAuthenticationPolicySilo
+Parameter Sets: Identity
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -AuthType
+Specifies the authentication method to use.
+The acceptable values for this parameter are:
+
+- Negotiate or 0
+- Basic or 1
+
+The default authentication method is Negotiate.
+
+A Secure Sockets Layer (SSL) connection is required for the Basic authentication method.
+
+```yaml
+Type: ADAuthType
+Parameter Sets: (All)
+Aliases: 
+Accepted values: Negotiate, Basic
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Certificates
+Specifies an array of certificates.
+The cmdlet modifies the DER-encoded X.509v3 certificates of the account.
+These certificates include the public key certificates issued to this account by the Microsoft Certificate Service.
+This parameter sets the **Certificates** property of the account object.
+The Lightweight Directory Access Protocol (LDAP) display name (**ldapDisplayName**) for this property is userCertificate.
+
+To add values:
+
+`-Certificates @{Add=value1,value2,...}`
+
+To remove values:
+
+`-Certificates @{Remove=value3,value4,...}`
+
+To replace values:
+
+`-Certificates @{Replace=value1,value2,...}`
+
+To clear all values:
+
+`-Certificates $Null`
+
+You can specify more than one operation by using a list separated by semicolons.
+For example, use the following syntax to add and remove **Certificates** values:
+
+`-Certificates @{Add=value1,value2,...};@{Remove=value3,value4,...}`
+
+The operators are applied in the following sequence: 
+
+- Remove
+- Add
+- Replace
+
+```yaml
+Type: String[]
+Parameter Sets: Identity
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Clear
+Specifies an array of object properties that are cleared in the directory.
+Use this parameter to clear one or more values of a property that cannot be modified using a cmdlet parameter.
+To modify an object property, you must use the LDAP display name.
+You can modify more than one property by specifying a comma-separated list.
+The format for this parameter is:
+
+`-Clear Attribute1LDAPDisplayName, Attribute2LDAPDisplayName`
+
+When you use the *Add*, *Remove*, *Replace*, and *Clear* parameters together, the operations are performed in the following order:
+
+- **Remove**
+- **Add**
+- **Replace**
+- **Clear**
+
+```yaml
+Type: String[]
+Parameter Sets: Identity
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -CompoundIdentitySupported
+Indicates whether an account supports Kerberos service tickets which includes the authorization data for the user&#x27;s device.
+This value sets the compound identity supported flag of the Active Directory **msDS-SupportedEncryptionTypes** attribute.
+
+Warning: Domain-joined Windows systems and services such as clustering manage their own **msDS-SupportedEncryptionTypes** attribute.
+Therefore any changes to the flag on the **msDS-SupportedEncryptionTypes** attribute will be overwritten by the service or system which manages the setting.
+
+```yaml
+Type: Boolean
+Parameter Sets: Identity
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Confirm
+Prompts you for confirmation before running the cmdlet.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: cf
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Credential
+Specifies the user account credentials to use to perform this task.
+The default credentials are the credentials of the currently logged on user unless the cmdlet is run from an Active Directory module for Windows PowerShell provider drive.
+If the cmdlet is run from such a provider drive, the account associated with the drive is the default.
+
+To specify this parameter, you can type a user name, such as User1 or Domain01\User01 or you can specify a **PSCredential** object.
+If you specify a user name for this parameter, the cmdlet prompts for a password.
+
+You can also create a **PSCredential** object by using a script or by using the **Get-Credential** cmdlet.
+You can then set the *Credential* parameter to the **PSCredential** object.
+
+If the acting credentials do not have directory-level permission to perform the task, Active Directory module for Windows PowerShell returns a terminating error.
+
+```yaml
+Type: PSCredential
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Description
+Specifies a description of the object.
+This parameter sets the value of the **Description** property for the object.
+The LDAP display name (**ldapDisplayName**) for this property is description.
+
+```yaml
+Type: String
+Parameter Sets: Identity
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -DisplayName
+Specifies the display name of the object.
+This parameter sets the **DisplayName** property of the object.
+The LDAP display name (**ldapDisplayName**) for this property is displayName.
+
+```yaml
+Type: String
+Parameter Sets: Identity
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -DNSHostName
+Specifies the DNS host name.
+
+```yaml
+Type: String
+Parameter Sets: Identity
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Enabled
+Specifies if an account is enabled.
+An enabled account requires a password.
+This parameter sets the **Enabled** property for an account object.
+This parameter also sets the **ADS_UF_ACCOUNTDISABLE** flag of the Active Directory User Account Control (UAC) attribute.
+
+```yaml
+Type: Boolean
+Parameter Sets: Identity
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+# Set-ADServiceAccount
+
+### -HomePage
+Specifies the URL of the home page of the object.
+This parameter sets the **homePage** property of an Active Directory object.
+The LDAP display name (**ldapDisplayName**) for this property is wWWHomePage.
+
+```yaml
+Type: String
+Parameter Sets: Identity
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Identity
+Specifies an Active Directory account object by providing one of the following property values.
+The identifier in parentheses is the LDAP display name for the attribute.
+The acceptable values for this parameter are:
+
+- A distinguished name
+- A GUID (objectGUID) 
+- A security identifier (objectSid) 
+- A SAM account name (sAMAccountName)
+
+The cmdlet searches the default naming context or partition to find the object.
+If two or more objects are found, the cmdlet returns a non-terminating error.
+
+This parameter can also get this object through the pipeline or you can set this parameter to an object instance.
+
+```yaml
+Type: ADServiceAccount
+Parameter Sets: Identity
+Aliases: 
+
+Required: True
+Position: 0
+Default value: None
+Accept pipeline input: True (ByValue)
+Accept wildcard characters: False
+```
+
+### -Instance
+Specifies a modified copy of a service account object to use to update the actual Active Directory service account object.
+When this parameter is used, any modifications made to the modified copy of the object are also made to the corresponding Active Directory object.
+The cmdlet only updates the object properties that have changed.
+
+The *Instance* parameter can only update service account objects that have been retrieved by using the **Get-ADServiceAccount** cmdlet.
+When you specify the *Instance* parameter, you cannot specify other parameters that set properties on the object.
+
+```yaml
+Type: ADServiceAccount
+Parameter Sets: Instance
+Aliases: 
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -KerberosEncryptionType
+Specifies whether an account supports Kerberos encryption types that are used when creating service tickets.
+This value sets the encryption types supported flags of the Active Directory **msDS-SupportedEncryptionTypes** attribute. 
+The acceptable values for this parameter are:
+
+- None 
+- DES 
+- RC4 
+- AES128 
+- AES256
+
+None removes all encryption types from the account, which may result in the KDC being unable to issue service tickets for services using the account.
+
+DES is a weak encryption type that is not supported by default since Windows 7 and Windows Server 2008 R2.
+
+Warning: Domain-joined Windows systems and services such as clustering manage their own **msDS-SupportedEncryptionTypes** attribute.
+Therefore any changes to the flag on the **msDS-SupportedEncryptionTypes** attribute are overwritten by the service or system that manages the setting.
+
+```yaml
+Type: ADKerberosEncryptionType
+Parameter Sets: Identity
+Aliases: 
+Accepted values: None, DES, RC4, AES128, AES256
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Partition
+Specifies the distinguished name of an Active Directory partition.
+The distinguished name must be one of the naming contexts on the current directory server.
+The cmdlet searches this partition to find the object defined by the *Identity* parameter.
+
+In many cases, a default value is used for the *Partition* parameter if no value is specified.
+The rules for determining the default value are given below.
+Note that rules listed first are evaluated first and once a default value can be determined, no further rules are evaluated.
+
+In Active Directory Domain Services (AD DS) environments, a default value for *Partition* is set in the following cases: 
+
+- If the *Identity* parameter is set to a distinguished name, the default value of *Partition* is automatically generated from this distinguished name.
+- If running cmdlets from an Active Directory provider drive, the default value of *Partition* is automatically generated from the current path in the drive. 
+- If none of the previous cases apply, the default value of *Partition* is set to the default partition or naming context of the target domain.
+
+In AD LDS environments, a default value for *Partition* is set in the following cases:
+
+- If the *Identity* parameter is set to a distinguished name, the default value of *Partition* is automatically generated from this distinguished name. 
+- If running cmdlets from an Active Directory provider drive, the default value of *Partition* is automatically generated from the current path in the drive. 
+- If the target AD LDS instance has a default naming context, the default value of *Partition* will be set to the default naming context.
+To specify a default naming context for an AD LDS environment, set the **msDS-defaultNamingContext** property of the Active Directory directory service agent (DSA) object (**nTDSDSA**) for the AD LDS instance. 
+- If none of the previous cases apply, the *Partition* parameter will not take any default value.
+
+```yaml
+Type: String
+Parameter Sets: Identity
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -PassThru
+Returns an object representing the item with which you are working.
+By default, this cmdlet does not generate any output.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -PrincipalsAllowedToDelegateToAccount
+Specifies the accounts which can act on the behalf of users to services running as this Managed Service Account or Group Managed Service Account.
+This parameter sets the **msDS-AllowedToActOnBehalfOfOtherIdentity** attribute of the object.
+
+```yaml
+Type: ADPrincipal[]
+Parameter Sets: Identity
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -PrincipalsAllowedToRetrieveManagedPassword
+Specifies the membership policy for systems which can use a group managed service account.
+For a service to run under a group managed service account, the system must be in the membership policy of the account.
+This parameter sets the **msDS-GroupMSAMembership** attribute of a group managed service account object.
+This parameter should be set to the principals allowed to use this group managed service account.
+
+```yaml
+Type: ADPrincipal[]
+Parameter Sets: Identity
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+# Set-ADServiceAccount
+
+### -Remove
+Specifies that the cmdlet remove values of an object property.
+Use this parameter to remove one or more values of a property that cannot be modified using a cmdlet parameter.
+To remove an object property, you must use the LDAP display name.
+You can remove more than one property by specifying a semicolon-separated list.
+The format for this parameter is:
+
+`-Remove @{Attribute1LDAPDisplayName=value[];   Attribute2LDAPDisplayName=value[]}`
+
+When you use the *Add*, *Remove*, *Replace*, and *Clear* parameters together, the parameters will be applied in the following sequence:
+
+- **Remove**
+- **Add**
+- **Replace**
+- **Clear**
+
+```yaml
+Type: Hashtable
+Parameter Sets: Identity
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Replace
+Specifies values for an object property that will replace the current values.
+Use this parameter to replace one or more values of a property that cannot be modified using a cmdlet parameter.
+To modify an object property, you must use the LDAP display name.
+You can specify multiple values to a property by specifying a comma-separated list of values, and more than one property by separating them using a semicolon.
+The format for this parameter is:
+
+`-Replace @{Attribute1LDAPDisplayName=value1, value2, ...;   Attribute2LDAPDisplayName=value1, value2, ...; AttributeNLDAPDisplayName=value1, value2, ...}`
+
+When you use the *Add*, *Remove*, *Replace*, and *Clear* parameters together, the operations will be performed in the following order:
+
+- **Remove**
+- **Add**
+- **Replace**
+- **Clear**
+
+```yaml
+Type: Hashtable
+Parameter Sets: Identity
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -SamAccountName
+Specifies the Security Account Manager (SAM) account name of the user, group, computer, or service account.
+The maximum length of the description is 256 characters.
+To be compatible with older operating systems, create a SAM account name that is 20 characters or less.
+This parameter sets the **SAMAccountName** for an account object.
+The LDAP display name (**ldapDisplayName**) for this property is sAMAccountName.
+
+Note: If the string value provided is not terminated with a $ character, the system adds one if needed.
+
+```yaml
+Type: String
+Parameter Sets: Identity
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Server
+Specifies the Active Directory Domain Services instance to connect to, by providing one of the following values for a corresponding domain name or directory server.
+The service may be any of the following: Active Directory Lightweight Domain Services, Active Directory Domain Services or Active Directory Snapshot instance.
+
+Domain name values:
+
+- Fully qualified domain name (FQDN)
+- NetBIOS name
+
+Directory server values:
+
+- Fully qualified directory server name
+- NetBIOS name
+- Fully qualified directory server name and port
+
+The default value for the *Server* parameter is determined by one of the following methods in the order that they are listed:
+
+- By using *Server* value from objects passed through the pipeline. 
+- By using the server information associated with the Active Directory PowerShell provider drive, when running under that drive. 
+- By using the domain of the computer running PowerShell.
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -ServicePrincipalNames
+Specifies the service principal names for the account.
+This parameter sets the **ServicePrincipalNames** property of the account.
+The LDAP display name (**ldapDisplayName**) for this property is servicePrincipalName.
+This parameter uses the following syntax to add, remove, replace, or clear service principal name values.
+
+To add values:
+
+`-ServicePrincipalNames @{Add=value1,value2,...}`
+
+To remove values:
+
+`-ServicePrincipalNames @{Remove=value3,value4,...}`
+
+To replace values:
+
+`-ServicePrincipalNames @{Replace=value1,value2,...}`
+
+To clear all values:
+
+`-ServicePrincipalNames $Null`
+
+You can specify more than one change by using a list separated by semicolons.
+For example, use the following syntax to add and remove service principal names.
+
+`@{Add=value1,value2,...};@{Remove=value3,value4,...}`
+
+The operators are applied in the following sequence: 
+
+- Remove
+- Add
+- Replace
+
+The following example shows how to add and remove service principal names:
+
+```powershell
+ -ServicePrincipalNames @{Add=&quot;SQLservice\accounting.corp.contoso.com:1456&quot;};{Remove=&quot;SQLservice\finance.corp.contoso.com:1456&quot;}
+```
+
+```yaml
+Type: Hashtable
+Parameter Sets: Identity
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -TrustedForDelegation
+Indicates whether an account is trusted for Kerberos delegation.
+A service that runs under an account that is trusted for Kerberos delegation can assume the identity of a client requesting the service.
+This parameter sets the **TrustedForDelegation** property of an account object.
+This value also sets the **ADS_UF_TRUSTED_FOR_DELEGATION** flag of the Active Directory User Account Control attribute.
+The acceptable values for this parameter are:
+
+- $False or 0
+- $True or 1
+
+```yaml
+Type: Boolean
+Parameter Sets: Identity
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -WhatIf
+Shows what would happen if the cmdlet runs.
+The cmdlet is not run.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: wi
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### CommonParameters
+This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable. For more information, see [about_CommonParameters](https://go.microsoft.com/fwlink/?LinkID=113216).
+
+## INPUTS
+
+### None or Microsoft.ActiveDirectory.Management.ADServiceAccount
+A managed service account object is received by the *Identity* parameter.
+
+A managed service account object that was retrieved by using the **Get-ADServiceAccount** cmdlet and then modified is received by the *Instance* parameter.
+
+## OUTPUTS
+
+### None or Microsoft.ActiveDirectory.Management.ADServiceAccount
+Returns the modified managed service account object when the *PassThru* parameter is specified.
+By default, this cmdlet does not generate any output.
+
+## NOTES
+* This cmdlet does not work with AD LDS.
+* This cmdlet does not work with an Active Directory snapshot.
+* This cmdlet does not work with a read-only domain controller.
+
+## RELATED LINKS
+
+[Get-ADServiceAccount](./Get-ADServiceAccount.md)
+
+[Install-ADServiceAccount](./Install-ADServiceAccount.md)
+
+[New-ADServiceAccount](./New-ADServiceAccount.md)
+
+[Remove-ADServiceAccount](./Remove-ADServiceAccount.md)
+
+[Uninstall-ADServiceAccount](./Uninstall-ADServiceAccount.md)
+###Microsoft Learn URL###
+https://learn.microsoft.com/en-us/powershell/module/activedirectory/set-adserviceaccount/?view=windowsserver2022-ps
+</pre></html>

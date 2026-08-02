@@ -1,0 +1,468 @@
+<!doctype html><html lang="ja"><meta charset="utf-8"><pre class="record-source">###KnowledgeNo###
+PS51-WS2022-2026-1272
+###FormatID###
+PS51-WS2022
+###CreatedAt###
+2026-08-01 00:00
+###UpdatedAt###
+2026-08-01 00:00
+###タイトル###
+Get-GPInheritance
+###モジュール###
+grouppolicy
+###製品###
+Windows PowerShell 5.1
+###対応OS###
+Windows Server 2022
+###日本語訳###
+# Get-GPInheritance を取得する
+
+## シノプシスです.
+
+指定されたドメインまたはOUのグループポリシー相続情報を取得します.
+
+## SYNTAXは,のシンタックスです.
+
+```
+Get-GPInheritance [-Target] &lt;String&gt; [-Domain &lt;String&gt;] [-Server &lt;String&gt;] [&lt;CommonParameters&gt;]
+```
+
+## 記述は,
+
+   `Get-GPInheritance`cmdlet は,指定されたドメインまたは組織単位 (OU) のグループポリシー相続に関する情報を取得します.
+
+この情報は以下の内容を含んでいます.
+
+サイトに直接リンクされているGPOのリスト (**GpoLinks**プロパティ). - グループポリシーがクライアントで処理されるときにサイトに適用されるGPOのリスト (**InheritedGpoLinks**プロパティ). - サイトに遺産がブロックされているかどうか (**GpoInheritanceBlocked**プロパティ).
+
+**InheritedGpoLinks**属性は,グループポリシーがクライアントで処理されたときにOUまたはドメインに適用されるGPOsのリストを含んでいます.GPOsは,適用される優先順位によってリストされています.このリストには (次の順序で) 含まれます:
+
+- グループポリシー・ Hierarchy のより高いレベルでリンク,有効,および執行されたGPOs を継承した (例えば,サイト) - グループポリシー・ Hierarchy のより高いレベルでリンク,有効,および執行されたGPOs を指定された場所に直接リンクし,有効にした. - 指定された場所に遺伝がブロックされていない場合,グループポリシー・ Hierarchy のより高いレベルでリンク,有効,しかし実行されていないGPOs を継承した.
+
+## 例えは
+
+### 例1:特定のOUのグループポリシー相続情報を取得します.
+
+```powershell
+Get-GPInheritance -Target &#x27;ou=MyOU,dc=contoso,dc=com&#x27; 
+```
+
+```Output
+ContainerName         : myou
+ContainerType         : OU
+Path                  : ou=myou,dc=contoso,dc=com
+GpoInheritanceBlocked : No
+GpoLinks              : {TestGPO-0, TestGPO-1, TestGPO-2, TestGPO-3...}
+InheritedGpoLinks     : {TestGPO-2, TestGPO-3, Default Domain Policy}
+```
+
+このコマンドは,MyOUという名のOUのグループポリシー相続情報を取得します.`contoso.com`ドメイン.
+
+**GpoLinks**のプロパティには,リンクが有効かどうかに関係なく,GPOに直接リンクしているすべてのGPOのリストが含まれています.
+
+**InheritedGpoLinks**のプロパティには,クライアントでグループポリシーが処理されるときに適用されるすべてのGPOのリストが含まれています. `TestGPO-2`そして,`TestGPO-3`このリストに登場するのは,リンクが有効になっているからです.
+
+デフォルトドメインポリシー GPOは,  から継承されています.`contoso.com`域名. もし遺産がブロックされている場合,そのリンクがドメインで強制される限り,そのリンクが**InheritedGpoLinks** 属性に表示されない. もしそのリンクが強制される場合は,リストで最初に表示されます.
+
+### 例2:特定のドメインのグループポリシー遺産を取得する
+
+```powershell
+Get-GPInheritance -Target &quot;dc=contoso,dc=com&quot; -Domain &quot;contoso.com&quot; -Server &quot;DomainController1&quot;
+```
+
+```Output
+Name                  : contoso.com
+ContainerType         : Domain
+Path                  : dc=contoso,dc=com
+GpoInheritanceBlocked : No
+GpoLinks              : {Default Domain Policy}
+InheritedGpoLinks     : {Default Domain Policy}
+```
+
+このコマンドは,グループポリシーの相続情報を取得します.`contoso.com`ドメイン. ドメインコントローラとホスト名です.`DomainController1`操作を完了するために連絡されます.
+
+この例では,ドメイン**パラメータを使用してドメインを明確に指定する必要はありません.セッションを実行しているユーザーのドメイン (または起動・シャットダウンスクリプトの場合,コンピュータ) がターゲットドメインと同じである場合,またはそのとターゲットドメインの間で信頼が存在した場合, **Domain**パラメータを指定する必要はありません.
+
+### 例3: SOM オブジェクトの評価によって特定の組織単位にリンクされている GPOs を取得します.
+
+```powershell
+(Get-GPInheritance -Target &quot;ou=myou,dc=contoso,dc=com&quot;).GpoLinks | 
+    Foreach-Object { Get-GPO -Name ($_.DisplayName) }
+```
+
+```Output
+DisplayName      : TestGPO-3
+DomainName       : contoso.com
+Owner            : CONTOSO\Domain Admins
+Id               : d02126d4-82e8-4e87-b4a0-2d44b6891411
+GpoStatus        : AllSettingsEnabled
+Description      :
+CreationTime     : 2/27/2009 2:59:51 PM
+ModificationTime : 2/27/2009 4:00:44 PM
+UserVersion      : AD Version: 13, SysVol Version: 13
+ComputerVersion  : AD Version: 0, SysVol Version: 0
+WmiFilter        :
+
+DisplayName      : TestGPO-2
+DomainName       : contoso.com
+Owner            : CONTOSO\Domain Admins
+Id               : 375865b2-3b5f-480f-8f56-2a994ea6e725
+GpoStatus        : AllSettingsEnabled
+Description      :
+CreationTime     : 2/26/2009 11:28:08 PM
+ModificationTime : 3/1/2009 11:07:30 AM
+UserVersion      : AD Version: 0, SysVol Version: 0
+ComputerVersion  : AD Version: 1, SysVol Version: 1
+WmiFilter        :
+```
+
+このコマンドは,Microsoft.GroupPolicy.SOM** で返された SOM オブジェクトを評価します.`Get-GPInheritance`そして,そのGPOを返して,そのGPOにリンクしている.`MyOU`組織単位.このコマンドを使用して,出力を他のcmdletにパイプしてGPOのプロパティを設定できます.例えば,出力をパイプして にパイプすることができます.`Set-GPPermissions`OUにリンクされたGPOのそれぞれに OUの管理者に権限を委譲するcmdlet.
+
+SOMオブジェクトのGpoLinks**属性には,OUのすべてのGPOリンクのリストが含まれています.このリストの各オブジェクトは **Microsoft.GroupPolicy.GpoLink**のタイプです.
+
+コレクションは,パイプで, に繋がっています.`Foreach-Object`命令は,GpoLink**オブジェクトの **DisplayName**属性を使って各GPOを回収する.
+
+## パラメータは
+
+### -ドメイン
+
+このcmdletのドメインを指定します.ドメインの完全資格ドメイン名 (FQDN) を指定する必要があります.
+
+のために`Get-GPInheritance`cmdlet は,通常,相続情報を取得したいコンテナのドメイン (ドメインまたは OU) です.指定されたドメインがコンテナのドメインとは異なる場合,両ドメインの間に信頼が存在する必要があります.
+
+**Domain**パラメータを指定していない場合は,現在のセッションを実行しているユーザーのドメインが使用されます.もし,cmdletがコンピュータの起動またはシャットダウンスクリプトから実行されている場合は,コンピュータのドメインが使用されます.詳細については,完全なヘルプのメモセクションを参照してください.
+
+特定のドメインが現在のセッションを実行しているユーザーのドメイン (または起動またはシャットダウンスクリプトの場合,コンピュータ) と異なることを指定した場合,そのドメインとユーザーのドメインまたはコンピュータの間に信頼が存在する必要があります.
+
+また,内蔵の名前の **DomainName**によって**Domain**パラメータを参照することもできます.詳細については, [about_Aliases] (/powershell/module/microsoft.powershell.core/about/about_aliases) を参照してください.
+
+```yaml
+Type: System.String
+Parameter Sets: (All)
+Aliases: DomainName
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -サーバー
+
+このcmdletが操作を完了するために連絡するドメインコントローラの名前を指定します.完全に資格のあるドメイン名 (FQDN) またはホスト名を指定することができます.
+
+**Server**パラメータを使用して名前を指定しない場合は,プライマリドメインコントローラー (PDC) エミュレーターに連絡されます.
+
+また,内蔵のニックネーム, **DC** によって **Server** パラメータを参照することもできます.
+
+```yaml
+Type: System.String
+Parameter Sets: (All)
+Aliases: DC
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+# Get-GPInheritance を取得する
+
+### - ターゲット
+
+グループポリシー相続情報を,Lightweight Directory Access Protocol (LDAP) の名で取り出すドメインまたはOUを指定します.例えば, `MyOU`の組織的単位です.`contoso.com`ドメインは,指定されている.`ou=MyOU,dc=contoso,dc=com` .
+
+また,内蔵の名, **Path** で **Target** パラメータを参照することもできます.
+
+```yaml
+Type: System.String
+Parameter Sets: (All)
+Aliases: Path
+
+Required: True
+Position: 0
+Default value: None
+Accept pipeline input: True (ByPropertyName, ByValue)
+Accept wildcard characters: False
+```
+
+### 共通パラメーター
+
+このcmdletは,共通パラメータをサポートしています: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable.詳細については, [about_CommonParameters](を参照してください.https://go.microsoft.com/fwlink/?LinkID=113216) でした.
+
+## 輸入は
+
+### Microsoft.GroupPolicy.Somです. グループポリシーについて説明します.
+
+ドメインやOUを代表するオブジェクトです.
+
+## 輸出は
+
+### Microsoft.GroupPolicy.Somです. グループポリシーについて説明します.
+
+このcmdletはドメインまたはOUを表示するオブジェクトを返します.GpoInheritanceBlocked**のプロパティは,相続がブロックされているかどうかを表示します.  を使ってドメインまたはOUの相続を変更できます.`Set-GPInheritance`cmdletです.
+
+##  NOTES  記事ができました.
+
+**Domain**パラメータを使用して,このcmdletのドメインを明確に指定することができます.
+
+域を明確に指定しない場合は,cmdletはデフォルトドメインを使用します.デフォルトドメインは,現在のセッションが実行されているセキュリティコンテキストによってネットワークリソースにアクセスするために使用されるドメインです.このドメインは,通常,セッションを実行しているユーザーのドメインです.例えば,プログラムファイルメニューからWindows PowerShell を開きセッションを開始したユーザーのドメイン,またはルーンコマンドで指定されたユーザーのドメインです.しかし,コンピュータの起動とシャットダウンスクリプトは,ローカルシステムアカウントのコンテキストで実行されます.ローカルシステムアカウントは,内蔵のローカルアカウントで,ネットワークリソースにアクセスし,ローカルシステムアカウントのコンテキストでアクセスします.したがって,このcmdletが起動またはシャットダウンスクリプトから実行される場合,デフォルトドメインはコンピュータが接続したドメインです.
+
+## 関連リンク
+
+[Set-GPInheritance](./Set-GPInheritance.md) 
+###英語原文###
+# Get-GPInheritance
+
+## SYNOPSIS
+
+Gets Group Policy inheritance information for a specified domain or OU.
+
+## SYNTAX
+
+```
+Get-GPInheritance [-Target] &lt;String&gt; [-Domain &lt;String&gt;] [-Server &lt;String&gt;] [&lt;CommonParameters&gt;]
+```
+
+## DESCRIPTION
+
+The `Get-GPInheritance` cmdlet gets information about Group Policy inheritance for a specified
+domain or organizational unit (OU).
+
+This information includes the following:
+
+- A list of GPOs that are linked directly to the location (the **GpoLinks** property).
+- A list of GPOs that are applied to the location when Group Policy is processed on a client (the
+  **InheritedGpoLinks** property).
+- Whether inheritance is blocked for the location (the **GpoInheritanceBlocked** property).
+
+The **InheritedGpoLinks** property contains a list of the GPOs are applied to the OU or domain when
+Group Policy is processed on a client. The GPOs are listed according to the order of precedence
+with which they are applied. This list includes (in the following order):
+
+- Inherited GPOs that are linked, enabled, and enforced at higher levels of the Group Policy
+  hierarchy (for example, a site).
+- GPOs that are linked and enabled directly at the specified location.
+- If inheritance is not blocked for the specified location, inherited GPOs that are linked and
+  enabled -- but not enforced -- at higher levels of the Group Policy hierarchy.
+
+## EXAMPLES
+
+### Example 1: Get Group Policy inheritance information for a specific OU
+
+```powershell
+Get-GPInheritance -Target &#x27;ou=MyOU,dc=contoso,dc=com&#x27; 
+```
+
+```Output
+ContainerName         : myou
+ContainerType         : OU
+Path                  : ou=myou,dc=contoso,dc=com
+GpoInheritanceBlocked : No
+GpoLinks              : {TestGPO-0, TestGPO-1, TestGPO-2, TestGPO-3...}
+InheritedGpoLinks     : {TestGPO-2, TestGPO-3, Default Domain Policy}
+```
+
+This command gets Group Policy inheritance information for the OU named MyOU in the `contoso.com`
+domain.
+
+The **GpoLinks** property contains a list of all the GPOs that are linked directly to the GPO,
+whether their links are enabled or not.
+
+The **InheritedGpoLinks** property contains a list of all the GPOs that are applied when Group
+Policy is processed on the client. `TestGPO-2` and `TestGPO-3` appear in this list because their
+links are enabled.
+
+The Default Domain Policy GPO is inherited from the `contoso.com` domain. If inheritance is blocked,
+it does not appear in the **InheritedGpoLinks** property unless its link is enforced at the domain.
+If its link is enforced, it appears first in the list.
+
+### Example 2: Get Group Policy inheritance for a specific domain
+
+```powershell
+Get-GPInheritance -Target &quot;dc=contoso,dc=com&quot; -Domain &quot;contoso.com&quot; -Server &quot;DomainController1&quot;
+```
+
+```Output
+Name                  : contoso.com
+ContainerType         : Domain
+Path                  : dc=contoso,dc=com
+GpoInheritanceBlocked : No
+GpoLinks              : {Default Domain Policy}
+InheritedGpoLinks     : {Default Domain Policy}
+```
+
+This command gets Group Policy inheritance information for the `contoso.com` domain. The domain
+controller with the host name `DomainController1` is contacted to complete the operation.
+
+The domain does not have to be explicitly specified using the **Domain** parameter in this example.
+If the domain of the user that is running the session (or, for startup and shutdown scripts, the
+computer) is the same as the target domain, or a trust exists between it and the target domain, you
+do not have to specify the **Domain** parameter.
+
+### Example 3: Get GPOs that are linked to a specific organizational unit by evaluating the SOM object
+
+```powershell
+(Get-GPInheritance -Target &quot;ou=myou,dc=contoso,dc=com&quot;).GpoLinks | 
+    Foreach-Object { Get-GPO -Name ($_.DisplayName) }
+```
+
+```Output
+DisplayName      : TestGPO-3
+DomainName       : contoso.com
+Owner            : CONTOSO\Domain Admins
+Id               : d02126d4-82e8-4e87-b4a0-2d44b6891411
+GpoStatus        : AllSettingsEnabled
+Description      :
+CreationTime     : 2/27/2009 2:59:51 PM
+ModificationTime : 2/27/2009 4:00:44 PM
+UserVersion      : AD Version: 13, SysVol Version: 13
+ComputerVersion  : AD Version: 0, SysVol Version: 0
+WmiFilter        :
+
+DisplayName      : TestGPO-2
+DomainName       : contoso.com
+Owner            : CONTOSO\Domain Admins
+Id               : 375865b2-3b5f-480f-8f56-2a994ea6e725
+GpoStatus        : AllSettingsEnabled
+Description      :
+CreationTime     : 2/26/2009 11:28:08 PM
+ModificationTime : 3/1/2009 11:07:30 AM
+UserVersion      : AD Version: 0, SysVol Version: 0
+ComputerVersion  : AD Version: 1, SysVol Version: 1
+WmiFilter        :
+```
+
+This command evaluates the SOM object **Microsoft.GroupPolicy.SOM** returned by `Get-GPInheritance`
+and returns the GPOs that are linked to the `MyOU` organizational unit. You can use this command to
+set properties of the GPOs by piping its output into other cmdlets. For instance, you can pipe the
+output to the `Set-GPPermissions` cmdlet to delegate permissions to administrators of the OU for
+each of the GPOs linked to the OU.
+
+The **GpoLinks** property of the SOM object contains a list of all the GPO links for the OU.
+Each object in this list is of type **Microsoft.GroupPolicy.GpoLink**.
+
+The collection is piped into a `Foreach-Object` command, which retrieves each GPO by using the
+**DisplayName** property of the **GpoLink** object.
+
+## PARAMETERS
+
+### -Domain
+
+Specifies the domain for this cmdlet.
+You must specify the fully qualified domain name (FQDN) of the domain.
+
+For the `Get-GPInheritance` cmdlet, this is typically the domain of the container (domain or OU)
+for which you want to retrieve inheritance information. If the specified domain is different than
+the domain of the container, a trust must exist between the two domains.
+
+If you do not specify the **Domain** parameter, the domain of the user that is running the current
+session is used. If the cmdlet is being run from a computer startup or shutdown script, the domain
+of the computer is used. For more information, see the Notes section in the full Help.
+
+If you specify a domain that is different from the domain of the user that is running the current
+session (or, for a startup or shutdown script, the computer), a trust must exist between that domain
+and the domain of the user or the computer.
+
+You can also refer to the **Domain** parameter by its built-in alias, **DomainName**. For more
+information, see [about_Aliases](/powershell/module/microsoft.powershell.core/about/about_aliases).
+
+```yaml
+Type: System.String
+Parameter Sets: (All)
+Aliases: DomainName
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -Server
+
+Specifies the name of the domain controller that this cmdlet contacts to complete the operation. You
+can specify either the fully qualified domain name (FQDN) or the host name.
+
+If you do not specify the name by using the **Server** parameter, the primary domain controller
+(PDC) emulator is contacted.
+
+You can also refer to the **Server** parameter by its built-in alias, **DC**.
+
+```yaml
+Type: System.String
+Parameter Sets: (All)
+Aliases: DC
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+# Get-GPInheritance
+
+### -Target
+
+Specifies the domain or the OU for which to retrieve the Group Policy inheritance information by its
+Lightweight Directory Access Protocol (LDAP) distinguished name. For instance, the `MyOU`
+organizational unit in the `contoso.com` domain is specified as `ou=MyOU,dc=contoso,dc=com`.
+
+You can also refer to the **Target** parameter by its built-in alias, **Path**.
+
+```yaml
+Type: System.String
+Parameter Sets: (All)
+Aliases: Path
+
+Required: True
+Position: 0
+Default value: None
+Accept pipeline input: True (ByPropertyName, ByValue)
+Accept wildcard characters: False
+```
+
+### CommonParameters
+
+This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable,
+-InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose,
+-WarningAction, and -WarningVariable. For more information, see
+[about_CommonParameters](https://go.microsoft.com/fwlink/?LinkID=113216).
+
+## INPUTS
+
+### Microsoft.GroupPolicy.Som
+
+An object that represents a domain or an OU.
+
+## OUTPUTS
+
+### Microsoft.GroupPolicy.Som
+
+This cmdlet returns an object that represents the domain or OU. The **GpoInheritanceBlocked**
+property indicates whether inheritance is blocked. You can modify inheritance for the domain or OU
+by using the `Set-GPInheritance` cmdlet.
+
+## NOTES
+
+* You can use the **Domain** parameter to explicitly specify the domain for this cmdlet.
+
+  If you do not explicitly specify the domain, the cmdlet uses a default domain. The default domain
+  is the domain that is used to access network resources by the security context under which the
+  current session is running. This domain is typically the domain of the user that is running the
+  session. For example, the domain of the user who started the session by opening Windows PowerShell
+  from the Program Files menu, or the domain of a user that is specified in a runas command.
+  However, computer startup and shutdown scripts run under the context of the LocalSystem account.
+  The LocalSystem account is a built-in local account, and it accesses network resources under the
+  context of the computer account. Therefore, when this cmdlet is run from a startup or shutdown
+  script, the default domain is the domain to which the computer is joined.
+
+## RELATED LINKS
+
+[Set-GPInheritance](./Set-GPInheritance.md)
+###Microsoft Learn URL###
+https://learn.microsoft.com/en-us/powershell/module/grouppolicy/get-gpinheritance/?view=windowsserver2022-ps
+</pre></html>

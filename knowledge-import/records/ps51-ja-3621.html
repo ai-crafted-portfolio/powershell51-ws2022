@@ -1,0 +1,580 @@
+<!doctype html><html lang="ja"><meta charset="utf-8"><pre class="record-source">###KnowledgeNo###
+PS51-WS2022-2026-3621
+###FormatID###
+PS51-WS2022
+###CreatedAt###
+2026-08-01 00:00
+###UpdatedAt###
+2026-08-01 00:00
+###タイトル###
+about_Signing
+###モジュール###
+Microsoft.PowerShell.Core
+###製品###
+Windows PowerShell 5.1
+###対応OS###
+Windows Server 2022
+###日本語訳###
+# 署名について
+
+## 短編説明
+
+PowerShellの実行ポリシーに準拠するようにスクリプトを署名する方法を説明します.
+
+## 長い説明
+
+**Restricted**実行ポリシーでは,スクリプトが実行できない. **AllSigned**と **RemoteSigned**実行ポリシーでは,PowerShellがデジタル署名を持たないスクリプトを実行することを妨げています.
+
+このトピックでは,実行方針が**RemoteSigned**であるにもかかわらず,署名されていないスクリプトをどのように実行するか,また,自分の使用のためにスクリプトをどのように署名するか説明します.
+
+PowerShellで,以下のタイプのAuthenticode署名を確認します:
+
+ - -`.ps1`脚本ファイル - `.psm1`ファイル -  模組ファイル`.psd1`マニュアル・モジュールとデータファイル - `.ps1xml`XMLファイルのタイプとフォーマット - `.cdxml`CDXMLスクリプトファイル - `.xaml`XAMLスクリプトファイル
+
+PowerShellの実行ポリシーに関する詳細については,[about_Execution_Policies][03]を参照してください.
+
+## 署名されたスクリプトの実行を許可する
+
+パワーシェルを初めてコンピュータで起動すると,デフォルトの **Restricted**実行ポリシーが有効になる可能性があります.
+
+制限されたポリシーでは,すべてのスクリプトが実行されないようにしています.
+
+コンピュータの有効な実行ポリシーを見つけるには,次の入力してください:
+
+```powershell
+Get-ExecutionPolicy
+```
+
+**RemoteSigned**のポリシーでは,本地で作成した署名されたスクリプトや署名されていないスクリプトを実行できます.このポリシーを設定するには,PowerShell を **Run as Administrator**のオプションで起動し,次のコマンドを使用して実行ポリシーを変更してください.
+
+```powershell
+Set-ExecutionPolicy RemoteSigned
+```
+
+詳細については, の支援テーマを参照してください.`Set-ExecutionPolicy`cmdletです.
+
+署名されたスクリプトを実行するには,スクリプトには信頼できる出版社からのデジタル署名が必要です.コード署名証明書は,コンピュータに信頼されている認証機関によって発行されなければなりません.自署名証明書は,コンピュータの Trusted Root Certificates ストアにインストールする必要があります.
+
+## RemoteSigned policy を使って未署名スクリプトを実行します.
+
+PowerShellの実行方針がRemoteSignedである場合は,インターネットからダウンロードされた未署名スクリプト,電子メールやインスタントメッセージングプログラムを通じて受け取る未署名スクリプトを含む PowerShellは実行されません.
+
+ダウンロードしたスクリプトを実行しようとすると,PowerShellで以下のエラーメッセージが表示されます.
+
+```Output
+The file &lt;file-name&gt; cannot be loaded. The file &lt;file-name&gt; is not
+digitally signed. The script will not execute on the system. Please see
+&quot;Get-Help about_Signing&quot; for more details.
+```
+
+スクリプトを実行する前に,信頼されているか確認するためにコードをチェックしてください. スクリプトは実行可能なプログラムと同じ効果を持っています.
+
+署名されていないスクリプトを実行するには,  を使います.`Unblock-File`cmdlet または次の手順を使用します.
+
+1.コンピュータにスクリプトファイルを保存する. 1.スタートをクリックし,私のコンピュータをクリックし,保存されたスクリプトファイルを検索する. 1.スクリプトファイルを右クリックし,その後プロパティをクリックする. 1.ロックを解除する.
+
+インターネットからダウンロードしたスクリプトがデジタル署名されているが,その発行者に信頼することをまだ選択していない場合は,PowerShellで以下のメッセージが表示されます.
+
+```Output
+Do you want to run software from this untrusted publisher?
+The file &lt;file-name&gt; is published by CN=&lt;publisher-name&gt;. This
+publisher is not trusted on your system. Only run scripts
+from trusted publishers.
+
+[V] Never run  [D] Do not run  [R] Run once  [A] Always run
+[?] Help (default is &quot;D&quot;):
+```
+
+出版者に信頼する場合は ** once** を選択し, ** Always run** を選択します. 出版者に信頼しない場合は ** Never run** を選択します. または ** Never run** を選択します.
+
+## スクリプトの署名方法
+
+脚本を書いたり,他の情報源から入手した脚本も署名できます.脚本をサインする前に,安全であることを確認するために各コマンドをチェックしてください.
+
+スクリプトファイルに署名する方法についての詳細については,[Set-AuthenticodeSignature][06]を参照してください.
+
+   `New-SelfSignedCertificate`cmdletはPowerShell 3.0でPKIモジュールに導入され,テストに適した自己署名証明書を作成します.詳細については, のサポートトピックを参照してください.`New-SelfSignedCertificate`cmdletです.
+
+スクリプトにデジタル署名を追加するには,コード署名証明書で署名する必要があります. 脚本ファイルを署名するのに2種類の証明書が適しています:
+
+認証機関が作成した証明書:公認機関があなたの身分を証明し,コード署名証明書を無料で発行する.評判の高い認証機関から証明書を購入すると,Windowsを実行している他のコンピュータのユーザーと共有できる, [U+0B8F][U+0BA9][U+0BC6][U+0BA9][U+0BCD][U+0BB1][U+0BBE][U+0BB2][U+0BCD],他のコンピュータは認証機関に信頼している.
+
+- 作成する証明書: 作成する証明書には,自分のコンピュータが証明書を作成する権限を持つ自己署名証明書を作成できます.この証明書は無料で,コンピュータ上で脚本を書く,署名し実行できるようにします.しかし,自己署名証明書によって署名された脚本は他のコンピュータで実行されません.
+
+自署名証明書は,テスト目的でスクリプトをサインするためにのみ使用されるべきである.自署名証明書は,あなたが共有したいスクリプトに適していない.
+
+自署名証明書を作成する場合,証明書に強力なプライベートキー保護を有効にしてください.これは悪意のあるプログラムがあなたの代わりに脚本を署名するのを防ぐことです.このテーマの最後に説明が含まれています.
+
+## 署名証明書を作成します.
+
+自署名証明書を作成するには,PKI モジュール内の[New-SelfSignedCertificate][08] cmdlet を使用してください.このモジュールはPowerShell 3.0で導入されています.詳細については,  のサポートトピックを参照してください.`New-SelfSignedCertificate`cmdletです.
+
+```powershell
+$params = @{
+    Subject = &#x27;CN=PowerShell Code Signing Cert&#x27;
+    Type = &#x27;CodeSigning&#x27;
+    CertStoreLocation = &#x27;Cert:\CurrentUser\My&#x27;
+    HashAlgorithm = &#x27;sha256&#x27;
+}
+$cert = New-SelfSignedCertificate @params
+```
+
+# 署名について
+
+### Makecert.exe を使って
+
+Windows の以前のバージョンで自己署名証明書を作成するには,証明書作成ツールを使用します.`MakeCert.exe`このツールは,Microsoft .NET SDK (バージョン1.1以降) とMicrosoft Windows SDK に含まれています.
+
+の構文やパラメータ説明について詳しくはこちらからご覧ください.`MakeCert.exe`[証明書作成ツール (MakeCert.exe) ][01].
+
+ を使って`MakeCert.exe`証明書作成ツールでは,SDK コマンドプロンプトウィンドウで以下のコマンドを実行します.
+
+&gt; [!NOTE] &gt; 最初のコマンドは,あなたのコンピュータのローカル認証機関を作成します. &gt; 第二のコマンドは,認証機関から個人認証を作成します.コマンドを,実際に表示されたようにコピーまたは入力できます. &gt; 代替は不要です.しかし,証明書の名前を変更できます.
+
+```powershell
+makecert -n &quot;CN=PowerShell Local Certificate Root&quot; -a sha256 `
+-eku 1.3.6.1.5.5.7.3.3 -r -sv root.pvk root.cer `
+-ss Root -sr localMachine
+
+makecert -pe -n &quot;CN=PowerShell User&quot; -ss MY -a sha256 `
+-eku 1.3.6.1.5.5.7.3.3 -iv root.pvk -ic root.cer
+```
+
+   `MakeCert.exe`ツールでは,プライベートキーパスワードを提示します.パスワードは,あなたの同意なしに誰も証明書を使用したりアクセスしたりできないことを保証します.覚えておくためのパスワードを作成し入力します.このパスワードを後で証明書を取得するために使用します.
+
+証明書の正常に生成されたかどうかを確認するには,次のコマンドを使用して,コンピュータの証明書ストアから証明書を取得します.ファイルシステムディレクトリでは証明書ファイルが見つからないでしょう.
+
+PowerShell プロンプトで,入力してください:
+
+```powershell
+Get-ChildItem Cert:\CurrentUser\my -CodeSigning
+```
+
+このコマンドは,証明書に関する情報を表示するためにPowerShell証明書プロバイダを使用します.
+
+証明書は作成された場合,輸出は,以下のようで証明書を識別する指紋を表示します.
+
+```Output
+Directory: Microsoft.PowerShell.Security\Certificate::CurrentUser\My
+
+Thumbprint                                Subject
+----------                                -------
+4D4917CB140714BA5B81B96E0B18AAF2C4564FDF  CN=PowerShell User
+```
+
+## 脚本にサインする
+
+自署名証明書を作成した後,スクリプトをサインすることができます. **AllSigned**実行ポリシーを使用すると,スクリプトをサインすることで,スクリプトをコンピュータで実行することができます.
+
+次のサンプルスクリプトは, `Add-Signature.ps1`しかし,あなたが**AllSigned**実行ポリシーを使用している場合は,あなたは,  を署名する必要があります.`Add-Signature.ps1`脚本を実行する前に.
+
+[!IMPORTANT] &gt; PowerShell 7.2 前に,スクリプトは ASCII または UTF8NoBOM &gt; コーディングを使用して保存する必要があります.PowerShell 7.2 以降は,どんなエンコーディング &gt; フォーマットでも署名スクリプトをサポートします.
+
+このスクリプトを使用するには,次のテキストをテキストファイルにコピーして,その名前に指定してください.`Add-Signature.ps1` .
+
+```powershell
+
+## SIGNS A FILE
+[CmdletBinding()]
+param(
+    [Parameter(Mandatory=$true)]
+    [string] $File
+)
+
+$cert = Get-ChildItem Cert:\CurrentUser\My -CodeSigningCert |
+    Select-Object -First 1
+
+Set-AuthenticodeSignature -FilePath $File -Certificate $cert
+```
+
+署名するために,`Add-Signature.ps1`スクリプトファイルで PowerShell コマンドプロンプトに以下のコマンドを入力します:
+
+```powershell
+$cert = Get-ChildItem Cert:\CurrentUser\My -CodeSigningCert |
+    Select-Object -First 1
+
+Set-AuthenticodeSignature Add-Signature.ps1 $cert
+```
+
+   `Set-AuthenticodeSignature`cmdlet は,脚本ファイルに署名を追加し,ファイルの終わりにコメントブロックとして追加します.コメントブロックは,  で始まる.`# SIG #` .
+
+スクリプトをサインした後,ローカルコンピュータで実行できますが,PowerShell実行方針が信頼できる当局からのデジタル署名を必要とするコンピュータでは,スクリプトは実行されません.試す場合は,PowerShellは以下のエラーメッセージが表示されます.
+
+```Output
+The file C:\remote_file.ps1 cannot be loaded. The signature of the
+certificate cannot be verified.
+At line:1 char:15
++ .\ remote_file.ps1 &lt;&lt;&lt;&lt;
+```
+
+PowerShellで書き留めていないスクリプトを実行するとこのメッセージが表示される場合は,署名されていないスクリプトを扱うようにファイルに扱ってください.スクリプトを信頼できるか否かを確認するためにコードをレビューしてください.
+
+## プライベートキーに強い保護を可能にします.
+
+コンピュータにプライベートキーと証明書がある場合は,悪意のあるプログラムがあなたの代わりに脚本を署名することができ,PowerShellが実行できるようにします.
+
+自動署名を防止するには,証明書管理者を使用してください.`Certmgr.exe`署名キーを,証明書を,  に輸出する.`.pfx`ファイル.証明書管理者はMicrosoft .NET SDK,Microsoft Windows SDK,およびInternet Explorerに含まれています.
+
+証明書を輸出するには:
+
+1.証明書管理者を起動する. 1.PowerShell Local Certificate Rootによって発行された証明書を選択する. 1.証明書輸出ウィザードを起動するために **輸出**をクリックする. 1.Yesを選択し,私[U+94A5]を輸出し,次をクリックする. 1.Enable strong protectionを選択する. 1.パスワードを入力し,確認するために再入力する. 1.ファイル名を入力し,その上に が表示されます.`.pfx`1.クリックして **Finish**.
+
+証明書を再輸入するには:
+
+1.証明書管理者を起動する. 1.証明書輸入ウィザードを起動するには **輸入**をクリックする. 1.証明書輸入ウィザードを起動する. 1.証明書の位置に開く.`.pfx`1.パスワードページでは,強力なプライベートキー保護を有効に ** を選択し,その後,輸出プロセス中に割り当てられたパスワードを入力します. 1.個人認証証明書ストアを選択します. 1.終了する**をクリックします.
+
+## 署名が期限切れするのを防ぐ
+
+スクリプトのデジタル署名は,署名証明書の期限が切れるまで,またはタイムスタンプサーバーが署名証明書の有効期間中に脚本が署名されたことを確認できる限り有効です.
+
+ほとんどのサイン証明書は1年間しか有効でないため,タイムスタンプサーバーを使用することで,ユーザーは今後数年間あなたのスクリプトを使用できるようになります.
+
+## また, を参照してください.
+
+[about_Execution_Policies][03] - [about_Profiles][04] - [Set-AuthenticodeSignature][06] - [Get-ExecutionPolicy][05] - [Set-ExecutionPolicy][07] - [Code Signingへの導入]
+
+リンク参照 --&gt; [01]: /previous-versions/dotnet/netframework-2.0/bfsktky3(v=vs.80) [02]: /previous-versions/windows/internet-explorer/ie-developer/platform-apis/ms537361(v=vs.85) [03]: about_Execution_Policies.md [04]: about_Profiles.md [05]: xref:Microsoft.PowerShell.Security.Get-ExecutionPolicy [06]: xref:Microsoft.PowerShell.Security.Set-AuthenticodeSignature [07]: xref:Microsoft.PowerShell.Security.Set-ExecutionPolicy [08]: xki:New-SignedCertificate
+###英語原文###
+# about_Signing
+
+## Short description
+
+Explains how to sign scripts so that they comply with the PowerShell execution
+policies.
+
+## Long description
+
+The **Restricted** execution policy doesn&#x27;t permit any scripts to run. The
+**AllSigned** and **RemoteSigned** execution policies prevent PowerShell from
+running scripts that don&#x27;t have a digital signature.
+
+This topic explains how to run selected scripts that aren&#x27;t signed, even while
+the execution policy is **RemoteSigned**, and how to sign scripts for your own
+use.
+
+PowerShell checks the Authenticode signature of the following type types:
+
+- `.ps1` script files
+- `.psm1` module files
+- `.psd1` module manifest and data files
+- `.ps1xml` type and format XML files
+- `.cdxml` CDXML script files
+- `.xaml` XAML script files
+
+For more information about PowerShell execution policies, see
+[about_Execution_Policies][03].
+
+## Permit the execution of signed scripts
+
+When you start PowerShell on a computer for the first time, the **Restricted**
+execution policy, which is the default, is likely to be in effect.
+
+The **Restricted** policy prevents all scripts from running.
+
+To find the effective execution policy on your computer, type:
+
+```powershell
+Get-ExecutionPolicy
+```
+
+The **RemoteSigned** policy allows you to run signed scripts or unsigned
+scripts that you create locally. To configure this policy, start PowerShell
+with the **Run as Administrator** option and then use the following command to
+change the execution policy.
+
+```powershell
+Set-ExecutionPolicy RemoteSigned
+```
+
+For more information, see the help topic for the `Set-ExecutionPolicy` cmdlet.
+
+To run a signed script, the script must have a digital signature from a trusted
+publisher. The code signing certificate must be issued by a certification
+must be issued by a certification authority that is trusted on the computer.
+Self-signed certificates must be installed in the **Trusted Root Certificates**
+store on the computer.
+
+## Run unsigned scripts using the RemoteSigned policy
+
+If your PowerShell execution policy is **RemoteSigned**, PowerShell won&#x27;t run
+unsigned scripts that are downloaded from the internet, including unsigned
+scripts you receive through email and instant messaging programs.
+
+If you try to run a downloaded script, PowerShell displays the following error
+message:
+
+```Output
+The file &lt;file-name&gt; cannot be loaded. The file &lt;file-name&gt; is not
+digitally signed. The script will not execute on the system. Please see
+&quot;Get-Help about_Signing&quot; for more details.
+```
+
+Before you run the script, review the code to be sure that you trust it.
+Scripts have the same effect as any executable program.
+
+To run an unsigned script, use the `Unblock-File` cmdlet or use the following
+procedure.
+
+1. Save the script file on your computer.
+1. Click **Start**, click **My Computer**, and locate the saved script file.
+1. Right-click the script file, and then click **Properties**.
+1. Click **Unblock**.
+
+If a script that you downloaded from the internet is digitally signed, but you
+haven&#x27;t yet chosen to trust its publisher, PowerShell displays the following
+message:
+
+```Output
+Do you want to run software from this untrusted publisher?
+The file &lt;file-name&gt; is published by CN=&lt;publisher-name&gt;. This
+publisher is not trusted on your system. Only run scripts
+from trusted publishers.
+
+[V] Never run  [D] Do not run  [R] Run once  [A] Always run
+[?] Help (default is &quot;D&quot;):
+```
+
+If you trust the publisher, select **Run once** or **Always run**. If you don&#x27;t
+trust the publisher, select either **Never run** or **Do not run**. If you
+select **Never run** or **Always run**, PowerShell won&#x27;t prompt you again for
+this publisher.
+
+## Methods of signing scripts
+
+You can sign the scripts that you write and the scripts that you get from other
+sources. Before you sign any script, examine each command to verify that it&#x27;s
+safe to run.
+
+For more information about how to sign a script file, see
+[Set-AuthenticodeSignature][06].
+
+The `New-SelfSignedCertificate` cmdlet, introduced in the PKI module in
+PowerShell 3.0, creates a self-signed certificate that&#x27;s appropriate for
+testing. For more information, see the help topic for the
+`New-SelfSignedCertificate` cmdlet.
+
+To add a digital signature to a script, you must sign it with a code signing
+certificate. Two types of certificates are suitable for signing a script file:
+
+- Certificates that are created by a certification authority: For a fee, a
+  public certification authority verifies your identity and gives you a code
+  signing certificate. When you purchase your certificate from a reputable
+  certification authority, you are able to share your script with users on
+  other computers that are running Windows because those other computers trust
+  the certification authority.
+
+- Certificates that you create: You can create a self-signed certificate for
+  which your computer is the authority that creates the certificate. This
+  certificate is free of charge and enables you to write, sign, and run scripts
+  on your computer. However, a script signed by a self-signed certificate will
+  not run on other computers.
+
+Self-signed certificate should only be used to sign scripts for testing
+purposes. Self-signed certificates aren&#x27;t appropriate for scripts that you want
+to share.
+
+If you create a self-signed certificate, be sure to enable strong private key
+protection on your certificate. This prevents malicious programs from signing
+scripts on your behalf. The instructions are included at the end of this
+topic.
+
+## Create a self-signed certificate
+
+To create a self-signed certificate, use the [New-SelfSignedCertificate][08]
+cmdlet in the PKI module. This module is introduced in PowerShell 3.0. For more
+information, see the help topic for the `New-SelfSignedCertificate` cmdlet.
+
+```powershell
+$params = @{
+    Subject = &#x27;CN=PowerShell Code Signing Cert&#x27;
+    Type = &#x27;CodeSigning&#x27;
+    CertStoreLocation = &#x27;Cert:\CurrentUser\My&#x27;
+    HashAlgorithm = &#x27;sha256&#x27;
+}
+$cert = New-SelfSignedCertificate @params
+```
+
+# about_Signing
+
+### Using Makecert.exe
+
+To create a self-signed certificate in earlier versions of Windows, use the
+Certificate Creation tool `MakeCert.exe`. This tool is included in the
+Microsoft .NET SDK (versions 1.1 and later) and in the Microsoft Windows SDK.
+
+For more information about the syntax and the parameter descriptions of the
+`MakeCert.exe` tool, see [Certificate Creation Tool (MakeCert.exe)][01].
+
+To use the `MakeCert.exe` tool to create a certificate, run the following
+commands in an SDK Command Prompt window.
+
+&gt; [!NOTE]
+&gt; The first command creates a local certification authority for your computer.
+&gt; The second command generates a personal certificate from the certification
+&gt; authority. You can copy or type the commands exactly as they appear. No
+&gt; substitutions are necessary, although you can change the certificate name.
+
+```powershell
+makecert -n &quot;CN=PowerShell Local Certificate Root&quot; -a sha256 `
+-eku 1.3.6.1.5.5.7.3.3 -r -sv root.pvk root.cer `
+-ss Root -sr localMachine
+
+makecert -pe -n &quot;CN=PowerShell User&quot; -ss MY -a sha256 `
+-eku 1.3.6.1.5.5.7.3.3 -iv root.pvk -ic root.cer
+```
+
+The `MakeCert.exe` tool prompts you for a private key password. The password
+ensures that no one can use or access the certificate without your consent.
+Create and enter a password that you can remember. You&#x27;ll use this password
+later to retrieve the certificate.
+
+To verify that the certificate generated correctly, use the following command
+to get the certificate in the certificate store on the computer. You won&#x27;t find
+a certificate file in the file system directory.
+
+At the PowerShell prompt, type:
+
+```powershell
+Get-ChildItem Cert:\CurrentUser\my -CodeSigning
+```
+
+This command uses the PowerShell Certificate provider to view information
+about the certificate.
+
+If the certificate was created, the output shows the **thumbprint** that
+identifies the certificate in a display that resembles the following:
+
+```Output
+Directory: Microsoft.PowerShell.Security\Certificate::CurrentUser\My
+
+Thumbprint                                Subject
+----------                                -------
+4D4917CB140714BA5B81B96E0B18AAF2C4564FDF  CN=PowerShell User
+```
+
+## Sign a script
+
+After you create a self-signed certificate, you can sign scripts. If you use
+the **AllSigned** execution policy, signing a script permits you to run the
+script on your computer.
+
+The following sample script, `Add-Signature.ps1`, signs a script. However, if
+you are using the **AllSigned** execution policy, you must sign the
+`Add-Signature.ps1` script before you run it.
+
+&gt; [!IMPORTANT]
+&gt; Before PowerShell 7.2, the script must be saved using ASCII or UTF8NoBOM
+&gt; encoding. PowerShell 7.2 and higher supports signed scripts for any encoding
+&gt; format.
+
+To use this script, copy the following text into a text file, and name it
+`Add-Signature.ps1`.
+
+```powershell
+
+## SIGNS A FILE
+[CmdletBinding()]
+param(
+    [Parameter(Mandatory=$true)]
+    [string] $File
+)
+
+$cert = Get-ChildItem Cert:\CurrentUser\My -CodeSigningCert |
+    Select-Object -First 1
+
+Set-AuthenticodeSignature -FilePath $File -Certificate $cert
+```
+
+To sign the `Add-Signature.ps1` script file, type the following commands at the
+PowerShell command prompt:
+
+```powershell
+$cert = Get-ChildItem Cert:\CurrentUser\My -CodeSigningCert |
+    Select-Object -First 1
+
+Set-AuthenticodeSignature Add-Signature.ps1 $cert
+```
+
+The `Set-AuthenticodeSignature` cmdlet adds the signature to the script file as
+a comment block at the end of the file. The comment block begins and ends with
+`# SIG #`.
+
+After you sign the script, you can run it on the local computer. However, the
+script won&#x27;t run on computers where the PowerShell execution policy requires a
+digital signature from a trusted authority. If you try, PowerShell displays the
+following error message:
+
+```Output
+The file C:\remote_file.ps1 cannot be loaded. The signature of the
+certificate cannot be verified.
+At line:1 char:15
++ .\ remote_file.ps1 &lt;&lt;&lt;&lt;
+```
+
+If PowerShell displays this message when you run a script that you didn&#x27;t
+write, treat the file as you would treat any unsigned script. Review the code
+to determine whether you can trust the script.
+
+## Enable strong protection for your private key
+
+If you have a private key and certificate on your computer, malicious programs
+might be able to sign scripts on your behalf, which authorizes PowerShell to
+run them.
+
+To prevent automated signing on your behalf, use Certificate Manager
+`Certmgr.exe` to export your signing key and certificate to a `.pfx` file.
+Certificate Manager is included in the Microsoft .NET SDK, the Microsoft
+Windows SDK, and in Internet Explorer.
+
+To export the certificate:
+
+1. Start Certificate Manager.
+1. Select the certificate issued by PowerShell Local Certificate Root.
+1. Click **Export** to start the Certificate Export Wizard.
+1. Select **Yes, export the private key**, and then click **Next**.
+1. Select **Enable strong protection**.
+1. Type a password, and then type it again to confirm.
+1. Type a filename that has the `.pfx` filename extension.
+1. Click **Finish**.
+
+To re-import the certificate:
+
+1. Start Certificate Manager.
+1. Click **Import** to start the Certificate Import Wizard.
+1. Open to the location of the `.pfx` file that you created during the export
+   process.
+1. On the Password page, select **Enable strong private key protection**, and
+   then enter the password that you assigned during the export process.
+1. Select the **Personal** certificate store.
+1. Click **Finish**.
+
+## Prevent the signature from expiring
+
+The digital signature in a script is valid until the signing certificate
+expires or as long as a timestamp server can verify that the script was signed
+while the signing certificate was valid.
+
+Because most signing certificates are valid for one year only, using a time
+stamp server ensures that users can use your script for many years to come.
+
+## See also
+
+- [about_Execution_Policies][03]
+- [about_Profiles][04]
+- [Set-AuthenticodeSignature][06]
+- [Get-ExecutionPolicy][05]
+- [Set-ExecutionPolicy][07]
+- [Introduction to Code Signing][02]
+
+&lt;!-- link references --&gt;
+[01]: /previous-versions/dotnet/netframework-2.0/bfsktky3(v=vs.80)
+[02]: /previous-versions/windows/internet-explorer/ie-developer/platform-apis/ms537361(v=vs.85)
+[03]: about_Execution_Policies.md
+[04]: about_Profiles.md
+[05]: xref:Microsoft.PowerShell.Security.Get-ExecutionPolicy
+[06]: xref:Microsoft.PowerShell.Security.Set-AuthenticodeSignature
+[07]: xref:Microsoft.PowerShell.Security.Set-ExecutionPolicy
+[08]: xref:pki.New-SelfSignedCertificate
+###Microsoft Learn URL###
+https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_signing/?view=powershell-5.1
+</pre></html>

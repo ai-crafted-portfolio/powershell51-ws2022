@@ -1,0 +1,984 @@
+<!doctype html><html lang="ja"><meta charset="utf-8"><pre class="record-source">###KnowledgeNo###
+PS51-WS2022-2026-1029
+###FormatID###
+PS51-WS2022
+###CreatedAt###
+2026-08-01 00:00
+###UpdatedAt###
+2026-08-01 00:00
+###タイトル###
+Set-DnsServerDnsSecZoneSetting
+###モジュール###
+dnsserver
+###製品###
+Windows PowerShell 5.1
+###対応OS###
+Windows Server 2022
+###日本語訳###
+# Set-DnsServerDnsSecZoneSetting 設定する
+
+## SYNOPSIS は,ゾーンのためのDNSSECの設定を変更します.
+
+## SYNTAXは,のシンタックスです.
+
+### DnsSecSetting (デフォルト) ```
+Set-DnsServerDnsSecZoneSetting [-ZoneName] &lt;String&gt; [[-DenialOfExistence] &lt;String&gt;]
+ [-NSec3HashAlgorithm &lt;String&gt;] [-NSec3Iterations &lt;UInt16&gt;] [-NSec3OptOut &lt;Boolean&gt;]
+ [-NSec3RandomSaltLength &lt;Byte&gt;] [-NSec3UserSalt &lt;String&gt;] [-DistributeTrustAnchor &lt;String[]&gt;]
+ [-EnableRfc5011KeyRollover &lt;Boolean&gt;] [-DSRecordGenerationAlgorithm &lt;String[]&gt;] [-DSRecordSetTtl &lt;TimeSpan&gt;]
+ [-DnsKeyRecordSetTtl &lt;TimeSpan&gt;] [-SignatureInceptionOffset &lt;TimeSpan&gt;]
+ [-SecureDelegationPollingPeriod &lt;TimeSpan&gt;] [-PropagationTime &lt;TimeSpan&gt;]
+ [-ParentHasSecureDelegation &lt;Boolean&gt;] [-ComputerName &lt;String&gt;] [-PassThru] [-CimSession &lt;CimSession[]&gt;]
+ [-ThrottleLimit &lt;Int32&gt;] [-AsJob] [-WhatIf] [-Confirm] [&lt;CommonParameters&gt;]
+```
+
+### 署名メタデータ ```
+Set-DnsServerDnsSecZoneSetting [-ZoneName] &lt;String&gt; [-ComputerName &lt;String&gt;] [-PassThru]
+ [[-InputObject] &lt;CimInstance&gt;] [-CimSession &lt;CimSession[]&gt;] [-ThrottleLimit &lt;Int32&gt;] [-AsJob] [-WhatIf]
+ [-Confirm] [&lt;CommonParameters&gt;]
+```
+
+## 記述 **Set-DnsServerDnsSecZoneSetting** cmdlet は,ドメイン名システム (DNS) サーバーの指定されたゾーンのためのドメイン名システムセキュリティ拡張 (DNSSEC) 設定を変更します.
+
+存在の証明された否定を提供するために,次のセキュア (NSEC) のどのバージョンを使用するか選択できます. *DenialOfExistence* パラメータを NSec または NSec3 に設定します.NSec3 を使用する場合,ランダム塩またはユーザー定義塩を使用できます.
+
+*SigningMetadata*パラメータセットを使用すると,cmdletは **CimInstance#DnsServerZoneSigningMetadata**を入力オブジェクトとして取り出す.このcmdletをGet-DnsServerDnsSecZoneSettingで利用して,DNSSECのメタデータを1つのDNSサーバーから別のDNSサーバーにインポートできます.
+
+## 例えは
+
+### 例1: RFC 5011 の設定を変更する```
+PS C:\&gt; Set-DnsServerDnsSecZoneSetting -ZoneName &quot;west01.contoso.com&quot; -EnableRfc5011KeyRollover $True -PassThru -Verbose
+
+VERBOSE: Modifies the DNSSEC properties for the zone west01.contoso.com on server Server01. 
+VERBOSE: RFC5011KeyRollovers successfully set on server Server01. 
+ZoneName                      : west01.contoso.com
+IsKeyMasterServer             : True
+KeyMasterServer               : Server01.west01.contoso.com
+KeyMasterStatus               : Online
+DenialOfExistence             : NSec3
+NSec3HashAlgorithm            : RsaSha1
+NSec3Iterations               : 50
+NSec3OptOut                   : False
+IsNSec3SaltConfigured         : True
+NSec3RandomSaltLength         : 8
+NSec3UserSalt                 : -
+DnsKeyRecordSetTTL            : 01:00:00
+DSRecordSetTTL                : 01:00:00
+DSRecordGenerationAlgorithm   : {Sha1, Sha256}
+DistributeTrustAnchor         : {None}
+EnableRfc5011KeyRollover      : True
+ParentHasSecureDelegation     : False
+SecureDelegationPollingPeriod : 12:00:00
+PropagationTime               : 2.00:00:00
+SignatureInceptionOffset      : 01:00:00
+```
+
+このコマンドは, west01.contoso.com というゾーンのための RFC 5011 設定を変更します.例では,出力を生成するために *PassThru* パラメータ,すべての出力を含むために *Verbose* パラメータを使用します.
+
+### 例2:DNSSEC署名メタデータを輸入する```
+PS C:\&gt; Get-DnsServerDnsSecZoneSetting -SigningMetadata -ZoneName &quot;contoso.com&quot; -IncludeKSKMetadata -ComputerName &quot;KeyMaster01&quot; | Set-DnsServerDnsSecZoneSetting -ComputerName &quot;EdgeServer01&quot;
+```
+
+このコマンドは,contoso.comというゾーンにあるKeyMaster01というDNSサーバーから,KSKメタデータを含むDNSSEC署名メタデータを入手するために, **Get-DnsServerDnsSecZoneSetting** cmdlet を使用します.このコマンドは,パイプラインオペレーターを使用して,現在のcmdletにDNSSEC署名メタデータを転送します.このコマンドは,EdgeServer01という非鍵の主なプライマリサーバーにDNSSEC署名メタデータを設定します.サーバー上のゾーンが既に署名されていない場合は,コマンドはゾーンサインキーを使用してサーバーにサインを開始します.
+
+## パラメータは
+
+### -AsJobは,背景作業としてcmdletを実行する.このパラメータを使用して,完了するのに時間がかかるコマンドを実行します. 
+
+cmdlet はすぐに,その仕事を代表するオブジェクトを返して,コマンドプロンプトを表示します.作業が完了する間,セッションで作業を続けることができます.作業を管理するには,  を使ってください.`*-Job`職の結果を入手するには, [Receive-Job] (cmdlets) を使ってください.https://go.microsoft.com/fwlink/?LinkID=113372) cmdlet. 
+
+Windows PowerShell の背景の仕事に関する詳細については, [about_Jobs] (※) を参照してください.https://go.microsoft.com/fwlink/?LinkID=113251) でした.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -CimSession は,リモートセッションまたはリモートコンピュータでcmdletを実行します.コンピュータ名またはセッションオブジェクトを入力します.例えば,[New-CimSession]の出力です.https://go.microsoft.com/fwlink/p/?LinkId=227967) または [Get-CimSession]https://go.microsoft.com/fwlink/p/?LinkId=227966標準的には,ローカルコンピュータの現在のセッションです.
+
+```yaml
+Type: CimSession[]
+Parameter Sets: (All)
+Aliases: Session
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -ComputerName は DNS サーバを指定します.このパラメータを指定しない場合は,コマンドはローカルシステムで実行されます. IP アドレスまたは完全に資格のあるドメイン名 (FQDN),ホスト名,または NETBIOS名などの IP アドレスに解決する任意の値を指定できます.
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases: Cn
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Confirm は,cmdlet を実行する前に確認を提示します.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: cf
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -DSRecordGenerationAlgorithm は,ドメインサービス記録のための暗号アルゴリズムを表示する.このパラメータの受け入れ可能な値は:
+
+- Sha1 - Sha256 - Sha384
+
+```yaml
+Type: String[]
+Parameter Sets: DnsSecSetting
+Aliases: 
+Accepted values: None, Sha1, Sha256, Sha384
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -DSRecordSetTtl ドメインサービス記録のセットにTTL時間帯を指定します.デフォルト値はゾーンのTTLと同じです.
+
+```yaml
+Type: TimeSpan
+Parameter Sets: DnsSecSetting
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -DenialOfExistence NSECのどのバージョンを使用するか指定します.DNSサーバーは,登録されていない名の署名証明書を提供するためにこの設定を使用します.
+
+このパラメータの受け入れられる値は:
+
+- NSec - NSec3
+
+```yaml
+Type: String
+Parameter Sets: DnsSecSetting
+Aliases: 
+Accepted values: NSec, NSec3
+
+Required: False
+Position: 2
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+# Set-DnsServerDnsSecZoneSetting 設定する
+
+### -DistributeTrustAnchor Active Directory(R) Domain Services でDNS サーバが配布する信頼アンカーを数列する.DNS サーバはデフォルトで信頼アンカーを配布しません.DNS サーバがドメインコントローラーでもなければ,信頼アンカーをローカル・トラストアンカーストアにのみ追加します.
+
+```yaml
+Type: String[]
+Parameter Sets: DnsSecSetting
+Aliases: 
+Accepted values: None, DnsKey
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -DnsKeyRecordSetTtl は,DNSキー記録のタイム・スパンオブジェクトを指定し,DNSキー記録のタイム・トゥ・ライブ (TTL) 値を表示します.
+
+```yaml
+Type: TimeSpan
+Parameter Sets: DnsSecSetting
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -EnableRfc5011KeyRollover サーバがRFC 5011キーロールoversを使用しているか否かを指定します.
+
+```yaml
+Type: Boolean
+Parameter Sets: DnsSecSetting
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -InputObject このcmdletへの入力を指定します.このパラメータを使用するか,このcmdletへの入力パイプを入力することができます.
+
+```yaml
+Type: CimInstance
+Parameter Sets: SigningMetadata
+Aliases: 
+
+Required: False
+Position: 2
+Default value: None
+Accept pipeline input: True (ByValue)
+Accept wildcard characters: False
+```
+
+### -NSec3HashAlgorithm は NSEC3 ハッシュアルゴリズムを指定しています.唯一の可能な値は RsaSha1.です.
+
+```yaml
+Type: String
+Parameter Sets: DnsSecSetting
+Aliases: 
+Accepted values: RsaSha1
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -NSec3Iterations は,DNSゾーンにサインするときに実行する数々のNSEC3ハッシュイテレーションを指定します.デフォルト値は50です.
+
+```yaml
+Type: UInt16
+Parameter Sets: DnsSecSetting
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -NSec3OptOut NSEC オプトアウトを使用して DNS ゾーンにサインするか否かを指定します.デフォルト値は $Falseです.
+
+```yaml
+Type: Boolean
+Parameter Sets: DnsSecSetting
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -NSec3RandomSaltLength 塩値の長さを指定します.デフォルト長さは8です.
+
+```yaml
+Type: Byte
+Parameter Sets: DnsSecSetting
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -NSec3UserSalt はユーザー塩文字列を指定します.デフォルト値は Null または -. です.
+
+```yaml
+Type: String
+Parameter Sets: DnsSecSetting
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -ParentHasSecureDelegation 保護者がゾーンに安全な代入を備えているかどうかを指定します.デフォルト値は $Falseです.
+
+```yaml
+Type: Boolean
+Parameter Sets: DnsSecSetting
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -PassThru は,あなたが取り組んでいるアイテムを表すオブジェクトを返します.デフォルトでは,このcmdlet は出力を生成しません.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -PropagationTime Time は,時間範囲オブジェクトとして伝播時間を指定します.これはゾーン変更を伝播するのに必要な期待時間です.デフォルト値は2日です.
+
+```yaml
+Type: TimeSpan
+Parameter Sets: DnsSecSetting
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -SecureDelegationPollingPeriod 代議投票期間をタイムスペンオブジェクトとして指定します.これは小区のキーロールオーバーの投票試みの間の時間です.デフォルト値は12時間です.
+
+```yaml
+Type: TimeSpan
+Parameter Sets: DnsSecSetting
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -SignatureInceptionOffset 署名開始をタイムスペンオブジェクトとして指定します.この値は,過去のDNSSEC署名有効期間でどのくらいの距離が始まるかを表します.デフォルト値は1時間です.
+
+```yaml
+Type: TimeSpan
+Parameter Sets: DnsSecSetting
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -ThrottleLimit は,cmdletを実行するために設定できる最大限の同時操作数を指定します.このパラメータを省略した場合,または値が  の値である場合.`0`入力すると,Windows PowerShell(R) は,コンピュータ上で実行されている CIM cmdlets の数に基づいて cmdlet の最適な加速度制限を計算します.加速度制限は,セッションやコンピュータにではなく,現在の cmdlet にのみ適用されます.
+
+```yaml
+Type: Int32
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -WhatIf が実行されればどうなるか示します.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: wi
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -ZoneName は,DNSゾーンの名前を指定します.
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases: 
+
+Required: True
+Position: 1
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### 共通パラメータ このcmdletは共通パラメータをサポートしています: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable.詳細については, [about_CommonParameters](を参照してください.https://go.microsoft.com/fwlink/?LinkID=113216) でした.
+
+## 輸入は
+
+## 輸出は
+
+### Microsoft.Management.Infrastructure.CimInstance#DnsServerDnsSecZoneSetting DnsServerDnsSecZoneSetting オブジェクトには以下のフィールドが含まれています.
+
+DenialOfExistence - DistributeTrustAnchor - DnsKeyRecordSetTtl - DSRecordGenerationAlgorithm - DSRecordSetTtl - EnableRfc5011KeyRollover - IsKeyMasterServer - KeyMasterServer - KeyMasterStatus - NSec3HashAlgorithm - NSec3Iterations - NSec3OptOut - NSec3RandomSaltLength - NSec3UserSalt - ParentHasSecureDelegation - PropagationTime - SecureDelegationPollingPeriod - SignatureInceptionOffset - ZoneName
+
+##  NOTES  記事ができました.
+
+## 関連リンク
+
+[Get-DnsServerDnsSecZoneSetting](./Get-DnsServerDnsSecZoneSetting.md) について
+
+[Test-DnsServerDnsSecZoneSetting](./Test-DnsServerDnsSecZoneSetting.md) 
+###英語原文###
+# Set-DnsServerDnsSecZoneSetting
+
+## SYNOPSIS
+Changes settings for DNSSEC for a zone.
+
+## SYNTAX
+
+### DnsSecSetting (Default)
+```
+Set-DnsServerDnsSecZoneSetting [-ZoneName] &lt;String&gt; [[-DenialOfExistence] &lt;String&gt;]
+ [-NSec3HashAlgorithm &lt;String&gt;] [-NSec3Iterations &lt;UInt16&gt;] [-NSec3OptOut &lt;Boolean&gt;]
+ [-NSec3RandomSaltLength &lt;Byte&gt;] [-NSec3UserSalt &lt;String&gt;] [-DistributeTrustAnchor &lt;String[]&gt;]
+ [-EnableRfc5011KeyRollover &lt;Boolean&gt;] [-DSRecordGenerationAlgorithm &lt;String[]&gt;] [-DSRecordSetTtl &lt;TimeSpan&gt;]
+ [-DnsKeyRecordSetTtl &lt;TimeSpan&gt;] [-SignatureInceptionOffset &lt;TimeSpan&gt;]
+ [-SecureDelegationPollingPeriod &lt;TimeSpan&gt;] [-PropagationTime &lt;TimeSpan&gt;]
+ [-ParentHasSecureDelegation &lt;Boolean&gt;] [-ComputerName &lt;String&gt;] [-PassThru] [-CimSession &lt;CimSession[]&gt;]
+ [-ThrottleLimit &lt;Int32&gt;] [-AsJob] [-WhatIf] [-Confirm] [&lt;CommonParameters&gt;]
+```
+
+### SigningMetadata
+```
+Set-DnsServerDnsSecZoneSetting [-ZoneName] &lt;String&gt; [-ComputerName &lt;String&gt;] [-PassThru]
+ [[-InputObject] &lt;CimInstance&gt;] [-CimSession &lt;CimSession[]&gt;] [-ThrottleLimit &lt;Int32&gt;] [-AsJob] [-WhatIf]
+ [-Confirm] [&lt;CommonParameters&gt;]
+```
+
+## DESCRIPTION
+The **Set-DnsServerDnsSecZoneSetting** cmdlet changes Domain Name System Security Extensions (DNSSEC) settings for the specified zone on a Domain Name System (DNS) server.
+
+You can select which version of Next Secure (NSEC) to use to provide authenticated denial of existence.
+Set the *DenialOfExistence* parameter to NSec or NSec3.
+If you use NSec3, you can use either random salt or user-defined salt.
+
+When using the *SigningMetadata* parameter set, the cmdlet takes **CimInstance#DnsServerZoneSigningMetadata** as an input object.
+You can use this cmdlet with Get-DnsServerDnsSecZoneSetting to import the DNSSEC metadata of a zone from one DNS server to another DNS server.
+
+## EXAMPLES
+
+### Example 1: Modify RFC 5011 settings
+```
+PS C:\&gt; Set-DnsServerDnsSecZoneSetting -ZoneName &quot;west01.contoso.com&quot; -EnableRfc5011KeyRollover $True -PassThru -Verbose
+
+VERBOSE: Modifies the DNSSEC properties for the zone west01.contoso.com on server Server01. 
+VERBOSE: RFC5011KeyRollovers successfully set on server Server01. 
+ZoneName                      : west01.contoso.com
+IsKeyMasterServer             : True
+KeyMasterServer               : Server01.west01.contoso.com
+KeyMasterStatus               : Online
+DenialOfExistence             : NSec3
+NSec3HashAlgorithm            : RsaSha1
+NSec3Iterations               : 50
+NSec3OptOut                   : False
+IsNSec3SaltConfigured         : True
+NSec3RandomSaltLength         : 8
+NSec3UserSalt                 : -
+DnsKeyRecordSetTTL            : 01:00:00
+DSRecordSetTTL                : 01:00:00
+DSRecordGenerationAlgorithm   : {Sha1, Sha256}
+DistributeTrustAnchor         : {None}
+EnableRfc5011KeyRollover      : True
+ParentHasSecureDelegation     : False
+SecureDelegationPollingPeriod : 12:00:00
+PropagationTime               : 2.00:00:00
+SignatureInceptionOffset      : 01:00:00
+```
+
+This command modifies RFC 5011 settings for a zone named west01.contoso.com.
+The example uses the *PassThru* parameter to produce output and the *Verbose* parameter to include all output.
+
+### Example 2: Import DNSSEC signing metadata
+```
+PS C:\&gt; Get-DnsServerDnsSecZoneSetting -SigningMetadata -ZoneName &quot;contoso.com&quot; -IncludeKSKMetadata -ComputerName &quot;KeyMaster01&quot; | Set-DnsServerDnsSecZoneSetting -ComputerName &quot;EdgeServer01&quot;
+```
+
+This command uses the **Get-DnsServerDnsSecZoneSetting** cmdlet to get the DNSSEC signing metadata, that includes KSK metadata, from the DNS server named KeyMaster01 in the zone named contoso.com.
+The command passes the DNSSEC signing metadata to the current cmdlet by using the pipeline operator.
+The command sets the DNSSEC signing metadata on the non-key master primary server named EdgeServer01.
+If the zone on the server is not already signed, the command initiates signing on the server by using zone signing keys.
+
+## PARAMETERS
+
+### -AsJob
+Runs the cmdlet as a background job. Use this parameter to run commands that take a long time to complete. 
+
+The cmdlet immediately returns an object that represents the job and then displays the command prompt. 
+You can continue to work in the session while the job completes. 
+To manage the job, use the `*-Job` cmdlets. 
+To get the job results, use the [Receive-Job](https://go.microsoft.com/fwlink/?LinkID=113372) cmdlet. 
+
+For more information about Windows PowerShell background jobs, see [about_Jobs](https://go.microsoft.com/fwlink/?LinkID=113251).
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -CimSession
+Runs the cmdlet in a remote session or on a remote computer.
+Enter a computer name or a session object, such as the output of a [New-CimSession](https://go.microsoft.com/fwlink/p/?LinkId=227967) or [Get-CimSession](https://go.microsoft.com/fwlink/p/?LinkId=227966) cmdlet.
+The default is the current session on the local computer.
+
+```yaml
+Type: CimSession[]
+Parameter Sets: (All)
+Aliases: Session
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -ComputerName
+Specifies a DNS server.
+If you do not specify this parameter, the command runs on the local system.
+You can specify an IP address or any value that resolves to an IP address, such as a fully qualified domain name (FQDN), host name, or NETBIOS name.
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases: Cn
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Confirm
+Prompts you for confirmation before running the cmdlet.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: cf
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -DSRecordGenerationAlgorithm
+Specifies an array of cryptographic algorithms for domain service records.
+The acceptable values for this parameter are:
+
+- Sha1
+- Sha256
+- Sha384
+
+```yaml
+Type: String[]
+Parameter Sets: DnsSecSetting
+Aliases: 
+Accepted values: None, Sha1, Sha256, Sha384
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -DSRecordSetTtl
+Specifies a TTL time span for the set of domain service records.
+The default value is the same as the TTL for the zone.
+
+```yaml
+Type: TimeSpan
+Parameter Sets: DnsSecSetting
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -DenialOfExistence
+Specifies which version of NSEC to use.
+A DNS server uses this setting to provide signed proof of an unregistered name.
+
+The acceptable values for this parameter are:
+
+- NSec
+- NSec3
+
+```yaml
+Type: String
+Parameter Sets: DnsSecSetting
+Aliases: 
+Accepted values: NSec, NSec3
+
+Required: False
+Position: 2
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+# Set-DnsServerDnsSecZoneSetting
+
+### -DistributeTrustAnchor
+Specifies an array of trust anchors that a DNS server distributes in Active Directory(R) Domain Services.
+DNS servers do not distribute trust anchors by default.
+If the DNS server is not also a domain controller, it adds trust anchors only to the local trust anchor store.
+
+```yaml
+Type: String[]
+Parameter Sets: DnsSecSetting
+Aliases: 
+Accepted values: None, DnsKey
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -DnsKeyRecordSetTtl
+Specifies a time-span object that represents the Time to Live (TTL) value of a DNS key record.
+
+```yaml
+Type: TimeSpan
+Parameter Sets: DnsSecSetting
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -EnableRfc5011KeyRollover
+Specifies whether a server uses RFC 5011 key rollover.
+
+```yaml
+Type: Boolean
+Parameter Sets: DnsSecSetting
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -InputObject
+Specifies the input to this cmdlet. 
+You can use this parameter, or you can pipe the input to this cmdlet.
+
+```yaml
+Type: CimInstance
+Parameter Sets: SigningMetadata
+Aliases: 
+
+Required: False
+Position: 2
+Default value: None
+Accept pipeline input: True (ByValue)
+Accept wildcard characters: False
+```
+
+### -NSec3HashAlgorithm
+Specifies an NSEC3 hash algorithm.
+The only possible value is RsaSha1.
+
+```yaml
+Type: String
+Parameter Sets: DnsSecSetting
+Aliases: 
+Accepted values: RsaSha1
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -NSec3Iterations
+Specifies a number of NSEC3 hash iterations to perform when it signs a DNS zone.
+The default value is 50.
+
+```yaml
+Type: UInt16
+Parameter Sets: DnsSecSetting
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -NSec3OptOut
+Specifies whether to sign the DNS zone by using NSEC opt-out.
+The default value is $False.
+
+```yaml
+Type: Boolean
+Parameter Sets: DnsSecSetting
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -NSec3RandomSaltLength
+Specifies the length of a salt value.
+The default length is 8.
+
+```yaml
+Type: Byte
+Parameter Sets: DnsSecSetting
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -NSec3UserSalt
+Specifies a user salt string.
+The default value is Null or -.
+
+```yaml
+Type: String
+Parameter Sets: DnsSecSetting
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -ParentHasSecureDelegation
+Specifies whether a parent has secure delegation for a zone.
+The default value is $False.
+
+```yaml
+Type: Boolean
+Parameter Sets: DnsSecSetting
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -PassThru
+Returns an object representing the item with which you are working.
+By default, this cmdlet does not generate any output.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -PropagationTime
+Specifies a propagation time as a time-span object.
+This is the expected time required to propagate zone changes.
+The default value is 2 days.
+
+```yaml
+Type: TimeSpan
+Parameter Sets: DnsSecSetting
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -SecureDelegationPollingPeriod
+Specifies a delegation polling period as a time-span object.
+This is the time between polling attempts for key rollovers for child zones.
+The default value is 12 hours.
+
+```yaml
+Type: TimeSpan
+Parameter Sets: DnsSecSetting
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -SignatureInceptionOffset
+Specifies the signature inception as a time-span object.
+This value is how far in the past DNSSEC signature validity periods begin.
+The default value is one hour.
+
+```yaml
+Type: TimeSpan
+Parameter Sets: DnsSecSetting
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -ThrottleLimit
+Specifies the maximum number of concurrent operations that can be established to run the cmdlet.
+If this parameter is omitted or a value of `0` is entered, then Windows PowerShell(R) calculates an optimum throttle limit for the cmdlet based on the number of CIM cmdlets that are running on the computer.
+The throttle limit applies only to the current cmdlet, not to the session or to the computer.
+
+```yaml
+Type: Int32
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -WhatIf
+Shows what would happen if the cmdlet runs.
+The cmdlet is not run.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: wi
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -ZoneName
+Specifies the name of a DNS zone.
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases: 
+
+Required: True
+Position: 1
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### CommonParameters
+This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable. For more information, see [about_CommonParameters](https://go.microsoft.com/fwlink/?LinkID=113216).
+
+## INPUTS
+
+## OUTPUTS
+
+### Microsoft.Management.Infrastructure.CimInstance#DnsServerDnsSecZoneSetting
+The DnsServerDnsSecZoneSetting object contains the following fields:
+
+- DenialOfExistence
+- DistributeTrustAnchor
+- DnsKeyRecordSetTtl
+- DSRecordGenerationAlgorithm
+- DSRecordSetTtl
+- EnableRfc5011KeyRollover
+- IsKeyMasterServer
+- KeyMasterServer
+- KeyMasterStatus
+- NSec3HashAlgorithm
+- NSec3Iterations
+- NSec3OptOut
+- NSec3RandomSaltLength
+- NSec3UserSalt
+- ParentHasSecureDelegation
+- PropagationTime
+- SecureDelegationPollingPeriod
+- SignatureInceptionOffset
+- ZoneName
+
+## NOTES
+
+## RELATED LINKS
+
+[Get-DnsServerDnsSecZoneSetting](./Get-DnsServerDnsSecZoneSetting.md)
+
+[Test-DnsServerDnsSecZoneSetting](./Test-DnsServerDnsSecZoneSetting.md)
+###Microsoft Learn URL###
+https://learn.microsoft.com/en-us/powershell/module/dnsserver/set-dnsserverdnsseczonesetting/?view=windowsserver2022-ps
+</pre></html>

@@ -1,0 +1,1879 @@
+<!doctype html><html lang="ja"><meta charset="utf-8"><pre class="record-source">###KnowledgeNo###
+PS51-WS2022-2026-3508
+###FormatID###
+PS51-WS2022
+###CreatedAt###
+2026-08-01 00:00
+###UpdatedAt###
+2026-08-01 00:00
+###タイトル###
+about_Automatic_Variables
+###モジュール###
+Microsoft.PowerShell.Core
+###製品###
+Windows PowerShell 5.1
+###対応OS###
+Windows Server 2022
+###日本語訳###
+# about_Automatic_Variablesについて
+
+## 短編説明
+
+PowerShellで作成し維持されている状態情報を保存する変数を記述します.
+
+## 長い説明
+
+概念的には,これらの変数のほとんどは読み込みのみと考えられています.彼らは __ に書き込まれても,後回互換性のために __ に書き込まれないべきです.
+
+以下はPowerShellで自動変数のリストです.
+
+[] - -`$$`[40] - [ ]`$?`[41] - [ ]`$^`[42] - [ ]`$_`[02] - [ ]`$args`[03] - [ ]`$ConsoleFileName`[04] - [ ]`$Error`[06] - [ ]`$Event`[07] - [ ]`$EventArgs`[08] - [ ]`$EventSubscriber`[09] - [ ]`$ExecutionContext`[10] - [ ]`$false`[11] - [ ]`$foreach`[12] - [ ]`$HOME`[13] - [ ]`$Host`[14] - [ ]`$input`[15] - [ ]`$LASTEXITCODE`[20] - [ ]`$Matches`[21] - [ ]`$MyInvocation`[22] - [ ]`$NestedPromptLevel`[23] - [ ]`$null`[24] - [ ]`$PID`[25] - [ ]`$PROFILE`[26] - [ ]`$PSBoundParameters`[27] - [ ]`$PSCmdlet`[28] - [ ]`$PSCommandPath`[29] - [ ]`$PSCulture`[30] - [ ]`$PSDebugContext`[31] - [ ]`$PSEdition`[32] - [ ]`$PSHOME`[33] - [ ]`$PSItem`[34] - [ ]`$PSScriptRoot`[35] - [ ]`$PSSenderInfo`[36] - [ ]`$PSUICulture`[37] - [ ]`$PSVersionTable`[38] - [ ]`$PWD`[39] - [ ]`$Sender`[43] - [ ]`$ShellId`[44] - [ ]`$StackTrace`[45] - [ ]`$switch`[46] - [ ]`$this`[47] - [ ]`$true`[48] ] ]
+
+### `$$`
+
+セッションが受け取った最後の行で最後のトークンを含んでいる.
+
+### `$?`
+
+最後のコマンドの実行状態が含まれています.最後のコマンドが成功した場合の **True** と失敗した場合の **False** が含まれています.解析エラーは実行に繋がらないので,その値に影響しません.`$?` .
+
+管道内の複数の段階で実行されるcmdletsと高度な関数,例えば両方の で実行されます.`process`そして,`end`ブロック,電話 `this.WriteError()`    `$PSCmdlet.WriteError()`ポイントセットの任意の点にそれぞれ.`$?`偽りのことや,そのように`this.ThrowTerminatingError()`そして,`$PSCmdlet.ThrowTerminatingError()` .
+
+   `Write-Error`cmdlet は常に設定されます.`$?`**False** に実行された直後に,設定が行われないので,`$?`** toFalse** の関数で,以下のように呼び出す:
+
+```powershell
+function Test-WriteError
+{
+    Write-Error &quot;Bad&quot;
+    &quot;The `$? variable is: $?&quot;
+}
+
+Test-WriteError
+&quot;Now the `$? variable is: $?&quot;
+```
+
+```Output
+Test-WriteError : Bad
+At line:7 char:1
++ Test-WriteError
++ ~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (:) [Write-Error], WriteErrorException
+    + FullyQualifiedErrorId : Microsoft.PowerShell.Commands.WriteErrorException,Test-WriteError
+
+The $? variable is: False
+Now the $? variable is: True
+```
+
+この後者の目的のために, `$PSCmdlet.WriteError()`その代わりに使用すべきです.
+
+Native commands (実行可能) の場合は,`$?` のときの **True** に設定されます.`$LASTEXITCODE`0 と設定され,False に設定されます.`$LASTEXITCODE`は他の値です.
+
+&gt; [!NOTE] &gt; PowerShell 7まで,括弧の中に声明を巻くこと`(...)`, &gt;サブエクスプレッション構文`$(...)`,またはアレンジ式表現です.`@(...)`始終リセット &gt; `$?`例えば, `(Write-Error)`番組を表示する`$?`この行動はPowerShell 7で変更されたので,`$?`この表現では,常に最後のコマンド実行の実際の&gt;成功を反映します.
+
+### `$^`
+
+セッションが受け取った最後の行で最初のトークンを含んでいる.
+
+### `$_`
+
+と同じです.`$PSItem`パイプラインオブジェクトの現在のオブジェクトを含んでいる.パイプライン内のすべてのオブジェクトに対してアクションを実行するコマンドでこの変数を使用できます.
+
+詳細については,[about_PSItem][67]を参照してください.
+
+### `$args`
+
+宣言されていないパラメータの値数列が含まれるので,その値は関数,スクリプト,スクリプトブロックに転送されます.関数を作成すると,パラメータを&quot;&quot;で宣言できます.`param`キーワードまたは関数名の後括弧で逗号別列のパラメータを追加することで.
+
+イベントアクションでは,その `$args`処理されているイベントのイベントアーゲメントを表すオブジェクトが含まれています.この変数は,  変数内でのみ埋められます.`Action`この変数の値は,また,その  の **PSEventArgs** オブジェクトの **SourceArgs** 属性でも見ることができます.`Get-Event`返還する.
+
+### `$ConsoleFileName`
+
+コンソールファイルのパスが含まれています ()`.psc1`この変数は,PSConsoleFile**パラメータでPowerShellを起動する時,または&quot;&quot;を使用するときに埋め込まれます.`Export-Console`cmdlet はコンソールファイルにスナップイン名を輸出する.
+
+を使うとき`Export-Console`設定が無いcmdletでは,セッションで最近使用されたコンソールファイルを自動的に更新します.この自動変数を利用して,更新するファイルを決定できます.
+
+### `$Error`
+
+最新のエラーは,数列の最初のエラーオブジェクトです.`$Error[0]` .
+
+終止符でないエラーが  に追加されないようにするためです.`$Error`**Ignore**の値を持つ **ErrorAction**の共通パラメータを使用します.詳細については,[about_CommonParameters][53]を参照してください.
+
+### `$Event`
+
+処理されているイベントを表す **PSEventArgs**オブジェクトが含まれています.この変数は,  の内部でのみ埋められます.`Action`事件登録コマンドのブロック,例えば `Register-ObjectEvent`この変数の値は,  の同じオブジェクトである.`Get-Event`cmdlet が返されます.  の性質を使用できます.`Event`のような変数など.`$Event.TimeGenerated`で,`Action`脚本ブロック.
+
+### `$EventArgs`
+
+処理中のイベントの **EventArgs** から派生した最初のイベントのアーグメントを表すオブジェクトを含む.この変数は,  の内部でのみ埋められる.`Action`この変数の値は,また,その の **PSEventArgs** オブジェクトの **SourceEventArgs** 属性でも見ることができます.`Get-Event`返還する.
+
+### `$EventSubscriber`
+
+処理中のイベントのイベントサブスクリプションを表示する **PSEventSubscriber**オブジェクトが含まれています.この変数は,  の内部でのみ埋められます.`Action`この変数の値は,  のオブジェクトと同じものです.`Get-EventSubscriber`cmdlet が返されます.
+
+### `$ExecutionContext`
+
+PowerShell ホストの実行文脈を表す **EngineIntrinsics**オブジェクトが含まれています.この変数を使って,cmdletsに利用可能な実行オブジェクトを検索できます.
+
+### `$false`
+
+この変数を使って,文字列の代わりにコマンドやスクリプトで **False** を表示できます.`&quot;false&quot;`. 文字列は,無文字列または無数の整数に変換された場合, **True** として解釈できます.
+
+### `$foreach`
+
+[foreach][56]ループの表記 (結果値ではなく) を含む.`$foreach`変数が存在する限りしか存在しません.`foreach`ループが実行中であり,ループが完了した後は削除されます.
+
+リストラ機には,ループの値を取り戻し,現在のループの繰り返しを変更するために使用できる属性と方法が含まれています.詳細については, [Using Enumerators][49] を参照してください.
+
+### `$HOME`
+
+ユーザのホームディレクトリの完全なパスが含まれています.この変数は, の値を使用します.`&quot;$Env:USERPROFILE&quot;`Windows環境変数,通常は`C:\Users\&lt;UserName&gt;` .
+
+&gt; [!IMPORTANT] &gt;Windowsはユーザーのプロフィールの位置をリダイレクトすることができます.これは&quot;&gt; &quot;という意味です.`$HOME`と同じ値を持つことができないかもしれません.`&quot;$Env:HOMEDRIVE$Env:HOMEPATH&quot;` .
+
+# about_Automatic_Variablesについて
+
+### `$Host`
+
+PowerShellの現在のホストアプリケーションを表示するオブジェクトが含まれています.この変数をコマンドで現在のホストを表示したり,ホストのプロパティを表示したり変更したりするために使用できます.`$Host.Version`    `$Host.CurrentCulture`       `$Host.UI.RawUI.BackGroundColor = &quot;Red&quot;` .
+
+### `$input`
+
+函数に転送されたすべての入力を数えられる数算器を含んでいる.`$input`変数は機能,スクリプトブロック (名前不明の機能) とスクリプトファイル (スクリプトブロックが保存されている) にのみ利用可能です.
+
+- なしの関数で`begin`     `process`       `end`ブロックは,ブロックです.`$input`変数は関数へのすべての入力集合を数えます.
+
+- の内`begin`ブロックは,ブロックです.`$input`変数はデータを含まない.
+
+- の内`process`ブロックは,ブロックです.`$input`変数はパイプライン内の現在のオブジェクトを含んでいます.
+
+- の内`end`ブロックは,ブロックです.`$input`変数は関数へのすべての入力集合を数えます.
+
+&gt; [!NOTE] &gt;  を使えない`$input`変数の両方の内部で変数です.`process`ブロックと &gt; `end`同じ関数やスクリプトブロックにブロックする.
+
+以来`$input`計算機は,その性質のいずれかにアクセスし,原因を提示する数値表である.`$input`保存できるので,保存することができます.`$input`別の変数で,再利用する際には,`$input`財産です.
+
+リストラ機には,ループの値を取り戻し,現在のループの繰り返しを変更するために使用できる属性と方法が含まれています.詳細については, [Using Enumerators][49] を参照してください.
+
+   `$input`によって指定されたコマンドで変数も利用できます.`-Command`のパラメータのパラメータです.`powershell.exe`次の例はWindows Command shellから実行されます.
+
+```CMD
+echo Hello | powershell -Command &quot;&quot;&quot;$input World!&quot;&quot;&quot;
+```
+
+### `$LASTEXITCODE`
+
+実行した最後のネイティブプログラムまたはPowerShellスクリプトの出口コードが含まれています.
+
+PowerShell スクリプトでは,  の値が`$LASTEXITCODE`脚本の名前と,文字が なのか否かは関係します.`exit`キーワードは使用されました:
+
+- 脚本で文字が&quot;&quot;を使うとき`exit`キーワード:
+
+    `$LASTEXITCODE`によって指定された値に設定されます.`exit`キーワード.詳細については,[about_Language_Keywords][64].
+
+- 脚本が直接呼び出されたとき,例えば`./Test.ps1`呼び出し操作員[65] () とでも ()`&amp;`) といった.`&amp; ./Test.ps1`:
+
+の値が`$LASTEXITCODE`変更されていない場合を除く:
+
+- 脚本は,  を使った別の脚本に呼びかける.`exit`キーワード - スクリプトはネイティブコマンドを呼び出す - スクリプトは&quot;&quot;を用いています.`exit`キーワード
+
+- 脚本が&quot;&quot;で呼び出されたとき`powershell.exe`**File**パラメータを使用して,`$LASTEXITCODE`is set to:
+
+ - -`1`脚本が例外により終了した場合 - によって指定された値`exit`脚本で使用されている場合,キーワードは - `0`スクリプトが成功して完成したら
+
+- 脚本が&quot;&quot;で呼び出されたとき`powershell.exe`**Command**パラメータを使用して,`$LASTEXITCODE`is set to:
+
+ - -`1`もし,スクリプトが例外により終了した場合,または最後のコマンドセットの結果が終了した場合,`$?` に`$false` - -`0`もし脚本が成功して完了し,最後のコマンドセットの結果が示された場合.`$?` に`$true`
+
+**File**と **Command**のパラメータについての詳細については,[about_PowerShell_exe][68]を参照してください.
+
+### `$Matches`
+
+   `$Matches`変数で動作する.`-match`そして,`-notmatch`操作者. 送る時に [scalar][01] 入力を  に送る.`-match`     `-notmatch`操作者が一致するものを検知すると,両者はブルル値を返して,  を満たす.`$Matches`文字列の任意の値が一致するハッシュテーブルを持つ自動変数です.`$Matches`ハッシュテーブルは,定期表現を&quot;&quot;で使用すると,キャプチャで満たされることもできます.`-match`操作員.
+
+について詳しい情報はこちらから`-match`操作者については[about_Comparison_Operators][54].規則表現に関する詳細については[about_Regular_Expressions][69]を参照してください.
+
+   `$Matches`変数でも動作する.`switch`という文字で記述された.`-Regex`参数. と同じ方法で埋もれています.`-match`そして,`-notmatch`操作者についての詳細については, `switch`声明,参照 [about_Switch][71].
+
+&gt; [!NOTE] &gt; いつ`$Matches`セッションで満員になっているので,マッチした値が &gt; 異なるマッチで覆われるまで保持されます.`-match`また使用され,一致がない&gt;見つかった,リセットしない`$Matches`へ`$null`.以前一致した値 &gt; は,  で保持されます.`$Matches`試合が終わるまで,他の試合が決まるまで.
+
+### `$MyInvocation`
+
+現在のコマンドの名前,パラメータ,パラメータ値などの情報,コマンドがどのように起動,呼び出され,呼び出されたかについての情報,例えば,現在のコマンドを呼び出したスクリプトの名前を含む.
+
+`$MyInvocation`スクリプト,関数,スクリプトブロックのみに埋め込まれています.システム管理自動化誘発情報**のオブジェクトの情報を利用できます.`$MyInvocation`現在のスクリプトで返される,例えば関数の名前 () など.`$MyInvocation.MyCommand.Name`) を入力して,現在のコマンドを識別します.これは現在のスクリプトの名前を検索するのに役立ちます.
+
+PowerShell 3.0 から始め,`MyInvocation`次の新しい性質を持っています.
+
+**PSScriptRoot** - 現在のコマンドを呼び出したスクリプトへの完全なパスを含みます.このプロパティの値は,呼び手はスクリプトである場合にのみ記入されます. - **PSCommandPath** - 現在のコマンドを呼び出したスクリプトの完全なパスとファイル名を含みます.このプロパティの値は,呼び手はスクリプトである場合にのみ記入されます.
+
+とは異なり,`$PSScriptRoot`そして,`$PSCommandPath`自動変数,PSScriptRoot**とPSCommandPath**のプロパティを表示する`$MyInvocation`自動変数は,現在のスクリプトではなく,呼び出し者または呼び出しスクリプトに関する情報を含んでいる.
+
+### `$NestedPromptLevel`
+
+現在のプロンプトレベルが含まれています. 0 の値は元のプロンプトレベルを示します. 値は,巣のレベルに入ると増やされ,退くと減算されます.
+
+例えば,PowerShellでは,  を使ったときに,ネードされたコマンドプロンプトが表示されます.`$Host.EnterNestedPrompt`PowerShell は PowerShell デバッグで断点に達すると,ネードコマンドプロンプトも提示します.
+
+巣立するプロンプトを入力すると,PowerShellは現在のコマンドを一時停止し,実行文脈を保存し, の値を増加させます.`$NestedPromptLevel`追加的な内蔵コマンドプロンプト (最大128レベル) を作成するか,元のコマンドプロンプトに戻る場合は,コマンド変数を完了するか,または入力してください `exit` .
+
+   `$NestedPromptLevel`変数はプロンプトレベルを追跡するのに役立ちます.この値を含む代替的なPowerShellコマンドプロンプトを作成し,常に表示できるようにします.
+
+# about_Automatic_Variablesについて
+
+### `$null`
+
+`$null`自動変数は**null**または空の値を含んでいる.この変数はコマンドやスクリプトで存在しないまたは定義されていない値を表示するために使用できます.
+
+PowerShellは,処理する`$null`値のあるオブジェクト,または場所の保持者として,利用できます.`$null`値集の空の値を表現する.
+
+例えば,当時は`$null`集合に含まれているので,オブジェクトの一つとして数えられます.
+
+```powershell
+$a = &quot;one&quot;, $null, &quot;three&quot;
+$a.Count
+```
+
+```Output
+3
+```
+
+パイプを吹けば,`$null`変数に変数する.`ForEach-Object`cmdletでは,  の値を生成します.`$null`他の物体と同様に,他の物体にも同じです.
+
+```powershell
+&quot;one&quot;, $null, &quot;three&quot; | ForEach-Object {&quot;Hello &quot; + $_}
+```
+
+```Output
+Hello one
+Hello
+Hello three
+```
+
+その結果,使用できない.`$null`値値が  のパラメータ値である.`$null`標準パラメータ値を過失します.
+
+しかし,PowerShellが処理しているため,`$null`場所の定住者として,次のような脚本で使用できますが,もし  が変数であれば,それはうまくいかないでしょう.`$null`無視された.
+
+```powershell
+$calendar = @($null, $null, &quot;Meeting&quot;, $null, $null, &quot;Team Lunch&quot;, $null)
+$days = &quot;Sunday&quot;, &quot;Monday&quot;, &quot;Tuesday&quot;, &quot;Wednesday&quot;, &quot;Thursday&quot;,
+        &quot;Friday&quot;, &quot;Saturday&quot;
+$currentDay = 0
+foreach($day in $calendar)
+{
+    if($day -ne $null)
+    {
+        &quot;Appointment on $($days[$currentDay]): $day&quot;
+    }
+
+    $currentDay++
+}
+```
+
+```Output
+Appointment on Tuesday: Meeting
+Appointment on Friday: Team lunch
+```
+
+### `$PID`
+
+現在のPowerShellセッションをホストしているプロセスのプロセス識別子 (PID) を含む.
+
+### `$PROFILE`
+
+現在のユーザーと現在のホストアプリケーションのPowerShell プロフィールの完全な経路が含まれています.この変数をコマンドでプロフィールを表示するために使用できます.例えば,プロフィールが作成されたかどうかを判断するためにコマンドで使用できます.
+
+```powershell
+Test-Path $PROFILE
+```
+
+あるいは,プロフィールを作成するコマンドで使えます:
+
+```powershell
+New-Item -ItemType File -Path $PROFILE -Force
+```
+
+ファイルを開くコマンドで使えます **notepad.exe**:
+
+```powershell
+notepad.exe $PROFILE
+```
+
+### `$PSBoundParameters`
+
+スクリプトまたは関数に転送されるパラメータの辞書とその現在の値を含みます.この変数は,スクリプトまたは関数などのパラメータが宣言される範囲でのみ値を有します.パラメータの現在の値を表示または変更したり,または他のスクリプトまたは関数にパラメータ値を転送したりするために,それを使用できます.
+
+この例では, **Test2** 関数は,  を過ぎます.`$PSBoundParameters`**Test1**関数へ.`$PSBoundParameters`**Key**と **Value**の形式で表示されます.
+
+```powershell
+function Test1 {
+   param($a, $b)
+
+   # Display the parameters in dictionary format.
+   $PSBoundParameters
+}
+
+function Test2 {
+   param($a, $b)
+
+   # Run the Test1 function with $a and $b.
+   Test1 @PSBoundParameters
+}
+```
+
+```powershell
+Test2 -a Power -b Shell
+```
+
+```Output
+Key   Value
+---   -----
+a     Power
+b     Shell
+```
+
+### `$PSCmdlet`
+
+実行されているcmdletまたは高度な関数を表示するオブジェクトが含まれています.
+
+対象の属性や方法を使用して,cmdletまたは関数コードに使用条件に対応できます.例えば,**ParameterSetName**属性には,使用されているパラメータセットの名前が含まれ, **ShouldProcess**方法では,cmdletに動的に **WhatIf**と **Confirm**パラメータを追加します.
+
+について詳しい情報はこちらから`$PSCmdlet`自動変数を参照してください [about_Functions_CmdletBindingAttribute][60] と [about_Functions_Advanced][59].
+
+### `$PSCommandPath`
+
+実行されている脚本の全経路とファイル名を含む.この変数はすべての脚本で有効です.
+
+### `$PSCulture`
+
+現在オペレーティングシステムで使用されている文化の名前が含まれています.この文化は,番号,通貨,日付などのアイテムの表示形式を決定し,システム.グローバリゼーション.カルチャーインフォ**オブジェクトに保存されます.使用します.`Get-Culture`コンピュータの文化を表示する.`$PSCulture`**Name**のプロパティの値が含まれています.
+
+### `$PSDebugContext`
+
+デバッグする際に,この変数はデバッグ環境に関する情報を含みます.そうでなければ,それは**null**値を含みます.その結果,デバッグにコントロールがあるかどうかを判断するために使用できます. 埋め込まれたとき,それは**PsDebugContext**オブジェクトを含みます. その内には**Breakpoints**と**InvocationInfo**のプロパティがあります. **InvocationInfo**のプロパティには**Location**のプロパティを含むいくつかの有用なプロパティがあります. **Location**のプロパティは,デバッグされているスクリプトの経路を示します.
+
+### `$PSEdition`
+
+ で同じ値を含んでいる.`$PSVersionTable.PSEdition`この変数は,モジュールマニフェストファイルで使用可能で,`$PSVersionTable`isn&#x27;t. 
+
+### `$PSHOME`
+
+PowerShellのインストールディレクトリの完全なパスが含まれています.`$Env:windir\System32\PowerShell\v1.0`この変数はPowerShellファイルのパスで使用できます.例えば,次のコマンドは,概念的なHelpトピックを検索して **Help**という単語を探します.
+
+```powershell
+Select-String -Pattern Help -Path $PSHOME\en-US\*.txt
+```
+
+### `$PSItem`
+
+と同じです.`$_`パイプラインオブジェクトの現在のオブジェクトを含んでいる.パイプライン内のすべてのオブジェクトに対してアクションを実行するコマンドでこの変数を使用できます.
+
+詳細については,[about_PSItem][67]. を参照してください.
+
+### `$PSScriptRoot`
+
+実行脚本の親ディレクトリの完全な経路が含まれています.
+
+PowerShell 2.0では,この変数はスクリプトモジュール () でのみ有効です.`.psm1`) PowerShell 3.0 から開始すると,すべてのスクリプトで有効です.
+
+### `$PSSenderInfo`
+
+PSSession を起動したユーザーに関する情報,ユーザー身分と発生するコンピュータのタイムゾーンを含む情報を含んでいます.この変数はPSSession でのみ利用できます.
+
+   `$PSSenderInfo`ユーザー設定可能なプロパティ, **ApplicationArguments** を含むが,デフォルトでは,変数  を含むのみです.`$PSVersionTable`**ApplicationArguments** 属性にデータを追加するには,  の **ApplicationArguments** パラメータを使用してください.`New-PSSessionOption`cmdletです.
+
+&gt;!IMPORTANT] &gt;このプロパティにはクライアントが明示的に提供したデータが含まれているため,セキュリティ決定のためにこれを使用すると,攻撃者が権限を回避する可能性がある.信頼決定のためにこのデータを決して使用しないでください. &gt; [他のアプリケーション論理に使用された場合,すべてのユーザー入力を有効にします][78]
+
+### `$PSUICulture`
+
+操作システムで構成されているユーザーインターフェース (UI) 文化の名前です. UI 文化は,メニューやメッセージなどのユーザーインターフェース要素にどのテキスト文字文字列が使用されているかを決定します.これはシステム.グローバリゼーション.カルチャーインフォ.現在のUICulture.Name**のシステム属性の値です.システムのための**System.Globalization.CultureInfo**オブジェクトを取得するには,  を使います.`Get-UICulture`cmdletです.
+
+# about_Automatic_Variablesについて
+
+### `$PSVersionTable`
+
+PowerShell のバージョンについて詳細を表示する読み込みのみハッシュテーブルが,現在のセッションで実行されている.このテーブルには以下の項目が含まれています:
+
+**BuildVersion** - 現在のバージョンのビルド番号 - **CLRVersion** - 共通言語ランタイム (CLR) のバージョン - **PSCompatibleVersions** - 現在のバージョンと互換性のあるPowerShellのバージョン - **PSEdition** - このプロパティはWindows ServerとWindowsクライアントバージョンの&quot;デスクトップ&quot;の値を持っています. このプロパティは,ナノサーバーまたはWindows IoTで実行中のPowerShellの&quot;コア&quot;の値を持っています. - **PSRemotingProtoVersion** - PowerShell リモート管理プロトコルのバージョン. - **Version** - PowerShellのバージョン番号 - **SerializationVersion** - シリアル方法のバージョン - **ManStackWS** - WSのバージョンの番号.-管理スタック
+
+### `$PWD`
+
+現在のPowerShellランスペースの現在のディレクトリ位置の完全な経路を表すパスオブジェクトが含まれています.
+
+&gt; [!NOTE] &gt; PowerShell は,プロセス [U+0AA6][U+0AC0][U+0AA0]複数のランスペースをサポートしています.各ランスペースには独自の &gt; _current directory_があります.これは,プロセス &gt;の現在のディレクトリとは同じではありません: `[System.Environment]::CurrentDirectory` .
+
+### `$Sender`
+
+この変数はイベント登録コマンドのアクションブロック内でのみ埋め込まれています.この変数の値は,また,この PSEventArgs**オブジェクトの送信性において見ることができます.`Get-Event`返還する.
+
+### `$ShellId`
+
+現在のシェルの識別子を含んでいる.
+
+### `$StackTrace`
+
+最近のエラーのスタックトラスを含む.
+
+### `$switch`
+
+計数器を含んでいるが,結果的に得られる値ではない.`switch`声明は,`$switch`変数が存在する限りしか存在しません.`switch`実行されている;  の記述が削除されたとき,削除されます.`switch`実行を完了する声明.詳細については,[about_Switch][71]を参照してください.
+
+リストラ機には,ループの値を取り戻し,現在のループの繰り返しを変更するために使用できる属性と方法が含まれています.詳細については, [Using Enumerators][49] を参照してください.
+
+### `$this`
+
+   `$this`クラスを拡張するスクリプトブロックで,変数自体の一例を指すように使用されます.
+
+PowerShell の拡張型システム (ETS) は,スクリプトブロックを使用してクラスにプロパティを追加することを可能にします.スクリプトプロパティまたはスクリプト方法を定義するスクリプトブロックでは,  はスクリプトプロパティまたはスクリプト方法を定義します.`$this`たとえば,PowerShellは ETS を使用して **BaseName** 属性を **FileInfo** クラスに追加します.
+
+```powershell
+PS&gt; Get-ChildItem .\README.md | Get-Member BaseName | Format-List
+
+TypeName   : System.IO.FileInfo
+Name       : BaseName
+MemberType : ScriptProperty
+Definition : System.Object BaseName {get=if ($this.Extension.Length -gt 0)
+             {$this.Name.Remove($this.Name.Length - $this.Extension.Length
+             )}else{$this.Name};}
+```
+
+詳細については[about_Types.ps1xml]をご覧ください.
+
+PowerShellクラスでは,`$this`変数は,クラス内のインスタンスのオブジェクトを指し,クラスで定義された属性や方法にアクセスできるようにします.詳細については,[about_Classes][52]を参照してください.
+
+   `$this`変数は,イベントハンドルにスクリプトブロックを代表として扱う .NETイベントクラスでも使用されます.このシナリオでは, `$this`イベント発信者として知られるイベント発信主体を表す.
+
+### `$true`
+
+この変数をコマンドやスクリプトで **True** を表示するために使用できます.
+
+## 計数器を使用する
+
+   `$input`     `$foreach`そして,そして,`$switch`すべての変数は,コードブロックが処理する値を繰り返すために使用される数値表です.
+
+リストリストには,進めるために使用できる属性や方法,またはリセットするための方法が含まれています.またはリセット値を取得します.リストリストリストを直接操作することは,ベストプラクティスとみなされません.
+
+-ループの内では,フローコントロールキーワード [break][51]と [continue][55]が好まれる. -パイプライン入力を受け入れる機能の内では, **ValueFromPipeline**または **ValueFromPipelineByPropertyName**属性を持つパラメータを使用することがベストプラクティスです.
+
+詳細については[about_Functions_Advanced_Parameters][58].
+
+### MoveNext 移動する
+
+[MoveNext][76]方法により,カウントが集合の次の要素に移動します. **MoveNext**は返信します `True`計数器が成功して進んだ場合,`False`計数器がコレクションの終わりを過ぎた場合.
+
+**MoveNext**によって返された**Boolean**値は,出力ストリームに送信されます. &gt; タイプキャストして出力を抑制することができます.`[void]`&gt; [Out-Null][74]. &gt; &gt;  にパイプして送る```powershell
+&gt; $input.MoveNext() | Out-Null
+&gt; ```&gt;  &gt; ```powershell
+&gt; [void]$input.MoveNext()
+&gt; ```
+
+### セットをリセットする
+
+[Reset][77]方法では,表記者を元の位置に設定し,集合の最初の要素である**前**です.
+
+###  流動
+
+[Current][75]属性は,集合の要素,またはパイプラインを,カウントターの現在の位置で得ます.
+
+**Current**プロパティは, **MoveNext**が呼び出されるまで同じプロパティを返し続けます.
+
+## 例文
+
+### 例1:$input変数を使用する
+
+次の例では,  をアクセスして`$input`プロセスブロックが次の実行まで変数をクリアします. **Reset** 方法を使用して,変数をリセットします.`$input`現在のパイプライン値の変数です.
+
+```powershell
+function Test
+{
+    begin
+    {
+        $i = 0
+    }
+
+    process
+    {
+        &quot;Iteration: $i&quot;
+        $i++
+        &quot;`tInput: $input&quot;
+        &quot;`tAccess Again: $input&quot;
+        $input.Reset()
+        &quot;`tAfter Reset: $input&quot;
+    }
+}
+
+&quot;one&quot;,&quot;two&quot; | Test
+```
+
+```Output
+Iteration: 0
+    Input: one
+    Access Again:
+    After Reset: one
+Iteration: 1
+    Input: two
+    Access Again:
+    After Reset: two
+```
+
+プロセスブロックは自動的に を進める.`$input`変数にはアクセスできないとしても.
+
+```powershell
+$skip = $true
+function Skip
+{
+    begin
+    {
+        $i = 0
+    }
+
+    process
+    {
+        &quot;Iteration: $i&quot;
+        $i++
+        if ($skip)
+        {
+            &quot;`tSkipping&quot;
+            $skip = $false
+        }
+        else
+        {
+            &quot;`tInput: $input&quot;
+        }
+    }
+}
+
+&quot;one&quot;,&quot;two&quot; | Skip
+```
+
+```Output
+Iteration: 0
+    Skipping
+Iteration: 1
+    Input: two
+```
+
+### 例2:プロセスブロックの外で$inputを使用する
+
+プロセスの外では,ブロックをブロックする.`$input`変数は関数にパイプされたすべての値を表示します.
+
+- へのアクセス`$input`**Reset**方法により,全コレクションがリセットされます. - **Current**プロパティは,決して入住されません. - **MoveNext**方法では,コレクションが進行できないため,誤った返却されます. - **MoveNext**を呼び出すことで, を削除します.`$input`変数です.
+
+```powershell
+Function All
+{
+    &quot;All Values: $input&quot;
+    &quot;Access Again: $input&quot;
+    $input.Reset()
+    &quot;After Reset: $input&quot;
+    $input.MoveNext() | Out-Null
+    &quot;After MoveNext: $input&quot;
+}
+
+&quot;one&quot;,&quot;two&quot;,&quot;three&quot; | All
+```
+
+```Output
+All Values: one two three
+Access Again:
+After Reset: one two three
+After MoveNext:
+```
+
+# about_Automatic_Variablesについて
+
+### 例3:$input.Current のプロパティを使用する
+
+**Current**属性では,現在のパイプライン値に **Reset** 方法を使わずに複数回アクセスできます.プロセスブロックは自動的に **MoveNext** 方法に呼び出さない.
+
+**Current**プロパティは,あなたが明示的に **MoveNext** を呼び出さない限り,決して入らない. **Current**プロパティは,その値をクリアせずにプロセスブロック内で複数回アクセスできます.
+
+```powershell
+function Current
+{
+    begin
+    {
+        $i = 0
+    }
+
+    process
+    {
+        &quot;Iteration: $i&quot;
+        $i++
+        &quot;`tBefore MoveNext: $($input.Current)&quot;
+        $input.MoveNext() | Out-Null
+        &quot;`tAfter MoveNext: $($input.Current)&quot;
+        &quot;`tAccess Again: $($input.Current)&quot;
+    }
+}
+
+&quot;one&quot;,&quot;two&quot; | Current
+```
+
+```Output
+Iteration: 0
+    Before MoveNext:
+    After MoveNext: one
+    Access Again: one
+Iteration: 1
+    Before MoveNext:
+    After MoveNext: two
+    Access Again: two
+```
+
+### 例4:$foreach変数を使用する
+
+とは異なり,`$input`変数である.`$foreach`直接アクセスすると,常にコレクション内のすべてのアイテムを表します.現在のコレクション要素にアクセスするには, **Current** 属性,およびその値を変更するには **Reset** と **MoveNext** 方法を使用します.
+
+&gt; [!NOTE] &gt;  の各回転は`foreach`**MoveNext** &gt;方法を自動的に呼び出す.
+
+次のループは2回のみ実行されます.第2回繰り返すとき,再繰り返す前にコレクションは第3要素に移行されます.第2回繰り返す後に,再繰り返す値はなくなって,ループが終了します.
+
+**MoveNext**属性は,コレクションで繰り返すために選択された変数に影響しません ().`$Num`) でした.
+
+```powershell
+$i = 0
+foreach ($num in (&quot;one&quot;,&quot;two&quot;,&quot;three&quot;))
+{
+    &quot;Iteration: $i&quot;
+    $i++
+    &quot;`tNum: $num&quot;
+    &quot;`tCurrent: $($foreach.Current)&quot;
+
+    if ($foreach.Current -eq &quot;two&quot;)
+    {
+        &quot;Before MoveNext (Current): $($foreach.Current)&quot;
+        $foreach.MoveNext() | Out-Null
+        &quot;After MoveNext (Current): $($foreach.Current)&quot;
+        &quot;Num hasn&#x27;t changed: $num&quot;
+    }
+}
+```
+
+```Output
+Iteration: 0
+        Num: one
+        Current: one
+Iteration: 1
+        Num: two
+        Current: two
+Before MoveNext (Current): two
+After MoveNext (Current): three
+Num hasn&#x27;t changed: two
+```
+
+**Reset**方法を使用して,集合中の現在の要素をリセットします.次の例は,最初の2つの要素を _twice_ でループします.**Reset**方法が呼ばれているため.最初の2つのループの後, は`if`記述が失敗し,ループは通常,すべての3つの要素を繰り返します.
+
+&gt; [!IMPORTANT] &gt; これは無限のループを生む可能性があります.
+
+```powershell
+$stopLoop = 0
+foreach ($num in (&quot;one&quot;,&quot;two&quot;, &quot;three&quot;))
+{
+    (&quot;`t&quot; * $stopLoop) + &quot;Current: $($foreach.Current)&quot;
+
+    if ($num -eq &quot;two&quot; -and $stopLoop -lt 2)
+    {
+        $foreach.Reset()
+        (&quot;`t&quot; * $stopLoop) + &quot;Reset Loop: $stopLoop&quot;
+        $stopLoop++
+    }
+}
+```
+
+```Output
+Current: one
+Current: two
+Reset Loop: 0
+        Current: one
+        Current: two
+        Reset Loop: 1
+                Current: one
+                Current: two
+                Current: three
+```
+
+### 例5:$switch変数を使用する
+
+   `$switch`変数は,変数とまったく同じルールを持っている.`$foreach`次の例では,すべての数算子概念を示しています. 変数.
+
+&gt; [!NOTE] &gt; **NotEvaluated**ケースは,実行されないことに注意してください.`break`**MoveNext**方法の後に表示される.
+
+```powershell
+$values = &quot;Start&quot;, &quot;MoveNext&quot;, &quot;NotEvaluated&quot;, &quot;Reset&quot;, &quot;End&quot;
+$stopInfinite = $false
+switch ($values)
+{
+    &quot;MoveNext&quot; {
+        &quot;`tMoveNext&quot;
+        $switch.MoveNext() | Out-Null
+        &quot;`tAfter MoveNext: $($switch.Current)&quot;
+    }
+    # This case is never evaluated.
+    &quot;NotEvaluated&quot; {
+        &quot;`tAfterMoveNext: $($switch.Current)&quot;
+    }
+
+    &quot;Reset&quot; {
+        if (!$stopInfinite)
+        {
+            &quot;`tReset&quot;
+            $switch.Reset()
+            $stopInfinite = $true
+        }
+    }
+
+    default {
+        &quot;Default (Current): $($switch.Current)&quot;
+    }
+}
+```
+
+```Output
+Default (Current): Start
+    MoveNext
+    After MoveNext: NotEvaluated
+    Reset
+Default (Current): Start
+    MoveNext
+    After MoveNext: NotEvaluated
+Default (Current): End
+```
+
+## また, を参照してください.
+
+[about_Functions][62] - [about_Functions_Advanced][59] - [about_Functions_Advanced_Methods][57] - [about_Functions_Advanced_Parameters][58] - [about_Functions_OutputTypeAttribute][61] - [about_Functions_CmdletBindingAttribute][60] - [about_Hash_Tables][63] - [about_Preference_Variables][66] - [about_Splatting][70] - [about_Variables][73] - - [about_] -
+
+リンク参照 --&gt; [01]: /powershell/scripting/learn/glossary#scalar-value [02]: #_ [03]: #args [04]: #consolefilename [05]: #enabledexperimentalfeatures [06]: #error [07]: #event [08]: #eventargs [09]: #eventsubscriber [10]: #executioncontext [11]: #false [12]: #foreach [13]: #home [14]: #host [15]: #input
+
+
+
+
+20: #lastexitcode [21]: #matches [22]: #myinvocation [23]: #nestedpromptlevel [24]: #null [25]: #pid [26]: #profile [27]: #psboundparameters [28]: #pscmdlet [29]: #pscommandpath [30]: #psculture [31]: #psdebugcontext [32]: #psedition [33]: #pshome [34]: #psitem [35]: #psscriptroot [36]: #pssenderinfo [37]: #psuiculture [38]: #psversion [39]: #pversion [39]: #section [41]: #section-42]: #section-2 [43]: #sender [44]: #shtrue [44]: #stackers[46]: #ceers[46]: #switch [47]: #threaded: #threaded: #threaded: #en-trackers [47]: #threaded: #threaded: #en-trackers [48]:
+
+[51]: about_Break.md [52]: about_Classes.md [53]: about_CommonParameters.md [54]: about_Functions_CmdletBindingAttribute.md [54]: about_Functions_OutputTypeAttribute.md [55]: about_Continue.md [56]: about_Foreach.md [57]: about_Functions_Advanced_Methods.md [58]: about_Functions_Advanced_Parameters.md [59]: about_Functions_Advanced.md [60]: about_Functions_CmdletBindingAttribute.md [61]: about_Functions_OutputTypeAttribute.md [62]: about_Functions.md [63]: about_Hash_T.md [64]: about_language_keywords.md_Preparitatives.md: about_Switch_Switch_Switch_Switch_Switch_Switch_Switch_Switch_Switch_Switch_Switch_Switch_Switch_Switch_Switch_Switch_Switch_Switch_Switch_Switch_Switch_Switch_Switch_Switch_Switch_Switch_Switch_Switch_Switch_Switch_Switch_Switch_Switch_Switch_Switch_Switch_Switch_Switch_Switch_Switch_Switch_Switch_Switch_Switch_Switch_Switch_Switch_Switch_Switch_Switch_Switch_Switch_Switch_Switch_Switch_Switch_Switch_Switch_Switch_Switch_Switch_Switch_Switch_Switch_Switch_Switch_Switch_Switch_Switch_Switch_Switch_Switch_Switch_Switch_Swit[73]: about_Variables.md [74]: xref:Microsoft.PowerShell.Core.Out-Null [75]: xref:System.Collections.IEnumerator.Current [76]: xref:System.Collections.IEnumerator.MoveNext [77]: xref:System.Collections.IEnumerator.Reset [78]: https://top10proactive.owasp.org/archive/2024/the-top-10/c3-validate-input-and-handle-exceptions/
+###英語原文###
+# about_Automatic_Variables
+
+## Short description
+
+Describes variables that store state information for and are created and
+maintained by PowerShell.
+
+## Long description
+
+Conceptually, most of these variables are considered to be read-only. Even
+though they _can_ be written to, for backward compatibility they _should not_
+be written to.
+
+Here is a list of the automatic variables in PowerShell:
+
+- [`$$`][40]
+- [`$?`][41]
+- [`$^`][42]
+- [`$_`][02]
+- [`$args`][03]
+- [`$ConsoleFileName`][04]
+- [`$Error`][06]
+- [`$Event`][07]
+- [`$EventArgs`][08]
+- [`$EventSubscriber`][09]
+- [`$ExecutionContext`][10]
+- [`$false`][11]
+- [`$foreach`][12]
+- [`$HOME`][13]
+- [`$Host`][14]
+- [`$input`][15]
+- [`$LASTEXITCODE`][20]
+- [`$Matches`][21]
+- [`$MyInvocation`][22]
+- [`$NestedPromptLevel`][23]
+- [`$null`][24]
+- [`$PID`][25]
+- [`$PROFILE`][26]
+- [`$PSBoundParameters`][27]
+- [`$PSCmdlet`][28]
+- [`$PSCommandPath`][29]
+- [`$PSCulture`][30]
+- [`$PSDebugContext`][31]
+- [`$PSEdition`][32]
+- [`$PSHOME`][33]
+- [`$PSItem`][34]
+- [`$PSScriptRoot`][35]
+- [`$PSSenderInfo`][36]
+- [`$PSUICulture`][37]
+- [`$PSVersionTable`][38]
+- [`$PWD`][39]
+- [`$Sender`][43]
+- [`$ShellId`][44]
+- [`$StackTrace`][45]
+- [`$switch`][46]
+- [`$this`][47]
+- [`$true`][48]
+
+### `$$`
+
+Contains the last token in the last line received by the session.
+
+### `$?`
+
+Contains the execution status of the last command. It contains **True** if the
+last command succeeded and **False** if it failed. Parse errors don&#x27;t result in
+execution, so they don&#x27;t affect the value of `$?`.
+
+For cmdlets and advanced functions that are run at multiple stages in a
+pipeline, for example in both `process` and `end` blocks, calling
+`this.WriteError()` or `$PSCmdlet.WriteError()` respectively at any point sets
+`$?` to **False**, as does `this.ThrowTerminatingError()` and
+`$PSCmdlet.ThrowTerminatingError()`.
+
+The `Write-Error` cmdlet always sets `$?` to **False** immediately after it&#x27;s
+executed, but won&#x27;t set `$?` to **False** for a function calling it:
+
+```powershell
+function Test-WriteError
+{
+    Write-Error &quot;Bad&quot;
+    &quot;The `$? variable is: $?&quot;
+}
+
+Test-WriteError
+&quot;Now the `$? variable is: $?&quot;
+```
+
+```Output
+Test-WriteError : Bad
+At line:7 char:1
++ Test-WriteError
++ ~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (:) [Write-Error], WriteErrorException
+    + FullyQualifiedErrorId : Microsoft.PowerShell.Commands.WriteErrorException,Test-WriteError
+
+The $? variable is: False
+Now the $? variable is: True
+```
+
+For the latter purpose, `$PSCmdlet.WriteError()` should be used instead.
+
+For native commands (executables), `$?` is set to **True** when `$LASTEXITCODE`
+is 0, and set to **False** when `$LASTEXITCODE` is any other value.
+
+&gt; [!NOTE]
+&gt; Until PowerShell 7, wrapping a statement within parentheses `(...)`,
+&gt; subexpression syntax `$(...)`, or an array expression `@(...)` always reset
+&gt; `$?` to **True**. For example, `(Write-Error)` shows `$?` as **True**. This
+&gt; behavior changed in PowerShell 7, so that `$?` always reflects the actual
+&gt; success of the last command run in these expressions.
+
+### `$^`
+
+Contains the first token in the last line received by the session.
+
+### `$_`
+
+Same as `$PSItem`. Contains the current object in the pipeline object. You can
+use this variable in commands that perform an action on every object in a
+pipeline.
+
+For more information, see [about_PSItem][67].
+
+### `$args`
+
+Contains an array of values for undeclared parameters that are passed to a
+function, script, or scriptblock. When you create a function, you can declare
+the parameters with the `param` keyword or by adding a comma-separated list of
+parameters in parentheses after the function name.
+
+In an event action, the `$args` variable contains objects that represent the
+event arguments of the event that&#x27;s being processed. This variable is populated
+only within the `Action` block of an event registration command. The value of
+this variable can also be found in the **SourceArgs** property of the
+**PSEventArgs** object that `Get-Event` returns.
+
+### `$ConsoleFileName`
+
+Contains the path of the console file (`.psc1`) that was most recently used in
+the session. This variable is populated when you start PowerShell with the
+**PSConsoleFile** parameter or when you use the `Export-Console` cmdlet to
+export snap-in names to a console file.
+
+When you use the `Export-Console` cmdlet without parameters, it automatically
+updates the console file that was most recently used in the session. You can
+use this automatic variable to determine the file to update.
+
+### `$Error`
+
+Contains an array of error objects that represent the most recent errors. The
+most recent error is the first error object in the array `$Error[0]`.
+
+To prevent a non-terminating error from being added to the `$Error` array, use
+the **ErrorAction** common parameter with a value of **Ignore**. For more
+information, see [about_CommonParameters][53].
+
+### `$Event`
+
+Contains a **PSEventArgs** object that represents the event that&#x27;s being
+processed. This variable is populated only within the `Action` block of an
+event registration command, such as `Register-ObjectEvent`. The value of this
+variable is the same object that the `Get-Event` cmdlet returns. You can use
+the properties of the `Event` variable, such as `$Event.TimeGenerated`, in an
+`Action` scriptblock.
+
+### `$EventArgs`
+
+Contains an object that represents the first event argument that derives from
+**EventArgs** of the event that&#x27;s being processed. This variable is populated
+only within the `Action` block of an event registration command. The value of
+this variable can also be found in the **SourceEventArgs** property of the
+**PSEventArgs** object that `Get-Event` returns.
+
+### `$EventSubscriber`
+
+Contains a **PSEventSubscriber** object that represents the event subscriber of
+the event that&#x27;s being processed. This variable is populated only within the
+`Action` block of an event registration command. The value of this variable is
+the same object that the `Get-EventSubscriber` cmdlet returns.
+
+### `$ExecutionContext`
+
+Contains an **EngineIntrinsics** object that represents the execution context
+of the PowerShell host. You can use this variable to find the execution objects
+that are available to cmdlets.
+
+### `$false`
+
+Contains **False**. You can use this variable to represent **False** in
+commands and scripts instead of using the string `&quot;false&quot;`. The string can be
+interpreted as **True** if it&#x27;s converted to a non-empty string or to a
+non-zero integer.
+
+### `$foreach`
+
+Contains the enumerator (not the resulting values) of a [foreach][56] loop. The
+`$foreach` variable exists only while the `foreach` loop is running; it&#x27;s
+deleted after the loop is completed.
+
+Enumerators contain properties and methods you can use to retrieve loop values
+and change the current loop iteration. For more information, see
+[Using Enumerators][49].
+
+### `$HOME`
+
+Contains the full path of the user&#x27;s home directory. This variable uses the
+value of the `&quot;$Env:USERPROFILE&quot;` Windows environment variable, typically
+`C:\Users\&lt;UserName&gt;`.
+
+&gt; [!IMPORTANT]
+&gt; Windows can redirect the location of the user&#x27;s profile. This means that
+&gt; `$HOME` may not have the same value as `&quot;$Env:HOMEDRIVE$Env:HOMEPATH&quot;`.
+
+# about_Automatic_Variables
+
+### `$Host`
+
+Contains an object that represents the current host application for PowerShell.
+You can use this variable to represent the current host in commands or to
+display or change the properties of the host, such as `$Host.Version` or
+`$Host.CurrentCulture`, or `$Host.UI.RawUI.BackGroundColor = &quot;Red&quot;`.
+
+### `$input`
+
+Contains an enumerator that enumerates all input that&#x27;s passed to a function.
+The `$input` variable is available only to functions, scriptblocks (which
+are unnamed functions), and script files (which are saved scriptblocks).
+
+- In a function without a `begin`, `process`, or `end` block, the `$input`
+  variable enumerates the collection of all input to the function.
+
+- In the `begin` block, the `$input` variable contains no data.
+
+- In the `process` block, the `$input` variable contains the current object in
+  the pipeline.
+
+- In the `end` block, the `$input` variable enumerates the collection of all
+  input to the function.
+
+  &gt; [!NOTE]
+  &gt; You can&#x27;t use the `$input` variable inside both the `process` block and the
+  &gt; `end` block in the same function or scriptblock.
+
+Since `$input` is an enumerator, accessing any of its properties causes
+`$input` to no longer be available. You can store `$input` in another variable
+to reuse the `$input` properties.
+
+Enumerators contain properties and methods you can use to retrieve loop values
+and change the current loop iteration. For more information, see
+[Using Enumerators][49].
+
+The `$input` variable is also available to the command specified by the
+`-Command` parameter of `powershell.exe` when invoked from the command line.
+The following example is run from the Windows Command shell.
+
+```CMD
+echo Hello | powershell -Command &quot;&quot;&quot;$input World!&quot;&quot;&quot;
+```
+
+### `$LASTEXITCODE`
+
+Contains the exit code of the last native program or PowerShell script that
+ran.
+
+For PowerShell scripts, the value of `$LASTEXITCODE` depends on how the script
+was called and whether the `exit` keyword was used:
+
+- When a script uses the `exit` keyword:
+
+  `$LASTEXITCODE` is set to value the specified by the `exit` keyword. For more
+  information, see [about_Language_Keywords][64].
+
+- When a script is called directly, like `./Test.ps1`, or with the
+  [call operator][65] (`&amp;`) like `&amp; ./Test.ps1`:
+
+  The value of `$LASTEXITCODE` isn&#x27;t changed unless:
+
+  - The script calls another script that uses the `exit` keyword
+  - The script calls a native command
+  - The script uses the `exit` keyword
+
+- When a script is called with `powershell.exe` using the **File** parameter,
+  `$LASTEXITCODE` is set to:
+
+  - `1` if the script terminated due to an exception
+  - The value specified by the `exit` keyword, if used in the script
+  - `0` if the script completed successfully
+
+- When a script is called with `powershell.exe` using the **Command**
+  parameter, `$LASTEXITCODE` is set to:
+
+  - `1` if the script terminated due to an exception or if the result of the
+    last command set `$?` to `$false`
+  - `0` if the script completed successfully and the result of the last command
+    set `$?` to `$true`
+
+For more information on the **File** and **Command** parameters, see
+[about_PowerShell_exe][68].
+
+### `$Matches`
+
+The `$Matches` variable works with the `-match` and `-notmatch` operators. When
+you submit [scalar][01] input to the `-match` or `-notmatch` operator, and
+either one detects a match, they return a Boolean value and populate the
+`$Matches` automatic variable with a hash table of any string values that were
+matched. The `$Matches` hash table can also be populated with captures when you
+use regular expressions with the `-match` operator.
+
+For more information about the `-match` operator, see
+[about_Comparison_Operators][54]. For more information on regular expressions,
+see [about_Regular_Expressions][69].
+
+The `$Matches` variable also works in a `switch` statement with the `-Regex`
+parameter. It&#x27;s populated the same way as the `-match` and `-notmatch`
+operators. For more information about the `switch` statement, see
+[about_Switch][71].
+
+&gt; [!NOTE]
+&gt; When `$Matches` is populated in a session, it retains the matched value until
+&gt; it&#x27;s overwritten by another match. If `-match` is used again and no match is
+&gt; found, it doesn&#x27;t reset `$Matches` to `$null`. The previously matched value
+&gt; is kept in `$Matches` until another match is found.
+
+### `$MyInvocation`
+
+Contains information about the current command, such as the name, parameters,
+parameter values, and information about how the command was started, called, or
+invoked, such as the name of the script that called the current command.
+
+`$MyInvocation` is populated only for scripts, function, and scriptblocks. You
+can use the information in the **System.Management.Automation.InvocationInfo**
+object that `$MyInvocation` returns in the current script, such as the name of
+a function (`$MyInvocation.MyCommand.Name`) to identify the current command.
+This is useful for finding the name of the current script.
+
+Beginning in PowerShell 3.0, `MyInvocation` has the following new properties.
+
+- **PSScriptRoot** - Contains the full path to the script that invoked the
+  current command. The value of this property is populated only when the caller
+  is a script.
+- **PSCommandPath** - Contains the full path and filename of the script that
+  invoked the current command. The value of this property is populated only
+  when the caller is a script.
+
+Unlike the `$PSScriptRoot` and `$PSCommandPath` automatic variables, the
+**PSScriptRoot** and **PSCommandPath** properties of the `$MyInvocation`
+automatic variable contain information about the invoker or calling script, not
+the current script.
+
+### `$NestedPromptLevel`
+
+Contains the current prompt level. A value of 0 indicates the original prompt
+level. The value is incremented when you enter a nested level and decremented
+when you exit it.
+
+For example, PowerShell presents a nested command prompt when you use the
+`$Host.EnterNestedPrompt` method. PowerShell also presents a nested command
+prompt when you reach a breakpoint in the PowerShell debugger.
+
+When you enter a nested prompt, PowerShell pauses the current command, saves
+the execution context, and increments the value of the `$NestedPromptLevel`
+variable. To create additional nested command prompts (up to 128 levels) or to
+return to the original command prompt, complete the command, or type `exit`.
+
+The `$NestedPromptLevel` variable helps you track the prompt level. You can
+create an alternative PowerShell command prompt that includes this value so
+that it&#x27;s always visible.
+
+# about_Automatic_Variables
+
+### `$null`
+
+`$null` is an automatic variable that contains a **null** or empty value. You
+can use this variable to represent an absent or undefined value in commands and
+scripts.
+
+PowerShell treats `$null` as an object with a value, or a placeholder, so you
+can use `$null` to represent an empty value in a collection of values.
+
+For example, when `$null` is included in a collection, it&#x27;s counted as one of
+the objects.
+
+```powershell
+$a = &quot;one&quot;, $null, &quot;three&quot;
+$a.Count
+```
+
+```Output
+3
+```
+
+If you pipe the `$null` variable to the `ForEach-Object` cmdlet, it generates a
+value for `$null`, just as it does for the other objects
+
+```powershell
+&quot;one&quot;, $null, &quot;three&quot; | ForEach-Object {&quot;Hello &quot; + $_}
+```
+
+```Output
+Hello one
+Hello
+Hello three
+```
+
+As a result, you can&#x27;t use `$null` to mean **no parameter value**. A parameter
+value of `$null` overrides the default parameter value.
+
+However, because PowerShell treats the `$null` variable as a placeholder, you
+can use it in scripts like the following one, which wouldn&#x27;t work if `$null`
+were ignored.
+
+```powershell
+$calendar = @($null, $null, &quot;Meeting&quot;, $null, $null, &quot;Team Lunch&quot;, $null)
+$days = &quot;Sunday&quot;, &quot;Monday&quot;, &quot;Tuesday&quot;, &quot;Wednesday&quot;, &quot;Thursday&quot;,
+        &quot;Friday&quot;, &quot;Saturday&quot;
+$currentDay = 0
+foreach($day in $calendar)
+{
+    if($day -ne $null)
+    {
+        &quot;Appointment on $($days[$currentDay]): $day&quot;
+    }
+
+    $currentDay++
+}
+```
+
+```Output
+Appointment on Tuesday: Meeting
+Appointment on Friday: Team lunch
+```
+
+### `$PID`
+
+Contains the process identifier (PID) of the process that&#x27;s hosting the
+current PowerShell session.
+
+### `$PROFILE`
+
+Contains the full path of the PowerShell profile for the current user and the
+current host application. You can use this variable to represent the profile in
+commands. For example, you can use it in a command to determine whether a
+profile has been created:
+
+```powershell
+Test-Path $PROFILE
+```
+
+Or, you can use it in a command to create a profile:
+
+```powershell
+New-Item -ItemType File -Path $PROFILE -Force
+```
+
+You can use it in a command to open the profile in **notepad.exe**:
+
+```powershell
+notepad.exe $PROFILE
+```
+
+### `$PSBoundParameters`
+
+Contains a dictionary of the parameters that are passed to a script or function
+and their current values. This variable has a value only in a scope where
+parameters are declared, such as a script or function. You can use it to
+display or change the current values of parameters or to pass parameter values
+to another script or function.
+
+In this example, the **Test2** function passes the `$PSBoundParameters` to the
+**Test1** function. The `$PSBoundParameters` are displayed in the format of
+**Key** and **Value**.
+
+```powershell
+function Test1 {
+   param($a, $b)
+
+   # Display the parameters in dictionary format.
+   $PSBoundParameters
+}
+
+function Test2 {
+   param($a, $b)
+
+   # Run the Test1 function with $a and $b.
+   Test1 @PSBoundParameters
+}
+```
+
+```powershell
+Test2 -a Power -b Shell
+```
+
+```Output
+Key   Value
+---   -----
+a     Power
+b     Shell
+```
+
+### `$PSCmdlet`
+
+Contains an object that represents the cmdlet or advanced function that&#x27;s being
+run.
+
+You can use the properties and methods of the object in your cmdlet or function
+code to respond to the conditions of use. For example, the **ParameterSetName**
+property contains the name of the parameter set that&#x27;s being used, and the
+**ShouldProcess** method adds the **WhatIf** and **Confirm** parameters to the
+cmdlet dynamically.
+
+For more information about the `$PSCmdlet` automatic variable, see
+[about_Functions_CmdletBindingAttribute][60] and
+[about_Functions_Advanced][59].
+
+### `$PSCommandPath`
+
+Contains the full path and filename of the script that&#x27;s being run. This
+variable is valid in all scripts.
+
+### `$PSCulture`
+
+Contains the name of the culture currently in use in the operating system. The
+culture determines the display format of items such as numbers, currency, and
+dates, and is stored in a **System.Globalization.CultureInfo** object. Use
+`Get-Culture` to display the computer&#x27;s culture. `$PSCulture` contains the
+**Name** property&#x27;s value.
+
+### `$PSDebugContext`
+
+While debugging, this variable contains information about the debugging
+environment. Otherwise, it contains a **null** value. As a result, you can use
+it to determine whether the debugger has control. When populated, it contains a
+**PsDebugContext** object that has **Breakpoints** and **InvocationInfo**
+properties. The **InvocationInfo** property has several useful properties,
+including the **Location** property. The **Location** property indicates the
+path of the script that&#x27;s being debugged.
+
+### `$PSEdition`
+
+Contains the same value in `$PSVersionTable.PSEdition`. This variable is
+available for use in module manifest files, whereas `$PSVersionTable` isn&#x27;t.
+
+### `$PSHOME`
+
+Contains the full path of the installation directory for PowerShell, typically,
+`$Env:windir\System32\PowerShell\v1.0` in Windows systems. You can use this
+variable in the paths of PowerShell files. For example, the following command
+searches the conceptual Help topics for the word **Help**:
+
+```powershell
+Select-String -Pattern Help -Path $PSHOME\en-US\*.txt
+```
+
+### `$PSItem`
+
+Same as `$_`. Contains the current object in the pipeline object. You can use
+this variable in commands that perform an action on every object in a pipeline.
+
+For more information, see [about_PSItem][67].
+
+### `$PSScriptRoot`
+
+Contains the full path of the executing script&#x27;s parent directory.
+
+In PowerShell 2.0, this variable is valid only in script modules (`.psm1`).
+Beginning in PowerShell 3.0, it&#x27;s valid in all scripts.
+
+### `$PSSenderInfo`
+
+Contains information about the user who started the PSSession, including the
+user identity and the time zone of the originating computer. This variable is
+available only in PSSessions.
+
+The `$PSSenderInfo` variable includes a user-configurable property,
+**ApplicationArguments**, that by default, contains only the `$PSVersionTable`
+from the originating session. To add data to the **ApplicationArguments**
+property, use the **ApplicationArguments** parameter of the
+`New-PSSessionOption` cmdlet.
+
+&gt; [!IMPORTANT]
+&gt; Since this property contains data explicitly provided by the client, using
+&gt; this for security decisions could allow attackers to bypass authorization
+&gt; controls. Never use this data for trust decisions.
+&gt; [Validate all user input][78] when used for other application logic.
+
+### `$PSUICulture`
+
+Contains the name of the user interface (UI) culture that&#x27;s configured in the
+operating system. The UI culture determines which text strings are used for
+user interface elements, such as menus and messages. This is the value of the
+**System.Globalization.CultureInfo.CurrentUICulture.Name** property of the
+system. To get the **System.Globalization.CultureInfo** object for the system,
+use the `Get-UICulture` cmdlet.
+
+# about_Automatic_Variables
+
+### `$PSVersionTable`
+
+Contains a read-only hash table that displays details about the version of
+PowerShell that&#x27;s running in the current session. The table includes the
+following items:
+
+- **BuildVersion** - The build number of the current version
+- **CLRVersion** - The version of the common language runtime (CLR)
+- **PSCompatibleVersions** - Versions of PowerShell that are compatible with
+  the current version
+- **PSEdition** - This property has the value of &#x27;Desktop&#x27;, for Windows Server
+  and Windows client versions. This property has the value of &#x27;Core&#x27; for
+  PowerShell running under Nano Server or Windows IoT.
+- **PSRemotingProtocolVersion** - The version of the PowerShell remote
+  management protocol.
+- **PSVersion** - The PowerShell version number
+- **SerializationVersion** - The version of the serialization method
+- **WSManStackVersion** - The version number of the WS-Management stack
+
+### `$PWD`
+
+Contains a path object that represents the full path of the current directory
+location for the current PowerShell runspace.
+
+&gt; [!NOTE]
+&gt; PowerShell supports multiple runspaces per process. Each runspace has its own
+&gt; _current directory_. This isn&#x27;t the same as the current directory of the
+&gt; process: `[System.Environment]::CurrentDirectory`.
+
+### `$Sender`
+
+Contains the object that generated this event. This variable is populated only
+within the Action block of an event registration command. The value of this
+variable can also be found in the Sender property of the **PSEventArgs** object
+that `Get-Event` returns.
+
+### `$ShellId`
+
+Contains the identifier of the current shell.
+
+### `$StackTrace`
+
+Contains a stack trace for the most recent error.
+
+### `$switch`
+
+Contains the enumerator not the resulting values of a `switch` statement. The
+`$switch` variable exists only while the `switch` statement is running; it&#x27;s
+deleted when the `switch` statement completes execution. For more information,
+see [about_Switch][71].
+
+Enumerators contain properties and methods you can use to retrieve loop values
+and change the current loop iteration. For more information, see
+[Using Enumerators][49].
+
+### `$this`
+
+The `$this` variable is used in scriptblocks that extend classes to refer to
+the instance of the class itself.
+
+PowerShell&#x27;s Extensible Type System (ETS) allows you to add properties to
+classes using scriptblocks. In a scriptblock that defines a script property
+or script method, the `$this` variable refers to an instance of object of the
+class that&#x27;s being extended. For example, PowerShell uses ETS to add the
+**BaseName** property to the **FileInfo** class.
+
+```powershell
+PS&gt; Get-ChildItem .\README.md | Get-Member BaseName | Format-List
+
+TypeName   : System.IO.FileInfo
+Name       : BaseName
+MemberType : ScriptProperty
+Definition : System.Object BaseName {get=if ($this.Extension.Length -gt 0)
+             {$this.Name.Remove($this.Name.Length - $this.Extension.Length
+             )}else{$this.Name};}
+```
+
+For more information, see [about_Types.ps1xml][72].
+
+In a PowerShell class, the `$this` variable refers to the instance object of
+the class itself, allowing access to properties and methods defined in the
+class. For more information, see [about_Classes][52].
+
+The `$this` variable is also used by .NET event classes that take scriptblocks
+as delegates for the event handler. In this scenario, `$this` represents the
+object originating the event, known as the event sender.
+
+### `$true`
+
+Contains **True**. You can use this variable to represent **True** in commands
+and scripts.
+
+## Using enumerators
+
+The `$input`, `$foreach`, and `$switch` variables are all enumerators used to
+iterate through the values processed by their containing code block.
+
+An enumerator contains properties and methods you can use to advance or reset
+iteration, or retrieve iteration values. Directly manipulating enumerators
+isn&#x27;t considered best practice.
+
+- Within loops, flow control keywords [break][51] and [continue][55] should be
+  preferred.
+- Within functions that accept pipeline input, it&#x27;s best practice to use
+  parameters with the **ValueFromPipeline** or
+  **ValueFromPipelineByPropertyName** attributes.
+
+  For more information, see [about_Functions_Advanced_Parameters][58].
+
+### MoveNext
+
+The [MoveNext][76] method advances the enumerator to the next element of the
+collection. **MoveNext** returns `True` if the enumerator was successfully
+advanced, `False` if the enumerator has passed the end of the collection.
+
+&gt; [!NOTE]
+&gt; The **Boolean** value returned by **MoveNext** is sent to the output stream.
+&gt; You can suppress the output by typecasting it to `[void]` or piping it to
+&gt; [Out-Null][74].
+&gt;
+&gt; ```powershell
+&gt; $input.MoveNext() | Out-Null
+&gt; ```
+&gt;
+&gt; ```powershell
+&gt; [void]$input.MoveNext()
+&gt; ```
+
+### Reset
+
+The [Reset][77] method sets the enumerator to its initial position, which is
+**before** the first element in the collection.
+
+### Current
+
+The [Current][75] property gets the element in the collection, or pipeline, at
+the current position of the enumerator.
+
+The **Current** property continues to return the same property until
+**MoveNext** is called.
+
+## Examples
+
+### Example 1: Using the $input variable
+
+In the following example, accessing the `$input` variable clears the variable
+until the next time the process block executes. Using the **Reset** method
+resets the `$input` variable to the current pipeline value.
+
+```powershell
+function Test
+{
+    begin
+    {
+        $i = 0
+    }
+
+    process
+    {
+        &quot;Iteration: $i&quot;
+        $i++
+        &quot;`tInput: $input&quot;
+        &quot;`tAccess Again: $input&quot;
+        $input.Reset()
+        &quot;`tAfter Reset: $input&quot;
+    }
+}
+
+&quot;one&quot;,&quot;two&quot; | Test
+```
+
+```Output
+Iteration: 0
+    Input: one
+    Access Again:
+    After Reset: one
+Iteration: 1
+    Input: two
+    Access Again:
+    After Reset: two
+```
+
+The process block automatically advances the `$input` variable even if you
+don&#x27;t access it.
+
+```powershell
+$skip = $true
+function Skip
+{
+    begin
+    {
+        $i = 0
+    }
+
+    process
+    {
+        &quot;Iteration: $i&quot;
+        $i++
+        if ($skip)
+        {
+            &quot;`tSkipping&quot;
+            $skip = $false
+        }
+        else
+        {
+            &quot;`tInput: $input&quot;
+        }
+    }
+}
+
+&quot;one&quot;,&quot;two&quot; | Skip
+```
+
+```Output
+Iteration: 0
+    Skipping
+Iteration: 1
+    Input: two
+```
+
+### Example 2: Using $input outside the process block
+
+Outside of the process block the `$input` variable represents all the values
+piped into the function.
+
+- Accessing the `$input` variable clears all values.
+- The **Reset** method resets the entire collection.
+- The **Current** property is never populated.
+- The **MoveNext** method returns false because the collection can&#x27;t be
+  advanced.
+  - Calling **MoveNext** clears out the `$input` variable.
+
+```powershell
+Function All
+{
+    &quot;All Values: $input&quot;
+    &quot;Access Again: $input&quot;
+    $input.Reset()
+    &quot;After Reset: $input&quot;
+    $input.MoveNext() | Out-Null
+    &quot;After MoveNext: $input&quot;
+}
+
+&quot;one&quot;,&quot;two&quot;,&quot;three&quot; | All
+```
+
+```Output
+All Values: one two three
+Access Again:
+After Reset: one two three
+After MoveNext:
+```
+
+# about_Automatic_Variables
+
+### Example 3: Using the $input.Current property
+
+With the **Current** property, the current pipeline value can be accessed
+multiple times without using the **Reset** method. The process block doesn&#x27;t
+automatically call the **MoveNext** method.
+
+The **Current** property is never populated unless you explicitly call
+**MoveNext**. The **Current** property can be accessed multiple times inside
+the process block without clearing its value.
+
+```powershell
+function Current
+{
+    begin
+    {
+        $i = 0
+    }
+
+    process
+    {
+        &quot;Iteration: $i&quot;
+        $i++
+        &quot;`tBefore MoveNext: $($input.Current)&quot;
+        $input.MoveNext() | Out-Null
+        &quot;`tAfter MoveNext: $($input.Current)&quot;
+        &quot;`tAccess Again: $($input.Current)&quot;
+    }
+}
+
+&quot;one&quot;,&quot;two&quot; | Current
+```
+
+```Output
+Iteration: 0
+    Before MoveNext:
+    After MoveNext: one
+    Access Again: one
+Iteration: 1
+    Before MoveNext:
+    After MoveNext: two
+    Access Again: two
+```
+
+### Example 4: Using the $foreach variable
+
+Unlike the `$input` variable, the `$foreach` variable always represents all
+items in the collection when accessed directly. Use the **Current** property to
+access the current collection element, and the **Reset** and **MoveNext**
+methods to change its value.
+
+&gt; [!NOTE]
+&gt; Each iteration of the `foreach` loop automatically calls the **MoveNext**
+&gt; method.
+
+The following loop only executes twice. In the second iteration, the collection
+is moved to the third element before the iteration is complete. After the
+second iteration, there are now no more values to iterate, and the loop
+terminates.
+
+The **MoveNext** property doesn&#x27;t affect the variable chosen to iterate through
+the collection (`$Num`).
+
+```powershell
+$i = 0
+foreach ($num in (&quot;one&quot;,&quot;two&quot;,&quot;three&quot;))
+{
+    &quot;Iteration: $i&quot;
+    $i++
+    &quot;`tNum: $num&quot;
+    &quot;`tCurrent: $($foreach.Current)&quot;
+
+    if ($foreach.Current -eq &quot;two&quot;)
+    {
+        &quot;Before MoveNext (Current): $($foreach.Current)&quot;
+        $foreach.MoveNext() | Out-Null
+        &quot;After MoveNext (Current): $($foreach.Current)&quot;
+        &quot;Num hasn&#x27;t changed: $num&quot;
+    }
+}
+```
+
+```Output
+Iteration: 0
+        Num: one
+        Current: one
+Iteration: 1
+        Num: two
+        Current: two
+Before MoveNext (Current): two
+After MoveNext (Current): three
+Num hasn&#x27;t changed: two
+```
+
+Using the **Reset** method resets the current element in the collection. The
+following example loops through the first two elements _twice_ because the
+**Reset** method is called. After the first two loops, the `if` statement fails
+and the loop iterates through all three elements normally.
+
+&gt; [!IMPORTANT]
+&gt; This could result in an infinite loop.
+
+```powershell
+$stopLoop = 0
+foreach ($num in (&quot;one&quot;,&quot;two&quot;, &quot;three&quot;))
+{
+    (&quot;`t&quot; * $stopLoop) + &quot;Current: $($foreach.Current)&quot;
+
+    if ($num -eq &quot;two&quot; -and $stopLoop -lt 2)
+    {
+        $foreach.Reset()
+        (&quot;`t&quot; * $stopLoop) + &quot;Reset Loop: $stopLoop&quot;
+        $stopLoop++
+    }
+}
+```
+
+```Output
+Current: one
+Current: two
+Reset Loop: 0
+        Current: one
+        Current: two
+        Reset Loop: 1
+                Current: one
+                Current: two
+                Current: three
+```
+
+### Example 5: Using the $switch variable
+
+The `$switch` variable has the exact same rules as the `$foreach` variable. The
+following example demonstrates all the enumerator concepts.
+
+&gt; [!NOTE]
+&gt; Note how the **NotEvaluated** case is never executed, even though there&#x27;s
+&gt; no `break` statement after the **MoveNext** method.
+
+```powershell
+$values = &quot;Start&quot;, &quot;MoveNext&quot;, &quot;NotEvaluated&quot;, &quot;Reset&quot;, &quot;End&quot;
+$stopInfinite = $false
+switch ($values)
+{
+    &quot;MoveNext&quot; {
+        &quot;`tMoveNext&quot;
+        $switch.MoveNext() | Out-Null
+        &quot;`tAfter MoveNext: $($switch.Current)&quot;
+    }
+    # This case is never evaluated.
+    &quot;NotEvaluated&quot; {
+        &quot;`tAfterMoveNext: $($switch.Current)&quot;
+    }
+
+    &quot;Reset&quot; {
+        if (!$stopInfinite)
+        {
+            &quot;`tReset&quot;
+            $switch.Reset()
+            $stopInfinite = $true
+        }
+    }
+
+    default {
+        &quot;Default (Current): $($switch.Current)&quot;
+    }
+}
+```
+
+```Output
+Default (Current): Start
+    MoveNext
+    After MoveNext: NotEvaluated
+    Reset
+Default (Current): Start
+    MoveNext
+    After MoveNext: NotEvaluated
+Default (Current): End
+```
+
+## See also
+
+- [about_Functions][62]
+- [about_Functions_Advanced][59]
+- [about_Functions_Advanced_Methods][57]
+- [about_Functions_Advanced_Parameters][58]
+- [about_Functions_OutputTypeAttribute][61]
+- [about_Functions_CmdletBindingAttribute][60]
+- [about_Hash_Tables][63]
+- [about_Preference_Variables][66]
+- [about_Splatting][70]
+- [about_Variables][73]
+
+&lt;!-- link references --&gt;
+[01]: /powershell/scripting/learn/glossary#scalar-value
+[02]: #_
+[03]: #args
+[04]: #consolefilename
+[05]: #enabledexperimentalfeatures
+[06]: #error
+[07]: #event
+[08]: #eventargs
+[09]: #eventsubscriber
+[10]: #executioncontext
+[11]: #false
+[12]: #foreach
+[13]: #home
+[14]: #host
+[15]: #input
+
+
+
+
+[20]: #lastexitcode
+[21]: #matches
+[22]: #myinvocation
+[23]: #nestedpromptlevel
+[24]: #null
+[25]: #pid
+[26]: #profile
+[27]: #psboundparameters
+[28]: #pscmdlet
+[29]: #pscommandpath
+[30]: #psculture
+[31]: #psdebugcontext
+[32]: #psedition
+[33]: #pshome
+[34]: #psitem
+[35]: #psscriptroot
+[36]: #pssenderinfo
+[37]: #psuiculture
+[38]: #psversiontable
+[39]: #pwd
+[40]: #section
+[41]: #section-1
+[42]: #section-2
+[43]: #sender
+[44]: #shellid
+[45]: #stacktrace
+[46]: #switch
+[47]: #this
+[48]: #true
+[49]: #using-enumerators
+
+[51]: about_Break.md
+[52]: about_Classes.md
+[53]: about_CommonParameters.md
+[54]: about_comparison_operators.md
+[55]: about_Continue.md
+[56]: about_Foreach.md
+[57]: about_Functions_Advanced_Methods.md
+[58]: about_Functions_Advanced_Parameters.md
+[59]: about_Functions_Advanced.md
+[60]: about_Functions_CmdletBindingAttribute.md
+[61]: about_Functions_OutputTypeAttribute.md
+[62]: about_Functions.md
+[63]: about_Hash_Tables.md
+[64]: about_language_keywords.md#exit
+[65]: about_operators.md#call-operator-
+[66]: about_Preference_Variables.md
+[67]: about_PSItem.md
+[68]: about_PowerShell_exe.md
+[69]: about_Regular_Expressions.md
+[70]: about_Splatting.md
+[71]: about_Switch.md
+[72]: about_Types.ps1xml.md
+[73]: about_Variables.md
+[74]: xref:Microsoft.PowerShell.Core.Out-Null
+[75]: xref:System.Collections.IEnumerator.Current
+[76]: xref:System.Collections.IEnumerator.MoveNext
+[77]: xref:System.Collections.IEnumerator.Reset
+[78]: https://top10proactive.owasp.org/archive/2024/the-top-10/c3-validate-input-and-handle-exceptions/
+###Microsoft Learn URL###
+https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_automatic_variables/?view=powershell-5.1
+</pre></html>

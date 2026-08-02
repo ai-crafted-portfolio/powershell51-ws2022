@@ -1,0 +1,451 @@
+<!doctype html><html lang="ja"><meta charset="utf-8"><pre class="record-source">###KnowledgeNo###
+PS51-WS2022-2026-3601
+###FormatID###
+PS51-WS2022
+###CreatedAt###
+2026-08-01 00:00
+###UpdatedAt###
+2026-08-01 00:00
+###タイトル###
+about_Ref
+###モジュール###
+Microsoft.PowerShell.Core
+###製品###
+Windows PowerShell 5.1
+###対応OS###
+Windows Server 2022
+###日本語訳###
+# about_Refについて
+
+## 短編説明
+
+参照型変数を作成し,使用する方法について説明します.
+
+## 長い説明
+
+変数を函数 _by reference_または _by value_ に渡すことができます.変数を _by value_ と渡すとき,データのコピーを送信します.変数を _by reference_ と渡すとき,元の値への参照を送信します. これにより,関数は,その変数の値を変更することができます.参照タイプは,  を使って作成されます.`[ref]`の加速器のタイプである.`[System.Management.Automation.PSReference]`タイプです.
+
+の主な目的は`[ref]`PowerShell変数を .NET方法パラメータに参照して,  としてマークした PowerShell 変数を通過することを有効にします.`ref`     `out`       `in`また,自分のPowerShell関数を定義することもできます.`[ref]`この用法では,  タイプを入力します.`[ref]`変数に適用され,結果として得られる `[ref]`インスタンスは,その変数の値を間接的に変更するために使用できます.
+
+次の例では,関数は,その変数の値を変更します.PowerShellでは,整数は値型なので,値によって転送されます.したがって, の値は`$var`機能の範囲外には変わっていません.
+
+```powershell
+Function Test($Data)
+{
+    $Data = 3
+}
+
+$var = 10
+Test -Data $var
+$var
+```
+
+```Output
+10
+```
+
+次の例では,変数に&quot;&quot;が含まれる.`Hashtable`機能に転送されます.`Hashtable`オブジェクトタイプなので,デフォルトでは _by reference_ 機能に転送されます.
+
+変数を _by reference_ を渡すとき,関数はデータを変更することができ,関数が実行した後,その変更は継続します.
+
+```powershell
+Function Test($Data)
+{
+    $Data.Test = &quot;New Text&quot;
+}
+
+$var = @{}
+Test -Data $var
+$var
+```
+
+```Output
+Name                           Value
+----                           -----
+Test                           New Text
+```
+
+この関数は,関数の範囲外で持続する新しいキー値ペアを追加します.
+
+## 参照パラメータを受け入れるための書き込み関数
+
+送信されたデータタイプに関係なく,参照としてパラメータを採取するために,自分の関数をコードすることができます.これは,パラメータを入力して  と指定する必要があります.`[ref]` .
+
+参照を使用する際には,引用文字を用いなければならない.`Value`の財産の財産です.`[ref]`データを入力してアクセスできます.
+
+```powershell
+function Test {
+    param([ref]$Data)
+    $Data.Value = 3
+}
+```
+
+参照を期待するパラメータに変数を渡すためには,参照として変数をキャスト入力する必要があります.
+
+&gt; [!IMPORTANT] &gt;括弧と括弧は両方必要である.
+
+```powershell
+$var = 10
+Test -Data ([ref]$var)
+$var
+```
+
+```Output
+3
+```
+
+## .NET方法への参照を転送する
+
+.NETのいくつかの方法では,参照として変数を渡す必要がある場合があります.方法の定義ではキーワードを使用すると,`in`     `out`       `ref`パラメータで,参照を期待する.
+
+```powershell
+[int] | Get-Member -Static -Name TryParse
+```
+
+```Output
+Name     MemberType Definition
+----     ---------- ----------
+TryParse Method     static bool TryParse(string s, [ref] int result)
+```
+
+   `TryParse`文字列を整数として解析しようとする方法です.この方法は成功した場合,返却します.`$true`返事が,あなたが通過した変数に保存され,参照によって**が表示されます.
+
+```
+PS&gt; $number = 0
+PS&gt; [int]::TryParse(&quot;15&quot;, ([ref]$number))
+True
+PS&gt; $number
+15
+```
+
+## 参照と範囲
+
+参照は,親の範囲内の変数の値を子供範囲内で変更することを可能にします.
+
+```powershell
+
+# Create a value type variable.
+$i = 0
+
+# Create a reference type variable.
+$iRef = [ref]0
+
+# Invoke a scriptblock to attempt to change both values.
+&amp;{$i++;$iRef.Value++}
+
+# Output the results.
+&quot;`$i = $i;`$iRef = $($iRef.Value)&quot;
+```
+
+```Output
+$i = 0;$iRef = 1
+```
+
+参照型の変数だけが変更されました.
+
+##  を使って`[ref]`一般用途のオブジェクトホルダーとして使用します.
+
+も使っていいよ.`[ref]`一般的なオブジェクトホルダーとして使用しています.`[ref]`標準的には,その値は数のような _value type_ のインスタンスのものです.ほとんどのシナリオでは,通常の変数またはパラメータを使用することができます.しかし,この技術は,スクリプトブロックパラメータ値値などのシナリオで,明示的な値保有者を過ぎ去ることは望ましくない (簡潔に言うと) または不可能であるシナリオでは有用です.
+
+例えば,スクリプトブロックパラメータ値を用い, のパラメータ **NewName**の値を計算することができます.`Rename-Item`cmdlet. のcmdlet.`Rename-Item`cmdlet は,アイテムをパイプに運ぶことができます.コマンドは,パイプライン内の各アイテムの**NewName** に渡されたスクリプトブロックを実行します.スクリプトブロックは,子供範囲で実行されます.直接呼び手の範囲内の変数を修正することは役に立たないし,この文脈でスクリプトブロックに参数を送ることはできません.
+
+この例では,スクリプトブロックが **NewName** パラメータに渡され, の値を増加させる.`$iRef`脚本ブロックは,ファイル名の開始に番号を追加することで新しい名前を作成します.
+
+```powershell
+$iRef = [ref] 0
+Get-ChildItem -File $setPath |
+    Rename-Item -NewName { &#x27;{0} - {1}&#x27; -f $iRef.Value++,$_.Name }
+```
+
+## との違い`[ref]`そして,`[System.Management.Automation.PSReference]`
+
+ を使って参照型変数を作成します.`[ref]`加速器またはタイプ指定によって,`[System.Management.Automation.PSReference]`直接入力します.`[ref]` の加速器のタイプです.`[System.Management.Automation.PSReference]`異なる行動をとる.
+
+- を使用するときに`[ref]`PowerShellでキャストする変数に対して,変数の元のインスタンスの参照を含む参照オブジェクトが作成されます. - 変数の元のインスタンスの参照を含む.`[System.Management.Automation.PSReference]`PowerShellでキャストする変数では,元のインスタンスの参照ではなく,変数のコピーを含む参照オブジェクトを作成します.
+
+例えば,次のスクリプトは変数  を生成します.`$x`そして2つの参照オブジェクト.
+
+```powershell
+PS&gt; $int = 1
+PS&gt; $aRef = [ref] $int
+PS&gt; $bRef = [System.Management.Automation.PSReference] $int
+PS&gt; $int
+1
+PS&gt; $aRef, $bRef
+
+Value
+-----
+    1
+    1
+```
+
+この時点で,両方の参照オブジェクトは,同じ値に値する.`$int`.参照オブジェクトに異なる値を追加することで,私たちは見ることができます `$aRef`を使って作成された.`[ref]` の元のインスタンスの参照である.`$int`  `$bRef`を使って作成された.`[System.Management.Automation.PSReference]`, は変数のコピーです.
+
+```powershell
+PS&gt; $aRef.Value+=2
+PS&gt; $bRef.Value+=5
+PS&gt; $int
+3
+PS&gt; $aRef, $bRef
+
+Value
+-----
+    3
+    6
+```
+
+## また, を参照してください.
+
+- [about_Variables][06] - [about_Environment_Variables][01] - [about_Functions][02] - [about_Script_Blocks][04] - [about_Scopes][03] - [about_Type_Accelerators][05] - [System.Management.Automation.PSReference][07]
+
+&lt;!--リンク参照 --&gt; [01]: about_Environment_Variables.md [02]: about_Functions.md [03]: about_Scopes.md [04]: about_Script_Blocks.md [05]: about_Type_Accelerators.md [06]: about_Variables.md [07]: xref:System.Management.Automation.PSReference
+###英語原文###
+# about_Ref
+
+## Short description
+
+Describes how to create and use a reference type variable.
+
+## Long description
+
+You can pass variables to functions _by reference_ or _by value_. When you pass
+a variable _by value_, you are passing a copy of the data. When you pass a
+variable _by reference_, you are passing a reference to the original value.
+This allows the function to change the value of the variable that&#x27;s passed to
+it. Reference types are created using `[ref]`, which is the type accelerator
+for the `[System.Management.Automation.PSReference]` type.
+
+The primary purpose of `[ref]` is to enable passing PowerShell variables by
+reference to .NET method parameters marked as `ref`, `out`, or `in`. You can
+also define your own PowerShell function that take `[ref]` type parameters. In
+this usage, `[ref]` is applied to a _variable_, and the resulting `[ref]`
+instance can be used to indirectly modify that variable&#x27;s value.
+
+In the following example, the function changes the value of the variable passed
+to it. In PowerShell, integers are value types so they&#x27;re passed by value.
+Therefore, the value of `$var` is unchanged outside the scope of the function.
+
+```powershell
+Function Test($Data)
+{
+    $Data = 3
+}
+
+$var = 10
+Test -Data $var
+$var
+```
+
+```Output
+10
+```
+
+In the following example, a variable containing a `Hashtable` is passed to a
+function. `Hashtable` is an object type so by default it&#x27;s passed to the
+function _by reference_.
+
+When passing a variable _by reference_, the function can change the data and
+that change persists after the function executes.
+
+```powershell
+Function Test($Data)
+{
+    $Data.Test = &quot;New Text&quot;
+}
+
+$var = @{}
+Test -Data $var
+$var
+```
+
+```Output
+Name                           Value
+----                           -----
+Test                           New Text
+```
+
+The function adds a new key-value pair that persists outside of the function&#x27;s
+scope.
+
+## Writing functions to accept reference parameters
+
+You can code your functions to take a parameter as a reference, regardless of
+the type of data passed. This requires that you specify the parameters type
+as `[ref]`.
+
+When using references, you must use the `Value` property of the `[ref]` type to
+access your data.
+
+```powershell
+function Test {
+    param([ref]$Data)
+    $Data.Value = 3
+}
+```
+
+To pass a variable to a parameter that expects a reference, you must type cast
+your variable as a reference.
+
+&gt; [!IMPORTANT]
+&gt; The brackets and parenthesis are BOTH required.
+
+```powershell
+$var = 10
+Test -Data ([ref]$var)
+$var
+```
+
+```Output
+3
+```
+
+## Passing references to .NET methods
+
+Some .NET methods may require you to pass a variable as a reference. When the
+method&#x27;s definition uses the keywords `in`, `out`, or `ref` on a parameter, it
+expects a reference.
+
+```powershell
+[int] | Get-Member -Static -Name TryParse
+```
+
+```Output
+Name     MemberType Definition
+----     ---------- ----------
+TryParse Method     static bool TryParse(string s, [ref] int result)
+```
+
+The `TryParse` method attempts to parse a string as an integer. If the method
+succeeds, it returns `$true`, and the result is stored in the variable you
+passed **by reference**.
+
+```
+PS&gt; $number = 0
+PS&gt; [int]::TryParse(&quot;15&quot;, ([ref]$number))
+True
+PS&gt; $number
+15
+```
+
+## References and scopes
+
+References allow the value of a variable in the parent scope to be changed
+within a child scope.
+
+```powershell
+
+# Create a value type variable.
+$i = 0
+
+# Create a reference type variable.
+$iRef = [ref]0
+
+# Invoke a scriptblock to attempt to change both values.
+&amp;{$i++;$iRef.Value++}
+
+# Output the results.
+&quot;`$i = $i;`$iRef = $($iRef.Value)&quot;
+```
+
+```Output
+$i = 0;$iRef = 1
+```
+
+Only the reference type&#x27;s variable was changed.
+
+## Using `[ref]` as a general-purpose object holder
+
+You can also use `[ref]` as a general-purpose object holder. In this usage,
+`[ref]` is applied to a _value_ instead of a variable. Typically, the value is
+an instance of a _value type_, like a number. In most scenarios you can use a
+regular variable or parameter instead. However, this technique is useful in
+scenarios where passing an explicit value holder is undesired (for brevity) or
+not possible, such as in script-block parameter values.
+
+For example, you can use script-block parameter values to calculate the value
+of **NewName** parameter of the `Rename-Item` cmdlet. The `Rename-Item` cmdlet
+allows you to pipe items to it. The command run the scriptblock passed to the
+**NewName** for each item in the pipeline. The scriptblock run in a child
+scope. Modifying a variable in the caller&#x27;s scope directly won&#x27;t help and you
+can&#x27;t pass arguments to the scriptblock in this context.
+
+In this example, the scriptblock passed to the **NewName** parameter
+increments the value of `$iRef` for each item in the pipeline. The scriptblock
+creates a new name by adding a number to the beginning of the filename.
+
+```powershell
+$iRef = [ref] 0
+Get-ChildItem -File $setPath |
+    Rename-Item -NewName { &#x27;{0} - {1}&#x27; -f $iRef.Value++,$_.Name }
+```
+
+## Difference between `[ref]` and `[System.Management.Automation.PSReference]`
+
+A reference type variable is created using the `[ref]` type accelerator or by
+specifying the `[System.Management.Automation.PSReference]` type directly. Even
+though `[ref]` is a type accelerator for
+`[System.Management.Automation.PSReference]`, they behave differently.
+
+- When you use `[ref]` to cast a variable, PowerShell creates a reference
+  object that contains a reference to the original instance of the variable.
+- When you use `[System.Management.Automation.PSReference]` to cast a variable,
+  PowerShell creates a reference object that contains a copy of the variable,
+  rather than a reference to the original instance.
+
+For example, the following script creates a variable `$x` and two reference
+objects.
+
+```powershell
+PS&gt; $int = 1
+PS&gt; $aRef = [ref] $int
+PS&gt; $bRef = [System.Management.Automation.PSReference] $int
+PS&gt; $int
+1
+PS&gt; $aRef, $bRef
+
+Value
+-----
+    1
+    1
+```
+
+At this point, both reference objects have the same value as `$int`. By adding
+different values to the reference objects, we can see that `$aRef`, which was
+created using `[ref]`, is a reference to the original instance of `$int`.
+`$bRef`, which was created using `[System.Management.Automation.PSReference]`,
+is a copy of the variable.
+
+```powershell
+PS&gt; $aRef.Value+=2
+PS&gt; $bRef.Value+=5
+PS&gt; $int
+3
+PS&gt; $aRef, $bRef
+
+Value
+-----
+    3
+    6
+```
+
+## See also
+
+- [about_Variables][06]
+- [about_Environment_Variables][01]
+- [about_Functions][02]
+- [about_Script_Blocks][04]
+- [about_Scopes][03]
+- [about_Type_Accelerators][05]
+- [System.Management.Automation.PSReference][07]
+
+&lt;!-- link references --&gt;
+[01]: about_Environment_Variables.md
+[02]: about_Functions.md
+[03]: about_Scopes.md
+[04]: about_Script_Blocks.md
+[05]: about_Type_Accelerators.md
+[06]: about_Variables.md
+[07]: xref:System.Management.Automation.PSReference
+###Microsoft Learn URL###
+https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_ref/?view=powershell-5.1
+</pre></html>

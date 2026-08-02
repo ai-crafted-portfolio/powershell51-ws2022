@@ -1,0 +1,562 @@
+<!doctype html><html lang="ja"><meta charset="utf-8"><pre class="record-source">###KnowledgeNo###
+PS51-WS2022-2026-1286
+###FormatID###
+PS51-WS2022
+###CreatedAt###
+2026-08-01 00:00
+###UpdatedAt###
+2026-08-01 00:00
+###タイトル###
+Remove-GPLink
+###モジュール###
+grouppolicy
+###製品###
+Windows PowerShell 5.1
+###対応OS###
+Windows Server 2022
+###日本語訳###
+# Remove-GPLink を削除する
+
+## シノプシスです.
+
+サイト,ドメイン,またはOUからGPOリンクを削除します.
+
+## SYNTAXは,のシンタックスです.
+
+### LinkbyGUID (デフォルト) 
+
+```
+Remove-GPLink -Guid &lt;Guid&gt; -Target &lt;String&gt; [-Domain &lt;String&gt;] [-Server &lt;String&gt;] [-WhatIf]
+ [-Confirm] [&lt;CommonParameters&gt;]
+```
+
+### リンクバイ名前
+
+```
+Remove-GPLink [-Name] &lt;String&gt; -Target &lt;String&gt; [-Domain &lt;String&gt;] [-Server &lt;String&gt;] [-WhatIf]
+ [-Confirm] [&lt;CommonParameters&gt;]
+```
+
+## 記述は,
+
+   `Remove-GPLink`cmdlet は,グループポリシーオブジェクト (GPO) と指定されたサイト,ドメイン,またはOU の間のリンクを削除します.この cmdlet は,実際のGPO や指定されたGPO と他のサイト,ドメイン,またはOU の間の他のリンクを削除しません.
+
+## 例えは
+
+### 例1:指定されたGPOリンクを削除する
+
+```powershell
+Remove-GPLink -Name &quot;MyGPO&quot; -Target &quot;OU=MyOU,dc=contoso,dc=com&quot;
+```
+
+```Output
+DisplayName      : MyGPO
+DomainName       : contoso.com
+Owner            : CONTOSO\Domain Admins
+Id               : 375865b2-3b5f-480f-8f56-2a994ea6e725
+GpoStatus        : AllSettingsEnabled
+Description      :
+CreationTime     : 2/26/2009 11:28:08 PM
+ModificationTime : 3/5/2009 3:36:34 PM
+UserVersion      : AD Version: 0, SysVol Version: 0
+ComputerVersion  : AD Version: 1, SysVol Version: 1
+WmiFilter        :
+```
+
+このコマンドは,GPOの名前とされたリンクを削除します.`MyGPO`そして,その `MyOU`の組織的単位です.`contoso.com`ドメイン.
+
+### 例2:指定されたGPOとデフォルトサイトとのリンクを削除します
+
+```powershell
+Remove-GPLink -Name &quot;MyGPO&quot; -Target &quot;Default-First-Site-Name&quot;
+```
+
+このコマンドは,MyGPOというGPOとデフォルトサイトとの間のリンクを削除します.
+
+### 例3:指定された組織単位にリンクされているすべてのGPOのリンクを削除します
+
+```powershell
+(Get-GPInheritance -Target &quot;ou=MyOU,dc=contoso,dc=com&quot;).GpoLinks | Remove-GPLink
+```
+
+```Output
+DisplayName      : TestGPO-3
+DomainName       : contoso.com
+Owner            : CONTOSO\Domain Admins
+Id               : d02126d4-82e8-4e87-b4a0-2d44b6891411
+GpoStatus        : AllSettingsEnabled
+Description      :
+CreationTime     : 2/27/2009 2:59:51 PM
+ModificationTime : 3/5/2009 3:36:37 PM
+UserVersion      : AD Version: 13, SysVol Version: 13
+ComputerVersion  : AD Version: 0, SysVol Version: 0
+WmiFilter        :
+
+DisplayName      : TestGPO-2
+DomainName       : contoso.com
+Owner            : CONTOSO\Domain Admins
+Id               : 375865b2-3b5f-480f-8f56-2a994ea6e725
+GpoStatus        : AllSettingsEnabled
+Description      :
+CreationTime     : 2/26/2009 11:28:08 PM
+ModificationTime : 3/5/2009 3:36:34 PM
+UserVersion      : AD Version: 0, SysVol Version: 0
+ComputerVersion  : AD Version: 1, SysVol Version: 1
+WmiFilter        :
+```
+
+このコマンドは,すべてのGPOのリンクを削除します.`MyOU`の組織的単位です.`contoso.com`ドメイン.
+
+このcmdletは,OUのGpoLinks属性に含まれるOUにリンクされているGPOのすべてのGPOリンクが含まれています.より高いレベルのコンテナから継承されたリンクは含まれていません.このコレクションは,パイプで に送られます.`Remove-GPLink`リンクが削除されたGPOは返されます.
+
+## パラメータは
+
+### -ドメイン
+
+このcmdletのドメインを指定します.ドメインの完全資格ドメイン名 (FQDN) を指定する必要があります.
+
+のために`Remove-GPLink`cmdlet:
+
+- リンクされたGPOは,この領域に存在しなければならない.
+
+- リンクされているアクティブディレクトリコンテナ (サイト,ドメイン,またはOU) は,このドメインと信頼関係を持つドメインに存在する必要があります.
+
+注:リンクするドメインを指定するには, **Target** パラメータを使用します.
+
+**Domain**パラメータを指定していない場合は,現在のセッションを実行しているユーザーのドメインが使用されます.もし,cmdletがコンピュータの起動またはシャットダウンスクリプトから実行されている場合は,コンピュータのドメインが使用されます.詳細については,完全なヘルプのメモセクションを参照してください.
+
+もし,現在のセッションを実行しているユーザーのドメイン (または起動またはシャットダウンスクリプトの場合,コンピュータ) と異なるドメインを指定した場合,そのドメインとユーザーのドメイン,またはコンピュータの間に信頼が存在する必要があります.
+
+また,内蔵の名前の **DomainName**によって**Domain**パラメータを参照することもできます.詳細については, [about_Aliases] (/powershell/module/microsoft.powershell.core/about/about_aliases) を参照してください.
+
+```yaml
+Type: System.String
+Parameter Sets: (All)
+Aliases: DomainName
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -ガイド
+
+リンクをグローバル・ユニコーン・ID (GUID) で削除するGPOを指定します.`GUID`独創的にGPOを識別する.
+
+また,内蔵の名前名, **id** と **gpoid** によって **Guid** パラメタを参照することもできます.詳細については, [about_Aliases] (/powershell/module/microsoft.powershell.core/about/about_aliases) を参照してください.
+
+```yaml
+Type: Guid
+Parameter Sets: LinkbyGUID
+Aliases: ID, GPOID
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -名字は
+
+リンクを表示名で削除するGPOを指定します.
+
+画面名はドメインでユニークであることを保証することはできません.同じ表示名を持つ別のGPOがドメインで存在した場合,エラーが発生します.GPOをユニークに識別するために**Guid**パラメータを使用できます.
+
+また,内蔵の名前, **DisplayName**によって **Name**パラメータを参照することもできます.詳細については, [about_Aliases] (/powershell/module/microsoft.powershell.core/about/about_aliases) を参照してください.
+
+```yaml
+Type: System.String
+Parameter Sets: LinkbyName
+Aliases: DisplayName
+
+Required: True
+Position: 0
+Default value: None
+Accept pipeline input: True (ByValue)
+Accept wildcard characters: False
+```
+
+### -サーバー
+
+このcmdletが操作を完了するために連絡するドメインコントローラの名前を指定します.完全に資格のあるドメイン名 (FQDN) またはホスト名を指定することができます.
+
+**Server**パラメータを使用して名前を指定しない場合は,プライマリ ドメインコントローラー (PDC) エミュレーターに連絡されます.
+
+また,内蔵のニックネーム **DC**によって **Server** パラメータを参照することもできます.詳細については, [about_Aliases] (/powershell/module/microsoft.powershell.core/about/about_aliases) を参照してください.
+
+```yaml
+Type: System.String
+Parameter Sets: (All)
+Aliases: DC
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### - ターゲット
+
+ライトウェイトディレクトリ アクセス プロトコル (LDAP) を指定すると,リンクを削除するサイト,ドメイン,またはOUの名前の格差が表示されます.例えば,  の場合は,`MyOU`の組織的単位です.`contoso.com`LDAPの名前のドメインは,`ou=MyOU,dc=contoso,dc=com` .
+
+```yaml
+Type: System.String
+Parameter Sets: (All)
+Aliases:
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -確認
+
+cmdletを実行する前に確認を提示します.
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases: cf
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -WhatIf
+
+cmdletが実行されなければどうなるかを示しています.
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases: wi
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+# Remove-GPLink を削除する
+
+### 共通パラメーター
+
+このcmdletは,共通パラメータをサポートしています: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable.詳細については, [about_CommonParameters](を参照してください.https://go.microsoft.com/fwlink/?LinkID=113216) でした.
+
+## 輸入は
+
+### Microsoft.GroupPolicy.GpoLink について
+
+このcmdletは,GPOとサイト,ドメイン,またはOUの間のリンクを表すオブジェクトを受け入れます.
+
+## 輸出は
+
+### Microsoft.GroupPolicy.Gpo
+
+このcmdletは,リンクが削除されたGPOを返します.
+
+##  NOTES  記事ができました.
+
+## 関連リンク
+
+[New-GPLink](./New-GPLink.md) 
+
+[Set-GPLink](./Set-GPLink.md) 
+###英語原文###
+# Remove-GPLink
+
+## SYNOPSIS
+
+Removes a GPO link from a site, domain or OU.
+
+## SYNTAX
+
+### LinkbyGUID (Default)
+
+```
+Remove-GPLink -Guid &lt;Guid&gt; -Target &lt;String&gt; [-Domain &lt;String&gt;] [-Server &lt;String&gt;] [-WhatIf]
+ [-Confirm] [&lt;CommonParameters&gt;]
+```
+
+### LinkbyName
+
+```
+Remove-GPLink [-Name] &lt;String&gt; -Target &lt;String&gt; [-Domain &lt;String&gt;] [-Server &lt;String&gt;] [-WhatIf]
+ [-Confirm] [&lt;CommonParameters&gt;]
+```
+
+## DESCRIPTION
+
+The `Remove-GPLink` cmdlet removes the link between a Group Policy Object (GPO) and a specified
+site, domain, or OU. This cmdlet does not delete the actual GPO or any other links between the
+specified GPO and other sites, domains, or OUs.
+
+## EXAMPLES
+
+### Example 1: Remove the specified GPO link
+
+```powershell
+Remove-GPLink -Name &quot;MyGPO&quot; -Target &quot;OU=MyOU,dc=contoso,dc=com&quot;
+```
+
+```Output
+DisplayName      : MyGPO
+DomainName       : contoso.com
+Owner            : CONTOSO\Domain Admins
+Id               : 375865b2-3b5f-480f-8f56-2a994ea6e725
+GpoStatus        : AllSettingsEnabled
+Description      :
+CreationTime     : 2/26/2009 11:28:08 PM
+ModificationTime : 3/5/2009 3:36:34 PM
+UserVersion      : AD Version: 0, SysVol Version: 0
+ComputerVersion  : AD Version: 1, SysVol Version: 1
+WmiFilter        :
+```
+
+This command removes the link between the GPO named `MyGPO` and the `MyOU` organizational unit in
+the `contoso.com` domain.
+
+### Example 2: Remove the link between the specified GPO and the default site
+
+```powershell
+Remove-GPLink -Name &quot;MyGPO&quot; -Target &quot;Default-First-Site-Name&quot;
+```
+
+This command removes the link between the GPO named MyGPO and the default site.
+
+### Example 3: Remove the links for all GPOs that are linked to the specified organizational unit
+
+```powershell
+(Get-GPInheritance -Target &quot;ou=MyOU,dc=contoso,dc=com&quot;).GpoLinks | Remove-GPLink
+```
+
+```Output
+DisplayName      : TestGPO-3
+DomainName       : contoso.com
+Owner            : CONTOSO\Domain Admins
+Id               : d02126d4-82e8-4e87-b4a0-2d44b6891411
+GpoStatus        : AllSettingsEnabled
+Description      :
+CreationTime     : 2/27/2009 2:59:51 PM
+ModificationTime : 3/5/2009 3:36:37 PM
+UserVersion      : AD Version: 13, SysVol Version: 13
+ComputerVersion  : AD Version: 0, SysVol Version: 0
+WmiFilter        :
+
+DisplayName      : TestGPO-2
+DomainName       : contoso.com
+Owner            : CONTOSO\Domain Admins
+Id               : 375865b2-3b5f-480f-8f56-2a994ea6e725
+GpoStatus        : AllSettingsEnabled
+Description      :
+CreationTime     : 2/26/2009 11:28:08 PM
+ModificationTime : 3/5/2009 3:36:34 PM
+UserVersion      : AD Version: 0, SysVol Version: 0
+ComputerVersion  : AD Version: 1, SysVol Version: 1
+WmiFilter        :
+```
+
+This command removes the links for all the GPOs that are linked to the `MyOU` organizational unit in
+the `contoso.com` domain.
+
+This cmdlet is used to get a **Microsoft.GroupPolicy.Som** object for the OU. The GpoLinks property
+of the SOM object contains all the GPO links for GPOs that are linked to the OU. Links that are
+inherited from higher-level containers are not included. This collection is piped into
+`Remove-GPLink`. The GPOs for which links have been removed are returned.
+
+## PARAMETERS
+
+### -Domain
+
+Specifies the domain for this cmdlet. You must specify the fully qualified domain name (FQDN) of the
+domain.
+
+For the `Remove-GPLink` cmdlet:
+
+- The GPO that is linked must exist in this domain.
+
+- The Active Directory container (site, domain, or OU) that is linked must exist in a domain that
+  has a trust relationship with this domain.
+
+Note: To specify a domain to link to, use the **Target** parameter.
+
+If you do not specify the **Domain** parameter, the domain of the user that is running the current
+session is used. If the cmdlet is being run from a computer startup or shutdown script, the domain
+of the computer is used. For more information, see the Notes section in the full Help.
+
+If you specify a domain that is different from the domain of the user that is running the current
+session (or, for a startup or shutdown script, the computer), a trust must exist between that domain
+and the domain of the user, or the computer.
+
+You can also refer to the **Domain** parameter by its built-in alias, **DomainName**. For more
+information, see [about_Aliases](/powershell/module/microsoft.powershell.core/about/about_aliases).
+
+```yaml
+Type: System.String
+Parameter Sets: (All)
+Aliases: DomainName
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Guid
+
+Specifies the GPO for which to remove the link by its globally unique identifier (GUID).
+The `GUID` uniquely identifies the GPO.
+
+You can also refer to the **Guid** parameter by its built-in aliases, **id** and **gpoid**. For more
+information, see [about_Aliases](/powershell/module/microsoft.powershell.core/about/about_aliases).
+
+```yaml
+Type: Guid
+Parameter Sets: LinkbyGUID
+Aliases: ID, GPOID
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -Name
+
+Specifies the GPO for which to remove the link by its display name.
+
+The display name is not guaranteed to be unique in the domain. If another GPO with the same display
+name exists in the domain an error occurs. You can use the **Guid** parameter to uniquely identify a
+GPO.
+
+You can also refer to the **Name** parameter by its built-in alias, **DisplayName**. For more
+information, see [about_Aliases](/powershell/module/microsoft.powershell.core/about/about_aliases).
+
+```yaml
+Type: System.String
+Parameter Sets: LinkbyName
+Aliases: DisplayName
+
+Required: True
+Position: 0
+Default value: None
+Accept pipeline input: True (ByValue)
+Accept wildcard characters: False
+```
+
+### -Server
+
+Specifies the name of the domain controller that this cmdlet contacts to complete the operation. You
+can specify either the fully qualified domain name (FQDN) or the host name.
+
+If you do not specify the name using the **Server** parameter, the primary domain controller (PDC)
+emulator is contacted.
+
+You can also refer to the **Server** parameter by its built-in alias, **DC**. For more information,
+see [about_Aliases](/powershell/module/microsoft.powershell.core/about/about_aliases).
+
+```yaml
+Type: System.String
+Parameter Sets: (All)
+Aliases: DC
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Target
+
+Specifies the Lightweight Directory Access Protocol (LDAP) distinguished name of the site, domain,
+or OU from which to remove the link. For instance, for the `MyOU` organizational unit in the
+`contoso.com` domain, the LDAP distinguished name is `ou=MyOU,dc=contoso,dc=com`.
+
+```yaml
+Type: System.String
+Parameter Sets: (All)
+Aliases:
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -Confirm
+
+Prompts you for confirmation before running the cmdlet.
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases: cf
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -WhatIf
+
+Shows what would happen if the cmdlet runs. The cmdlet is not run.
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases: wi
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+# Remove-GPLink
+
+### CommonParameters
+
+This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable,
+-InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose,
+-WarningAction, and -WarningVariable. For more information, see
+[about_CommonParameters](https://go.microsoft.com/fwlink/?LinkID=113216).
+
+## INPUTS
+
+### Microsoft.GroupPolicy.GpoLink
+
+This cmdlet accepts an object that represents the link between a GPO and a site, domain, or OU.
+
+## OUTPUTS
+
+### Microsoft.GroupPolicy.Gpo
+
+This cmdlet returns the GPO for which the link has been removed.
+
+## NOTES
+
+## RELATED LINKS
+
+[New-GPLink](./New-GPLink.md)
+
+[Set-GPLink](./Set-GPLink.md)
+###Microsoft Learn URL###
+https://learn.microsoft.com/en-us/powershell/module/grouppolicy/remove-gplink/?view=windowsserver2022-ps
+</pre></html>

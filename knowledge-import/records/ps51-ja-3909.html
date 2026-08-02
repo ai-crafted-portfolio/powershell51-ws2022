@@ -1,0 +1,443 @@
+<!doctype html><html lang="ja"><meta charset="utf-8"><pre class="record-source">###KnowledgeNo###
+PS51-WS2022-2026-3909
+###FormatID###
+PS51-WS2022
+###CreatedAt###
+2026-08-01 00:00
+###UpdatedAt###
+2026-08-01 00:00
+###タイトル###
+Measure-Command
+###モジュール###
+Microsoft.PowerShell.Utility
+###製品###
+Windows PowerShell 5.1
+###対応OS###
+Windows Server 2022
+###日本語訳###
+# メーザー・コマンドです.
+
+## SYNOPSISは,スクリプトブロックとcmdletsを実行するのにかかる時間を測定します.
+
+## SYNTAXは,のシンタックスです.
+
+```
+Measure-Command [-InputObject &lt;PSObject&gt;] [-Expression] &lt;ScriptBlock&gt; [&lt;CommonParameters&gt;]
+```
+
+## 記述は,
+
+   `Measure-Command`cmdlet は内部でスクリプトブロックまたは cmdlet を実行し,実行時間を操作を実行して実行時間を返します.
+
+によって実行されるスクリプトブロック`Measure-Command`現在の範囲で実行する,子供範囲では行かない.
+
+## 例えは
+
+### 例1:コマンドを測定する
+
+この例では,実行するのにかかる時間を測定します.`Get-EventLog`Windows PowerShell イベントログのイベントを記録するコマンドです.
+
+```powershell
+Measure-Command { Get-EventLog &quot;Windows PowerShell&quot; }
+```
+
+### 例2: 測定命令から2つの出力を比較してみてください.
+
+最初のコマンドは,リクティブの処理にかかる時間を測定します.`Get-ChildItem`のみを取得するために**Path**パラメータを使用するコマンドです.`.txt`のファイルに含まれるファイルです.`C:\Windows`ディレクトリとそのサブディレクトリ.
+
+第二のコマンドは,リクティブの処理にかかる時間を測定します.`Get-ChildItem`プロバイダー特定の**フィルター**パラメータを使用するコマンドです.
+
+これらのコマンドはPowerShellコマンドでプロバイダー特定フィルタを使用する価値を示します.
+
+```powershell
+Measure-Command { Get-ChildItem -Path C:\Windows\*.txt -Recurse }
+```
+
+```Output
+Days              : 0
+Hours             : 0
+Minutes           : 0
+Seconds           : 8
+Milliseconds      : 618
+Ticks             : 86182763
+TotalDays         : 9.9748568287037E-05
+TotalHours        : 0.00239396563888889
+TotalMinutes      : 0.143637938333333
+TotalSeconds      : 8.6182763
+TotalMilliseconds : 8618.2763
+```
+
+```powershell
+Measure-Command {Get-ChildItem C:\Windows -Filter &quot;*.txt&quot; -Recurse}
+```
+
+```Output
+Days              : 0
+Hours             : 0
+Minutes           : 0
+Seconds           : 1
+Milliseconds      : 140
+Ticks             : 11409189
+TotalDays         : 1.32050798611111E-05
+TotalHours        : 0.000316921916666667
+TotalMinutes      : 0.019015315
+TotalSeconds      : 1.1409189
+TotalMilliseconds : 1140.9189
+```
+
+### 例3: 測定命令への入力パイプを3つ示します.
+
+管道で送られている物体.`Measure-Command`**Expression**パラメータに転送されるスクリプトブロックに利用できます.スクリプトブロックはパイプライン上の各オブジェクトに対して一度実行されます.
+
+```powershell
+
+# Perform a simple operation to demonstrate the InputObject parameter
+
+# Note that no output is displayed.
+10, 20, 50 | Measure-Command -Expression { for ($i=0; $i -lt $_; $i++) {$i} }
+```
+
+```Output
+Days              : 0
+Hours             : 0
+Minutes           : 0
+Seconds           : 0
+Milliseconds      : 12
+Ticks             : 122672
+TotalDays         : 1.41981481481481E-07
+TotalHours        : 3.40755555555556E-06
+TotalMinutes      : 0.000204453333333333
+TotalSeconds      : 0.0122672
+TotalMilliseconds : 12.2672
+```
+
+### 例4: 測定命令の出力を表示する例
+
+ で表現の出力を表示するには`Measure-Command`管を使って を操作できます.`Out-Default` .
+
+```powershell
+
+# Perform the same operation as above adding Out-Default to every execution.
+
+# This will show that the ScriptBlock is in fact executing for every item.
+10, 20, 50 | Measure-Command -Expression {for ($i=0; $i -lt $_; $i++) {$i}; &quot;$($_)&quot; | Out-Default }
+```
+
+```Output
+10
+20
+50
+
+
+Days              : 0
+Hours             : 0
+Minutes           : 0
+Seconds           : 0
+Milliseconds      : 11
+Ticks             : 113745
+TotalDays         : 1.31649305555556E-07
+TotalHours        : 3.15958333333333E-06
+TotalMinutes      : 0.000189575
+TotalSeconds      : 0.0113745
+TotalMilliseconds : 11.3745
+```
+
+### 例5:児童範囲で実行を測定する例
+
+`Measure-Command`脚本ブロックは現在の範囲で実行されるため,脚本ブロックは現在の範囲の値を変更できます.現在の範囲の変更を避けるために,脚本ブロックを括弧に包んで () する必要があります.`{}`) と,呼び出しオペレーターを使用する ()`&amp;`) は,子供範囲でブロックを実行します.
+
+```powershell
+$foo = &#x27;Value 1&#x27;
+$null = Measure-Command { $foo = &#x27;Value 2&#x27; }
+$foo
+$null = Measure-Command { &amp; { $foo = &#x27;Value 3&#x27; } }
+$foo
+```
+
+```Output
+Value 2
+Value 2
+```
+
+呼び出しオペレーターに関する詳細については, [about_Operators] (../Microsoft.PowerShell.Core/About/about_Operators.md#call-operator-) を参照してください.
+
+## パラメータは
+
+### -Expression
+
+タイミングを指定する表現を表示します. 式を括弧に挿入します ().`{}`) でした.
+
+```yaml
+Type: System.Management.Automation.ScriptBlock
+Parameter Sets: (All)
+Aliases:
+
+Required: True
+Position: 0
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -InputObject
+
+**InputObject**パラメータに結合したオブジェクトは,スクリプトブロックが**Expression**パラメータに転送されるオプション入力です.`$_`管道内の現在のオブジェクトを参照するために使用できます.
+
+```yaml
+Type: System.Management.Automation.PSObject
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByValue)
+Accept wildcard characters: False
+```
+
+### 共通パラメーター
+
+このcmdletは,共通パラメータをサポートしています: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable.詳細については, [about_CommonParameters](を参照してください.https://go.microsoft.com/fwlink/?LinkID=113216) でした.
+
+## 輸入は
+
+### システム管理自動化PSObject
+
+このcmdletにオブジェクトをパイプすることができます.
+
+## 輸出は
+
+### System.TimeSpan について
+
+このcmdletは,結果を表す時間帯オブジェクトを返します.
+
+##  NOTES  記事ができました.
+
+## 関連リンク
+
+[Invoke-Command](../Microsoft.PowerShell.Core/Invoke-Command.md) について
+
+[Trace-Command](Trace-Command.md) でした.
+###英語原文###
+# Measure-Command
+
+## SYNOPSIS
+Measures the time it takes to run scriptblocks and cmdlets.
+
+## SYNTAX
+
+```
+Measure-Command [-InputObject &lt;PSObject&gt;] [-Expression] &lt;ScriptBlock&gt; [&lt;CommonParameters&gt;]
+```
+
+## DESCRIPTION
+
+The `Measure-Command` cmdlet runs a scriptblock or cmdlet internally, times the execution of the
+operation, and returns the execution time.
+
+&gt; [!NOTE]
+&gt; scriptblocks run by `Measure-Command` run in the current scope, not a child scope.
+
+## EXAMPLES
+
+### Example 1: Measure a command
+
+This example measures the time it takes to run a `Get-EventLog` command that gets the events in the
+Windows PowerShell event log.
+
+```powershell
+Measure-Command { Get-EventLog &quot;Windows PowerShell&quot; }
+```
+
+### Example 2: Compare two outputs from Measure-Command
+
+The first command measures the time it takes to process a recursive `Get-ChildItem` command that
+uses the **Path** parameter to get only `.txt` files in the `C:\Windows` directory and its
+subdirectories.
+
+The second command measures the time it takes to process a recursive `Get-ChildItem` command that
+uses the provider-specific **Filter** parameter.
+
+These commands show the value of using a provider-specific filter in PowerShell commands.
+
+```powershell
+Measure-Command { Get-ChildItem -Path C:\Windows\*.txt -Recurse }
+```
+
+```Output
+Days              : 0
+Hours             : 0
+Minutes           : 0
+Seconds           : 8
+Milliseconds      : 618
+Ticks             : 86182763
+TotalDays         : 9.9748568287037E-05
+TotalHours        : 0.00239396563888889
+TotalMinutes      : 0.143637938333333
+TotalSeconds      : 8.6182763
+TotalMilliseconds : 8618.2763
+```
+
+```powershell
+Measure-Command {Get-ChildItem C:\Windows -Filter &quot;*.txt&quot; -Recurse}
+```
+
+```Output
+Days              : 0
+Hours             : 0
+Minutes           : 0
+Seconds           : 1
+Milliseconds      : 140
+Ticks             : 11409189
+TotalDays         : 1.32050798611111E-05
+TotalHours        : 0.000316921916666667
+TotalMinutes      : 0.019015315
+TotalSeconds      : 1.1409189
+TotalMilliseconds : 1140.9189
+```
+
+### Example 3: Piping input to Measure-Command
+
+Objects that are piped to `Measure-Command` are available to the scriptblock that is passed to the
+**Expression** parameter. The scriptblock is executed once for each object on the pipeline.
+
+```powershell
+
+# Perform a simple operation to demonstrate the InputObject parameter
+
+# Note that no output is displayed.
+10, 20, 50 | Measure-Command -Expression { for ($i=0; $i -lt $_; $i++) {$i} }
+```
+
+```Output
+Days              : 0
+Hours             : 0
+Minutes           : 0
+Seconds           : 0
+Milliseconds      : 12
+Ticks             : 122672
+TotalDays         : 1.41981481481481E-07
+TotalHours        : 3.40755555555556E-06
+TotalMinutes      : 0.000204453333333333
+TotalSeconds      : 0.0122672
+TotalMilliseconds : 12.2672
+```
+
+### Example 4: Displaying output of measured command
+
+To display output of expression in `Measure-Command` you can use a pipe to `Out-Default`.
+
+```powershell
+
+# Perform the same operation as above adding Out-Default to every execution.
+
+# This will show that the ScriptBlock is in fact executing for every item.
+10, 20, 50 | Measure-Command -Expression {for ($i=0; $i -lt $_; $i++) {$i}; &quot;$($_)&quot; | Out-Default }
+```
+
+```Output
+10
+20
+50
+
+
+Days              : 0
+Hours             : 0
+Minutes           : 0
+Seconds           : 0
+Milliseconds      : 11
+Ticks             : 113745
+TotalDays         : 1.31649305555556E-07
+TotalHours        : 3.15958333333333E-06
+TotalMinutes      : 0.000189575
+TotalSeconds      : 0.0113745
+TotalMilliseconds : 11.3745
+```
+
+### Example 5: Measuring execution in a child scope
+
+`Measure-Command` runs the scriptblock in the current scope, so the scriptblock can modify values
+in the current scope. To avoid changes to the current scope, you must wrap the scriptblock in
+braces (`{}`) and use the invocation operator (`&amp;`) to execute the block in a child scope.
+
+```powershell
+$foo = &#x27;Value 1&#x27;
+$null = Measure-Command { $foo = &#x27;Value 2&#x27; }
+$foo
+$null = Measure-Command { &amp; { $foo = &#x27;Value 3&#x27; } }
+$foo
+```
+
+```Output
+Value 2
+Value 2
+```
+
+For more information about the invocation operator, see
+[about_Operators](../Microsoft.PowerShell.Core/About/about_Operators.md#call-operator-).
+
+## PARAMETERS
+
+### -Expression
+
+Specifies the expression that is being timed. Enclose the expression in braces (`{}`).
+
+```yaml
+Type: System.Management.Automation.ScriptBlock
+Parameter Sets: (All)
+Aliases:
+
+Required: True
+Position: 0
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -InputObject
+
+Objects bound to the **InputObject** parameter are optional input for the scriptblock passed to the
+**Expression** parameter. Inside the scriptblock, `$_` can be used to reference the current object
+in the pipeline.
+
+```yaml
+Type: System.Management.Automation.PSObject
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByValue)
+Accept wildcard characters: False
+```
+
+### CommonParameters
+
+This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable,
+-InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose,
+-WarningAction, and -WarningVariable. For more information, see
+[about_CommonParameters](https://go.microsoft.com/fwlink/?LinkID=113216).
+
+## INPUTS
+
+### System.Management.Automation.PSObject
+
+You can pipe an object to this cmdlet.
+
+## OUTPUTS
+
+### System.TimeSpan
+
+This cmdlet returns a time span object representing the result.
+
+## NOTES
+
+## RELATED LINKS
+
+[Invoke-Command](../Microsoft.PowerShell.Core/Invoke-Command.md)
+
+[Trace-Command](Trace-Command.md)
+###Microsoft Learn URL###
+https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.utility/measure-command/?view=powershell-5.1
+</pre></html>

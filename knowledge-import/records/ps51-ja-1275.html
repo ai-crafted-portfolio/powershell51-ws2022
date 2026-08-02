@@ -1,0 +1,653 @@
+<!doctype html><html lang="ja"><meta charset="utf-8"><pre class="record-source">###KnowledgeNo###
+PS51-WS2022-2026-1275
+###FormatID###
+PS51-WS2022
+###CreatedAt###
+2026-08-01 00:00
+###UpdatedAt###
+2026-08-01 00:00
+###タイトル###
+Get-GPPermission
+###モジュール###
+grouppolicy
+###製品###
+Windows PowerShell 5.1
+###対応OS###
+Windows Server 2022
+###日本語訳###
+# GPPermission を取得する
+
+## シノプシスです.
+
+指定されたGPOで1つまたは複数のセキュリティプリンシパルの許可レベルを取得します.
+
+## SYNTAXは,のシンタックスです.
+
+### SourcebyGUID (デフォルト) 
+
+```
+Get-GPPermission -Guid &lt;Guid&gt; [-TargetName &lt;String&gt;] [-TargetType &lt;PermissionTrusteeType&gt;]
+ [-DomainName &lt;String&gt;] [-Server &lt;String&gt;] [-All] [&lt;CommonParameters&gt;]
+```
+
+### SourcebyName ソースバイネーム
+
+```
+Get-GPPermission [-Name] &lt;String&gt; [-TargetName &lt;String&gt;] [-TargetType &lt;PermissionTrusteeType&gt;]
+ [-DomainName &lt;String&gt;] [-Server &lt;String&gt;] [-All] [&lt;CommonParameters&gt;]
+```
+
+## 記述は,
+
+   `Get-GPPermission`cmdlet は指定されたグループポリシーオブジェクト (GPO) にある1つまたは複数のセキュリティプリンシルの許可レベルを取得します.あなたは,指定されたグループポリシーオブジェクト (GPO) にあるユーザー,セキュリティグループ,またはコンピュータの許可レベルを取得するためのユーザー,セキュリティグループ,またはコンピュータを指定するために **TargetName**と **TargetType**パラメータを使用できます.あなたは,ユーザー,セキュリティグループ,またはコンピュータを含む各セキュリティプリンシルの許可レベルを取得するために **All**パラメータを使用できます.これはGPOに権限のあるユーザー,セキュリティグループ,またはコンピュータのみ有効です. GPOの表示名または GUIDでGPOを指定できます.
+
+## 例えは
+
+### 例1:指定されたGPOのグループに対する許可レベルを取得します
+
+```powershell
+Get-GPPermission -Name &quot;TestGpo&quot; -TargetName &quot;Domain Users&quot; -TargetType Group
+```
+
+```Output
+Trustee         : Domain Users
+TrusteeType     : Group
+PermissionLevel : GpoRead
+Inherited       : False
+```
+
+このコマンドは,GPOのDomain Usersグループに TestGpoという許可レベルを取得します.
+
+### 例2:指定されたGPOで指定された GUIDでグループのための許可レベルを取得します.
+
+```powershell
+$params = @{
+    Domain     = &#x27;sales.contoso.com&#x27;
+    Server     = &#x27;DC1&#x27;
+    GUID       = &#x27;fa4a9473-6e2a-4b87-ab78-175e68d97bde&#x27;
+    TargetName = &#x27;Domain Admins&#x27;
+    TargetType = &#x27;Group&#x27;
+}
+Get-GPPermission @params
+```
+
+このコマンドは,GPOでGUIIDのドメイン管理者グループに対する許可レベルを獲得します.`fa4a9473-6e2a-4b78-175e68d97bde`の内側にある`Sales.Contoso.com`域名です.`DC1.sales.contoso.com`ドメインコントローラに連絡して操作を完了します.
+
+セッションを実行しているユーザーのドメイン (または起動・シャットダウンスクリプトの場合,コンピュータ) が, と異なる場合.`sales.contoso.com`ドメインは,両ドメインの間に信頼が存在しなければならない,またはコマンドが失敗します.
+
+### 例3:指定されたGPOのすべてのセキュリティ原則の許可レベルを取得します.
+
+```powershell
+Get-GPPermission -Name &quot;TestGPO&quot; -All
+```
+
+```Output
+Trustee     : Authenticated Users
+TrusteeType : WellKnownGroup
+Permission  : GpoApply
+Inherited   : False
+
+Trustee     : Domain Admins
+TrusteeType : Group
+Permission  : GpoEditDeleteModifySecurity
+Inherited   : False
+
+Trustee     : Enterprise Admins
+TrusteeType : Group
+Permission  : GpoEditDeleteModifySecurity
+Inherited   : False
+
+Trustee     : ENTERPRISE DOMAIN CONTROLLERS
+TrusteeType : WellKnownGroup
+Permission  : GpoRead
+Inherited   : False
+
+Trustee     : SYSTEM
+TrusteeType : WellKnownGroup
+Permission  : GpoEditDeleteModifySecurity
+Inherited   : False
+```
+
+このコマンドは,GPOに許可があるすべてのセキュリティ・プリンシルの許可レベルを獲得します.`TestGPO` .
+
+### 例4:特定の許可のために各GPOの表示名を取得する
+
+```powershell
+Get-GPO -All | ForEach-Object {
+    if ( $_ |
+            $params = @{
+                TargetName  = &#x27;contoso\Domain Admins&#x27;
+                TargetType  = &#x27;Group&#x27;
+                ErrorAction = &#x27;SilentlyContinue&#x27;
+            }
+            Get-GPPermission @params) {
+            $_.DisplayName
+        }
+    }
+```
+
+```Output
+Default Domain Policy
+TestGPO-1
+TestGPO-2 Default Domain Controllers Policy
+Internet Security
+TestGPO
+```
+
+このコマンドは,指定されたセキュリティ・プリンシパルの許可がある各GPOの表示名 (ドメイン) をリストする.
+
+まず, `Get-GPO`ドメインのすべてのGPOを回収するために使用されます ().`Get-GPO -All`) となるので,コレクションは,パイプでに流れ込む.`Foreach-Object`各GPOが評価されるにつれて,命令はパイプでに流れます.`Get-GPPermissions`. 許可レベルが返された場合,GPOの **DisplayName**プロパティが印刷されます.
+
+**ErrorAction**パラメータは,  に設定されています.`SilentlyContinue`原因は,指定されたセキュリティ・プリンシパルはGPOに権限がない場合,終了しないエラーが発生するからです. **ErrorAction** を  として指定します.`SilentlyContinue`セキュリティ・プリンタが許可がないGPOSでエラーメッセージが印刷されないようにします. **ErrorAction**パラメータに関する詳細については, [about_CommonParameters] を参照してください.https://go.microsoft.com/fwlink/?LinkID=113216) でした.
+
+## パラメータは
+
+### -すべて
+
+CmdletがGPOに権限を持つ各ユーザー,グループ,またはコンピュータの許可レベルを取得することを示します.
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -ドメイン名
+
+このcmdletのドメインを指定します.ドメインの完全資格ドメイン名 (FQDN) を指定する必要があります.指定されたGPOはこのドメインに存在する必要があります.
+
+**Domain**パラメータを指定していない場合は,現在のセッションを実行しているユーザーのドメインが使用されます.もし,cmdletがコンピュータの起動またはシャットダウンスクリプトから実行されている場合は,コンピュータのドメインが使用されます.詳細については,完全なヘルプのメモ欄を参照してください.
+
+当時のセッション (または起動またはシャットダウンスクリプトの場合,コンピュータ) を実行しているユーザーのドメインとは異なるドメインを指定した場合,そのドメインとユーザーのドメインまたはコンピュータの間に信頼が存在する必要があります.
+
+また,その内蔵のアリアス,ドメインによって **Server** パラメータを参照することもできます.詳細については, [about_Aliases] (/powershell/module/microsoft.powershell.core/about/about_aliases) を参照してください.
+
+```yaml
+Type: System.String
+Parameter Sets: (All)
+Aliases: Domain
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -ガイド
+
+グローバル・ユニコーン・ID (GUID) で許可レベルを回収するGPOを指定します.`GUID`独創的にGPOを識別する.
+
+また,内蔵の名前名, **Id**によって **Guid** パラメタを参照することもできます.詳細については, [about_Aliases] (/powershell/module/microsoft.powershell.core/about/about_aliases) を参照してください.
+
+```yaml
+Type: Guid
+Parameter Sets: SourcebyGUID
+Aliases: ID
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -名字は
+
+許可レベルを表示するGPOを表示する表示名によって指定します.
+
+表示名がドメインでユニークであることを保証することはありません.同じ表示名を持つ別のGPOがドメインで存在した場合,エラーが発生します.GPOをユニークに識別するために**Guid**パラメータを使用できます.
+
+また,内蔵の名前, **DisplayName**によって **Name**パラメータを参照することもできます.詳細については, [about_Aliases] (/powershell/module/microsoft.powershell.core/about/about_aliases) を参照してください.
+
+```yaml
+Type: System.String
+Parameter Sets: SourcebyName
+Aliases: DisplayName
+
+Required: True
+Position: 0
+Default value: None
+Accept pipeline input: True (ByValue)
+Accept wildcard characters: False
+```
+
+# GPPermission を取得する
+
+### -サーバー
+
+このcmdletが操作を完了するために連絡するドメインコントローラの名前を指定します.完全に資格のあるドメイン名 (FQDN) またはホスト名を指定することができます.
+
+**Server**パラメータを使用して名前を指定しない場合は,PDCエミュレーターに連絡されます.
+
+また,内蔵のニックネーム **DC**によって **Server** パラメータを参照することもできます.詳細については, [about_Aliases] (/powershell/module/microsoft.powershell.core/about/about_aliases) を参照してください.
+
+```yaml
+Type: System.String
+Parameter Sets: (All)
+Aliases: DC
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -ターゲット名
+
+許可レベルを取得するセキュリティ・プリンシ[U+09AA][U+09BE][U+09B2]の名前を指定します.ユーザー,セキュリティグループ,コンピュータを指定できます. セキュリティ・プリンシ[U+09AA][U+09BE][U+09B2]のドメイン・クライフィード・名前 (ドメイン\アカウント) または単にその名前を使用できます.
+
+例えば,この&quot;&quot;の文字で`contoso.com`ドメインを指定するには:
+
+- ユーザー名,使用 `contoso\someuser`     `someuser`- ドメイン管理者のセキュリティグループで,使用する`contoso\Domain Admins`     `Domain Admins`- コンピュータ名,使用する`contoso\computer-01`     `computer-01` .
+
+```yaml
+Type: System.String
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -TargetType
+
+許可レベルを得るためのセキュリティプリンシルのタイプ.このパラメータの受け入れ可能な値は:
+
+コンピュータ - ユーザー - グループ
+
+```yaml
+Type: PermissionTrusteeType
+Parameter Sets: (All)
+Aliases:
+Accepted values: Computer, User, Group
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### 共通パラメーター
+
+このcmdletは,共通パラメータをサポートしています: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable.詳細については, [about_CommonParameters](を参照してください.https://go.microsoft.com/fwlink/?LinkID=113216) でした.
+
+## 輸入は
+
+### Microsoft.GroupPolicy.Gpo
+
+このcmdletにGPOをパイプして許可レベルを取得できます.異なるドメインからGPOを含むコレクションはサポートされません.
+
+## 輸出は
+
+### Microsoft.GroupPolicy.GPPermissionCollection でした.
+
+### Microsoft.GroupPolicy.GPPermission 
+
+このcmdletは,GPOの指定されたセキュリティ原則 (ユーザー,グループ,またはコンピュータ) の許可を表すオブジェクトを返します.
+
+##  NOTES  記事ができました.
+
+このcmdletのドメインを明確に指定するには**DomainName**パラメータを使用できます.ドメインを明確に指定していない場合は,cmdletはデフォルトドメインを使用します.デフォルトドメインは,現在のセッションが実行されているセキュリティコンテキストによってネットワークリソースにアクセスするために使用されるドメインです.このドメインは,通常,セッションを実行しているユーザーのドメインです.例えば,Windows PowerShellを開きセッションを開始したユーザーのドメインまたはルーンコマンドで指定されたユーザーのドメインです.しかし,コンピュータの起動とシャットダウンスクリプトは,ローカルシステムアカウントのコンテキストで実行されます.ローカルシステムアカウントは,内蔵のローカルアカウントであり,それはネットワークリソースをコンピュータアカウントのコンテキストでアクセスします.したがって,このcmdletが起動またはシャットダウンスクリプトから実行される場合,デフォルトドメインはコンピュータが接続したドメインです.
+
+## 関連リンク
+
+[Set-GPPermission](./Set-GPPermission.md) 
+###英語原文###
+# Get-GPPermission
+
+## SYNOPSIS
+
+Gets the permission level for one or more security principals on a specified GPO.
+
+## SYNTAX
+
+### SourcebyGUID (Default)
+
+```
+Get-GPPermission -Guid &lt;Guid&gt; [-TargetName &lt;String&gt;] [-TargetType &lt;PermissionTrusteeType&gt;]
+ [-DomainName &lt;String&gt;] [-Server &lt;String&gt;] [-All] [&lt;CommonParameters&gt;]
+```
+
+### SourcebyName
+
+```
+Get-GPPermission [-Name] &lt;String&gt; [-TargetName &lt;String&gt;] [-TargetType &lt;PermissionTrusteeType&gt;]
+ [-DomainName &lt;String&gt;] [-Server &lt;String&gt;] [-All] [&lt;CommonParameters&gt;]
+```
+
+## DESCRIPTION
+
+The `Get-GPPermission` cmdlet gets the permission level for one or more security principals on the
+specified Group Policy Object (GPO). You can use the **TargetName** and **TargetType** parameters to
+specify a user, security group, or computer for which to get the permission level. You can use the
+**All** parameter to get the permission level for each security principal that includes: user,
+security group, or computer. This only works for a user, security group, or computer that has
+permissions on the GPO. You can specify the GPO by its display name or by its GUID.
+
+## EXAMPLES
+
+### Example 1: Get the permission level for group on the specified GPO
+
+```powershell
+Get-GPPermission -Name &quot;TestGpo&quot; -TargetName &quot;Domain Users&quot; -TargetType Group
+```
+
+```Output
+Trustee         : Domain Users
+TrusteeType     : Group
+PermissionLevel : GpoRead
+Inherited       : False
+```
+
+This command gets the permission level for the Domain Users group on the GPO named TestGpo.
+
+### Example 2: Get the permission level for group on the specified GPO with the specified GUID
+
+```powershell
+$params = @{
+    Domain     = &#x27;sales.contoso.com&#x27;
+    Server     = &#x27;DC1&#x27;
+    GUID       = &#x27;fa4a9473-6e2a-4b87-ab78-175e68d97bde&#x27;
+    TargetName = &#x27;Domain Admins&#x27;
+    TargetType = &#x27;Group&#x27;
+}
+Get-GPPermission @params
+```
+
+This command gets the permission level for the Domain Admins group on the GPO with the GUID
+`fa4a9473-6e2a-4b78-175e68d97bde` in the `Sales.Contoso.com` domain. The `DC1.sales.contoso.com`
+domain controller is contacted to complete the operation.
+
+If the domain of the user that&#x27;s running the session (or, for startup and shutdown scripts, the
+computer) is different from the `sales.contoso.com` domain, a trust must exist between the two
+domains, or the command fails.
+
+### Example 3: Get the permission level for all security principals on the specified GPO
+
+```powershell
+Get-GPPermission -Name &quot;TestGPO&quot; -All
+```
+
+```Output
+Trustee     : Authenticated Users
+TrusteeType : WellKnownGroup
+Permission  : GpoApply
+Inherited   : False
+
+Trustee     : Domain Admins
+TrusteeType : Group
+Permission  : GpoEditDeleteModifySecurity
+Inherited   : False
+
+Trustee     : Enterprise Admins
+TrusteeType : Group
+Permission  : GpoEditDeleteModifySecurity
+Inherited   : False
+
+Trustee     : ENTERPRISE DOMAIN CONTROLLERS
+TrusteeType : WellKnownGroup
+Permission  : GpoRead
+Inherited   : False
+
+Trustee     : SYSTEM
+TrusteeType : WellKnownGroup
+Permission  : GpoEditDeleteModifySecurity
+Inherited   : False
+```
+
+This command gets the permission level for each security principal that has permissions on the GPO
+named `TestGPO`.
+
+### Example 4: Get the display name of each GPO for a specific permissions
+
+```powershell
+Get-GPO -All | ForEach-Object {
+    if ( $_ |
+            $params = @{
+                TargetName  = &#x27;contoso\Domain Admins&#x27;
+                TargetType  = &#x27;Group&#x27;
+                ErrorAction = &#x27;SilentlyContinue&#x27;
+            }
+            Get-GPPermission @params) {
+            $_.DisplayName
+        }
+    }
+```
+
+```Output
+Default Domain Policy
+TestGPO-1
+TestGPO-2 Default Domain Controllers Policy
+Internet Security
+TestGPO
+```
+
+This command lists the display name of each GPO (in the domain) on which the specified security
+principal has permissions.
+
+First, `Get-GPO` is used to retrieve all the GPOs in the domain (`Get-GPO -All`). Then, the
+collection is piped into the `Foreach-Object` command. As each GPO is evaluated, it&#x27;s piped into
+`Get-GPPermissions`. If a permission level is returned, the **DisplayName** property of the GPO is
+printed.
+
+The **ErrorAction** parameter is set to `SilentlyContinue`. This is because a non-terminating error
+occurs if the specified security principal doesn&#x27;t have permissions on the GPO. Specifying the
+**ErrorAction** as `SilentlyContinue` prevents the error messages from being printed for GPOS on
+which the security principal doesn&#x27;t have permissions. For more information about the
+**ErrorAction** parameter, see
+[about_CommonParameters](https://go.microsoft.com/fwlink/?LinkID=113216).
+
+## PARAMETERS
+
+### -All
+
+Indicates that the cmdlet gets the permission level for each user, group, or computer that has
+permissions on the GPO.
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -DomainName
+
+Specifies the domain for this cmdlet. You must specify the fully qualified domain name (FQDN) of the
+domain. The GPO specified must exist in this domain.
+
+If you don&#x27;t specify the **Domain** parameter, the domain of the user that&#x27;s running the current
+session is used. If the cmdlet is being run from a computer startup or shutdown script, the domain
+of the computer is used. For more information, see the Notes section in the full Help.
+
+If you specify a domain that&#x27;s different from the domain of the user that&#x27;s running the current
+session (or, for a startup or shutdown script, the computer), a trust must exist between that domain
+and the domain of the user or the computer.
+
+You can also refer to the **Server** parameter by its built-in alias, domain. For more information,
+see [about_Aliases](/powershell/module/microsoft.powershell.core/about/about_aliases).
+
+```yaml
+Type: System.String
+Parameter Sets: (All)
+Aliases: Domain
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -Guid
+
+Specifies the GPO from which to retrieve the permission level by its globally unique identifier
+(GUID). The `GUID` uniquely identifies the GPO.
+
+You can also refer to the **Guid** parameter by its built-in alias, **Id**. For more information,
+see [about_Aliases](/powershell/module/microsoft.powershell.core/about/about_aliases).
+
+```yaml
+Type: Guid
+Parameter Sets: SourcebyGUID
+Aliases: ID
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -Name
+
+Specifies the GPO from which to retrieve the permission level by its display name.
+
+The display name isn&#x27;t guaranteed to be unique in the domain. If another GPO with the same display
+name exists in the domain an error occurs. You can use the **Guid** parameter to uniquely identify a
+GPO.
+
+You can also refer to the **Name** parameter by its built-in alias, **DisplayName**. For more
+information, see [about_Aliases](/powershell/module/microsoft.powershell.core/about/about_aliases).
+
+```yaml
+Type: System.String
+Parameter Sets: SourcebyName
+Aliases: DisplayName
+
+Required: True
+Position: 0
+Default value: None
+Accept pipeline input: True (ByValue)
+Accept wildcard characters: False
+```
+
+# Get-GPPermission
+
+### -Server
+
+Specifies the name of the domain controller that this cmdlet contacts to complete the operation. You
+can specify either the fully qualified domain name (FQDN) or the host name.
+
+If you don&#x27;t specify the name using the **Server** parameter, the PDC emulator is contacted.
+
+You can also refer to the **Server** parameter by its built-in alias, **DC**. For more information,
+see [about_Aliases](/powershell/module/microsoft.powershell.core/about/about_aliases).
+
+```yaml
+Type: System.String
+Parameter Sets: (All)
+Aliases: DC
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -TargetName
+
+Specifies the name of the security principal for which to get the permission level. You can specify
+a user, a security group, or a computer. You can use either the domain-qualified name of the
+security principal (domain\account) or just its name.
+
+For instance, in the `contoso.com` domain, to specify:
+
+- The username, use `contoso\someuser` or `someuser`.
+- The Domain Admins security group, use `contoso\Domain Admins` or `Domain Admins`.
+- The computer name, use `contoso\computer-01` or `computer-01`.
+
+```yaml
+Type: System.String
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -TargetType
+
+The type of security principal for which to get the permission level. The acceptable values for this
+parameter are:
+
+- Computer
+- User
+- Group
+
+```yaml
+Type: PermissionTrusteeType
+Parameter Sets: (All)
+Aliases:
+Accepted values: Computer, User, Group
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### CommonParameters
+
+This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable,
+-InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose,
+-WarningAction, and -WarningVariable. For more information, see
+[about_CommonParameters](https://go.microsoft.com/fwlink/?LinkID=113216).
+
+## INPUTS
+
+### Microsoft.GroupPolicy.Gpo
+
+You can pipe a GPO to this cmdlet for which to get the permission level. Collections that contain
+GPOs from different domains are not supported.
+
+## OUTPUTS
+
+### Microsoft.GroupPolicy.GPPermissionCollection
+
+### Microsoft.GroupPolicy.GPPermission
+
+This cmdlet returns an object that represents permissions for the specified security principal
+(user, group, or computer) on the GPO.
+
+## NOTES
+
+You can use the **DomainName** parameter to explicitly specify the domain for this cmdlet. If you do
+not explicitly specify the domain, the cmdlet uses the default domain. The default domain is the
+domain that is used to access network resources by the security context under which the current
+session is running. This domain is typically the domain of the user that is running the session. For
+example, the domain of the user who started the session by opening Windows PowerShell or the domain
+of a user that is specified in a runas command. However, computer startup and shutdown scripts run
+under the context of the LocalSystem account. The LocalSystem account is a built-in local account,
+and it accesses network resources under the context of the computer account. Therefore, when this
+cmdlet is run from a startup or shutdown script, the default domain is the domain to which the
+computer is joined.
+
+## RELATED LINKS
+
+[Set-GPPermission](./Set-GPPermission.md)
+###Microsoft Learn URL###
+https://learn.microsoft.com/en-us/powershell/module/grouppolicy/get-gppermission/?view=windowsserver2022-ps
+</pre></html>

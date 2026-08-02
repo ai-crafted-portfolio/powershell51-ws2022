@@ -1,0 +1,1037 @@
+<!doctype html><html lang="ja"><meta charset="utf-8"><pre class="record-source">###KnowledgeNo###
+PS51-WS2022-2026-1357
+###FormatID###
+PS51-WS2022
+###CreatedAt###
+2026-08-01 00:00
+###UpdatedAt###
+2026-08-01 00:00
+###タイトル###
+Initialize-HgsServer
+###モジュール###
+hgsserver
+###製品###
+Windows PowerShell 5.1
+###対応OS###
+Windows Server 2022
+###日本語訳###
+# HgsServer を初期化する
+
+## SYNOPSIS はホストガードニアサービスサーバを初期化します.
+
+## SYNTAXは,のシンタックスです.
+
+### PrimaryServer_HgsDomain (デフォルト) ```
+Initialize-HgsServer [-HgsServiceName] &lt;String&gt; [-UseHgsDomain] [-LogDirectory &lt;String&gt;] [-Http] [-Https]
+ [-HttpPort &lt;UInt16&gt;] [-HttpsPort &lt;UInt16&gt;] [-HttpsCertificatePath &lt;String&gt;]
+ [-HttpsCertificatePassword &lt;SecureString&gt;] [-HttpsCertificateThumbprint &lt;String&gt;] [-TrustActiveDirectory]
+ [-TrustTpm] [-EncryptionCertificateThumbprint &lt;String&gt;] [-EncryptionCertificatePath &lt;String&gt;]
+ [-EncryptionCertificatePassword &lt;SecureString&gt;] [-SigningCertificateThumbprint &lt;String&gt;]
+ [-SigningCertificatePath &lt;String&gt;] [-SigningCertificatePassword &lt;SecureString&gt;] [-HgsVersion &lt;HgsVersion&gt;]
+ [-Force] [-WhatIf] [-Confirm] [&lt;CommonParameters&gt;]
+```
+
+### PrimaryServer_SecureDomain ```
+Initialize-HgsServer [-HgsServiceName] &lt;String&gt; [-UseExistingDomain] [-LogDirectory &lt;String&gt;]
+ -JeaAdministratorsGroup &lt;ADGroup&gt; -JeaReviewersGroup &lt;ADGroup&gt; -ServiceAccount &lt;ADServiceAccount&gt;
+ [-ClusterName &lt;String&gt;] [-Http] [-Https] [-HttpPort &lt;UInt16&gt;] [-HttpsPort &lt;UInt16&gt;]
+ [-HttpsCertificatePath &lt;String&gt;] [-HttpsCertificatePassword &lt;SecureString&gt;]
+ [-HttpsCertificateThumbprint &lt;String&gt;] [-TrustActiveDirectory] [-TrustTpm]
+ [-EncryptionCertificateThumbprint &lt;String&gt;] [-EncryptionCertificatePath &lt;String&gt;]
+ [-EncryptionCertificatePassword &lt;SecureString&gt;] [-SigningCertificateThumbprint &lt;String&gt;]
+ [-SigningCertificatePath &lt;String&gt;] [-SigningCertificatePassword &lt;SecureString&gt;] [-HgsVersion &lt;HgsVersion&gt;]
+ [-Force] [-WhatIf] [-Confirm] [&lt;CommonParameters&gt;]
+```
+
+### AdditionalServer  追加サーバー```
+Initialize-HgsServer [-HgsServerIPAddress] &lt;String&gt; [-LogDirectory &lt;String&gt;] [-Http] [-Https]
+ [-HttpPort &lt;UInt16&gt;] [-HttpsPort &lt;UInt16&gt;] [-HttpsCertificatePath &lt;String&gt;]
+ [-HttpsCertificatePassword &lt;SecureString&gt;] [-HttpsCertificateThumbprint &lt;String&gt;] [-Force] [-WhatIf]
+ [-Confirm] [&lt;CommonParameters&gt;]
+```
+
+## 記述 **Initialize-HgsServer** cmdlet は,再起動後,ホストガードンサービス (HGS) の必要インフラストラクチャコンポーネントを構成します.
+
+このcmdletは,最初のHGSノードのインフラストラクチャコンポーネントに以下の構成アクションを実行します.
+
+- 単ノード故障クラスタを作成する. - HGS名前の完全資格ドメイン名: \&lt;HgsServerName\&gt;.\&lt;LocalDomain\&gt;に対応する分散ネットワーク名資源を持つ故障クラスタを構成する. - IISサービスで証明サービスWebアプリケーションを登録し設定する. - IISサービスでキー保護サービスWebアプリケーションを登録し設定する. - Key Protectionサービス署名証明書をキー保護サービスで設定する. - ローカルノードで十分な管理を有効にする.
+
+このcmdletは,追加のHGSノードにあるコンポーネントに次の構成変更を行います.
+
+- HgsServerIPAddress**パラメータで指定されたノードで既存のフェイロワークラスターにローカルノードを追加し,HgsDomainCredential**パラメータで指定された認証を使用します.
+ 
+-IISサービスで認証サービスWebアプリケーションを登録し設定します. -IISサービスでキー保護サービスWebアプリケーションを登録し設定します. -Key Protectionサービスで認証サービス署名証明書を設定します. -Just Enough Administrationを有効にします.
+
+シナリオの条件についての詳細については, [セキュリティと保証] を参照してください.https://go.microsoft.com/fwlink/?LinkId=699209) でした.
+
+## 例えは
+
+### 例1: TPMモードで HGS を初始的に起動する```
+PS C:\&gt; Initialize-HgsServer -HgsServiceName &quot;SecureFabricHgs&quot; -EncryptionCertificateThumbprint $EncryptionCert.Thumbprint -SigningCertificateThumbprint $SigningCert.Thumbprint
+```
+
+このコマンドは,HGSサーバをメインノードで初期化します.デフォルトでは,サーバーはHTTPポート80でアクセスされ,証明サービスはTPMモードに設定されます.指定された証明書はキー保護サービスによって使用されます.
+
+### 例2: TPMモードで次元のノードでHGSを初期化します.```
+PS C:\&gt; $Cred = Get-Credential
+PS C:\&gt; Initialize-HgsServer -HgsServerIPAddress &quot;100.100.100.1&quot; -HgsDomainCredential $Cred
+```
+
+このコマンドは,次要ノードでHGSサーバを初期化します.デフォルトでは,サーバーはHTTPポート80でアクセスされ,証明サービスはTPMモードに設定されます.キー保護サービスは,主要なサーバーが設定した暗号化および署名証明書を使用します.
+
+### 例3: アクティブディレクトリモードで HGS をメインノードで初期化します.```
+PS C:\&gt; Initialize-HgsServer -TrustActiveDirectory -HgsServiceName &quot;SecureFabricHgs&quot; -EncryptionCertificateThumbprint $EncryptionCert.Thumbprint -SigningCertificateThumbprint $SigningCert.Thumbprint
+```
+
+このコマンドは,主ノードでHGSサーバを初期化し,Attestationサービスを Active Directory (AD) モードに設定します.デフォルトでは,サーバーはHTTPポート80でアクセスできます.指定された証明書は,キー保護サービスによって使用されます.
+
+### 例4: TPMモードでプライマリノードのHGSを初期化して,HTTPSを有効にします.```
+PS C:\&gt; Initialize-HgsServer -HgsServiceName &quot;SecureFabricHgs&quot; -EncryptionCertificateThumbprint $EncryptionCert.Thumbprint -SigningCertificateThumbprint $SigningCert.Thumbprint -http -https -HttpsCertificatePath $PathToPfx -HttpsCertificatePassword $PfxSecureString
+```
+
+このコマンドは,主ノードでHGSサーバを初期化します.サーバーは,デフォルトポートでHTTPとHTTPSでアクセス可能で,および指定されたHTTPS証明書で設定されます.デフォルトでは,サーバーはHTTPポート80でアクセス可能で,証明サービスはTPMモードに設定されます.指定された証明書は,キー保護サービスによって使用されます.
+
+## パラメータは
+
+### -クラスター名 クラスター名を指定する.
+
+```yaml
+Type: String
+Parameter Sets: PrimaryServer_SecureDomain
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -EncryptionCertificatePassword は **EncryptionCertificatePath** で指定されている証明書ファイルのパスワードを指定します.
+
+```yaml
+Type: SecureString
+Parameter Sets: PrimaryServer_HgsDomain, PrimaryServer_SecureDomain
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -EncryptionCertificatePath キー保護サービスによって使用される暗号化証明書への経路を指定します.
+
+```yaml
+Type: String
+Parameter Sets: PrimaryServer_HgsDomain, PrimaryServer_SecureDomain
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -EncryptionCertificateThumbprint 鍵保護サービスによって使用される暗号化証明書の指紋を指定します.
+
+```yaml
+Type: String
+Parameter Sets: PrimaryServer_HgsDomain, PrimaryServer_SecureDomain
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### - ユーザの確認を要求せずにコマンドを実行するように強制します.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+# HgsServer を初期化する
+
+### -HgsServerIPAddress は,指定されたHGSドメインのドメインコントローラーである HGSサーバのIPアドレスを指定します.
+
+```yaml
+Type: String
+Parameter Sets: AdditionalServer
+Aliases: 
+
+Required: True
+Position: 1
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -HgsServiceName は,HGS名を示しています.
+
+```yaml
+Type: String
+Parameter Sets: PrimaryServer_HgsDomain, PrimaryServer_SecureDomain
+Aliases: 
+
+Required: True
+Position: 1
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -HgsVersion 将来の使用のために予約されています.
+
+```yaml
+Type: HgsVersion
+Parameter Sets: PrimaryServer_HgsDomain, PrimaryServer_SecureDomain
+Aliases: 
+Accepted values: HgsVersion1503, HgsVersion1704
+
+Required: False
+Position: Named
+Default value: $script:HgsSupportedLevels[0]
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Http は,HGS サーバが HTTP でアクセス可能であることを示す.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -HttpPort は HGS サーバのHTTPポートを指定します.
+
+```yaml
+Type: UInt16
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Https HGSサーバがHTTPSでアクセス可能であることを表示します.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -HttpsCertificatePassword は, **HttpsCertificatePath** によって識別された証明書ファイルにパスワードを指定します.
+
+```yaml
+Type: SecureString
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -HttpsCertificatePath は,HTTPS証明書ファイル (.pfx) のパス指定します.
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -HttpsCertificateThumbprint HTTPS証明書の指紋を表示する.
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -HttpsPort HGSサーバのHTTPSポートを指定します.
+
+```yaml
+Type: UInt16
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -JeaAdministratorsGroup は,Just Enough Administration を通じてHGS を管理できるユーザーグループを特定する.
+
+```yaml
+Type: ADGroup
+Parameter Sets: PrimaryServer_SecureDomain
+Aliases: 
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -JeaReviewersGroup は,Just Enough Administration を通じてHGS設定を表示できる,変更できないユーザーグループを識別する.
+
+```yaml
+Type: ADGroup
+Parameter Sets: PrimaryServer_SecureDomain
+Aliases: 
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -LogDirectoryは,出力ログのディレクトリを指定します.
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -ServiceAccountは,キー保護サービスで使用されるグループ管理サービスアカウントを識別します.指定されたアカウントは,すでにインストールされ,このマシンで使用するために設定する必要があります.
+
+```yaml
+Type: ADServiceAccount
+Parameter Sets: PrimaryServer_SecureDomain
+Aliases: 
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -SigningCertificatePassword は, **SigningCertificatePath** によって識別された証明書ファイルのパスワードを指定します.
+
+```yaml
+Type: SecureString
+Parameter Sets: PrimaryServer_HgsDomain, PrimaryServer_SecureDomain
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -SigningCertificatePath 鍵保護サービスで使用するサイン証明書への経路を指定します.
+
+```yaml
+Type: String
+Parameter Sets: PrimaryServer_HgsDomain, PrimaryServer_SecureDomain
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -SigningCertificateThumbprint 署名証明書の指紋は,キー保護サービスで使用するための指紋を指定します.
+
+```yaml
+Type: String
+Parameter Sets: PrimaryServer_HgsDomain, PrimaryServer_SecureDomain
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### - TrustActiveDirectory ```yaml
+Type: SwitchParameter
+Parameter Sets: PrimaryServer_HgsDomain, PrimaryServer_SecureDomain
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -TPMの信頼を深めること```yaml
+Type: SwitchParameter
+Parameter Sets: PrimaryServer_HgsDomain, PrimaryServer_SecureDomain
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -UseExistingDomain は,HGS が既存のドメインに接続されたことを示すため,独自のドメインを確立していない (Install-HgsServer).HGS は継続するには,すでに既存のドメインに接続する必要があります.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: PrimaryServer_SecureDomain
+Aliases: 
+
+Required: True
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -UseHgsDomain HGSは,Install-HgsServer cmdletを使用して独自の専用アクティブディレクトリフォレストを設置したことを示しています.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: PrimaryServer_HgsDomain
+Aliases: 
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### - 確認は,cmdletを実行する前に確認を提示します.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: cf
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -WhatIf が実行されればどうなるか示します.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: wi
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### 常規パラメータ このcmdletは,共通パラメータをサポートしています: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable.詳細については, about_CommonParameters () を参照してください.http://go.microsoft.com/fwlink/?LinkID=113216) でした.
+
+## 輸入は
+
+## 輸出は
+
+##  NOTES  記事ができました.
+
+## 関連リンク
+
+[HGS Server Cmdlets](./hgsserver.md) 
+###英語原文###
+# Initialize-HgsServer
+
+## SYNOPSIS
+Initializes the Host Guardian Service server.
+
+## SYNTAX
+
+### PrimaryServer_HgsDomain (Default)
+```
+Initialize-HgsServer [-HgsServiceName] &lt;String&gt; [-UseHgsDomain] [-LogDirectory &lt;String&gt;] [-Http] [-Https]
+ [-HttpPort &lt;UInt16&gt;] [-HttpsPort &lt;UInt16&gt;] [-HttpsCertificatePath &lt;String&gt;]
+ [-HttpsCertificatePassword &lt;SecureString&gt;] [-HttpsCertificateThumbprint &lt;String&gt;] [-TrustActiveDirectory]
+ [-TrustTpm] [-EncryptionCertificateThumbprint &lt;String&gt;] [-EncryptionCertificatePath &lt;String&gt;]
+ [-EncryptionCertificatePassword &lt;SecureString&gt;] [-SigningCertificateThumbprint &lt;String&gt;]
+ [-SigningCertificatePath &lt;String&gt;] [-SigningCertificatePassword &lt;SecureString&gt;] [-HgsVersion &lt;HgsVersion&gt;]
+ [-Force] [-WhatIf] [-Confirm] [&lt;CommonParameters&gt;]
+```
+
+### PrimaryServer_SecureDomain
+```
+Initialize-HgsServer [-HgsServiceName] &lt;String&gt; [-UseExistingDomain] [-LogDirectory &lt;String&gt;]
+ -JeaAdministratorsGroup &lt;ADGroup&gt; -JeaReviewersGroup &lt;ADGroup&gt; -ServiceAccount &lt;ADServiceAccount&gt;
+ [-ClusterName &lt;String&gt;] [-Http] [-Https] [-HttpPort &lt;UInt16&gt;] [-HttpsPort &lt;UInt16&gt;]
+ [-HttpsCertificatePath &lt;String&gt;] [-HttpsCertificatePassword &lt;SecureString&gt;]
+ [-HttpsCertificateThumbprint &lt;String&gt;] [-TrustActiveDirectory] [-TrustTpm]
+ [-EncryptionCertificateThumbprint &lt;String&gt;] [-EncryptionCertificatePath &lt;String&gt;]
+ [-EncryptionCertificatePassword &lt;SecureString&gt;] [-SigningCertificateThumbprint &lt;String&gt;]
+ [-SigningCertificatePath &lt;String&gt;] [-SigningCertificatePassword &lt;SecureString&gt;] [-HgsVersion &lt;HgsVersion&gt;]
+ [-Force] [-WhatIf] [-Confirm] [&lt;CommonParameters&gt;]
+```
+
+### AdditionalServer
+```
+Initialize-HgsServer [-HgsServerIPAddress] &lt;String&gt; [-LogDirectory &lt;String&gt;] [-Http] [-Https]
+ [-HttpPort &lt;UInt16&gt;] [-HttpsPort &lt;UInt16&gt;] [-HttpsCertificatePath &lt;String&gt;]
+ [-HttpsCertificatePassword &lt;SecureString&gt;] [-HttpsCertificateThumbprint &lt;String&gt;] [-Force] [-WhatIf]
+ [-Confirm] [&lt;CommonParameters&gt;]
+```
+
+## DESCRIPTION
+The **Initialize-HgsServer** cmdlet configures the necessary infrastructure components for Host Guardian Service (HGS) after it is rebooted.
+
+This cmdlet performs the following configuration actions on infrastructure components of the first HGS node: 
+
+- Creates one-node failover cluster.
+- Configures a failover cluster with a distributed network name resource corresponding to the fully qualified domain name of the HGS name: \&lt;HgsServerName\&gt;.\&lt;LocalDomain\&gt;.
+- Registers and configures the Attestation service web application with the IIS service.
+- Registers and configures the Key Protection service web application with the IIS service.
+- Configures the Attestation service signer certificate with the Key Protection service.
+- Enables Just Enough Administration on the local node.
+
+This cmdlet makes the following configuration changes to components on an additional HGS node: 
+
+- Adds the local node to the existing failover cluster on a node specified by the **HgsServerIPAddress** parameter using the credential specified in the **HgsDomainCredential** parameter.
+ 
+- Registers and configures the Attestation service web application with the IIS service.
+- Registers and configures the Key Protection service web application with the IIS service.
+- Configures the Attestation service signer certificate with the Key Protection service.
+- Enables Just Enough Administration on the local node.
+
+For more information about the scenario terms, see [Security and Assurance](https://go.microsoft.com/fwlink/?LinkId=699209).
+
+## EXAMPLES
+
+### Example 1: Initialize the HGS on the primary node in TPM mode
+```
+PS C:\&gt; Initialize-HgsServer -HgsServiceName &quot;SecureFabricHgs&quot; -EncryptionCertificateThumbprint $EncryptionCert.Thumbprint -SigningCertificateThumbprint $SigningCert.Thumbprint
+```
+
+This command initializes the HGS server on the primary node.
+By default, the server is accessible on HTTP port 80 and the Attestation service is set to TPM mode.
+The specified certificates are used by the Key Protection service.
+
+### Example 2: Initialize the HGS on a secondary node in TPM mode
+```
+PS C:\&gt; $Cred = Get-Credential
+PS C:\&gt; Initialize-HgsServer -HgsServerIPAddress &quot;100.100.100.1&quot; -HgsDomainCredential $Cred
+```
+
+This command initializes the HGS server on a secondary node.
+By default, the server is accessible on HTTP port 80 and the Attestation service is set to TPM mode.
+The Key Protection service uses the encryption and signing certificates set by the primary server.
+
+### Example 3: Initialize the HGS on the primary node in Active Directory mode
+```
+PS C:\&gt; Initialize-HgsServer -TrustActiveDirectory -HgsServiceName &quot;SecureFabricHgs&quot; -EncryptionCertificateThumbprint $EncryptionCert.Thumbprint -SigningCertificateThumbprint $SigningCert.Thumbprint
+```
+
+This command initializes the HGS server on the primary node and sets the Attestation service to Active Directory (AD) mode.
+By default, the server is accessible on HTTP port 80.
+The specified certificates are used by the Key Protection service.
+
+### Example 4: Initialize the HGS on the primary node in TPM mode and enable HTTPS
+```
+PS C:\&gt; Initialize-HgsServer -HgsServiceName &quot;SecureFabricHgs&quot; -EncryptionCertificateThumbprint $EncryptionCert.Thumbprint -SigningCertificateThumbprint $SigningCert.Thumbprint -http -https -HttpsCertificatePath $PathToPfx -HttpsCertificatePassword $PfxSecureString
+```
+
+This command initializes the HGS server on the primary node.
+The server is set to be accessible by HTTP and HTTPS on the default ports, and with the specified certificate for HTTPS.
+By default, the server is accessible on HTTP port 80 and the Attestation service is set to TPM mode.
+The specified certificates are used by the Key Protection service.
+
+## PARAMETERS
+
+### -ClusterName
+Specifies a cluster name.
+
+```yaml
+Type: String
+Parameter Sets: PrimaryServer_SecureDomain
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -EncryptionCertificatePassword
+Specifies the password for the certificate file specified in **EncryptionCertificatePath**.
+
+```yaml
+Type: SecureString
+Parameter Sets: PrimaryServer_HgsDomain, PrimaryServer_SecureDomain
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -EncryptionCertificatePath
+Specifies the path to the encryption certificate used by the Key Protection service.
+
+```yaml
+Type: String
+Parameter Sets: PrimaryServer_HgsDomain, PrimaryServer_SecureDomain
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -EncryptionCertificateThumbprint
+Specifies the thumbprint of the encryption certificate used by the Key Protection service.
+
+```yaml
+Type: String
+Parameter Sets: PrimaryServer_HgsDomain, PrimaryServer_SecureDomain
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Force
+Forces the command to run without asking for user confirmation.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+# Initialize-HgsServer
+
+### -HgsServerIPAddress
+Specifies the IP address of the HGS server that is a domain controller for the specified HGS domain.
+
+```yaml
+Type: String
+Parameter Sets: AdditionalServer
+Aliases: 
+
+Required: True
+Position: 1
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -HgsServiceName
+Specifies the HGS name.
+
+```yaml
+Type: String
+Parameter Sets: PrimaryServer_HgsDomain, PrimaryServer_SecureDomain
+Aliases: 
+
+Required: True
+Position: 1
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -HgsVersion
+Reserved for future use.
+
+```yaml
+Type: HgsVersion
+Parameter Sets: PrimaryServer_HgsDomain, PrimaryServer_SecureDomain
+Aliases: 
+Accepted values: HgsVersion1503, HgsVersion1704
+
+Required: False
+Position: Named
+Default value: $script:HgsSupportedLevels[0]
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Http
+Indicates that the HGS server is accessible over HTTP.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -HttpPort
+Specifies the HTTP port of the HGS server.
+
+```yaml
+Type: UInt16
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Https
+Indicates that the HGS server is accessible over HTTPS.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -HttpsCertificatePassword
+Specifies the password to the certificate file identified by **HttpsCertificatePath**.
+
+```yaml
+Type: SecureString
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -HttpsCertificatePath
+Specifies the path to the HTTPS certificate file (.pfx).
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -HttpsCertificateThumbprint
+Indicates the thumbprint of the HTTPS certificate.
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -HttpsPort
+Specifies the HTTPS port of the HGS server.
+
+```yaml
+Type: UInt16
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -JeaAdministratorsGroup
+Identifies the Active Directory group of users who can administer HGS through Just Enough Administration.
+
+```yaml
+Type: ADGroup
+Parameter Sets: PrimaryServer_SecureDomain
+Aliases: 
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -JeaReviewersGroup
+Identifies the Active Directory group of users who can view, but not change, HGS settings through Just Enough Administration.
+
+```yaml
+Type: ADGroup
+Parameter Sets: PrimaryServer_SecureDomain
+Aliases: 
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -LogDirectory
+Specifies the directory for the output log.
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -ServiceAccount
+Identifies the Group Managed Service Account that will be used for the Key Protection Service. The specified account must already be installed and configured for use on this machine.
+
+```yaml
+Type: ADServiceAccount
+Parameter Sets: PrimaryServer_SecureDomain
+Aliases: 
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -SigningCertificatePassword
+Specifies the password for the certificate file identified by **SigningCertificatePath**.
+
+```yaml
+Type: SecureString
+Parameter Sets: PrimaryServer_HgsDomain, PrimaryServer_SecureDomain
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -SigningCertificatePath
+Specifies the path to the signing certificate for use by the Key Protection service.
+
+```yaml
+Type: String
+Parameter Sets: PrimaryServer_HgsDomain, PrimaryServer_SecureDomain
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -SigningCertificateThumbprint
+Specifies the thumbprint of the signing certificate for use by the Key Protection service.
+
+```yaml
+Type: String
+Parameter Sets: PrimaryServer_HgsDomain, PrimaryServer_SecureDomain
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -TrustActiveDirectory
+```yaml
+Type: SwitchParameter
+Parameter Sets: PrimaryServer_HgsDomain, PrimaryServer_SecureDomain
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -TrustTpm
+```yaml
+Type: SwitchParameter
+Parameter Sets: PrimaryServer_HgsDomain, PrimaryServer_SecureDomain
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -UseExistingDomain
+Indicates that HGS was joined to an existing domain and did not establish its own domain (with Install-HgsServer). HGS must already be joined to the existing domain to continue.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: PrimaryServer_SecureDomain
+Aliases: 
+
+Required: True
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -UseHgsDomain
+Indicates that HGS was set up with its own dedicated Active Directory forest using the Install-HgsServer cmdlet.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: PrimaryServer_HgsDomain
+Aliases: 
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Confirm
+Prompts you for confirmation before running the cmdlet.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: cf
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -WhatIf
+Shows what would happen if the cmdlet runs.
+The cmdlet is not run.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: wi
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### CommonParameters
+This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable. For more information, see about_CommonParameters (http://go.microsoft.com/fwlink/?LinkID=113216).
+
+## INPUTS
+
+## OUTPUTS
+
+## NOTES
+
+## RELATED LINKS
+
+[HGS Server Cmdlets](./hgsserver.md)
+###Microsoft Learn URL###
+https://learn.microsoft.com/en-us/powershell/module/hgsserver/initialize-hgsserver/?view=windowsserver2022-ps
+</pre></html>

@@ -1,0 +1,961 @@
+<!doctype html><html lang="ja"><meta charset="utf-8"><pre class="record-source">###KnowledgeNo###
+PS51-WS2022-2026-3633
+###FormatID###
+PS51-WS2022
+###CreatedAt###
+2026-08-01 00:00
+###UpdatedAt###
+2026-08-01 00:00
+###タイトル###
+about_Type_Conversion
+###モジュール###
+Microsoft.PowerShell.Core
+###製品###
+Windows PowerShell 5.1
+###対応OS###
+Windows Server 2022
+###日本語訳###
+# about_Type_Conversionについて
+
+## 短編説明
+
+PowerShellは柔軟なタイプシステムがあり,使いやすくなっていますが,意外な結果を避けるために,どのように機能するか理解する必要があります.
+
+## 長い説明
+
+默[U+8BA4]で,PowerShell _variables_ aren&#x27;t _type-constrained_. あなたは1種類のインスタンスを含む変数を作成し,後に他のタイプの値を割り当てることができます.また,PowerShell は,明示的にも暗示的にも,他のタイプに自動的に値を変換します.暗示的なタイプ変換が有用であるかもしれませんが,特に厳格なタイプ処理を持つ言語により熟悉なユーザーには,障害があります.
+
+## タイプ制限変数と明示的なタイプ変換です.
+
+変数を入力制限するには,代数の変数の名前から左に文字列を配置します.例えば:
+
+```powershell
+[int]$foo = 42
+```
+
+タイプキャスティングを使用して,値を特定のタイプに明確に変換できます.例えば:
+
+```powershell
+PS&gt; $var = [int]&#x27;43&#x27;
+PS&gt; $var.GetType().Name
+Int32
+```
+
+タイプ制限は,指定されたタイプの値のみが変数に割り当てられるようにします. PowerShell で,制限されたタイプに変換できる別のタイプの値を割り当てようとすると,暗黙変換を実行します.詳細については,この記事の [暗黙型変換][03]セクションを参照してください.
+
+### 数字型変換
+
+番号型は,対象型が変換された値を保持できる限り,他の番号型に変換できます.例えば:
+
+```powershell
+PS&gt; (42.1).GetType().Name
+Double
+PS&gt; $byte = [byte] 42.1
+PS&gt; $byte
+42
+PS&gt; $byte.GetType().Name
+Byte
+```
+
+値が値する`42.1`バイトに投げると,PowerShellで整数に切り替える.`42`バイトに収まるほど小さい.
+
+リアルナンバーを整数型に変換する際,PowerShellは,切り切り替えではなく丸化を使用し,特に _rounding-to-nearest-even_方法を使用します.以下の例は,この行動を説明します.両方の値は,最も近い整数,  に丸化されます.`22` .
+
+```powershell
+PS&gt; [byte]21.5
+22
+PS&gt; [byte]22.5
+22
+```
+
+詳細については,[Math.Round][20] 方法の _Midpoint values and rounding conventions_セクションを参照してください.
+
+### ブール式変換
+
+_any_ の値がブルール式に強制される可能性があります.
+
+- 数字型には,`0` に変換する.`$false`そして他のすべての値が  に変換されます.`$true` .
+
+    ```powershell
+  PS&gt; [boolean]0
+  False
+  PS&gt; [boolean]0.0
+  False
+  PS&gt; [boolean]-1
+  True
+  PS&gt; [boolean]1
+  True
+  PS&gt; [boolean]42.1
+  True
+  ```
+
+- 他のタイプでは,ゼロ値,空文字列,空の配列を&quot;_&quot;に変換する.`$false` .
+
+    ```powershell
+  PS&gt; [boolean]&#x27;&#x27;
+  False
+  PS&gt; [boolean]@()
+  False
+  PS&gt; [boolean]&#x27;Hello&#x27;
+  True
+  ```
+
+ に変換する空白ハッシュタブルを含む他の値`$true`単要素集合は,単要素集合のブルル値に評価されます. 1以上の要素を持つ集合は常に です.`$true` .
+
+    ```powershell
+  PS&gt; [boolean]@(0)
+  False
+  PS&gt; [boolean]@(0,0)
+  True
+  PS&gt; [boolean]@{}
+  True
+  ```
+
+### 文字列の種類変換
+
+__ の値が**String**に強制される可能性があります.デフォルト変換は,  を呼び出すことです.`ToString()`対象の方法.
+
+アレは文字列に変換されます.アレの各要素は個別に文字列に変換され,結果となる文字列に結合されます.デフォルトでは,変換された値はスペースによって分離されます. を設定することで分離器を変更できます.`$OFS`偏見変数です.
+
+```powershell
+PS&gt; [string] @(1, 2, 3)
+1 2 3
+```
+
+に関する詳細については,`$OFS`[about_Preference_Variables] を参照.
+
+単一の文字列の値は,タイプが静的を実行した場合,タイプのインスタンスの形式に変換できます.`Parse()`方法.例えば, `[bigint]&#x27;42&#x27;`は,と同じです.`[bigint]::Parse(&#x27;42&#x27;, [cultureinfo]::InvariantCulture)`選択可能の `[cultureinfo]::InvariantCulture`値が  に結合する.`IFormatProvider`方法の種類パラメータ.変換の文化変化の行動を保証します. の実装はすべてではありません.`Parse()`方法にはこのパラメータがあります.
+
+&gt; [!NOTE] &gt; 文字列への変換は通常, [不変文化] を使って行われます[16].不変文化は,アメリカ・英語文化に基づいているが,同一ではない.特に,この時期 () を使っている.`.`) はデフォルトでデシマルの &gt;マークと米国式の月初日として表示されます.しかし, _binary cmdlets_ &gt; はパラメータ結合中に文化に敏感な変換を実行します.
+
+### Enum 型変換
+
+PowerShellで[Enum][15] タイプを **String** インスタンスの入場から変換できます.例えば,Typecast 文字列は`[System.PlatformId]&#x27;Unix&#x27;`は,enum値と同じです.`[System.PlatformId]::Unix`PowerShell では,文字列内のまたは文字列の配列として,逗号分離した値に対して,フラグベースのエンムも正しく処理します.以下の例を考えてみましょう.
+
+```powershell
+[System.Reflection.TypeAttributes]&#x27;Public, Abstract&#x27;
+[System.Reflection.TypeAttributes](&#x27;Public&#x27;, &#x27;Abstract&#x27;)
+```
+
+これらの例は,enum式に相当します:
+
+```powershell
+[System.Reflection.TypeAttributes]::Public -bor
+    [System.Reflection.TypeAttributes]::Abstract
+```
+
+### 他のタイプの変換
+
+単一の値 (非アレンジ) は,次の場合,タイプのインスタンスの形式に変換できます.
+
+- そのタイプには (公開) 単パラメータコンストラクタがある - そして値は同じタイプである,またはパラメータのタイプに強制される可能性があります
+
+例えば,次の2行は等価である.
+
+```powershell
+[regex]&#x27;a|b&#x27;
+[regex]::new(&#x27;a|b&#x27;)`
+```
+
+## 暗黙のタイプ
+
+PowerShellで,文字どおりの値にタイプも自動的に割り当てられます.
+
+数字文字は,デフォルトで暗示的に入力されます.数字は,そのサイズに基づいて入力されます.例えば, `42`サイズが小さすぎて **Int32**タイプとして保存されることが出来ます.`1.2`より大きい整数として保存されます.`[int32]::MaxValue`保存されているのは **Int64** として.`42`バイトとして保存され,`1.2`**Single**タイプとして保存できるので,暗黙のタイピングはそれぞれ **Int32**と **Double**を使用しています.詳細については,[about_Numeric_Literals][07]を参照してください.
+
+文字列は暗示的に **String** と入力されます.単文字列 **String** インスタンスは **Char** タイプに変換できます.しかし,PowerShell には文字列 **Char** タイプはありません.
+
+## 暗黙の型変換
+
+特定の文脈では,PowerShellが暗示的に他のタイプの値に変換することができます.これらの文脈には以下が含まれます.
+
+パラメーター結合 - タイプ制限変数 - オペレーターを使用する表現 - ブール文脈 - PowerShell で条件式表現を変換します`if`     `while`     `do`       `switch`- 拡張タイプシステム (ETS) のタイプ定義 - タイプ変換はいくつかの方法で定義できます: - [Update-TypeData][12] - [Types.ps1xml][10]ファイルで - [TypeConverterAttribute][14]属性で飾られているタイプのためのコンパイルコードで - [TypeConverter][13]または [PSTypeConverter][18]から派生したクラスを通じて - [TypeConverter][13]または [PSTypeConverter][]から派生したクラスを通じて -
+
+# about_Type_Conversionについて
+
+### パラメーター結合変換
+
+PowerShellで,パラメータ型に対応するパラメータに転送された値を変換しようとします.パラメータ型変換は,パラメータが特定のタイプで宣言される cmdlets,関数,スクリプト,スクリプトブロック,または .NET方法で発生します. 型でパラメータを宣言します. `[Object]`特定のタイプを定義しないことによって,任意の値タイプがパラメータに転送される可能性があります.パラメータはまた, [ArgumentTransformationAttribute][17]属性でパラメータを装飾することによって定義されたカスタム変換を有することができます.
+
+詳細については[about_Parameter_Binding][08]を参照してください.
+
+### パラメータ結合のためのベストプラクティス
+
+.NET方法では,必要な場合,カストを用いることで,期待される正確なタイプをパスする方がよい.正確なタイプがない場合,PowerShell は間違った方法オーバーロードを選択できます.また,将来の .NETバージョンに追加される新しい方法オーバーロードは既存のコードを破ることができる.この問題の極端な例については,この [Stack Overflow 質問][11]を参照してください.
+
+アレイを a に渡す場合は,`[string]`PowerShellで,先ほど説明したように,配列を文字列に変換する可能性があります.次の基本的な関数を考慮してください.
+
+```powershell
+function Test-String {
+    param([string] $String)
+    $String
+}
+
+Test-String -String 1, 2
+```
+
+この関数は,出力します.`1 2`この動作を避けるために,  を足して[先端関数][06] を作成してください.`[CmdletBinding()]`attribut. 属性です.
+
+```powershell
+function Test-String {
+    [CmdletBinding()]
+    param([string] $String)
+    $String
+}
+
+Test-String -String 1, 2
+```
+
+拡張機能では,PowerShellはアレイを非アレイタイプに結びつけることを拒否します.アレイをパスすると,PowerShellは以下のエラーメッセージを送ります.
+
+```Output
+Test-String:
+Line |
+   7 |  Test-String -String 1, 2
+     |                      ~~~~
+     | Cannot process argument transformation on parameter &#x27;String&#x27;. Cannot
+     | convert value to type System.String.
+```
+
+残念ながら,この行動は .NET方法通話では避けられません.
+
+```powershell
+PS&gt; (Get-Date).ToString(@(1, 2))
+1 2
+```
+
+PowerShellでアレイを文字列に変換します.`&quot;1 2&quot;`の格式パラメータに転送されます.`ToString()`方法.
+
+次の例では,アレイ変換問題の別の例を示しています.
+
+```powershell
+PS&gt; $bytes = [byte[]] @(1..16)
+PS&gt; $guid = New-Object System.Guid($bytes)
+New-Object: Cannot find an overload for &quot;Guid&quot; and the argument count: &quot;16&quot;.
+```
+
+PowerShellで処理されるのは,`$bytes` が個別パラメータのリストとして配列されていますが,`$bytes`はバイト数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数数が数数数数数数数数数`System.Guid` を持っている.`Guid(byte[])`建設者.
+
+この共通のコードパターンは,意図されたように常に動作しない _pseudo method syntax_ の例です.この構文は次のように訳されます.
+
+```powershell
+PS&gt; [byte[]] $bytes = 1..16
+PS&gt; New-Object -TypeName System.Guid -ArgumentList $bytes
+New-Object: Cannot find an overload for &quot;Guid&quot; and the argument count: &quot;16&quot;.
+```
+
+**ArgumentList**のタイプが&quot;&quot;であることを考えると,`[Object[]]`任意の数列である単一の論点は,その _element by element_ に結合する.`$bytes`外部マレイに配置され,PowerShellが外部マレイの内容に一致するパラメータを持つコンストラクタを探しているようにします.
+
+```powershell
+PS&gt; [byte[]] $bytes = 1..16
+PS&gt; $guid = New-Object -TypeName System.Guid -ArgumentList (, $bytes)
+PS&gt; $guid
+
+Guid
+----
+04030201-0605-0807-090a-0b0c0d0e0f10
+```
+
+包装された配列の最初のアイテムは,私たちのオリジナルです.`[byte[]]`その値は,例の  に一致する値です.`Guid(byte[])`建設者.
+
+アレア包装の解決方法の代替は,固有の静止の利用です.`new()`方法.
+
+```powershell
+PS&gt; [byte[]] $bytes = 1..16
+PS&gt; [System.Guid]::new($bytes)  # OK
+
+Guid
+----
+04030201-0605-0807-090a-0b0c0d0e0f10
+```
+
+### 型制限変数変換
+
+タイプ制限変数に値を割り当てると,PowerShellは値を変数型に変換しようとします.提供された値が変数型に変換できる場合は,割り当てが成功します.
+
+例えば:
+
+```powershell
+PS&gt; [int]$foo = &#x27;43&#x27;
+PS&gt; $foo.GetType().Name
+Int32
+```
+
+変換は,文字列の動作のため,変換が有効である.`&#x27;43&#x27;`数字に変換できます.
+
+## オペレーター変換
+
+PowerShellで,表現の操作を暗黙に変換して,合理的な結果が得られる.また,一部のオペレーターはタイプ特有の行動をとる.
+
+# about_Type_Conversionについて
+
+### 数字操作です.
+
+数値操作では,両オペラントが同じ数値タイプであっても,結果は異なるタイプになる可能性があります.これは,結果に対応する自動型変換によるものです.
+
+```powershell
+PS&gt; [int]$a = 1
+PS&gt; [int]$b = 2
+PS&gt; $result = $a / $b
+PS&gt; $result
+0.5
+PS&gt; $result.GetType().Name
+Double
+```
+
+両オペラントが整数であるにもかかわらず,結果は割引結果を支えるために **Double** に変換されます.真の整数分割を得るには,  を使います.`[int]::Truncate()`    `[Math]::DivRem()`詳細については[Truncate() [21]と[DivRem() ][19]を参照してください.
+
+整数算学では,結果がオペランドの大きさを超えると,結果が **Int64** タイプに収まる場合でも,結果のために **Double** を使用することを PowerShell でデフォルトします.
+
+```powershell
+PS&gt; $result = [int]::MaxValue + 1
+PS&gt; $result
+2147483648
+PS&gt; $result.GetType().Name
+Double
+```
+
+結果をInt64としたい場合は,結果タイプまたはオペランスをキャストできます.
+
+```powershell
+PS&gt; ([int64]([int]::MaxValue + 1)).GetType().Name
+Int64
+```
+
+しかし,特定のタイプに結果をキャスティングする際には注意してください.例えば,結果をキャスティングするタイプを  にタイプします.`[decimal]`タイプは精度低下につながる可能性があります.`1`最大の **Int64** 値に **Double** タイプがもたらされる. **Decimale** に **Double** を投げる場合,結果は  です.`9223372036854780000`誤った内容です.
+
+```powershell
+PS&gt; ([int64]::MaxValue + 1).GetType().Name
+Double
+PS&gt; [decimal]([int64]::MaxValue + 1)
+9223372036854780000
+```
+
+変換は精度15桁に限ります.詳細については,[十数倍) [01]コンストラクタードキュメントの _Remarks_セクションを参照してください.
+
+精度が失われないようにするために,  を使ってください.`D`のサフイックスに`1`文字直訳.  を足すことで.`D`補足詞,PowerShellで変換される`[int64]::MaxValue` を足す前に,aを**10に割る.`1D` .
+
+```powershell
+PS&gt; ([int64]::MaxValue + 1D).GetType().Name
+Decimal
+PS&gt; ([int64]::MaxValue + 1D)
+9223372036854775808
+```
+
+数字式サフフイックスに関する詳細については,[about_Numeric_Literals][07]を参照してください.
+
+通常,PowerShell オペレーターの左側 (LHS) オペランドが操作で使用されるデータタイプを決定する.PowerShellは右側 (RHS) オペランドを必要なタイプに変換する (強制する).
+
+```powershell
+PS&gt; 10 - &#x27; 9 &#x27;
+1
+```
+
+この例では,RHSオペランドは文字列のである.`&#x27; 9 &#x27;`引き算操作の前に暗黙に整数に変換される.同じことが比較オペレータにも当てはまります.
+
+```powershell
+PS&gt; 10 -eq &#x27; 10&#x27;
+True
+PS&gt; 10 -eq &#x27;0xa&#x27;
+True
+```
+
+算数_オペレータ () を使う場合には例外がある.`+`     `-`     `*`     `/`) と _non-numeric_ operands を使っている.
+
+を使うとき`-`そして,`/`PowerShellで,文字列の操作を文字列から数字に変換する.
+
+```powershell
+PS&gt; &#x27;10&#x27; - &#x27;2&#x27;
+8
+PS&gt; &#x27;10&#x27; / &#x27;2&#x27;
+5
+```
+
+逆に,そのは`+`そして,`*`文字列特有のセマンティック (コンカテネーションと複製) を持つ操作者はいます.
+
+```powershell
+PS&gt; &#x27;10&#x27; + &#x27;2&#x27;
+102
+PS&gt; &#x27;10&#x27; * &#x27;2&#x27;
+1010
+```
+
+計算操作者と boolean 値を使用すると,PowerShell で値が整数に変換されます.`$true` becomes becomes becomes になる`[int]1`そして,`$false` becomes becomes becomes になる`[int]0` .
+
+```powershell
+PS&gt; $false - $true
+-1
+```
+
+例外は,倍数 () です.`*`) の2つのブーランの.
+
+```powershell
+PS&gt; $false * $true
+InvalidOperation: The operation &#x27;[System.Boolean] * [System.Boolean]&#x27; is not
+defined.
+```
+
+他のLHSタイプでは,数学的オペレータが成功するのは,あるタイプのカスタム定義が [オペレータ過載]を通じてこれらのオペレータを定義した場合のみである.
+
+### 比較操作を比較する
+
+比較オペレータは,例えば `-eq`     `-lt`そして,そして,`-gt`文字列以外のタイプと非原始型の振る舞いは,LHSタイプが などのインターフェースを実装するかどうかによって異なります.`IEquatable`そして,`IComparable` .
+
+コレクションベースの比較オペレータ ()`-in`そして,`-contains`) を要素ごとに実行する.`-eq`比較は一致するまでの間です. 集合オペランドの各要素があらゆる種類の強制を駆動するものです.
+
+```powershell
+PS&gt; $true -in &#x27;true&#x27;, &#x27;false&#x27;
+True
+PS&gt; &#x27;true&#x27;, &#x27;false&#x27; -contains $true
+True
+```
+
+両例が真になるのは,なぜなら,`&#x27;true&#x27; -eq $true` 生産性`$true` .
+
+詳細については[about_Comparison_Operators][05]を参照してください.
+
+リンク参照 --&gt; [01]: /dotnet/api/system.decimal.-ctor#system-decimal-ctor-system-double) [02]: /dotnet/csharp/programming-guide/statements-expressions-operators/overloadable-operators [03]: #implicit-type-conversion [04]: about_Booleans.md [05]: about_Comparison_Operators.md [06]: about_Functions_Advanced.md [07]: about_Numeric_Literals.md [08]: about_Parameter_Binding.md [09]: about_Preference_Variables.md#ofs [10]: about_Types.ps1x.md [11]: ml: https://stackoverflow.com/questions/76241804/how-does-powershell-split-consecutive-strings-not-a-single-letterxref:Microsoft.PowerShell.Utility.Update-TypeData [13]: xref:System.ComponentModel.TypeConverter [14]: xref:System.ComponentModel.TypeConverterAttribute [15]: xref:System.Enum [16]: xref:System.Globalization.CultureInfo.InvariantCulture%2A [17]: xref:System.Management.Automation.ArgumentTransformationAttribute [18]: xref:System.Management.Automation.PSTypeConverter [19]: xref:System.Math.DivRem%2A [20]: xref:System.Round.%2Apoint-values-and-trund-conventions-mid-mid-mid-mid-mid-mid-mid-mid-mid-mid-mid-mid-mid-mid-mid-mid-mid-mid-mid-mid-mid-mid-mid-mid-mid-mid-mid-mid-mid-mid-mid-mid-mid-mid-mid-mid-mid-mid-mid-mid-mid-mid-mid-mid-mid-mid-mid-mid-mid-mid-mid-mid-mid-mid-mid-mid-mid-mid-mid-mid-mid-mid-mid-mid-mid-mid-mid-mid-mid-mid-mid-mid-mid-mid-mid-mid-mid-mid-mid-mid-mid-mid-mid-mid-mid-mid-mid-mid-mid-mid-mid-mid-mid-mid-mid-mid-mid-mid-mid-mid-mid-mid-mid-mid-mid-mid-mid-mid-mid-mid-mid-mid-mid-mid-mid-mid-mid-mid-mid-mid-mid-mid-mid-mid-mid-mid-mid-mid-mid-mid-mid-mid-mid-mid-mid-mid-mid-mid-mid-mid-mid-mid-mid-mid-mid-mid-mid-mid-mid-mid-mid-mid-mid-mid-mid-mid-mid-mid-mid-mid-mid-mid-
+###英語原文###
+# about_Type_Conversion
+
+## Short description
+
+PowerShell has a flexible type system that makes it easier to use. However, you
+must understand how it works to avoid unexpected results.
+
+## Long description
+
+By default, PowerShell _variables_ aren&#x27;t _type-constrained_. You can create a
+variable containing an instance of one type and later assign values of any
+other type. Also, PowerShell automatically converts values to other types, both
+explicitly and implicitly. While implicit type conversion can be helpful, there
+are pitfalls, especially for users more familiar with languages that have
+stricter type handling.
+
+## Type-constrained variables and explicit type conversion
+
+To type-constrain a variable, place a type literal to the left of the variable
+name in an assignment. For example:
+
+```powershell
+[int]$foo = 42
+```
+
+You can use type casting to explicitly convert a value to a specific type. For
+example:
+
+```powershell
+PS&gt; $var = [int]&#x27;43&#x27;
+PS&gt; $var.GetType().Name
+Int32
+```
+
+Type constraining ensures that only values of the specified type can be
+assigned to the variable. PowerShell performs an implicit conversion if you try
+to assign a value of a different type that can be converted to the constrained
+type. For more information, see the [Implicit type conversion][03] section of
+this article.
+
+### Numeric type conversion
+
+Numeric types can be converted to any other numeric type as long as the target
+type is capable of holding the converted value. For example:
+
+```powershell
+PS&gt; (42.1).GetType().Name
+Double
+PS&gt; $byte = [byte] 42.1
+PS&gt; $byte
+42
+PS&gt; $byte.GetType().Name
+Byte
+```
+
+The value `42.1` is a **Double**. When you cast it to a **Byte**, PowerShell
+truncates it to an integer `42`, which is small enough to fit into a **Byte**.
+
+When converting real numbers to integer types, PowerShell uses rounding rather
+than truncation, specifically using the _rounding-to-nearest-even_ method.
+The following examples illustrate this behavior. Both values are rounded to the
+nearest even integer, `22`.
+
+```powershell
+PS&gt; [byte]21.5
+22
+PS&gt; [byte]22.5
+22
+```
+
+For more information, see the _Midpoint values and rounding conventions_
+section of the [Math.Round][20] method.
+
+### Boolean type conversion
+
+A value of _any_ type can be coerced to a **Boolean**.
+
+- For numeric types, `0` converts to `$false` and any other value converts to
+  `$true`.
+
+  ```powershell
+  PS&gt; [boolean]0
+  False
+  PS&gt; [boolean]0.0
+  False
+  PS&gt; [boolean]-1
+  True
+  PS&gt; [boolean]1
+  True
+  PS&gt; [boolean]42.1
+  True
+  ```
+
+- For other types, null values, empty strings, and empty arrays are converted
+  to `$false`.
+
+  ```powershell
+  PS&gt; [boolean]&#x27;&#x27;
+  False
+  PS&gt; [boolean]@()
+  False
+  PS&gt; [boolean]&#x27;Hello&#x27;
+  True
+  ```
+
+  Other values, including empty hashtables convert to `$true`. Single-element
+  collections evaluate to the Boolean value of their one and only element.
+  Collections with more than 1 element are always `$true`.
+
+  ```powershell
+  PS&gt; [boolean]@(0)
+  False
+  PS&gt; [boolean]@(0,0)
+  True
+  PS&gt; [boolean]@{}
+  True
+  ```
+
+### String type conversion
+
+A value of _any_ type can be coerced to a **String**. The default conversion is
+to call the `ToString()` method on the object.
+
+Arrays are converted to strings. Each element in the array is converted to a
+string, individually and joined to the resulting string. By default, the
+converted values are separated by a space. The separator can be changed by
+setting the `$OFS` preference variable.
+
+```powershell
+PS&gt; [string] @(1, 2, 3)
+1 2 3
+```
+
+For more information about `$OFS`, see [about_Preference_Variables][09].
+
+A single string value can be converted to an instance of a type if the type
+implements a static `Parse()` method. For example, `[bigint]&#x27;42&#x27;` is the same
+as `[bigint]::Parse(&#x27;42&#x27;, [cultureinfo]::InvariantCulture)`. The optional
+`[cultureinfo]::InvariantCulture` value binds to an `IFormatProvider` type
+parameter of the method. It ensures culture-invariant behavior of the
+conversion. Not all implementations of `Parse()` methods have this parameter.
+
+&gt; [!NOTE]
+&gt; Conversion to and from strings is usually performed using the
+&gt; [invariant culture][16]. Invariant culture is based on, but not identical to,
+&gt; the US-English culture. Notably, it uses the period (`.`) as the decimal
+&gt; mark and US-style month-first dates by default. However, _binary cmdlets_
+&gt; perform culture-sensitive conversion during parameter binding.
+
+### Enum type conversion
+
+PowerShell can convert [Enum][15] types to and from **String** instances. For
+example, the typecast string `[System.PlatformId]&#x27;Unix&#x27;` is the same as the
+enum value `[System.PlatformId]::Unix`. PowerShell also handles flag-based
+enums correctly for comma-separated values inside a string or as an array of
+strings. Consider the following examples:
+
+```powershell
+[System.Reflection.TypeAttributes]&#x27;Public, Abstract&#x27;
+[System.Reflection.TypeAttributes](&#x27;Public&#x27;, &#x27;Abstract&#x27;)
+```
+
+These examples are equivalent to the enum expression:
+
+```powershell
+[System.Reflection.TypeAttributes]::Public -bor
+    [System.Reflection.TypeAttributes]::Abstract
+```
+
+### Other type conversions
+
+A single value (non-array) can be converted to an instance of a type if:
+
+- That type has a (public) single-parameter constructor
+- And the value is the same type or can be coerced to the type of the parameter
+
+For example, the following two lines are equivalent:
+
+```powershell
+[regex]&#x27;a|b&#x27;
+[regex]::new(&#x27;a|b&#x27;)`
+```
+
+## Implicit types
+
+PowerShell also assigns types to literal values automatically.
+
+Numeric literals are implicitly typed by default. Numbers are typed based on
+their size. For example, `42` is small enough to be stored as an **Int32** type
+and `1.2` is stored as a **Double**. Integers larger than `[int32]::MaxValue`
+are stored as **Int64**. While `42` can be stored as a **Byte** and `1.2` can
+be stored as a **Single** type, the implicit typing uses **Int32** and
+**Double** respectively. For more information, see
+[about_Numeric_Literals][07].
+
+Literal strings are implicitly typed as **String**. Single-character **String**
+instances can be converted to and from the **Char** type. However, PowerShell
+has no literal **Char** type.
+
+## Implicit type conversion
+
+In certain contexts, PowerShell can implicitly convert values to other types.
+These contexts include:
+
+- Parameter binding
+- Type-constrained variables
+- Expressions using operators
+- Boolean contexts - PowerShell converts the conditional expressions of `if`,
+  `while`, `do`, or `switch` statements to **Boolean** values, as previously
+  described. For more information, see [about_Booleans][04].
+- Extended Type System (ETS) type definitions - Type conversions can be defined
+  in several ways:
+  - Using the **TypeConverter** parameter of [Update-TypeData][12]
+  - In [Types.ps1xml][10] files
+  - In compiled code for types decorated with a [TypeConverterAttribute][14]
+    attribute
+  - Via classes derived from [TypeConverter][13] or [PSTypeConverter][18]
+
+# about_Type_Conversion
+
+### Parameter binding conversions
+
+PowerShell attempts to convert values passed to parameters to match the
+parameter type. Type conversion of parameter values occurs in cmdlets,
+functions, scripts, scriptblocks, or .NET methods where the parameter is
+declared with a specific type. Declaring a parameter with the type `[Object]`
+or not defining a specific type allows any value type to be passed to a
+parameter. Parameters can also have custom conversions defined by decorating
+parameters with [ArgumentTransformationAttribute][17] attribute.
+
+For more information, see [about_Parameter_Binding][08].
+
+### Best practices for parameter binding
+
+For .NET methods, it&#x27;s better to pass the exact type expected using a type
+casts where needed. Without exact types, PowerShell can select the wrong method
+overload. Also, new method overloads added in future versions of .NET can break
+existing code. For an extreme example of this problem, see this
+[Stack Overflow question][11].
+
+If you pass an array to a `[string]` typed parameter, PowerShell might convert
+the array to a string as previously described. Consider the following basic
+function:
+
+```powershell
+function Test-String {
+    param([string] $String)
+    $String
+}
+
+Test-String -String 1, 2
+```
+
+This function outputs `1 2` because the array is converted to a string. To
+avoid this behavior, create an [advanced function][06] by adding the
+`[CmdletBinding()]` attribute.
+
+```powershell
+function Test-String {
+    [CmdletBinding()]
+    param([string] $String)
+    $String
+}
+
+Test-String -String 1, 2
+```
+
+For advanced functions, PowerShell refuses to bind the array to a non-array
+type. When you pass an array, PowerShell returns the following error message:
+
+```Output
+Test-String:
+Line |
+   7 |  Test-String -String 1, 2
+     |                      ~~~~
+     | Cannot process argument transformation on parameter &#x27;String&#x27;. Cannot
+     | convert value to type System.String.
+```
+
+Unfortunately, you can&#x27;t avoid this behavior for .NET method calls.
+
+```powershell
+PS&gt; (Get-Date).ToString(@(1, 2))
+1 2
+```
+
+PowerShell converts the array to the string `&quot;1 2&quot;`, which is passed to the
+**Format** parameter of the `ToString()` method.
+
+The following example shows another instance of the array conversion problem.
+
+```powershell
+PS&gt; $bytes = [byte[]] @(1..16)
+PS&gt; $guid = New-Object System.Guid($bytes)
+New-Object: Cannot find an overload for &quot;Guid&quot; and the argument count: &quot;16&quot;.
+```
+
+PowerShell treats the `$bytes` array as a list of individual parameters even
+though `$bytes` is an array of bytes and `System.Guid` has a `Guid(byte[])`
+constructor.
+
+This common code pattern is an instance of _pseudo method syntax_, which
+doesn&#x27;t always work as intended. This syntax translates to:
+
+```powershell
+PS&gt; [byte[]] $bytes = 1..16
+PS&gt; New-Object -TypeName System.Guid -ArgumentList $bytes
+New-Object: Cannot find an overload for &quot;Guid&quot; and the argument count: &quot;16&quot;.
+```
+
+Given that the type of **ArgumentList** is `[Object[]]`, a single argument that
+happens to be an array (of any type) binds to it _element by element_. The
+workaround is to wrap `$bytes` in an outer array so that PowerShell looks for a
+constructor with parameters that match the contents of the outer array.
+
+```powershell
+PS&gt; [byte[]] $bytes = 1..16
+PS&gt; $guid = New-Object -TypeName System.Guid -ArgumentList (, $bytes)
+PS&gt; $guid
+
+Guid
+----
+04030201-0605-0807-090a-0b0c0d0e0f10
+```
+
+The first item of the wrapped array is our original `[byte[]]` instance. That
+value matches the `Guid(byte[])` constructor.
+
+An alternative to the array wrapping workaround is to use the intrinsic static
+`new()` method.
+
+```powershell
+PS&gt; [byte[]] $bytes = 1..16
+PS&gt; [System.Guid]::new($bytes)  # OK
+
+Guid
+----
+04030201-0605-0807-090a-0b0c0d0e0f10
+```
+
+### Type-constrained variable conversions
+
+When you assign a value to a type-constrained variable, PowerShell attempts to
+convert the value to the variable type. If the value provided can be converted
+to the variable type, the assignment succeeds.
+
+For example:
+
+```powershell
+PS&gt; [int]$foo = &#x27;43&#x27;
+PS&gt; $foo.GetType().Name
+Int32
+```
+
+The conversion works because the string `&#x27;43&#x27;` can be converted to a number.
+
+## Operator conversions
+
+PowerShell can implicitly convert the operands in an expression to produce a
+reasonable result. Also, some operators have type-specific behaviors.
+
+# about_Type_Conversion
+
+### Numeric operations
+
+In numeric operations, even if both operands are the same numeric type, the
+result can be a different type, due to automatic type conversion to accommodate
+the result.
+
+```powershell
+PS&gt; [int]$a = 1
+PS&gt; [int]$b = 2
+PS&gt; $result = $a / $b
+PS&gt; $result
+0.5
+PS&gt; $result.GetType().Name
+Double
+```
+
+Even though both operands are integers, the result is converted to a **Double**
+to support the fractional result. To get true integer division, use the
+`[int]::Truncate()` or `[Math]::DivRem()` static methods. For more information,
+see [Truncate()][21] and [DivRem()][19].
+
+In integer arithmetic, when the result overflows the size of the operands,
+PowerShell defaults to using **Double** for the results, even when the result
+could fit into an **Int64** type.
+
+```powershell
+PS&gt; $result = [int]::MaxValue + 1
+PS&gt; $result
+2147483648
+PS&gt; $result.GetType().Name
+Double
+```
+
+If you want the result to be an **Int64**, you can cast the result type or
+operands.
+
+```powershell
+PS&gt; ([int64]([int]::MaxValue + 1)).GetType().Name
+Int64
+```
+
+However, use care when casting results to a specific type. For example, type
+casting the result to the `[decimal]` type can lead to loss of precision.
+Adding `1` to the maximum **Int64** value results in a **Double** type. When
+you cast a **Double** to a **Decimal** type, the result is
+`9223372036854780000`, which isn&#x27;t accurate.
+
+```powershell
+PS&gt; ([int64]::MaxValue + 1).GetType().Name
+Double
+PS&gt; [decimal]([int64]::MaxValue + 1)
+9223372036854780000
+```
+
+The conversion is limited to 15 digits of precision. For more information, see
+the _Remarks_ section of the [Decimal(Double)][01] constructor documentation.
+
+To avoid a loss of precision, use the `D` suffix on the `1` literal. By adding
+the `D` suffix, PowerShell converts the `[int64]::MaxValue` to a **Decimal**
+before adding `1D`.
+
+```powershell
+PS&gt; ([int64]::MaxValue + 1D).GetType().Name
+Decimal
+PS&gt; ([int64]::MaxValue + 1D)
+9223372036854775808
+```
+
+For more information about numeric suffixes, see [about_Numeric_Literals][07].
+
+Usually, the left-hand side (LHS) operand of PowerShell operators determines
+the data type used in the operation. PowerShell converts (coerces) the
+right-hand side (RHS) operand to the required type.
+
+```powershell
+PS&gt; 10 - &#x27; 9 &#x27;
+1
+```
+
+In this example, the RHS operand is the string `&#x27; 9 &#x27;`, which is implicitly
+converted to an integer before the subtraction operation. The same is true for
+the comparison operators.
+
+```powershell
+PS&gt; 10 -eq &#x27; 10&#x27;
+True
+PS&gt; 10 -eq &#x27;0xa&#x27;
+True
+```
+
+There are exceptions when using arithmetic_ operators (`+`, `-`, `*`, `/`) with
+_non-numeric_ operands.
+
+When you use the `-` and `/` operands with strings, PowerShell converts both
+operands from strings to numbers.
+
+```powershell
+PS&gt; &#x27;10&#x27; - &#x27;2&#x27;
+8
+PS&gt; &#x27;10&#x27; / &#x27;2&#x27;
+5
+```
+
+By contrast, the `+` and `*` operators have string-specific semantics
+(concatenation and replication).
+
+```powershell
+PS&gt; &#x27;10&#x27; + &#x27;2&#x27;
+102
+PS&gt; &#x27;10&#x27; * &#x27;2&#x27;
+1010
+```
+
+When you use **Boolean** values with arithmetic operators, PowerShell converts
+the values to integers: `$true` becomes `[int]1` and `$false` becomes
+`[int]0`.
+
+```powershell
+PS&gt; $false - $true
+-1
+```
+
+The one exception is the multiplication (`*`) of two booleans.
+
+```powershell
+PS&gt; $false * $true
+InvalidOperation: The operation &#x27;[System.Boolean] * [System.Boolean]&#x27; is not
+defined.
+```
+
+For other LHS types, arithmetic operators only succeed if a given type
+custom-defines these operators via [operator overloading][02].
+
+### Comparison operations
+
+The comparison operators, such as `-eq`, `-lt`, and `-gt`, can compare operands
+of different types. The behavior of non-strings and non-primitive types depends
+on whether the LHS type implements interfaces such as `IEquatable` and
+`IComparable`.
+
+The collection-based comparison operators (`-in` and `-contains`) perform per
+element `-eq` comparisons until a match is found. It&#x27;s each individual element
+of the collection operand that drives any type coercion.
+
+```powershell
+PS&gt; $true -in &#x27;true&#x27;, &#x27;false&#x27;
+True
+PS&gt; &#x27;true&#x27;, &#x27;false&#x27; -contains $true
+True
+```
+
+Both examples return true because `&#x27;true&#x27; -eq $true` yields `$true`.
+
+For more information, see [about_Comparison_Operators][05].
+
+&lt;!-- link references --&gt;
+[01]: /dotnet/api/system.decimal.-ctor#system-decimal-ctor(system-double)
+[02]: /dotnet/csharp/programming-guide/statements-expressions-operators/overloadable-operators
+[03]: #implicit-type-conversion
+[04]: about_Booleans.md
+[05]: about_Comparison_Operators.md
+[06]: about_Functions_Advanced.md
+[07]: about_Numeric_Literals.md
+[08]: about_Parameter_Binding.md
+[09]: about_Preference_Variables.md#ofs
+[10]: about_Types.ps1xml.md
+[11]: https://stackoverflow.com/questions/76241804/how-does-powershell-split-consecutive-strings-not-a-single-letter
+[12]: xref:Microsoft.PowerShell.Utility.Update-TypeData
+[13]: xref:System.ComponentModel.TypeConverter
+[14]: xref:System.ComponentModel.TypeConverterAttribute
+[15]: xref:System.Enum
+[16]: xref:System.Globalization.CultureInfo.InvariantCulture%2A
+[17]: xref:System.Management.Automation.ArgumentTransformationAttribute
+[18]: xref:System.Management.Automation.PSTypeConverter
+[19]: xref:System.Math.DivRem%2A
+[20]: xref:System.Math.Round%2A#midpoint-values-and-rounding-conventions
+[21]: xref:System.Math.Truncate%2A
+###Microsoft Learn URL###
+https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_type_conversion/?view=powershell-5.1
+</pre></html>

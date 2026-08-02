@@ -1,0 +1,1705 @@
+<!doctype html><html lang="ja"><meta charset="utf-8"><pre class="record-source">###KnowledgeNo###
+PS51-WS2022-2026-3948
+###FormatID###
+PS51-WS2022
+###CreatedAt###
+2026-08-01 00:00
+###UpdatedAt###
+2026-08-01 00:00
+###タイトル###
+Update-TypeData
+###モジュール###
+Microsoft.PowerShell.Utility
+###製品###
+Windows PowerShell 5.1
+###対応OS###
+Windows Server 2022
+###日本語訳###
+# Update-TypeData を更新する
+
+## SYNOPSIS はセッションで拡張型データを更新します.
+
+## SYNTAXは,のシンタックスです.
+
+### ファイルセット (デフォルト) 
+
+```
+Update-TypeData [[-AppendPath] &lt;String[]&gt;] [-PrependPath &lt;String[]&gt;] [-WhatIf] [-Confirm]
+ [&lt;CommonParameters&gt;]
+```
+
+### DynamicTypeSetは
+
+```
+Update-TypeData [-MemberType &lt;PSMemberTypes&gt;] [-MemberName &lt;String&gt;] [-Value &lt;Object&gt;]
+ [-SecondValue &lt;Object&gt;] [-TypeConverter &lt;Type&gt;] [-TypeAdapter &lt;Type&gt;]
+ [-SerializationMethod &lt;String&gt;] [-TargetTypeForDeserialization &lt;Type&gt;]
+ [-SerializationDepth &lt;Int32&gt;] [-DefaultDisplayProperty &lt;String&gt;]
+ [-InheritPropertySerializationSet &lt;Nullable`1&gt;] [-StringSerializationSource &lt;String&gt;]
+ [-DefaultDisplayPropertySet &lt;String[]&gt;] [-DefaultKeyPropertySet &lt;String[]&gt;]
+ [-PropertySerializationSet &lt;String[]&gt;] -TypeName &lt;String&gt; [-Force] [-WhatIf] [-Confirm]
+ [&lt;CommonParameters&gt;]
+```
+
+### TypeDataSet
+
+```
+Update-TypeData [-Force] [-TypeData] &lt;TypeData[]&gt; [-WhatIf] [-Confirm] [&lt;CommonParameters&gt;]
+```
+
+## 記述は,
+
+   `Update-TypeData`cmdlet は,セッション中の拡張型データを更新し,再充電する  を再充電します.`Types.ps1xml`ファイルをメモリに保存し,新しい拡張型データを追加します.
+
+デフォルトでは,PowerShellが必要なように拡張型データをロードします.パラメータなしでは,`Update-TypeData`の全部を再充電します.`Types.ps1xml`セッションで読み込んだファイル,あなたが追加したファイルタイプを含む.  のパラメータを使用できます.`Update-TypeData`新しいタイプファイルを追加し,拡張型データを追加して置き換えることができます.
+
+   `Update-TypeData`cmdlet はすべてのタイプのデータをプレロードするために使用できます.この機能は,タイプを開発しているときに特に有用であり,テスト目的で新しいタイプをロードしたい場合です.
+
+Windows PowerShell 3.0 から始めると,使用することができます.`Update-TypeData`を使わずにセッションで拡張型データを追加して置き換えることができます.`Types.ps1xml`ダイナミックに追加されるデータ,つまりファイルなしで,現在のセッションにのみ追加されます.すべてのセッションにタイプデータを追加するには,  を追加してください.`Update-TypeData`PowerShell プロフィールへのコマンド.詳細については, [about_Profiles] (Microsoft.PowerShell.Core/About/about_Profiles.md) を参照してください.
+
+また,Windows PowerShell 3.0から始め,あなたは&quot;&quot;を使用できます.`Get-TypeData`cmdlet で,現在のセッションと  の拡張型を入手できます.`Remove-TypeData`cmdlet は,現在のセッションから拡張型を削除する.
+
+属性や属性を追加した場合の例外は,`Update-TypeData`コマンドは,エラーを報告しないでください.これはフォーマットと出力中に多くの一般的なタイプで発生する例外を削除するためです. .NET属性を取得している場合は,以下の例で示されているように,方法構文を使用することで例外を削除する方法を回避できます.
+
+`&quot;hello&quot;.get_Length()`
+
+方法構文は .NET 属性のみで使用できることに注意してください.  を実行することで追加される属性です.`Update-TypeData`cmdlet は方法構文を使用できない.
+
+について詳しい情報はこちらから`Types.ps1xml`PowerShellで,[about_Types.ps1xml]のファイルを参照してください.
+
+## 例えは
+
+### 例1: 更新拡張型
+
+```powershell
+Update-TypeData
+```
+
+このコマンドは,拡張型構成を更新する.`Types.ps1xml`セッションで既に使用されているファイルです.
+
+### 例2: 更新タイプを複数回更新する
+
+この例では,同じセッションで複数のタイプファイルのタイプを更新する方法を示しています.
+
+最初のコマンドは,拡張型設定を更新する.`Types.ps1xml`ファイル処理,処理`TypesA.types.ps1xml`そして,`TypesB.types.ps1xml`まずファイル.
+
+2番目のコマンドは, を更新する方法を示します.`TypesA.types.ps1xml`ファイルにタイプを追加または変更した場合に可能となるようなものです.  の前のコマンドを繰り返すことができます.`TypesA.types.ps1xml`ファイル,または実行する`Update-TypeData`という指令がパラメータのないコマンドだからです.`TypesA.types.ps1xml`既存のセッションのファイルタイプリストには既に含まれています.
+
+```powershell
+Update-TypeData -PrependPath TypesA.types.ps1xml, TypesB.types.ps1xml
+Update-TypeData -PrependPath TypesA.types.ps1xml
+```
+
+### 例3: DateTimeオブジェクトにスクリプトプロパティを追加する
+
+この例では,利用する.`Update-TypeData`実行中のセッションのシステム.日付時間**オブジェクトに**Quarter**スクリプト属性を追加する,例えば,返信したものなど.`Get-Date`cmdletです.
+
+```powershell
+$typeDataParams = @{
+    TypeName   = &#x27;System.DateTime&#x27;
+    MemberType = &#x27;ScriptProperty&#x27;
+    MemberName = &#x27;Quarter&#x27;
+    Value      = {
+        switch ($this.Month) {
+            { $_ -in @(1, 2, 3) } { return &#x27;Q1&#x27; }
+            { $_ -in @(4, 5, 6) } { return &#x27;Q2&#x27; }
+            { $_ -in @(7, 8, 9) } { return &#x27;Q3&#x27; }
+            default               { return &#x27;Q4&#x27; }
+        }
+    }
+}
+Update-TypeData @typeDataParams
+
+(Get-Date).Quarter
+```
+
+```Output
+Q1
+```
+
+   `Update-TypeData`システム.日付時間** のタイプを指定するために **TypeName** パラメータ,新しいプロパティの名前を指定するために **MemberName** パラメータ,ScriptProperty** のタイプを指定するために **MemberType** プロパティ,年間四半期を決定するスクリプトを指定するために **Value** パラメタを使用します.
+
+**Value**のプロパティの値は,現在の年4分の計算を図書でします.`$this`自動変数は,オブジェクトの現在のインスタンスを表示し,Inオペレータは,毎月の値がすべての整数数列に表示されるかどうかを判断します.`-in`オペレーターについては, [about_Comparison_Operators]を参照してください. (Microsoft.PowerShell.Core/about/about_comparison_Operators.md)
+
+2番目のコマンドは,現在の日付の新しいQuarterプロパティを取得します.
+
+# Update-TypeData を更新する
+
+### 例4: リストでデフォルトで表示されるタイプを更新する
+
+この例では,リストでデフォルトで表示されるタイプの性質を設定する方法を示しています.つまり,属性がない場合です. タイプデータは,  で指定されていないため,`Types.ps1xml`ファイルは,現在のセッションでのみ有効です.
+
+```powershell
+Get-Date | Format-List
+
+Update-TypeData -TypeName &quot;System.DateTime&quot; -DefaultDisplayPropertySet @(
+    &#x27;DateTime&#x27;
+    &#x27;DayOfYear&#x27;
+    &#x27;Quarter&#x27;
+)
+
+Get-Date | Format-List
+```
+
+```Output
+DisplayHint : DateTime
+Date        : 8/7/2024 12:00:00 AM
+Day         : 7
+DayOfWeek   : Wednesday
+DayOfYear   : 220
+Hour        : 10
+Kind        : Local
+Millisecond : 568
+Minute      : 34
+Month       : 8
+Second      : 43
+Ticks       : 638586236835683086
+TimeOfDay   : 10:34:43.5683086
+Year        : 2024
+DateTime    : Wednesday, August 7, 2024 10:34:43 AM
+Quarter     : Q3
+
+
+DateTime  : Wednesday, August 7, 2024 10:34:43 AM
+DayOfYear : 220
+Quarter   : Q3
+```
+
+最初のコマンドは,  のリストビューを表示します.`Get-Date`このコマンドはパイプライン操作符 () を使っています.`|`) をして, DateTime オブジェクトを  に送信します.`Format-List`cmdlet. なぜなら,cmdlet は`Format-List`コマンドはリストに表示される属性を指定していないため,PowerShellはオブジェクトのすべての公開で隠されていない属性を表示します.
+
+第二のコマンドは,という文字を使用します.`Update-TypeData`※System.DateTime** のデフォルトリストプロパティを設定するには cmdlet を使用します.このコマンドは,タイプを指定するために **TypeName** パラメータを使用し,リストのデフォルトプロパティを指定するために **DefaultDisplayPropertySet** パラメータを使用します.選択されたプロパティには,以前の例で追加された新しい **Quarter** スクリプトプロパティが含まれます.
+
+最後のコマンドは現在の日付を入手し,リスト形式で再び表示します.このコマンドは, で定義された属性のみを表示します.`Update-TypeData`命令ではなく,プロパティの完全なリストです.
+
+# Update-TypeData を更新する
+
+### 例5: タイプ表示のプロパティを設定する 幅広く表示される
+
+この例では,新しいスクリプトプロパティを作成して,タイプが  に渡されたときに表示されるデフォルトプロパティとして使用する方法を示しています.`Format-Wide`cmdletです.
+
+```powershell
+Get-Command *File* | Format-Wide
+```
+
+```Output
+Set-AppPackageProvisionedDataFile                          Set-ProvisionedAppPackageDataFile
+Set-ProvisionedAppXDataFile                                Write-FileSystemCache
+Write-FileSystemCache                                      Block-FileShareAccess
+Clear-FileStorageTier                                      Close-SmbOpenFile
+Debug-FileShare                                            Disable-NetIPHttpsProfile
+Enable-NetIPHttpsProfile                                   Get-FileHash
+Get-FileIntegrity                                          Get-FileShare
+Get-FileShareAccessControlEntry                            Get-FileStorageTier
+Get-NetConnectionProfile                                   Get-NetFirewallHyperVProfile
+Get-NetFirewallProfile                                     Get-SmbOpenFile
+Get-StorageFileServer                                      Get-SupportedFileSystems
+Grant-FileShareAccess                                      Import-PowerShellDataFile
+New-FileShare                                              New-NetFirewallHyperVProfile
+New-ScriptFileInfo                                         New-StorageFileServer
+New-TemporaryFile                                          Publish-BCFileContent
+Remove-FileShare                                           Remove-NetFirewallHyperVProfile
+Remove-StorageFileServer                                   Repair-FileIntegrity
+Revoke-FileShareAccess                                     Set-FileIntegrity
+Set-FileShare                                              Set-FileStorageTier
+Set-NetConnectionProfile                                   Set-NetFirewallHyperVProfile
+Set-NetFirewallProfile                                     Set-StorageBusProfile
+Set-StorageFileServer                                      Test-ScriptFileInfo
+Unblock-FileShareAccess                                    Update-ScriptFileInfo
+Add-BitsFile                                               Get-AIPFileStatus
+Get-AppLockerFileInformation                               New-FileCatalog
+New-PSRoleCapabilityFile                                   New-PSSessionConfigurationFile
+Out-File                                                   Set-AIPFileClassification
+Set-AIPFileLabel                                           Set-AppXProvisionedDataFile
+Set-UevTemplateProfile                                     Test-FileCatalog
+Test-PSSessionConfigurationFile                            Unblock-File
+FileDialogBroker.exe                                       FileHistory.exe
+forfiles.exe                                               openfiles.exe
+```
+
+```powershell
+$typeDataParams = @{
+    TypeName               = &#x27;System.Management.Automation.CommandInfo&#x27;
+    DefaultDisplayProperty = &#x27;FullyQualifiedName&#x27;
+    MemberType             = &#x27;ScriptProperty&#x27;
+    MemberName             = &#x27;FullyQualifiedName&#x27;
+    Value                  = {
+        [OutputType([string])]
+        param()
+
+        # For executables, return the path to the application.
+        if ($this -is [System.Management.Automation.ApplicationInfo]) {
+            return $this.Path
+        }
+
+        # For commands defined outside a module, return only the name.
+        if ([string]::IsNullOrEmpty($this.ModuleName)) {
+            return $this.Name
+        }
+
+        # Return the fully-qualified command name &quot;&lt;ModuleName&gt;\&lt;CommandName&gt;&quot;
+        return &#x27;{0}\{1}&#x27; -f $this.ModuleName, $this.Name
+    }
+}
+Update-TypeData @typeDataParams
+
+Get-Command *File* | Format-Wide
+```
+
+```Output
+Dism\Set-AppPackageProvisionedDataFile                     Dism\Set-ProvisionedAppPackageDataFile
+Dism\Set-ProvisionedAppXDataFile                           Storage\Write-FileSystemCache
+VMDirectStorage\Write-FileSystemCache                      Storage\Block-FileShareAccess
+Storage\Clear-FileStorageTier                              SmbShare\Close-SmbOpenFile
+Storage\Debug-FileShare                                    NetworkTransition\Disable-NetIPHttpsProfile
+NetworkTransition\Enable-NetIPHttpsProfile                 Microsoft.PowerShell.Utility\Get-FileHash
+Storage\Get-FileIntegrity                                  Storage\Get-FileShare
+Storage\Get-FileShareAccessControlEntry                    Storage\Get-FileStorageTier
+NetConnection\Get-NetConnectionProfile                     NetSecurity\Get-NetFirewallHyperVProfile
+NetSecurity\Get-NetFirewallProfile                         SmbShare\Get-SmbOpenFile
+Storage\Get-StorageFileServer                              Storage\Get-SupportedFileSystems
+Storage\Grant-FileShareAccess                              Microsoft.PowerShell.Utility\Import-PowerShellDataFile
+Storage\New-FileShare                                      NetSecurity\New-NetFirewallHyperVProfile
+PowerShellGet\New-ScriptFileInfo                           Storage\New-StorageFileServer
+Microsoft.PowerShell.Utility\New-TemporaryFile             BranchCache\Publish-BCFileContent
+Storage\Remove-FileShare                                   NetSecurity\Remove-NetFirewallHyperVProfile
+Storage\Remove-StorageFileServer                           Storage\Repair-FileIntegrity
+Storage\Revoke-FileShareAccess                             Storage\Set-FileIntegrity
+Storage\Set-FileShare                                      Storage\Set-FileStorageTier
+NetConnection\Set-NetConnectionProfile                     NetSecurity\Set-NetFirewallHyperVProfile
+NetSecurity\Set-NetFirewallProfile                         StorageBusCache\Set-StorageBusProfile
+Storage\Set-StorageFileServer                              PowerShellGet\Test-ScriptFileInfo
+Storage\Unblock-FileShareAccess                            PowerShellGet\Update-ScriptFileInfo
+BitsTransfer\Add-BitsFile                                  AzureInformationProtection\Get-AIPFileStatus
+AppLocker\Get-AppLockerFileInformation                     Microsoft.PowerShell.Security\New-FileCatalog
+Microsoft.PowerShell.Core\New-PSRoleCapabilityFile         Microsoft.PowerShell.Core\New-PSSessionConfigurationFile
+Microsoft.PowerShell.Utility\Out-File                      AzureInformationProtection\Set-AIPFileClassification
+AzureInformationProtection\Set-AIPFileLabel                Dism\Set-AppXProvisionedDataFile
+UEV\Set-UevTemplateProfile                                 Microsoft.PowerShell.Security\Test-FileCatalog
+Microsoft.PowerShell.Core\Test-PSSessionConfigurationFile  Microsoft.PowerShell.Utility\Unblock-File
+C:\WINDOWS\system32\FileDialogBroker.exe                   C:\WINDOWS\system32\FileHistory.exe
+C:\WINDOWS\system32\forfiles.exe                           C:\WINDOWS\system32\openfiles.exe
+```
+
+最初のコマンドは,を用います.`Get-Command`cmdlet は,すべてのコマンドに&quot;&quot;という単語を含む名前で返信する.`File`輸出を  に送る.`Format-Wide`cmdletで,列内のコマンドの名前を表示します.
+
+次に,例は&quot;&quot;を使用します.`Update-TypeData`**DefaultDisplayProperty**と,CommandInfo**タイプの新しいスクリプトプロパティを定義する.`Get-Command`**CommandInfo**のオブジェクトと,そのタイプから派生されたオブジェクトを返します.新しいスクリプトプロパティ, **FullyQualifiedName**は,実行可能なアプリケーションへの完全なパスとcmdletsの完全資格の名前を返します.
+
+# Update-TypeData を更新する
+
+CMdletの名前と定義するモジュールを元に設定します.`Update-TypeData`cmdlet は新しいスクリプトプロパティを定義し,同じコマンドで **DefaultDisplayProperty** として使用することができます.
+
+最後に,出力が  の結果を示します.`Get-Command`タイプ更新後,広いフォーマットで表示される. cmdlets の完全資格の名前と実行可能なアプリケーションへの完全な経路を表示します.
+
+# Update-TypeData を更新する
+
+### 例6:パイプされたオブジェクトのデータタイプ更新
+
+```powershell
+$typeDataParams = @{
+    MemberType = &#x27;ScriptProperty&#x27;
+    MemberName = &#x27;SupportsUpdatableHelp&#x27;
+    Value      = {
+        [OutputType([bool])]
+        param()
+
+        return (-not [string]::IsNullOrEmpty($this.HelpInfoUri))
+    }
+}
+Get-Module Microsoft.PowerShell.Utility | Update-TypeData @typeDataParams
+
+Get-Module -ListAvailable -Name Microsoft.PowerShell.* |
+    Format-Table Name, SupportsUpdatableHelp
+```
+
+```Output
+Name                                      SupportsUpdatableHelp
+----                                      ---------------------
+Microsoft.PowerShell.Operation.Validation                  True
+Microsoft.PowerShell.Archive                               True
+Microsoft.PowerShell.Diagnostics                           True
+Microsoft.PowerShell.Host                                  True
+Microsoft.PowerShell.LocalAccounts                         True
+Microsoft.PowerShell.Management                            True
+Microsoft.PowerShell.ODataUtils                            True
+Microsoft.PowerShell.Security                              True
+Microsoft.PowerShell.Utility                               True
+```
+
+この例は,物体をパイプして にすると示しています.`Update-TypeData`     `Update-TypeData`対象タイプに拡張型データを追加します.
+
+この技術は,  を使っているよりも速くなります.`Get-Member`cmdlet または `Get-Type`しかし,あなたが物体の集合を  にパイプした場合,`Update-TypeData`集合内の他のすべてのオブジェクトに対してエラーを返します.そのメンバーは既にタイプで定義されているからです.
+
+最初のコマンドは,を用います.`Get-Module`図は,Microsoft.PowerShell.Utility** モジュールを取得するcmdletです.コマンドは,モジュールオブジェクトを  にパイプします.`Update-TypeData`cmdletでは,システム管理自動化PSModuleInfo**タイプとそこから派生したタイプ,例えばModuleInfoGrouping**タイプを更新します.`Get-Module`命令で**ListAvailable**パラメータを使用すると返されます.
+
+   `Update-TypeData`命令は,輸入されたすべてのモジュールに **SupportsUpdatableHelp** スクリプト属性を追加します. **Value** パラメータの値は,返信するスクリプトです.`$true`モデルのHelpInfoUri**属性が満員で,`$false`違うと.
+
+第二のコマンドは,モジュールオブジェクトを からパイプします.`Get-Module`へ`Format-Table`cmdletでは,利用可能なモジュール内の **Name** と **SupportsUpdatableHelp** のプロパティが表示されます.
+
+## パラメータは
+
+### -AppendPath
+
+選択式へのパスポートを指定します.`.ps1xml`指定されたファイルは,内蔵ファイルが読み込まれるとリストされている順に読み込まれています.また, **AppendPath** の値を  にパイプすることもできます.`Update-TypeData` .
+
+```yaml
+Type: System.String[]
+Parameter Sets: FileSet
+Aliases: PSPath, Path
+
+Required: False
+Position: 0
+Default value: None
+Accept pipeline input: True (ByPropertyName, ByValue)
+Accept wildcard characters: False
+```
+
+### -DefaultDisplayProperty 設定されたプロパティ
+
+によって表示されるタイプの性質を指定します.`Format-Wide`他の属性がない場合,cmdletです.
+
+タイプの標準または拡張属性の名前を入力します.このパラメータの値は,同じコマンドで追加されるタイプの名前かもしれません.
+
+この値は,  の型に定義された幅の表示がない場合にのみ有効です.`Format.ps1xml`ファイル.
+
+このパラメータはWindows PowerShell 3.0で導入されました.
+
+```yaml
+Type: System.String
+Parameter Sets: DynamicTypeSet
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -DefaultDisplayPropertySet でした
+
+タイプの一か複数の性質を指定する.これらの性質は, によって表示される.`Format-List`     `Format-Table`そして,そして,`Format-Custom`他の属性がない場合のcmdlets.
+
+タイプの標準または拡張属性の名前を入力します.このパラメータの値は,同じコマンドで追加されるタイプの名前かもしれません.
+
+この値は,リスト,テーブル,またはカスタムビューが存在しない場合にのみ有効です.`Format.ps1xml`ファイル.
+
+このパラメータはWindows PowerShell 3.0で導入されました.
+
+```yaml
+Type: System.String[]
+Parameter Sets: DynamicTypeSet
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -DefaultKeyPropertySet でした.
+
+タイプの一つまたは複数の性質を指定する.これらの性質は, によって使用されます.`Group-Object`そして,`Sort-Object`他の属性がない場合のcmdlets.
+
+タイプの標準または拡張属性の名前を入力します.このパラメータの値は,同じコマンドで追加されるタイプの名前かもしれません.
+
+このパラメータはWindows PowerShell 3.0で導入されました.
+
+```yaml
+Type: System.String[]
+Parameter Sets: DynamicTypeSet
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -フォース
+
+cmdlet で指定されたタイプのデータを使用すると示します.そのタイプのデータが既に指定されている場合でも.
+
+このパラメータはWindows PowerShell 3.0で導入されました.
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: DynamicTypeSet, TypeDataSet
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -InheritPropertySerializationSet について
+
+シリアライズされたプロパティセットが相続されているかどうかを表示します.デフォルト値は です.`$null`このパラメータの受け入れられる値は:
+
+ - -`$true`財産セットは相続されます. - `$false`財産セットは相続されない. - `$null`遺産は定義されていません.
+
+このパラメータは, **SerializationMethod**パラメータの値が である場合にのみ有効です.`SpecificProperties`このパラメータの値は であるとき.`$false`, **PropertySerializationSet**のパラメータが求められます.
+
+このパラメータはWindows PowerShell 3.0で導入されました.
+
+```yaml
+Type: System.Nullable`1[System.Boolean]
+Parameter Sets: DynamicTypeSet
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -メンバー名
+
+属性や方法の名前を指定します.
+
+このパラメータを **TypeName**, **MemberType**, **Value**, **SecondValue**のパラメータで用い,タイプの属性や方法を追加または変更する.
+
+このパラメータはWindows PowerShell 3.0で導入されました.
+
+```yaml
+Type: System.String
+Parameter Sets: DynamicTypeSet
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+# Update-TypeData を更新する
+
+### -MemberType
+
+追加または変更するメンバーの種類を指定します.
+
+このパラメータを **TypeName**, **MemberType**, **Value**, **SecondValue**のパラメータで用い,タイプの属性または方法を追加または変更する.このパラメータの受け入れられる値は:
+
+アリアスプロペティ - コードメソッド - コードプロペティ - ノートプロペティ - スクリプトメソッド - スクリプトプロペティ
+
+これらの値についての情報については,PSMemberTypes [PSMemberTypes Enumeration] (/dotnet/api/system.management.automation.psmembertypes) を参照してください.
+
+このパラメータはWindows PowerShell 3.0で導入されました.
+
+```yaml
+Type: System.Management.Automation.PSMemberTypes
+Parameter Sets: DynamicTypeSet
+Aliases:
+Accepted values: NoteProperty, AliasProperty, ScriptProperty, CodeProperty, ScriptMethod, CodeMethod
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -PrependPath について
+
+選択式への経路を指定します.`.ps1xml`指定されたファイルは,内蔵ファイルが読み込まれる前に,リストされている順序で読み込まれます.
+
+```yaml
+Type: System.String[]
+Parameter Sets: FileSet
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -PropertySerializationSet について
+
+シリアライズされたプロパティの名前を指定します. **SerializationMethod**のパラメータの値は **SpecificProperties**であるときにこのパラメータを使用します.
+
+```yaml
+Type: System.String[]
+Parameter Sets: DynamicTypeSet
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -SecondValue
+
+**AliasProperty**, **ScriptProperty**, **CodeProperty**,または **CodeMethod**メンバーの追加値を指定します.
+
+このパラメータを **TypeName**, **MemberType**, **Value**, **SecondValue**のパラメータで用い,タイプの属性または方法を追加または変更する.
+
+**MemberType**パラメータの値は であるとき`AliasProperty`PowerShell で,アライス属性の値を指定されたタイプに変換 (キャスト) します.例えば,文字列属性の代替名を提供するアライス属性を追加すると,アライス属性の値を整数に変換するために,システム.Int32** の **SecondValue** を指定することもできます.
+
+**MemberType**パラメータの値は であるとき`ScriptProperty`追加スクリプトブロックを指定するには, **SecondValue** パラメータを使用できます. **Value** パラメータの値にあるスクリプトブロックは変数の値を得ます. **SecondValue** パラメータの値にあるスクリプトブロックは変数の値を設定します.
+
+このパラメータはWindows PowerShell 3.0で導入されました.
+
+```yaml
+Type: System.Object
+Parameter Sets: DynamicTypeSet
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -SerializationDepth
+
+文字列として数レベルのオブジェクトが序列化されているかを指定します.デフォルト値は `1`対象とその性質をシリアライズする. の値.`0`対象をシリアライズしますが,その性質を表示しません.`2`対象,その性質,および任意のオブジェクトをプロパティ値に並べます.
+
+このパラメータはWindows PowerShell 3.0で導入されました.
+
+```yaml
+Type: System.Int32
+Parameter Sets: DynamicTypeSet
+Aliases:
+
+Required: False
+Position: Named
+Default value: 1
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -SerializationMethod
+
+型にシリアライゼーション方法を指定する.シリアライゼーション方法は,タイプのどの属性がシリアライゼーションされているか,およびそれらをシリアライゼーションするために使用する技術を決定する.このパラメータの受け入れ可能な値は:です.
+
+ - -`AllPublicProperties`タイプのすべての公開属性をシリアライズします.子供属性がシリアライズされているかどうかを判断するために **SerializationDepth**パラメータを使用できます. - `String`文字列としてタイプをシリアライズする. 文字列の生成結果として使用するタイプの属性を指定するために **StringSerializationSource** を使用できます. そうでなければ,オブジェクトの **ToString** 方法を使用してタイプがシリアライズされます. - `SpecificProperties`このタイプの指定されたプロパティのみをシリアライズします. シリアライズされているタイプのプロパティを指定するには**PropertySerializationSet**パラメータを使用します. また,プロパティセットが相続されているかどうかを判断するために**InheritPropertySerializationSet**パラメータを使用し,子属性がシリアライズされているかどうかを判断するには**SerializationDepth**パラメータを使用します.
+
+PowerShellでは,シリアライゼーション方法がPSStandardMembers**内部オブジェクトに保存されます.
+
+このパラメータはWindows PowerShell 3.0で導入されました.
+
+```yaml
+Type: System.String
+Parameter Sets: DynamicTypeSet
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -StringSerializationSource について
+
+指定された属性の値は,シリアライゼーション結果として使用されます.このパラメータは, **SerializationMethod**パラメータの値は Stringである場合にのみ有効です.
+
+```yaml
+Type: System.String
+Parameter Sets: DynamicTypeSet
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -TargetTypeForDeserialization について
+
+このタイプのオブジェクトが消散されたときにどの型に変換されるかを指定します.
+
+このパラメータはWindows PowerShell 3.0で導入されました.
+
+```yaml
+Type: System.Type
+Parameter Sets: DynamicTypeSet
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -TypeAdapter
+
+タイプアダプターの種類を指定します.例えば **Microsoft.PowerShell.Cim.CimInstanceAdapter**.タイプアダプターは,PowerShellにタイプのメンバーを取得できるようにします.
+
+このパラメータはWindows PowerShell 3.0で導入されました.
+
+```yaml
+Type: System.Type
+Parameter Sets: DynamicTypeSet
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -TypeConverter
+
+タイプ変換器を指定すると,異なるタイプ間の値を変換する.タイプ変換器がタイプのために定義されている場合,変換のためにタイプ変換器のインスタンスを使用します.
+
+**System.Type**の値を入力し,その値は **System.ComponentModel.TypeConverter**または **System.Management.Automation.PSTypeConverter**のクラスから得られます.
+
+このパラメータはWindows PowerShell 3.0で導入されました.
+
+```yaml
+Type: System.Type
+Parameter Sets: DynamicTypeSet
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -TypeData
+
+このcmdletがセッションに追加するデータタイプの配列を指定します. **TypeData** オブジェクトを含む変数または などの **TypeData** オブジェクトを得るコマンドを入力してください.`Get-TypeData`また,TypeData* オブジェクトを  にパイプすることもできます.`Update-TypeData` .
+
+このパラメータはWindows PowerShell 3.0で導入されました.
+
+```yaml
+Type: System.Management.Automation.Runspaces.TypeData[]
+Parameter Sets: TypeDataSet
+Aliases:
+
+Required: True
+Position: 0
+Default value: None
+Accept pipeline input: True (ByPropertyName, ByValue)
+Accept wildcard characters: False
+```
+
+# Update-TypeData を更新する
+
+### -TypeName
+
+拡張するタイプの名前を指定します.
+
+**システム**名空のタイプについては,略名を入力してください.そうでなければ,完全なタイプ名が必要になります.ワイルドカードはサポートされていません.
+
+名前を入力して,パイプを入力して,`Update-TypeData`対象をにパイプする時.`Update-TypeData`     `Update-TypeData`対象のタイプ名と,対象のタイプデータを取得します.
+
+このパラメータを **MemberName**, **MemberType**, **Value**, **SecondValue**のパラメータで用い,タイプの属性や方法を追加または変更する.
+
+このパラメータはWindows PowerShell 3.0で導入されました.
+
+```yaml
+Type: System.String
+Parameter Sets: DynamicTypeSet
+Aliases:
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: True (ByValue)
+Accept wildcard characters: False
+```
+
+### -Value
+
+資産または方法の値を指定します.
+
+ を追加すると,`AliasProperty`     `CodeProperty`     `ScriptProperty`       `CodeMethod`メンバーは,追加情報を追加するために **SecondValue** パラメータを使用できます.
+
+このパラメータを **MemberName**, **MemberType**, **Value**, **SecondValue**のパラメータで用い,タイプの属性や方法を追加または変更する.
+
+このパラメータはWindows PowerShell 3.0で導入されました.
+
+```yaml
+Type: System.Object
+Parameter Sets: DynamicTypeSet
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -確認
+
+cmdletを実行する前に確認を提示します.
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases: cf
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -WhatIf
+
+cmdletが実行されなければどうなるかを示しています.
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases: wi
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### 共通パラメーター
+
+このcmdletは,共通パラメータをサポートしています: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable.詳細については, [about_CommonParameters](を参照してください.https://go.microsoft.com/fwlink/?LinkID=113216) でした.
+
+## 輸入は
+
+### System.String でした.
+
+**AppendPath**, **TypeName**,または **TypeData**のパラメータの値を含む文字列をこのcmdletにパイプすることができます.
+
+## 輸出は
+
+### どれもない
+
+このcmdletは出力返さない.
+
+##  NOTES  記事ができました.
+
+## 関連リンク
+
+[about_Types.ps1xml](../Microsoft.PowerShell.Core/About/about_Types.ps1xml.md) について
+
+[Get-TypeData](Get-TypeData.md) について
+
+[Remove-TypeData](Remove-TypeData.md を削除する)
+###英語原文###
+# Update-TypeData
+
+## SYNOPSIS
+Updates the extended type data in the session.
+
+## SYNTAX
+
+### FileSet (Default)
+
+```
+Update-TypeData [[-AppendPath] &lt;String[]&gt;] [-PrependPath &lt;String[]&gt;] [-WhatIf] [-Confirm]
+ [&lt;CommonParameters&gt;]
+```
+
+### DynamicTypeSet
+
+```
+Update-TypeData [-MemberType &lt;PSMemberTypes&gt;] [-MemberName &lt;String&gt;] [-Value &lt;Object&gt;]
+ [-SecondValue &lt;Object&gt;] [-TypeConverter &lt;Type&gt;] [-TypeAdapter &lt;Type&gt;]
+ [-SerializationMethod &lt;String&gt;] [-TargetTypeForDeserialization &lt;Type&gt;]
+ [-SerializationDepth &lt;Int32&gt;] [-DefaultDisplayProperty &lt;String&gt;]
+ [-InheritPropertySerializationSet &lt;Nullable`1&gt;] [-StringSerializationSource &lt;String&gt;]
+ [-DefaultDisplayPropertySet &lt;String[]&gt;] [-DefaultKeyPropertySet &lt;String[]&gt;]
+ [-PropertySerializationSet &lt;String[]&gt;] -TypeName &lt;String&gt; [-Force] [-WhatIf] [-Confirm]
+ [&lt;CommonParameters&gt;]
+```
+
+### TypeDataSet
+
+```
+Update-TypeData [-Force] [-TypeData] &lt;TypeData[]&gt; [-WhatIf] [-Confirm] [&lt;CommonParameters&gt;]
+```
+
+## DESCRIPTION
+
+The `Update-TypeData` cmdlet updates the extended type data in the session by reloading the
+`Types.ps1xml` files into memory and adding new extended type data.
+
+By default, PowerShell loads extended type data as it is needed. Without parameters,
+`Update-TypeData` reloads all of the `Types.ps1xml` files that it has loaded in the session,
+including any type files that you added. You can use the parameters of `Update-TypeData` to add new
+type files and add and replace extended type data.
+
+The `Update-TypeData` cmdlet can be used to preload all type data. This feature is particularly
+useful when you are developing types and want to load those new types for testing purposes.
+
+Beginning in Windows PowerShell 3.0, you can use `Update-TypeData` to add and replace extended type
+data in the session without using a `Types.ps1xml` file. Type data that is added dynamically, that
+is, without a file, is added only to the current session. To add the type data to all sessions, add
+an `Update-TypeData` command to your PowerShell profile. For more information, see
+[about_Profiles](../Microsoft.PowerShell.Core/About/about_Profiles.md).
+
+Also, beginning in Windows PowerShell 3.0, you can use the `Get-TypeData` cmdlet to get the extended
+types in the current session and the `Remove-TypeData` cmdlet to delete extended types from the
+current session.
+
+Exceptions that occur in properties, or from adding properties to an `Update-TypeData` command, do
+not report errors. This is to suppress exceptions that would occur in many common types during
+formatting and outputting. If you are getting .NET properties, you can work around the suppression
+of exceptions by using method syntax instead, as shown in the following example:
+
+`&quot;hello&quot;.get_Length()`
+
+Note that method syntax can only be used with .NET properties. Properties that are added by running
+the `Update-TypeData` cmdlet cannot use method syntax.
+
+For more information about the `Types.ps1xml` files in PowerShell, see
+[about_Types.ps1xml](../Microsoft.PowerShell.Core/About/about_Types.ps1xml.md).
+
+## EXAMPLES
+
+### Example 1: Update extended types
+
+```powershell
+Update-TypeData
+```
+
+This command updates the extended type configuration from the `Types.ps1xml` files that have already
+been used in the session.
+
+### Example 2: Update types multiple times
+
+This example shows how to update the types in a type file multiple times in the same session.
+
+The first command updates the extended type configuration from the `Types.ps1xml` files, processing
+the `TypesA.types.ps1xml` and `TypesB.types.ps1xml` files first.
+
+The second command shows how to update the `TypesA.types.ps1xml` again, such as you might do if you
+added or changed a type in the file. You can either repeat the previous command for the
+`TypesA.types.ps1xml` file, or run an `Update-TypeData` command without parameters, because
+`TypesA.types.ps1xml` is already in the type file list for the current session.
+
+```powershell
+Update-TypeData -PrependPath TypesA.types.ps1xml, TypesB.types.ps1xml
+Update-TypeData -PrependPath TypesA.types.ps1xml
+```
+
+### Example 3: Add a script property to DateTime objects
+
+This example uses `Update-TypeData` to add the **Quarter** script property to **System.DateTime**
+objects in the current session, such as those returned by the `Get-Date` cmdlet.
+
+```powershell
+$typeDataParams = @{
+    TypeName   = &#x27;System.DateTime&#x27;
+    MemberType = &#x27;ScriptProperty&#x27;
+    MemberName = &#x27;Quarter&#x27;
+    Value      = {
+        switch ($this.Month) {
+            { $_ -in @(1, 2, 3) } { return &#x27;Q1&#x27; }
+            { $_ -in @(4, 5, 6) } { return &#x27;Q2&#x27; }
+            { $_ -in @(7, 8, 9) } { return &#x27;Q3&#x27; }
+            default               { return &#x27;Q4&#x27; }
+        }
+    }
+}
+Update-TypeData @typeDataParams
+
+(Get-Date).Quarter
+```
+
+```Output
+Q1
+```
+
+The `Update-TypeData` command uses the **TypeName** parameter to specify **the System.DateTime**
+type, the **MemberName** parameter to specify a name for the new property, the **MemberType**
+property to specify the **ScriptProperty** type, and the **Value** parameter to specify the script
+that determines the annual quarter.
+
+The value of the **Value** property is a script that calculates the current annual quarter. The
+scriptblock uses the `$this` automatic variable to represent the current instance of the object and
+the In operator to determine whether the month value appears in each integer array. For more
+information about the `-in` operator, see
+[about_Comparison_Operators](../Microsoft.PowerShell.Core/about/about_Comparison_Operators.md).
+
+The second command gets the new Quarter property of the current date.
+
+# Update-TypeData
+
+### Example 4: Update a type that displays in lists by default
+
+This example shows how to set the properties of a type that displays in lists by default, that is,
+when no properties are specified. Because the type data is not specified in a `Types.ps1xml` file,
+it is effective only in the current session.
+
+```powershell
+Get-Date | Format-List
+
+Update-TypeData -TypeName &quot;System.DateTime&quot; -DefaultDisplayPropertySet @(
+    &#x27;DateTime&#x27;
+    &#x27;DayOfYear&#x27;
+    &#x27;Quarter&#x27;
+)
+
+Get-Date | Format-List
+```
+
+```Output
+DisplayHint : DateTime
+Date        : 8/7/2024 12:00:00 AM
+Day         : 7
+DayOfWeek   : Wednesday
+DayOfYear   : 220
+Hour        : 10
+Kind        : Local
+Millisecond : 568
+Minute      : 34
+Month       : 8
+Second      : 43
+Ticks       : 638586236835683086
+TimeOfDay   : 10:34:43.5683086
+Year        : 2024
+DateTime    : Wednesday, August 7, 2024 10:34:43 AM
+Quarter     : Q3
+
+
+DateTime  : Wednesday, August 7, 2024 10:34:43 AM
+DayOfYear : 220
+Quarter   : Q3
+```
+
+The first command shows the list view for the `Get-Date` command, which outputs a
+**System.DateTime** object that represents the current date. The command uses a pipeline operator
+(`|`) to send the **DateTime** object to the `Format-List` cmdlet. Because the `Format-List`
+command does not specify the properties to display in the list, PowerShell displays every public,
+non-hidden property for the object.
+
+The second command uses the `Update-TypeData` cmdlet to set the default list properties for the
+**System.DateTime** type. The command uses the **TypeName** parameter to specify the type and the
+**DefaultDisplayPropertySet** parameter to specify the default properties for a list. The selected
+properties include the new **Quarter** script property that was added in a previous example.
+
+The last command gets the current date and displays it in a list format again. It only displays the
+properties defined in the `Update-TypeData` command, instead of the full list of properties.
+
+# Update-TypeData
+
+### Example 5: Set the property a type displays in wide format
+
+This example demonstrates how to create a new script property and use it
+as the default property displayed when the type is passed to the `Format-Wide` cmdlet.
+
+```powershell
+Get-Command *File* | Format-Wide
+```
+
+```Output
+Set-AppPackageProvisionedDataFile                          Set-ProvisionedAppPackageDataFile
+Set-ProvisionedAppXDataFile                                Write-FileSystemCache
+Write-FileSystemCache                                      Block-FileShareAccess
+Clear-FileStorageTier                                      Close-SmbOpenFile
+Debug-FileShare                                            Disable-NetIPHttpsProfile
+Enable-NetIPHttpsProfile                                   Get-FileHash
+Get-FileIntegrity                                          Get-FileShare
+Get-FileShareAccessControlEntry                            Get-FileStorageTier
+Get-NetConnectionProfile                                   Get-NetFirewallHyperVProfile
+Get-NetFirewallProfile                                     Get-SmbOpenFile
+Get-StorageFileServer                                      Get-SupportedFileSystems
+Grant-FileShareAccess                                      Import-PowerShellDataFile
+New-FileShare                                              New-NetFirewallHyperVProfile
+New-ScriptFileInfo                                         New-StorageFileServer
+New-TemporaryFile                                          Publish-BCFileContent
+Remove-FileShare                                           Remove-NetFirewallHyperVProfile
+Remove-StorageFileServer                                   Repair-FileIntegrity
+Revoke-FileShareAccess                                     Set-FileIntegrity
+Set-FileShare                                              Set-FileStorageTier
+Set-NetConnectionProfile                                   Set-NetFirewallHyperVProfile
+Set-NetFirewallProfile                                     Set-StorageBusProfile
+Set-StorageFileServer                                      Test-ScriptFileInfo
+Unblock-FileShareAccess                                    Update-ScriptFileInfo
+Add-BitsFile                                               Get-AIPFileStatus
+Get-AppLockerFileInformation                               New-FileCatalog
+New-PSRoleCapabilityFile                                   New-PSSessionConfigurationFile
+Out-File                                                   Set-AIPFileClassification
+Set-AIPFileLabel                                           Set-AppXProvisionedDataFile
+Set-UevTemplateProfile                                     Test-FileCatalog
+Test-PSSessionConfigurationFile                            Unblock-File
+FileDialogBroker.exe                                       FileHistory.exe
+forfiles.exe                                               openfiles.exe
+```
+
+```powershell
+$typeDataParams = @{
+    TypeName               = &#x27;System.Management.Automation.CommandInfo&#x27;
+    DefaultDisplayProperty = &#x27;FullyQualifiedName&#x27;
+    MemberType             = &#x27;ScriptProperty&#x27;
+    MemberName             = &#x27;FullyQualifiedName&#x27;
+    Value                  = {
+        [OutputType([string])]
+        param()
+
+        # For executables, return the path to the application.
+        if ($this -is [System.Management.Automation.ApplicationInfo]) {
+            return $this.Path
+        }
+
+        # For commands defined outside a module, return only the name.
+        if ([string]::IsNullOrEmpty($this.ModuleName)) {
+            return $this.Name
+        }
+
+        # Return the fully-qualified command name &quot;&lt;ModuleName&gt;\&lt;CommandName&gt;&quot;
+        return &#x27;{0}\{1}&#x27; -f $this.ModuleName, $this.Name
+    }
+}
+Update-TypeData @typeDataParams
+
+Get-Command *File* | Format-Wide
+```
+
+```Output
+Dism\Set-AppPackageProvisionedDataFile                     Dism\Set-ProvisionedAppPackageDataFile
+Dism\Set-ProvisionedAppXDataFile                           Storage\Write-FileSystemCache
+VMDirectStorage\Write-FileSystemCache                      Storage\Block-FileShareAccess
+Storage\Clear-FileStorageTier                              SmbShare\Close-SmbOpenFile
+Storage\Debug-FileShare                                    NetworkTransition\Disable-NetIPHttpsProfile
+NetworkTransition\Enable-NetIPHttpsProfile                 Microsoft.PowerShell.Utility\Get-FileHash
+Storage\Get-FileIntegrity                                  Storage\Get-FileShare
+Storage\Get-FileShareAccessControlEntry                    Storage\Get-FileStorageTier
+NetConnection\Get-NetConnectionProfile                     NetSecurity\Get-NetFirewallHyperVProfile
+NetSecurity\Get-NetFirewallProfile                         SmbShare\Get-SmbOpenFile
+Storage\Get-StorageFileServer                              Storage\Get-SupportedFileSystems
+Storage\Grant-FileShareAccess                              Microsoft.PowerShell.Utility\Import-PowerShellDataFile
+Storage\New-FileShare                                      NetSecurity\New-NetFirewallHyperVProfile
+PowerShellGet\New-ScriptFileInfo                           Storage\New-StorageFileServer
+Microsoft.PowerShell.Utility\New-TemporaryFile             BranchCache\Publish-BCFileContent
+Storage\Remove-FileShare                                   NetSecurity\Remove-NetFirewallHyperVProfile
+Storage\Remove-StorageFileServer                           Storage\Repair-FileIntegrity
+Storage\Revoke-FileShareAccess                             Storage\Set-FileIntegrity
+Storage\Set-FileShare                                      Storage\Set-FileStorageTier
+NetConnection\Set-NetConnectionProfile                     NetSecurity\Set-NetFirewallHyperVProfile
+NetSecurity\Set-NetFirewallProfile                         StorageBusCache\Set-StorageBusProfile
+Storage\Set-StorageFileServer                              PowerShellGet\Test-ScriptFileInfo
+Storage\Unblock-FileShareAccess                            PowerShellGet\Update-ScriptFileInfo
+BitsTransfer\Add-BitsFile                                  AzureInformationProtection\Get-AIPFileStatus
+AppLocker\Get-AppLockerFileInformation                     Microsoft.PowerShell.Security\New-FileCatalog
+Microsoft.PowerShell.Core\New-PSRoleCapabilityFile         Microsoft.PowerShell.Core\New-PSSessionConfigurationFile
+Microsoft.PowerShell.Utility\Out-File                      AzureInformationProtection\Set-AIPFileClassification
+AzureInformationProtection\Set-AIPFileLabel                Dism\Set-AppXProvisionedDataFile
+UEV\Set-UevTemplateProfile                                 Microsoft.PowerShell.Security\Test-FileCatalog
+Microsoft.PowerShell.Core\Test-PSSessionConfigurationFile  Microsoft.PowerShell.Utility\Unblock-File
+C:\WINDOWS\system32\FileDialogBroker.exe                   C:\WINDOWS\system32\FileHistory.exe
+C:\WINDOWS\system32\forfiles.exe                           C:\WINDOWS\system32\openfiles.exe
+```
+
+The first command uses the `Get-Command` cmdlet to return every command with a name containing the
+word `File`. It pipes the output to the `Format-Wide` cmdlet, which shows the names of the commands
+in columns.
+
+Next, the example uses `Update-TypeData` to define both the **DefaultDisplayProperty** and a new
+script property for the **CommandInfo** type. The output for `Get-Command` returns **CommandInfo**
+objects and objects derived from that type. The new script property, **FullyQualifiedName**,
+returns the full path to executable applications and the fully qualified name for cmdlets, which
+
+# Update-TypeData
+
+prefixes the cmdlet name with the module that defines it. The `Update-TypeData` cmdlet is able to
+define the new script property and use it as the **DefaultDisplayProperty** in the same command.
+
+Finally, the output shows the results of the `Get-Command` displayed in wide format after the type
+update. It shows the fully qualified name for cmdlets and the full path to executable applications.
+
+# Update-TypeData
+
+### Example 6: Update type data for a piped object
+
+```powershell
+$typeDataParams = @{
+    MemberType = &#x27;ScriptProperty&#x27;
+    MemberName = &#x27;SupportsUpdatableHelp&#x27;
+    Value      = {
+        [OutputType([bool])]
+        param()
+
+        return (-not [string]::IsNullOrEmpty($this.HelpInfoUri))
+    }
+}
+Get-Module Microsoft.PowerShell.Utility | Update-TypeData @typeDataParams
+
+Get-Module -ListAvailable -Name Microsoft.PowerShell.* |
+    Format-Table Name, SupportsUpdatableHelp
+```
+
+```Output
+Name                                      SupportsUpdatableHelp
+----                                      ---------------------
+Microsoft.PowerShell.Operation.Validation                  True
+Microsoft.PowerShell.Archive                               True
+Microsoft.PowerShell.Diagnostics                           True
+Microsoft.PowerShell.Host                                  True
+Microsoft.PowerShell.LocalAccounts                         True
+Microsoft.PowerShell.Management                            True
+Microsoft.PowerShell.ODataUtils                            True
+Microsoft.PowerShell.Security                              True
+Microsoft.PowerShell.Utility                               True
+```
+
+This example demonstrates that when you pipe an object to `Update-TypeData`, `Update-TypeData` adds
+extended type data for the object type.
+
+This technique is quicker than using the `Get-Member` cmdlet or the `Get-Type` method to get the
+object type. However, if you pipe a collection of objects to `Update-TypeData`, it updates the type
+data of the first object type and then returns an error for all other objects in the collection
+because the member is already defined on the type.
+
+The first command uses the `Get-Module` cmdlet to get the **Microsoft.PowerShell.Utility** module.
+The command pipes the module object to the `Update-TypeData` cmdlet, which updates the type data
+for the **System.Management.Automation.PSModuleInfo** type and the types derived from it, such as
+the **ModuleInfoGrouping** type that `Get-Module` returns when you use the **ListAvailable**
+parameter in the command.
+
+The `Update-TypeData` commands adds the **SupportsUpdatableHelp** script property to all imported
+modules. The value of the **Value** parameter is a script that returns `$true` if the
+**HelpInfoUri** property of the module is populated and `$false` otherwise.
+
+The second command pipes the module objects from `Get-Module` to the `Format-Table` cmdlet, which
+displays the **Name** and **SupportsUpdatableHelp** properties of the available modules.
+
+## PARAMETERS
+
+### -AppendPath
+
+Specifies the path to optional `.ps1xml` files. The specified files are loaded in the order that
+they are listed after the built-in files are loaded. You can also pipe an **AppendPath** value to
+`Update-TypeData`.
+
+```yaml
+Type: System.String[]
+Parameter Sets: FileSet
+Aliases: PSPath, Path
+
+Required: False
+Position: 0
+Default value: None
+Accept pipeline input: True (ByPropertyName, ByValue)
+Accept wildcard characters: False
+```
+
+### -DefaultDisplayProperty
+
+Specifies the property of the type that is displayed by the `Format-Wide` cmdlet when no other
+properties are specified.
+
+Type the name of a standard or extended property of the type. The value of this parameter can be the
+name of a type that is added in the same command.
+
+This value is effective only when there are no wide views defined for the type in a `Format.ps1xml`
+file.
+
+This parameter was introduced in Windows PowerShell 3.0.
+
+```yaml
+Type: System.String
+Parameter Sets: DynamicTypeSet
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -DefaultDisplayPropertySet
+
+Specifies one or more properties of the type. These properties are displayed by the `Format-List`,
+`Format-Table`, and `Format-Custom` cmdlets when no other properties are specified.
+
+Type the names of standard or extended properties of the type. The value of this parameter can be
+the names of types that are added in the same command.
+
+This value is effective only when there are no list, table, or custom views, respectively,
+defined for the type in a `Format.ps1xml` file.
+
+This parameter was introduced in Windows PowerShell 3.0.
+
+```yaml
+Type: System.String[]
+Parameter Sets: DynamicTypeSet
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -DefaultKeyPropertySet
+
+Specifies one or more properties of the type. These properties are used by the `Group-Object` and
+`Sort-Object` cmdlets when no other properties are specified.
+
+Type the names of standard or extended properties of the type. The value of this parameter can be
+the names of types that are added in the same command.
+
+This parameter was introduced in Windows PowerShell 3.0.
+
+```yaml
+Type: System.String[]
+Parameter Sets: DynamicTypeSet
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Force
+
+Indicates that the cmdlet uses the specified type data, even if type data has already been specified
+for that type.
+
+This parameter was introduced in Windows PowerShell 3.0.
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: DynamicTypeSet, TypeDataSet
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -InheritPropertySerializationSet
+
+Indicates whether the set of properties that are serialized is inherited. The default value is
+`$null`. The acceptable values for this parameter are:
+
+- `$true`. The property set is inherited.
+- `$false`. The property set is not inherited.
+- `$null`. Inheritance is not defined.
+
+This parameter is valid only when the value of the **SerializationMethod** parameter is
+`SpecificProperties`. When the value of this parameter is `$false`, the **PropertySerializationSet**
+parameter is required.
+
+This parameter was introduced in Windows PowerShell 3.0.
+
+```yaml
+Type: System.Nullable`1[System.Boolean]
+Parameter Sets: DynamicTypeSet
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -MemberName
+
+Specifies the name of a property or method.
+
+Use this parameter with the **TypeName**, **MemberType**, **Value** and **SecondValue** parameters
+to add or change a property or method of a type.
+
+This parameter was introduced in Windows PowerShell 3.0.
+
+```yaml
+Type: System.String
+Parameter Sets: DynamicTypeSet
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+# Update-TypeData
+
+### -MemberType
+
+Specifies the type of the member to add or change.
+
+Use this parameter with the **TypeName**, **MemberType**, **Value** and **SecondValue** parameters
+to add or change a property or method of a type. The acceptable values for this parameter are:
+
+- AliasProperty
+- CodeMethod
+- CodeProperty
+- Noteproperty
+- ScriptMethod
+- ScriptProperty
+
+For information about these values, see
+[PSMemberTypes Enumeration](/dotnet/api/system.management.automation.psmembertypes).
+
+This parameter was introduced in Windows PowerShell 3.0.
+
+```yaml
+Type: System.Management.Automation.PSMemberTypes
+Parameter Sets: DynamicTypeSet
+Aliases:
+Accepted values: NoteProperty, AliasProperty, ScriptProperty, CodeProperty, ScriptMethod, CodeMethod
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -PrependPath
+
+Specifies the path to the optional `.ps1xml` files. The specified files are loaded in the order that
+they are listed before the built-in files are loaded.
+
+```yaml
+Type: System.String[]
+Parameter Sets: FileSet
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -PropertySerializationSet
+
+Specifies the names of properties that are serialized. Use this parameter when the value of the
+**SerializationMethod** parameter is **SpecificProperties**.
+
+```yaml
+Type: System.String[]
+Parameter Sets: DynamicTypeSet
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -SecondValue
+
+Specifies additional values for **AliasProperty**, **ScriptProperty**, **CodeProperty**, or
+**CodeMethod** members.
+
+Use this parameter with the **TypeName**, **MemberType**, **Value**, and **SecondValue** parameters
+to add or change a property or method of a type.
+
+When the value of the **MemberType** parameter is `AliasProperty`, the value of the **SecondValue**
+parameter must be a data type. PowerShell converts (that is, casts) the value of the alias property
+to the specified type. For example, if you add an alias property that provides an alternate name for
+a string property, you can also specify a **SecondValue** of **System.Int32** to convert the aliased
+string value to an integer.
+
+When the value of the **MemberType** parameter is `ScriptProperty`, you can use the **SecondValue**
+parameter to specify an additional scriptblock. The scriptblock in the value of the **Value**
+parameter gets the value of a variable. The scriptblock in the value of the **SecondValue**
+parameter sets the value of the variable.
+
+This parameter was introduced in Windows PowerShell 3.0.
+
+```yaml
+Type: System.Object
+Parameter Sets: DynamicTypeSet
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -SerializationDepth
+
+Specifies how many levels of type objects are serialized as strings. The default value `1`
+serializes the object and its properties. A value of `0` serializes the object, but not its
+properties. A value of `2` serializes the object, its properties, and any objects in property
+values.
+
+This parameter was introduced in Windows PowerShell 3.0.
+
+```yaml
+Type: System.Int32
+Parameter Sets: DynamicTypeSet
+Aliases:
+
+Required: False
+Position: Named
+Default value: 1
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -SerializationMethod
+
+Specifies a serialization method for the type. A serialization method determines which properties of
+the type are serialized and the technique that is used to serialize them. The acceptable values for
+this parameter are:
+
+- `AllPublicProperties`. Serialize all public properties of the type. You can use the
+  **SerializationDepth** parameter to determine whether child properties are serialized.
+- `String`. Serialize the type as a string. You can use the **StringSerializationSource** to specify
+  a property of the type to use as the serialization result. Otherwise, the type is serialized by
+  using the **ToString** method of the object.
+- `SpecificProperties`. Serialize only the specified properties of this type. Use the
+  **PropertySerializationSet** parameter to specify the properties of the type that are serialized.
+  You can also use the **InheritPropertySerializationSet** parameter to determine whether the
+  property set is inherited and the **SerializationDepth** parameter to determine whether child
+  properties are serialized.
+
+In PowerShell, serialization methods are stored in **PSStandardMembers** internal objects.
+
+This parameter was introduced in Windows PowerShell 3.0.
+
+```yaml
+Type: System.String
+Parameter Sets: DynamicTypeSet
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -StringSerializationSource
+
+Specifies the name of a property of the type. The value of specified property is used as the
+serialization result. This parameter is valid only when the value of the **SerializationMethod**
+parameter is String.
+
+```yaml
+Type: System.String
+Parameter Sets: DynamicTypeSet
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -TargetTypeForDeserialization
+
+Specifies the type to which object of this type are converted when they are deserialized.
+
+This parameter was introduced in Windows PowerShell 3.0.
+
+```yaml
+Type: System.Type
+Parameter Sets: DynamicTypeSet
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -TypeAdapter
+
+Specifies the type of a type adapter, such as **Microsoft.PowerShell.Cim.CimInstanceAdapter**. A
+type adapter enables PowerShell to get the members of a type.
+
+This parameter was introduced in Windows PowerShell 3.0.
+
+```yaml
+Type: System.Type
+Parameter Sets: DynamicTypeSet
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -TypeConverter
+
+Specifies a type converter to convert values between different types. If a type converter is defined
+for a type, an instance of the type converter is used for the conversion.
+
+Enter a **System.Type** value that is derived from the **System.ComponentModel.TypeConverter** or
+**System.Management.Automation.PSTypeConverter** classes.
+
+This parameter was introduced in Windows PowerShell 3.0.
+
+```yaml
+Type: System.Type
+Parameter Sets: DynamicTypeSet
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -TypeData
+
+Specifies an array of type data that this cmdlet adds to the session. Enter a variable that contains
+a **TypeData** object or a command that gets a **TypeData** object, such as a `Get-TypeData`
+command. You can also pipe a **TypeData** object to `Update-TypeData`.
+
+This parameter was introduced in Windows PowerShell 3.0.
+
+```yaml
+Type: System.Management.Automation.Runspaces.TypeData[]
+Parameter Sets: TypeDataSet
+Aliases:
+
+Required: True
+Position: 0
+Default value: None
+Accept pipeline input: True (ByPropertyName, ByValue)
+Accept wildcard characters: False
+```
+
+# Update-TypeData
+
+### -TypeName
+
+Specifies the name of the type to extend.
+
+For types in the **System** namespace, enter the short name. Otherwise, the full type name is
+required. Wildcards are not supported.
+
+You can pipe type names to `Update-TypeData`. When you pipe an object to `Update-TypeData`,
+`Update-TypeData` gets the type name of the object and type data to the object type.
+
+Use this parameter with the **MemberName**, **MemberType**, **Value** and **SecondValue** parameters
+to add or change a property or method of a type.
+
+This parameter was introduced in Windows PowerShell 3.0.
+
+```yaml
+Type: System.String
+Parameter Sets: DynamicTypeSet
+Aliases:
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: True (ByValue)
+Accept wildcard characters: False
+```
+
+### -Value
+
+Specifies the value of the property or method.
+
+If you add an `AliasProperty`, `CodeProperty`, `ScriptProperty`, or `CodeMethod` member, you can use
+the **SecondValue** parameter to add additional information.
+
+Use this parameter with the **MemberName**, **MemberType**, **Value** and **SecondValue** parameters
+to add or change a property or method of a type.
+
+This parameter was introduced in Windows PowerShell 3.0.
+
+```yaml
+Type: System.Object
+Parameter Sets: DynamicTypeSet
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Confirm
+
+Prompts you for confirmation before running the cmdlet.
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases: cf
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -WhatIf
+
+Shows what would happen if the cmdlet runs. The cmdlet is not run.
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases: wi
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### CommonParameters
+
+This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable,
+-InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose,
+-WarningAction, and -WarningVariable. For more information, see
+[about_CommonParameters](https://go.microsoft.com/fwlink/?LinkID=113216).
+
+## INPUTS
+
+### System.String
+
+You can pipe a string that contains the values of the **AppendPath**, **TypeName**, or **TypeData**
+parameters to this cmdlet.
+
+## OUTPUTS
+
+### None
+
+This cmdlet returns no output.
+
+## NOTES
+
+## RELATED LINKS
+
+[about_Types.ps1xml](../Microsoft.PowerShell.Core/About/about_Types.ps1xml.md)
+
+[Get-TypeData](Get-TypeData.md)
+
+[Remove-TypeData](Remove-TypeData.md)
+###Microsoft Learn URL###
+https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.utility/update-typedata/?view=powershell-5.1
+</pre></html>

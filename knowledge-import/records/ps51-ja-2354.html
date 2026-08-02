@@ -1,0 +1,923 @@
+<!doctype html><html lang="ja"><meta charset="utf-8"><pre class="record-source">###KnowledgeNo###
+PS51-WS2022-2026-2354
+###FormatID###
+PS51-WS2022
+###CreatedAt###
+2026-08-01 00:00
+###UpdatedAt###
+2026-08-01 00:00
+###タイトル###
+New-NetworkControllerVirtualGatewayNetworkConnection
+###モジュール###
+networkcontroller
+###製品###
+Windows PowerShell 5.1
+###対応OS###
+Windows Server 2022
+###日本語訳###
+# 新しいネットワークコントローラー 仮想GatewayNetworkConnection
+
+## SYNOPSISは仮想ゲートウェイネットワーク接続を作成します.
+
+## SYNTAXは,のシンタックスです.
+
+```
+New-NetworkControllerVirtualGatewayNetworkConnection [-VirtualGatewayId] &lt;String&gt; [-ResourceId] &lt;String&gt;
+ [-Properties] &lt;NetworkConnectionProperties&gt; [[-ResourceMetadata] &lt;ResourceMetadata&gt;] [[-Etag] &lt;String&gt;]
+ [-Force] -ConnectionUri &lt;Uri&gt; [-CertificateThumbprint &lt;String&gt;] [-Credential &lt;PSCredential&gt;]
+ [-PassInnerException] [-WhatIf] [-Confirm] [&lt;CommonParameters&gt;]
+```
+
+## 記述 **New-NetworkControllerVirtualGatewayNetworkConnection** cmdlet は,ネットワークコントローラーで指定されたレンタに対してネットワーク接続の設定を追加します.ネットワーク接続の設定が既に存在している場合は,この cmdlet は古い設定を覆い替えます.
+
+## 例えは
+
+### 例1: レンタバーチャルゲートウェイに新しいIPSecネットワーク接続を追加する```
+PS C:\&gt; $uri = &quot;https://networkcontroller&quot;
+
+# Create a new object for tenant network connection
+PS C:\&gt; $nwConnectionProperties = New-Object Microsoft.Windows.NetworkController.NetworkConnectionProperties
+
+# Update the common object properties
+PS C:\&gt; $nwConnectionProperties.ConnectionType = &quot;IPSec&quot; 
+PS C:\&gt; $nwConnectionProperties.OutboundKiloBitsPerSecond = 10000 
+PS C:\&gt; $nwConnectionProperties.InboundKiloBitsPerSecond = 10000
+
+# Update specific properties depending on the connection type
+PS C:\&gt; $nwConnectionProperties.IpSecConfiguration = New-Object Microsoft.Windows.NetworkController.IpSecConfiguration 
+PS C:\&gt; $nwConnectionProperties.IpSecConfiguration.AuthenticationMethod = &quot;PSK&quot; 
+PS C:\&gt; $nwConnectionProperties.IpSecConfiguration.SharedSecret = &quot;P@ssw0rd&quot; 
+
+PS C:\&gt; $nwConnectionProperties.IpSecConfiguration.QuickMode = New-Object Microsoft.Windows.NetworkController.QuickMode 
+PS C:\&gt; $nwConnectionProperties.IpSecConfiguration.QuickMode.PerfectForwardSecrecy = &quot;PFS2048&quot; 
+PS C:\&gt; $nwConnectionProperties.IpSecConfiguration.QuickMode.AuthenticationTransformationConstant = &quot;SHA256128&quot; 
+PS C:\&gt; $nwConnectionProperties.IpSecConfiguration.QuickMode.CipherTransformationConstant = &quot;DES3&quot; 
+PS C:\&gt; $nwConnectionProperties.IpSecConfiguration.QuickMode.SALifeTimeSeconds = 1233 
+PS C:\&gt; $nwConnectionProperties.IpSecConfiguration.QuickMode.IdleDisconnectSeconds = 500 
+PS C:\&gt; $nwConnectionProperties.IpSecConfiguration.QuickMode.SALifeTimeKiloBytes = 2000 
+
+PS C:\&gt; $nwConnectionProperties.IpSecConfiguration.MainMode = New-Object Microsoft.Windows.NetworkController.MainMode 
+PS C:\&gt; $nwConnectionProperties.IpSecConfiguration.MainMode.DiffieHellmanGroup = &quot;Group2&quot; 
+PS C:\&gt; $nwConnectionProperties.IpSecConfiguration.MainMode.IntegrityAlgorithm = &quot;SHA256&quot; 
+PS C:\&gt; $nwConnectionProperties.IpSecConfiguration.MainMode.EncryptionAlgorithm = &quot;AES256&quot; 
+PS C:\&gt; $nwConnectionProperties.IpSecConfiguration.MainMode.SALifeTimeSeconds = 1234 
+PS C:\&gt; $nwConnectionProperties.IpSecConfiguration.MainMode.SALifeTimeKiloBytes = 2000
+
+# L3 specific configuration (leave blank for IPSec)
+PS C:\&gt; $nwConnectionProperties.IPAddresses = @() 
+PS C:\&gt; $nwConnectionProperties.PeerIPAddresses = @()
+
+# Update the IPv4 routes that are reachable over the site-to-site VPN tunnel
+PS C:\&gt; $nwConnectionProperties.Routes = @() 
+PS C:\&gt; $ipv4Route = New-Object Microsoft.Windows.NetworkController.RouteInfo 
+PS C:\&gt; $ipv4Route.DestinationPrefix = &quot;14.1.10.1/32&quot; 
+PS C:\&gt; $ipv4Route.metric = 10 
+PS C:\&gt; $nwConnectionProperties.Routes += $ipv4Route
+
+# Tunnel destination (remote endpoint) address
+PS C:\&gt; $nwConnectionProperties.DestinationIPAddress = &quot;10.127.134.121&quot;
+
+# Add the new network connection for the tenant
+PS C:\&gt; New-NetworkControllerVirtualGatewayNetworkConnection -ConnectionUri $uri -VirtualGatewayId &quot;Contoso&quot; -ResourceId &quot;Contoso_IPSecGW&quot; -Properties $nwConnectionProperties -Force
+```
+
+このcmdletセットは,Contosoレンタ仮想ゲートウェイに新しいIPSec接続を追加します.
+
+### 例2: レンタバーチャルゲートウェイにGREネットワーク接続を追加する```
+PS C:\&gt; $uri = &quot;https://networkcontroller&quot;
+
+# Create a new object for the tenant network connection
+PS C:\&gt; $nwConnectionProperties = New-Object Microsoft.Windows.NetworkController.NetworkConnectionProperties
+
+# Update the common object properties
+PS C:\&gt; $nwConnectionProperties.ConnectionType = &quot;GRE&quot; 
+PS C:\&gt; $nwConnectionProperties.OutboundKiloBitsPerSecond = 10000 
+PS C:\&gt; $nwConnectionProperties.InboundKiloBitsPerSecond = 10000
+
+# Update specific properties depending on the connection type
+PS C:\&gt; $nwConnectionProperties.GreConfiguration = New-Object Microsoft.Windows.NetworkController.GreConfiguration 
+PS C:\&gt; $nwConnectionProperties.GreConfiguration.GreKey = 1234
+
+# Update the IPv4 routes that are reachable over the site-to-site VPN tunnel
+PS C:\&gt; $nwConnectionProperties.Routes = @() 
+PS C:\&gt; $ipv4Route = New-Object Microsoft.Windows.NetworkController.RouteInfo 
+PS C:\&gt; $ipv4Route.DestinationPrefix = &quot;14.2.20.1/32&quot; 
+PS C:\&gt; $ipv4Route.metric = 10 
+PS C:\&gt; $nwConnectionProperties.Routes += $ipv4Route
+
+# Tunnel destination (remote endpoint) address
+PS C:\&gt; $nwConnectionProperties.DestinationIPAddress = &quot;10.127.134.122&quot;
+
+# L3 specific configuration (leave blank for GRE)
+PS C:\&gt; $nwConnectionProperties.L3Configuration = New-Object Microsoft.Windows.NetworkController.L3Configuration 
+PS C:\&gt; $nwConnectionProperties.IPAddresses = @() 
+PS C:\&gt; $nwConnectionProperties.PeerIPAddresses = @()
+
+# Add the new network connection for the tenant
+PS C:\&gt; New-NetworkControllerVirtualGatewayNetworkConnection -ConnectionUri $uri -VirtualGatewayId &quot;Contoso&quot; -ResourceId &quot;Contoso_GreGW&quot; -Properties $nwConnectionProperties -Force
+```
+
+このセットのcmdletsは,Contosoレンタ仮想ゲートウェイに新しいGRE接続を追加します.
+
+### 例3: レンタバーチャルゲートウェイに新しいGREネットワーク接続を追加する```
+PS C:\&gt; $uri = &quot;https://networkcontroller&quot;
+
+#############################################################################
+
+# A. Configure a VNET based Logical Network for the L3 Connection on the NC #
+#############################################################################
+
+# Create a new object for the logical network to be used for L3 forwarding
+PS C:\&gt; $lnProperties = New-Object Microsoft.Windows.NetworkController.LogicalNetworkProperties
+
+PS C:\&gt; $lnProperties.NetworkVirtualizationEnabled = $false
+PS C:\&gt; $lnProperties.Subnets = @()
+
+# Create a new object for the logical subnet to be used for L3 forwarding and update properties
+PS C:\&gt; $logicalsubnet = New-Object Microsoft.Windows.NetworkController.LogicalSubnet
+PS C:\&gt; $logicalsubnet.ResourceId = &quot;Contoso_L3_Subnet&quot;
+PS C:\&gt; $logicalsubnet.Properties = New-Object Microsoft.Windows.NetworkController.LogicalSubnetProperties
+PS C:\&gt; $logicalsubnet.Properties.VlanID = 1001
+PS C:\&gt; $logicalsubnet.Properties.AddressPrefix = &quot;10.127.134.0/25&quot;
+PS C:\&gt; $logicalsubnet.Properties.DefaultGateway = &quot;10.127.134.1&quot;
+
+$lnProperties.Subnets += $logicalsubnet
+
+# Add the new logical network to Network Controller
+PS C:\&gt; $vlanNetwork = New-NetworkControllerLogicalNetwork -ConnectionUri $uri -ResourceId &quot;Contoso_L3_Network&quot; -Properties $lnProperties -Force
+
+#######################################################
+
+# B. Configure the L3 Forwarding connection on the NC #
+#######################################################
+
+# Create a new object for the tenant network connection
+PS C:\&gt; $nwConnectionProperties = New-Object Microsoft.Windows.NetworkController.NetworkConnectionProperties
+
+# Update the common object properties
+PS C:\&gt; $nwConnectionProperties.ConnectionType = &quot;L3&quot; 
+PS C:\&gt; $nwConnectionProperties.OutboundKiloBitsPerSecond = 10000 
+PS C:\&gt; $nwConnectionProperties.InboundKiloBitsPerSecond = 10000
+
+# GRE-specific configuration (leave blank for L3)
+PS C:\&gt; $nwConnectionProperties.GreConfiguration = New-Object Microsoft.Windows.NetworkController.GreConfiguration
+
+# Update specific properties depending on the connection type
+PS C:\&gt; $nwConnectionProperties.L3Configuration = New-Object Microsoft.Windows.NetworkController.L3Configuration 
+PS C:\&gt; $nwConnectionProperties.L3Configuration.VlanSubnet = $vlanNetwork.properties.Subnets[0] 
+
+PS C:\&gt; $nwConnectionProperties.IPAddresses = @() 
+PS C:\&gt; $localIPAddress = New-Object Microsoft.Windows.NetworkController.CidrIPAddress 
+PS C:\&gt; $localIPAddress.IPAddress = &quot;10.127.134.55&quot; 
+PS C:\&gt; $localIPAddress.PrefixLength = 25 
+PS C:\&gt; $nwConnectionProperties.IPAddresses += $localIPAddress 
+
+PS C:\&gt; $nwConnectionProperties.PeerIPAddresses = @(&quot;10.127.134.65&quot;)
+
+# Update the IPv4 routes that are reachable over the site-to-site VPN tunnel
+PS C:\&gt; $nwConnectionProperties.Routes = @() 
+PS C:\&gt; $ipv4Route = New-Object Microsoft.Windows.NetworkController.RouteInfo 
+PS C:\&gt; $ipv4Route.DestinationPrefix = &quot;14.2.20.1/32&quot; 
+PS C:\&gt; $ipv4Route.metric = 10 
+PS C:\&gt; $nwConnectionProperties.Routes += $ipv4Route
+
+# Add the new network connection for the tenant
+PS C:\&gt; New-NetworkControllerVirtualGatewayNetworkConnection -ConnectionUri $uri -VirtualGatewayId &quot;Contoso&quot; -ResourceId &quot;Contoso_L3GW&quot; -Properties $nwConnectionProperties -Force
+```
+
+このセットのcmdletsは,Contosoレンタ仮想ゲートウェイに新しいGRE接続を追加します.
+
+## パラメータは
+
+### -CertificateThumbprint この動作を行う許可を有するユーザーアカウントのデジタル公開鍵 X.509 証明書を指定します.これは証明書の証明書指紋です.この指紋は,ネットワークコントローラがこのユーザーを承認できるように,インストールネットワークコントローラまたはセットネットワークコントローラのcmdletの *ClientCertificateThumbprint* パラメータで提供されなければなりません.
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### - 確認は,cmdletを実行する前に確認を提示します.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: cf
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -ConnectionUri は,ネットワークコントローラの統一リソース識別子 (URI) を指定し,すべてのレプレゼテーションステート転送 (REST) クライアントがネットワークコントローラに接続するために使用します.
+
+```yaml
+Type: Uri
+Parameter Sets: (All)
+Aliases: 
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Credential このアクションを実行する許可を有するユーザー認証を指定します.デフォルト値は現在のユーザーです.このユーザーは,インストールネットワークコントローラ** cmdlet の *ClientSecurityGroup* パラメータで提供されたセキュリティグループに存在する必要があります.
+
+```yaml
+Type: PSCredential
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Etag は,リソースのエンティティタグ (ETag) を指定します. ETag は HTTP 対応のウェブサーバーが返信する HTTP 応答ヘッダーです. ETag は,特定の URL でリソースの内容の変化を決定するために使用されます. ヘッダの値は,応答が生成された時点でリソースの状態を表す不透明な文字列です.
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: 6
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### - ユーザの確認を要求せずにコマンドを実行するように強制します.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: 7
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -PassInnerException この指紋は,ClientCertificateThumbprint**のパラメータで **Install-NetworkController**または **Set-NetworkController**のcmdletで提供され,ネットワークコントローラがこのユーザーを許可できるようにする必要があります.
+
+フィンガープリントは,ネットワークコントローラクライアント認証がX509証明書である場合にのみ提供されなければならない. **Get-NetworkController**は,そのクライアント認証および認証情報を取得します.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -プロパティ ネットワーク接続のプロパティを指定します.
+
+```yaml
+Type: NetworkConnectionProperties
+Parameter Sets: (All)
+Aliases: 
+
+Required: True
+Position: 3
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -ResourceId は,作成するネットワーク接続のリソース ID を指定します.
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases: 
+
+Required: True
+Position: 1
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -ResourceMetadata クライアントのメタデータ情報を指定します.例えば,レンタID,グループID,リソース名などです.
+
+```yaml
+Type: ResourceMetadata
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: 4
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -VirtualGatewayId 仮想ゲートウェイのIDを指定します.
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases: 
+
+Required: True
+Position: 0
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -WhatIf が実行されればどうなるか示します.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: wi
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### 共通パラメータ このcmdletは共通パラメータをサポートしています: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable.詳細については, [about_CommonParameters](を参照してください.https://go.microsoft.com/fwlink/?LinkID=113216) でした.
+
+## 輸入は
+
+### System.String でした.
+
+### Microsoft.Windows.NetworkController.NetworkConnectionプロパティについて
+
+## 輸出は
+
+# 新しいネットワークコントローラー 仮想GatewayNetworkConnection
+
+### System.Object について
+
+このcmdletは以下の情報を出力します.
+
+- リソース参照URI - リソースの作成時間 - リソースのインスタンスのID - リソースのメタデータ - リソース ID - リソースのプロパティ: 
+
+&quot;{
+
+&quot;&quot;ConnectionType&quot;&quot;: &quot;&quot;&quot;&quot;,
+
+&quot;&quot;OutboundKiloBitsPerSecond&quot;&quot;は,UInt32の&quot;
+
+&quot;&quot;InboundKiloBitsPerSecond&quot;&quot;は,
+
+&quot;&quot;IPSecConfiguration&quot;&quot;: @{
+
+&quot;&quot;QuickMode&quot;&quot;: @{
+
+&quot;&quot;PerfectForwardSecrecy&quot;&quot;: &quot;&quot;&quot;&quot;,
+
+&quot;&quot;authenticationTransformationConstant&quot;&quot;: &quot;&quot;&quot;&quot;,
+
+&quot;&quot;cipherTransformationConstant&quot;&quot;: &quot;&quot;&quot;&quot;,
+
+&quot;&quot;LifeTimeSeconds&quot;では&quot;,&quot;&quot;&quot;&quot;
+
+&quot;&quot;idleDisconnectSeconds&quot;&quot;: &quot;&quot;&quot;&quot;,
+
+&quot;&quot;LifeTimeKiloBytes&quot;として&quot;&quot;&quot;&quot;
+
+        },
+
+&quot;&quot;メインモード&quot;&quot;: @{
+
+&quot;&quot;diffieHellmanGroup&quot;&quot;: &quot;&quot;&quot;&quot;,
+
+&quot;&quot;integrityAlgorithm&quot;&quot;: &quot;&quot;&quot;&quot;,
+
+&quot;&quot;暗号化アルゴリズム&quot;&quot;: &quot;&quot;&quot;&quot;,
+
+&quot;&quot;LifeTimeSeconds&quot;では&quot;,&quot;&quot;&quot;&quot;
+
+&quot;&quot;LifeTimeKiloBytes&quot;として&quot;&quot;&quot;&quot;
+
+        },
+
+&quot;&quot;認証方法&quot;&quot;: &quot;&quot;&quot;&quot;,
+
+&quot;&quot;SharedSecret&quot;&quot;: &quot;&quot;&quot;&quot;
+
+    },
+
+&quot;&quot;GreConfiguration&quot;&quot;: @{ &quot;&quot;GREKey&quot;&quot;: &quot;&quot;&quot;&quot;},
+
+&quot;&quot;L3Configuration&quot;&quot;: @{ &quot;&quot;VlanSubnet&quot;&quot;: @{&quot;&quot;ResourceRef&quot;&quot;: &quot;&quot;\&lt;string\&gt;&quot;&quot; }},
+
+&quot;&quot;IPAddresses&quot;&quot;: @(),
+
+&quot;&quot;PeerIPAddresses&quot;&quot;: @(),
+
+&quot;&quot;ルート&quot;&quot;: @(@{
+
+&quot;&quot;DestinationPrefix&quot;&quot;: &quot;&quot;&quot;&quot;,
+
+&quot;&quot;メトリック&quot;&quot;: &quot;&quot;&quot;&quot;
+
+    }),
+
+&quot;&quot;DestinationIPAddress&quot;&quot;は, &quot;
+
+}&quot;
+
+##  NOTES  記事ができました.
+
+## 関連リンク
+
+[Get-NetworkControllerVirtualGatewayNetworkConnection](./Get-NetworkControllerVirtualGatewayNetworkConnection.md) 
+
+[VirtualGatewayNetworkConnection](./Remove-NetworkControllerVirtualGatewayNetworkConnection.md) を削除する
+###英語原文###
+# New-NetworkControllerVirtualGatewayNetworkConnection
+
+## SYNOPSIS
+Creates a virtual gateway network connection.
+
+## SYNTAX
+
+```
+New-NetworkControllerVirtualGatewayNetworkConnection [-VirtualGatewayId] &lt;String&gt; [-ResourceId] &lt;String&gt;
+ [-Properties] &lt;NetworkConnectionProperties&gt; [[-ResourceMetadata] &lt;ResourceMetadata&gt;] [[-Etag] &lt;String&gt;]
+ [-Force] -ConnectionUri &lt;Uri&gt; [-CertificateThumbprint &lt;String&gt;] [-Credential &lt;PSCredential&gt;]
+ [-PassInnerException] [-WhatIf] [-Confirm] [&lt;CommonParameters&gt;]
+```
+
+## DESCRIPTION
+The **New-NetworkControllerVirtualGatewayNetworkConnection** cmdlet adds a configuration for a network connection for the specified tenant in Network Controller.
+If a network connection configuration already exists, this cmdlet overwrites and replaces the older configuration.
+
+## EXAMPLES
+
+### Example 1: Add a new IPSec network connection to tenant virtual gateway
+```
+PS C:\&gt; $uri = &quot;https://networkcontroller&quot;
+
+# Create a new object for tenant network connection
+PS C:\&gt; $nwConnectionProperties = New-Object Microsoft.Windows.NetworkController.NetworkConnectionProperties
+
+# Update the common object properties
+PS C:\&gt; $nwConnectionProperties.ConnectionType = &quot;IPSec&quot; 
+PS C:\&gt; $nwConnectionProperties.OutboundKiloBitsPerSecond = 10000 
+PS C:\&gt; $nwConnectionProperties.InboundKiloBitsPerSecond = 10000
+
+# Update specific properties depending on the connection type
+PS C:\&gt; $nwConnectionProperties.IpSecConfiguration = New-Object Microsoft.Windows.NetworkController.IpSecConfiguration 
+PS C:\&gt; $nwConnectionProperties.IpSecConfiguration.AuthenticationMethod = &quot;PSK&quot; 
+PS C:\&gt; $nwConnectionProperties.IpSecConfiguration.SharedSecret = &quot;P@ssw0rd&quot; 
+
+PS C:\&gt; $nwConnectionProperties.IpSecConfiguration.QuickMode = New-Object Microsoft.Windows.NetworkController.QuickMode 
+PS C:\&gt; $nwConnectionProperties.IpSecConfiguration.QuickMode.PerfectForwardSecrecy = &quot;PFS2048&quot; 
+PS C:\&gt; $nwConnectionProperties.IpSecConfiguration.QuickMode.AuthenticationTransformationConstant = &quot;SHA256128&quot; 
+PS C:\&gt; $nwConnectionProperties.IpSecConfiguration.QuickMode.CipherTransformationConstant = &quot;DES3&quot; 
+PS C:\&gt; $nwConnectionProperties.IpSecConfiguration.QuickMode.SALifeTimeSeconds = 1233 
+PS C:\&gt; $nwConnectionProperties.IpSecConfiguration.QuickMode.IdleDisconnectSeconds = 500 
+PS C:\&gt; $nwConnectionProperties.IpSecConfiguration.QuickMode.SALifeTimeKiloBytes = 2000 
+
+PS C:\&gt; $nwConnectionProperties.IpSecConfiguration.MainMode = New-Object Microsoft.Windows.NetworkController.MainMode 
+PS C:\&gt; $nwConnectionProperties.IpSecConfiguration.MainMode.DiffieHellmanGroup = &quot;Group2&quot; 
+PS C:\&gt; $nwConnectionProperties.IpSecConfiguration.MainMode.IntegrityAlgorithm = &quot;SHA256&quot; 
+PS C:\&gt; $nwConnectionProperties.IpSecConfiguration.MainMode.EncryptionAlgorithm = &quot;AES256&quot; 
+PS C:\&gt; $nwConnectionProperties.IpSecConfiguration.MainMode.SALifeTimeSeconds = 1234 
+PS C:\&gt; $nwConnectionProperties.IpSecConfiguration.MainMode.SALifeTimeKiloBytes = 2000
+
+# L3 specific configuration (leave blank for IPSec)
+PS C:\&gt; $nwConnectionProperties.IPAddresses = @() 
+PS C:\&gt; $nwConnectionProperties.PeerIPAddresses = @()
+
+# Update the IPv4 routes that are reachable over the site-to-site VPN tunnel
+PS C:\&gt; $nwConnectionProperties.Routes = @() 
+PS C:\&gt; $ipv4Route = New-Object Microsoft.Windows.NetworkController.RouteInfo 
+PS C:\&gt; $ipv4Route.DestinationPrefix = &quot;14.1.10.1/32&quot; 
+PS C:\&gt; $ipv4Route.metric = 10 
+PS C:\&gt; $nwConnectionProperties.Routes += $ipv4Route
+
+# Tunnel destination (remote endpoint) address
+PS C:\&gt; $nwConnectionProperties.DestinationIPAddress = &quot;10.127.134.121&quot;
+
+# Add the new network connection for the tenant
+PS C:\&gt; New-NetworkControllerVirtualGatewayNetworkConnection -ConnectionUri $uri -VirtualGatewayId &quot;Contoso&quot; -ResourceId &quot;Contoso_IPSecGW&quot; -Properties $nwConnectionProperties -Force
+```
+
+This set of cmdlets adds a new IPSec connection on the Contoso tenant virtual gateway.
+
+### Example 2: Add a GRE network connection to a tenant virtual gateway
+```
+PS C:\&gt; $uri = &quot;https://networkcontroller&quot;
+
+# Create a new object for the tenant network connection
+PS C:\&gt; $nwConnectionProperties = New-Object Microsoft.Windows.NetworkController.NetworkConnectionProperties
+
+# Update the common object properties
+PS C:\&gt; $nwConnectionProperties.ConnectionType = &quot;GRE&quot; 
+PS C:\&gt; $nwConnectionProperties.OutboundKiloBitsPerSecond = 10000 
+PS C:\&gt; $nwConnectionProperties.InboundKiloBitsPerSecond = 10000
+
+# Update specific properties depending on the connection type
+PS C:\&gt; $nwConnectionProperties.GreConfiguration = New-Object Microsoft.Windows.NetworkController.GreConfiguration 
+PS C:\&gt; $nwConnectionProperties.GreConfiguration.GreKey = 1234
+
+# Update the IPv4 routes that are reachable over the site-to-site VPN tunnel
+PS C:\&gt; $nwConnectionProperties.Routes = @() 
+PS C:\&gt; $ipv4Route = New-Object Microsoft.Windows.NetworkController.RouteInfo 
+PS C:\&gt; $ipv4Route.DestinationPrefix = &quot;14.2.20.1/32&quot; 
+PS C:\&gt; $ipv4Route.metric = 10 
+PS C:\&gt; $nwConnectionProperties.Routes += $ipv4Route
+
+# Tunnel destination (remote endpoint) address
+PS C:\&gt; $nwConnectionProperties.DestinationIPAddress = &quot;10.127.134.122&quot;
+
+# L3 specific configuration (leave blank for GRE)
+PS C:\&gt; $nwConnectionProperties.L3Configuration = New-Object Microsoft.Windows.NetworkController.L3Configuration 
+PS C:\&gt; $nwConnectionProperties.IPAddresses = @() 
+PS C:\&gt; $nwConnectionProperties.PeerIPAddresses = @()
+
+# Add the new network connection for the tenant
+PS C:\&gt; New-NetworkControllerVirtualGatewayNetworkConnection -ConnectionUri $uri -VirtualGatewayId &quot;Contoso&quot; -ResourceId &quot;Contoso_GreGW&quot; -Properties $nwConnectionProperties -Force
+```
+
+This set of cmdlets adds a new GRE connection on Contoso tenant virtual gateway.
+
+### Example 3: Add a new GRE network connection to a tenant virtual gateway
+```
+PS C:\&gt; $uri = &quot;https://networkcontroller&quot;
+
+#############################################################################
+
+# A. Configure a VNET based Logical Network for the L3 Connection on the NC #
+#############################################################################
+
+# Create a new object for the logical network to be used for L3 forwarding
+PS C:\&gt; $lnProperties = New-Object Microsoft.Windows.NetworkController.LogicalNetworkProperties
+
+PS C:\&gt; $lnProperties.NetworkVirtualizationEnabled = $false
+PS C:\&gt; $lnProperties.Subnets = @()
+
+# Create a new object for the logical subnet to be used for L3 forwarding and update properties
+PS C:\&gt; $logicalsubnet = New-Object Microsoft.Windows.NetworkController.LogicalSubnet
+PS C:\&gt; $logicalsubnet.ResourceId = &quot;Contoso_L3_Subnet&quot;
+PS C:\&gt; $logicalsubnet.Properties = New-Object Microsoft.Windows.NetworkController.LogicalSubnetProperties
+PS C:\&gt; $logicalsubnet.Properties.VlanID = 1001
+PS C:\&gt; $logicalsubnet.Properties.AddressPrefix = &quot;10.127.134.0/25&quot;
+PS C:\&gt; $logicalsubnet.Properties.DefaultGateway = &quot;10.127.134.1&quot;
+
+$lnProperties.Subnets += $logicalsubnet
+
+# Add the new logical network to Network Controller
+PS C:\&gt; $vlanNetwork = New-NetworkControllerLogicalNetwork -ConnectionUri $uri -ResourceId &quot;Contoso_L3_Network&quot; -Properties $lnProperties -Force
+
+#######################################################
+
+# B. Configure the L3 Forwarding connection on the NC #
+#######################################################
+
+# Create a new object for the tenant network connection
+PS C:\&gt; $nwConnectionProperties = New-Object Microsoft.Windows.NetworkController.NetworkConnectionProperties
+
+# Update the common object properties
+PS C:\&gt; $nwConnectionProperties.ConnectionType = &quot;L3&quot; 
+PS C:\&gt; $nwConnectionProperties.OutboundKiloBitsPerSecond = 10000 
+PS C:\&gt; $nwConnectionProperties.InboundKiloBitsPerSecond = 10000
+
+# GRE-specific configuration (leave blank for L3)
+PS C:\&gt; $nwConnectionProperties.GreConfiguration = New-Object Microsoft.Windows.NetworkController.GreConfiguration
+
+# Update specific properties depending on the connection type
+PS C:\&gt; $nwConnectionProperties.L3Configuration = New-Object Microsoft.Windows.NetworkController.L3Configuration 
+PS C:\&gt; $nwConnectionProperties.L3Configuration.VlanSubnet = $vlanNetwork.properties.Subnets[0] 
+
+PS C:\&gt; $nwConnectionProperties.IPAddresses = @() 
+PS C:\&gt; $localIPAddress = New-Object Microsoft.Windows.NetworkController.CidrIPAddress 
+PS C:\&gt; $localIPAddress.IPAddress = &quot;10.127.134.55&quot; 
+PS C:\&gt; $localIPAddress.PrefixLength = 25 
+PS C:\&gt; $nwConnectionProperties.IPAddresses += $localIPAddress 
+
+PS C:\&gt; $nwConnectionProperties.PeerIPAddresses = @(&quot;10.127.134.65&quot;)
+
+# Update the IPv4 routes that are reachable over the site-to-site VPN tunnel
+PS C:\&gt; $nwConnectionProperties.Routes = @() 
+PS C:\&gt; $ipv4Route = New-Object Microsoft.Windows.NetworkController.RouteInfo 
+PS C:\&gt; $ipv4Route.DestinationPrefix = &quot;14.2.20.1/32&quot; 
+PS C:\&gt; $ipv4Route.metric = 10 
+PS C:\&gt; $nwConnectionProperties.Routes += $ipv4Route
+
+# Add the new network connection for the tenant
+PS C:\&gt; New-NetworkControllerVirtualGatewayNetworkConnection -ConnectionUri $uri -VirtualGatewayId &quot;Contoso&quot; -ResourceId &quot;Contoso_L3GW&quot; -Properties $nwConnectionProperties -Force
+```
+
+This set of cmdlets adds a new GRE connection on Contoso tenant virtual gateway.
+
+## PARAMETERS
+
+### -CertificateThumbprint
+Specifies the digital public key X.509 certificate of a user account that has permission to perform this action.
+This is the certificate thumbprint of the certificate.This thumbprint must also be provided in the *ClientCertificateThumbprint* parameter in the **Install-NetworkController** or **Set-NetworkController** cmdlet so that Network Controller can authorize this user.
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Confirm
+Prompts you for confirmation before running the cmdlet.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: cf
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -ConnectionUri
+Specifies the Uniform Resource Identifier (URI) of the Network Controller, used by all Representational State Transfer (REST) clients to connect to Network Controller.
+
+```yaml
+Type: Uri
+Parameter Sets: (All)
+Aliases: 
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Credential
+Specifies a user credential that has permission to perform this action.
+The default value is the current user.
+This user must be present in the security group provided in the *ClientSecurityGroup* parameter in the **Install-NetworkController** cmdlet.
+
+```yaml
+Type: PSCredential
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Etag
+Specifies the entity tag (ETag) of the resource.
+An ETag is an HTTP response header returned by an HTTP-compliant web server.
+An ETag is used to determine change in the content of a resource at a given URL.
+The value of the header is an opaque string representing the state of the resource at the time the response was generated.
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: 6
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Force
+Forces the command to run without asking for user confirmation.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: 7
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -PassInnerException
+This thumbprint must also be provided in the **ClientCertificateThumbprint** parameter in the **Install-NetworkController** or **Set-NetworkController** cmdlet so that Network Controller can authorize this user.
+
+The thumbprint must be provided only if the network controller client authentication is X509 certificates.
+**Get-NetworkController** retrieves that client authentication and authorization information.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Properties
+Specifies the properties of the network connection.
+
+```yaml
+Type: NetworkConnectionProperties
+Parameter Sets: (All)
+Aliases: 
+
+Required: True
+Position: 3
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -ResourceId
+Specifies the resource ID of the network connection to create.
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases: 
+
+Required: True
+Position: 1
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -ResourceMetadata
+Specifies metadata information for the client, such as the tenant ID, group ID, and resource name.
+
+```yaml
+Type: ResourceMetadata
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: 4
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -VirtualGatewayId
+Specifies the ID of a virtual gateway.
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases: 
+
+Required: True
+Position: 0
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -WhatIf
+Shows what would happen if the cmdlet runs.
+The cmdlet is not run.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: wi
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### CommonParameters
+This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable. For more information, see [about_CommonParameters](https://go.microsoft.com/fwlink/?LinkID=113216).
+
+## INPUTS
+
+### System.String
+
+### Microsoft.Windows.NetworkController.NetworkConnectionProperties
+
+## OUTPUTS
+
+# New-NetworkControllerVirtualGatewayNetworkConnection
+
+### System.Object
+
+This cmdlet outputs the following information: 
+
+- Resource reference URI.
+- Created time of the resource.
+- Instance ID of the resource.
+- Resource metadata.
+- Resource ID.
+- Properties of the resource: 
+
+&quot;{
+
+    &quot;&quot;ConnectionType&quot;&quot; : &quot;&quot;&quot;&quot;,
+
+    &quot;&quot;OutboundKiloBitsPerSecond&quot;&quot; : \&lt;UInt32\&gt;,
+
+    &quot;&quot;InboundKiloBitsPerSecond&quot;&quot; : \&lt;UInt32\&gt;,
+
+    &quot;&quot;IPSecConfiguration&quot;&quot;: @{
+
+        &quot;&quot;QuickMode&quot;&quot;: @{
+
+                &quot;&quot;PerfectForwardSecrecy&quot;&quot;: &quot;&quot;&quot;&quot;,
+
+                &quot;&quot;authenticationTransformationConstant&quot;&quot;: &quot;&quot;&quot;&quot;,
+
+                &quot;&quot;cipherTransformationConstant&quot;&quot;: &quot;&quot;&quot;&quot;,
+
+                &quot;&quot;saLifeTimeSeconds&quot;&quot;: &quot;&quot;&quot;&quot;,
+
+                &quot;&quot;idleDisconnectSeconds&quot;&quot;: &quot;&quot;&quot;&quot;,
+
+                &quot;&quot;saLifeTimeKiloBytes&quot;&quot;: &quot;&quot;&quot;&quot;
+
+        },
+
+        &quot;&quot;MainMode&quot;&quot;: @{
+
+            &quot;&quot;diffieHellmanGroup&quot;&quot;: &quot;&quot;&quot;&quot;,
+
+            &quot;&quot;integrityAlgorithm&quot;&quot;: &quot;&quot;&quot;&quot;,
+
+            &quot;&quot;encryptionAlgorithm&quot;&quot;: &quot;&quot;&quot;&quot;,
+
+            &quot;&quot;saLifeTimeSeconds&quot;&quot;: &quot;&quot;&quot;&quot;,
+
+            &quot;&quot;saLifeTimeKiloBytes&quot;&quot;: &quot;&quot;&quot;&quot;
+
+        },
+
+        &quot;&quot;AuthenticationMethod&quot;&quot;: &quot;&quot;&quot;&quot;,
+
+        &quot;&quot;SharedSecret&quot;&quot;: &quot;&quot;&quot;&quot;
+
+    },
+
+    &quot;&quot;GreConfiguration&quot;&quot;: @{ &quot;&quot;GREKey&quot;&quot;: &quot;&quot;&quot;&quot;},
+
+    &quot;&quot;L3Configuration&quot;&quot;: @{ &quot;&quot;VlanSubnet&quot;&quot;: @{&quot;&quot;ResourceRef&quot;&quot;: &quot;&quot;\&lt;string\&gt;&quot;&quot; }},
+
+    &quot;&quot;IPAddresses&quot;&quot;: @(),
+
+    &quot;&quot;PeerIPAddresses&quot;&quot;: @(),
+
+    &quot;&quot;Routes&quot;&quot;: @( @{
+
+        &quot;&quot;DestinationPrefix&quot;&quot;: &quot;&quot;&quot;&quot;,
+
+        &quot;&quot;Metric&quot;&quot;: &quot;&quot;&quot;&quot;
+
+    }),
+
+    &quot;&quot;DestinationIPAddress&quot;&quot; : &quot;&quot;&quot;&quot;
+
+}&quot;
+
+## NOTES
+
+## RELATED LINKS
+
+[Get-NetworkControllerVirtualGatewayNetworkConnection](./Get-NetworkControllerVirtualGatewayNetworkConnection.md)
+
+[Remove-NetworkControllerVirtualGatewayNetworkConnection](./Remove-NetworkControllerVirtualGatewayNetworkConnection.md)
+###Microsoft Learn URL###
+https://learn.microsoft.com/en-us/powershell/module/networkcontroller/new-networkcontrollervirtualgatewaynetworkconnection/?view=windowsserver2022-ps
+</pre></html>

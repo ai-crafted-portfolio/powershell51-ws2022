@@ -1,0 +1,489 @@
+<!doctype html><html lang="ja"><meta charset="utf-8"><pre class="record-source">###KnowledgeNo###
+PS51-WS2022-2026-3964
+###FormatID###
+PS51-WS2022
+###CreatedAt###
+2026-08-01 00:00
+###UpdatedAt###
+2026-08-01 00:00
+###タイトル###
+Enable-WSManCredSSP
+###モジュール###
+Microsoft.WSMan.Management
+###製品###
+Windows PowerShell 5.1
+###対応OS###
+Windows Server 2022
+###日本語訳###
+# 有効にWSManCredSSPを有効にします.
+
+## SYNOPSISは,コンピュータ上でクレジットシールセキュリティサポートプロバイダー (CredSSP) の認証を有効にする.
+
+## SYNTAXは,のシンタックスです.
+
+###            
+
+```
+Enable-WSManCredSSP [[-DelegateComputer] &lt;String[]&gt;] [-Force] [-Role] &lt;String&gt;
+ [&lt;CommonParameters&gt;]
+```
+
+## 記述は,
+
+   `Enable-WSManCredSSP`cmdlet はクライアントまたはサーバーコンピュータで CredSSP認証を有効にする. CredSSP認証を使用すると,ユーザー認証は認証されるためのリモートコンピュータに転送されます.このタイプの認証は,別のリモートセッションからリモートセッションを作成するコマンドに設計されています.例えば,リモートコンピュータでバックグラウンド作業を実行したい場合は,この種の認証を使用します.
+
+`Enable-WSManCredSSP`クレードSSPをクライアントまたはサーバーで有効にすることができます. クレードSSPをクライアントで有効にするために, **ロール**パラメータで **クライアントを指定してください. サーバー認証が達成されたときにクライアントはサーバーに明示的な認証を委ねます. クレードSSPをサーバーで有効にするために, **ロール**パラメータで **サーバーを指定してください. サーバーはクライアントの代表として機能します.詳細については,パラメータセクションの **ロール** を参照してください.
+
+[!CAUTION] &gt; CredSSP認証は,ローカルコンピュータからリモートコンピュータにユーザの認証情報を委託する.この慣行により,リモート操作のセキュリティリスクが増加する.リモート&gt;コンピュータが侵害された場合,認証がそれに渡されたとき,認証はネットワークセッションを制御するために使用できます.
+
+## 例えは
+
+### 例1:クライアントの認証を委託する
+
+この例では,完全資格ドメイン名を使用してクライアントの認証をコンピュータに委託することができます.
+
+```powershell
+Enable-WSManCredSSP -Role &quot;Client&quot; -DelegateComputer &quot;Server02.fabrikam.com&quot;
+```
+
+```Output
+cfg         : http://schemas.microsoft.com/wbem/wsman/1/config/client/auth
+lang        : en-US
+Basic       : true
+Digest      : true
+Kerberos    : true
+Negotiate   : true
+Certificate : true
+CredSSP     : true
+```
+
+### 例2: 域内のすべてのコンピュータにクライアントの認証を委譲する
+
+この例では,クライアントの認証が**fabrikam.com**ドメインのすべてのコンピュータに委託されるようにします.`*`) ワイルドカードはすべてのコンピュータを指定します.
+
+**DelegateComputer**パラメータを持つワイルドカードを使用すると,必要以上に多くのコンピュータで CredSSP を有効にすることができます.
+
+```powershell
+Enable-WSManCredSSP -Role &quot;Client&quot; -DelegateComputer &quot;*.fabrikam.com&quot;
+```
+
+```Output
+cfg         : http://schemas.microsoft.com/wbem/wsman/1/config/client/auth
+lang        : en-US
+Basic       : true
+Digest      : true
+Kerberos    : true
+Negotiate   : true
+Certificate : true
+CredSSP     : true
+```
+
+### 例3:複数のコンピュータにクライアントの認証をデレゲートする
+
+この例では,クライアントの認証が複数のコンピュータに委託されるようにします.
+
+```powershell
+$servers = &quot;server02.fabrikam.com&quot;, &quot;server03.fabrikam.com&quot;, &quot;server04.fabrikam.com&quot;
+Enable-WSManCredSSP -Role &quot;Client&quot; -DelegateComputer $servers
+```
+
+```Output
+cfg         : http://schemas.microsoft.com/wbem/wsman/1/config/client/auth
+lang        : en-US
+Basic       : true
+Digest      : true
+Kerberos    : true
+Negotiate   : true
+Certificate : true
+CredSSP     : true
+```
+
+   `$servers`変数はサーバー名前のリストを含んでいます. `Enable-WSManCredSSP`**Client**の役割を指定するために**Role**パラメータを使用します. **DelegateComputer**は,コンピュータの名前を&quot;&quot;から得ます.`$servers`変数です.
+
+### 例4:コンピュータが代弁者として機能することを許可する
+
+この例では,コンピュータが別のコンピュータの代弁者として機能することを可能にします.`Enable-WSManCredSSP`前例で示されたcmdletは,クライアントでCredSSP認証を有効にするとともに,その代理で行動できるリモートコンピュータを指定する.リモートコンピュータがクライアントの代弁者として機能するためには,WSManの **Service**ノードにある CredSSP項目は true に設定する必要があります.この例では,WSManの **Service**ノードにある CredSSP項目は true に設定します.
+
+```powershell
+Enable-WSManCredSSP -Role &quot;Server&quot;
+```
+
+### 例5: セットアイテムを使ってコンピュータをデレガートとして操作することを許可する
+
+この例では,コンピュータが別のコンピュータの代弁者として機能することを可能にします.`Enable-WSManCredSSP`上記の例で示されたコマンドは,クライアントコンピュータでのみ CredSSP認証を有効にし,クライアントコンピュータの代りに行動できるリモートコンピュータを指定します.リモートコンピュータがクライアントコンピュータの代表として機能するためには,WSManプロバイダのサービスディレクトリ内の CredSSP項目は true に設定する必要があります.
+
+```powershell
+Connect-WSMan -ComputerName &quot;server02&quot;
+Set-Item -Path &quot;WSMan:\server02\service\auth\credSSP&quot; -Value $true
+```
+
+`Connect-WSMan`端末コンピュータ,サーバー02に接続を作成します.`Set-Item`**Path**パラメータを使用して **WSMan** プロバイダーの位置を指定します. **Value**パラメータは **Service**設定を true に設定します.
+
+## パラメータは
+
+### -デレガートコンピュータ
+
+クライアントの認証が代入されるサーバーを指定する.最もよい方法は,完全に資格のあるドメイン名を使用することです.
+
+ワイルドカードは受け入れられているが,必要以上に多くのコンピュータで CredSSP を有効にすることができます.
+
+**Role**のパラメータが **Client**なら,このパラメータを指定する必要があります. **Role**が **Server**なら,このパラメータを指定しないでください.
+
+```yaml
+Type: System.String[]
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: 1
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: True
+```
+
+### -フォース
+
+ユーザの確認を要求せずにコマンドを実行するように強制します.
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -ロール
+
+クレードSSPをクライアントとしてまたはサーバーとして有効にするかどうかを指定します.このパラメータの受け入れ可能な値は: **クライアント**と **サーバー**です.
+
+**Client**を指定すると,次のアクションが実行されます.これらの設定は,サーバー認証が達成されたときにクライアントがサーバーに明示的な認証を委ねることができます.
+
+- クライアントで CredSSP を有効にする. - WS-Management の設定を設定します `\&lt;localhost|computername\&gt;\Client\Auth\CredSSP`true. - クライアントのWSMan/Delegate** に Windows CredSSPポリシーを設定する.
+
+**Server**を指定すると,以下の操作が実行されます.このポリシー設定により,サーバーがクライアントの代表として機能することができます.
+
+- サーバー上で CredSSP を有効にする. - WS-Management設定を設定します `\&lt;localhost|computername\&gt;\Service\Auth\CredSSP`true にする.
+
+```yaml
+Type: System.String
+Parameter Sets: (All)
+Aliases:
+Accepted values: Client, Server
+
+Required: True
+Position: 0
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### 共通パラメーター
+
+このcmdletは,共通パラメータをサポートしています: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable.詳細については, [about_CommonParameters](を参照してください.https://go.microsoft.com/fwlink/?LinkID=113216) でした.
+
+## 輸入は
+
+### どれもない
+
+このcmdletに物体をパイプすることはできません.
+
+## 輸出は
+
+### System.Xml.XmlElement
+
+CredSSP認証が成功して有効に設定された場合,このcmdletは **XMLElement**オブジェクトを返します.
+
+##  NOTES  記事ができました.
+
+CredSSP認証を無効にするには,  を使ってください.`Disable-WSManCredSSP`cmdletです.
+
+# 有効にWSManCredSSPを有効にします.
+
+## 関連リンク
+
+[Connect-WSMan](Connect-WSMan.md) 
+
+[Disable-WSManCredSSP](Disable-WSManCredSSP.md) でした.
+
+[Disconnect-WSMan](Disconnect-WSMan.md) 
+
+[Get-WSManCredSSP](Get-WSManCredSSP.md) について
+
+[Get-WSManInstance](Get-WSManInstance.md) について
+
+[インボーク-WSManAction](インボーク-WSManAction.md)
+
+[New-WSManInstance](New-WSManInstance.md) 
+
+[New-WSManSessionOption](New-WSManSessionOption.md) について
+
+[Remove-WSManInstance](Remove-WSManInstance.md) 
+
+[Set-WSManInstance](Set-WSManInstance.md) でした.
+
+[Set-WSManQuickConfig](Set-WSManQuickConfig.md) は,このままに設定されている.
+
+[テスト-WSMan](テスト-WSMan.md)
+###英語原文###
+# Enable-WSManCredSSP
+
+## SYNOPSIS
+Enables Credential Security Support Provider (CredSSP) authentication on a computer.
+
+## SYNTAX
+
+### All
+
+```
+Enable-WSManCredSSP [[-DelegateComputer] &lt;String[]&gt;] [-Force] [-Role] &lt;String&gt;
+ [&lt;CommonParameters&gt;]
+```
+
+## DESCRIPTION
+
+The `Enable-WSManCredSSP` cmdlet enables CredSSP authentication on a client or on a server computer.
+When CredSSP authentication is used, the user credentials are passed to a remote computer to be
+authenticated. This type of authentication is designed for commands that create a remote session
+from another remote session. For example, if you want to run a background job on a remote computer,
+use this kind of authentication.
+
+`Enable-WSManCredSSP` can enable CredSSP on a **Client** or a **Server**. To enable CredSSP on a
+client, specify **Client** in the **Role** parameter. Clients delegate explicit credentials to a
+server when server authentication is achieved. To enable CredSSP on a server, specify **Server** in
+the **Role** parameter. A server acts as a delegate for clients. For more details, see **Role** in
+the Parameters section.
+
+&gt; [!CAUTION]
+&gt; CredSSP authentication delegates the user credentials from the local computer to a remote
+&gt; computer. This practice increases the security risk of the remote operation. If the remote
+&gt; computer is compromised, when credentials are passed to it, the credentials can be used to control
+&gt; the network session.
+
+## EXAMPLES
+
+### Example 1: Delegate client credentials
+
+This example allows the client credentials to be delegated to a computer by using the fully
+qualified domain name.
+
+```powershell
+Enable-WSManCredSSP -Role &quot;Client&quot; -DelegateComputer &quot;Server02.fabrikam.com&quot;
+```
+
+```Output
+cfg         : http://schemas.microsoft.com/wbem/wsman/1/config/client/auth
+lang        : en-US
+Basic       : true
+Digest      : true
+Kerberos    : true
+Negotiate   : true
+Certificate : true
+CredSSP     : true
+```
+
+### Example 2: Delegate client credentials to all computers in a domain
+
+This example allows the client credentials to be delegated to all the computers in the
+**fabrikam.com** domain. The asterisk (`*`) wildcard specifies all computers.
+
+&gt; [!NOTE]
+&gt; Using wildcards with the **DelegateComputer** parameter can enable CredSSP on more computers than
+&gt; necessary.
+
+```powershell
+Enable-WSManCredSSP -Role &quot;Client&quot; -DelegateComputer &quot;*.fabrikam.com&quot;
+```
+
+```Output
+cfg         : http://schemas.microsoft.com/wbem/wsman/1/config/client/auth
+lang        : en-US
+Basic       : true
+Digest      : true
+Kerberos    : true
+Negotiate   : true
+Certificate : true
+CredSSP     : true
+```
+
+### Example 3: Delegate client credentials to multiple computers
+
+This example allows the client credentials to be delegated to multiple computers.
+
+```powershell
+$servers = &quot;server02.fabrikam.com&quot;, &quot;server03.fabrikam.com&quot;, &quot;server04.fabrikam.com&quot;
+Enable-WSManCredSSP -Role &quot;Client&quot; -DelegateComputer $servers
+```
+
+```Output
+cfg         : http://schemas.microsoft.com/wbem/wsman/1/config/client/auth
+lang        : en-US
+Basic       : true
+Digest      : true
+Kerberos    : true
+Negotiate   : true
+Certificate : true
+CredSSP     : true
+```
+
+The `$servers` variable contains a list of server names. `Enable-WSManCredSSP` uses the **Role**
+parameter to specify the **Client** role. The **DelegateComputer** gets the computer names from the
+`$servers` variable.
+
+### Example 4: Allow a computer to act as a delegate
+
+This example allows a computer to act as a delegate for another. The `Enable-WSManCredSSP` cmdlet,
+shown in the earlier examples, only enables CredSSP authentication on the client, and specifies the
+remote computers that can act on its behalf. In order for the remote computer to act as a delegate
+for the client, the CredSSP item in the **Service** node of WSMan must be set to true. This example
+sets the CredSSP item in the **Service** node of WSMan to true.
+
+```powershell
+Enable-WSManCredSSP -Role &quot;Server&quot;
+```
+
+### Example 5: Allow a computer to act as a delegate by using Set-Item
+
+This example allows a computer to act as a delegate for another computer. The `Enable-WSManCredSSP`
+commands, shown in the earlier examples, enable CredSSP authentication only on the client computer,
+and they specify the remote computers that can act on behalf of the client computer. For the remote
+computer to act as a delegate for the client computer, the CredSSP item in the Service directory of
+the WSMan provider must be set to true.
+
+```powershell
+Connect-WSMan -ComputerName &quot;server02&quot;
+Set-Item -Path &quot;WSMan:\server02\service\auth\credSSP&quot; -Value $true
+```
+
+`Connect-WSMan` creates a connection to the remote computer, server02. `Set-Item` uses the **Path**
+parameter to specify the **WSMan** provider&#x27;s location. The **Value** parameter sets the **Service**
+setting to true.
+
+## PARAMETERS
+
+### -DelegateComputer
+
+Specifies servers to which client credentials are delegated. The best practice is to use fully
+qualified domain names.
+
+Wildcards are accepted, but can enable CredSSP on more computers than necessary.
+
+If the **Role** parameter is **Client**, you must specify this parameter. If **Role** is **Server**,
+don&#x27;t specify this parameter.
+
+```yaml
+Type: System.String[]
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: 1
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: True
+```
+
+### -Force
+
+Forces the command to run without asking for user confirmation.
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Role
+
+Specifies whether to enable CredSSP as a client or as a server. The acceptable values for this
+parameter are: **Client** and **Server**.
+
+If you specify **Client**, the following actions are performed. These settings allow the client to
+delegate explicit credentials to a server when server authentication is achieved.
+
+- Enables CredSSP on the client.
+- Sets the WS-Management setting `\&lt;localhost|computername\&gt;\Client\Auth\CredSSP` to true.
+- Sets the Windows CredSSP policy **AllowFreshCredentials** to **WSMan/Delegate** on the client.
+
+If you specify **Server**, the following actions are performed. This policy setting allows the
+server to act as a delegate for clients.
+
+- Enables CredSSP on the server.
+- Sets the WS-Management setting `\&lt;localhost|computername\&gt;\Service\Auth\CredSSP` to true.
+
+```yaml
+Type: System.String
+Parameter Sets: (All)
+Aliases:
+Accepted values: Client, Server
+
+Required: True
+Position: 0
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### CommonParameters
+
+This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable,
+-InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose,
+-WarningAction, and -WarningVariable. For more information, see
+[about_CommonParameters](https://go.microsoft.com/fwlink/?LinkID=113216).
+
+## INPUTS
+
+### None
+
+You can&#x27;t pipe objects to this cmdlet.
+
+## OUTPUTS
+
+### System.Xml.XmlElement
+
+If CredSSP authentication is successfully enabled, this cmdlet returns an **XMLElement** object.
+
+## NOTES
+
+To disable CredSSP authentication, use the `Disable-WSManCredSSP` cmdlet.
+
+# Enable-WSManCredSSP
+
+## RELATED LINKS
+
+[Connect-WSMan](Connect-WSMan.md)
+
+[Disable-WSManCredSSP](Disable-WSManCredSSP.md)
+
+[Disconnect-WSMan](Disconnect-WSMan.md)
+
+[Get-WSManCredSSP](Get-WSManCredSSP.md)
+
+[Get-WSManInstance](Get-WSManInstance.md)
+
+[Invoke-WSManAction](Invoke-WSManAction.md)
+
+[New-WSManInstance](New-WSManInstance.md)
+
+[New-WSManSessionOption](New-WSManSessionOption.md)
+
+[Remove-WSManInstance](Remove-WSManInstance.md)
+
+[Set-WSManInstance](Set-WSManInstance.md)
+
+[Set-WSManQuickConfig](Set-WSManQuickConfig.md)
+
+[Test-WSMan](Test-WSMan.md)
+###Microsoft Learn URL###
+https://learn.microsoft.com/en-us/powershell/module/microsoft.wsman.management/enable-wsmancredssp/?view=powershell-5.1
+</pre></html>

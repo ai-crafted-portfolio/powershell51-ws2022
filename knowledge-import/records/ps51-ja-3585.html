@@ -1,0 +1,542 @@
+<!doctype html><html lang="ja"><meta charset="utf-8"><pre class="record-source">###KnowledgeNo###
+PS51-WS2022-2026-3585
+###FormatID###
+PS51-WS2022
+###CreatedAt###
+2026-08-01 00:00
+###UpdatedAt###
+2026-08-01 00:00
+###タイトル###
+about_PowerShell_exe
+###モジュール###
+Microsoft.PowerShell.Core
+###製品###
+Windows PowerShell 5.1
+###対応OS###
+Windows Server 2022
+###日本語訳###
+# about_PowerShell_exeについて
+
+## 短編説明は,どのように使用するか説明します.`powershell.exe`コマンドラインのパラメータを表示し,構文を記述します.
+
+## 長い記述です.
+
+PowerShell 7 のコマンドラインオプションに関する情報については,[about_Pwsh][01]を参照してください.
+
+## シンタックス
+
+```
+PowerShell[.exe]
+    [-PSConsoleFile &lt;file&gt; | -Version &lt;version&gt;]
+    [-NoLogo]
+    [-NoExit]
+    [-Sta]
+    [-Mta]
+    [-NoProfile]
+    [-NonInteractive]
+    [-InputFormat {Text | XML}]
+    [-OutputFormat {Text | XML}]
+    [-WindowStyle &lt;style&gt;]
+    [-EncodedArguments &lt;Base64EncodedArguments&gt;]
+    [-EncodedCommand &lt;Base64EncodedCommand&gt;]
+    [-ConfigurationName &lt;string&gt;]
+    [-File - | &lt;filePath&gt; &lt;args&gt;]
+    [-ExecutionPolicy &lt;ExecutionPolicy&gt;]
+    [-Command - | { &lt;script-block&gt; [-args &lt;arg-array&gt;] }
+                | { &lt;string&gt; [&lt;CommandParameters&gt;] } ]
+
+PowerShell[.exe] -Help | -? | /?
+```
+
+## パラメータは
+
+すべてのパラメータはケース無感覚です.
+
+### -ファイル - フィルパース
+
+**File**の値は,`-`もし, **File** の値は  の場合,`-`標準入力からコマンドが読み取れます.
+
+**File**の値はファイルパスである場合は,スクリプトは新しいセッションのローカルスコープ (&quot;dot-sourced&quot;) で実行され,スクリプトが作成する機能と変数は新しいセッションで利用可能になります.スクリプトファイルパスと任意のパラメータを入力します. **File** _must_はコマンドの最後のパラメータです. **File**パラメータの後に入力されたすべての値は,スクリプトファイルパスとパラメータとして解釈され,そのスクリプトに転送されます.例えば: `-File .\Get-Script.ps1 -Domain Central`
+
+通常,スクリプトのスイッチパラメータは含まれているか省略されている.例えば,次のコマンドは,  の **All**パラメータを使用します.`Get-Script.ps1`脚本ファイル: `-File .\Get-Script.ps1 -All`
+
+希少なケースでは,パラメータのブルール値を指定する必要がある場合があります.スイッチパラメータの明示的なブルール値をこの方法で実行する際は,パスすることはできません.この制限はPowerShell 6 () で削除されました.`pwsh.exe`) でした.
+
+スクリプトに転送されたパラメータは,現在のシェルによる解釈後に文字列として転送されます.例えば,あなたが  でいる場合は,`cmd.exe`環境変数値を渡したい場合は,  を使う.`cmd.exe`文法: `powershell.exe -File .\test.ps1 -TestParam %windir%`
+
+対照的に,走るのが`powershell.exe -File .\test.ps1 -TestParam $Env:windir`     `cmd.exe`結果として,文字列が文字列に表示されます.`$Env:windir`なぜなら,現在の流れに特別な意味がないからです.`cmd.exe`シェル. 殻.`$Env:windir`環境変数参照のスタイルは,PowerShellコードとして解釈されているため,**Command**パラメータ内で使用されます.
+
+同様に, _Batch script_ から同じコマンドを実行したい場合は,使用します.`%~dp0`ではなく`.\`    `$PSScriptRoot`現在の実行ディレクトリを表示する: `pwsh -File %~dp0test.ps1 -TestParam %windir%`を使用すると.`.\test.ps1`その代わりに,PowerShellは文字通りのパスを見つけられないのでエラーを投げ出します.`.\test.ps1`
+
+&gt; [!NOTE] &gt; **File** パラメータは,数値の数列を期待するパラメータを使用したスクリプトをサポートすることはできません.これは残念ながら,&gt;ネイティブコマンドが数値を取得する方法の制限です.ネイティブ実行可能な (例えば &gt; ) を呼び出すとき,`powershell`    `pwsh`),それはアレイと何をすべきかわからないので, &gt; は文字列として通過します.
+
+**File**の値は である場合`-`標準入力からコマンドが読み取れます.`powershell -File -`標準入力がリダイレクトされないと,通常のセッションが起動する.これは,  を指定しないことと同じです.`File`標準入力から読み取ると,入力式は PowerShell コマンドプロンプトで入力されたように,一度に1つのコマンドで実行されます. 記述が正しく解析されない場合は,表示が実行されません. プロセス出口コードは最後の (実行された) コマンドの状態によって決定されます. 成功した実行では,出口コードは常に です.`0`脚本ファイルが  で終わると`exit`命令では,プロセス出口コードは,  で使用される数値引数に設定されます.`exit`命令です.
+
+ に似ている`-Command`脚本終結エラーが発生すると,出口コードは  に設定されます.`1`しかし,この方法とは異なり,`-Command`,実行が &lt;kbd&gt;Ctrl&lt;/kbd&gt;+&lt;kbd&gt;C&lt;/kbd&gt;で中断された場合,出口コードは です.`0`詳細については,参照してください.`$LASTEXITCODE`in [about_Automatic_Variables][03].
+
+# about_PowerShell_exeについて
+
+### - コマンド
+
+**Command**の値は,`-`文字ブロック,または文字列. **Command**の値は である場合`-`標準入力からコマンドテキストが読み取れます.
+
+**Command** パラメータは,実行のためのスクリプトブロックを**ScriptBlock**タイプとして**Command** に渡された値を認識できる場合にのみ受け入れます.これは,実行時に__のみ可能です.`powershell.exe`**ScriptBlock**タイプは既存の変数に含まれ,表現から返還可能,または,カーリブブブレーズで囲まれた文字文字のスクリプトブロックとしてPowerShellホストによって解析可能 ()`{}`), に渡される前に`powershell.exe` .
+
+```powershell
+powershell -Command {Get-WinEvent -LogName Security}
+```
+
+        `cmd.exe`文字列 (または **ScriptBlock** タイプ) と呼ばれるものは存在しないので,コマンドに転送された値は _always_ 文字列です.文字列の中に文字列ブロックを書けるが,実行される代わりに,それは典型的なPowerShell プロンプトでタイプしたかのように振る舞い,文字列ブロックの内容をあなたに印刷します.
+
+**Command** に渡された文字列は,まだPowerShellコードとして実行されますので,スクリプトブロックのカーリルブレスが通常,最初に必要ありません.`cmd.exe`.文字列の中で定義されたインラインスクリプトブロックを実行するには, [コールオペレータ][05] `&amp;`は使用できます:
+
+```cmd
+powershell.exe -Command &quot;&amp; {Get-WinEvent -LogName Security}&quot;
+```
+
+**Command**の値は文字列である場合は, **Command** は pwsh の最後のパラメータである必要があります.その後に続くすべての議論は実行命令の一部として解釈されるからです.
+
+既存の PowerShell セッションから呼び出されると,結果は,ライブオブジェクトではなく,デセリアライズされた XML オブジェクトとして親シェルに戻されます.他のシェルでは,結果は文字列として返されます.
+
+**Command**の値は,`-`標準入力からコマンドが読み取れます.標準入力で**Command**パラメータを使用する際には,標準入力から標準入力をリダイレクトする必要があります.例えば:
+
+```powershell
+@&#x27;
+&quot;in&quot;
+
+&quot;hi&quot; |
+  % { &quot;$_ there&quot; }
+
+&quot;out&quot;
+&#x27;@ | powershell -NoProfile -Command -
+```
+
+この例では,次の出力が得られます.
+
+```Output
+in
+hi there
+out
+```
+
+標準入力から読み取ると,入力が PowerShell コマンドプロンプトで入力されたように,入力が解析され,一度に一つの式で実行されます.入力コードが正しく解析されない場合は,入力式が実行されません.  を使わない限り,実行されます.`-NoExit`パラメータとして,標準入力から読み取れる入力がなくなったときにPowerShellセッションが終了します.
+
+プロセス出口コードは,入力内の最後の (実行された) コマンドの状態によって決定されます. 出口コードは です.`0` いつ いつ`$?`は`$true`    `1` いつ いつ`$?`は`$false`最後のコマンドが外部プログラムか,また,出口コードを明確に設定するPowerShellスクリプトである場合.`0`    `1`出て行うコードが,  に変換されます.`1`同様に,スクリプト終結 (runspace-terminating) のエラー,例えば のようなエラーが発生すると,1値は返されます.`throw`    `-ErrorAction Stop`, , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , ,
+
+特定の出口コードを保存するには,  を追加します.`exit $LASTEXITCODE`コマンド文字列やスクリプトブロックに追加します.詳細については,  を参照してください.`$LASTEXITCODE`[about_Automatic_Variables][02].
+
+### -設定名 \&lt;string\&gt;
+
+PowerShellが実行されるコンフィギュレーションエンドポイントを指定します.これは,デフォルト PowerShell リモートエンドポイントを含むローカルマシンに登録された任意のエンドポイントまたは特定のユーザーロール機能を持つカスタムエンドポイントを含む.
+
+### -EncodedArguments \&lt;Base64EncodedArguments\&gt;
+
+Base64コードされた文字列バージョンのコマンド 参数を受け入れます.このパラメータを使用して複雑な,巣の引用を必要とする参数を提出します.Base64 表現は UTF-16LE コードされた文字列でなければなりません.
+
+### -EncodedCommand \&lt;Base64EncodedCommand\&gt;
+
+命令のベース64コード文字列バージョンを承認する.このパラメータを使用して,複雑な引用符やカボチャブレスを必要とするコマンドをPowerShellに送信します.文字列は UTF-16LE文字コードを使用してフォーマットする必要があります.
+
+### -ExecutionPolicy \&lt;ExecutionPolicy\&gt;
+
+現在のセッションのデフォルト実行ポリシーを設定し,その設定を  に保存します.`$Env:PSExecutionPolicyPreference`このパラメータは,レジストリに設定されているPowerShell実行ポリシーを変更しません.有効な値の一覧を含むPowerShell実行ポリシーに関する情報については,[about_Execution_Policies][04]を参照してください.
+
+### -InputFormat {テキスト・XML} 
+
+PowerShell に送信されたデータのフォーマットを記述します.有効値は です.`Text`(テキスト文字列) または `XML`(シリアライズされた CLIXML 形式)
+
+### -MTA
+
+PowerShell 3.0では,マルチスレッドアパート (MTA) がデフォルトで設定されています.PowerShell 3.0では,単行スレッドアパート (STA) がデフォルトで設定されています.
+
+### -NoExit
+
+起動コマンドを実行した後は退出しません.
+
+### -非インタラクティブ
+
+このスイッチは,ユーザの入力を必要としないセッションを作成するために使用されます.これはスケジュールされたタスクまたはCI/CDパイプラインで実行されるスクリプトに役立ちます.インタラクティブな機能を使用するいかなる試みも,例えば `Read-Host`確認提示は,取付する代わりに,声明を終了するエラーをもたらします.
+
+### - ノロゴ
+
+スタートアップで著作権のバナーを隠す.
+
+### -NoProfile
+
+PowerShell プロフィールが読み込まれていない.
+
+### -OutputFormat {テキスト・XML} 
+
+PowerShellから出力がどのようにフォーマットされるかを決定します.有効な値は`Text`(テキスト文字列) または `XML`(シリアライズされた CLIXML 形式)
+
+### -PSConsoleFile \&lt;FilePath\&gt;
+
+指定されたPowerShellコンソールファイルをロードします.コンソールファイルのパスと名前入力します.コンソールファイルを作成するには,PowerShellでExport-Console cmdlet を使用します.
+
+### - スタ
+
+PowerShell は単行本のアパートを使用して PowerShell を起動します.Windows PowerShell 2.0 では,複数本のアパート (MTA) がデフォルトで設定されています.Windows PowerShell 3.0 では,単行本のアパート (STA) がデフォルトで設定されています.
+
+### -バージョン \&lt;PowerShell Version\&gt;
+
+指定されたバージョンのPowerShellを起動します.有効値は2.0と3.0です.指定したバージョンはシステムにインストールする必要があります.コンピュータにWindows PowerShell 3.0がインストールされている場合&quot;,3.0&quot;はデフォルトバージョンです.そうでなければ&quot;,2.0&quot;はデフォルトバージョンです.詳細については,[PowerShellをインストールする][02]を参照してください.
+
+### -WindowsStyle \&lt;Windows style\&gt;
+
+セッションの窓スタイルを設定します.有効値は です.`Normal`     `Minimized`     `Maximized`そして,`Hidden` .
+
+### - 助けてくれ!
+
+ のためのサポートを表示します.`powershell.exe`を入力している場合は.`powershell.exe`PowerShellセッションでは,コマンドパラメータをハイフン () でプリペンする.`-`),前向きのスラッシュではない ().`/`にハイフンやフォワードスラッシュを使用できます.`cmd.exe` .
+
+## 発言は
+
+トラブルシューティング注意:PowerShell 2.0では,PowerShellコンソールからプログラムを開始すると,0xc0000142のLastExitCode**が失敗します.
+
+## 例文
+
+```powershell
+
+# Create a new PowerShell session and load a saved console file
+PowerShell -PSConsoleFile sqlsnapin.psc1
+
+# Create a new PowerShell V2 session with text input, XML output, and no logo
+PowerShell -Version 2.0 -NoLogo -InputFormat text -OutputFormat XML
+
+# Execute a PowerShell Command in a session
+PowerShell -Command &quot;Get-EventLog -LogName Security&quot;
+
+# Run a script block in a session
+PowerShell -Command {Get-EventLog -LogName Security}
+
+# An alternate way to run a command in a new session
+PowerShell -Command &quot;&amp; {Get-EventLog -LogName Security}&quot;
+
+# To use the -EncodedCommand parameter:
+$command = &quot;dir &#x27;C:\Program Files&#x27; &quot;
+$bytes = [System.Text.Encoding]::Unicode.GetBytes($command)
+$encodedCommand = [Convert]::ToBase64String($bytes)
+powershell.exe -EncodedCommand $encodedCommand
+```
+
+&lt;!--リンク参照 --&gt; [01]: /powershell/module/microsoft.powershell.core/about/about_pwsh [02]: /powershell/scripting/install/installing-windows-powershell [03]: about_Automatic_Variables.md#lastexitcode [04]: about_Execution_Policies.md [05]: about_operators.md#special-operators
+###英語原文###
+# about_PowerShell_exe
+
+## SHORT DESCRIPTION
+Explains how to use the `powershell.exe` command-line interface. Displays the
+command-line parameters and describes the syntax.
+
+## LONG DESCRIPTION
+
+For information about the command-line options for PowerShell 7, see
+[about_Pwsh][01].
+
+## Syntax
+
+```
+PowerShell[.exe]
+    [-PSConsoleFile &lt;file&gt; | -Version &lt;version&gt;]
+    [-NoLogo]
+    [-NoExit]
+    [-Sta]
+    [-Mta]
+    [-NoProfile]
+    [-NonInteractive]
+    [-InputFormat {Text | XML}]
+    [-OutputFormat {Text | XML}]
+    [-WindowStyle &lt;style&gt;]
+    [-EncodedArguments &lt;Base64EncodedArguments&gt;]
+    [-EncodedCommand &lt;Base64EncodedCommand&gt;]
+    [-ConfigurationName &lt;string&gt;]
+    [-File - | &lt;filePath&gt; &lt;args&gt;]
+    [-ExecutionPolicy &lt;ExecutionPolicy&gt;]
+    [-Command - | { &lt;script-block&gt; [-args &lt;arg-array&gt;] }
+                | { &lt;string&gt; [&lt;CommandParameters&gt;] } ]
+
+PowerShell[.exe] -Help | -? | /?
+```
+
+## Parameters
+
+All parameters are case-insensitive.
+
+### -File - | \&lt;filePath\&gt; \&lt;args\&gt;
+
+The value of **File** can be `-` or a filepath and optional parameters. If the
+value of **File** is `-`, then commands are read from standard input.
+
+If the value of **File** is a filepath, the script runs in the local scope
+(&quot;dot-sourced&quot;) of the new session, so that the functions and variables that
+the script creates are available in that new session. Enter the script filepath
+and any parameters. **File** _must_ be the last parameter in the command. All
+values typed after the **File** parameter are interpreted as the script
+filepath and parameters passed to that script. For example:
+`-File .\Get-Script.ps1 -Domain Central`
+
+Typically, the switch parameters of a script are either included or omitted.
+For example, the following command uses the **All** parameter of the
+`Get-Script.ps1` script file: `-File .\Get-Script.ps1 -All`
+
+In rare cases, you might need to provide a **Boolean** value for a parameter.
+It isn&#x27;t possible to pass an explicit boolean value for a switch parameter when
+running a script in this way. This limitation was removed in PowerShell 6
+(`pwsh.exe`).
+
+Parameters passed to the script are passed as literal strings, after
+interpretation by the current shell. For example, if you are in `cmd.exe` and
+want to pass an environment variable value, you would use the `cmd.exe` syntax:
+`powershell.exe -File .\test.ps1 -TestParam %windir%`
+
+In contrast, running `powershell.exe -File .\test.ps1 -TestParam $Env:windir`
+in `cmd.exe` results in the script receiving the literal string `$Env:windir`
+because it has no special meaning to the current `cmd.exe` shell. The
+`$Env:windir` style of environment variable reference _can_ be used inside a
+**Command** parameter, since there it&#x27;s interpreted as PowerShell code.
+
+Similarly, if you want to execute the same command from a _Batch script_, you
+would use `%~dp0` instead of `.\` or `$PSScriptRoot` to represent the current
+execution directory: `pwsh -File %~dp0test.ps1 -TestParam %windir%`. If you use
+`.\test.ps1` instead, PowerShell throws an error because it can&#x27;t find the
+literal path `.\test.ps1`
+
+&gt; [!NOTE]
+&gt; The **File** parameter can&#x27;t support scripts using a parameter that expects
+&gt; an array of argument values. This, unfortunately, is a limitation of how a
+&gt; native command gets argument values. When you call a native executable (such
+&gt; as `powershell` or `pwsh`), it doesn&#x27;t know what to do with an array, so
+&gt; it&#x27;s passed as a string.
+
+If the value of **File** is `-`, then commands are read from standard input.
+Running `powershell -File -` without redirected standard input starts a regular
+session. This is the same as not specifying the `File` parameter at all. When
+reading from standard input, the input statements are executed one statement at
+a time as though they were typed at the PowerShell command prompt. If a
+statement doesn&#x27;t parse correctly, the statement isn&#x27;t executed. The process
+exit code is determined by status of the last (executed) command. With
+successful execution, the exit code is always `0`. When the script file
+terminates with an `exit` command, the process exit code is set to the numeric
+argument used with the `exit` command.
+
+Similar to `-Command`, when a script-terminating error occurs, the exit code is
+set to `1`. However, unlike with `-Command`, when the execution is interrupted
+with &lt;kbd&gt;Ctrl&lt;/kbd&gt;+&lt;kbd&gt;C&lt;/kbd&gt; the exit code is `0`. For more information,
+see `$LASTEXITCODE` in [about_Automatic_Variables][03].
+
+# about_PowerShell_exe
+
+### -Command
+
+The value of **Command** can be `-`, a script block, or a string. If the value
+of **Command** is `-`, the command text is read from standard input.
+
+The **Command** parameter only accepts a script block for execution when it can
+recognize the value passed to **Command** as a **ScriptBlock** type. This is
+_only_ possible when running `powershell.exe` from another PowerShell host. The
+**ScriptBlock** type may be contained in an existing variable, returned from an
+expression, or parsed by the PowerShell host as a literal script block enclosed
+in curly braces (`{}`), before being passed to `powershell.exe`.
+
+```powershell
+powershell -Command {Get-WinEvent -LogName Security}
+```
+
+In `cmd.exe`, there is no such thing as a script block (or **ScriptBlock**
+type), so the value passed to **Command** is _always_ a string. You can write a
+script block inside the string, but instead of being executed it behaves
+exactly as though you typed it at a typical PowerShell prompt, printing the
+contents of the script block back out to you.
+
+A string passed to **Command** is still executed as PowerShell code, so the
+script block curly braces are often not required in the first place when
+running from `cmd.exe`. To execute an inline script block defined inside a
+string, the [call operator][05] `&amp;` can be used:
+
+```cmd
+powershell.exe -Command &quot;&amp; {Get-WinEvent -LogName Security}&quot;
+```
+
+If the value of **Command** is a string, **Command** must be the last parameter
+for pwsh, because all arguments following it are interpreted as part of the
+command to execute.
+
+When called from within an existing PowerShell session, the results are
+returned to the parent shell as deserialized XML objects, not live objects. For
+other shells, the results are returned as strings.
+
+If the value of **Command** is `-`, the commands are read from standard
+input. You must redirect standard input when using the **Command** parameter
+with standard input. For example:
+
+```powershell
+@&#x27;
+&quot;in&quot;
+
+&quot;hi&quot; |
+  % { &quot;$_ there&quot; }
+
+&quot;out&quot;
+&#x27;@ | powershell -NoProfile -Command -
+```
+
+This example produces the following output:
+
+```Output
+in
+hi there
+out
+```
+
+When reading from standard input, the input is parsed and executed one
+statement at a time, as though they were typed at the PowerShell command
+prompt. If the input code doesn&#x27;t parse correctly, the statement isn&#x27;t
+executed. Unless you use the `-NoExit` parameter, the PowerShell session exits
+when there is no more input to read from standard input.
+
+The process exit code is determined by status of the last (executed) command
+within the input. The exit code is `0` when `$?` is `$true` or `1` when `$?` is
+`$false`. If the last command is an external program or a PowerShell script
+that explicitly sets an exit code other than `0` or `1`, that exit code is
+converted to `1` for process exit code. Similarly, the value 1 is returned when
+a script-terminating (runspace-terminating) error, such as a `throw` or
+`-ErrorAction Stop`, occurs or when execution is interrupted with
+&lt;kbd&gt;Ctrl&lt;/kbd&gt;+&lt;kbd&gt;C&lt;/kbd&gt;.
+
+To preserve the specific exit code, add `exit $LASTEXITCODE` to your command
+string or script block. For more information, see `$LASTEXITCODE` in
+[about_Automatic_Variables][02].
+
+### -ConfigurationName \&lt;string\&gt;
+
+Specifies a configuration endpoint in which PowerShell is run. This can be any
+endpoint registered on the local machine including the default PowerShell
+remoting endpoints or a custom endpoint having specific user role capabilities.
+
+### -EncodedArguments \&lt;Base64EncodedArguments\&gt;
+
+Accepts a Base64-encoded string version command arguments. Use this parameter
+to submit arguments that require complex, nested quoting. The Base64
+representation must be a UTF-16LE encoded string.
+
+### -EncodedCommand \&lt;Base64EncodedCommand\&gt;
+
+Accepts a base-64-encoded string version of a command. Use this parameter to
+submit commands to PowerShell that require complex quotation marks or curly
+braces. The string must be formatted using UTF-16LE character encoding.
+
+### -ExecutionPolicy \&lt;ExecutionPolicy\&gt;
+
+Sets the default execution policy for the current session and saves it in the
+`$Env:PSExecutionPolicyPreference` environment variable. This parameter does
+not change the PowerShell execution policy that&#x27;s set in the registry. For
+information about PowerShell execution policies, including a list of valid
+values, see [about_Execution_Policies][04].
+
+### -InputFormat {Text | XML}
+
+Describes the format of data sent to PowerShell. Valid values are `Text` (text
+strings) or `XML` (serialized CLIXML format).
+
+### -Mta
+
+Starts PowerShell using a multi-threaded apartment. This parameter is
+introduced in PowerShell 3.0. In PowerShell 2.0, multi-threaded apartment (MTA)
+is the default. In PowerShell 3.0, single-threaded apartment (STA) is the
+default.
+
+### -NoExit
+
+Doesn&#x27;t exit after running startup commands.
+
+### -NonInteractive
+
+This switch is used to create sessions that shouldn&#x27;t require user input. This
+is useful for scripts that run in scheduled tasks or CI/CD pipelines. Any
+attempts to use interactive features, like `Read-Host` or confirmation prompts,
+result in statement terminating errors rather than hanging.
+
+### -NoLogo
+
+Hides the copyright banner at startup.
+
+### -NoProfile
+
+Doesn&#x27;t load the PowerShell profile.
+
+### -OutputFormat {Text | XML}
+
+Determines how output from PowerShell is formatted. Valid values are `Text`
+(text strings) or `XML` (serialized CLIXML format).
+
+### -PSConsoleFile \&lt;FilePath\&gt;
+
+Loads the specified PowerShell console file. Enter the path and name of the
+console file. To create a console file, use the Export-Console cmdlet in
+PowerShell.
+
+### -Sta
+
+Starts PowerShell using a single-threaded apartment. In Windows PowerShell 2.0,
+multi-threaded apartment (MTA) is the default. In Windows PowerShell 3.0,
+single-threaded apartment (STA) is the default.
+
+### -Version \&lt;PowerShell Version\&gt;
+
+Starts the specified version of PowerShell. Valid values are 2.0 and 3.0. The
+version that you specify must be installed on the system. If Windows PowerShell
+3.0 is installed on the computer, &quot;3.0&quot; is the default version. Otherwise,
+&quot;2.0&quot; is the default version. For more information, see
+[Installing PowerShell][02].
+
+### -WindowStyle \&lt;Window style\&gt;
+
+Sets the window style for the session. Valid values are `Normal`, `Minimized`,
+`Maximized`, and `Hidden`.
+
+### -Help, -?, /?
+
+Displays help for `powershell.exe`. If you are typing a `powershell.exe`
+command in a PowerShell session, prepend the command parameters with a hyphen
+(`-`), not a forward slash (`/`). You can use either a hyphen or forward slash
+in `cmd.exe`.
+
+## Remarks
+
+Troubleshooting note: In PowerShell 2.0, starting some programs from the
+PowerShell console fails with a **LastExitCode** of 0xc0000142.
+
+## Examples
+
+```powershell
+
+# Create a new PowerShell session and load a saved console file
+PowerShell -PSConsoleFile sqlsnapin.psc1
+
+# Create a new PowerShell V2 session with text input, XML output, and no logo
+PowerShell -Version 2.0 -NoLogo -InputFormat text -OutputFormat XML
+
+# Execute a PowerShell Command in a session
+PowerShell -Command &quot;Get-EventLog -LogName Security&quot;
+
+# Run a script block in a session
+PowerShell -Command {Get-EventLog -LogName Security}
+
+# An alternate way to run a command in a new session
+PowerShell -Command &quot;&amp; {Get-EventLog -LogName Security}&quot;
+
+# To use the -EncodedCommand parameter:
+$command = &quot;dir &#x27;C:\Program Files&#x27; &quot;
+$bytes = [System.Text.Encoding]::Unicode.GetBytes($command)
+$encodedCommand = [Convert]::ToBase64String($bytes)
+powershell.exe -EncodedCommand $encodedCommand
+```
+
+&lt;!-- link references --&gt;
+[01]: /powershell/module/microsoft.powershell.core/about/about_pwsh
+[02]: /powershell/scripting/install/installing-windows-powershell
+[03]: about_Automatic_Variables.md#lastexitcode
+[04]: about_Execution_Policies.md
+[05]: about_operators.md#special-operators
+###Microsoft Learn URL###
+https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_powershell_exe/?view=powershell-5.1
+</pre></html>

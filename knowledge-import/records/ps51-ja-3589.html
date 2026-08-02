@@ -1,0 +1,556 @@
+<!doctype html><html lang="ja"><meta charset="utf-8"><pre class="record-source">###KnowledgeNo###
+PS51-WS2022-2026-3589
+###FormatID###
+PS51-WS2022
+###CreatedAt###
+2026-08-01 00:00
+###UpdatedAt###
+2026-08-01 00:00
+###タイトル###
+about_Prompts
+###モジュール###
+Microsoft.PowerShell.Core
+###製品###
+Windows PowerShell 5.1
+###対応OS###
+Windows Server 2022
+###日本語訳###
+# about_Promptsについて
+
+## 短編説明
+
+を記述する.`prompt`機能が機能し,カスタムを作成する方法を示しています.`prompt`機能.
+
+## 長い説明
+
+PowerShell コマンドプロンプトは,PowerShell がコマンドを実行する準備ができていることを表示します.
+
+```
+PS C:\&gt;
+```
+
+PowerShell には内蔵された機能があります.`prompt`機能は,独自のカスタマイズされた機能を定義できます.`prompt`PowerShell プロフィールスクリプトの機能です.
+
+## について`prompt`機能
+
+   `prompt`PowerShell プロンプトの外観を決める機能です.PowerShell は内蔵の   付属機能が付いています.`prompt`機能は,自分の機能を定義することで,それを覆すことができます.`prompt`機能.
+
+   `prompt`函数には次の構文があります.
+
+```powershell
+function prompt { &lt;function-body&gt; }
+```
+
+   `prompt`機能はオブジェクトを返さなければならない.ベストプラクティスとして,文字列または文字列としてフォーマットされたオブジェクトを返します. 最大推奨長さは80文字です.
+
+例えば,次の `prompt`関数は&quot;,Hello, World&quot;文字列を返して,右角括弧 () を返します.`&gt;`) でした.
+
+```powershell
+PS C:\&gt; function prompt {&quot;Hello, World &gt; &quot;}
+Hello, World &gt;
+```
+
+###  を獲得する`prompt`機能
+
+ を獲得するために`prompt`関数を使用する`Get-Command`cmdlet または使用する`Get-Item`機能ドライブのcmdlet.
+
+例えば:
+
+```powershell
+PS C:\&gt; Get-Command prompt
+
+CommandType     Name      ModuleName
+-----------     ----      ----------
+Function        prompt
+```
+
+プロンプトの値を設定するスクリプトを取得するには,点法を使用して,  の **ScriptBlock** 属性を取得します.`prompt`機能.
+
+例えば:
+
+```powershell
+(Get-Command prompt).ScriptBlock
+```
+
+```Output
+&quot;PS $($ExecutionContext.SessionState.Path.CurrentLocation)$(&#x27;&gt;&#x27; * ($NestedPromptLevel + 1)) &quot;
+
+# .Link
+
+# https://go.microsoft.com/fwlink/?LinkID=225750
+
+# .ExternalHelp System.Management.Automation.dll-help.xml
+```
+
+すべての関数と同様に,  は`prompt`函数が  に保存されている.`Function:`ドライブ. 現在の動力を作成する脚本を表示するために.`prompt`機能,タイプ:
+
+```powershell
+(Get-Item Function:prompt).ScriptBlock
+```
+
+### デフォルトプロンプトは
+
+デフォルトプロンプトは,  のときのみ表示されます.`prompt`機能がエラーを生成するか,オブジェクトを返さない.
+
+PowerShell プロンプトのデフォルトは:
+
+```
+PS&gt;
+```
+
+例えば,次のコマンドは,  を設定します.`prompt` に関する関数です.`$null`誤った結果として,デフォルトプロンプトが表示されます.
+
+```powershell
+PS C:\&gt; function prompt {$null}
+PS&gt;
+```
+
+PowerShellが組み込みプロンプトが付いているので,通常はデフォルトプロンプトが表示されない.
+
+### 組み込みプロンプト
+
+PowerShellには内蔵された機能が含まれています.`prompt`機能.
+
+```powershell
+function prompt {
+  &quot;PS $($ExecutionContext.SessionState.Path.CurrentLocation)$(&#x27;&gt;&#x27; * ($NestedPromptLevel + 1)) &quot;;
+  # .Link
+  # https://go.microsoft.com/fwlink/?LinkID=225750
+  # .ExternalHelp System.Management.Automation.dll-help.xml
+}
+```
+
+関数は,  を使います.`Test-Path`のcmdletがテストされているかどうかを確認します.`$PSDebugContext`自動変数は値がある.If `$PSDebugContext`値があるので,デバッグモードで実行しているので,`[DBG]:`提示に次のように追加されます:
+
+```Output
+[DBG]: PS C:\ps-test&gt;
+```
+
+If  でした.`$PSDebugContext`isn&#x27;t populated, the function adds  を追加する`PS`そして,関数は  を使います.`Get-Location`cmdlet で現在のファイルシステムディレクトリ位置を表示します.その後,正角括弧 () を追加します.`&gt;`) でした.
+
+例えば:
+
+```Output
+PS C:\ps-test&gt;
+```
+
+巣のプロンプトに入っている場合,関数は2つの角度括弧を追加します ().`&gt;&gt;`の値が の値である場合,あなたは巣のプロンプトにいます.`$NestedPromptLevel`自動変数は0より大きい.
+
+例えば,埋め込まれたプロンプトでデバッグをしているとき,プロンプトは次のプロンプトに似ている:
+
+```Output
+[DBG] PS C:\ps-test&gt;&gt;&gt;
+```
+
+### 提示の変更です
+
+   `Enter-PSSession`cmdlet は,リモートコンピュータの名前を現在の  にプリペンドします.`prompt`関数を使うとき.`Enter-PSSession`遠隔コンピュータでセッションを開始するには,コマンドプロンプトが変更され,遠隔コンピュータの名前が含まれます.
+
+```Output
+PS Hello, World&gt; Enter-PSSession Server01
+[Server01]: PS Hello, World&gt;
+```
+
+他のPowerShellホストアプリケーションや代替シェルは独自のカスタムコマンドプロンプトを持っているかもしれません.
+
+について詳しい情報はこちらから`$PSDebugContext`そして,`$NestedPromptLevel`自動変数については[about_Automatic_Variables]を参照してください.
+
+### 提示符をカスタマイズする方法
+
+プロンプトをカスタマイズするには,新しい書き込みをします.`prompt`機能は保護されていないので,書き換えることができます.
+
+ を書くために`prompt`函数を入力すると,次のようになります:
+
+```powershell
+function prompt { }
+```
+
+その後,ブレーキの間の間には,プロンプトを作成するコマンドまたは文字列を入力します.
+
+例えば,次のプロンプトには,コンピュータの名前が含まれます.
+
+```powershell
+function prompt {&quot;PS [$Env:COMPUTERNAME]&gt; &quot;}
+```
+
+Server01 のコンピュータでは,プロンプトは次のプロンプトに似ている:
+
+```Output
+PS [Server01] &gt;
+```
+
+   以下のようなもの`prompt`関数は現在の日時を含む:
+
+```powershell
+function prompt {&quot;$(Get-Date)&gt; &quot;}
+```
+
+提示は以下の提示に似ている:
+
+```Output
+03/15/2012 17:49:47&gt;
+```
+
+既定の変更もできます.`prompt`機能:
+
+例えば,以下の修正された`prompt`機能を追加する`[ADMIN]:`強化セッションで実行する際に,内蔵のPowerShellプロンプトに.
+
+```powershell
+function prompt {
+  $identity = [Security.Principal.WindowsIdentity]::GetCurrent()
+  $principal = [Security.Principal.WindowsPrincipal] $identity
+  $adminRole = [Security.Principal.WindowsBuiltInRole]::Administrator
+
+  $(if (Test-Path Variable:/PSDebugContext) { &#x27;[DBG]: &#x27; }
+    elseif($principal.IsInRole($adminRole)) { &quot;[ADMIN]: &quot; }
+    else { &#x27;&#x27; }
+  ) + &#x27;PS &#x27; + $(Get-Location) +
+    $(if ($NestedPromptLevel -ge 1) { &#x27;&gt;&gt;&#x27; }) + &#x27;&gt; &#x27;
+}
+```
+
+**管理者として実行する**オプションを使用してPowerShellを起動すると,次のプロンプトに似たプロンプトが表示されます.
+
+```Output
+[ADMIN]: PS C:\ps-test&gt;
+```
+
+   以下のようなもの`prompt`機能は次のコマンドの履歴 ID を表示します.コマンド履歴を見るには,  を使います.`Get-History`cmdletです.
+
+```powershell
+function prompt {
+   # The at sign creates an array in case only one history item exists.
+   $history = @(Get-History)
+   if($history.Count -gt 0)
+   {
+      $lastItem = $history[$history.Count - 1]
+      $lastId = $lastItem.Id
+   }
+
+   $nextCommand = $lastId + 1
+   $currentDirectory = Get-Location
+   &quot;PS: $nextCommand $currentDirectory &gt;&quot;
+}
+```
+
+次のプロンプトは,  を使っています.`Write-Host`そして,`Get-Random`ランダムに色を変更するプロンプトを作成するcmdlets.`Write-Host`現在のホストアプリケーションに書き込み,返却しないオブジェクトを返します.この関数は,  を含む.`return`PowerShellでは,標準プロンプトを使用します.`PS&gt;` .
+
+```powershell
+function prompt {
+    $color = Get-Random -Min 1 -Max 16
+    Write-Host (&quot;PS &quot; + $(Get-Location) +&quot;&gt;&quot;) -NoNewline `
+     -ForegroundColor $Color
+    return &quot; &quot;
+}
+```
+
+### 保存する `prompt`機能
+
+どんな関数でも同様,  は`prompt`この機能は,現在のセッションでのみ存在します.  を保存するには,`prompt`将来のセッションの機能は,PowerShell プロフィールに追加してください.プロフィールに関する詳細については,[about_Profiles][04]を参照してください.
+
+# about_Promptsについて
+
+## また, を参照してください.
+
+[about_Automatic_Variables][01] - [about_Debuggers][02] - [about_Functions][03] - [about_Profiles][04] - [about_Scopes][05] - [Get-History][09] - [Write-Host][12] - [Get-Location][10] - [Enter-PSSession][08] - [Get-Random][11]
+
+&lt;!--リンク参照 --&gt; [01]: about_Automatic_Variables.md [02]: about_Debuggers.md [03]: about_Functions.md [04]: about_Profiles.md [05]: about_Scopes.md [08]: xref:Microsoft.PowerShell.Core.Enter-PSSession [09]: xref:Microsoft.PowerShell.Core.Get-History [10]: xref:Microsoft.PowerShell.Management.Get-Location [11]: xref:Microsoft.PowerShell.Utility.Get-Random [12]: xref:Microsoft.PowerShell.Utility.Write-Host
+###英語原文###
+# about_Prompts
+
+## Short description
+
+Describes the `prompt` function and demonstrates how to create a custom
+`prompt` function.
+
+## Long description
+
+The PowerShell command prompt indicates that PowerShell is ready to run a
+command:
+
+```
+PS C:\&gt;
+```
+
+PowerShell has a built-in `prompt` function. You can define your own customized
+`prompt` function in your PowerShell profile script.
+
+## About the `prompt` function
+
+The `prompt` function determines the appearance of the PowerShell prompt.
+PowerShell comes with a built-in `prompt` function, but you can override it by
+defining your own `prompt` function.
+
+The `prompt` function has the following syntax:
+
+```powershell
+function prompt { &lt;function-body&gt; }
+```
+
+The `prompt` function must return an object. As a best practice, return a
+string or an object that&#x27;s formatted as a string. The maximum recommended
+length is 80 characters.
+
+For example, the following `prompt` function returns a &quot;Hello, World&quot; string
+followed by a  right angle bracket (`&gt;`).
+
+```powershell
+PS C:\&gt; function prompt {&quot;Hello, World &gt; &quot;}
+Hello, World &gt;
+```
+
+### Getting the `prompt` function
+
+To get the `prompt` function, use the `Get-Command` cmdlet or use the
+`Get-Item` cmdlet in the Function drive.
+
+For example:
+
+```powershell
+PS C:\&gt; Get-Command prompt
+
+CommandType     Name      ModuleName
+-----------     ----      ----------
+Function        prompt
+```
+
+To get the script that sets the value of the prompt, use the dot method to get
+the **ScriptBlock** property of the `prompt` function.
+
+For example:
+
+```powershell
+(Get-Command prompt).ScriptBlock
+```
+
+```Output
+&quot;PS $($ExecutionContext.SessionState.Path.CurrentLocation)$(&#x27;&gt;&#x27; * ($NestedPromptLevel + 1)) &quot;
+
+# .Link
+
+# https://go.microsoft.com/fwlink/?LinkID=225750
+
+# .ExternalHelp System.Management.Automation.dll-help.xml
+```
+
+Like all functions, the `prompt` function is stored in the `Function:` drive.
+To display the script that creates the current `prompt` function, type:
+
+```powershell
+(Get-Item Function:prompt).ScriptBlock
+```
+
+### The default prompt
+
+The default prompt appears only when the `prompt` function generates an error
+or doesn&#x27;t return an object.
+
+The default PowerShell prompt is:
+
+```
+PS&gt;
+```
+
+For example, the following command sets the `prompt` function to `$null`, which
+is invalid. As a result, the default prompt appears.
+
+```powershell
+PS C:\&gt; function prompt {$null}
+PS&gt;
+```
+
+Because PowerShell comes with a built-in prompt, you usually don&#x27;t see the
+default prompt.
+
+### Built-in prompt
+
+PowerShell includes a built-in `prompt` function.
+
+```powershell
+function prompt {
+  &quot;PS $($ExecutionContext.SessionState.Path.CurrentLocation)$(&#x27;&gt;&#x27; * ($NestedPromptLevel + 1)) &quot;;
+  # .Link
+  # https://go.microsoft.com/fwlink/?LinkID=225750
+  # .ExternalHelp System.Management.Automation.dll-help.xml
+}
+```
+
+The function uses the `Test-Path` cmdlet to test whether the `$PSDebugContext`
+automatic variable has a value. If `$PSDebugContext` has a value, you are
+running in debugging mode, and `[DBG]:` is added to the prompt, as follows:
+
+```Output
+[DBG]: PS C:\ps-test&gt;
+```
+
+If `$PSDebugContext` isn&#x27;t populated, the function adds `PS` to the prompt.
+And, the function uses the `Get-Location` cmdlet to get the current file system
+directory location. Then, it adds a right angle bracket (`&gt;`).
+
+For example:
+
+```Output
+PS C:\ps-test&gt;
+```
+
+If you are in a nested prompt, the function adds two angle brackets (`&gt;&gt;`) to
+the prompt. You are in a nested prompt if the value of the `$NestedPromptLevel`
+automatic variable is greater than 0.
+
+For example, when you are debugging in a nested prompt, the prompt resembles
+the following prompt:
+
+```Output
+[DBG] PS C:\ps-test&gt;&gt;&gt;
+```
+
+### Changes to the prompt
+
+The `Enter-PSSession` cmdlet prepends the name of the remote computer to the
+current `prompt` function. When you use the `Enter-PSSession` cmdlet to start a
+session with a remote computer, the command prompt changes to include the name
+of the remote computer. For example:
+
+```Output
+PS Hello, World&gt; Enter-PSSession Server01
+[Server01]: PS Hello, World&gt;
+```
+
+Other PowerShell host applications and alternate shells might have their own
+custom command prompts.
+
+For more information about the `$PSDebugContext` and `$NestedPromptLevel`
+automatic variables, see [about_Automatic_Variables][01].
+
+### How to customize the prompt
+
+To customize the prompt, write a new `prompt` function. The function isn&#x27;t
+protected, so you can overwrite it.
+
+To write a `prompt` function, type the following:
+
+```powershell
+function prompt { }
+```
+
+Then, between the braces, enter the commands or the string that creates your
+prompt.
+
+For example, the following prompt includes your computer name:
+
+```powershell
+function prompt {&quot;PS [$Env:COMPUTERNAME]&gt; &quot;}
+```
+
+On the Server01 computer, the prompt resembles the following prompt:
+
+```Output
+PS [Server01] &gt;
+```
+
+The following `prompt` function includes the current date and time:
+
+```powershell
+function prompt {&quot;$(Get-Date)&gt; &quot;}
+```
+
+The prompt resembles the following prompt:
+
+```Output
+03/15/2012 17:49:47&gt;
+```
+
+You can also change the default `prompt` function:
+
+For example, the following modified `prompt` function adds `[ADMIN]:` to the
+built-in PowerShell prompt when running in an elevated session.
+
+```powershell
+function prompt {
+  $identity = [Security.Principal.WindowsIdentity]::GetCurrent()
+  $principal = [Security.Principal.WindowsPrincipal] $identity
+  $adminRole = [Security.Principal.WindowsBuiltInRole]::Administrator
+
+  $(if (Test-Path Variable:/PSDebugContext) { &#x27;[DBG]: &#x27; }
+    elseif($principal.IsInRole($adminRole)) { &quot;[ADMIN]: &quot; }
+    else { &#x27;&#x27; }
+  ) + &#x27;PS &#x27; + $(Get-Location) +
+    $(if ($NestedPromptLevel -ge 1) { &#x27;&gt;&gt;&#x27; }) + &#x27;&gt; &#x27;
+}
+```
+
+When you start PowerShell using the **Run as administrator** option, a prompt
+that resembles the following prompt appears:
+
+```Output
+[ADMIN]: PS C:\ps-test&gt;
+```
+
+The following `prompt` function displays the history ID of the next command. To
+view the command history, use the `Get-History` cmdlet.
+
+```powershell
+function prompt {
+   # The at sign creates an array in case only one history item exists.
+   $history = @(Get-History)
+   if($history.Count -gt 0)
+   {
+      $lastItem = $history[$history.Count - 1]
+      $lastId = $lastItem.Id
+   }
+
+   $nextCommand = $lastId + 1
+   $currentDirectory = Get-Location
+   &quot;PS: $nextCommand $currentDirectory &gt;&quot;
+}
+```
+
+The following prompt uses the `Write-Host` and `Get-Random` cmdlets to create a
+prompt that changes color randomly. Because `Write-Host` writes to the current
+host application but doesn&#x27;t return an object, this function includes a
+`return` statement. Without it, PowerShell uses the default prompt, `PS&gt;`.
+
+```powershell
+function prompt {
+    $color = Get-Random -Min 1 -Max 16
+    Write-Host (&quot;PS &quot; + $(Get-Location) +&quot;&gt;&quot;) -NoNewline `
+     -ForegroundColor $Color
+    return &quot; &quot;
+}
+```
+
+### Saving the `prompt` function
+
+Like any function, the `prompt` function exists only in the current session. To
+save the `prompt` function for future sessions, add it to your PowerShell
+profiles. For more information about profiles, see [about_Profiles][04].
+
+# about_Prompts
+
+## See also
+
+- [about_Automatic_Variables][01]
+- [about_Debuggers][02]
+- [about_Functions][03]
+- [about_Profiles][04]
+- [about_Scopes][05]
+- [Get-History][09]
+- [Write-Host][12]
+- [Get-Location][10]
+- [Enter-PSSession][08]
+- [Get-Random][11]
+
+&lt;!-- link references --&gt;
+[01]: about_Automatic_Variables.md
+[02]: about_Debuggers.md
+[03]: about_Functions.md
+[04]: about_Profiles.md
+[05]: about_Scopes.md
+[08]: xref:Microsoft.PowerShell.Core.Enter-PSSession
+[09]: xref:Microsoft.PowerShell.Core.Get-History
+[10]: xref:Microsoft.PowerShell.Management.Get-Location
+[11]: xref:Microsoft.PowerShell.Utility.Get-Random
+[12]: xref:Microsoft.PowerShell.Utility.Write-Host
+###Microsoft Learn URL###
+https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_prompts/?view=powershell-5.1
+</pre></html>

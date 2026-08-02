@@ -1,0 +1,843 @@
+<!doctype html><html lang="ja"><meta charset="utf-8"><pre class="record-source">###KnowledgeNo###
+PS51-WS2022-2026-3582
+###FormatID###
+PS51-WS2022
+###CreatedAt###
+2026-08-01 00:00
+###UpdatedAt###
+2026-08-01 00:00
+###タイトル###
+about_Parsing
+###モジュール###
+Microsoft.PowerShell.Core
+###製品###
+Windows PowerShell 5.1
+###対応OS###
+Windows Server 2022
+###日本語訳###
+# パーシングについて
+
+## 短編説明
+
+PowerShell でコマンドを解析する方法について説明します.
+
+## 長い説明
+
+コマンドプロンプトでコマンドを入力すると,PowerShellはコマンドテキストを _tokens_と呼ばれる一連のセグメントに分割し,それぞれのトークンをどのように解釈するか決定します.
+
+例えば,入力すると:
+
+```powershell
+Write-Host book
+```
+
+PowerShellでコマンドを2つのトークンに分割します.`Write-Host`そして,`book`,そして,二つの主要な解析モードの一つである表現モードと議論モードを使用して,それぞれのトークンを独立して解釈します.
+
+[!NOTE] &gt; PowerShellがコマンド入力を解析する際に,コマンド名を&gt;cmdletsまたはネイティブ実行可能なものに修正しようとします.コマンド名が正確な&gt;マッチがない場合,PowerShellは prepends を実行します.`Get-`命令をデフォルト動詞として実行します. For &gt; example, PowerShell parses `Service`     `Get-Service`. この機能を使用することは以下の理由で推奨されません. &gt; &gt; - 効率が悪い.これはPowerShellで複数回検索する原因です. &gt; - 同名の外部プログラムが最初に解決されますので,意図されたcmdletを実行することはできません. &gt; - `Get-Help`そして,`Get-Command`&gt; - コマンド名は,予約された単語または言語キーワードである可能性があります. `Process`&gt;は両方であり,解決できない.`Get-Process` .
+
+## 表現モード
+
+表現モードは,スクリプト言語で値操作に必要な表現を組み合わせるために設計されています.表現はPowerShell構文で値を表すものであり,単純または複合式で,例えば:
+
+文字表現は,その価値観の直接表現である.
+
+```powershell
+&#x27;hello&#x27;
+32
+```
+
+変数表現は,参照する変数の値を運ぶ.
+
+```powershell
+$x
+$Script:path
+```
+
+Operators は評価のために他の表現を組み合わせます:
+
+```powershell
+-12
+-not $Quiet
+3 + 7
+$input.Length -gt 1
+```
+
+_ _Character string literals_ は引用符に含まれなければならない. - _Numbers_ は文字列 (逃れがない限り) の代わりに数値として扱われる. - _Operators_,包括して, unary operators  のような_Operators_ は,`-`そして,`-not`のようなバイナリーオペレータと`+`そして,`-gt`変数式は,オペレータとして解釈され,それぞれの操作をその論理 (オペレンド) に適用する. - _Attribute と Conversion 表現は,表現として解析され,次元の表現に適用される.例えば: `[int] &#x27;7&#x27;`_ _variable references_ は値値に評価されるが, _splatting_ は禁止され,解析エラーを引き起こす. - 他のすべてのものは,呼び出す命令として扱われます.
+
+## 議論モード
+
+パースティングでは,PowerShell は最初に入力を表現として解釈するよう探します.しかしコマンド呼び出しが遭遇すると,パースティングは議論モードで続きます.パスなどのスペースを含む議論がある場合は,それらの議論値を引用文に付与する必要があります.
+
+議論モードは,シェル環境におけるコマンドの参数と参数を解析するために設計されています.以下の構文のうちの1つを使用しない限り,すべての入力は拡張可能な文字列として扱われます:
+
+ドルサイン ()`$`) に続く変数の名前から変数の参照が始まる,そうでなければ拡張可能な文字列の一部として解釈される.変数の参照にはメンバーアクセスまたはインデックスが含まれます. - 簡単な変数の参照の後に追加文字,例えば `$HOME`変数の名前を括弧に挿入する ()`{}`) を次のような文字から分離するために使用します.`${HOME}`- 変数参照にメンバーアクセスが含まれている場合,追加文字のうち最初の文字は新しい議論の始まりとみなされます.`$HOME.Length-more`結果は二つの議論で成り立つ.`$HOME.Length`そして文字列文字直字です.`-more` .
+
+- 引用符 ()`&#x27;`そして,`&quot;`) は文字列を始める
+
+- ブレス ()`{}`) は新しいスクリプトブロックを始める
+
+逗号 ( - 逗号)`,`) は,呼び出されるコマンドがネイティブアプリケーションでない限り,アレイとして通過するリストを入力します.この場合は拡張可能な文字列の一部として解釈されます.初期,連続,または後行 kommaはサポートされていません.
+
+- 親子 ()`()`) は新しい表現を開始する - 副表現操作符 ()`$()`) は埋め込まれた表現を開始する - 記号 () の初期文字 ()`@`) は,スプラッティング () のような表現構文を始める.`@args`),アレイズ ()`@(1,2,3)`),およびハッシュテーブル文字 ()`@{a=1;b=2}`- ) でした.`()`     `$()`そして,そして,`@()`記号の開始時に,表現や嵌まったコマンドを含む新しい解析文脈を作成します. - 追加文字が続くとき,最初の追加文字は新しい,別々の議論の開始とみなされます. - 引用されていない文字が先行すると,`$()`拡張可能な文字列のように動作します.`()`表現の新しい議論を始める.`@()`文字どおりに取られている.`@` with with とする`()`表現である新しい議論を始める.
+
+拡張可能な文字列として扱われる他のすべての文字は,まだ脱出する必要があるメタ文字を除く.参照 [特殊文字処理][03]. - 議論モードのメタ文字は: ``&lt;space&gt; &#x27; &quot; `ヽ } } } } ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ ヽ `&lt; &gt; @ #`代[U+5E01]の開始時にのみ特色になります.
+
+- ストップ解析トークン ()`--%`) は,残りのすべての議論の解釈を変更します.詳細については,下記の [停止解析トークン][04] セクションを参照してください.
+
+# パーシングについて
+
+### 例文
+
+次の表は,表現モードと議論モードで処理されたトークンのいくつかの例とそれらのトークンの評価を示しています.これらの例では,変数の値が です.`$a`は`4` .
+
+モデル・ファッション・結果・結果・モデル・ファッション・モデル・モデル・モデル・モデル・モデル・モデル・モデル・モデル・モデル・モデル・モデル・モデル・モデル・モデル・モデル・モデル・モデル・モデル・モデル・モデル・モデル・モデル・モデル・モデル・モデル・モデル・モデル・モデル・モデル・モデル・モデル・モデル・モデル・モデル・モデル・モデル・モデル・モデル・モデル・モデル・モデル・モデル・モデル・モデル・モデル・モデル・モデル・モデル・モデル・モデル・モデル・モデル・モデル・モデル・モデル・モデル・モデル・モデル・モデル・モデル・モデル・モデル・モデル・モデル・モデル・モデル・モデル・モデル・モデル・モデル・モデル・モデル・モデル・モデル・モデル・`2`表現2 (整数) は,` `2 表現 &quot;2&quot; (コマンド)`Write-Output 2`表現2 (整数)`2+2`表現4 (整数)`Write-Output 2+2`議論は2+2 (弦)`Write-Output(2+2)`表現4 (整数)`$a`表現4 (整数)`Write-Output $a`表現4 (整数)`$a+2`表現6 (整数)`Write-Output $a+2`議論は4+2 (弦)`$-`$&quot; (コマンド) 議論`Write-Output $-`$&quot; (弦) の議論です.`a$a`発音&quot;a$a&quot; (コマンド)`Write-Output a$a`議論&quot;a4&quot; (弦)`a&#x27;$a&#x27;`発音&quot;a$a&quot; (コマンド)`Write-Output a&#x27;$a&#x27;`議論は&quot;a$a&quot; (弦)`a&quot;$a&quot;`発音&quot;a$a&quot; (コマンド)`Write-Output a&quot;$a&quot;`議論&quot;a4&quot; (弦)`a$(2)`発音&quot;a$(2) &quot; (コマンド)`Write-Output a$(2)`議論&quot;a2&quot; (弦)
+
+各トークンは, **Boolean**や **String**などのオブジェクトタイプとして解釈できます.PowerShellは表現からオブジェクトタイプを決定しようとします.オブジェクトタイプはコマンドが期待するパラメータタイプ,また PowerShellが議論を正しいタイプに変換する方法を知っているかどうかに依存します.次の表は,表現によって返された値に割り当てられたタイプのいくつかの例を示します.
+
+モデル・ファッション・結果・結果・結果・結果`Write-Output !1`議論は!1&quot; (弦)`Write-Output (!1)`表現は偽りである.`Write-Output (2)`表現2 (整数)`Set-Variable AB A,B`議論は&quot;A&quot;,B&quot; (array)`CMD /CECHO A,B`議論は&quot;A,B&quot; (弦) です.`CMD /CECHO $AB`表現&quot;A B&quot; (array)`CMD /CECHO :$AB`議論は&quot;A B&quot; (弦)
+
+## 特殊キャラクター管理について
+
+バックティックキャラクター (`)` ``) は表現の特別な文字を逃すために使用できます.これは,メタ文字ではなく文字文字として使いたい議論モードのメタ文字から逃れるのに最も便利です.例えば,ドルマーク () を使用する場合は,`$`) を文字列として拡張可能な文字列に表示する.
+
+```powershell
+&quot;The value of `$ErrorActionPreference is &#x27;$ErrorActionPreference&#x27;.&quot;
+```
+
+```Output
+The value of $ErrorActionPreference is &#x27;Continue&#x27;.
+```
+
+## ラインの継続です
+
+バックティック文字は,また,行末に用いられ,次の行への入力を継続できるようにします.これは,長い名前と引数値を持つ数パラメータを採取するコマンドの読みやすさを向上します.例えば:
+
+```powershell
+New-AzVm `
+    -ResourceGroupName &quot;myResourceGroupVM&quot; `
+    -Name &quot;myVM&quot; `
+    -Location &quot;EastUS&quot; `
+    -VirtualNetworkName &quot;myVnet&quot; `
+    -SubnetName &quot;mySubnet&quot; `
+    -SecurityGroupName &quot;myNetworkSecurityGroup&quot; `
+    -PublicIpAddressName &quot;myPublicIpAddress&quot; `
+    -Credential $cred
+```
+
+しかし,ライン継続を使用しないべきです.
+
+- バックティック文字は,見難し易忘れるものになり, - バックティックの後,余剰スペースが行列の継続を壊す. 空間が見難し易見なので,エラーを見つけるのは難しいかもしれません.
+
+PowerShellでは,構文の自然点での行列を断断裂するいくつかの方法を提供します.
+
+- パイプ文字の後 ()`|`) - バイナリーオペレータの後 ()`+`     `-`     `-eq`逗号の後 ()`,`) の範囲で - のような文字を開いた後に`[`     `{`     `(`
+
+大きなパラメータセットでは,代わりにスプラッティングを使用します.例えば:
+
+```powershell
+$parameters = @{
+    ResourceGroupName = &quot;myResourceGroupVM&quot;
+    Name = &quot;myVM&quot;
+    Location = &quot;EastUS&quot;
+    VirtualNetworkName = &quot;myVnet&quot;
+    SubnetName = &quot;mySubnet&quot;
+    SecurityGroupName = &quot;myNetworkSecurityGroup&quot;
+    PublicIpAddressName = &quot;myPublicIpAddress&quot;
+    Credential = $cred
+}
+New-AzVm @parameters
+```
+
+## 引数をネイティブコマンドに転送する
+
+PowerShellからネイティブコマンドを実行する際,その議論は PowerShell で解析される.解析された議論は,それぞれのパラメータをスペースで分離した単一の文字列に組み合わされる.
+
+例えば,次のコマンドは&quot;&quot;を呼びます.`icacls.exe`プログラム.
+
+```powershell
+icacls X:\VMS /grant Dom\HVAdmin:(CI)(OI)F
+```
+
+このコマンドをPowerShell 2.0で実行するには,エスケーパー文字を使って,PowerShellが括弧を誤った解釈するのを防ぐ必要があります.
+
+```powershell
+icacls X:\VMS /grant Dom\HVAdmin:`(CI`)`(OI`)F
+```
+
+### 停止解析トークン
+
+PowerShell 3.0 から始めると, _stop-parsing_ () を使用できます.`--%`) は,PowerShellが入力を PowerShell コマンドまたは表現として解釈することを阻止するトークンです.
+
+&gt; [!NOTE] &gt; ストップ解析トークンは,Windows &gt;プラットフォームのネイティブコマンドの使用のみに目的としています.
+
+ネイティブコマンドを呼び出すとき,プログラムの議論の前にストップパースリングトークンを置く.この技術は,誤った解釈を防ぐためにエスケープ文字を使用するよりもはるかに簡単です.
+
+PowerShell は,ストップ解析トークンを遭遇すると,行内の残りの文字を文字として扱います.実行する唯一の解釈は,標準的な Windows 符号を使用する環境変数に値を置き換えることです.例えば,`%USERPROFILE%` .
+
+```powershell
+icacls X:\VMS --% /grant Dom\HVAdmin:(CI)(OI)F
+```
+
+PowerShellで次のコマンド・ストリングを  に送信します.`icacls.exe`プログラム:
+
+`X:\VMS /grant Dom\HVAdmin:(CI)(OI)F`
+
+ストップ解析トークンは次の新行またはパイプライン文字まで有効です. ライン継続文字 (`) を使用することはできません.` ``) 効果を拡大したり,コマンドデリミーターを使用したりする ()`;`) の効果を終わらせるために.
+
+                                                                                                                                                                    `%variable%`環境変数参照では,コマンドに他のダイナミックな要素を埋め込むことはできません.`%`というキャラクターとして`%%`組ファイル内でのやり方がサポートされていません.`%&lt;name&gt;%`代証は常に拡張されます.`&lt;name&gt;`定義された環境変数には言及しない.トークンは存在として通過する.
+
+ストリームリダイレクトは使えない (例えば )`&gt;file.txt`) が,目標コマンドへの議論として文字どおりに通過しているからです.
+
+次の例では,ストップ解析トークンを使用せずにコマンドを実行する.PowerShellは引用文字列を評価し,値 (引用なし) を  に転送します.`cmd.exe`誤りが生じます.
+
+```powershell
+PS&gt; cmd /c echo &quot;a|b&quot;
+&#x27;b&#x27; is not recognized as an internal or external command,
+operable program or batch file.
+PS&gt; cmd /c --% echo &quot;a|b&quot;
+&quot;a|b&quot;
+```
+
+&gt; [!NOTE] &gt; PowerShell cmdlets を使用する際には,停止解析トークンが不要です.しかし, &gt; そのトークメントを使ってネイティブコマンドを呼び出すように設計された PowerShell 機能に 議論を転送することは有用かもしれません.
+
+# パーシングについて
+
+### 引用文字を含む議論を通過する
+
+&gt; [!WARNING] &gt; Windowsでは,バッチファイルに議論を転送する際,その議論は原始コマンドライン文字列として,  に渡されます.`cmd.exe`. PowerShellと &gt; 基礎 API があなたのパラメータを安全に解釈しようとしたが,信頼されていない入力 &gt; は別の方法で転送されるべきである.
+
+一部のネイティブコマンドは,引用文字を含む議論を期待する.通常,PowerShellのコマンドライン解析は,あなたが提供した引用文字を取り除きます.解析された議論は,それぞれのパラメータをスペースで分離した単一の文字列に結合します.この文字列は,次に, の **Arguments**属性に割り当てられます.`ProcessStartInfo`文字列内の引用は,追加引用またはバックスラッシュ () を使用して回避する必要があります.`\`) は文字です.
+
+&gt; [!NOTE] &gt; バックスラッシュ ()`\`) 文字は&gt; PowerShell でエスケープ文字として認識されていません.これは,&gt;  のための基礎 API で使用されるエスケープ文字です.`ProcessStartInfo.Arguments` .
+
+脱出要件についての詳細については, [ProcessStartInfo.Arguments][01] のドキュメントを参照してください.
+
+&gt; [!NOTE] &gt;以下の例では,  を使っています.`TestExe.exe`ツールを作れる.`TestExe`PowerShell ソースリポジトリで[TestExe][06] を参照してください.
+
+これらの例の目的は,ディレクトリ経路を通過することです.`&quot;C:\Program Files (x86)\Microsoft\&quot;`ローカルコマンドに,引用文字列としてパスを受け取るようにします.
+
+のエコアッグスパラメータを表示する.`TestExe`実行可能なものに議論として受け取った値を表示します.このツールを使用して,議論の文字を適切に逃したかどうかを確認できます.
+
+```powershell
+TestExe -echoargs &quot;&quot;&quot;&quot;&quot;${Env:ProgramFiles(x86)}\Microsoft\\&quot;&quot;&quot;&quot;&quot;
+TestExe -echoargs &quot;&quot;&quot;&quot;&quot;C:\Program Files (x86)\Microsoft\\&quot;&quot;&quot;&quot;&quot;
+TestExe -echoargs --% &quot;&quot;\&quot;&quot;C:\Program Files (x86)\Microsoft\\&quot;&quot;
+TestExe -echoargs --% &quot;&quot;&quot;C:\Program Files (x86)\Microsoft\\&quot;&quot;
+TestExe -echoargs --% &quot;&quot;&quot;%ProgramFiles(x86)%\Microsoft\\&quot;&quot;
+```
+
+輸出はすべての例に同じです:
+
+```Output
+Arg 0 is &lt;&quot;C:\Program Files (x86)\Microsoft\&quot;&gt;
+```
+
+## PowerShell コマンドに参数を転送する
+
+PowerShell 3.0 から始め, _end-of-parameters_ 符号 () を使用できます.`--`) を PowerShell の入力を PowerShell のパラメータとして解釈するのを阻止する.これは POSIX Shell and Utilities の仕様で指定されたコンベンションです.
+
+### 端参数トークン
+
+端参数トークン ()`--`) は,それに続くすべての議論が,その真似した形で,まるでその周りに二重引用が置かれたかのように,通過することを示しています.例えば,  を使って`--`文字列を出力できるでしょうか?`-InputObject`引用文を使用することなく,パラメータとして解釈することなく:
+
+```powershell
+Write-Output -- -InputObject
+```
+
+```Output
+-InputObject
+```
+
+ストップパースとは異なり ()`--%`) 符号,その後に存在する任意の値です.`--`符号はPowerShellで表現として解釈できます.
+
+```powershell
+Write-Output -- -InputObject $Env:PROCESSOR_ARCHITECTURE
+```
+
+```Output
+-InputObject
+AMD64
+```
+
+この行動はPowerShellコマンドにのみ適用されます.`--`代号は,外部コマンド,  を呼び出すときの代号です.`--`文字列は,そのコマンドに議論として通過します.
+
+```powershell
+TestExe -echoargs -a -b -- -c
+```
+
+輸出は,その出力を示しています.`--` にある議論として通過する.`TestExe` .
+
+```Output
+Arg 0 is &lt;-a&gt;
+Arg 1 is &lt;-b&gt;
+Arg 2 is &lt;--&gt;
+Arg 3 is &lt;-c&gt;
+```
+
+## ティルデ (~) 
+
+ティルデ文字 ()`~`) はPowerShellで特別な意味を持っています. パワースルの初めの PowerShell コマンドで使用すると,tilde 文字はユーザーのホームディレクトリに拡張されます.もし,tilde 文字がパス内の他のどこでも使用されれば,それは文字文字として扱われます.
+
+```powershell
+PS D:\temp&gt; $PWD
+
+Path
+----
+D:\temp
+
+PS D:\temp&gt; Set-Location ~
+PS C:\Users\user2&gt; $PWD
+
+Path
+----
+C:\Users\user2
+```
+
+この例では,  の **Name** パラメータを`New-Item`文字列を期待する. ティルデ文字は文字文字として扱われます. 新しく作成されたディレクトリに変更するには,パスポートをティルデ文字で資格付けなければなりません.
+
+```powershell
+PS D:\temp&gt; Set-Location ~
+PS C:\Users\user2&gt; New-Item -Type Directory -Name ~
+
+    Directory: C:\Users\user2
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+d----            5/6/2024  2:08 PM                ~
+
+PS C:\Users\user2&gt; Set-Location ~
+PS C:\Users\user2&gt; Set-Location .\~
+PS C:\Users\user2\~&gt; $PWD
+
+Path
+----
+C:\Users\user2\~
+```
+
+native commandsで tilde 文字を使用すると,PowerShell は, tilde を文字文字文字として通過します.Tilde をパスで使用すると, Windows で native command のエラーが発生します.
+
+```powershell
+PS D:\temp&gt; $PWD
+
+Path
+----
+D:\temp
+
+PS D:\temp&gt; Get-Item ~\repocache.clixml
+
+    Directory: C:\Users\user2
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a---           4/29/2024  3:42 PM          88177 repocache.clixml
+
+PS D:\temp&gt; more.com ~\repocache.clixml
+Cannot access file D:\temp\~\repocache.clixml
+```
+
+## また, を参照してください.
+
+- [about_Command_Syntax][05]について
+
+&lt;!--リンク参照 --&gt; [01]: /dotnet/api/system.diagnostics.processstartinfo.arguments [03]: #handling-special-characters [04]: #the-stop-parsing-token [05]: about_Command_Syntax.md [06]: https://github.com/PowerShell/PowerShell/blob/master/test/tools/TestExe/TestExe.cs
+###英語原文###
+# about_Parsing
+
+## Short description
+
+Describes how PowerShell parses commands.
+
+## Long description
+
+When you enter a command at the command prompt, PowerShell breaks the command
+text into a series of segments called _tokens_ and then determines how to
+interpret each token.
+
+For example, if you type:
+
+```powershell
+Write-Host book
+```
+
+PowerShell breaks the command into two tokens, `Write-Host` and `book`, and
+interprets each token independently using one of two major parsing modes:
+expression mode and argument mode.
+
+&gt; [!NOTE]
+&gt; As PowerShell parses command input it tries to resolve the command names to
+&gt; cmdlets or native executables. If a command name doesn&#x27;t have an exact
+&gt; match, PowerShell prepends `Get-` to the command as a default verb. For
+&gt; example, PowerShell parses `Service` as `Get-Service`. It&#x27;s not
+&gt; recommended to use this feature for the following reasons:
+&gt;
+&gt; - It&#x27;s inefficient. This causes PowerShell to search multiple times.
+&gt; - External programs with the same name are resolved first, so you may not
+&gt;   execute the intended cmdlet.
+&gt; - `Get-Help` and `Get-Command` don&#x27;t recognize verb-less names.
+&gt; - The command name may be a reserved word or a language keyword. `Process` is
+&gt;   both, and can&#x27;t be resolved to `Get-Process`.
+
+## Expression mode
+
+Expression mode is intended for combining expressions, required for value
+manipulation in a scripting language. Expressions are representations of values
+in PowerShell syntax, and can be simple or composite, for example:
+
+Literal expressions are direct representations of their values:
+
+```powershell
+&#x27;hello&#x27;
+32
+```
+
+Variable expressions carry the value of the variable they reference:
+
+```powershell
+$x
+$Script:path
+```
+
+Operators combine other expressions for evaluation:
+
+```powershell
+-12
+-not $Quiet
+3 + 7
+$input.Length -gt 1
+```
+
+- _Character string literals_ must be contained in quotation marks.
+- _Numbers_ are treated as numerical values rather than as a series of
+  characters (unless escaped).
+- _Operators_, including unary operators like `-` and `-not` and binary
+  operators like `+` and `-gt`, are interpreted as operators and apply their
+  respective operations on their arguments (operands).
+- _Attribute and conversion expressions_ are parsed as expressions and applied
+  to subordinate expressions. For example: `[int] &#x27;7&#x27;`.
+- _Variable references_ are evaluated to their values but _splatting_ is
+  forbidden and causes a parser error.
+- Anything else is treated as a command to be invoked.
+
+## Argument mode
+
+When parsing, PowerShell first looks to interpret input as an expression. But
+when a command invocation is encountered, parsing continues in argument mode.
+If you have arguments that contain spaces, such as paths, then you must
+enclose those argument values in quotes.
+
+Argument mode is designed for parsing arguments and parameters for commands in
+a shell environment. All input is treated as an expandable string unless it
+uses one of the following syntaxes:
+
+- Dollar sign (`$`) followed by a variable name begins a variable reference,
+  otherwise it&#x27;s interpreted as part of the expandable string. The variable
+  reference can include member access or indexing.
+  - Additional characters following simple variable references, such as
+    `$HOME`, are considered part of the same argument. Enclose the variable
+    name in braces (`{}`) to separate it from subsequent characters. For
+    example, `${HOME}`.
+  - When the variable reference includes member access, the first of any
+    additional characters is considered the start of a new argument. For
+    example `$HOME.Length-more` results in two arguments: the value of
+    `$HOME.Length` and string literal `-more`.
+
+- Quotation marks (`&#x27;` and `&quot;`) begin strings
+
+- Braces (`{}`) begin a new scriptblock
+
+- Commas (`,`) introduce lists passed as arrays, unless the command being
+  called is a native application, in which case they&#x27;re interpreted as part of
+  the expandable string. Initial, consecutive or trailing commas aren&#x27;t
+  supported.
+
+- Parentheses (`()`) begin a new expression
+- Subexpression operator (`$()`) begins an embedded expression
+- Initial at sign (`@`) begins expression syntaxes such as splatting (`@args`),
+  arrays (`@(1,2,3)`), and hash table literals (`@{a=1;b=2}`).
+- `()`, `$()`, and `@()` at the start of a token create a new parsing context
+  that can contain expressions or nested commands.
+  - When followed by additional characters, the first additional character is
+    considered the start of a new, separate argument.
+  - When preceded by an unquoted literal `$()` works like an expandable string,
+    `()` starts a new argument that&#x27;s an expression, and `@()` is taken as
+    literal `@` with `()` starting a new argument that&#x27;s an expression.
+
+- Everything else is treated as an expandable string, except metacharacters
+  that still need escaping. See [Handling special characters][03].
+  - The argument-mode metacharacters (characters with special syntactic
+    meaning) are: ``&lt;space&gt; &#x27; &quot; ` , ; ( ) { } | &amp; &lt; &gt; @ #``. Of these,
+    `&lt; &gt; @ #` are only special at the start of a token.
+
+- The stop-parsing token (`--%`) changes the interpretation of all remaining
+  arguments. For more information, see the [stop-parsing token][04] section
+  below.
+
+# about_Parsing
+
+### Examples
+
+The following table provides several examples of tokens processed in expression
+mode and argument mode and the evaluation of those tokens. For these examples,
+the value of the variable `$a` is `4`.
+
+|       Example        |    Mode    |      Result       |
+| -------------------- | ---------- | ----------------- |
+| `2`                  | Expression | 2 (integer)       |
+| `` `2``              | Expression | &quot;2&quot; (command)     |
+| `Write-Output 2`     | Expression | 2 (integer)       |
+| `2+2`                | Expression | 4 (integer)       |
+| `Write-Output 2+2`   | Argument   | &quot;2+2&quot; (string)    |
+| `Write-Output(2+2)`  | Expression | 4 (integer)       |
+| `$a`                 | Expression | 4 (integer)       |
+| `Write-Output $a`    | Expression | 4 (integer)       |
+| `$a+2`               | Expression | 6 (integer)       |
+| `Write-Output $a+2`  | Argument   | &quot;4+2&quot; (string)    |
+| `$-`                 | Argument   | &quot;$-&quot; (command)    |
+| `Write-Output $-`    | Argument   | &quot;$-&quot; (string)     |
+| `a$a`                | Expression | &quot;a$a&quot; (command)   |
+| `Write-Output a$a`   | Argument   | &quot;a4&quot; (string)     |
+| `a&#x27;$a&#x27;`              | Expression | &quot;a$a&quot; (command)   |
+| `Write-Output a&#x27;$a&#x27;` | Argument   | &quot;a$a&quot; (string)    |
+| `a&quot;$a&quot;`              | Expression | &quot;a$a&quot; (command)   |
+| `Write-Output a&quot;$a&quot;` | Argument   | &quot;a4&quot; (string)     |
+| `a$(2)`              | Expression | &quot;a$(2)&quot; (command) |
+| `Write-Output a$(2)` | Argument   | &quot;a2&quot; (string)     |
+
+Every token can be interpreted as some kind of object type, such as **Boolean**
+or **String**. PowerShell attempts to determine the object type from the
+expression. The object type depends on the type of parameter a command expects
+and on whether PowerShell knows how to convert the argument to the correct
+type. The following table shows several examples of the types assigned to
+values returned by the expressions.
+
+|        Example        |    Mode    |     Result      |
+| --------------------- | ---------- | --------------- |
+| `Write-Output !1`     | argument   | &quot;!1&quot; (string)   |
+| `Write-Output (!1)`   | expression | False (Boolean) |
+| `Write-Output (2)`    | expression | 2 (integer)     |
+| `Set-Variable AB A,B` | argument   | &#x27;A&#x27;,&#x27;B&#x27; (array) |
+| `CMD /CECHO A,B`      | argument   | &#x27;A,B&#x27; (string)  |
+| `CMD /CECHO $AB`      | expression | &#x27;A B&#x27; (array)   |
+| `CMD /CECHO :$AB`     | argument   | &#x27;:A B&#x27; (string) |
+
+## Handling special characters
+
+The backtick character (`` ` ``) can be used to escape any special character in
+an expression. This is most useful for escaping the argument-mode
+metacharacters that you want to use as literal characters rather than as a
+metacharacter. For example, to use the dollar sign (`$`) as a literal in an
+expandable string:
+
+```powershell
+&quot;The value of `$ErrorActionPreference is &#x27;$ErrorActionPreference&#x27;.&quot;
+```
+
+```Output
+The value of $ErrorActionPreference is &#x27;Continue&#x27;.
+```
+
+## Line continuation
+
+The backtick character can also be used at the end of a line to allow you to
+continue the input on the next line. This is improve the readability of a
+command that takes several parameters with long names and argument values. For
+example:
+
+```powershell
+New-AzVm `
+    -ResourceGroupName &quot;myResourceGroupVM&quot; `
+    -Name &quot;myVM&quot; `
+    -Location &quot;EastUS&quot; `
+    -VirtualNetworkName &quot;myVnet&quot; `
+    -SubnetName &quot;mySubnet&quot; `
+    -SecurityGroupName &quot;myNetworkSecurityGroup&quot; `
+    -PublicIpAddressName &quot;myPublicIpAddress&quot; `
+    -Credential $cred
+```
+
+However, you should avoid using line continuation.
+
+- The backtick characters can be hard to see and easy to forget.
+- An extra space after the backtick breaks the line continuation. Since the
+  space is hard to see it can be difficult to find the error.
+
+PowerShell provides several ways break lines at natural points in the syntax.
+
+- After pipe characters (`|`)
+- After binary operators (`+`, `-`, `-eq`, etc.)
+- After commas (`,`) in an array
+- After opening characters such as `[`, `{`, `(`
+
+For large parameter set, use splatting instead. For example:
+
+```powershell
+$parameters = @{
+    ResourceGroupName = &quot;myResourceGroupVM&quot;
+    Name = &quot;myVM&quot;
+    Location = &quot;EastUS&quot;
+    VirtualNetworkName = &quot;myVnet&quot;
+    SubnetName = &quot;mySubnet&quot;
+    SecurityGroupName = &quot;myNetworkSecurityGroup&quot;
+    PublicIpAddressName = &quot;myPublicIpAddress&quot;
+    Credential = $cred
+}
+New-AzVm @parameters
+```
+
+## Passing arguments to native commands
+
+When running native commands from PowerShell, the arguments are first parsed by
+PowerShell. The parsed arguments are then joined into a single string with each
+parameter separated by a space.
+
+For example, the following command calls the `icacls.exe` program.
+
+```powershell
+icacls X:\VMS /grant Dom\HVAdmin:(CI)(OI)F
+```
+
+To run this command in PowerShell 2.0, you must use escape characters to
+prevent PowerShell from misinterpreting the parentheses.
+
+```powershell
+icacls X:\VMS /grant Dom\HVAdmin:`(CI`)`(OI`)F
+```
+
+### The stop-parsing token
+
+Beginning in PowerShell 3.0, you can use the _stop-parsing_ (`--%`) token to
+stop PowerShell from interpreting input as PowerShell commands or expressions.
+
+&gt; [!NOTE]
+&gt; The stop-parsing token is only intended for use native commands on Windows
+&gt; platforms.
+
+When calling a native command, place the stop-parsing token before the program
+arguments. This technique is much easier than using escape characters to
+prevent misinterpretation.
+
+When it encounters a stop-parsing token, PowerShell treats the remaining
+characters in the line as a literal. The only interpretation it performs is to
+substitute values for environment variables that use standard Windows notation,
+such as `%USERPROFILE%`.
+
+```powershell
+icacls X:\VMS --% /grant Dom\HVAdmin:(CI)(OI)F
+```
+
+PowerShell sends the following command string to the `icacls.exe` program:
+
+`X:\VMS /grant Dom\HVAdmin:(CI)(OI)F`
+
+The stop-parsing token is effective only until the next newline or pipeline
+character. You can&#x27;t use the line continuation character (`` ` ``) to extend
+its effect or use a command delimiter (`;`) to terminate its effect.
+
+Other than `%variable%` environment-variable references, you can&#x27;t embed any
+other dynamic elements in the command. Escaping a `%` character as `%%`, the
+way you can do inside batch files, isn&#x27;t supported. `%&lt;name&gt;%` tokens are
+invariably expanded. If `&lt;name&gt;` doesn&#x27;t refer to a defined environment
+variable the token is passed through as-is.
+
+You can&#x27;t use stream redirection (like `&gt;file.txt`) because they&#x27;re passed
+verbatim as arguments to the target command.
+
+In the following example, the first step runs a command without using the
+stop-parsing token. PowerShell evaluates the quoted string and passes the value
+(without quotes) to `cmd.exe`, which results in an error.
+
+```powershell
+PS&gt; cmd /c echo &quot;a|b&quot;
+&#x27;b&#x27; is not recognized as an internal or external command,
+operable program or batch file.
+PS&gt; cmd /c --% echo &quot;a|b&quot;
+&quot;a|b&quot;
+```
+
+&gt; [!NOTE]
+&gt; The stop-parsing token isn&#x27;t needed when using PowerShell cmdlets. However,
+&gt; it could be useful to pass arguments to a PowerShell function that is
+&gt; designed to call a native command with those arguments.
+
+# about_Parsing
+
+### Passing arguments that contain quote characters
+
+&gt; [!WARNING]
+&gt; On Windows, when passing arguments to batch files, the arguments are passed
+&gt; as raw command-line strings to `cmd.exe`. Although PowerShell and the
+&gt; underlying API attempt to interpret your parameters safely, untrusted input
+&gt; should be passed another way.
+
+Some native commands expect arguments that contain quote characters. Normally,
+PowerShell&#x27;s command line parsing removes the quote character you provided. The
+parsed arguments are then joined into a single string with each parameter
+separated by a space. This string is then assigned to the **Arguments**
+property of a `ProcessStartInfo` object. Quotes within the string must be
+escaped using extra quotes or backslash (`\`) characters.
+
+&gt; [!NOTE]
+&gt; The backslash (`\`) character isn&#x27;t recognized as an escape character by
+&gt; PowerShell. It&#x27;s the escape character used by the underlying API for
+&gt; `ProcessStartInfo.Arguments`.
+
+For more information about the escape requirements, see the documentation for
+[ProcessStartInfo.Arguments][01].
+
+&gt; [!NOTE]
+&gt; The following examples use the `TestExe.exe` tool. You can build `TestExe`
+&gt; from the source code. See [TestExe][06] in the PowerShell source repository.
+
+The goal of these examples is to pass the directory path
+`&quot;C:\Program Files (x86)\Microsoft\&quot;` to a native command so that it received
+the path as a quoted string.
+
+The **echoargs** parameter of `TestExe` displays the values received as
+arguments to the executable. You can use this tool to verify that you have
+properly escaped the characters in your arguments.
+
+```powershell
+TestExe -echoargs &quot;&quot;&quot;&quot;&quot;${Env:ProgramFiles(x86)}\Microsoft\\&quot;&quot;&quot;&quot;&quot;
+TestExe -echoargs &quot;&quot;&quot;&quot;&quot;C:\Program Files (x86)\Microsoft\\&quot;&quot;&quot;&quot;&quot;
+TestExe -echoargs --% &quot;&quot;\&quot;&quot;C:\Program Files (x86)\Microsoft\\&quot;&quot;
+TestExe -echoargs --% &quot;&quot;&quot;C:\Program Files (x86)\Microsoft\\&quot;&quot;
+TestExe -echoargs --% &quot;&quot;&quot;%ProgramFiles(x86)%\Microsoft\\&quot;&quot;
+```
+
+The output is the same for all examples:
+
+```Output
+Arg 0 is &lt;&quot;C:\Program Files (x86)\Microsoft\&quot;&gt;
+```
+
+## Passing arguments to PowerShell commands
+
+Beginning in PowerShell 3.0, you can use the _end-of-parameters_ token (`--`)
+to stop PowerShell from interpreting input as PowerShell parameters. This is a
+convention specified in the POSIX Shell and Utilities specification.
+
+### The end-of-parameters token
+
+The end-of-parameters token (`--`) indicates that all arguments following it
+are to be passed in their actual form as though double quotes were placed
+around them. For example, using `--` you can output the string `-InputObject`
+without using quotes or having it interpreted as a parameter:
+
+```powershell
+Write-Output -- -InputObject
+```
+
+```Output
+-InputObject
+```
+
+Unlike the stop-parsing (`--%`) token, any values following the `--` token can
+be interpreted as expressions by PowerShell.
+
+```powershell
+Write-Output -- -InputObject $Env:PROCESSOR_ARCHITECTURE
+```
+
+```Output
+-InputObject
+AMD64
+```
+
+This behavior only applies to PowerShell commands. If you use the `--` token
+when calling an external command, the `--` string is passed as an argument to
+that command.
+
+```powershell
+TestExe -echoargs -a -b -- -c
+```
+
+The output shows that `--` is passed as an argument to `TestExe`.
+
+```Output
+Arg 0 is &lt;-a&gt;
+Arg 1 is &lt;-b&gt;
+Arg 2 is &lt;--&gt;
+Arg 3 is &lt;-c&gt;
+```
+
+## Tilde (~)
+
+The tilde character (`~`) has special meaning in PowerShell. When it&#x27;s used
+with PowerShell commands at the beginning of a path, the tilde character is
+expanded to the user&#x27;s home directory. If the tilde character is used anywhere
+else in a path, it&#x27;s treated as a literal character.
+
+```powershell
+PS D:\temp&gt; $PWD
+
+Path
+----
+D:\temp
+
+PS D:\temp&gt; Set-Location ~
+PS C:\Users\user2&gt; $PWD
+
+Path
+----
+C:\Users\user2
+```
+
+In this example, the **Name** parameter of the `New-Item` expects a string. The
+tilde character is treated as a literal character. To change to the newly
+created directory, you must qualify the path with the tilde character.
+
+```powershell
+PS D:\temp&gt; Set-Location ~
+PS C:\Users\user2&gt; New-Item -Type Directory -Name ~
+
+    Directory: C:\Users\user2
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+d----            5/6/2024  2:08 PM                ~
+
+PS C:\Users\user2&gt; Set-Location ~
+PS C:\Users\user2&gt; Set-Location .\~
+PS C:\Users\user2\~&gt; $PWD
+
+Path
+----
+C:\Users\user2\~
+```
+
+When you use the tilde character with native commands, PowerShell passes the
+tilde as a literal character. Using the tilde in a path causes errors for
+native commands on Windows that don&#x27;t support the tilde character.
+
+```powershell
+PS D:\temp&gt; $PWD
+
+Path
+----
+D:\temp
+
+PS D:\temp&gt; Get-Item ~\repocache.clixml
+
+    Directory: C:\Users\user2
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a---           4/29/2024  3:42 PM          88177 repocache.clixml
+
+PS D:\temp&gt; more.com ~\repocache.clixml
+Cannot access file D:\temp\~\repocache.clixml
+```
+
+## See also
+
+- [about_Command_Syntax][05]
+
+&lt;!-- link references --&gt;
+[01]: /dotnet/api/system.diagnostics.processstartinfo.arguments
+[03]: #handling-special-characters
+[04]: #the-stop-parsing-token
+[05]: about_Command_Syntax.md
+[06]: https://github.com/PowerShell/PowerShell/blob/master/test/tools/TestExe/TestExe.cs
+###Microsoft Learn URL###
+https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_parsing/?view=powershell-5.1
+</pre></html>

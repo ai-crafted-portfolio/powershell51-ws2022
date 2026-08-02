@@ -1,0 +1,408 @@
+<!doctype html><html lang="ja"><meta charset="utf-8"><pre class="record-source">###KnowledgeNo###
+PS51-WS2022-2026-3719
+###FormatID###
+PS51-WS2022
+###CreatedAt###
+2026-08-01 00:00
+###UpdatedAt###
+2026-08-01 00:00
+###タイトル###
+New-WinEvent
+###モジュール###
+Microsoft.PowerShell.Diagnostics
+###製品###
+Windows PowerShell 5.1
+###対応OS###
+Windows Server 2022
+###日本語訳###
+# 新勝イベントです.
+
+## SYNOPSIS は指定されたイベントプロバイダーのために新しいWindowsイベントを作成します.
+
+## SYNTAXは,のシンタックスです.
+
+```
+New-WinEvent [-ProviderName] &lt;String&gt; [-Id] &lt;Int32&gt; [-Version &lt;Byte&gt;]
+ [[-Payload] &lt;Object[]&gt;] [&lt;CommonParameters&gt;]
+```
+
+## 記述は,
+
+   `New-WinEvent`cmdlet はイベントプロバイダーのために Windows のイベント追跡 (ETW) イベントを作成します.この cmdlet を使用して,PowerShell から ETW チャンネルにイベントを追加できます.
+
+## 例えは
+
+### 例1 - 新しいイベントを作成する
+
+```powershell
+New-WinEvent -ProviderName Microsoft-Windows-PowerShell -Id 45090 -Payload @(&quot;Workflow&quot;, &quot;Running&quot;)
+```
+
+このコマンドは,という文字を使用します.`New-WinEvent`Microsoft Windows PowerShellプロバイダーのためにイベント45090を作成するcmdlet.
+
+### 例2 - イベントのテンプレートを入手する
+
+この例では,`Get-WinEvent`グループポリシーイベントプロバイダーからイベント id 8007 のテンプレートを取得するために使用されます.イベントには2つのフォーマットがあることに注意してください.
+
+バージョン0では, **IsMachine** フィールドはブーレン値である. バージョン1では, **IsMachine** フィールドは未署名整数値である.
+
+```powershell
+(Get-WinEvent -ListProvider Microsoft-Windows-GroupPolicy).Events | Where-Object Id -EQ 8007
+```
+
+```Output
+Id          : 8007
+Version     : 0
+LogLink     : System.Diagnostics.Eventing.Reader.EventLogLink
+Level       : System.Diagnostics.Eventing.Reader.EventLevel
+Opcode      : System.Diagnostics.Eventing.Reader.EventOpcode
+Task        : System.Diagnostics.Eventing.Reader.EventTask
+Keywords    : {}
+Template    : &lt;template xmlns=&quot;http://schemas.microsoft.com/win/2004/08/events&quot;&gt;
+                &lt;data name=&quot;PolicyElaspedTimeInSeconds&quot; inType=&quot;win:UInt32&quot; outType=&quot;xs:unsignedInt&quot;/&gt;
+                &lt;data name=&quot;ErrorCode&quot; inType=&quot;win:UInt32&quot; outType=&quot;win:HexInt32&quot;/&gt;
+                &lt;data name=&quot;PrincipalSamName&quot; inType=&quot;win:UnicodeString&quot; outType=&quot;xs:string&quot;/&gt;
+                &lt;data name=&quot;IsMachine&quot; inType=&quot;win:Boolean&quot; outType=&quot;xs:boolean&quot;/&gt;
+                &lt;data name=&quot;IsConnectivityFailure&quot; inType=&quot;win:Boolean&quot; outType=&quot;xs:boolean&quot;/&gt;
+              &lt;/template&gt;
+
+Description : Completed periodic policy processing for user %3 in %1 seconds.
+
+Id          : 8007
+Version     : 1
+LogLink     : System.Diagnostics.Eventing.Reader.EventLogLink
+Level       : System.Diagnostics.Eventing.Reader.EventLevel
+Opcode      : System.Diagnostics.Eventing.Reader.EventOpcode
+Task        : System.Diagnostics.Eventing.Reader.EventTask
+Keywords    : {}
+Template    : &lt;template xmlns=&quot;http://schemas.microsoft.com/win/2004/08/events&quot;&gt;
+                &lt;data name=&quot;PolicyElaspedTimeInSeconds&quot; inType=&quot;win:UInt32&quot; outType=&quot;xs:unsignedInt&quot;/&gt;
+                &lt;data name=&quot;ErrorCode&quot; inType=&quot;win:UInt32&quot; outType=&quot;win:HexInt32&quot;/&gt;
+                &lt;data name=&quot;PrincipalSamName&quot; inType=&quot;win:UnicodeString&quot; outType=&quot;xs:string&quot;/&gt;
+                &lt;data name=&quot;IsMachine&quot; inType=&quot;win:UInt32&quot; outType=&quot;xs:unsignedInt&quot;/&gt;
+                &lt;data name=&quot;IsConnectivityFailure&quot; inType=&quot;win:Boolean&quot; outType=&quot;xs:boolean&quot;/&gt;
+              &lt;/template&gt;
+
+Description : Completed periodic policy processing for user %3 in %1 seconds.
+```
+
+**Description**属性には,イベントログに書き込まれたメッセージが含まれます.`%3`そして,`%1`テンプレートに転送された値の値が,値が位置保持者である.`%3`文字列が **PrincipalSamName**フィールドに転送された値に置き換えられます.`%1`文字列は, **PolicyElaspedTimeInSeconds** フィールドに転送された値で置き換えられます.
+
+### 例3 - バージョンのテンプレートを使って新しいイベントを作成します
+
+この例では,特定のテンプレートバージョンを使用してイベントを作成する方法を示しています.
+
+```powershell
+$Payload = @(300, [uint32]&#x27;0x8001011f&#x27;, $Env:USERNAME, 0, 1)
+New-WinEvent -ProviderName Microsoft-Windows-GroupPolicy -Id 8007 -Version 1 -Payload $Payload
+Get-WinEvent -ProviderName Microsoft-Windows-GroupPolicy -MaxEvents 1
+```
+
+```Output
+   ProviderName: Microsoft-Windows-GroupPolicy
+
+TimeCreated            Id LevelDisplayName Message
+-----------            -- ---------------- -------
+5/4/2022 8:40:24 AM  8007 Information      Completed periodic policy processing for user User1 in 300 seconds
+```
+
+役に立たない荷物の値がテンプレートのタイプと一致しない場合は,イベントが記録されますが,役に立たない荷物はエラーを含んでいます.
+
+## パラメータは
+
+### -Id
+
+イベントプロバイダに登録されているイベントIDを指定します.
+
+```yaml
+Type: System.Int32
+Parameter Sets: (All)
+Aliases:
+
+Required: True
+Position: 2
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### - 支払荷
+
+役荷は,イベントテンプレートに位置論として渡される数値の配列である.イベントのメッセージを構築するために,値がテンプレートに挿入されます.イベントには異なるフォーマットを使用する複数のテンプレートバージョンが可能です.
+
+役に立たない荷物の値がテンプレートのタイプと一致しない場合は,イベントが記録されますが,役に立たない荷物はエラーを含んでいます.
+
+```yaml
+Type: System.Object[]
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: 3
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### - プロバイダー名
+
+&quot;Microsoft-Windows-PowerShell&quot;などのイベントログにイベントを書き込むイベントプロバイダを指定します. ETWイベントプロバイダは,ETWセッションにイベントを書き込む論理的エンティティです.
+
+```yaml
+Type: System.String
+Parameter Sets: (All)
+Aliases:
+
+Required: True
+Position: 1
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Version
+
+PowerShell で,その番号を必要なバイトタイプに変換します.この値は,同じイベントの異なるバージョンが定義されたときに,イベントのバージョンを指定します.
+
+```yaml
+Type: System.Byte
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### 共通パラメーター
+
+このcmdletは,共通パラメータをサポートしています: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable.詳細については, [about_CommonParameters](を参照してください.https://go.microsoft.com/fwlink/?LinkID=113216) でした.
+
+## 輸入は
+
+### どれもない
+
+このcmdletに物体をパイプすることはできません.
+
+## 輸出は
+
+### どれもない
+
+このcmdletは出力返さない.
+
+##  NOTES  記事ができました.
+
+サービス提供者がイベントをイベントログに書き込んだ後,あなたは  を利用できます.`Get-WinEvent`cmdlet はイベントログからイベントを入手する.
+
+## 関連リンク
+
+[Get-WinEvent](Get-WinEvent.md) 
+###英語原文###
+# New-WinEvent
+
+## SYNOPSIS
+Creates a new Windows event for the specified event provider.
+
+## SYNTAX
+
+```
+New-WinEvent [-ProviderName] &lt;String&gt; [-Id] &lt;Int32&gt; [-Version &lt;Byte&gt;]
+ [[-Payload] &lt;Object[]&gt;] [&lt;CommonParameters&gt;]
+```
+
+## DESCRIPTION
+
+The `New-WinEvent` cmdlet creates an Event Tracing for Windows (ETW) event for an event provider.
+You can use this cmdlet to add events to ETW channels from PowerShell.
+
+## EXAMPLES
+
+### Example 1 - Create a new event
+
+```powershell
+New-WinEvent -ProviderName Microsoft-Windows-PowerShell -Id 45090 -Payload @(&quot;Workflow&quot;, &quot;Running&quot;)
+```
+
+This command uses the `New-WinEvent` cmdlet to create event 45090 for the
+Microsoft-Windows-PowerShell provider.
+
+### Example 2 - Get the template for an event
+
+In this example, `Get-WinEvent` is used to get the template for event id 8007 from the Group Policy
+event provider. Notice that the event has two formats.
+
+In version 0, the **IsMachine** field is a boolean value. In version 1, the **IsMachine** field is
+an unsigned integer value.
+
+```powershell
+(Get-WinEvent -ListProvider Microsoft-Windows-GroupPolicy).Events | Where-Object Id -EQ 8007
+```
+
+```Output
+Id          : 8007
+Version     : 0
+LogLink     : System.Diagnostics.Eventing.Reader.EventLogLink
+Level       : System.Diagnostics.Eventing.Reader.EventLevel
+Opcode      : System.Diagnostics.Eventing.Reader.EventOpcode
+Task        : System.Diagnostics.Eventing.Reader.EventTask
+Keywords    : {}
+Template    : &lt;template xmlns=&quot;http://schemas.microsoft.com/win/2004/08/events&quot;&gt;
+                &lt;data name=&quot;PolicyElaspedTimeInSeconds&quot; inType=&quot;win:UInt32&quot; outType=&quot;xs:unsignedInt&quot;/&gt;
+                &lt;data name=&quot;ErrorCode&quot; inType=&quot;win:UInt32&quot; outType=&quot;win:HexInt32&quot;/&gt;
+                &lt;data name=&quot;PrincipalSamName&quot; inType=&quot;win:UnicodeString&quot; outType=&quot;xs:string&quot;/&gt;
+                &lt;data name=&quot;IsMachine&quot; inType=&quot;win:Boolean&quot; outType=&quot;xs:boolean&quot;/&gt;
+                &lt;data name=&quot;IsConnectivityFailure&quot; inType=&quot;win:Boolean&quot; outType=&quot;xs:boolean&quot;/&gt;
+              &lt;/template&gt;
+
+Description : Completed periodic policy processing for user %3 in %1 seconds.
+
+Id          : 8007
+Version     : 1
+LogLink     : System.Diagnostics.Eventing.Reader.EventLogLink
+Level       : System.Diagnostics.Eventing.Reader.EventLevel
+Opcode      : System.Diagnostics.Eventing.Reader.EventOpcode
+Task        : System.Diagnostics.Eventing.Reader.EventTask
+Keywords    : {}
+Template    : &lt;template xmlns=&quot;http://schemas.microsoft.com/win/2004/08/events&quot;&gt;
+                &lt;data name=&quot;PolicyElaspedTimeInSeconds&quot; inType=&quot;win:UInt32&quot; outType=&quot;xs:unsignedInt&quot;/&gt;
+                &lt;data name=&quot;ErrorCode&quot; inType=&quot;win:UInt32&quot; outType=&quot;win:HexInt32&quot;/&gt;
+                &lt;data name=&quot;PrincipalSamName&quot; inType=&quot;win:UnicodeString&quot; outType=&quot;xs:string&quot;/&gt;
+                &lt;data name=&quot;IsMachine&quot; inType=&quot;win:UInt32&quot; outType=&quot;xs:unsignedInt&quot;/&gt;
+                &lt;data name=&quot;IsConnectivityFailure&quot; inType=&quot;win:Boolean&quot; outType=&quot;xs:boolean&quot;/&gt;
+              &lt;/template&gt;
+
+Description : Completed periodic policy processing for user %3 in %1 seconds.
+```
+
+The **Description** property contains the message that gets written to the event log. The `%3` and
+`%1` value are placeholders for the values passed into the template. The `%3` string is replace with
+the value passed to the **PrincipalSamName** field. The `%1` string is replaced with value passed
+to the **PolicyElaspedTimeInSeconds** field.
+
+### Example 3 - Create a new event using a versioned template
+
+This example shows how to create an event using a specific template version.
+
+```powershell
+$Payload = @(300, [uint32]&#x27;0x8001011f&#x27;, $Env:USERNAME, 0, 1)
+New-WinEvent -ProviderName Microsoft-Windows-GroupPolicy -Id 8007 -Version 1 -Payload $Payload
+Get-WinEvent -ProviderName Microsoft-Windows-GroupPolicy -MaxEvents 1
+```
+
+```Output
+   ProviderName: Microsoft-Windows-GroupPolicy
+
+TimeCreated            Id LevelDisplayName Message
+-----------            -- ---------------- -------
+5/4/2022 8:40:24 AM  8007 Information      Completed periodic policy processing for user User1 in 300 seconds
+```
+
+If the values in the payload do not match the types in the template, the event is logged but the
+payload contains an error.
+
+## PARAMETERS
+
+### -Id
+
+Specifies an event Id that is registered in the event provider.
+
+```yaml
+Type: System.Int32
+Parameter Sets: (All)
+Aliases:
+
+Required: True
+Position: 2
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Payload
+
+The payload is an array of values passed as positional arguments to the event template. The values
+are inserted into the template to construct the message for the event. Events can have multiple
+template versions that use different formats.
+
+If the values in the payload do not match the types in the template, the event is logged but the
+payload contains an error.
+
+```yaml
+Type: System.Object[]
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: 3
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -ProviderName
+
+Specifies the event provider that writes the event to an event log, such as
+&quot;Microsoft-Windows-PowerShell&quot;. An ETW event provider is a logical entity that writes events to ETW
+sessions.
+
+```yaml
+Type: System.String
+Parameter Sets: (All)
+Aliases:
+
+Required: True
+Position: 1
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Version
+
+Specifies the version number of the event. PowerShell converts the number to the required Byte type.
+The value specifies the version of the event when different versions of the same event are defined.
+
+```yaml
+Type: System.Byte
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### CommonParameters
+
+This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable,
+-InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose,
+-WarningAction, and -WarningVariable. For more information, see
+[about_CommonParameters](https://go.microsoft.com/fwlink/?LinkID=113216).
+
+## INPUTS
+
+### None
+
+You can&#x27;t pipe objects to this cmdlet.
+
+## OUTPUTS
+
+### None
+
+This cmdlet returns no output.
+
+## NOTES
+
+After the provider writes the event to an eventlog, you can use the `Get-WinEvent` cmdlet to get the
+event from the event log.
+
+## RELATED LINKS
+
+[Get-WinEvent](Get-WinEvent.md)
+###Microsoft Learn URL###
+https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.diagnostics/new-winevent/?view=powershell-5.1
+</pre></html>

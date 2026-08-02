@@ -1,0 +1,589 @@
+<!doctype html><html lang="ja"><meta charset="utf-8"><pre class="record-source">###KnowledgeNo###
+PS51-WS2022-2026-3620
+###FormatID###
+PS51-WS2022
+###CreatedAt###
+2026-08-01 00:00
+###UpdatedAt###
+2026-08-01 00:00
+###タイトル###
+about_Session_Configurations
+###モジュール###
+Microsoft.PowerShell.Core
+###製品###
+Windows PowerShell 5.1
+###対応OS###
+Windows Server 2022
+###日本語訳###
+# about_Session_Configurationsについて
+
+## 短編説明
+
+セッション構成を記述し,コンピュータに遠隔接続できるユーザと実行できるコマンドを決定する.
+
+## 長い説明
+
+セッション構成,また&quot;エンドポイント&quot;とも呼ばれ,ローカルコンピュータの設定がグループであり,ローカルコンピュータのPowerShellセッションの環境を定義します.これは,リモートまたはローカルユーザがローカルコンピュータのPowerShellに接続するときに作成される.
+
+コンピュータの管理者は,コンピュータを保護し,コンピュータに接続するユーザーにカスタム環境を定義するためにセッション設定を使用することができます.
+
+管理者はセッション設定を使用して,コンピュータに接続するために必要な権限を決定することもできます.デフォルトでは,管理者グループのメンバーだけがセッション設定を使用してリモート接続を許可できますが,すべてのユーザーまたは選択されたユーザーにコンピュータに接続できるように,デフォルト設定を変更できます.
+
+PowerShell 3.0 から始め,セッション構成ファイルを使用してセッション構成要素を定義できます.この機能により,コードを書く必要のないセッションを簡単にカスタマイズし,セッション構成の性質を発見できます.セッション構成ファイルを作成するには,  を使用します.`New-PSSessionConfiguration`cmdlet.セッション設定ファイルについての詳細については, [about_Session_Configuration_Files][01]を参照してください.
+
+セッション設定はWSMANベースのPowerShell リモート処理の特徴です. を使用するときにのみ使用されます.`New-PSSession`     `Invoke-Command`       `Enter-PSSession`遠隔Windowsコンピュータに接続するためのcmdlets.
+
+Windows コンピュータのセッション設定を管理するには,管理者として実行するオプションでPowerShellを起動します.
+
+### セッション設定について
+
+PowerShell のすべてのセッションはセッション構成を使用します.これは,あなたが  を使って作成する持続的なセッションを含む.`New-PSSession`     `Enter-PSSession`cmdlets,および,WS-Managementベースのリモート技術を使用する cmdlet の ComputerName パラメータを使用すると,PowerShell が作成する一時的なセッション,例えば `Invoke-Command` .
+
+管理者はセッション設定を使用して,コンピュータのリソースを保護し,コンピュータに接続するユーザーのためにカスタム環境を作成することができます.例えば,セッションではコンピュータがセッション中に受け取るオブジェクトのサイズを制限し,セッションの言語モードを定義し,セッションで利用可能なcmdlet,プロバイダー,機能を指定するセッション設定を使用できます.
+
+セッション設定のセキュリティ記述子を設定することで,セッション設定をコンピュータに接続するために誰が使用できるかを決定します.ユーザーはセッション設定に実行許可を得なければなりません.セッションで使用するには,実行許可が必要です.ユーザーがコンピュータでセッション設定を使用するための必要な権限を持っていない場合,ユーザーは遠隔接続からコンピュータに接続することはできません.
+
+デフォルトでは,コンピュータの管理者だけがデフォルトセッション設定を使用する許可を持っています.しかし,あなたはすべてのユーザー,誰も,または選択されたユーザーにのみあなたのコンピュータでセッション設定を使用することを許可するためにセキュリティ記述を変更することができます.
+
+### 組み込みセッション設定です.
+
+PowerShell 3.0 には,Microsoft.PowerShell と Microsoft.PowerShell.Workflow という組み込みセッション構成が含まれています.Windowsの64ビットバージョンを実行しているコンピュータでは,PowerShell は32ビットセッション構成である Microsoft.PowerShell32 も提供しています.
+
+Microsoft.PowerShell のセッション設定は,デフォルトでセッションに使用されます.つまり,セッションを作成するコマンドに設定名パラメータが含まれていない場合です.`New-PSSession`     `Enter-PSSession`       `Invoke-Command`cmdletです.
+
+設定のデフォルトセッションのセキュリティ ディス[U+0915][U+094D][U+0930][U+093F]プターは,ローカルコンピュータ上の管理者グループのメンバーのみが使用できるようにします.したがって,デフォルト設定を変更しない限り,管理者グループのメンバーのみが遠隔でコンピュータに接続できます.
+
+ を使ってデフォルトセッション設定を変更できます.`$PSSessionConfigurationName`偏見変数.詳細については,[about_Preference_Variables][02]を参照してください.
+
+### ローカルコンピュータでセッション設定を表示する
+
+ローカルコンピュータのセッション設定を入手するには,  を使ってください.`Get-PSSessionConfiguration`cmdletです.
+
+例えば,タイプ:
+
+```powershell
+PS C:&gt; Get-PSSessionConfiguration | Format-List -Property Name, Permission
+
+Name       : microsoft.powershell
+Permission : BUILTIN\Administrators AccessAllowed
+
+Name       : microsoft.powershell.workflow
+Permission : BUILTIN\Administrators AccessAllowed
+
+Name       : microsoft.powershell32
+Permission : BUILTIN\Administrators AccessAllowed
+```
+
+セッション構成オブジェクトはPowerShell 3.0で拡張され,セッション構成ファイルを使用して構成されるセッション構成の性質を表示します.
+
+例えば,セッション構成オブジェクトのすべての属性を表示するには,次のタイプを入力してください:
+
+```powershell
+PS C:&gt; Get-PSSessionConfiguration | Format-List -Property *
+```
+
+また,PowerShellでWSManプロバイダを使用してセッション構成を表示できます.WSManプロバイダは,セッションでWSMan:ドライブを作成します.
+
+WSMan:ドライブでは,セッション構成はプラグインノードにあります. (すべてのセッション構成はプラグインノードにありますが,プラグインノードにはセッション構成ではないアイテムがあります.)
+
+例えば,ローカルコンピュータのセッション設定を表示するには,次のタイプを入力してください.
+
+```powershell
+PS C:&gt; dir WSMan:\localhost\plugin\microsoft*
+
+WSManConfig: Microsoft.WSMan.Management\WSMan::localhost\Plugin
+
+Type       Keys                              Name
+----       ----                              ----
+Container  {Name=microsoft.powershell}       microsoft.powershell
+Container  {Name=microsoft.powershell.wor... microsoft.powershell.workflow
+Container  {Name=microsoft.powershell32}     microsoft.powershell32
+```
+
+### リモートコンピュータでセッション設定を表示する
+
+リモートコンピュータのセッション設定を表示するには,  を使ってください.`Connect-WSMan`遠隔コンピュータのノードを追加するには,msman:ドライブを本地コンピュータに追加し,msman:ドライブを使用してセッション設定を表示します.
+
+例えば,次のコマンドは,WSManに Server01 リモートコンピュータのノードを追加します.
+
+```powershell
+PS C:&gt; Connect-WSMan server01.corp.fabrikam.com
+```
+
+コマンドが完了すると,セッション設定を表示するために Server01 コンピュータのノードにナビゲートできます.
+
+例えば:
+
+```powershell
+PS C:&gt; cd WSMan:
+
+PS WSMan:&gt; dir
+
+ComputerName                                  Type
+------------                                  ----
+localhost                                     Container
+server01.corp.fabrikam.com                    Container
+
+PS WSMan:&gt; dir server01\plugin\
+
+WSManConfig: Microsoft.WSMan.Management\WSMan::server01.corp.fabrikam.com\Pl
+ugin
+
+Type       Keys                              Name
+----       ----                              ----
+Container  {Name=microsoft.powershell}       microsoft.powershell
+Container  {Name=microsoft.powershell.wor... microsoft.powershell.workflow
+Container  {Name=microsoft.powershell32}     microsoft.powershell32
+```
+
+# about_Session_Configurationsについて
+
+### セッション設定のセキュリティ記述子を変更する
+
+Windows Server 2012およびWindows Serverの最新バージョンでは,リモートユーザーには,デフォルトで内蔵セッション構成が有効になっています.他のサポートされている Windows バージョンでは,リモートアクセスを許可するためにセッション構成のセキュリティ記述子を変更する必要があります.
+
+コンピュータのセッション設定へのリモートアクセスを有効にするには,  を使ってください.`Enable-PSRemoting`cmdletです.
+
+また,デフォルトでは,コンピュータ上の管理者グループのメンバーだけがデフォルトセッション設定の実行許可を有しますが,デフォルトセッション設定や作成するセッション設定のセキュリティ記述子を変更できます.
+
+他のユーザーに遠隔でコンピュータに接続する許可を与えるには,Set-PSSessionConfiguration cmdlet を使用して,Microsoft.PowerShell と Microsoft.PowerShell32 セッション設定のセキュリティ記述にそれらのユーザーのための&quot;実行&quot;権限を追加します.
+
+例えば,次のコマンドは,Microsoft.PowerShellのデフォルトセッション設定のセキュリティ記述子を変更するプロパティページを開きます.
+
+```powershell
+Set-PSSessionConfiguration -Name Microsoft.PowerShell -ShowSecurityDescriptorUI
+```
+
+コンピュータ上のすべてのセッション設定の許可をすべて拒否するには,  を使ってください.`Disable-PSSessionConfiguration`例えば,次のコマンドは,コンピュータのデフォルトセッション設定を無効にする.
+
+```powershell
+PS C:&gt; Disable-PSSessionConfiguration -Name Microsoft.PowerShell
+```
+
+リモートユーザがコンピュータに接続できず,ローカルユーザが接続できるようにするには,  を使ってください.`Disable-PSRemoting`cmdlet. `Disable-PSRemoting`コンピュータのすべてのセッション構成に&quot;Network_Deny_All&quot;エントリを追加します.
+
+```powershell
+PS C:&gt; Disable-PSRemoting
+```
+
+リモートユーザーにコンピュータ上のすべてのセッション設定を使用できるようにするには,  を使ってください.`Enable-PSRemoting`    `Enable-PSSessionConfiguration`例えば,次のコマンドは,内蔵のセッション設定へのリモートアクセスが可能になります.
+
+```powershell
+PS C:&gt; Enable-PSSessionConfiguration -Name Microsoft.Power*
+```
+
+セッション設定のセキュリティ記述に他の変更を行うには,  を使ってください.`Set-PSSessionConfiguration`cmdlet.SDDL文字列値を提出するには,S SecurityDescriptorSDDL パラメータを使用します.SDDL文字列値を提出するには,SDDL パラメータのプロパティシートを表示するために,ShowSecurityDescriptorUI パラメータを使用します.新しいSDDLを作成するのに役立ちます.
+
+例えば:
+
+```powershell
+Set-PSSessionConfiguration -Name Microsoft.PowerShell -ShowSecurityDescriptorUI
+```
+
+### 新しいセッション設定を作成する
+
+ローカルコンピュータで新しいセッション設定を作成するには,  を使ってください.`Register-PSSessionConfiguration`cmdlet. 新しいセッション設定を定義するには,C#アセンブリ,PowerShellスクリプト,および のパラメータを使用できます.`Register-PSSessionConfiguration`cmdletです.
+
+例えば,次のコマンドは,Microsoft.PowerShellセッション設定と同一のセッション設定を作成しますが,リモートコマンドから受信されるデータを20メガバイト (MB) に制限します. (デフォルトは50MBです).
+
+```powershell
+$registerPSSessionConfigurationSplat = @{
+    Name = &#x27;NewConfig&#x27;
+    MaximumReceivedDataSizePerCommandMB = 20
+}
+Register-PSSessionConfiguration @registerPSSessionConfigurationSplat
+```
+
+セッション設定を作成すると,他のセッション設定cmdletsを使用して管理することができます,そしてそれはWSMan:ドライブに表示されます.
+
+詳細については,参照してください.`Register-PSSessionConfiguration` .
+
+### セッション設定を削除する
+
+局部コンピュータからセッション設定を削除するには,  を使ってください.`Unregister-PSSessionConfiguration`例えば,次のコマンドは,コンピュータからNewConfig セッション構成を削除します.
+
+```powershell
+Unregister-PSSessionConfiguration -Name NewConfig
+```
+
+詳細については,参照してください.`Unregister-PSSessionConfiguration` .
+
+### セッション設定を復元する
+
+誤って削除された (登録されていない) デフォルトセッション設定を復元するには,  を使います.`Enable-PSRemoting`cmdletです.
+
+   `Enable-PSRemoting`cmdlet は,コンピュータに存在しないすべてのデフォルトセッション構成を再現します.既存のセッション構成のプロパティ値を覆い替えるか変更しない.
+
+デフォルトセッション設定の元のプロパティ値を復元するには,  を使ってください.`Unregister-PSSessionConfiguration`セッション設定を削除し,その後に  を使います.`Enable-PSRemoting`cmdletで再現できます.
+
+### セッション設定を選択する
+
+セッションの特定のセッション設定を選択するには,設定名前のパラメータを使用してください.`New-PSSession`     `Enter-PSSession`       `Invoke-Command` .
+
+例えば,このコマンドでは,という文字を使用します.`New-PSSession`Server01 コンピュータでPSSセッションを開始するcmdletです.コマンドは,ConfigurationName パラメータを使用して Server01 コンピュータのWithProfile 設定を選択します.
+
+```powershell
+New-PSSession -ComputerName Server01 -ConfigurationName WithProfile
+```
+
+このコマンドは,現在のユーザーが WithProfile セッション設定を使用する許可がある場合のみ,または必要な許可を持つユーザーの認証情報を提供できる場合のみ,成功します.
+
+また,コンピュータ上のデフォルトセッション設定を変更するには $PSSessionConfigurationName 選択変数を使用できます. $PSSessionConfigurationName 選択変数についての詳細については, [about_Preference_Variables][02]を参照してください.
+
+## キーワードは
+
+about_Endpoints about_SessionConfigurationsについて
+
+## また, を参照してください.
+
+[about_Preference_Variables][02] - [about_PSSessions](about_PSSessions.md) - [about_Remote_Remote.md) - [about_Session_Configuration_Files][01] - [New-PSSession] - [xref:Microsoft.PowerShell.Core.New-PSSession) - [Disable-PSSessions] - [xref:Microsoft.PowerShell.Core.Disable-SessionConfiguration] - [Enable-PSSessionConfiguration] - [Enable-PSSessionConfiguration] - [Get-PSPSSessions.Core.PSSessions] - [Get-PSSessionsConfiguration] - [Get-PSSessions.PSSessions.Configuration] - [Get-PSSessions.Configuration] - [Get-PSSessions.Configuration.Configuration.Configuration.Configuration.Configuration.Configuration.Configuration.Configuration.Configuration.Configuration.Configuration.Configuration.Configuration.Configuration.Configuration.Configuration.Configuration.Configuration.Configuration.Configuration.Configuration.Configuration.Configuration.Configuration.Configur.Configur.Configur.Configur.Configur.Configur.Configur.Configur.Configur.Configur.Configur.Configur.Configur.Configur.Configur.Configur.Configur.Configur.Configur.Configur.Con - 設定.Configur.Configur.Configur.Configur.Configur.Configur.Configur.Configur.Configur.Configur.Configur.Configur.Configur.Configur.Configur.Configur.Configur.Con.Con.Configur.Con.Con.Con.Con.Con.Configur.Con.Con.Con.Con.Con.Con.Con.Con.Con.Con.Con.Con.Con.Con.Con.Con.Con.Con.Con.Con.Con.Con.Con.Con.Con.Con.Con.Con.Con.Con.Con.Con.Con[PSSessionConfigurationFile](xref:Microsoft.PowerShell.Core.Unregister-PSSessionConfiguration) - [New-PSSessionConfigurationFile](xref:Microsoft.PowerShell.Core.New-PSSessionConfigurationFile) - [Test-PSSessionConfigurationFile](xref:Microsoft.PowerShell.Core.Test-PSSessionConfigurationFile) 
+
+&lt;!--リンク参照 --&gt; [01]: about_Session_Configuration_Files.md [02]: about_Preference_Variables.mdについて
+###英語原文###
+# about_Session_Configurations
+
+## Short description
+
+Describes session configurations, which determine the users who can connect to
+the computer remotely and the commands they can run.
+
+## Long description
+
+A session configuration, also known as an &quot;endpoint&quot; is a group of settings on
+the local computer that define the environment for the PowerShell sessions that
+are created when remote or local users connect to PowerShell on the local
+computer.
+
+Administrators of the computer can use session configurations to protect the
+computer and to define custom environments for users who connect to the
+computer.
+
+Administrators can also use session configurations to determine the
+permissions that are required to connect to the computer remotely. By default,
+only members of the Administrators group have permission to use the session
+configuration to connect remotely, but you can change the default settings to
+allow all users, or selected users, to connect remotely to your computer.
+
+Beginning in PowerShell 3.0, you can use a session configuration file to
+define the elements of a session configuration. This feature makes it easy to
+customize sessions without writing code and to discover the properties of a
+session configuration. To create a session configuration file, use the
+`New-PSSessionConfiguration` cmdlet. For more information about session
+configuration files, see [about_Session_Configuration_Files][01].
+
+Session configurations are a feature of WSMAN-based PowerShell remoting. They
+are used only when you use the `New-PSSession`, `Invoke-Command`, or
+`Enter-PSSession` cmdlets to connect to a remote Windows computer.
+
+To manage the session configurations on a Windows computer, start
+PowerShell with the **Run as administrator** option.
+
+### About Session Configurations
+
+Every PowerShell session uses a session configuration. This includes
+persistent sessions that you create by using the `New-PSSession` or
+`Enter-PSSession` cmdlets, and the temporary sessions that PowerShell creates
+when you use the ComputerName parameter of a cmdlet that uses
+WS-Management-based remoting technology, such as `Invoke-Command`.
+
+Administrators can use session configurations to protect the resources of the
+computer and to create custom environments for users who connect to the
+computer. For example, you can use a session configuration to limit the size
+of objects that the computer receives in the session, to define the language
+mode of the session, and to specify the cmdlets, providers, and functions that
+are available in the session.
+
+By configuring the security descriptor of a session configuration, you
+determine who can use the session configuration to connect to the computer.
+Users must have Execute permission to a session configuration to use it in a
+session. If a user does not have the required permissions to use any of the
+session configurations on a computer, the user cannot connect to the computer
+remotely.
+
+By default, only Administrators of the computer have permission to use the
+default session configurations. But, you can change the security descriptors
+to allow everyone, no one, or only selected users to use the session
+configurations on your computer.
+
+### Built-in Session Configurations
+
+PowerShell 3.0 includes built-in session configurations named
+Microsoft.PowerShell and Microsoft.PowerShell.Workflow. On computers running
+64-bit versions of Windows, PowerShell also provides Microsoft.PowerShell32, a
+32-bit session configuration.
+
+The Microsoft.PowerShell session configuration is used for sessions by
+default, that is, when a command to create a session does not include the
+ConfigurationName parameter of the `New-PSSession`, `Enter-PSSession`, or
+`Invoke-Command` cmdlet.
+
+The security descriptors for the default session configurations allow only
+members of the Administrators group on the local computer to use them. As
+such, only members of the Administrators group can connect to the computer
+remotely unless you change the default settings.
+
+You can change the default session configurations by using the
+`$PSSessionConfigurationName` preference variable. For more information, see
+[about_Preference_Variables][02].
+
+### Viewing Session Configurations on the Local Computer
+
+To get the session configurations on your local computer, use the
+`Get-PSSessionConfiguration` cmdlet.
+
+For example, type:
+
+```powershell
+PS C:&gt; Get-PSSessionConfiguration | Format-List -Property Name, Permission
+
+Name       : microsoft.powershell
+Permission : BUILTIN\Administrators AccessAllowed
+
+Name       : microsoft.powershell.workflow
+Permission : BUILTIN\Administrators AccessAllowed
+
+Name       : microsoft.powershell32
+Permission : BUILTIN\Administrators AccessAllowed
+```
+
+The session configuration object is expanded in PowerShell 3.0 to
+display the properties of the session configuration that are configured by
+using a session configuration file.
+
+For example, to see all of the properties of a session configuration
+object, type:
+
+```powershell
+PS C:&gt; Get-PSSessionConfiguration | Format-List -Property *
+```
+
+You can also use the WSMan provider in PowerShell to view session
+configurations. The WSMan provider creates a WSMan: drive in your session.
+
+In the WSMan: drive, session configurations are in the Plugin node. (All
+session configurations are in the Plugin node, but there are items in the
+Plugin node that are not session configurations.)
+
+For example, to view the session configurations on the local computer,
+type:
+
+```powershell
+PS C:&gt; dir WSMan:\localhost\plugin\microsoft*
+
+WSManConfig: Microsoft.WSMan.Management\WSMan::localhost\Plugin
+
+Type       Keys                              Name
+----       ----                              ----
+Container  {Name=microsoft.powershell}       microsoft.powershell
+Container  {Name=microsoft.powershell.wor... microsoft.powershell.workflow
+Container  {Name=microsoft.powershell32}     microsoft.powershell32
+```
+
+### Viewing Session Configurations on a Remote Computer
+
+To view the session configurations on a remote computer, use the
+`Connect-WSMan` cmdlet to add a node for the remote computer to the
+WSMan: drive on your local computer, and then use the WSMan: drive to view the
+session configurations.
+
+For example, the following command adds a node for the Server01 remote
+computer to the WSMan: drive on the local computer.
+
+```powershell
+PS C:&gt; Connect-WSMan server01.corp.fabrikam.com
+```
+
+When the command is complete, you can navigate to the node for the Server01
+computer to view the session configurations.
+
+For example:
+
+```powershell
+PS C:&gt; cd WSMan:
+
+PS WSMan:&gt; dir
+
+ComputerName                                  Type
+------------                                  ----
+localhost                                     Container
+server01.corp.fabrikam.com                    Container
+
+PS WSMan:&gt; dir server01\plugin\
+
+WSManConfig: Microsoft.WSMan.Management\WSMan::server01.corp.fabrikam.com\Pl
+ugin
+
+Type       Keys                              Name
+----       ----                              ----
+Container  {Name=microsoft.powershell}       microsoft.powershell
+Container  {Name=microsoft.powershell.wor... microsoft.powershell.workflow
+Container  {Name=microsoft.powershell32}     microsoft.powershell32
+```
+
+# about_Session_Configurations
+
+### Changing the Security Descriptor of a Session Configuration
+
+In Windows Server 2012 and newer releases of Windows Server, the built-in
+session configurations are enabled for remote users by default. In other
+supported versions of Windows, you must change the security descriptors of the
+session configurations to allow remote access.
+
+To enable remote access to the session configurations on the computer, use the
+`Enable-PSRemoting` cmdlet.
+
+Also, by default, only members of the Administrators group on the computer
+have Execute permission to the default session configurations, but you can
+change the security descriptors on the default session configurations and on
+any session configurations that you create.
+
+To give other users permission to connect to the computer remotely, use the
+Set-PSSessionConfiguration cmdlet to add &quot;Execute&quot; permissions for those users
+to the security descriptors of the Microsoft.PowerShell and
+Microsoft.PowerShell32 session configurations.
+
+For example, the following command opens a property page that lets you change
+the security descriptor for the Microsoft.PowerShell default session
+configuration.
+
+```powershell
+Set-PSSessionConfiguration -Name Microsoft.PowerShell -ShowSecurityDescriptorUI
+```
+
+To deny everyone permission to all the session configurations on the computer,
+use the `Disable-PSSessionConfiguration` cmdlet. For example, the following
+command disables the default session configurations on the computer.
+
+```powershell
+PS C:&gt; Disable-PSSessionConfiguration -Name Microsoft.PowerShell
+```
+
+To prevent remote users from connecting to the computer, but allow local users
+to connect, use the `Disable-PSRemoting` cmdlet. `Disable-PSRemoting` adds a
+&quot;Network_Deny_All&quot; entry to all session configurations on the computer.
+
+```powershell
+PS C:&gt; Disable-PSRemoting
+```
+
+To allow remote users to use all session configurations on the computer, use
+the `Enable-PSRemoting` or `Enable-PSSessionConfiguration` cmdlet. For example,
+the following command enables remote access to the built-in session
+configurations.
+
+```powershell
+PS C:&gt; Enable-PSSessionConfiguration -Name Microsoft.Power*
+```
+
+To make other changes to the security descriptor of a session configuration,
+use the `Set-PSSessionConfiguration` cmdlet. Use the SecurityDescriptorSDDL
+parameter to submit an SDDL string value. Use the ShowSecurityDescriptorUI
+parameter to display a user interface property sheet that helps you to create
+a new SDDL.
+
+For example:
+
+```powershell
+Set-PSSessionConfiguration -Name Microsoft.PowerShell -ShowSecurityDescriptorUI
+```
+
+### Creating a New Session Configuration
+
+To create a new session configuration on the local computer, use the
+`Register-PSSessionConfiguration` cmdlet. To define the new session
+configuration, you can use a C# assembly, a PowerShell script, and the
+parameters of the `Register-PSSessionConfiguration` cmdlet.
+
+For example, the following command creates a session configuration that is
+identical the Microsoft.PowerShell session configuration, except that it
+limits the data received from a remote command to 20 megabytes (MB). (The
+default is 50 MB).
+
+```powershell
+$registerPSSessionConfigurationSplat = @{
+    Name = &#x27;NewConfig&#x27;
+    MaximumReceivedDataSizePerCommandMB = 20
+}
+Register-PSSessionConfiguration @registerPSSessionConfigurationSplat
+```
+
+When you create a session configuration, you can manage it by using the other
+session configuration cmdlets, and it appears in the WSMan: drive.
+
+For more information, see `Register-PSSessionConfiguration`.
+
+### Removing a Session Configuration
+
+To remove a session configuration from the local computer, use the
+`Unregister-PSSessionConfiguration` cmdlet. For example, the following command
+removes the NewConfig session configuration from the computer.
+
+```powershell
+Unregister-PSSessionConfiguration -Name NewConfig
+```
+
+For more information, see `Unregister-PSSessionConfiguration`.
+
+### Restoring a Session Configuration
+
+To restore a default session configuration that was deleted (unregistered)
+accidentally, use the `Enable-PSRemoting` cmdlet.
+
+The `Enable-PSRemoting` cmdlet recreates all default sessions configurations
+that do not exist on the computer. It does not overwrite or change the
+property values of existing session configurations.
+
+To restore the original property values of a default session configuration,
+use the `Unregister-PSSessionConfiguration` to delete the session configuration
+and then use the `Enable-PSRemoting` cmdlet to recreate it.
+
+### Selecting a Session Configuration
+
+To select a particular session configuration for a session, use the
+ConfigurationName parameter of `New-PSSession`, `Enter-PSSession`, or
+`Invoke-Command`.
+
+For example, this command uses the `New-PSSession` cmdlet to start a PSSession
+on the Server01 computer. The command uses the ConfigurationName parameter to
+select the WithProfile configuration on the Server01 computer.
+
+```powershell
+New-PSSession -ComputerName Server01 -ConfigurationName WithProfile
+```
+
+This command will succeed only if the current user has permission to use the
+WithProfile session configuration or can supply the credentials of a user who
+has the required permissions.
+
+You can also use the $PSSessionConfigurationName preference variable to change
+the default session configuration on the computer. For more information about
+the $PSSessionConfigurationName preference variable, see
+[about_Preference_Variables][02].
+
+## Keywords
+
+about_Endpoints
+about_SessionConfigurations
+
+## See also
+
+- [about_Preference_Variables][02]
+- [about_PSSessions](about_PSSessions.md)
+- [about_Remote](about_Remote.md)
+- [about_Session_Configuration_Files][01]
+- [New-PSSession](xref:Microsoft.PowerShell.Core.New-PSSession)
+- [Disable-PSSessionConfiguration](xref:Microsoft.PowerShell.Core.Disable-PSSessionConfiguration)
+- [Enable-PSSessionConfiguration](xref:Microsoft.PowerShell.Core.Enable-PSSessionConfiguration)
+- [Get-PSSessionConfiguration](xref:Microsoft.PowerShell.Core.Get-PSSessionConfiguration)
+- [Register-PSSessionConfiguration](xref:Microsoft.PowerShell.Core.Register-PSSessionConfiguration)
+- [Set-PSSessionConfiguration](xref:Microsoft.PowerShell.Core.Set-PSSessionConfiguration)
+- [Unregister-PSSessionConfiguration](xref:Microsoft.PowerShell.Core.Unregister-PSSessionConfiguration)
+- [New-PSSessionConfigurationFile](xref:Microsoft.PowerShell.Core.New-PSSessionConfigurationFile)
+- [Test-PSSessionConfigurationFile](xref:Microsoft.PowerShell.Core.Test-PSSessionConfigurationFile)
+
+&lt;!-- link references --&gt;
+[01]: about_Session_Configuration_Files.md
+[02]: about_Preference_Variables.md
+###Microsoft Learn URL###
+https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_session_configurations/?view=powershell-5.1
+</pre></html>

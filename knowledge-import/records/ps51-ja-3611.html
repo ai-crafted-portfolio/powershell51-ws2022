@@ -1,0 +1,449 @@
+<!doctype html><html lang="ja"><meta charset="utf-8"><pre class="record-source">###KnowledgeNo###
+PS51-WS2022-2026-3611
+###FormatID###
+PS51-WS2022
+###CreatedAt###
+2026-08-01 00:00
+###UpdatedAt###
+2026-08-01 00:00
+###タイトル###
+about_Requires
+###モジュール###
+Microsoft.PowerShell.Core
+###製品###
+Windows PowerShell 5.1
+###対応OS###
+Windows Server 2022
+###日本語訳###
+# about_Requiresについて
+
+## 短編説明
+
+必要な要素がないとスクリプトが実行されないようにします.
+
+## 長い説明
+
+   `#Requires`PowerShellバージョン,モジュール (およびバージョン) および編集前提条件が満たされない限り,脚本が実行されないようにします.条件が満たされない場合は,PowerShell は脚本を実行したり,タブ完了などの他の実行時の機能を提供したりしません.
+
+### シンタックス
+
+```
+#Requires -Version &lt;N&gt;[.&lt;n&gt;]
+#Requires -PSSnapin &lt;PSSnapin-Name&gt; [-Version &lt;N&gt;[.&lt;n&gt;]]
+#Requires -Modules { &lt;Module-Name&gt; | &lt;Hashtable&gt; }
+#Requires -PSEdition &lt;PSEdition-Name&gt;
+#Requires -ShellId &lt;ShellId&gt; -PSSnapin &lt;PSSnapin-Name&gt; [-Version &lt;N&gt;[.&lt;n&gt;]]
+#Requires -RunAsAdministrator
+```
+
+文法についての詳細については, [ScriptRequirements] (/dotnet/api/system.management.automation.language.scriptrequirements) を参照してください.
+
+### 使用規則
+
+スクリプトには1つ以上が含まれている可能性があります.`#Requires`声明は,`#Requires`ステートメントはスクリプトの任意の行に表示される.
+
+ を置くとき`#Requires`関数内の記述は,その範囲を制限しない.`#Requires`ステートメントは常にグローバルに適用され,スクリプトが実行する前に満たされなければならない.
+
+&gt; [!WARNING] &gt;  があったとしても`#Requires`スクリプトの任意の行に表示される可能性がありますが,そのスクリプトの位置は,そのアプリケーションの順序に影響しません.`#Requires`脚本&gt;実行前に,声明が提示される条件を満たす必要があります.
+
+例:
+
+```powershell
+Get-Module AzureRM.Netcore | Remove-Module
+#Requires -Modules AzureRM.Netcore
+```
+
+必要なモジュールが  よりも前に削除されたため,上記のコードが実行されるべきではないと考えられます.`#Requires`しかし,この発言は,`#Requires`スクリプトが実行する前に,その状態が満たされなければならなかった.その後,スクリプトの最初の行は,要求された状態を無効にしました.
+
+### パラメータは
+
+#### -Assembly \&lt;Assembly path&gt; \ \&lt;.NETの組立仕様を表示する
+
+&gt; [!IMPORTANT] &gt;   について`-Assembly`文法は,時代遅れです.機能も果たしません.文法はPowerShell 5.1で追加されましたが,サポートコードは実装されませんでした.&gt;文法はまだ後回互換性のために受け入れられています.
+
+集合 DLL ファイルまたは .NET 集合名への経路を指定します. **Assembly** パラメータは PowerShell 5.0 で導入されました. .NET 集合に関する詳細については, [Assembly names] (/dotnet/standard/assembly/names) を参照してください.
+
+例えば:
+
+```
+#Requires -Assembly path\to\foo.dll
+```
+
+```
+#Requires -Assembly &quot;System.Management.Automation, Version=3.0.0.0,
+  Culture=neutral, PublicKeyToken=31bf3856ad364e35&quot;
+```
+
+#### -Version \&lt;N\&gt;[.\&lt;n\&gt;]
+
+スクリプトが要求する最小バージョンのPowerShellを指定します.主要なバージョン番号とオプションのマイナーバージョン番号を入力します.
+
+例えば:
+
+```powershell
+#Requires -Version 5.1
+```
+
+#### -PSSnapin \&lt;PSSnapin-Name\&gt; [-Version \&lt;N\&gt;[.\&lt;n\&gt;]]
+
+スクリプトが要求するPowerShellのスナップインを指定します.スナップインの名前とオプションバージョン番号を入力します.
+
+例えば:
+
+```powershell
+#Requires -PSSnapin DiskSnapin -Version 1.2
+```
+
+#### - モジュール・名稱・ハッシュタブル
+
+スクリプトが要求するPowerShellモジュールを指定します.モジュール名とオプションバージョン番号を入力します.
+
+必要なモジュールが現在のセッションにない場合は,PowerShellが輸入します.モジュールが輸入できない場合は,PowerShellが終了エラーを投げます.
+
+   `#Requires`文は,モジュール内のクラスと表記定義をロードしない.  を使ってください.`using module`クラスと表記定義を含むモジュールを輸入するスクリプトの初めの記述.詳細については, [about_Using] (about_Using.md) を参照してください.
+
+各モジュールに対して,モジュール名 (\&lt;String\&gt;) またはハッシュテーブルを入力してください.その値は文字列とハッシュテーブルの組み合わせでできます.ハッシュテーブルには以下のキーがあります.
+
+ - -`ModuleName`- **Required** モジュール名前の指定をします. - `GUID`- ** オプション ** モジュールのGUIDを指定します. - また,以下の3つのキーのうち少なくとも1つを指定する必要があります. - `ModuleVersion`- モデルの最小の受け入れ可能なバージョンを指定します. - `MaximumVersion`- モジュールの一番の受け入れられるバージョンを指定します. - `RequiredVersion`- 模組の正確なバージョンを指定します.これは他のバージョンキーで使用できません.
+
+&gt; [!NOTE] &gt; `RequiredVersion`Windows PowerShell 5.0 で追加されました. &gt; `MaximumVersion`Windows PowerShell 5.1で追加されました.
+
+例えば:
+
+要求する.`Hyper-V`(バージョンは, )`1.1`以上の) がインストールされています.
+
+```powershell
+#Requires -Modules @{ ModuleName=&quot;Hyper-V&quot;; ModuleVersion=&quot;1.1&quot; }
+```
+
+要求している.`Hyper-V`(****のみ**バージョン) `1.1`) がインストールされている.
+
+```powershell
+#Requires -Modules @{ ModuleName=&quot;Hyper-V&quot;; RequiredVersion=&quot;1.1&quot; }
+```
+
+要求している.`Hyper-V`(バージョンは, )`1.1`インストールされている.
+
+```powershell
+#Requires -Modules @{ ModuleName=&quot;Hyper-V&quot;; MaximumVersion=&quot;1.1&quot; }
+```
+
+の任意のバージョンを要求します.`PSScheduledJob`そして,`PSWorkflow`, がインストールされています.
+
+```powershell
+#Requires -Modules PSWorkflow, PSScheduledJob
+```
+
+ を使ったときに`RequiredVersion`キーで,バージョンの文字列が,あなたが要求したいバージョンの文字列に正確に一致することを確認してください.
+
+```powershell
+Get-Module Hyper-V
+```
+
+```Output
+ModuleType Version    Name     ExportedCommands
+---------- -------    ----     ------------------
+Binary     2.0.0.0    hyper-v  {Add-VMAssignableDevice, ...}
+```
+
+次の例は失敗する,なぜなら **2.0.0**は **2.0.0.0**とまったく一致していないからです.
+
+```powershell
+#Requires -Modules @{ ModuleName=&quot;Hyper-V&quot;; RequiredVersion=&quot;2.0.0&quot; }
+```
+
+#### -PSEdition \&lt;PSEdition-Name\&gt;
+
+スクリプトが要求するPowerShell版を指定します.有効な値は,PowerShellの **Core**とWindows PowerShellの **Desktop**です.
+
+例えば:
+
+```powershell
+#Requires -PSEdition Core
+```
+
+#### -シェルド
+
+スクリプトが要求するシェルを指定します.シェルIDを入力します. **ShellId** パラメータを使用する場合, **PSSnapin** パラメータも含まれなければなりません.  を問い合わせることで現在の **ShellId** を見つけることができます.`$ShellId`自動変数です.
+
+例えば:
+
+```powershell
+#Requires -ShellId MyLocalShell -PSSnapin Microsoft.PowerShell.Core
+```
+
+&gt; [!NOTE] &gt; このパラメータは,使用済みミニ殻に使用されるため.
+
+#### -RunAsAdministratorを実行する
+
+このときのときのとき`[switch]`パラメータがあなたのパラメータに追加されます.`#Requires`スクリプトを実行しているPowerShellセッションは,ユーザー権利が高く起動しなければならないと指定している. **RunAsAdministrator**のパラメータは,Windows以外のオペレーティングシステムでは無視されます. **RunAsAdministrator**のパラメータはPowerShell 4.0.で導入されました.
+
+例えば:
+
+```powershell
+#Requires -RunAsAdministrator
+```
+
+### 例文
+
+次の脚本には2つの文字があります.`#Requires`記述.両記述で指定された要件が満たされない場合は,スクリプトが実行されない.それぞれ `#Requires`文は,列の最初の項目のいずれかである必要があります:
+
+```powershell
+#Requires -Modules PSWorkflow
+#Requires -Version 3
+param
+(
+    [Parameter(Mandatory=$true)]
+    [string[]]
+    $Path
+)
+...
+```
+
+## また, を参照してください.
+
+[about_Automatic_Variables] ((about_Automatic_Variables.md) - [about_Language_Keywords] ((about_Language_Keywords.md) - [about_PSSnapins] ((about_PSSnapins.md) - [Get-PSSnapin] (xref:Microsoft.PowerShell.Core.Get-PSSnapin)
+###英語原文###
+# about_Requires
+
+## Short description
+
+Prevents a script from running without the required elements.
+
+## Long description
+
+The `#Requires` statement prevents a script from running unless the PowerShell
+version, modules (and version), and edition prerequisites are met. If the
+prerequisites aren&#x27;t met, PowerShell doesn&#x27;t run the script or provide other
+runtime features, such as tab completion.
+
+### Syntax
+
+```
+#Requires -Version &lt;N&gt;[.&lt;n&gt;]
+#Requires -PSSnapin &lt;PSSnapin-Name&gt; [-Version &lt;N&gt;[.&lt;n&gt;]]
+#Requires -Modules { &lt;Module-Name&gt; | &lt;Hashtable&gt; }
+#Requires -PSEdition &lt;PSEdition-Name&gt;
+#Requires -ShellId &lt;ShellId&gt; -PSSnapin &lt;PSSnapin-Name&gt; [-Version &lt;N&gt;[.&lt;n&gt;]]
+#Requires -RunAsAdministrator
+```
+
+For more information about the syntax, see
+[ScriptRequirements](/dotnet/api/system.management.automation.language.scriptrequirements).
+
+### Rules for use
+
+A script can include more than one `#Requires` statement. The `#Requires`
+statements can appear on any line in a script.
+
+Placing a `#Requires` statement inside a function doesn&#x27;t limit its scope. All
+`#Requires` statements are always applied globally, and must be met, before the
+script can execute.
+
+&gt; [!WARNING]
+&gt; Even though a `#Requires` statement can appear on any line in a script, its
+&gt; position in a script doesn&#x27;t affect the sequence of its application. The
+&gt; global state the `#Requires` statement presents must be met before script
+&gt; execution.
+
+Example:
+
+```powershell
+Get-Module AzureRM.Netcore | Remove-Module
+#Requires -Modules AzureRM.Netcore
+```
+
+You might think that the above code shouldn&#x27;t run because the required module
+was removed before the `#Requires` statement. However, the `#Requires` state
+had to be met before the script could even execute. Then the first line of the
+script invalidated the required state.
+
+### Parameters
+
+#### -Assembly \&lt;Assembly path&gt; | \&lt;.NET assembly specification&gt;
+
+&gt; [!IMPORTANT]
+&gt; The `-Assembly` syntax is deprecated. It serves no function. The syntax was
+&gt; added in PowerShell 5.1 but the supporting code was never implemented. The
+&gt; syntax is still accepted for backward compatibility.
+
+Specifies the path to the assembly DLL file or a .NET assembly name. The
+**Assembly** parameter was introduced in PowerShell 5.0. For more information
+about .NET assemblies, see [Assembly names](/dotnet/standard/assembly/names).
+
+For example:
+
+```
+#Requires -Assembly path\to\foo.dll
+```
+
+```
+#Requires -Assembly &quot;System.Management.Automation, Version=3.0.0.0,
+  Culture=neutral, PublicKeyToken=31bf3856ad364e35&quot;
+```
+
+#### -Version \&lt;N\&gt;[.\&lt;n\&gt;]
+
+Specifies the minimum version of PowerShell that the script requires. Enter a
+major version number and optional minor version number.
+
+For example:
+
+```powershell
+#Requires -Version 5.1
+```
+
+#### -PSSnapin \&lt;PSSnapin-Name\&gt; [-Version \&lt;N\&gt;[.\&lt;n\&gt;]]
+
+Specifies a PowerShell snap-in that the script requires. Enter the snap-in name
+and an optional version number.
+
+For example:
+
+```powershell
+#Requires -PSSnapin DiskSnapin -Version 1.2
+```
+
+#### -Modules \&lt;Module-Name\&gt; | \&lt;Hashtable\&gt;
+
+Specifies PowerShell modules that the script requires. Enter the module name
+and an optional version number.
+
+If the required modules aren&#x27;t in the current session, PowerShell imports them.
+If the modules can&#x27;t be imported, PowerShell throws a terminating error.
+
+The `#Requires` statement doesn&#x27;t load class and enumeration definitions in the
+module. Use the `using module` statement at the beginning of your script to
+import the module, including the class and enumeration definitions. For more
+information, see [about_Using](about_Using.md).
+
+For each module, type the module name (\&lt;String\&gt;) or a hashtable. The value
+can be a combination of strings and hashtables. The hashtable has the
+following keys.
+
+- `ModuleName` - **Required** Specifies the module name.
+- `GUID` - **Optional** Specifies the GUID of the module.
+- It&#x27;s also **Required** to specify at least one of the three below keys.
+  - `ModuleVersion` - Specifies a minimum acceptable version of the module.
+  - `MaximumVersion` - Specifies the maximum acceptable version of the module.
+  - `RequiredVersion` - Specifies an exact, required version of the module.
+    This can&#x27;t be used with the other Version keys.
+
+&gt; [!NOTE]
+&gt; `RequiredVersion` was added in Windows PowerShell 5.0.
+&gt; `MaximumVersion` was added in Windows PowerShell 5.1.
+
+For example:
+
+Require that `Hyper-V` (version `1.1` or greater) is installed.
+
+```powershell
+#Requires -Modules @{ ModuleName=&quot;Hyper-V&quot;; ModuleVersion=&quot;1.1&quot; }
+```
+
+Requires that `Hyper-V` (**only** version `1.1`) is installed.
+
+```powershell
+#Requires -Modules @{ ModuleName=&quot;Hyper-V&quot;; RequiredVersion=&quot;1.1&quot; }
+```
+
+Requires that `Hyper-V` (version `1.1` or lesser) is installed.
+
+```powershell
+#Requires -Modules @{ ModuleName=&quot;Hyper-V&quot;; MaximumVersion=&quot;1.1&quot; }
+```
+
+Requires that any version of `PSScheduledJob` and `PSWorkflow`, is installed.
+
+```powershell
+#Requires -Modules PSWorkflow, PSScheduledJob
+```
+
+When using the `RequiredVersion` key, ensure your version string exactly matches
+the version string you wish to require.
+
+```powershell
+Get-Module Hyper-V
+```
+
+```Output
+ModuleType Version    Name     ExportedCommands
+---------- -------    ----     ------------------
+Binary     2.0.0.0    hyper-v  {Add-VMAssignableDevice, ...}
+```
+
+The following example fails because **2.0.0** doesn&#x27;t exactly match
+**2.0.0.0**.
+
+```powershell
+#Requires -Modules @{ ModuleName=&quot;Hyper-V&quot;; RequiredVersion=&quot;2.0.0&quot; }
+```
+
+#### -PSEdition \&lt;PSEdition-Name\&gt;
+
+Specifies a PowerShell edition that the script requires. Valid values are
+**Core** for PowerShell and **Desktop** for Windows PowerShell.
+
+For example:
+
+```powershell
+#Requires -PSEdition Core
+```
+
+#### -ShellId
+
+Specifies the shell that the script requires. Enter the shell ID. If you use
+the **ShellId** parameter, you must also include the **PSSnapin** parameter.
+You can find the current **ShellId** by querying the `$ShellId` automatic
+variable.
+
+For example:
+
+```powershell
+#Requires -ShellId MyLocalShell -PSSnapin Microsoft.PowerShell.Core
+```
+
+&gt; [!NOTE]
+&gt; This parameter is intended for use in mini-shells, which have been deprecated.
+
+#### -RunAsAdministrator
+
+When this `[switch]` parameter is added to your `#Requires` statement, it
+specifies that the PowerShell session in which you&#x27;re running the script must
+be started with elevated user rights. The **RunAsAdministrator** parameter is
+ignored on a non-Windows operating system. The **RunAsAdministrator** parameter
+was introduced in PowerShell 4.0.
+
+For example:
+
+```powershell
+#Requires -RunAsAdministrator
+```
+
+### Examples
+
+The following script has two `#Requires` statements. If the requirements
+specified in both statements aren&#x27;t met, the script doesn&#x27;t run. Each
+`#Requires` statement must be the first item on a line:
+
+```powershell
+#Requires -Modules PSWorkflow
+#Requires -Version 3
+param
+(
+    [Parameter(Mandatory=$true)]
+    [string[]]
+    $Path
+)
+...
+```
+
+## See also
+
+- [about_Automatic_Variables](about_Automatic_Variables.md)
+- [about_Language_Keywords](about_Language_Keywords.md)
+- [about_PSSnapins](about_PSSnapins.md)
+- [Get-PSSnapin](xref:Microsoft.PowerShell.Core.Get-PSSnapin)
+###Microsoft Learn URL###
+https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_requires/?view=powershell-5.1
+</pre></html>

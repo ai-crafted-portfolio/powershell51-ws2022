@@ -1,0 +1,479 @@
+<!doctype html><html lang="ja"><meta charset="utf-8"><pre class="record-source">###KnowledgeNo###
+PS51-WS2022-2026-3655
+###FormatID###
+PS51-WS2022
+###CreatedAt###
+2026-08-01 00:00
+###UpdatedAt###
+2026-08-01 00:00
+###タイトル###
+Disable-PSSessionConfiguration
+###モジュール###
+Microsoft.PowerShell.Core
+###製品###
+Windows PowerShell 5.1
+###対応OS###
+Windows Server 2022
+###日本語訳###
+# Disable-PSSessionConfiguration を消す
+
+## SYNOPSISは,ローカルコンピュータのセッション設定を無効にする.
+
+## SYNTAXは,のシンタックスです.
+
+```
+Disable-PSSessionConfiguration [[-Name] &lt;String[]&gt;] [-Force] [-NoServiceRestart] [-WhatIf] [-Confirm]
+ [&lt;CommonParameters&gt;]
+```
+
+## 記述は,
+
+   `Disable-PSSessionConfiguration`cmdlet は,ローカルコンピュータのセッション設定を無効にし,すべてのユーザーがセッション設定を使用してローカルコンピュータでユーザー管理のセッション (**PSSessions**) を作成することを妨げます.これはシステム管理者がユーザー向けのカスタマイズされたセッション設定を管理するために使用するように設計された高度な cmdletです.
+
+PowerShell 3.0で起動すると,`Disable-PSSessionConfiguration`cmdlet はセッション設定の **Enabled**設定を設定します ()`WSMan:\localhost\Plugins\&lt;SessionConfiguration&gt;\Enabled`) を偽りにする.
+
+PowerShell 2.0では,その  を`Disable-PSSessionConfiguration`cmdlet は,登録されたセッション構成の1つまたは複数のセキュリティ記述器に **Deny_All** エントリを追加します.
+
+パラメータなしでは,`Disable-PSSessionConfiguration`セッションに使用されるデフォルト設定である **Microsoft.PowerShell**設定を無効にする.ユーザーが異なる設定を指定しない限り,ローカルとリモートユーザはコンピュータに接続するセッションを作成できなくなります.
+
+コンピュータ上のすべてのセッション設定を無効にするには,  を使います.`Disable-PSRemoting` .
+
+## 例えは,
+
+### 例1: デフォルト設定を無効にします.
+
+この例では,Microsoft.PowerShell**セッション設定を無効にする.
+
+```powershell
+Disable-PSSessionConfiguration
+```
+
+### 例2:すべての登録セッション設定を無効にします.
+
+この例では,コンピュータの登録されたセッション構成をすべて無効にします.
+
+```powershell
+Disable-PSSessionConfiguration -Name *
+```
+
+### 例3: 名前によってセッション構成を無効にします
+
+この例では,第1から始まる名前を持つすべてのセッション設定を無効にします.`Microsoft`**Force**パラメータは,cmdletからすべてのユーザープロンプトを削除します.
+
+```powershell
+Disable-PSSessionConfiguration -Name Microsoft* -Force
+```
+
+### 例4:パイプラインを使ってセッション設定を無効にします
+
+この例では **MaintenanceShell** と **AdminShell** のセッション設定を無効にする.パイプラインオペレーターは ()`|`) は, a の結果を送信します.`Get-PSSessionConfiguration`へ`Disable-PSSessionConfiguration` .
+
+```powershell
+Get-PSSessionConfiguration -Name MaintenanceShell, AdminShell | Disable-PSSessionConfiguration
+```
+
+### 例5:セッション設定を無効にする効果
+
+この例では,実行前の許可と実行後の許可を示しています.`Disable-PSSessionConfiguration`セッション設定を無効にする効果もありました.
+
+```
+PS&gt; Get-PSSessionConfiguration | Format-Table -Property Name, Permission -Auto
+
+Name                   Permission
+----                   ----------
+MaintenanceShell       BUILTIN\Administrators AccessAllowed
+microsoft.powershell   BUILTIN\Administrators AccessAllowed
+microsoft.powershell32 BUILTIN\Administrators AccessAllowed
+
+PS&gt; Disable-PSSessionConfiguration -Name MaintenanceShell -Force
+PS&gt; Get-PSSessionConfiguration | Format-Table -Property Name, Permission -Auto
+
+Name                   Permission
+----                   ----------
+MaintenanceShell       Everyone AccessDenied, BUILTIN\Administrators AccessAllowed
+microsoft.powershell   BUILTIN\Administrators AccessAllowed
+microsoft.powershell32 BUILTIN\Administrators AccessAllowed
+
+PS&gt; New-PSSession -ComputerName localhost -ConfigurationName MaintenanceShell
+
+[localhost] Connecting to remote server failed with the following error message : Access is denied.
+For more information, see the about_Remote_Troubleshooting Help topic.
++ CategoryInfo          : OpenError: (System.Manageme....RemoteRunspace:RemoteRunspace) [], PSRemotingTransportException
++ FullyQualifiedErrorId : PSSessionOpenFailed
+```
+
+&gt; [!NOTE] &gt;設定を無効にするには,設定を変更する際には,設定を無効にするにはならない.`Set-PSSessionConfiguration`cmdlet. これは構成の使用を妨げているだけです.
+
+## パラメータは
+
+### -フォース
+
+ユーザの確認を要求せずにコマンドを実行するように強制します.
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -名字は
+
+禁用するセッション設定の名前配列を指定します.一つ以上の設定名を入力します.ワイルドカード文字が許可されています.また,設定名を含む文字列またはセッション設定オブジェクトを  にパイプすることができます.`Disable-PSSessionConfiguration` .
+
+このパラメータを省略すると,`Disable-PSSessionConfiguration`**Microsoft.PowerShell**セッション設定を無効にする.
+
+```yaml
+Type: System.String[]
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: 0
+Default value: None
+Accept pipeline input: True (ByPropertyName, ByValue)
+Accept wildcard characters: True
+```
+
+### -NoServiceRestart サービス再起動は不要です
+
+WSMan サービスの再起動を防ぐために使用されます.設定を無効にするには,サービスを再起動する必要はありません.
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -確認
+
+cmdletを実行する前に確認を提示します.
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases: cf
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -WhatIf
+
+cmdletが実行されなければどうなるかを示しています.
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases: wi
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### 共通パラメーター
+
+このcmdletは,共通パラメータをサポートしています: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable.詳細については, [about_CommonParameters](を参照してください.https://go.microsoft.com/fwlink/?LinkID=113216) でした.
+
+## 輸入は
+
+### Microsoft.PowerShell.Commands.PSSessionConfigurationCommands#PSSessionConfiguration を使用する
+
+セッション構成オブジェクトをこのcmdletにパイプすることができます.
+
+### System.String でした.
+
+セッション設定の名前を含む文字列をこのcmdletにパイプすることができます.
+
+## 輸出は
+
+### どれもない
+
+このcmdletは出力返さない.
+
+##  NOTES  記事ができました.
+
+このcmdletを実行するには,管理者として実行する**オプションを使用してPowerShellを起動する必要があります.
+
+## 関連リンク
+
+[PSSessionConfigurationを有効にする](PSSessionConfiguration.mdを有効にする)
+
+[Get-PSSessionConfiguration](Get-PSSessionConfiguration.md) は,PSセッションの設定を表示しています.
+
+[New-PSSessionConfigurationFile](New-PSSessionConfigurationFile.md) でした.
+
+[PSSessionConfiguration](Register-PSSessionConfiguration.md) 登録する時間
+
+[Set-PSSessionConfiguration](Set-PSSessionConfiguration.md) は,PSセッションの設定を表示しています.
+
+[Test-PSSessionConfigurationFile](Test-PSSessionConfigurationFile.md) でした.
+
+[Unregister-PSSessionConfiguration](Unregister-PSSessionConfiguration.md) は,PSセッションの設定を削除する際に,PSセッションの設定を削除する.
+
+[WSMan Provider](../Microsoft.WsMan.Management/About/about_WSMan_Provider.md) について
+
+[about_Session_Configurations](About/about_Session_Configurations.md) について
+
+[about_Session_Configuration_Files](About/about_Session_Configuration_Files.md) について
+###英語原文###
+# Disable-PSSessionConfiguration
+
+## SYNOPSIS
+Disables session configurations on the local computer.
+
+## SYNTAX
+
+```
+Disable-PSSessionConfiguration [[-Name] &lt;String[]&gt;] [-Force] [-NoServiceRestart] [-WhatIf] [-Confirm]
+ [&lt;CommonParameters&gt;]
+```
+
+## DESCRIPTION
+
+The `Disable-PSSessionConfiguration` cmdlet disables session configurations on the local computer,
+which prevents all users from using the session configurations to create a user-managed sessions
+(**PSSessions**) on the local computer. This is an advanced cmdlet that is designed to be used by
+system administrators to manage customized session configurations for their users.
+
+Starting in PowerShell 3.0, the `Disable-PSSessionConfiguration` cmdlet sets the **Enabled** setting
+of the session configuration (`WSMan:\localhost\Plugins\&lt;SessionConfiguration&gt;\Enabled`) to False.
+
+In PowerShell 2.0, the `Disable-PSSessionConfiguration` cmdlet adds a **Deny_All** entry to the
+security descriptor of one or more registered session configurations.
+
+Without parameters, `Disable-PSSessionConfiguration` disables the **Microsoft.PowerShell**
+configuration, the default configuration used for sessions. Unless the user specifies a different
+configuration, both local and remote users are effectively prevented from creating any sessions that
+connect to the computer.
+
+To disable all session configurations on the computer, use `Disable-PSRemoting`.
+
+## EXAMPLES
+
+### Example 1: Disable the default configuration
+
+This example disables the **Microsoft.PowerShell** session configuration.
+
+```powershell
+Disable-PSSessionConfiguration
+```
+
+### Example 2: Disable all registered session configurations
+
+This example disables all registered session configurations on the computer.
+
+```powershell
+Disable-PSSessionConfiguration -Name *
+```
+
+### Example 3: Disable session configurations by name
+
+This example disables all session configurations that have names that begin with `Microsoft`. The
+**Force** parameter suppresses all user prompts from the cmdlet.
+
+```powershell
+Disable-PSSessionConfiguration -Name Microsoft* -Force
+```
+
+### Example 4: Disable session configurations by using the pipeline
+
+This example disables the **MaintenanceShell** and **AdminShell** session configurations. The
+pipeline operator (`|`) sends the results of a `Get-PSSessionConfiguration` to
+`Disable-PSSessionConfiguration`.
+
+```powershell
+Get-PSSessionConfiguration -Name MaintenanceShell, AdminShell | Disable-PSSessionConfiguration
+```
+
+### Example 5: Effects of disabling a session configuration
+
+This example shows the permissions before and after running `Disable-PSSessionConfiguration` and the
+effect of disabling a session configuration.
+
+```
+PS&gt; Get-PSSessionConfiguration | Format-Table -Property Name, Permission -Auto
+
+Name                   Permission
+----                   ----------
+MaintenanceShell       BUILTIN\Administrators AccessAllowed
+microsoft.powershell   BUILTIN\Administrators AccessAllowed
+microsoft.powershell32 BUILTIN\Administrators AccessAllowed
+
+PS&gt; Disable-PSSessionConfiguration -Name MaintenanceShell -Force
+PS&gt; Get-PSSessionConfiguration | Format-Table -Property Name, Permission -Auto
+
+Name                   Permission
+----                   ----------
+MaintenanceShell       Everyone AccessDenied, BUILTIN\Administrators AccessAllowed
+microsoft.powershell   BUILTIN\Administrators AccessAllowed
+microsoft.powershell32 BUILTIN\Administrators AccessAllowed
+
+PS&gt; New-PSSession -ComputerName localhost -ConfigurationName MaintenanceShell
+
+[localhost] Connecting to remote server failed with the following error message : Access is denied.
+For more information, see the about_Remote_Troubleshooting Help topic.
++ CategoryInfo          : OpenError: (System.Manageme....RemoteRunspace:RemoteRunspace) [], PSRemotingTransportException
++ FullyQualifiedErrorId : PSSessionOpenFailed
+```
+
+&gt; [!NOTE]
+&gt; Disabling the configuration does not prevent you from changing the configuration using the
+&gt; `Set-PSSessionConfiguration` cmdlet. It only prevents use of the configuration.
+
+## PARAMETERS
+
+### -Force
+
+Forces the command to run without asking for user confirmation.
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Name
+
+Specifies an array of names of session configurations to disable. Enter one or more configuration
+names. Wildcard characters are permitted. You can also pipe a string that contains a configuration
+name or a session configuration object to `Disable-PSSessionConfiguration`.
+
+If you omit this parameter, `Disable-PSSessionConfiguration` disables the **Microsoft.PowerShell**
+session configuration.
+
+```yaml
+Type: System.String[]
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: 0
+Default value: None
+Accept pipeline input: True (ByPropertyName, ByValue)
+Accept wildcard characters: True
+```
+
+### -NoServiceRestart
+
+Used to prevent the restart of the WSMan service. It is not necessary to restart the service to
+disable the configuration.
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Confirm
+
+Prompts you for confirmation before running the cmdlet.
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases: cf
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -WhatIf
+
+Shows what would happen if the cmdlet runs. The cmdlet is not run.
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases: wi
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### CommonParameters
+
+This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable,
+-InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose,
+-WarningAction, and -WarningVariable. For more information, see
+[about_CommonParameters](https://go.microsoft.com/fwlink/?LinkID=113216).
+
+## INPUTS
+
+### Microsoft.PowerShell.Commands.PSSessionConfigurationCommands#PSSessionConfiguration
+
+You can pipe a session configuration object to this cmdlet.
+
+### System.String
+
+You can pipe a string that contains the name of a session configuration to this cmdlet.
+
+## OUTPUTS
+
+### None
+
+This cmdlet returns no output.
+
+## NOTES
+
+To run this cmdlet you must start PowerShell by using the **Run as administrator** option.
+
+## RELATED LINKS
+
+[Enable-PSSessionConfiguration](Enable-PSSessionConfiguration.md)
+
+[Get-PSSessionConfiguration](Get-PSSessionConfiguration.md)
+
+[New-PSSessionConfigurationFile](New-PSSessionConfigurationFile.md)
+
+[Register-PSSessionConfiguration](Register-PSSessionConfiguration.md)
+
+[Set-PSSessionConfiguration](Set-PSSessionConfiguration.md)
+
+[Test-PSSessionConfigurationFile](Test-PSSessionConfigurationFile.md)
+
+[Unregister-PSSessionConfiguration](Unregister-PSSessionConfiguration.md)
+
+[WSMan Provider](../Microsoft.WsMan.Management/About/about_WSMan_Provider.md)
+
+[about_Session_Configurations](About/about_Session_Configurations.md)
+
+[about_Session_Configuration_Files](About/about_Session_Configuration_Files.md)
+###Microsoft Learn URL###
+https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.core/disable-pssessionconfiguration/?view=powershell-5.1
+</pre></html>

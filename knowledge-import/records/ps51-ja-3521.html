@@ -1,0 +1,579 @@
+<!doctype html><html lang="ja"><meta charset="utf-8"><pre class="record-source">###KnowledgeNo###
+PS51-WS2022-2026-3521
+###FormatID###
+PS51-WS2022
+###CreatedAt###
+2026-08-01 00:00
+###UpdatedAt###
+2026-08-01 00:00
+###タイトル###
+about_Command_Precedence
+###モジュール###
+Microsoft.PowerShell.Core
+###製品###
+Windows PowerShell 5.1
+###対応OS###
+Windows Server 2022
+###日本語訳###
+# 命令先制について_命令先制について
+
+## 短編説明
+
+PowerShellで実行するコマンドを決める方法を説明します.
+
+## 長い説明
+
+命令優先は,セッションが同じ名前を持つコマンドを複数含むときに,どのコマンドを実行するかPowerShellで決定する方法を説明します.セッション内のコマンドは,同じ名前を持つコマンドで隠され,または置き換えることができます.この記事では,隠されたコマンドを実行する方法とコマンド名との衝突を避ける方法を示します.
+
+## コマンド優先順位
+
+PowerShellセッションが同じ名前を持つコマンドを複数含む場合,PowerShellは以下のルールを使用してどのコマンドを実行するか判断します.
+
+命令へのパスを選択すると,PowerShellでコマンドがパスで指定された場所に実行されます.
+
+例えば,次のコマンドは, FindDocs.ps1 スクリプトを  で実行します.`C:\TechDocs`ディレクトリ:
+
+```powershell
+C:\TechDocs\FindDocs.ps1
+```
+
+セキュリティ機能として,PowerShellは,PowerShell スクリプトやネイティブコマンドを含む実行可能なコマンドを実行しません.そのコマンドは,  に記載されているパス内に位置しない限り.`$Env:PATH`環境の変数.
+
+現在のディレクトリに含まれる実行可能なファイルを実行するには,完全なパス指定するか,相対的なパスを使用してください.`.\`代表する現在のディレクトリです.
+
+例えば,  を実行するには,`FindDocs.ps1`現在のディレクトリ内のファイルは,タイプ:
+
+```powershell
+.\FindDocs.ps1
+```
+
+パースを指定していない場合は,PowerShellはコマンドを実行するときに次の優先順位を使用します.
+
+1.アライアス 1.機能 1.Cmdlet ([Cmdlet name resolution][05]参照) 1.外部実行可能なファイル (PowerShell スクリプトファイルを含む) 
+
+したがって,入力すると,`help`PowerShell は最初に,名前の別名を探しています.`help`という関数です.`help`そして最後に,cmdlet と呼ばれる.`help`実行する最初の `help`発見したアイテムです.
+
+たとえば,セッションにcmdletと関数が含まれている場合,どちらも名前の`Get-Map`を入力すると,`Get-Map`,PowerShellで関数を実行します.
+
+&gt; [!NOTE] &gt; これは,読み込みされたコマンドにのみ適用されます.`build`実行可能と &gt;   `build`という名前を持つ関数についてです.`Invoke-Build`現在のセッションに読み込まれていないモジュール &gt; の内部では,PowerShellで  を実行します.`build`&gt;実行可能ではなく,外部 &gt;実行可能が見つかったら,モジュールを自動ロードしない.外部&gt;実行可能が見つからない場合にのみ,名前付属のアライス, &gt;関数,またはCMdletが呼び出される.
+
+## 同じ名前を持つアイテムを解決する
+
+これらのルールにより,アイテムが同じ名前を持つアイテムで置き換えられ,隠されることもできます.
+
+項目名は,元項目にアクセスできても,例えば,項目の名前をモジュール名で指定することで, _hidden_または _shadowed_ になっている.
+
+例えば,セッションで cmdlet と同じ名前を持つ関数を輸入すると, cmdlet は _hidden_ で,交換されない.そのモジュールに適した名前を指定することで, cmdlet を実行できます.
+
+項目が _replaced_または _overwritten_になったとき,元の項目へのアクセスができません.
+
+例えば,セッションで変数と同じ名前を持つ変数を輸入すると,元の変数は交換されます. 変数をモジュール名で資格付けすることはできません.
+
+コマンドラインで関数を作成し,同じ名前で関数を輸入すると,元の関数は置き換えられます.
+
+## 隠されたコマンドを検索
+
+[Get-Command][10] cmdletのAll**パラメータは,すべてのコマンドが指定された名前で,隠されたり,置き換えられたりであっても,すべて表示されます.PowerShell 3.0から,デフォルトでは, `Get-Command`命令名を入力すると実行されるコマンドのみが表示されます.
+
+次の例では,セッションには,が含まれる.`Get-Date`機能と[Get-Date][14] cmdlet を使用できます.`Get-Command`どちらのコマンドが最初に選択されているかを判断します.
+
+```powershell
+Get-Command Get-Date
+```
+
+```Output
+CommandType     Name                      ModuleName
+-----------     ----                      ----------
+Function        Get-Date
+```
+
+リストの利用可能な要素を表示するには **All**パラメータを使用します.`Get-Date`命令です.
+
+```powershell
+Get-Command Get-Date -All
+```
+
+```Output
+CommandType     Name                 Version    Source
+-----------     ----                 -------    ------
+Function        Get-Date
+Cmdlet          Get-Date             3.1.0.0    Microsoft.PowerShell.Utility
+```
+
+```powershell
+Get-Command where -All
+```
+
+```Output
+CommandType Name                     Version      Source
+----------- ----                     -------      ------
+Alias       where -&gt; Where-Object
+Application where.exe                10.0.22621.1 C:\Windows\system32\where.exe
+```
+
+特定のコマンドを実行するには,コマンドを同じ名前を持つ他のコマンドから区別する資格情報を追加します.cmdletsでは,モジュール資格の名前を使用できます.実行可能な場合は,ファイル拡張子を含みます.例えば,実行可能なバージョンの を実行するには,実行可能なバージョンの を実行します.`where` use use を使用する`where.exe` .
+
+### 模組資格の名前を使用します
+
+模組の指定されたCMDletの名前を使用すると,同じ名前を持つアイテムによって隠されたコマンドを実行できます.例えば, を実行できます.`Get-Date`模組名 **Microsoft.PowerShell.Utility**またはそのパスで,cmdletを資格化することで,その模組名 **Microsoft.PowerShell.Utility**またはそのパスで,その模組を資格化した名前を使用すると,その模組は, [] の値に応じて自動的にセッションに輸入されることがあります.`$PSModuleAutoLoadingPreference`][03]. ] ]
+
+&gt; [!NOTE] &gt; 変数や異名を指定するためにモジュール名を使用することはできません.
+
+モジュールに適した名前を使うことで,実行する意図のあるコマンドを実行していることを確認できます.これは,配布する意図のあるスクリプトを書くときにCMdletを呼び出す推奨方法です.
+
+次の例では,そのモジュール名を含めてコマンドを資格化する方法を示しています.
+
+&gt;!IMPORTANT] &gt; モジュール資格はバックスラッシュ文字を使用します ()`\`) は,プラットフォームに関係なく, &gt; モジュール名とコマンド名を分離します.
+
+```powershell
+New-Alias -Name &quot;Get-Date&quot; -Value &quot;Get-ChildItem&quot;
+Microsoft.PowerShell.Utility\Get-Date
+```
+
+```Output
+Tuesday, May 16, 2023 1:32:51 PM
+```
+
+を走らせるために`New-Map`コマンドから`MapFunctions`模組は,その模組資格の名前を使用します:
+
+```powershell
+MapFunctions\New-Map
+```
+
+コマンドが輸入されたモジュールを見つけるには,コマンドの **ModuleName** 属性を使用してください.
+
+```
+(Get-Command &lt;command-name&gt;).ModuleName
+```
+
+例えば,  の源を調べるため`Get-Date`cmdlet,タイプ:
+
+```powershell
+(Get-Command Get-Date).ModuleName
+```
+
+```Output
+Microsoft.PowerShell.Utility
+```
+
+モジュールへのパスを使用してコマンド名を資格にしたい場合は,前向きのスラッシュ () を使用する必要があります.`/`) を経路分離器とバックスラッシュ文字として () 指定します.`\`) がコマンド名前に表示されます.次の例を使って  を実行します.`Get-Date`cmdlet:
+
+```powershell
+//localhost/c$/Progra~1/PowerShell/7-preview/Modules/Microsoft.PowerShell.Utility\Get-Date
+```
+
+パスはフルパースまたは現在の位置に相対的なパースである可能性があります.Windowsでは,ドライブ合格のパースを使用することはできません.前例のようにUNCパースを使用する必要があります.または現在のドライブに相対的なパースを使用します.次の例では,現在の位置が に位置していると仮定します.`C:`ドライブです.
+
+```powershell
+/Progra~1/PowerShell/7-preview/Modules/Microsoft.PowerShell.Utility\Get-Date
+```
+
+# 命令先制について_命令先制について
+
+### コール・オペレータを活用する
+
+また,コールオペレーター () も使えます.`&amp;`隠されたコマンドを実行するには, [Get-ChildItem]への呼び出しと組み合わせて[13] (仮名は です).`dir`), `Get-Command`or [Get-Module][11].
+
+コールオペレータは,子供範囲で文字列とスクリプトブロックを実行します.詳細については,[about_Operators][08]を参照してください.
+
+例えば,次のコマンドを使用して, という関数を実行します.`Map`という名前の隠れ字によって隠されている.`Map` .
+
+```powershell
+&amp; (Get-Command -Name Map -CommandType Function)
+```
+
+         
+
+```powershell
+&amp; (dir Function:\map)
+```
+
+また,隠されたコマンドを変数に保存して実行を楽にする.
+
+例えば,次のコマンドは,  を保存します.`Map`関数における関数です.`$myMap`変数を使って変数を変数します.`Call`実行する操作員です.
+
+```powershell
+$myMap = (Get-Command -Name map -CommandType Function)
+&amp; ($myMap)
+```
+
+## 置き換え物件
+
+_replaced_ itemは,もうアクセスできないもの. 単位のアイテムをモジュールから輸入することでアイテムを交換できます.
+
+例えば,もしあなたが&quot;&quot;を入力した場合,`Get-Map`セッションで関数があり, という関数を輸入します.`Get-Map`元の関数を置き換える.現在のセッションでは取り戻すことはできません.
+
+変数と偽名には隠れられない,なぜなら,呼び出しオペレーターや資格のある名前を使えないので,実行できない. モデルの変数と偽名を輸入すると,同じ名前でセッション中の変数を置き換える.
+
+## Cmdlet name resolution を表示する
+
+合格したCMDletの名前を使用していない場合,PowerShellは当時のセッションでCMDletがロードされているかどうかを確認します.同じCMDletの名前を含む複数のモジュールがロードされている場合,PowerShellはアルファベット順で発見された最初のモジュールからCMDletを使用します.
+
+もしcmdletが読み込まれていない場合は,PowerShellはインストールされたモジュールで検索し,cmdletを含む最初のモジュールを自動読み込み,そのcmdletを実行します.PowerShellは,cmdletで定義された各経路のモジュールを探します.`$Env:PSModulePath`変数. 経路は変数に記載されている順で検索されます. 各経路内で,モジュールがアルファベティ順で検索されます. PowerShell は最初に見つけた環境のcmdlet を使用します.
+
+## 名前衝突を避ける
+
+コマンド名紛争を管理する最善の方法は,それらを防ぐことです.コマンドに名前をつける際には,ユニークな名前を使用してください.例えば,コマンドの名詞に初期文字や会社名略名を追加してください.
+
+PowerShell モジュールからまたは別のセッションから命令をセッションに輸入する際には,  を使えます.`Prefix`[インポートモジュール][12]または [インポートPSセッション][15] cmdletのパラメータで,コマンド名前の名詞に前文を追加します.
+
+例えば,次のコマンドは,  と衝突を回避します.`Get-Date`そして,`Set-Date`を輸入するときにPowerShellで付いているcmdlets.`DateFunctions`模組.
+
+```powershell
+Import-Module -Name DateFunctions -Prefix ZZ
+```
+
+## 外部実行可能なものを実行します.
+
+Windows では,PowerShell で,ファイル拡張子は,  のリストに記載されている.`$Env:PATHEXT`Windows の実行可能なファイルとして変数される.Windows の実行可能なファイルでないファイルは,処理するために Windows に渡される.Windows はファイル関連を検索し,拡張子のためのデフォルト Windows Shell 動詞を実行します.Windows がファイル拡張子による実行をサポートするためには,関連はシステムで登録する必要があります.
+
+実行可能なエンジンをファイル拡張子に登録できるのは,  を使ってです.`ftype`そして,`assoc`PowerShell ではファイル管理者を登録する直接方法はない.詳細については[ftype][04]コマンドのドキュメントを参照してください.
+
+PowerShellでファイル拡張子が現在のセッションで実行可能であることを表示するには,拡張子を&quot;&quot;に追加する必要があります.`$Env:PATHEXT`環境の変数.
+
+## また, を参照してください.
+
+- [about_Aliases][06] - [about_Functions][07] - [about_Path_Syntax][09] - [Alias-Provider][01] - [Function-Provider][02] - [Get-Command][10] - [Import-Module][12] - [Import-PSSession][15]
+
+リンク参照 --&gt; [01]: ./about_Alias_Provider.md [02]: ./about_Function_Provider.md [03]: ./about_Path_Syntax.md#psmoduleautoloadingpreference [04]: /windows-server/administration/windows-commands/ftype [05]: #cmdlet-name-resolution [06]: about_Aliases.md [07]: about_Functions.md [08]: about_Operators.md [09]: about_Path_Syntax. [10]: x: Microsoft.PowerShell.Core.Get-Command [11]: x: Microsoft.PowerShell.Core.Get-Module [12]: xShell.Import.PowerShell.PowerCore.md: x:Shell.Shell.Shell.Shell.Shell.Shell:X:X:X:X:X:X:X:X:X:X:X:X:X:X:X:X:X:X:X:X:X:X:X:X:X:X:X:X:X:X:X:X:X:X:X:X:X:X:X:X:X:X:X:X:X:X:X:X:X:X:X:X:X:X:X:X:X:X:X:X:X:X:X:X:X:X:X:X:X:X:X:X:X:X:X:X:X:X:X:X:X:X:X:X:X:X:X:X:X:X:X:X:X:X:X:X:X:X:X:X:X:X:X:X:X:X:X:X:X:X:X:X:X:X:X:X:X:X:X:X:X:X:X:X:X:X:X:X:X:X:X:X:X:X:X:X:X:X:X:X:X:X:X:X:X:X:X
+###英語原文###
+# about_Command_Precedence
+
+## Short description
+
+Describes how PowerShell determines which command to run.
+
+## Long description
+
+Command precedence describes how PowerShell determines which command to run
+when a session contains more than one command with the same name. Commands
+within a session can be hidden or replaced by commands with the same name. This
+article shows you how to run hidden commands and how to avoid command-name
+conflicts.
+
+## Command precedence
+
+When a PowerShell session includes more than one command that has the same
+name, PowerShell determines which command to run using the following rules.
+
+If you specify the path to a command, PowerShell runs the command at the
+location specified by the path.
+
+For example, the following command runs the FindDocs.ps1 script in the
+`C:\TechDocs` directory:
+
+```powershell
+C:\TechDocs\FindDocs.ps1
+```
+
+You can run any executable command using its full path. As a security feature,
+PowerShell doesn&#x27;t run executable commands, including PowerShell scripts and
+native commands, unless the command is located in a path listed in the
+`$Env:PATH` environment variable.
+
+To run an executable file that&#x27;s in the current directory, specify the full
+path or use the relative path `.\` to represent the current directory.
+
+For example, to run the `FindDocs.ps1` file in the current directory, type:
+
+```powershell
+.\FindDocs.ps1
+```
+
+If you don&#x27;t specify a path, PowerShell uses the following precedence order
+when it runs commands.
+
+1. Alias
+1. Function
+1. Cmdlet (see [Cmdlet name resolution][05])
+1. External executable files (including PowerShell script files)
+
+Therefore, if you type `help`, PowerShell first looks for an alias named
+`help`, then a function named `help`, and finally a cmdlet named `help`. It
+runs the first `help` item that it finds.
+
+For example, if your session contains a cmdlet and a function, both named
+`Get-Map`, when you type `Get-Map`, PowerShell runs the function.
+
+&gt; [!NOTE]
+&gt; This only applies to loaded commands. If there is a `build` executable and an
+&gt; Alias `build` for a function with the name of `Invoke-Build` inside a module
+&gt; that is not loaded into the current session, PowerShell runs the `build`
+&gt; executable instead. It doesn&#x27;t auto-load modules if it finds the external
+&gt; executable. It&#x27;s only when no external executable is found that an alias,
+&gt; function, or cmdlet with the given name is invoked.
+
+## Resolve items with the same names
+
+As a result of these rules, items can be replaced or hidden by items with the
+same name.
+
+Items are _hidden_ or _shadowed_ if you can still access the original item,
+such as by qualifying the item name with a module name.
+
+For example, if you import a function that has the same name as a cmdlet in the
+session, the cmdlet is _hidden_, but not replaced. You can run the cmdlet by
+specifying its module-qualified name.
+
+When items are _replaced_ or _overwritten_, you can no longer access the
+original item.
+
+For example, if you import a variable that has the same name as a variable in
+the session, the original variable is replaced. You can&#x27;t qualify a variable
+with a module name.
+
+If you create a function at the command line and then import a function with
+the same name, the original function is replaced.
+
+## Find hidden commands
+
+The **All** parameter of the [Get-Command][10] cmdlet gets all commands with
+the specified name, even if they&#x27;re hidden or replaced. Beginning in PowerShell
+3.0, by default, `Get-Command` gets only the commands that run when you type
+the command name.
+
+In the following examples, the session includes a `Get-Date` function and a
+[Get-Date][14] cmdlet. You can use `Get-Command` to determine which command is
+chosen first.
+
+```powershell
+Get-Command Get-Date
+```
+
+```Output
+CommandType     Name                      ModuleName
+-----------     ----                      ----------
+Function        Get-Date
+```
+
+Uses the **All** parameter to list available `Get-Date` commands.
+
+```powershell
+Get-Command Get-Date -All
+```
+
+```Output
+CommandType     Name                 Version    Source
+-----------     ----                 -------    ------
+Function        Get-Date
+Cmdlet          Get-Date             3.1.0.0    Microsoft.PowerShell.Utility
+```
+
+```powershell
+Get-Command where -All
+```
+
+```Output
+CommandType Name                     Version      Source
+----------- ----                     -------      ------
+Alias       where -&gt; Where-Object
+Application where.exe                10.0.22621.1 C:\Windows\system32\where.exe
+```
+
+You can run particular commands by including qualifying information that
+distinguishes the command from other commands that might have the same name.
+For cmdlets, you can use the module-qualified name. For executables, you can
+include the file extension. For example, to run the executable version of
+`where` use `where.exe`.
+
+### Use module-qualified names
+
+Using the module-qualified name of a cmdlet allows you to run commands hidden
+by an item with the same name. For example, you can run the `Get-Date` cmdlet
+by qualifying it with its module name **Microsoft.PowerShell.Utility** or its
+path. When you use module-qualified names, the module can be automatically
+imported into the session depending on the value of
+[`$PSModuleAutoLoadingPreference`][03].
+
+&gt; [!NOTE]
+&gt; You can&#x27;t use module names to qualify variables or aliases.
+
+Using module-qualified names ensures that you are running the command that you
+intend to run. This is the recommended method of calling cmdlets when writing
+scripts that you intend to distribute.
+
+The following example illustrates how to qualify a command by including its
+module name.
+
+&gt; [!IMPORTANT]
+&gt; Module qualification uses the backslash character (`\`) to separate the
+&gt; module name from the command name, regardless of the platform.
+
+```powershell
+New-Alias -Name &quot;Get-Date&quot; -Value &quot;Get-ChildItem&quot;
+Microsoft.PowerShell.Utility\Get-Date
+```
+
+```Output
+Tuesday, May 16, 2023 1:32:51 PM
+```
+
+To run a `New-Map` command from the `MapFunctions` module, use its
+module-qualified name:
+
+```powershell
+MapFunctions\New-Map
+```
+
+To find the module from which a command was imported, use the **ModuleName**
+property of commands.
+
+```
+(Get-Command &lt;command-name&gt;).ModuleName
+```
+
+For example, to find the source of the `Get-Date` cmdlet, type:
+
+```powershell
+(Get-Command Get-Date).ModuleName
+```
+
+```Output
+Microsoft.PowerShell.Utility
+```
+
+If you want to qualify the name of the command using the path to the module,
+you must use the forward slash (`/`) as the path separator and the backslash
+character (`\`) before the command name. Use the following example to run the
+`Get-Date` cmdlet:
+
+```powershell
+//localhost/c$/Progra~1/PowerShell/7-preview/Modules/Microsoft.PowerShell.Utility\Get-Date
+```
+
+The path can be a full path or a path that is relative to the current location.
+On Windows, you can&#x27;t use a drive-qualified path. You must use a UNC path, as
+shown in the previous example, or a path that&#x27;s relative to the current drive.
+The following example assumes that your current location is in the `C:` drive.
+
+```powershell
+/Progra~1/PowerShell/7-preview/Modules/Microsoft.PowerShell.Utility\Get-Date
+```
+
+# about_Command_Precedence
+
+### Use the call operator
+
+You can also use the call operator (`&amp;`) to run hidden commands by combining it
+with a call to [Get-ChildItem][13] (the alias is `dir`), `Get-Command` or
+[Get-Module][11].
+
+The call operator executes strings and scriptblocks in a child scope. For more
+information, see [about_Operators][08].
+
+For example, use the following command to run the function named `Map` that&#x27;s
+hidden by an alias named `Map`.
+
+```powershell
+&amp; (Get-Command -Name Map -CommandType Function)
+```
+
+or
+
+```powershell
+&amp; (dir Function:\map)
+```
+
+You can also save your hidden command in a variable to make it easier to run.
+
+For example, the following command saves the `Map` function in the `$myMap`
+variable and then uses the `Call` operator to run it.
+
+```powershell
+$myMap = (Get-Command -Name map -CommandType Function)
+&amp; ($myMap)
+```
+
+## Replaced items
+
+A _replaced_ item is one that you can no longer access. You can replace items
+by importing items of the same name from a module.
+
+For example, if you type a `Get-Map` function in your session, and you import a
+function called `Get-Map`, it replaces the original function. You can&#x27;t
+retrieve it in the current session.
+
+Variables and aliases can&#x27;t be hidden because you can&#x27;t use a call operator or
+a qualified name to run them. When you import variables and aliases from a
+module, they replace variables in the session with the same name.
+
+## Cmdlet name resolution
+
+When you don&#x27;t use the qualified name of a cmdlet, PowerShell checks to see if
+the cmdlet is loaded in the current session. If there are multiple modules
+loaded that contain the same cmdlet name, PowerShell uses the cmdlet from the
+first module found alphabetically.
+
+If the cmdlet isn&#x27;t loaded, PowerShell searches the installed modules and
+autoloads the first module that contains the cmdlet and runs that cmdlet.
+PowerShell searches for modules in each path defined in the `$Env:PSModulePath`
+environment variable. The paths are searched in the order that they&#x27;re listed
+in the variable. Within each path, the modules are searched in alphabetical
+order. PowerShell uses the cmdlet from the first match it finds.
+
+## Avoid name conflicts
+
+The best way to manage command name conflicts is to prevent them. When you name
+your commands, use a unique name. For example, add your initials or company
+name acronym to the nouns in your commands.
+
+When you import commands into your session from a PowerShell module or from
+another session, you can use the `Prefix` parameter of the [Import-Module][12]
+or [Import-PSSession][15] cmdlet to add a prefix to the nouns in the names of
+commands.
+
+For example, the following command avoids any conflict with the `Get-Date` and
+`Set-Date` cmdlets that come with PowerShell when you import the
+`DateFunctions` module.
+
+```powershell
+Import-Module -Name DateFunctions -Prefix ZZ
+```
+
+## Run external executables
+
+On Windows. PowerShell treats the file extensions listed in the `$Env:PATHEXT`
+environment variable as executable files. Files that aren&#x27;t Windows executables
+are handed to Windows to process. Windows looks up the file association and
+executes the default Windows Shell verb for the extension. For Windows to
+support the execution by file extension, the association must be registered
+with the system.
+
+You can register the executable engine for a file extension using the `ftype`
+and `assoc` commands of the CMD command shell. PowerShell has no direct method
+to register the file handler. For more information, see the documentation for
+the [ftype][04] command.
+
+For PowerShell to see a file extension as executable in the current session,
+you must add the extension to the `$Env:PATHEXT` environment variable.
+
+## See also
+
+- [about_Aliases][06]
+- [about_Functions][07]
+- [about_Path_Syntax][09]
+- [Alias-Provider][01]
+- [Function-Provider][02]
+- [Get-Command][10]
+- [Import-Module][12]
+- [Import-PSSession][15]
+
+&lt;!-- link references --&gt;
+[01]: ./about_Alias_Provider.md
+[02]: ./about_Function_Provider.md
+[03]: ./about_preference_variables.md#psmoduleautoloadingpreference
+[04]: /windows-server/administration/windows-commands/ftype
+[05]: #cmdlet-name-resolution
+[06]: about_Aliases.md
+[07]: about_Functions.md
+[08]: about_Operators.md
+[09]: about_Path_Syntax.md
+[10]: xref:Microsoft.PowerShell.Core.Get-Command
+[11]: xref:Microsoft.PowerShell.Core.Get-Module
+[12]: xref:Microsoft.PowerShell.Core.Import-Module
+[13]: xref:Microsoft.PowerShell.Management.Get-ChildItem
+[14]: xref:Microsoft.PowerShell.Utility.Get-Date
+[15]: xref:Microsoft.PowerShell.Utility.Import-PSSession
+###Microsoft Learn URL###
+https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_command_precedence/?view=powershell-5.1
+</pre></html>

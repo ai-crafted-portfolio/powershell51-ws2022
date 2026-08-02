@@ -1,0 +1,872 @@
+<!doctype html><html lang="ja"><meta charset="utf-8"><pre class="record-source">###KnowledgeNo###
+PS51-WS2022-2026-0061
+###FormatID###
+PS51-WS2022
+###CreatedAt###
+2026-08-01 00:00
+###UpdatedAt###
+2026-08-01 00:00
+###タイトル###
+Get-ADUser
+###モジュール###
+activedirectory
+###製品###
+Windows PowerShell 5.1
+###対応OS###
+Windows Server 2022
+###日本語訳###
+# Get-ADUser は,GET-ADUser を使用する
+
+## SYNOPSISは,アクティブディレクトリユーザー1人以上を獲得する.
+
+## SYNTAXは,のシンタックスです.
+
+### フィルター (デフォルト) ```
+Get-ADUser [-AuthType &lt;ADAuthType&gt;] [-Credential &lt;PSCredential&gt;] -Filter &lt;String&gt; [-Properties &lt;String[]&gt;]
+ [-ResultPageSize &lt;Int32&gt;] [-ResultSetSize &lt;Int32&gt;] [-SearchBase &lt;String&gt;] [-SearchScope &lt;ADSearchScope&gt;]
+ [-Server &lt;String&gt;] [&lt;CommonParameters&gt;]
+```
+
+### アイデンティティ```
+Get-ADUser [-AuthType &lt;ADAuthType&gt;] [-Credential &lt;PSCredential&gt;] [-Identity] &lt;ADUser&gt; [-Partition &lt;String&gt;]
+ [-Properties &lt;String[]&gt;] [-Server &lt;String&gt;] [&lt;CommonParameters&gt;]
+```
+
+### LdapFilter ```
+Get-ADUser [-AuthType &lt;ADAuthType&gt;] [-Credential &lt;PSCredential&gt;] -LDAPFilter &lt;String&gt; [-Properties &lt;String[]&gt;]
+ [-ResultPageSize &lt;Int32&gt;] [-ResultSetSize &lt;Int32&gt;] [-SearchBase &lt;String&gt;] [-SearchScope &lt;ADSearchScope&gt;]
+ [-Server &lt;String&gt;] [&lt;CommonParameters&gt;]
+```
+
+## 記述 **Get-ADUser** cmdlet は指定されたユーザーオブジェクトを取得するか,複数のユーザーオブジェクトを取得するために検索を実行します.
+
+*Identity* パラメータは,取得するアクティブディレクトリユーザを指定します.ユーザを識別する際には,その識別子 (DN),GUID,セキュリティ識別子 (SID) またはセキュリティアカウントマネージャ (SAM) のアカウント名によって識別できます.また,そのパラメータをユーザオブジェクト変数に設定できます.例えば,`$&lt;localUserObject&gt;`または,パイプラインを通ってユーザオブジェクトを *Identity* パラメータに転送する.
+
+1人以上のユーザーを検索し,取得するには, *フィルター*または *LDAPFilter* パラメータを使用します. *フィルター* パラメータは,Active Directory のクエリ文字列を書くためにPowerShell エクスペレーション言語を使用します.PowerShell エクスペレーション言語の構文は, *フィルター* パラメータによって受信された値型に対する豊富なタイプ変換サポートを提供します. *フィルター* パラメータ構文についての詳細については,  タイプを入力してください.`Get-Help about_ActiveDirectory_Filter`.既存のLightweight Directory Access Protocol (LDAP) [U+67E5][U+8BE2]文字列を保有している場合は, *LDAPFilter* パラメータを使用できます.
+
+このcmdletでは,ユーザオブジェクトのプロパティのデフォルトセットが取り戻されます.追加のプロパティを取り戻すには, _Properties_パラメータを使用します.ユーザオブジェクトのプロパティをどのように判断するかについての詳細については, _Properties_パラメータ説明を参照してください.
+
+## 例えは
+
+### 例1: 容器にすべてのユーザを集める```powershell
+PS C:\&gt; Get-ADUser -Filter * -SearchBase &quot;OU=Finance,OU=UserAccounts,DC=FABRIKAM,DC=COM&quot;
+```
+
+このコマンドは,OU=Finance,OU=UserAccounts,DC=FABRIKAM,DC=COM コンテナ内のすべてのユーザーを獲得します.
+
+### 例2: ユーザーの一覧をフィルタリングして表示する```powershell
+PS C:\&gt; Get-ADUser -Filter &#x27;Name -like &quot;*SvcAccount&quot;&#x27; | Format-Table Name,SamAccountName -A
+```
+
+```Output
+Name             SamAccountName
+----             --------------
+SQL01 SvcAccount SQL01
+SQL02 SvcAccount SQL02
+IIS01 SvcAccount IIS01
+```
+
+このコマンドは,SvcAccountで終わる名前を持つすべてのユーザーを獲得します.
+
+### 例3:指定されたユーザーに所有するすべてのプロパティを取得します.```powershell
+PS C:\&gt; Get-ADUser -Identity ChewDavid -Properties *
+```
+
+```Output
+Surname           : David
+Name              : Chew David
+UserPrincipalName :
+GivenName         : David
+Enabled           : False
+SamAccountName    : ChewDavid
+ObjectClass       : user
+SID               : S-1-5-21-2889043008-4136710315-2444824263-3544
+ObjectGUID        : e1418d64-096c-4cb0-b903-ebb66562d99d
+DistinguishedName : CN=Chew David,OU=NorthAmerica,OU=Sales,OU=UserAccounts,DC=FABRIKAM,DC=COM
+```
+
+このコマンドは,SAMアカウント名 ChewDavidでユーザーのすべてのプロパティを取得します.
+
+### 例4:指定されたユーザーを取得する```powershell
+PS C:\&gt; Get-ADUser -Filter &quot;Name -eq &#x27;ChewDavid&#x27;&quot; -SearchBase &quot;DC=AppNC&quot; -Properties &quot;mail&quot; -Server lds.Fabrikam.com:50000
+```
+
+このコマンドは,アクティブディレクトリライトウェイトディレクトリサービス (AD LDS) インスタンスの ChewDavid というユーザーに表示されます.
+
+### 例5:すべての有効ユーザーアカウントを入手します.```powershell
+C:\PS&gt; Get-ADUser -LDAPFilter &#x27;(!userAccountControl:1.2.840.113556.1.4.803:=2)&#x27;
+```
+
+このコマンドは,LDAPフィルタを使用して,アクティブディレクトリ内のすべての有効ユーザーアカウントを取得します.
+
+## パラメータは
+
+### -AuthType は,使用する認証方法を指定します.このパラメータの受け入れ可能な値は:です.
+
+- 交渉するまたは0 - 基本または1
+
+デフォルト認証方法は,交渉です.
+
+基本認証方法には,セキュアソケットレイヤ (SSL) 接続が必要となります.
+
+```yaml
+Type: ADAuthType
+Parameter Sets: (All)
+Aliases:
+Accepted values: Negotiate, Basic
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Credential この作業を実行するために使用するユーザーアカウントの認証を指定します.当時はログインしているユーザーに,Cmdlet が Active Directory PowerShell プロバイダードライブから実行されている場合を除き,デフォルトで使用するユーザーアカウントの認証です.
+
+このパラメータを指定するには,ユーザー名,例えば User1 または Domain01\User01 を入力するか,PSCredential** オブジェクトを指定することもできます.このパラメータのユーザー名を指定すると,cmdlet はパスワードを提示します.
+
+また,スクリプトを使用して **PSCredential** オブジェクトを作成したり, **Get-Credential** cmdlet を使用したりできます.その後, **PSCredential** オブジェクトに *Credential* パラメータを設定できます.
+
+実行する認証がタスクを実行するためのディレクトリレベルの許可がない場合,Active Directory PowerShell では終了エラーが返されます.
+
+```yaml
+Type: PSCredential
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+# Get-ADUser は,GET-ADUser を使用する
+
+### -フィルタは,アクティブディレクトリオブジェクトを回収するクエリ文字列を指定します.この文字列はPowerShell エクスペレーション言語の構文を使用します.PowerShell エクスペレーション言語の構文は, *フィルター*パラメータによって受信された値型のための豊富なタイプ変換サポートを提供します.構文は,順序表示を使用します.つまり,オペレータはオペレンドと値の間に配置されます. *フィルター*パラメータについての詳細については,  タイプしてください.`Get-Help about_ActiveDirectory_Filter` .
+
+文法:
+
+次の構文では,このパラメータのためにPowerShell表現言語を使用する方法を示すために,バックス-ナウルフォームを使用します.
+
+::= &quot;{&quot; \&lt;FilterComponentList\&gt; &quot;}&quot;
+
+フィルター構成要素リストは,フィルター構成要素の構成要素を組み合わせて操作する.
+
+\&lt;FilterComponent\&gt; ::= \&lt;attr\&gt; \&lt;FilterOperator\&gt; \&lt;value\&gt; \.\.\.\.\&quot;\&quot;\&quot;&lt;FilterComponent\&gt; &quot;)&quot;
+
+フィルターオペレータは, &quot;-eq&quot; &quot;-le&quot; &quot;-ge&quot; &quot;-ne&quot; &quot;-lt&quot; &quot;-gt&quot; &quot;-approx&quot; &quot;-bor&quot; &quot;-band&quot; &quot;-recursivmatch&quot; &quot;-like&quot; &quot;-notlike&quot;
+
+&lt;&lt;JoinOperator&gt;&gt; ::= &quot;-and&quot; ≫
+
+\&lt;NotOperator\&gt; ::= &quot;-not&quot;
+
+\ \attr\&gt; ::= \&lt;PropertyName\&gt; \ \ \LDAPDisplayName of the attribute\&gt;\&gt;
+
+指定した \&lt;FilterOperator\&gt;\&gt; を使って,この値を \&lt;attr\&gt; と比較してみてください.
+
+\&lt;value\&gt; のサポートされているタイプのリストのために,  を入力してください.`Get-Help about_ActiveDirectory_ObjectModel` .
+
+注:Stringパラメータタイプでは,PowerShell はコマンドを処理する間に,フィルタークエリを文字列に投げ込む.フィルターコンポーネントの値として文字列変数を使用する際, [PowerShell Quoting Rules]/powershell/module/microsoft.powershell.core/about/about_quoting_rules) に適合しているかどうか確認してください.例えば,フィルター表現が二重引用されている場合,変数は単一の引用符を用い,加上する必要があります. **Get-ADUser -Filter &quot;Name -like &#x27;$UserName&#x27;&quot;**.
+
+注: ?などの \*,以外のPowerShellワイルドカードは, *フィルター*構文ではサポートされていません.
+
+注: LDAP [U+67E5][U+8BE2]文字列を使用してクエリを行うには, *LDAPFilter* パラメータを使用してください.
+
+```yaml
+Type: String
+Parameter Sets: Filter
+Aliases:
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Identity Active Directory のユーザーオブジェクトを次のプロパティ値のうちの1つで指定します.括弧の識別子は属性のLDAP表示名です.このパラメータの受け入れ可能な値は:です.
+
+特徴ある名前 - GUID (objectGUID) - セキュリティ識別子 (objectSid) - SAMアカウント名 (sAMAccountName)
+
+cmdlet は,オブジェクトを見つけるためにデフォルトの命名コンテキストまたはパーティションを探します.もし2つ以上のオブジェクトが見つかったら,cmdlet は,終了しないエラーを返します.
+
+このパラメータは,このオブジェクトをパイプラインを通過させることもできます.または,このパラメータをオブジェクトインスタンスの設定でもできます.
+
+```yaml
+Type: ADUser
+Parameter Sets: Identity
+Aliases:
+
+Required: True
+Position: 0
+Default value: None
+Accept pipeline input: True (ByValue)
+Accept wildcard characters: False
+```
+
+### -LDAPFilterは,アクティブディレクトリオブジェクトをフィルタリングするために使用される LDAPクエリ文字列を指定します.このパラメータを使用して既存の LDAPクエリを実行できます. *フィルター*パラメータ構文は,LDAP構文と同じ機能をサポートします.詳細については, *フィルター*パラメータ説明またはタイプ を参照してください.`Get-Help about_ActiveDirectory_Filter` .
+
+```yaml
+Type: String
+Parameter Sets: LdapFilter
+Aliases:
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Partition Active Directory のパーティションの名前の指定.この名前の指定は,現在のディレクトリサーバーの名前設定のいずれかである必要があります. cmdlet はこのパーティションで検索して, *Identity* パラメータで定義されたオブジェクトを見つける.
+
+多くの場合,デフォルト値が指定されていない場合, *Partition* パラメータにデフォルト値が使用されます.デフォルト値の決定のためのルールが下記です.最初にリストされたルールが最初に評価され,デフォルト値が決定できるときは,他のルールが評価されないことに注意してください.
+
+AD DS環境では,以下の場合, *Partition* のデフォルト値は設定されます.
+
+- *Identity* パラメータが別名に設定されている場合, *Partition* のデフォルト値は自動的にこの別名から生成されます. - Active Directory プロバイダードライブからcmdletsを実行している場合は, *Partition* のデフォルト値は自動的にドライブ内の現在のパスから生成されます. - 前例のいずれも適用されない場合, *Partition* のデフォルト値は目標ドメインのデフォルトパーティションまたは命名コンテキストに設定されます.
+
+AD LDS環境では,以下の場合, *Partition* のデフォルト値は設定されます.
+
+*Identity*パラメータが別名に設定されている場合, *Partition* のデフォルト値は自動的にこの別名から生成されます. - Active Directory プロバイダードライブから cmdlets を実行している場合は, *Partition* のデフォルト値は自動的にドライブ内の現在のパスから生成されます. - ターゲット AD LDS インスタンスのデフォルトの命名コンテキストがある場合, *Partition* のデフォルト値はデフォルトの命名コンテキストに設定されます. AD LDS 環境のデフォルトの命名コンテキストを指定するには,AD LDS のための Active Directory ディレクトリサービスエージェントオブジェクト (**nTDSDSA**) の **msDS If-defaultNamingContext** 属性を設定します. - 前回のインスタンスのいずれも適用されませんが, *Partition 適用されます.*パラメータはデフォルト値を取らない.
+
+
+```yaml
+Type: String
+Parameter Sets: Identity
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -プロパティ サーバから取得する輸出オブジェクトのプロパティを指定します.このパラメータを使用してデフォルトセットに含まれていないプロパティを取得します.
+
+このパラメータの属性を逗号別名列として指定する.オブジェクトに設定されたすべての属性を表示するには, * (アステリスックス) を指定します.
+
+個別拡張属性を指定するには,その属性の名前を用い.デフォルトまたは拡張属性でない属性については,属性のLDAP表示名称を指定する必要があります.
+
+属性を取り出し,オブジェクトに表示するには,オブジェクトに関連したGet-* cmdlet を使用して,出力を **Get-Member** cmdlet に転送できます.
+
+```yaml
+Type: String[]
+Parameter Sets: (All)
+Aliases: Property
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -ResultPageSize は,アクティブディレクトリドメインサービスに関する質問に対して,一つのページに含まれるオブジェクトの数を指定します.
+
+デフォルトは,ページ [U+0AA6][U+0AC0][U+0AA0]256オブジェクトです.
+
+```yaml
+Type: Int32
+Parameter Sets: Filter, LdapFilter
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -ResultSetSize Active Directory Domain Services のクエリで返される最大数のオブジェクトを指定します.すべてのオブジェクトを受け取りたい場合は,このパラメータを $Null (ゼロ値) に設定します.Ctrl+Cを使用してクエリを停止し,オブジェクト返却をします.
+
+デフォルトは$Nullです.
+
+```yaml
+Type: Int32
+Parameter Sets: Filter, LdapFilter
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+# Get-ADUser は,GET-ADUser を使用する
+
+### -SearchBase は,検索するアクティブディレクトリパスを指定します.
+
+Active Directory プロバイダードライブからcmdletを実行すると,このパラメータのデフォルト値はドライブの現在のパスです.
+
+アクティブディレクトリプロバイダドライブの外でCMdletを AD DSターゲットに実行すると,このパラメータのデフォルト値は,ターゲットドメインのデフォルト命名文脈です.
+
+アクティブ・ディレクトリプロバイダードライブの外で AD LDS ターゲットに対して cmdlet を実行すると,デフォルト値は, AD LDS 対象の例のデフォルト命名文脈である.当時は,その定義が AD LDS インスタンスのために, Active Directory ディレクトリサービスエージェント (DSA) オブジェクト (**nTDSDSA**) の **msDS-defaultNamingContext** 属性 (**nTDSDSA**) を設定することによって指定されている場合.もし,ターゲット AD LDS インスタンスのデフォルト命名文脈が指定されていない場合,このパラメータにはデフォルト値がない.
+
+*SearchBase*パラメータの値は空の文字列に設定され, GCポートに接続されている場合,すべてのパーティションが検索されます. *SearchBase*パラメータの値は空の文字列に設定され, GCポートに接続されていない場合は,エラーが発生します.
+
+```yaml
+Type: String
+Parameter Sets: Filter, LdapFilter
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -SearchScope は,アクティブディレクトリ検索の範囲を指定します.このパラメータの受け入れ可能な値は:
+
+ベースまたは0 - OneLevelまたは1 - サブリーまたは2
+
+Base valueを持つ検索スコップは,指定されたユーザーのみを検索します.OUがSearchBaseパラメータで指定されている場合,指定されたフィルターステートメントで返されるユーザーはありません.OneLevelクエリは,そのパスまたはオブジェクトの直接的な子供を探します.このオプションは,OUがSearchBaseとして与えられた場合にのみ有効です.ユーザーが与えられた場合,返品はありません.Subtreeクエリは,現在のパスまたはオブジェクトとそのパスまたはオブジェクトのすべての子供を探します.
+
+```yaml
+Type: ADSearchScope
+Parameter Sets: Filter, LdapFilter
+Aliases:
+Accepted values: Base, OneLevel, Subtree
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Serverは,対応するドメイン名またはディレクトリサーバーに以下の値のうちの1つを提供することで,接続するアクティブディレクトリ ドメインサービスインスタンスを指定します.サービスは以下のいずれかかもしれません.
+
+ドメイン名値:
+
+- 完全資格ドメイン名 (FQDN) - NetBIOS名
+
+ディレクトリサーバーの値:
+
+- 完全資格のあるディレクトリサーバー名 - NetBIOS名 - 完全資格のあるディレクトリサーバー名とポート
+
+*サーバー*パラメータのデフォルト値は,次の方法のうちの1つによって,列挙された順序で決定されます.
+
+- パイプラインを通過したオブジェクトから *Server* 値を利用する. - Active Directory PowerShell プロバイダードライブに関連したサーバー情報を利用する. - PowerShell を実行しているコンピュータのドメインを使用して.
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### 共通パラメータ このcmdletは共通パラメータをサポートしています: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable.詳細については, [about_CommonParameters](を参照してください.https://go.microsoft.com/fwlink/?LinkID=113216) でした.
+
+## 輸入は
+
+### Microsoft.ActiveDirectory.Management.ADUser None.ActiveDirectory.Management.ADUser ユーザーオブジェクトは, *Identity* パラメータで受信されます.
+
+## 輸出は
+
+### Microsoft.ActiveDirectory.Management.ADUser は,ユーザーオブジェクト1つまたは複数のオブジェクトを返します.
+
+このcmdletは **ADUser**プロパティのデフォルトセットを返します.追加の **ADUser**プロパティを取得するには, *Properties* パラメータを使用します.
+
+**ADUser**オブジェクトのデフォルトプロパティセットのリストを取得するには,次のコマンドを使用してください.
+
+`Get-ADUser`\&lt;user\&gt; \&lt;user\&gt;`| Get-Member`
+
+ADUser オブジェクトで最もよく使われているプロパティのリストを取得するには,次のコマンドを使用してください:
+
+`Get-ADUser`\&lt;user\&gt; \&lt;user\&gt;`-Properties Extended | Get-Member`
+
+**ADUser**オブジェクトのすべての属性のリストを取得するには,次のコマンドを使用してください.
+
+`Get-ADUser`\&lt;user\&gt; \&lt;user\&gt;`-Properties * | Get-Member`
+
+## 注 * このcmdletは,アクティブディレクトリのスナップショットで動作しません.
+
+## 関連リンク
+
+[New-ADUser](./New-ADUser.md) 
+
+[Remove-ADUser](./Remove-ADUser.md) を削除する
+
+[Set-ADUser](./Set-ADUser.md) 
+###英語原文###
+# Get-ADUser
+
+## SYNOPSIS
+Gets one or more Active Directory users.
+
+## SYNTAX
+
+### Filter (Default)
+```
+Get-ADUser [-AuthType &lt;ADAuthType&gt;] [-Credential &lt;PSCredential&gt;] -Filter &lt;String&gt; [-Properties &lt;String[]&gt;]
+ [-ResultPageSize &lt;Int32&gt;] [-ResultSetSize &lt;Int32&gt;] [-SearchBase &lt;String&gt;] [-SearchScope &lt;ADSearchScope&gt;]
+ [-Server &lt;String&gt;] [&lt;CommonParameters&gt;]
+```
+
+### Identity
+```
+Get-ADUser [-AuthType &lt;ADAuthType&gt;] [-Credential &lt;PSCredential&gt;] [-Identity] &lt;ADUser&gt; [-Partition &lt;String&gt;]
+ [-Properties &lt;String[]&gt;] [-Server &lt;String&gt;] [&lt;CommonParameters&gt;]
+```
+
+### LdapFilter
+```
+Get-ADUser [-AuthType &lt;ADAuthType&gt;] [-Credential &lt;PSCredential&gt;] -LDAPFilter &lt;String&gt; [-Properties &lt;String[]&gt;]
+ [-ResultPageSize &lt;Int32&gt;] [-ResultSetSize &lt;Int32&gt;] [-SearchBase &lt;String&gt;] [-SearchScope &lt;ADSearchScope&gt;]
+ [-Server &lt;String&gt;] [&lt;CommonParameters&gt;]
+```
+
+## DESCRIPTION
+The **Get-ADUser** cmdlet gets a specified user object or performs a search to get multiple user objects.
+
+The *Identity* parameter specifies the Active Directory user to get.
+You can identify a user by its distinguished name (DN), GUID, security identifier (SID), or Security Account Manager (SAM) account name.
+You can also set the parameter to a user object variable such as `$&lt;localUserObject&gt;` or pass a user object through the pipeline to the *Identity* parameter.
+
+To search for and retrieve more than one user, use the *Filter* or *LDAPFilter* parameters.
+The *Filter* parameter uses the PowerShell Expression Language to write query strings for Active Directory.
+PowerShell Expression Language syntax provides rich type-conversion support for value types received by the *Filter* parameter.
+For more information about the *Filter* parameter syntax, type `Get-Help about_ActiveDirectory_Filter`.
+If you have existing Lightweight Directory Access Protocol (LDAP) query strings, you can use the *LDAPFilter* parameter.
+
+This cmdlet retrieves a default set of user object properties.
+To retrieve additional properties use the _Properties_ parameter.
+For more information about how to determine the properties for user objects, see the _Properties_ parameter description.
+
+## EXAMPLES
+
+### Example 1: Get all of the users in a container
+```powershell
+PS C:\&gt; Get-ADUser -Filter * -SearchBase &quot;OU=Finance,OU=UserAccounts,DC=FABRIKAM,DC=COM&quot;
+```
+
+This command gets all users in the container OU=Finance,OU=UserAccounts,DC=FABRIKAM,DC=COM.
+
+### Example 2: Get a filtered list of users
+```powershell
+PS C:\&gt; Get-ADUser -Filter &#x27;Name -like &quot;*SvcAccount&quot;&#x27; | Format-Table Name,SamAccountName -A
+```
+
+```Output
+Name             SamAccountName
+----             --------------
+SQL01 SvcAccount SQL01
+SQL02 SvcAccount SQL02
+IIS01 SvcAccount IIS01
+```
+
+This command gets all users that have a name that ends with SvcAccount.
+
+### Example 3: Get all of the properties for a specified user
+```powershell
+PS C:\&gt; Get-ADUser -Identity ChewDavid -Properties *
+```
+
+```Output
+Surname           : David
+Name              : Chew David
+UserPrincipalName :
+GivenName         : David
+Enabled           : False
+SamAccountName    : ChewDavid
+ObjectClass       : user
+SID               : S-1-5-21-2889043008-4136710315-2444824263-3544
+ObjectGUID        : e1418d64-096c-4cb0-b903-ebb66562d99d
+DistinguishedName : CN=Chew David,OU=NorthAmerica,OU=Sales,OU=UserAccounts,DC=FABRIKAM,DC=COM
+```
+
+This command gets all of the properties of the user with the SAM account name ChewDavid.
+
+### Example 4: Get a specified user
+```powershell
+PS C:\&gt; Get-ADUser -Filter &quot;Name -eq &#x27;ChewDavid&#x27;&quot; -SearchBase &quot;DC=AppNC&quot; -Properties &quot;mail&quot; -Server lds.Fabrikam.com:50000
+```
+
+This command gets the user with the name ChewDavid in the Active Directory Lightweight Directory Services (AD LDS) instance.
+
+### Example 5: Get all enabled user accounts
+```powershell
+C:\PS&gt; Get-ADUser -LDAPFilter &#x27;(!userAccountControl:1.2.840.113556.1.4.803:=2)&#x27;
+```
+
+This command gets all enabled user accounts in Active Directory using an LDAP filter.
+
+## PARAMETERS
+
+### -AuthType
+Specifies the authentication method to use.
+The acceptable values for this parameter are:
+
+- Negotiate or 0
+- Basic or 1
+
+The default authentication method is Negotiate.
+
+A Secure Sockets Layer (SSL) connection is required for the Basic authentication method.
+
+```yaml
+Type: ADAuthType
+Parameter Sets: (All)
+Aliases:
+Accepted values: Negotiate, Basic
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Credential
+Specifies the user account credentials to use to perform this task.
+The default credentials are the credentials of the currently logged on user unless the cmdlet is run from an Active Directory PowerShell provider drive.
+If the cmdlet is run from such a provider drive, the account associated with the drive is the default.
+
+To specify this parameter, you can type a user name, such as User1 or Domain01\User01 or you can specify a **PSCredential** object.
+If you specify a user name for this parameter, the cmdlet prompts for a password.
+
+You can also create a **PSCredential** object by using a script or by using the **Get-Credential** cmdlet.
+You can then set the *Credential* parameter to the **PSCredential** object.
+
+If the acting credentials do not have directory-level permission to perform the task, Active Directory PowerShell returns a terminating error.
+
+```yaml
+Type: PSCredential
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+# Get-ADUser
+
+### -Filter
+Specifies a query string that retrieves Active Directory objects.
+This string uses the PowerShell Expression Language syntax.
+The PowerShell Expression Language syntax provides rich type-conversion support for value types received by the *Filter* parameter.
+The syntax uses an in-order representation, which means that the operator is placed between the operand and the value.
+For more information about the *Filter* parameter, type `Get-Help about_ActiveDirectory_Filter`.
+
+Syntax:
+
+The following syntax uses Backus-Naur form to show how to use the PowerShell Expression Language for this parameter.
+
+\&lt;filter\&gt;  ::= &quot;{&quot; \&lt;FilterComponentList\&gt; &quot;}&quot;
+
+\&lt;FilterComponentList\&gt; ::= \&lt;FilterComponent\&gt; | \&lt;FilterComponent\&gt; \&lt;JoinOperator\&gt; \&lt;FilterComponent\&gt; | \&lt;NotOperator\&gt;  \&lt;FilterComponent\&gt;
+
+\&lt;FilterComponent\&gt; ::= \&lt;attr\&gt; \&lt;FilterOperator\&gt; \&lt;value\&gt; | &quot;(&quot; \&lt;FilterComponent\&gt; &quot;)&quot;
+
+\&lt;FilterOperator\&gt; ::= &quot;-eq&quot; | &quot;-le&quot; | &quot;-ge&quot; | &quot;-ne&quot; | &quot;-lt&quot; | &quot;-gt&quot;| &quot;-approx&quot; | &quot;-bor&quot; | &quot;-band&quot; | &quot;-recursivematch&quot; | &quot;-like&quot; | &quot;-notlike&quot;
+
+\&lt;JoinOperator\&gt; ::= &quot;-and&quot; | &quot;-or&quot;
+
+\&lt;NotOperator\&gt; ::= &quot;-not&quot;
+
+\&lt;attr\&gt; ::= \&lt;PropertyName\&gt; | \&lt;LDAPDisplayName of the attribute\&gt;
+
+\&lt;value\&gt;::= \&lt;compare this value with an \&lt;attr\&gt; by using the specified \&lt;FilterOperator\&gt;\&gt;
+
+For a list of supported types for \&lt;value\&gt;, type `Get-Help about_ActiveDirectory_ObjectModel`.
+
+Note: For String parameter type, PowerShell will cast the filter query to a string while processing the command. When using a string variable as a value in the filter component, make sure that it complies with the [PowerShell Quoting Rules](/powershell/module/microsoft.powershell.core/about/about_quoting_rules). For example, if the filter expression is double-quoted, the variable should be enclosed using single quotation marks:
+**Get-ADUser -Filter &quot;Name -like &#x27;$UserName&#x27;&quot;**. On the contrary, if curly braces are used to enclose the filter, the variable should not be quoted at all: **Get-ADUser -Filter {Name -like $UserName}**.
+
+Note: PowerShell wildcards other than \*, such as ?, are not supported by the *Filter* syntax.
+
+Note: To query using LDAP query strings, use the *LDAPFilter* parameter.
+
+```yaml
+Type: String
+Parameter Sets: Filter
+Aliases:
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Identity
+Specifies an Active Directory user object by providing one of the following property values.
+The identifier in parentheses is the LDAP display name for the attribute.
+The acceptable values for this parameter are:
+
+- A distinguished name
+- A GUID (objectGUID)
+- A security identifier (objectSid)
+- A SAM account name (sAMAccountName)
+
+The cmdlet searches the default naming context or partition to find the object.
+If two or more objects are found, the cmdlet returns a non-terminating error.
+
+This parameter can also get this object through the pipeline or you can set this parameter to an object instance.
+
+```yaml
+Type: ADUser
+Parameter Sets: Identity
+Aliases:
+
+Required: True
+Position: 0
+Default value: None
+Accept pipeline input: True (ByValue)
+Accept wildcard characters: False
+```
+
+### -LDAPFilter
+Specifies an LDAP query string that is used to filter Active Directory objects.
+You can use this parameter to run your existing LDAP queries.
+The *Filter* parameter syntax supports the same functionality as the LDAP syntax.
+For more information, see the *Filter* parameter description or type `Get-Help about_ActiveDirectory_Filter`.
+
+```yaml
+Type: String
+Parameter Sets: LdapFilter
+Aliases:
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Partition
+Specifies the distinguished name of an Active Directory partition.
+The distinguished name must be one of the naming contexts on the current directory server.
+The cmdlet searches this partition to find the object defined by the *Identity* parameter.
+
+In many cases, a default value is used for the *Partition* parameter if no value is specified.
+The rules for determining the default value are given below.
+Note that rules listed first are evaluated first, and when a default value can be determined, no further rules are evaluated.
+
+In AD DS environments, a default value for *Partition* is set in the following cases:
+
+- If the *Identity* parameter is set to a distinguished name, the default value of *Partition* is automatically generated from this distinguished name.
+- If running cmdlets from an Active Directory provider drive, the default value of *Partition* is automatically generated from the current path in the drive.
+- If none of the previous cases apply, the default value of *Partition* is set to the default partition or naming context of the target domain.
+
+In AD LDS environments, a default value for *Partition* is set in the following cases:
+
+- If the *Identity* parameter is set to a distinguished name, the default value of *Partition* is automatically generated from this distinguished name.
+- If running cmdlets from an Active Directory provider drive, the default value of *Partition* is automatically generated from the current path in the drive.
+- If the target AD LDS instance has a default naming context, the default value of *Partition* is set to the default naming context.
+To specify a default naming context for an AD LDS environment, set the **msDS-defaultNamingContext** property of the Active Directory directory service agent object (**nTDSDSA**) for the AD LDS instance.
+- If none of the previous cases apply, the *Partition* parameter does not take any default value.
+
+
+```yaml
+Type: String
+Parameter Sets: Identity
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Properties
+Specifies the properties of the output object to retrieve from the server.
+Use this parameter to retrieve properties that are not included in the default set.
+
+Specify properties for this parameter as a comma-separated list of names.
+To display all of the attributes that are set on the object, specify * (asterisk).
+
+To specify an individual extended property, use the name of the property.
+For properties that are not default or extended properties, you must specify the LDAP display name of the attribute.
+
+To retrieve properties and display them for an object, you can use the Get-* cmdlet associated with the object and pass the output to the **Get-Member** cmdlet.
+
+```yaml
+Type: String[]
+Parameter Sets: (All)
+Aliases: Property
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -ResultPageSize
+Specifies the number of objects to include in one page for an Active Directory Domain Services query.
+
+The default is 256 objects per page.
+
+```yaml
+Type: Int32
+Parameter Sets: Filter, LdapFilter
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -ResultSetSize
+Specifies the maximum number of objects to return for an Active Directory Domain Services query.
+If you want to receive all of the objects, set this parameter to $Null (null value).
+You can use Ctrl+C to stop the query and return of objects.
+
+The default is $Null.
+
+```yaml
+Type: Int32
+Parameter Sets: Filter, LdapFilter
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+# Get-ADUser
+
+### -SearchBase
+Specifies an Active Directory path to search under.
+
+When you run a cmdlet from an Active Directory provider drive, the default value of this parameter is the current path of the drive.
+
+When you run a cmdlet outside of an Active Directory provider drive against an AD DS target, the default value of this parameter is the default naming context of the target domain.
+
+When you run a cmdlet outside of an Active Directory provider drive against an AD LDS target, the default value is the default naming context of the target LDS instance if one has been specified by setting the **msDS-defaultNamingContext** property of the Active Directory directory service agent (DSA) object (**nTDSDSA**) for the AD LDS instance.
+If no default naming context has been specified for the target AD LDS instance, then this parameter has no default value.
+
+When the value of the *SearchBase* parameter is set to an empty string and you are connected to a GC port, all partitions are searched.
+If the value of the *SearchBase* parameter is set to an empty string and you are not connected to a GC port, an error is thrown.
+
+```yaml
+Type: String
+Parameter Sets: Filter, LdapFilter
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -SearchScope
+Specifies the scope of an Active Directory search.
+The acceptable values for this parameter are:
+
+- Base or 0
+- OneLevel or 1
+- Subtree or 2
+
+A SearchScope with a Base value searches only for the given user. If an OU is specified in the SearchBase parameter, no user will be returned by, for example, a specified Filter statement.
+A OneLevel query searches the immediate children of that path or object. This option only works when an OU is given as the SearchBase. If a user is given, no results are returned.
+A Subtree query searches the current path or object and all children of that path or object.
+
+```yaml
+Type: ADSearchScope
+Parameter Sets: Filter, LdapFilter
+Aliases:
+Accepted values: Base, OneLevel, Subtree
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Server
+Specifies the Active Directory Domain Services instance to connect to, by providing one of the following values for a corresponding domain name or directory server.
+The service may be any of the following: Active Directory Lightweight Domain Services, Active Directory Domain Services or Active Directory Snapshot instance.
+
+Domain name values:
+
+- Fully qualified domain name (FQDN)
+- NetBIOS name
+
+Directory server values:
+
+- Fully qualified directory server name
+- NetBIOS name
+- Fully qualified directory server name and port
+
+The default value for the *Server* parameter is determined by one of the following methods in the order that they are listed:
+
+- By using *Server* value from objects passed through the pipeline.
+- By using the server information associated with the Active Directory PowerShell provider drive, when running under that drive.
+- By using the domain of the computer running PowerShell.
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### CommonParameters
+This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable. For more information, see [about_CommonParameters](https://go.microsoft.com/fwlink/?LinkID=113216).
+
+## INPUTS
+
+### None or Microsoft.ActiveDirectory.Management.ADUser
+A user object is received by the *Identity* parameter.
+
+## OUTPUTS
+
+### Microsoft.ActiveDirectory.Management.ADUser
+Returns one or more user objects.
+
+This cmdlet returns a default set of **ADUser** property values.
+To retrieve additional **ADUser** properties, use the *Properties* parameter.
+
+To get a list of the default set of properties of an **ADUser** object, use the following command:
+
+`Get-ADUser`\&lt;user\&gt;`| Get-Member`
+
+To get a list of the most commonly used properties of an ADUser object, use the following command:
+
+`Get-ADUser`\&lt;user\&gt;`-Properties Extended | Get-Member`
+
+To get a list of all the properties of an **ADUser** object, use the following command:
+
+`Get-ADUser`\&lt;user\&gt;`-Properties * | Get-Member`
+
+## NOTES
+* This cmdlet does not work with an Active Directory snapshot.
+
+## RELATED LINKS
+
+[New-ADUser](./New-ADUser.md)
+
+[Remove-ADUser](./Remove-ADUser.md)
+
+[Set-ADUser](./Set-ADUser.md)
+###Microsoft Learn URL###
+https://learn.microsoft.com/en-us/powershell/module/activedirectory/get-aduser/?view=windowsserver2022-ps
+</pre></html>

@@ -1,0 +1,610 @@
+<!doctype html><html lang="ja"><meta charset="utf-8"><pre class="record-source">###KnowledgeNo###
+PS51-WS2022-2026-3819
+###FormatID###
+PS51-WS2022
+###CreatedAt###
+2026-08-01 00:00
+###UpdatedAt###
+2026-08-01 00:00
+###タイトル###
+Stop-Process
+###モジュール###
+Microsoft.PowerShell.Management
+###製品###
+Windows PowerShell 5.1
+###対応OS###
+Windows Server 2022
+###日本語訳###
+# 停止プロセス
+
+## シノプシスは,実行中の1つまたは複数のプロセスを停止します.
+
+## SYNTAX 
+
+### ID (デフォルト) 
+
+```
+Stop-Process [-Id] &lt;Int32[]&gt; [-PassThru] [-Force] [-WhatIf] [-Confirm]
+ [&lt;CommonParameters&gt;]
+```
+
+### 名前
+
+```
+Stop-Process -Name &lt;String[]&gt; [-PassThru] [-Force] [-WhatIf] [-Confirm]
+ [&lt;CommonParameters&gt;]
+```
+
+### InputObject を入力する
+
+```
+Stop-Process [-InputObject] &lt;Process[]&gt; [-PassThru] [-Force] [-WhatIf] [-Confirm]
+ [&lt;CommonParameters&gt;]
+```
+
+## 記述は,
+
+   `Stop-Process`cmdlet は,実行中のプロセスの一つまたは複数のプロセスを停止します.プロセス名またはプロセスID (PID) によってプロセスを指定するか,プロセスオブジェクトを  に転送することができます.`Stop-Process`  `Stop-Process`ローカルコンピュータで実行されているプロセスでのみ動作します.
+
+Windows VistaおよびWindowsオペレーティングシステムの後代バージョンでは,現在のユーザーに所有されていないプロセスを停止するには,管理者として実行するオプションを使用してPowerShell を起動する必要があります.また,確認のパラメータを指定しない限り,確認を提示されません.
+
+## 例えは,
+
+### 例1:プロセスのすべてのインスタンスを停止する
+
+```
+PS C:\&gt; Stop-Process -Name &quot;notepad&quot;
+```
+
+このコマンドはコンピュータ上のノートパッドプロセスのすべてのインスタンスを停止します.ノートパッドの各インスタンスは独自のプロセスで実行されます.プロセスを指定するために **Name**パラメータを使用します.すべてのプロセスが同じ名前を持っています.同じプロセスを停止するために **Id**パラメータを使用すると,ノートパッドの各インスタンスのプロセスIDをリストする必要があります.
+
+### 例2: プロセスの一つの特定のインスタンスを停止する
+
+```powershell
+PS C:\&gt; Stop-Process -Id 3952 -Confirm -PassThru
+```
+
+```Output
+Confirm
+Are you sure you want to perform this action?
+Performing operation &quot;Stop-Process&quot; on Target &quot;notepad (3952)&quot;.
+[Y] Yes  [A] Yes to All  [N] No  [L] No to All  [S] Suspend  [?] Help
+(default is &quot;Y&quot;):y
+Handles  NPM(K)    PM(K)      WS(K) VM(M)   CPU(s)     Id ProcessName
+-------  ------    -----      ----- -----   ------     -- -----------
+41       2      996       3212    31            3952 notepad
+```
+
+このコマンドはNotepadプロセスの一例を停止します.プロセス識別子3952を使用し,プロセスを識別します. **確認**パラメータは,プロセス停止する前に PowerShell に提示するように指示します.プロンプトにはそのIDに加えてプロセス名が含まれているため,これは最善の慣行です. **PassThru**パラメータは,プロセスオブジェクトを表示するためにフォーマットに転送します.このパラメータがなければ,表示後に表示はありません.`Stop-Process`命令です.
+
+### 例3: プロセスを停止し,そのプロセスを停止したと検出する.
+
+```powershell
+calc
+$p = Get-Process -Name &quot;calc&quot;
+Stop-Process -InputObject $p
+Get-Process | Where-Object {$_.HasExited}
+```
+
+このコマンド連鎖は,  を起動して停止する.`Calc`プロセスが停止し,停止したプロセスを検出します.
+
+最初のコマンドは,計算機のインスタンスを起動します.
+
+第二のコマンドは,使用します.`Get-Process`を表示するオブジェクトが表示されます.`Calc`処理で保存し,その過程で保存します.`$p`変数です.
+
+第三のコマンドは,  を停止します.`Calc`プロセス.このプロセスでは,オブジェクトを  に渡すために **InputObject** パラメータを使用します.`Stop-Process` .
+
+最後のコマンドは,実行中のコンピュータのすべてのプロセスを取り出すが,停止されたことを確認します.`Get-Process`パイプラインオペレーター () が,すべてのプロセスをコンピュータに載せます.`|`) は結果を,  に渡す.`Where-Object`cmdletでは, **HasExited** のプロパティの値が $true であるものを選択します. **HasExited** はプロセスオブジェクトの単なるプロパティです.すべてのプロパティを見つけるために,  を入力してください.`Get-Process | Get-Member` .
+
+### 例4: 現在のユーザーに属していないプロセスを停止します.
+
+```powershell
+PS&gt; Get-Process -Name &quot;lsass&quot; | Stop-Process
+```
+
+```Output
+Stop-Process : Cannot stop process &#x27;lsass (596)&#x27; because of the following error: Access is denied
+At line:1 char:34
++ Get-Process -Name &quot;lsass&quot; | Stop-Process &lt;&lt;&lt;&lt;
+```
+
+```powershell
+[ADMIN]: PS&gt; Get-Process -Name &quot;lsass&quot; | Stop-Process
+```
+
+```Output
+Warning!
+Are you sure you want to perform this action?
+Performing operation &#x27;Stop-Process&#x27; on Target &#x27;lsass(596)&#x27;
+[Y] Yes  [A] Yes to All  [N] No  [L] No to All  [S] Suspend  [?] Help (default is &quot;Y&quot;):
+```
+
+```powershell
+[ADMIN]: PS&gt; Get-Process -Name &quot;lsass&quot; | Stop-Process -Force
+[ADMIN]: PS&gt;
+```
+
+これらのコマンドは,ユーザが所有していないプロセスを停止するために **Force**を使用する効果を示しています.
+
+最初のコマンドは,  を使います.`Get-Process`管道事業者は,そのプロセスを  に送ります.`Stop-Process`試作品で示されているように,最初のコマンドはAccess 拒否されたメッセージで失敗します.このプロセスを停止するのは,コンピュータ上の管理者グループのメンバーのみです.
+
+PowerShell が Run を管理者オプションとして開くと,コマンドが繰り返されると, PowerShell は確認を提示します.
+
+2番目のコマンドでは,プロンプトを削除する **Force**を指定します.その結果,確認なしにプロセスは停止されます.
+
+## パラメータは
+
+### -フォース
+
+確認を促さずに指定されたプロセスを停止します.`Stop-Process`現在のユーザーに所有されていないプロセスを停止する前に確認を提示します.
+
+プロセスの主人公を見つけるには,  を使って`Get-CimInstance`cmdlet は,プロセスを表現する **Win32_Process** オブジェクトを取得し,その後のオブジェクトの **GetOwner** 方法を使用します.
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Id
+
+止まるプロセス ID を指定します.複数の ID を指定するには,逗号を使って ID を分離します.プロセス PID を探すために,入力します `Get-Process` .
+
+```yaml
+Type: System.Int32[]
+Parameter Sets: Id
+Aliases:
+
+Required: True
+Position: 0
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -InputObject
+
+停止するプロセスオブジェクトを指定します.オブジェクトを含む変数を入力するか,オブジェクトを取得するコマンドまたは表情を入力します.
+
+```yaml
+Type: System.Diagnostics.Process[]
+Parameter Sets: InputObject
+Aliases:
+
+Required: True
+Position: 0
+Default value: None
+Accept pipeline input: True (ByValue)
+Accept wildcard characters: False
+```
+
+### -名字は
+
+止めるプロセスに含まれるプロセス名を指定します.複数のプロセス名を入力し,逗号で分離したり,ワイルドカード文字を使用することもできます.
+
+```yaml
+Type: System.String[]
+Parameter Sets: Name
+Aliases: ProcessName
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: True
+```
+
+### -PassThru でした.
+
+プロセスを表すオブジェクトを返します.デフォルトでは,このcmdletは出力を生成しません.
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -確認
+
+cmdletを実行する前に確認を提示します.
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases: cf
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -WhatIf
+
+cmdletが実行されなければどうなるかを示しています.
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases: wi
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+# 停止プロセス
+
+### 共通パラメーター
+
+このcmdletは,共通パラメータをサポートしています: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable.詳細については, [about_CommonParameters](を参照してください.https://go.microsoft.com/fwlink/?LinkID=113216) でした.
+
+## 輸入は
+
+### システム.診断.プロセス
+
+このcmdletにプロセスオブジェクトをパイプすることができます.
+
+## 輸出は
+
+### どれもない
+
+デフォルトでは,このcmdletは出力返さない.
+
+### システム.診断.プロセス
+
+**PassThru**パラメータを使用すると,このcmdletは停止されたプロセスを表示する **Process**オブジェクトを返します.
+
+##  NOTES  記事ができました.
+
+Windows PowerShell では,次のアライスがあります.`Stop-Process`:
+
+ - -`kill` - -`spps`
+
+また,Windows PowerShellでWindows Management Instrumentation (WMI) **Win32_Process**オブジェクトの特性と方法を利用できます.詳細については,参照`Get-CimInstance`そしてWMI SDK.
+
+プロセスを停止する際,プロセスを停止することは,プロセスに依存するプロセスやサービスを停止することが認識してください.極端な場合,プロセスを停止することは,Windowsを停止することができます.
+
+## 関連リンク
+
+[デバッグプロセス](デバッグプロセス.md)
+
+[Get-Process](Get-Process.md) について
+
+[Start-Process](Start-Process.md) 
+
+[Stop-Process](Stop-Process.md) でした.
+
+[Wait-Process](Wait-Process.md) 
+###英語原文###
+# Stop-Process
+
+## SYNOPSIS
+Stops one or more running processes.
+
+## SYNTAX
+
+### Id (Default)
+
+```
+Stop-Process [-Id] &lt;Int32[]&gt; [-PassThru] [-Force] [-WhatIf] [-Confirm]
+ [&lt;CommonParameters&gt;]
+```
+
+### Name
+
+```
+Stop-Process -Name &lt;String[]&gt; [-PassThru] [-Force] [-WhatIf] [-Confirm]
+ [&lt;CommonParameters&gt;]
+```
+
+### InputObject
+
+```
+Stop-Process [-InputObject] &lt;Process[]&gt; [-PassThru] [-Force] [-WhatIf] [-Confirm]
+ [&lt;CommonParameters&gt;]
+```
+
+## DESCRIPTION
+
+The `Stop-Process` cmdlet stops one or more running processes. You can specify a process by process
+name or process ID (PID), or pass a process object to `Stop-Process`. `Stop-Process` works only on
+processes running on the local computer.
+
+On Windows Vista and later versions of the Windows operating system, to stop a process that is not
+owned by the current user, you must start PowerShell by using the Run as administrator option. Also,
+you are not prompted for confirmation unless you specify the **Confirm** parameter.
+
+## EXAMPLES
+
+### Example 1: Stop all instances of a process
+
+```
+PS C:\&gt; Stop-Process -Name &quot;notepad&quot;
+```
+
+This command stops all instances of the Notepad process on the computer. Each instance of Notepad
+runs in its own process. It uses the **Name** parameter to specify the processes, all of which have
+the same name. If you were to use the **Id** parameter to stop the same processes, you would have to
+list the process IDs of each instance of Notepad.
+
+### Example 2: Stop a specific instance of a process
+
+```powershell
+PS C:\&gt; Stop-Process -Id 3952 -Confirm -PassThru
+```
+
+```Output
+Confirm
+Are you sure you want to perform this action?
+Performing operation &quot;Stop-Process&quot; on Target &quot;notepad (3952)&quot;.
+[Y] Yes  [A] Yes to All  [N] No  [L] No to All  [S] Suspend  [?] Help
+(default is &quot;Y&quot;):y
+Handles  NPM(K)    PM(K)      WS(K) VM(M)   CPU(s)     Id ProcessName
+-------  ------    -----      ----- -----   ------     -- -----------
+41       2      996       3212    31            3952 notepad
+```
+
+This command stops a particular instance of the Notepad process. It uses the process ID, 3952, to
+identify the process. The **Confirm** parameter directs PowerShell to prompt you before it stops the
+process. Because the prompt includes the process name in addition to its ID, this is best practice.
+The **PassThru** parameter passes the process object to the formatter for display. Without this
+parameter, there would be no display after a `Stop-Process` command.
+
+### Example 3: Stop a process and detect that it has stopped
+
+```powershell
+calc
+$p = Get-Process -Name &quot;calc&quot;
+Stop-Process -InputObject $p
+Get-Process | Where-Object {$_.HasExited}
+```
+
+This series of commands starts and stops the `Calc` process, and then detects processes that have
+stopped.
+
+The first command starts an instance of the calculator.
+
+The second command uses `Get-Process` gets an object that represents the `Calc` process, and then
+stores it in the `$p` variable.
+
+The third command stops the `Calc` process. It uses the **InputObject** parameter to pass the object
+to `Stop-Process`.
+
+The last command gets all of the processes on the computer that were running but that are now
+stopped. It uses `Get-Process` to get all of the processes on the computer. The pipeline operator
+(`|`) passes the results to the `Where-Object` cmdlet, which selects the ones where the value of the
+**HasExited** property is $true. **HasExited** is just one property of process objects. To find all
+the properties, type `Get-Process | Get-Member`.
+
+### Example 4: Stop a process not owned by the current user
+
+```powershell
+PS&gt; Get-Process -Name &quot;lsass&quot; | Stop-Process
+```
+
+```Output
+Stop-Process : Cannot stop process &#x27;lsass (596)&#x27; because of the following error: Access is denied
+At line:1 char:34
++ Get-Process -Name &quot;lsass&quot; | Stop-Process &lt;&lt;&lt;&lt;
+```
+
+```powershell
+[ADMIN]: PS&gt; Get-Process -Name &quot;lsass&quot; | Stop-Process
+```
+
+```Output
+Warning!
+Are you sure you want to perform this action?
+Performing operation &#x27;Stop-Process&#x27; on Target &#x27;lsass(596)&#x27;
+[Y] Yes  [A] Yes to All  [N] No  [L] No to All  [S] Suspend  [?] Help (default is &quot;Y&quot;):
+```
+
+```powershell
+[ADMIN]: PS&gt; Get-Process -Name &quot;lsass&quot; | Stop-Process -Force
+[ADMIN]: PS&gt;
+```
+
+These commands show the effect of using **Force** to stop a process that is not owned by the user.
+
+The first command uses `Get-Process` to get the Lsass process. A pipeline operator sends the process
+to `Stop-Process` to stop it. As shown in the sample output, the first command fails with an Access
+denied message, because this process can be stopped only by a member of the Administrator group on
+the computer.
+
+When PowerShell is opened by using the Run as administrator option, and the command is repeated,
+PowerShell prompts you for confirmation.
+
+The second command specifies **Force** to suppress the prompt. As a result, the process is stopped
+without confirmation.
+
+## PARAMETERS
+
+### -Force
+
+Stops the specified processes without prompting for confirmation. By default, `Stop-Process` prompts
+for confirmation before stopping any process that is not owned by the current user.
+
+To find the owner of a process, use the `Get-CimInstance` cmdlet to get a **Win32_Process** object
+that represents the process, and then use the **GetOwner** method of the object.
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Id
+
+Specifies the process IDs of the processes to stop. To specify multiple IDs, use commas to separate
+the IDs. To find the PID of a process, type `Get-Process`.
+
+```yaml
+Type: System.Int32[]
+Parameter Sets: Id
+Aliases:
+
+Required: True
+Position: 0
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -InputObject
+
+Specifies the process objects to stop. Enter a variable that contains the objects, or type a command
+or expression that gets the objects.
+
+```yaml
+Type: System.Diagnostics.Process[]
+Parameter Sets: InputObject
+Aliases:
+
+Required: True
+Position: 0
+Default value: None
+Accept pipeline input: True (ByValue)
+Accept wildcard characters: False
+```
+
+### -Name
+
+Specifies the process names of the processes to stop. You can type multiple process names, separated
+by commas, or use wildcard characters.
+
+```yaml
+Type: System.String[]
+Parameter Sets: Name
+Aliases: ProcessName
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: True
+```
+
+### -PassThru
+
+Returns an object that represents the process. By default, this cmdlet does not generate any output.
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Confirm
+
+Prompts you for confirmation before running the cmdlet.
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases: cf
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -WhatIf
+
+Shows what would happen if the cmdlet runs. The cmdlet is not run.
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases: wi
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+# Stop-Process
+
+### CommonParameters
+
+This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable,
+-InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose,
+-WarningAction, and -WarningVariable. For more information, see
+[about_CommonParameters](https://go.microsoft.com/fwlink/?LinkID=113216).
+
+## INPUTS
+
+### System.Diagnostics.Process
+
+You can pipe a process object to this cmdlet.
+
+## OUTPUTS
+
+### None
+
+By default, this cmdlet returns no output.
+
+### System.Diagnostics.Process
+
+When you use the **PassThru** parameter, this cmdlet returns a **Process** object representing the
+stopped process.
+
+## NOTES
+
+Windows PowerShell includes the following aliases for `Stop-Process`:
+
+- `kill`
+- `spps`
+
+You can also use the properties and methods of the Windows Management Instrumentation (WMI)
+**Win32_Process** object in Windows PowerShell. For more information, see `Get-CimInstance` and
+the WMI SDK.
+
+- When stopping processes, realize that stopping a process can stop process and services that depend
+  on the process. In an extreme case, stopping a process can stop Windows.
+
+## RELATED LINKS
+
+[Debug-Process](Debug-Process.md)
+
+[Get-Process](Get-Process.md)
+
+[Start-Process](Start-Process.md)
+
+[Stop-Process](Stop-Process.md)
+
+[Wait-Process](Wait-Process.md)
+###Microsoft Learn URL###
+https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.management/stop-process/?view=powershell-5.1
+</pre></html>

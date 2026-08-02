@@ -1,0 +1,296 @@
+<!doctype html><html lang="ja"><meta charset="utf-8"><pre class="record-source">###KnowledgeNo###
+PS51-WS2022-2026-3532
+###FormatID###
+PS51-WS2022
+###CreatedAt###
+2026-08-01 00:00
+###UpdatedAt###
+2026-08-01 00:00
+###タイトル###
+about_DesiredStateConfiguration
+###モジュール###
+Microsoft.PowerShell.Core
+###製品###
+Windows PowerShell 5.1
+###対応OS###
+Windows Server 2022
+###日本語訳###
+# about_DesiredStateConfigurationについて
+
+## 短編説明
+
+PowerShell Desired State Configuration (DSC) の機能について簡潔な紹介をします.
+
+## 長い説明
+
+DSCはPowerShellで管理プラットフォームで,ソフトウェアサービスのための構成データを展開し管理し,これらのサービスが実行される環境を管理することができます.
+
+DSCは,PowerShell言語拡張機能,新しいcmdlet,リソースのセットを提供し,ソフトウェア環境の状態をどのように設定したいかを宣言的に指定するために使用できます.また,既存の設定を維持し管理するための手段を提供します.
+
+DSCはPowerShell 4.0で導入されています.
+
+DSCに関する詳細については, [PowerShell Desired State Configuration Overview] (/powershell/scripting/dsc/overview) を参照してください.
+
+## クラスでDSCリソースを開発する
+
+PowerShell 5.0 からスタートすると,クラスを使用してDSCリソースを開発できます.詳細については, [about_Classes] (about_Classes.md) と [PowerShellクラスでカスタムDSCリソースを書く] (/powershell/scripting/dsc/resources/authoringresourceclass) を参照してください.
+
+## DSCを利用して
+
+DSCを使用して環境を構成するには,まず PowerShell スクリプトブロックを設定し,設定キーワードを使用して識別子が次いで,その次にブロックを境界する円ブレスペアが次いで,設定ブロック内に,環境内の各ノード (コンピュータ) の設定状態を指定するノードブロックを定義できます.ノードブロックはノードキーワードから始まり,コンピュータの名前から続く.コンピュータ名から,ノードブロックを境界する円ブレスが次いできます.ノードブロック内に,特定のリソースを設定するためのリソースブロックを定義できます.リソースブロックはリソースの名前から始まります.そのブロックに指定したい識別子が続くと,次の例で示したようにブロックを境界するりな括弧が続く.
+
+```powershell
+Configuration MyWebConfig {
+    # Parameters are optional
+    param ($MachineName, $WebsiteFilePath)
+    # A Configuration block can have one or more Node blocks
+    Node $MachineName
+    {
+        # Next, specify one or more resource blocks
+        # WindowsFeature is one of the resources you can use in a Node block
+        # This example ensures the Web Server (IIS) role is installed
+        WindowsFeature IIS
+        {
+            # To ensure that the role is not installed, set Ensure to &quot;Absent&quot;
+            Ensure = &quot;Present&quot;
+            Name = &quot;Web-Server&quot; # Use the Name property from Get-WindowsFeature
+        }
+
+        # You can use the File resource to create files and folders
+        # &quot;WebDirectory&quot; is the name you want to use to refer to this instance
+        File WebDirectory
+        {
+            Ensure = &quot;Present&quot;  # You can also set Ensure to &quot;Absent&quot;
+            Type = &quot;Directory&quot; # Default is &quot;File&quot;
+            Recurse = $true
+            SourcePath = $WebsiteFilePath
+            DestinationPath = &quot;C:\inetpub\wwwroot&quot;
+
+            # Ensure that the IIS block is successfully run first before
+            # configuring this resource
+            DependsOn = &quot;[WindowsFeature]IIS&quot;  # Use for dependencies
+        }
+    }
+}
+```
+
+設定を作成するには,PowerShell機能に呼びかけるように設定ブロックを呼び出すこと,あなたが定義した予想されたパラメータを入力します (上記の例では2つ).例えば,この例では:
+
+```powershell
+MyWebConfig -MachineName &quot;TestMachine&quot; -WebsiteFilePath `
+  &quot;\\filesrv\WebFiles&quot; -OutputPath &quot;C:\Windows\system32\Temp&quot;
+
+# OutputPath is optional
+```
+
+これにより,指定したパスでノードごとにMOFファイルが生成されます.これらのMOFファイルは各ノードに望ましい構成を指定します.次に,次のcmdletを使用して構成MOFファイルを解析し,各ノードに対応する構成を送信し,それらの構成を実行します.クラスベースのDSCリソースのために別のMOFファイルを作成する必要がないことに注意してください.
+
+```powershell
+Start-DscConfiguration -Verbose -Wait -Path &quot;C:\Windows\system32\Temp&quot;
+```
+
+## DSC を使用して構成状態を維持します.
+
+DSCでは,設定は無効です.つまり,同じ設定を複数回実行するために DSC を使用した場合,結果となる設定状態は常に同じになります.このため,環境内のノードが望ましい設定状態から漂ってきている可能性が疑われる場合は,同じ DSC設定を再生して,望ましい状態に戻すことができます.必要な状態から漂って来たリソースのみに対応するために設定スクリプトを変更する必要はありません.
+
+次の例では,特定のノードにおける構成状態がノードで実施された最後のDSC構成から漂移したかどうかを確認する方法を示しています.この例では,ローカルコンピュータの構成をチェックしています.
+
+```powershell
+$session = New-CimSession -ComputerName &quot;localhost&quot;
+Test-DscConfiguration -CimSession $session
+```
+
+## 組み込みのDSCリソースです.
+
+設定スクリプトでは以下の内蔵リソースを使用できます.
+
+ファイル 目的地パス,属性,チェックサム,コンテンツ ファイル ファイル ファイル ファイル ファイル ファイル ファイル ファイル ファイル ファイル ファイル ファイル ファイル ファイル ファイル ファイル ファイル ファイル ファイル ファイル ファイル ファイル ファイル ファイル ファイル ファイル ファイル ファイル ファイル ファイル ファイル ファイル ファイル ファイル ファイル ファイル ファイル ファイル ファイル ファイル ファイル ファイル ファイル ファイル ファイル ファイル ファイル ファイル ファイル ファイル ファイル ファイル ファイル ファイル ファイル ファイル ファイル ファイル ファイル ファイル ファイル ファイル ファイル ファイル ファイル ファイル ファイル ファイル ファイル ファイル ファイル ファイル ファイル ファイル ファイル ファイル ファイル ファイル ファイル ファイル ファイル ファイル ファイル ファイル ファイル ファイル ファイル ファイル ファイル ファイル ファイル ファイル ファイル ファイル ファイル ファイル ファイル ファイル ファイル ファイル ファイル ファイル ファイル ファイル ファイル ファイル ファイル ファイル ファイル ファイル ファイル ファイル ファイル ファイル ファイル ファイル ファイル ファイル ファイル ファイル ファイル ファイル ファイル ファイル ファイル ファイル ファイル ファイル ファイル ファイル ファイル ファイル ファイル ファイル ファイル ファイル ファイル ファイル ファイル ファイル ファイル ファイル ファイル ファイル ファイル ファイル ファイル ファイル ファイル ファイル ファイル ファイル ファイル ファイル ファイル ファイル ファイル ファイル ファイル ファイル ファイル ファイル ファイル ファイル ファイル ファイル ファイル ファイル ファイル ファイル ファイル ファイル ファイル ファイル ファイル ファイル ファイル ファイル ファイル ファイル ファイル ファイル ファイル ファイル ファイル ファイル ファイル ファイル ファイル ファイル ファイル ファイル ファイル ファイル ファイル ファイル ファイル ファイル ファイル ファイル ファイル ファイル ファイル ファイル ファイル ファイル ファイル ファイル ファイル ファイル ファイル ファイル ファイル ファイル ファイル ファイル ファイル ファイル ファイル ファイル ファイル ファイル ファイル ファイル ファイル ファイル ファイル ファイル ファイル ファイル ファイル ファイル ファイル ファイル ファイル ファイル ファイル ファイル ファイル ファイル ファイル ファイル ファイル ファイル ファイル ファイル ファイル ファイル {GetScript, SetScript, TestScript, Credential...} サービス名,BuiltInAccount, Credential, Dependencies...} ユーザー名,依存名,説明,障害者...} ユーザー名,依存名,依存名,依存名, PsDscRunAsC...} ユーザー名,依存名,依存名,依存名,依存名,依存名,依存名,依存名,依存名,依存名,依存名,依存名,依存名,依存名,依存名,依存名,依存名,依存名,依存名,依存名,依存名,依存名,依存名,依存名,依存名,依存名,依存名,依存名,依存名,依存名,依存名,依存名,依存名,依存名,依存名,依存名,依存名,依存名,依存名,依存名,依存名,依存名,依存名,依存名,依存名,依存名,依存名,依存名,依存名,依存名,依存名,依存名,依存名,依存名,依存名,依存名,依存名,依存名,依存名,依存名,依存名,依存名,依存名,依存名,依存名,依存名,依存名,依存名,依存名,依存名,依存名,依存名,依存名,依存名,依存名,依存名,依存名,依存名,依存名,依存名,依存名,
+
+システムで利用可能なDSCリソースのリストを取得するには,  を実行してください.`Get-DscResource`cmdletです.
+
+&gt; [!NOTE] &gt; PowerShell版で7.0未満のバージョンでは,`Get-DscResource`クラスベースの &gt; DSCリソースが見つかりませんでした.
+
+このトピックの例では,ファイルとWindowsFeatureリソースの使い方を示しています.リソースで使えるすべてのプロパティを表示するには,PowerShell ISEで設定スクリプト内にリソースキーワード (例えば,ファイル) のカーソルを挿入し,&lt;kbd&gt;CTRL&lt;/kbd&gt;+&lt;kbd&gt;SPACEBAR&lt;/kbd&gt;を押して,
+
+## もっと多くの資源を検索する
+
+PowerShellやDSCユーザーコミュニティ,およびMicrosoftが作成した他の多くの利用可能なDSCリソースをダウンロード,インストール,および学びます. [PowerShell Gallery]の訪問してください.https://www.powershellgallery.com/) を閲覧し,利用可能なDSCリソースについて学びます.
+
+# about_DesiredStateConfigurationについて
+
+## また, を参照してください.
+
+- [PowerShell Desired State Configuration Overview](/powershell/scripting/dsc/overview/) - [PowerShell Desired State Configuration Resources] (/powershell/scripting/dsc/resources/resources) - [カスタムにカスタムされた PowerShell Desired State Configuration Resourcesをビルドする] ((/powershell/scripting/dsc/resources/authoringResource)
+###英語原文###
+# about_DesiredStateConfiguration
+
+## Short description
+
+Provides a brief introduction to the PowerShell Desired State
+Configuration (DSC) feature.
+
+## Long description
+
+DSC is a management platform in PowerShell that enables deploying and managing
+configuration data for software services, and managing the environment in
+which these services run.
+
+DSC provides a set of PowerShell language extensions, new cmdlets, and
+resources that you can use to declaratively specify how you want the state of
+your software environment to be configured. It also provides a means to
+maintain and manage existing configurations.
+
+DSC is introduced in PowerShell 4.0.
+
+For detailed information about DSC, see
+[PowerShell Desired State Configuration Overview](/powershell/scripting/dsc/overview).
+
+## Developing DSC resources with classes
+
+Starting in PowerShell 5.0, you can develop DSC resources by using classes.
+For more information, see [about_Classes](about_Classes.md), and
+[Writing a custom DSC resource with PowerShell classes](/powershell/scripting/dsc/resources/authoringresourceclass).
+
+## Using DSC
+
+To use DSC to configure your environment, first define a PowerShell
+script block using the Configuration keyword, followed by an identifier, which
+is in turn followed by the pair of curly braces delimiting the block. Inside
+the configuration block you can define node blocks that specify the desired
+configuration state for each node (computer) in the environment. A node block
+starts with the Node keyword, followed by the name of the target computer,
+which can be a variable. After the computer name, come the curly braces that
+delimit the node block. Inside the node block, you can define resource blocks
+to configure specific resources. A resource block starts with the type name of
+the resource, followed by the identifier you want to specify for that block,
+followed by the curly braces that delimit the block, as shown in the following
+example.
+
+```powershell
+Configuration MyWebConfig {
+    # Parameters are optional
+    param ($MachineName, $WebsiteFilePath)
+    # A Configuration block can have one or more Node blocks
+    Node $MachineName
+    {
+        # Next, specify one or more resource blocks
+        # WindowsFeature is one of the resources you can use in a Node block
+        # This example ensures the Web Server (IIS) role is installed
+        WindowsFeature IIS
+        {
+            # To ensure that the role is not installed, set Ensure to &quot;Absent&quot;
+            Ensure = &quot;Present&quot;
+            Name = &quot;Web-Server&quot; # Use the Name property from Get-WindowsFeature
+        }
+
+        # You can use the File resource to create files and folders
+        # &quot;WebDirectory&quot; is the name you want to use to refer to this instance
+        File WebDirectory
+        {
+            Ensure = &quot;Present&quot;  # You can also set Ensure to &quot;Absent&quot;
+            Type = &quot;Directory&quot; # Default is &quot;File&quot;
+            Recurse = $true
+            SourcePath = $WebsiteFilePath
+            DestinationPath = &quot;C:\inetpub\wwwroot&quot;
+
+            # Ensure that the IIS block is successfully run first before
+            # configuring this resource
+            DependsOn = &quot;[WindowsFeature]IIS&quot;  # Use for dependencies
+        }
+    }
+}
+```
+
+To create a configuration, invoke the Configuration block the same way you
+would invoke a PowerShell function, passing in any expected parameters you may
+have defined (two in the example above). For example, in this case:
+
+```powershell
+MyWebConfig -MachineName &quot;TestMachine&quot; -WebsiteFilePath `
+  &quot;\\filesrv\WebFiles&quot; -OutputPath &quot;C:\Windows\system32\Temp&quot;
+
+# OutputPath is optional
+```
+
+This generates a MOF file per node at the path you specify. These MOF files
+specify the desired configuration for each node. Next, use the following
+cmdlet to parse the configuration MOF files, send each node its corresponding
+configuration, and enact those configurations. Note that you do not need to
+create a separate MOF file for class-based DSC resources.
+
+```powershell
+Start-DscConfiguration -Verbose -Wait -Path &quot;C:\Windows\system32\Temp&quot;
+```
+
+## Using DSC to maintain configuration state
+
+With DSC, configuration is idempotent. This means that if you use DSC to enact
+the same configuration more than once, the resulting configuration state will
+always be the same. Because of this, if you suspect that any nodes in your
+environment may have drifted from the desired state of configuration, you can
+enact the same DSC configuration again to bring them back to the desired
+state. You do not need to modify the configuration script to address only
+those resources whose state has drifted from the desired state.
+
+The following example shows how you can verify whether the actual state of
+configuration on a given node has drifted from the last DSC configuration
+enacted on the node. In this example we are checking the configuration of the
+local computer.
+
+```powershell
+$session = New-CimSession -ComputerName &quot;localhost&quot;
+Test-DscConfiguration -CimSession $session
+```
+
+## Built-in DSC resources
+
+You can use the following built-in resources in your configuration scripts:
+
+|Name                  |Properties                                         |
+|----------------------|---------------------------------------------------|
+|File                  |{DestinationPath, Attributes, Checksum, Content...}|
+|Archive               |{Destination, Path, Checksum, Credential...}       |
+|Environment           |{Name, DependsOn, Ensure, Path...}                 |
+|Group                 |{GroupName, Credential, DependsOn, Description...} |
+|Log                   |{Message, DependsOn, PsDscRunAsCredential}         |
+|Package               |{Name, Path, ProductId, Arguments...}              |
+|Registry              |{Key, ValueName, DependsOn, Ensure...}             |
+|Script                |{GetScript, SetScript, TestScript, Credential...}  |
+|Service               |{Name, BuiltInAccount, Credential, Dependencies...}|
+|User                  |{UserName, DependsOn, Description, Disabled...}    |
+|WaitForAll            |{NodeName, ResourceName, DependsOn, PsDscRunAsC...}|
+|WaitForAny            |{NodeName, ResourceName, DependsOn, PsDscRunAsC...}|
+|WaitForSome           |{NodeCount, NodeName, ResourceName, DependsOn...}  |
+|WindowsFeature        |{Name, Credential, DependsOn, Ensure...}           |
+|WindowsOptionalFeature|{Name, DependsOn, Ensure, LogLevel...}             |
+|WindowsProcess        |{Arguments, Path, Credential, DependsOn...}        |
+
+To get a list of available DSC resources on your system, run the
+`Get-DscResource` cmdlet.
+
+&gt; [!NOTE]
+&gt; In PowerShell versions below 7.0, `Get-DscResource` does not find Class based
+&gt; DSC resources.
+
+The example in this topic demonstrates how to use the File and WindowsFeature
+resources. To see all properties that you can use with a resource, insert the
+cursor in the resource keyword (for example, File) within your configuration
+script in PowerShell ISE, hold down &lt;kbd&gt;CTRL&lt;/kbd&gt;+&lt;kbd&gt;SPACEBAR&lt;/kbd&gt;
+
+## Find more resources
+
+You can download, install, and learn about many other available DSC resources
+that have been created by the PowerShell and DSC user community, and by
+Microsoft. Visit the [PowerShell Gallery](https://www.powershellgallery.com/)
+to browse and learn about available DSC resources.
+
+# about_DesiredStateConfiguration
+
+## See also
+
+- [PowerShell Desired State Configuration Overview](/powershell/scripting/dsc/overview/)
+- [Built-In PowerShell Desired State Configuration Resources](/powershell/scripting/dsc/resources/resources)
+- [Build Custom PowerShell Desired State Configuration Resources](/powershell/scripting/dsc/resources/authoringResource)
+###Microsoft Learn URL###
+https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_desiredstateconfiguration/?view=powershell-5.1
+</pre></html>

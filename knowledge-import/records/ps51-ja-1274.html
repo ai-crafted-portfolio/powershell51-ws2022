@@ -1,0 +1,539 @@
+<!doctype html><html lang="ja"><meta charset="utf-8"><pre class="record-source">###KnowledgeNo###
+PS51-WS2022-2026-1274
+###FormatID###
+PS51-WS2022
+###CreatedAt###
+2026-08-01 00:00
+###UpdatedAt###
+2026-08-01 00:00
+###タイトル###
+Get-GPOReport
+###モジュール###
+grouppolicy
+###製品###
+Windows PowerShell 5.1
+###対応OS###
+Windows Server 2022
+###日本語訳###
+# Get-GPOReport を取得する
+
+## シノプシスです.
+
+指定されたGPOまたはドメイン内のすべてのGPOのためにXMLまたはHTML形式のレポートを作成します.
+
+## SYNTAX 
+
+### ByGUID (デフォルト) 
+
+```
+Get-GPOReport [-Guid] &lt;Guid&gt; [-ReportType] &lt;ReportType&gt; [[-Path] &lt;String&gt;] [[-Domain] &lt;String&gt;]
+ [[-Server] &lt;String&gt;] [&lt;CommonParameters&gt;]
+```
+
+### ByName 名前
+
+```
+Get-GPOReport [-Name] &lt;String&gt; [-ReportType] &lt;ReportType&gt; [[-Path] &lt;String&gt;] [[-Domain] &lt;String&gt;]
+ [[-Server] &lt;String&gt;] [&lt;CommonParameters&gt;]
+```
+
+### 報告全
+
+```
+Get-GPOReport [-ReportType] &lt;ReportType&gt; [[-Path] &lt;String&gt;] [[-Domain] &lt;String&gt;]
+ [[-Server] &lt;String&gt;] [-All] [&lt;CommonParameters&gt;]
+```
+
+## 記述は,
+
+   `Get-GPOReport`cmdlet は XML または HTML 形式で報告を作成し,指定されたグループポリシーオブジェクト (GPO) またはドメイン内のすべての GPO の性質とポリシー設定を記述します.各 GPO に報告される情報には:詳細,リンク,セキュリティフィルタリング,Windows管理機器 (WMI) フィルタリング,デレガーション,およびコンピュータとユーザー設定が含まれます.
+
+域内のすべてのGPOに対してレポートを作成するための**All**パラメータを指定することもできますし,単一のGPOに対してレポートを作成するために**Name**または**Guid**パラメータを指定することもできます.また,このcmdletにGPOオブジェクトをパイプすることもできます. **Path**パラメータでファイルを指定すると,レポートはファイルに書き込まれます.そうでなければ,ディスプレイに印刷されます.
+
+## 例えは,
+
+### 例1:指定されたGPOのHTMLレポートを作成します.
+
+```powershell
+Get-GPOReport -Name &quot;TestGPO1&quot; -ReportType HTML -Path &quot;C:\GPOReports\GPOReport1.html&quot;
+```
+
+このコマンドは,GPOのHTML形式でレポートを作成します.`TestGPO1`そしてファイルに書き込みます.`C:\GPOReports\GPOReport1.html`
+
+### 例2:指定されたドメインのGPOごとにXMLレポートを作成します
+
+```powershell
+$params = @{
+    All         = $true
+    Domain      = &#x27;sales.contoso.com&#x27;
+    Server      = &#x27;DC1&#x27;
+    ReportType  = &#x27;XML&#x27; 
+    Path        = &#x27;C:\GPOReports\GPOReportsAll.xml&#x27;
+}
+Get-GPOReport @params
+```
+
+このコマンドは,XML形式で,すべてのGPOの XML 形式のレポートを生成します.`sales.contoso.com`ドメインで書き込み,ファイルに書き込みます.`C:\GPOReports\GPOReportsAll.xml`           `DC1`ドメインコントローラに連絡して操作を完了します.
+
+ユーザーアカウントのドメイン (または起動・シャットダウンスクリプトの場合,コンピュータアカウント) が異なる場合,`sales.contoso2.com`信頼関係があるのは,両領域の間にあること.
+
+### 例3:指定された GUIDでGPOのXMLレポートを作成する
+
+```powershell
+Get-GPOReport -GUID 73624cc9-e8f2-4f05-8802-193fae8773ce -ReportType XML
+```
+
+このコマンドは指定された GUID を備えたGPOのXMLフォーマットでレポートを作成します. **Path** パラメータが提供されていないため,レポートはディスプレイに書き込まれます.
+
+## パラメータは
+
+### -すべて
+
+cmdletがドメイン内のすべてのGPOのレポートを生成することを示します.
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: ReportAll
+Aliases: 
+
+Required: True
+Position: 5
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -ドメイン
+
+このcmdletのドメインを指定します.ドメインの完全資格ドメイン名 (FQDN) を指定する必要があります.
+
+のために`Get-GPOReport`cmdlet:
+
+- 単一のGPOが指定されている場合,このドメインで存在する必要があります.
+
+- **All**パラメータが指定されている場合,このドメインのGPOごとにレポートが生成されます.
+
+**Domain**パラメータを指定していない場合は,現在のセッションを実行しているユーザーのドメインが使用されます.もし,cmdletがコンピュータの起動またはシャットダウンスクリプトから実行されている場合は,コンピュータのドメインが使用されます.詳細については,完全なヘルプのメモセクションを参照してください.
+
+もし,現在のセッションを実行しているユーザーや (起動またはシャットダウンスクリプトの場合,コンピュータ) のドメインと異なるドメインを指定した場合,そのドメインとユーザーまたはコンピュータのドメインの間に信頼が存在する必要があります.
+
+ドメインを内蔵の名前で参照することもできます. **DomainName**.詳細については, [about_Aliases] (/powershell/module/microsoft.powershell.core/about/about_aliases) を参照してください.
+
+```yaml
+Type: System.String
+Parameter Sets: (All)
+Aliases: DomainName
+
+Required: False
+Position: 3
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -ガイド
+
+グローバル・ユニコーン・ID (グローバル・ユニコーン・ID) によって報告を生成するGPOを指定する.
+
+また,内蔵の名前の **Id**によって **Guid** パラメタを参照することもできます.詳細については, [about_Aliases] (/powershell/module/microsoft.powershell.core/about/about_aliases) を参照してください.
+
+```yaml
+Type: Guid
+Parameter Sets: ByGUID
+Aliases: Id
+
+Required: True
+Position: 0
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -名字は
+
+報告書を表示するGPOを表示する表示名によって指定します.
+
+画面名はドメインでユニークであることを保証することはできません.同じ表示名を持つ別のGPOがドメインで存在した場合,エラーが発生します.GPOをユニークに識別するために**Guid**パラメータを使用できます.
+
+また,内蔵の名前, **DisplayName**によって **Name**パラメータを参照することもできます.詳細については, [about_Aliases] (/powershell/module/microsoft.powershell.core/about/about_aliases) を参照してください.
+
+```yaml
+Type: System.String
+Parameter Sets: ByName
+Aliases: DisplayName
+
+Required: True
+Position: 0
+Default value: None
+Accept pipeline input: True (ByValue)
+Accept wildcard characters: False
+```
+
+### - 歩道
+
+報告書ファイルへのパスポートを指定します.例えば, `c:\Reports\GpoReport.xml`. 経路が指定されていない場合は,レポートがディスプレイに印刷されます.
+
+```yaml
+Type: System.String
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: 2
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -ReportType
+
+報告書のフォーマットを指定します. Html (HTML形式) または Xml (XML形式) を指定する必要があります.これらの値はケースセンシティブではありません.
+
+このオブジェクトタイプには以下の値が許容されている.
+
+```yaml
+Type: ReportType
+Parameter Sets: (All)
+Aliases: 
+Accepted values: Xml, Html
+
+Required: True
+Position: 1
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -サーバー
+
+このcmdletが操作を完了するために連絡するドメインコントローラの名前を指定します.完全に資格のあるドメイン名 (FQDN) またはホスト名を指定することができます.
+
+**Server**パラメータを使用して名前を指定しない場合は,プライマリドメインコントローラー (PDC) エミュレーターに連絡されます.
+
+このパラメータを,内蔵のニックネーム, **DC**によって参照できます.詳細については, [about_Aliases] (/powershell/module/microsoft.powershell.core/about/about_aliases) を参照してください.
+
+```yaml
+Type: System.String
+Parameter Sets: (All)
+Aliases: DC
+
+Required: False
+Position: 4
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### 共通パラメーター
+
+このcmdletは,共通パラメータをサポートしています: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable.詳細については, [about_CommonParameters](を参照してください.https://go.microsoft.com/fwlink/?LinkID=113216) でした.
+
+## 輸入は
+
+### Microsoft.GroupPolicy.Gpo
+
+GPOを表すオブジェクト.異なるドメインからGPOを含むコレクションはサポートされません.
+
+## 輸出は
+
+### どれもない
+
+このcmdletは,出力を生成しません.
+
+# Get-GPOReport を取得する
+
+##  NOTES  記事ができました.
+
+**Domain**パラメータを使用して,このcmdletのドメインを明確に指定することができます.
+
+域を明示的に指定していない場合,cmdletはデフォルトドメインを使用します.デフォルトドメインは,当時のセッションが実行されているセキュリティコンテキストによってネットワークリソースにアクセスするために使用されるドメインです.このドメインは,通常,セッションを実行しているユーザーのドメインです.例えば,プログラムファイルメニューからWindows PowerShell を開きセッションを開始したユーザーのドメイン,またはルーンコマンドで指定されたユーザーのドメインです.しかし,コンピュータの起動とシャットダウンスクリプトは,ローカルシステムアカウントのコンテキストで実行されます.ローカルシステムアカウントは,内蔵のローカルアカウントであり,ネットワークリソースにアクセスし,ローカルシステムアカウントのコンテキストでアクセスします.したがって,このcmdletが起動またはシャットダウンスクリプトから実行される場合,デフォルトドメインはコンピュータが接続したドメインです.
+
+このcmdletのインスタンスの場合,ドメインが1つのみ使用できます.このcmdletに集合したGPO (Microsoft.GroupPolicy.Gpo) オブジェクトをパイプすると,コレクション内の最初のGPOオブジェクトの **DomainName**プロパティは,cmdletのドメインを指定します.これはドメイン名は**Domain**パラメータの内蔵のニックネームであり,Domain**パラメータはパイプラインからプロパティ名によってその値を取ることができます.このドメインに含まれていないコレクション内のGPOsに対して,終了しないエラーが発生します.このドメインがユーザーアカウントのドメインと,起動またはシャットダウンスクリプト,コンピュータアカウントとの異なる場合,両ドメインの間に信頼が存在する必要があります.
+
+## 関連リンク
+###英語原文###
+# Get-GPOReport
+
+## SYNOPSIS
+
+Generates a report either in XML or HTML format for a specified GPO or for all GPOs in a domain.
+
+## SYNTAX
+
+### ByGUID (Default)
+
+```
+Get-GPOReport [-Guid] &lt;Guid&gt; [-ReportType] &lt;ReportType&gt; [[-Path] &lt;String&gt;] [[-Domain] &lt;String&gt;]
+ [[-Server] &lt;String&gt;] [&lt;CommonParameters&gt;]
+```
+
+### ByName
+
+```
+Get-GPOReport [-Name] &lt;String&gt; [-ReportType] &lt;ReportType&gt; [[-Path] &lt;String&gt;] [[-Domain] &lt;String&gt;]
+ [[-Server] &lt;String&gt;] [&lt;CommonParameters&gt;]
+```
+
+### ReportAll
+
+```
+Get-GPOReport [-ReportType] &lt;ReportType&gt; [[-Path] &lt;String&gt;] [[-Domain] &lt;String&gt;]
+ [[-Server] &lt;String&gt;] [-All] [&lt;CommonParameters&gt;]
+```
+
+## DESCRIPTION
+
+The `Get-GPOReport` cmdlet generates a report in either XML or HTML format that describes
+properties and policy settings for a specified Group Policy Object (GPO) or for all GPOs in a
+domain. The information that is reported for each GPO includes: details, links, security filtering,
+Windows Management Instrumentation (WMI) filtering, delegation, and computer and user
+configurations.
+
+You can specify the **All** parameter to generate a report for every GPO in the domain, or you can
+specify either the **Name** or **Guid** parameter to generate a report for a single GPO. You can
+also pipe GPO objects into this cmdlet. If you specify a file through the **Path** parameter, the
+report is written to a file; otherwise, it is printed to the display.
+
+## EXAMPLES
+
+### Example 1: Generate an HTML report for the specified GPO
+
+```powershell
+Get-GPOReport -Name &quot;TestGPO1&quot; -ReportType HTML -Path &quot;C:\GPOReports\GPOReport1.html&quot;
+```
+
+This command generates a report in HTML format for the GPO `TestGPO1` and writes it to the file `C:\GPOReports\GPOReport1.html`
+
+### Example 2: Generate an XML report for each GPO in the specified domain
+
+```powershell
+$params = @{
+    All         = $true
+    Domain      = &#x27;sales.contoso.com&#x27;
+    Server      = &#x27;DC1&#x27;
+    ReportType  = &#x27;XML&#x27; 
+    Path        = &#x27;C:\GPOReports\GPOReportsAll.xml&#x27;
+}
+Get-GPOReport @params
+```
+
+This command generates a report in XML format for each GPO in the `sales.contoso.com` domain and
+writes it to the file `C:\GPOReports\GPOReportsAll.xml`. The `DC1` domain controller is contacted to
+complete the operation.
+
+If the domain of the user account (or, for startup and shutdown scripts, the computer account) is
+different from `sales.contoso2.com`, a trust must exist between the two domains.
+
+### Example 3: Generate an XML report for a GPO with the specified GUID
+
+```powershell
+Get-GPOReport -GUID 73624cc9-e8f2-4f05-8802-193fae8773ce -ReportType XML
+```
+
+This command generates a report in XML format for the GPO with the specified GUID.
+Because no **Path** parameter is supplied, the report is written to the display.
+
+## PARAMETERS
+
+### -All
+
+Indicates that the cmdlet generates a report for all GPOs in the domain.
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: ReportAll
+Aliases: 
+
+Required: True
+Position: 5
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Domain
+
+Specifies the domain for this cmdlet. You must specify the fully qualified domain name (FQDN) of the
+domain.
+
+For the `Get-GPOReport` cmdlet:
+
+- If a single GPO is specified, it must exist in this domain.
+
+- If the **All** parameter is specified, a report is generated for each GPO in this domain.
+
+If you do not specify the **Domain** parameter, the domain of the user that is running the current
+session is used. If the cmdlet is being run from a computer startup or shutdown script, the domain
+of the computer is used. For more information, see the Notes section in the full Help.
+
+If you specify a domain that is different from the domain of the user that is running the current
+session or, (for a startup or shutdown script, the computer), a trust must exist between that domain
+and the domain of the user or the computer.
+
+You can also refer to Domain by its built-in alias, **DomainName**. For more information, see
+[about_Aliases](/powershell/module/microsoft.powershell.core/about/about_aliases).
+
+```yaml
+Type: System.String
+Parameter Sets: (All)
+Aliases: DomainName
+
+Required: False
+Position: 3
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -Guid
+
+Specifies the GPO for which to generate the report by its globally unique identifier (GUID). The
+GUID uniquely identifies the GPO.
+
+You can also refer to the **Guid** parameter by its built-in alias, **Id**. For more information,
+see [about_Aliases](/powershell/module/microsoft.powershell.core/about/about_aliases)
+
+```yaml
+Type: Guid
+Parameter Sets: ByGUID
+Aliases: Id
+
+Required: True
+Position: 0
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -Name
+
+Specifies the GPO for which to generate the report by its display name.
+
+The display name is not guaranteed to be unique in the domain. If another GPO with the same display
+name exists in the domain an error occurs. You can use the **Guid** parameter to uniquely identify a
+GPO.
+
+You can also refer to the **Name** parameter by its built-in alias, **DisplayName**. For more
+information, see [about_Aliases](/powershell/module/microsoft.powershell.core/about/about_aliases).
+
+```yaml
+Type: System.String
+Parameter Sets: ByName
+Aliases: DisplayName
+
+Required: True
+Position: 0
+Default value: None
+Accept pipeline input: True (ByValue)
+Accept wildcard characters: False
+```
+
+### -Path
+
+Specifies the path to the report file; for instance, `c:\Reports\GpoReport.xml`.
+If no path is specified, the report is printed to the display.
+
+```yaml
+Type: System.String
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: 2
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -ReportType
+
+Specifies the format of the report.
+You must specify either Html (for HTML format) or Xml (for XML format).
+These values are not case sensitive.
+
+The following values are permitted for this object type.
+
+```yaml
+Type: ReportType
+Parameter Sets: (All)
+Aliases: 
+Accepted values: Xml, Html
+
+Required: True
+Position: 1
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Server
+
+Specifies the name of the domain controller that this cmdlet contacts to complete the operation. You
+can specify either the fully qualified domain name (FQDN) or the host name.
+
+If you do not specify the name by using the **Server** parameter, the primary domain controller
+(PDC) emulator is contacted.
+
+You can refer to this parameter by its built-in alias, **DC**. For more information, see
+[about_Aliases](/powershell/module/microsoft.powershell.core/about/about_aliases).
+
+```yaml
+Type: System.String
+Parameter Sets: (All)
+Aliases: DC
+
+Required: False
+Position: 4
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### CommonParameters
+
+This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable,
+-InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose,
+-WarningAction, and -WarningVariable. For more information, see
+[about_CommonParameters](https://go.microsoft.com/fwlink/?LinkID=113216).
+
+## INPUTS
+
+### Microsoft.GroupPolicy.Gpo
+
+An object that represents a GPO.
+Collections that contain GPOs from different domains are not supported.
+
+## OUTPUTS
+
+### None
+
+This cmdlet does not generate any output.
+
+# Get-GPOReport
+
+## NOTES
+
+* You can use the **Domain** parameter to explicitly specify the domain for this cmdlet.
+
+  If you do not explicitly specify the domain, the cmdlet uses a default domain. The default domain
+  is the domain that is used to access network resources by the security context under which the
+  current session is running. This domain is typically the domain of the user that is running the
+  session. For instance, the domain of the user who started the session by opening Windows
+  PowerShell from the Program Files menu, or the domain of a user that is specified in a runas
+  command. However, computer startup and shutdown scripts run under the context of the LocalSystem
+  account. The LocalSystem account is a built-in local account, and it accesses network resources
+  under the context of the computer account. Therefore, when this cmdlet is run from a startup or
+  shutdown script, the default domain is the domain to which the computer is joined.
+
+  Only one domain can be used by an instance of this cmdlet. If you pipe a collection of GPO
+  (Microsoft.GroupPolicy.Gpo) objects to this cmdlet, the **DomainName** property of the first GPO
+  object in the collection specifies the domain for the cmdlet. This is because domainname is a
+  built-in alias for the **Domain** parameter, and the **Domain** parameter can take its value by
+  property name from the pipeline. A non-terminating error occurs for any GPOs in the collection
+  that are not in this domain. If this domain is different from the domain of the user account, for
+  startup or shutdown scripts, the computer account, a trust must exist between the two domains.
+
+## RELATED LINKS
+###Microsoft Learn URL###
+https://learn.microsoft.com/en-us/powershell/module/grouppolicy/get-gporeport/?view=windowsserver2022-ps
+</pre></html>

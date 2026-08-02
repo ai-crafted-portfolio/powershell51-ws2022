@@ -1,0 +1,993 @@
+<!doctype html><html lang="ja"><meta charset="utf-8"><pre class="record-source">###KnowledgeNo###
+PS51-WS2022-2026-0188
+###FormatID###
+PS51-WS2022
+###CreatedAt###
+2026-08-01 00:00
+###UpdatedAt###
+2026-08-01 00:00
+###タイトル###
+Test-ADDSDomainInstallation
+###モジュール###
+addsdeployment
+###製品###
+Windows PowerShell 5.1
+###対応OS###
+Windows Server 2022
+###日本語訳###
+# テスト-ADDSDomain インストール
+
+## SYNOPSISは新しいアクティブディレクトリドメイン設定をインストールするための前提条件を実行します.
+
+## SYNTAXは,のシンタックスです.
+
+```
+Test-ADDSDomainInstallation -NewDomainName &lt;String&gt; -ParentDomainName &lt;String&gt;
+ [-SafeModeAdministratorPassword &lt;SecureString&gt;] [-ADPrepCredential &lt;PSCredential&gt;]
+ [-AllowDomainReinstall] [-CreateDnsDelegation] [-Credential &lt;PSCredential&gt;]
+ [-DatabasePath &lt;String&gt;] [-DnsDelegationCredential &lt;PSCredential&gt;] [-NoDnsOnNetwork]
+ [-DomainMode &lt;DomainMode&gt;] [-DomainType &lt;DomainType&gt;] [-NoGlobalCatalog] [-InstallDns]
+ [-LogPath &lt;String&gt;] [-NewDomainNetbiosName &lt;String&gt;] [-NoRebootOnCompletion]
+ [-ReplicationSourceDC &lt;String&gt;] [-SiteName &lt;String&gt;] [-SkipAutoConfigureDns]
+ [-SysvolPath &lt;String&gt;] [-Force] [&lt;CommonParameters&gt;]
+```
+
+## 記述は,
+
+   `Test-ADDSDomainInstallation`cmdlet では,前提条件のチェックが実行されます.`Install-ADDSDomainController`新 Active Directory ドメイン設定をインストールするcmdletは, と **WhatIf** パラメータを使用するとは異なります.`Install-ADDSDomainController`cmdletとは,インストールプロセス中に起こる変更を概要する代わりに,この cmdlet は,現在の環境を考えると,これらの変更が可能かどうかを実際にテストするということです.
+
+このcmdletを使用するときにADDSDeploymentモジュールが実行するこれらの前提チェックの範囲に関する詳細については,AD DS 簡易化管理のADDPrepと前提チェックアーキテクチャのセクションを参照してください.https://go.microsoft.com/fwlink/?LinkID=237244) でした.
+
+## 例えは
+
+### 例1: 児童ドメインをインストールすることは可能かどうかテストする
+
+```powershell
+@HashArguments = {
+    CreateDNSDelegation  = $true
+    Credential           = (Get-Credential CORP\EnterpriseAdmin1)
+    DatabasePath         = &quot;D:\NTDS&quot;
+    DomainMode           = Win2003
+    InstallDNS           = $true
+    NewDomainName        = &quot;child&quot;
+    NoRebootOnCompletion = $true
+    ParentDomainName     = &quot;corp.contoso.com&quot;
+    ReplicationSourceDC  = &quot;DC1.corp.contoso.com&quot;
+    LogPath              = &quot;E:\Logs&quot;
+    SiteName             = &quot;Houston&quot;
+    SYSVOLPath           = &quot;D:\SYSVOL&quot;
+}
+Test-ADDSDomainInstallation @HashArguments
+```
+
+このコマンドは,新しい子供ドメインをインストールするかどうかを判断するための前提条件を実行します.`child.corp.contoso.com`の認証情報を使用する.`CORP\EnterpriseAdmin1`このコマンドは,また,DNSサーバーをインストールし,DNSデレグレーションを に作成します.`corp.contoso.com`ドメインをWindows Server 2003に設定し,ドメインコントローラをグローバル・カタログサーバーにします.`Houston`そして,使用する.`DC1.corp.contoso.com`また,このコマンドは,アクティブディレクトリデータベースとSYSVOLを  にインストールします.`D:\`ドライブにログファイルをインストールし,ログファイルを にインストールします.`E:\`ドメインのインストールが完了した後,サーバーが自動的にリセットされないので,ユーザは Active Directory でドメインのインストールを完了し,コミットするために,ディレクトリサービス復元モード (DSRM) パスワードを入力して確認するよう要求します.
+
+## パラメータは
+
+### -ADPrepCredential でした
+
+ユーザ名とパスワードを指定し,アカウントに対応するアカウントを指定し,必要に応じてアクティブディレクトリを準備するために実行する操作に使用します.このドメインをインストールする前に.`Get-Credential`cmdlet は,ユーザがパスワードを入力するように促す.
+
+```yaml
+Type: System.Management.Automation.PSCredential
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: NULL
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -AllowDomainReinstallを許可する
+
+cmdletが既存のドメインを再現することを表示します.
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: NULL
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -CreateDnsDelegation を作成する
+
+ドメインコントローラとインストールしている新しいDNSサーバを参照するDNSデレグレーションを作成するか否かを表示します.Active Directory-integrated DNSのみで有効です.デフォルトは環境に基づいて自動的に計算されます.
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: NULL
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### - 信用証
+
+ドメインコントローラをインストールするために使用したアカウントに対応するユーザー名とパスワードを指定します.  を使って`Get-Credential`cmdlet は,ユーザがパスワードを入力するように促す.
+
+```yaml
+Type: System.Management.Automation.PSCredential
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: NULL
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -DatabasePath
+
+域名データベースを含むローカルコンピュータの固定ディスクにあるディレクトリへの完全資格のある,非普遍的な命名条約 (UNC) 経路を指定します.`C:\Windows\NTDS`デフォルトは です.`%SYSTEMROOT%\NTDS` .
+
+```yaml
+Type: System.String
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: NULL
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -DnsDelegationCredential
+
+DNSデレグレーションを作成するユーザー用のユーザー名とパスワードを指定します.このパラメータは, **CreateDnsDelegation**パラメータの値は指定または計算された場合,スキップされます.`$false` .
+
+```yaml
+Type: System.Management.Automation.PSCredential
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: NULL
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -ドメインモード
+
+新しい森林を作成する際に最初のドメインの域機能レベルを指定します.このパラメータのサポートされた値は有効な整数または対応したリスト列値である可能性があります.例えば,ドメインモードレベルをWindows Server 2008 R2に設定するには,値のいずれかを指定できます.`4`    `Win2008R2` .
+
+このパラメータの受け入れられる値は:
+
+Windows Server 2003: 2またはWin2003 - Windows Server 2008: 3またはWin2008 - Windows Server 2008 R2: 4またはWin2008R2 - Windows Server 2012: 5またはWin2012 - Windows Server 2012 R2: 6またはWin2012R2 - Windows Server 2012: 5またはWin2012 - Windows Server 2012 R2: 6またはWin2012R2
+
+ドメイン機能レベルは,森林機能レベルよりも低いが,より高い可能性があります.デフォルトは自動的に計算され設定されます.
+
+```yaml
+Type: System.DirectoryServices.ActiveDirectory.DomainMode
+Parameter Sets: (All)
+Aliases: 
+Accepted values: Win2008, Win2008R2, Win2012, Win2012R2, WinThreshold, Default
+
+Required: False
+Position: Named
+Default value: Windows2008R2
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -ドメインタイプ
+
+このcmdletが作成するドメインの種類を指定します.既存の森の新しいドメイン木 (サポートされた値は です).`TreeDomain`     `tree`),既存のドメインの子供 (サポートされた値は です)`ChildDomain`     `child`預設は です).`ChildDomain` .
+
+```yaml
+Type: DomainType
+Parameter Sets: (All)
+Aliases: 
+Accepted values: ChildDomain, TreeDomain
+
+Required: False
+Position: Named
+Default value: ChildDomain
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -フォース
+
+ユーザの確認を要求せずにコマンドを実行するように強制します.
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+# テスト-ADDSDomain インストール
+
+### -InstallDns
+
+このcmdletはドメインまたはドメインツリーのためのDNS Serverサービスをインストールして設定することを示します.ドメインインストールでは,このパラメータが指定されていないまま,母ドメイン (またはドメインツリーの場合,森林根ドメイン) がすでにドメインのDNS名をホストし,保存している場合は,このパラメータのデフォルトは です.`$true`違う場合は,DNSドメイン名がアクティブディレクトリの外にホストされている場合,デフォルトは です.`$false`DNSサーバーはインストールされていない.
+
+Active Directory の外に DNS ドメイン名がホストされているかどうかをテストするには,このcmdlet は,SOA (Start of Authority) の DNS タイプを使用します.例えば, **NewDomainName** の値は  の場合`corp.contoso.com`Active Directory は SOA の問い合わせを実行します.`corp.contoso.com`応答のゾーン名が&quot;&quot;であることを確認します.`corp.contoso.com` .
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: NULL
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -LogPath
+
+域ログファイルを含む,地元のコンピュータの固定ディスク上のディレクトリへの完全資格のある,UNC以外のパス指定します.`C:\Windows\Logs`デフォルトは です.`%SYSTEMROOT%\NTDS` .
+
+```yaml
+Type: System.String
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: NULL
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -NewDomainName
+
+ドメインの新しい名前を指定します. **DomainType** に設定された値は  に設定されている場合.`TreeDomain`このパラメータを使用して,新しいドメインツリーの完全資格ドメイン名 (FQDN) を指定できます (例えば, ).`contoso.com`◎**DomainType** に設定された値は,`ChildDomain`このパラメータは,子供ドメインの単一のレーベルドメイン名を指定するために使用できます (例えば,新しいドメインを作るために corpを指定します).`corp.contoso.com`新しいドメインが  にある場合`contoso.com`ドメインの木).
+
+```yaml
+Type: System.String
+Parameter Sets: (All)
+Aliases: 
+
+Required: True
+Position: Named
+Default value: &lt;mandatory&gt;
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -NewDomainNetbiosName
+
+新しいドメインのNetBIOS名を指定します.このパラメータで使用するためにNetBIOS名が有効になるためには,単一のラベル名で15文字以下でなければならない.
+
+このパラメータが有効なNetBIOS名値で設定されている場合,プロモーションは指定された名前で続きます.このパラメータが設定されていない場合,デフォルトは自動的に **NewDomainName**パラメータの値から計算されます.
+
+例えば,このパラメータが指定されていない場合,および**NewDomainName**パラメータの値内に15文字以下の単行レーベルプレフィックスドメイン名が指定されている場合,プロモーションは自動的に生成されるNetBIOSドメイン名で継続されます.例えば,プレフィックスラベル corpは,全域名値の内にある.`corp.contoso.com`標識が16文字以上であれば,操作は失敗します.
+
+```yaml
+Type: System.String
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: NULL
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -NoDnsOnNetwork
+
+このパラメータは,このコンピュータのネットワークアダプターのIP設定が名前解析のためのDNSサーバの名前で設定されていない場合にのみ使用されます.このコンピュータに名前解析のためのDNSサーバがインストールされていることを意味します.そうでなければ,ネットワークアダプターのIP設定はまずDNSサーバのアドレスで設定する必要があります.
+
+このパラメータを省略すると,デフォルト値が表示されるのは,このサーバーコンピュータのネットワークアダプターのTCP/IPクライアント設定がDNSサーバーと連絡するために使用されていることを示している.したがって,このパラメータを指定していない場合は,まず TCP/IPクライアント設定が優先されたDNSサーバーアドレスで設定されることを確認してください.
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -NoGlobalCatalog について
+
+読みのみドメインコントローラ (RODC) がグローバル・カタログサーバーではないことを示します.デフォルトでは,インストールしているドメインコントローラはグローバル・カタログサーバーです.
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -NoRebootOnCompletion 完成していない
+
+完了したときに,成功しても,cmdletがコンピュータを再起動することを示します.デフォルトでは,このcmdletが使用され,このパラメータが省略されるときに完了したときに再起動が起こります.一般的ルールとして,Microsoftサポートはテストまたはトラブルシューティング目的を除き,このパラメータを使用することを推奨します.設定が完了したら,サーバーは再起動するまでメンバーサーバーまたはDCとして正しく機能しません.
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -親子ドメイン名
+
+既存の親ドメインの完全資格ドメイン名 (FQDN) を指定します.
+
+```yaml
+Type: System.String
+Parameter Sets: (All)
+Aliases: 
+
+Required: True
+Position: Named
+Default value: &lt;mandatory&gt;
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -ReplicationSourceDC
+
+このドメインに複製するソースとして使用するドメインコントローラの完全資格ドメイン名 (FQDN) を指定します.このパラメータのデフォルト値は環境から自動的に計算されます.
+
+```yaml
+Type: System.String
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: NULL
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -SafeModeAdministrator パスワード
+
+コンピュータが安全なモードまたは安全なモードの変異で起動するときに管理者アカウントのパスワードを入力します.例えばディレクトリサービス復元モードです. ドメインのパスワード複雑性のルールを満たすパスワードを入力する必要があります.パスワードは空白でできません.値で指定された場合,値は安全な文字列でなければなりません.
+
+このパラメータが指定されていない場合,CMDletは,あなたがマスクされたパスワードを入力して確認するよう求めます.これは,インタラクティブでCMDletを実行する際に使用される好みのものです.さらに,CMDletで指定された他の議論がない場合,このパラメータのためのマスクされたパスワードを入力するよう求められますが,入力されたパスワードの確認はありません.これは誤ったパスワードを設定できるようにすることが推奨されません.利用可能な別の先進的なオプションは,入力されたパスワードの設定です.`ConvertTo-SecureString`cmdlet を入力して,パスワード文字列をアンマスクされたコンソール入力として入力してください.これは生産部署における推奨のセキュリティベストプラクティスでもありません.
+
+```yaml
+Type: System.Security.SecureString
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: &lt;mandatory&gt;
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+# テスト-ADDSDomain インストール
+
+### -サイト名
+
+新しいドメインコントローラを配置できる既存のサイトの名前を指定します.デフォルト値は,このサーバのIPアドレスを含むサブネットに関連したサイトです.そのようなサイトがない場合は,デフォルトは複製ソースドメインコントローラのサイトです.
+
+```yaml
+Type: System.String
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: NULL
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -SkipAutoConfigureDns
+
+このcmdletは,DNSクライアント設定,転送者,ルーツヒントの自動設定をスキップすると示します.このパラメータは,DNS Server サービスが既にインストールされている場合にのみ有効です.
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: NULL
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -SysvolPath でした
+
+完全合格でUNC以外の経路を指定して,ローカルコンピュータの固定ディスク上のディレクトリへ移動します.`C:\Windows\SYSVOL`デフォルトは です.`%SYSTEMROOT%\SYSVOL` .
+
+```yaml
+Type: System.String
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: NULL
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### 共通パラメーター
+
+このcmdletは,共通パラメータをサポートしています: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable.詳細については, [about_CommonParameters](を参照してください.https://go.microsoft.com/fwlink/?LinkID=113216) でした.
+
+## 輸入は
+
+## 輸出は
+
+##  NOTES  記事ができました.
+
+## 関連リンク
+
+[AD DS 簡易化管理]https://go.microsoft.com/fwlink/?LinkID=237244) 
+
+[Install-ADDSDomain.md]
+
+[Get-Credential] ◎https://go.microsoft.com/fwlink/?LinkID=293936) 
+
+[ConvertTo-SecureString]は,安全性のある文字列を変換する.https://go.microsoft.com/fwlink/p/?LinkId=113291) 
+###英語原文###
+# Test-ADDSDomainInstallation
+
+## SYNOPSIS
+Runs the prerequisites for installing a new Active Directory domain configuration.
+
+## SYNTAX
+
+```
+Test-ADDSDomainInstallation -NewDomainName &lt;String&gt; -ParentDomainName &lt;String&gt;
+ [-SafeModeAdministratorPassword &lt;SecureString&gt;] [-ADPrepCredential &lt;PSCredential&gt;]
+ [-AllowDomainReinstall] [-CreateDnsDelegation] [-Credential &lt;PSCredential&gt;]
+ [-DatabasePath &lt;String&gt;] [-DnsDelegationCredential &lt;PSCredential&gt;] [-NoDnsOnNetwork]
+ [-DomainMode &lt;DomainMode&gt;] [-DomainType &lt;DomainType&gt;] [-NoGlobalCatalog] [-InstallDns]
+ [-LogPath &lt;String&gt;] [-NewDomainNetbiosName &lt;String&gt;] [-NoRebootOnCompletion]
+ [-ReplicationSourceDC &lt;String&gt;] [-SiteName &lt;String&gt;] [-SkipAutoConfigureDns]
+ [-SysvolPath &lt;String&gt;] [-Force] [&lt;CommonParameters&gt;]
+```
+
+## DESCRIPTION
+
+The `Test-ADDSDomainInstallation` cmdlet runs those prerequisite checks which would be performed if
+you were to use the `Install-ADDSDomainController` cmdlet to install a new Active Directory domain
+configuration. It differs from using the **WhatIf** parameter with the
+`Install-ADDSDomainController` cmdlet in that instead of summarizing the changes that would occur
+during the installation process, this cmdlet actually tests whether those changes are possible
+given the current environment.
+
+For more information on the scope of these prerequisite checks that the **ADDSDeployment** module
+performs when using this cmdlet see the section ADPrep and Prerequisite Checking Architecture in
+[AD DS Simplified Administration](https://go.microsoft.com/fwlink/?LinkID=237244).
+
+## EXAMPLES
+
+### Example 1: Test if installing a child domain is possible
+
+```powershell
+@HashArguments = {
+    CreateDNSDelegation  = $true
+    Credential           = (Get-Credential CORP\EnterpriseAdmin1)
+    DatabasePath         = &quot;D:\NTDS&quot;
+    DomainMode           = Win2003
+    InstallDNS           = $true
+    NewDomainName        = &quot;child&quot;
+    NoRebootOnCompletion = $true
+    ParentDomainName     = &quot;corp.contoso.com&quot;
+    ReplicationSourceDC  = &quot;DC1.corp.contoso.com&quot;
+    LogPath              = &quot;E:\Logs&quot;
+    SiteName             = &quot;Houston&quot;
+    SYSVOLPath           = &quot;D:\SYSVOL&quot;
+}
+Test-ADDSDomainInstallation @HashArguments
+```
+
+This command runs the prerequisites to determine if installing a new child domain named
+`child.corp.contoso.com` using credentials of `CORP\EnterpriseAdmin1` is possible. This command
+also installs a DNS server, creates a DNS delegation in the `corp.contoso.com` domain, sets the
+domain functional level to Windows Server 2003, makes the domain controller a global catalog server
+in a site named `Houston`, and uses `DC1.corp.contoso.com` as the replication source domain
+controller. The command also installs the Active Directory database and SYSVOL on the `D:\` drive,
+installs the log files on the `E:\` drive, has the server not automatically restart after the
+domain installation is complete and prompts the user to provide and confirm the Directory Services
+Restore Mode (DSRM) password to complete and commit the installation of the domain in Active
+Directory.
+
+## PARAMETERS
+
+### -ADPrepCredential
+
+Specifies the user name and password that corresponds to the account to be used for running
+operations, if required, to prepare Active Directory prior to the installation of this domain. Use
+the `Get-Credential` cmdlet to prompt the user to supply a password.
+
+```yaml
+Type: System.Management.Automation.PSCredential
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: NULL
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -AllowDomainReinstall
+
+Indicates that the cmdlet recreates an existing domain is to be recreated.
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: NULL
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -CreateDnsDelegation
+
+Indicates whether to create a DNS delegation that references the new DNS server that you are
+installing along with the domain controller. Valid for Active Directory-integrated DNS only. The
+default is computed automatically based on the environment.
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: NULL
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Credential
+
+Specifies the user name and password that corresponds to the account used to install the domain
+controller. Use the `Get-Credential` cmdlet to prompt the user to supply a password.
+
+```yaml
+Type: System.Management.Automation.PSCredential
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: NULL
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -DatabasePath
+
+Specifies the fully qualified, non-Universal Naming Convention (UNC) path to a directory on a fixed
+disk of the local computer that contains the domain database, for example, `C:\Windows\NTDS`. The
+default is `%SYSTEMROOT%\NTDS`.
+
+```yaml
+Type: System.String
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: NULL
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -DnsDelegationCredential
+
+Specifies the user name and password for the user that creates the DNS delegation. This parameter
+is skipped if the value for the **CreateDnsDelegation** parameter is either specified or computed
+to be `$false`.
+
+```yaml
+Type: System.Management.Automation.PSCredential
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: NULL
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -DomainMode
+
+Specifies the domain functional level of the first domain in the creation of a new forest.
+Supported values for this parameter can be either a valid integer or a corresponding enumerated
+string value. For instance, to set the domain mode level to Windows Server 2008 R2, you can specify
+either a value of `4` or `Win2008R2`.
+
+The acceptable values for this parameter are:
+
+- Windows Server 2003:  2 or Win2003
+- Windows Server 2008:  3 or Win2008
+- Windows Server 2008 R2:  4 or Win2008R2
+- Windows Server 2012:  5 or Win2012
+- Windows Server 2012 R2:  6 or Win2012R2
+
+The domain functional level cannot be lower than the forest functional level, but it can be higher.
+The default is automatically computed and set.
+
+```yaml
+Type: System.DirectoryServices.ActiveDirectory.DomainMode
+Parameter Sets: (All)
+Aliases: 
+Accepted values: Win2008, Win2008R2, Win2012, Win2012R2, WinThreshold, Default
+
+Required: False
+Position: Named
+Default value: Windows2008R2
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -DomainType
+
+Specifies the type of domain that this cmdlet creates: a new domain tree in an existing forest
+(supported values are `TreeDomain` or `tree`), a child of an existing domain (supported values are
+`ChildDomain` or `child`). The default is `ChildDomain`.
+
+```yaml
+Type: DomainType
+Parameter Sets: (All)
+Aliases: 
+Accepted values: ChildDomain, TreeDomain
+
+Required: False
+Position: Named
+Default value: ChildDomain
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Force
+
+Forces the command to run without asking for user confirmation.
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+# Test-ADDSDomainInstallation
+
+### -InstallDns
+
+Indicates that this cmdlet installs and configures the DNS Server service for the domain or domain
+tree. For domain installation, if this parameter is left unspecified and the parent domain (or in
+the case of a domain tree, the forest root domain) already hosts and stores the DNS names for the
+domain, then the default for this parameter is `$true` and the DNS server is installed. Otherwise,
+if DNS domain names are hosted outside of Active Directory, the default is `$false` and no DNS
+server is installed.
+
+To test if DNS domain names are hosted outside of Active Directory, this cmdlet uses a start of
+authority (SOA) type DNS. For instance, if the value of **NewDomainName** is `corp.contoso.com`,
+Active Directory performs an SOA query for `corp.contoso.com` and ensures that the zone name in the
+response is `corp.contoso.com`.
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: NULL
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -LogPath
+
+Specifies the fully qualified, non-UNC path to a directory on a fixed disk of the local computer
+that will contain the domain log files, for example, `C:\Windows\Logs`. The default is
+`%SYSTEMROOT%\NTDS`.
+
+```yaml
+Type: System.String
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: NULL
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -NewDomainName
+
+Specifies the new name of the domain. If the value set for **DomainType** is set to `TreeDomain`,
+this parameter can be used to specify the fully qualified domain name (FQDN) for the new domain
+tree (for example, `contoso.com`). If the value set for **DomainType** is set to `ChildDomain`,
+this parameter can be used to specify a single label domain name for the child domain (for example,
+specify corp to make a new domain `corp.contoso.com` if the new domain is in the `contoso.com`
+domain tree).
+
+```yaml
+Type: System.String
+Parameter Sets: (All)
+Aliases: 
+
+Required: True
+Position: Named
+Default value: &lt;mandatory&gt;
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -NewDomainNetbiosName
+
+Specifies the NetBIOS name for the new domain. For NetBIOS names to be valid for use with this
+parameter they must be single label names of 15 characters or less.
+
+If this parameter is set with a valid NetBIOS name value, then promotion continues with the name
+specified. If this parameter is not set, then the default is automatically computed from the value
+of the **NewDomainName** parameter.
+
+For instance, if this parameter is not specified and a single-label prefix domain name of 15
+characters or less is specified within the value of the **NewDomainName** parameter, then promotion
+continues with an automatically generated NetBIOS domain name. For example, the prefix label corp
+within a full domain name value of `corp.contoso.com` would be a successful name choice. If the
+label is more than 16 characters, the operation will fail.
+
+```yaml
+Type: System.String
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: NULL
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -NoDnsOnNetwork
+
+Indicates that the DNS service is not available on the network. This parameter is used only when the
+IP setting of the network adapter for this computer is not configured with the name of a DNS server
+for name resolution. It indicates that a DNS server is installed on this computer for name
+resolution. Otherwise, the IP settings of the network adapter must first be configured with the
+address of a DNS server.
+
+Omitting this parameter, the default value, indicates that the TCP/IP client settings of the network
+adapter on this server computer is used to contact a DNS server. Therefore, if you are not
+specifying this parameter, ensure that TCP/IP client settings are first configured with a preferred
+DNS server address.
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -NoGlobalCatalog
+
+Indicates that the read-only domain controller (RODC) will not be a global catalog server. By
+default, the domain controller that you are installing is a global catalog server.
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -NoRebootOnCompletion
+
+Indicates that the cmdlet restarts the computer upon completion, regardless of success. By default,
+reboot upon completion occurs when this cmdlet is used and this parameter is omitted. As a general
+rule, Microsoft support recommends that you not use this parameter except for testing or
+troubleshooting purposes because once configuration has completed the server will not function
+correctly as either a member server or a DC until it is rebooted.
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -ParentDomainName
+
+Specifies the fully qualified domain name (FQDN) of an existing parent domain.
+
+```yaml
+Type: System.String
+Parameter Sets: (All)
+Aliases: 
+
+Required: True
+Position: Named
+Default value: &lt;mandatory&gt;
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -ReplicationSourceDC
+
+Specifies the fully qualified domain name (FQDN) of the domain controller to be used as the source
+for replicating to this domain. The default value for this parameter is automatically computed from
+the environment.
+
+```yaml
+Type: System.String
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: NULL
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -SafeModeAdministratorPassword
+
+Supplies the password for the administrator account when the computer is started in Safe Mode or a
+variant of Safe Mode, such as Directory Services Restore Mode. You must supply a password that meets
+the password complexity rules of the domain and the password cannot be blank. If specified with a
+value, the value must be a secure string.
+
+If this parameter is not specified, the cmdlet prompts you to enter and confirm a masked password.
+This is the preferred usage when running the cmdlet interactively. If additionally there are no
+other arguments specified with the cmdlet, you are prompted to enter a masked password for this
+parameter but no confirmation of the password entered is made. This is not recommended as it could
+allow a mistyped password to be configured. Another available advanced option is to use the
+`ConvertTo-SecureString` cmdlet and specify the password string inline as unmasked console input,
+which is also not a recommended security best practice in production deployments.
+
+```yaml
+Type: System.Security.SecureString
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: &lt;mandatory&gt;
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+# Test-ADDSDomainInstallation
+
+### -SiteName
+
+Specifies the name of an existing site where you can place the new domain controller. The default
+value is the site that is associated with the subnet that includes the IP address of this server. If
+no such site exists, the default is the site of the replication source domain controller.
+
+```yaml
+Type: System.String
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: NULL
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -SkipAutoConfigureDns
+
+Indicates that this cmdlet skips automatic configuration of DNS client settings, forwarders, and
+root hints. This parameter is in effect only if the DNS Server service is already installed.
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: NULL
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -SysvolPath
+
+Specifies the fully qualified, non-UNC path to a directory on a fixed disk of the local computer,
+for example, `C:\Windows\SYSVOL`. The default is `%SYSTEMROOT%\SYSVOL`.
+
+```yaml
+Type: System.String
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: NULL
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### CommonParameters
+
+This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable,
+-InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose,
+-WarningAction, and -WarningVariable. For more information, see
+[about_CommonParameters](https://go.microsoft.com/fwlink/?LinkID=113216).
+
+## INPUTS
+
+## OUTPUTS
+
+## NOTES
+
+## RELATED LINKS
+
+[AD DS Simplified Administration](https://go.microsoft.com/fwlink/?LinkID=237244)
+
+[Install-ADDSDomain](./Install-ADDSDomain.md)
+
+[Get-Credential](https://go.microsoft.com/fwlink/?LinkID=293936)
+
+[ConvertTo-SecureString](https://go.microsoft.com/fwlink/p/?LinkId=113291)
+###Microsoft Learn URL###
+https://learn.microsoft.com/en-us/powershell/module/addsdeployment/test-addsdomaininstallation/?view=windowsserver2022-ps
+</pre></html>

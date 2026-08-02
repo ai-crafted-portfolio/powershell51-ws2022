@@ -1,0 +1,476 @@
+<!doctype html><html lang="ja"><meta charset="utf-8"><pre class="record-source">###KnowledgeNo###
+PS51-WS2022-2026-3659
+###FormatID###
+PS51-WS2022
+###CreatedAt###
+2026-08-01 00:00
+###UpdatedAt###
+2026-08-01 00:00
+###タイトル###
+Enter-PSHostProcess
+###モジュール###
+Microsoft.PowerShell.Core
+###製品###
+Windows PowerShell 5.1
+###対応OS###
+Windows Server 2022
+###日本語訳###
+# PSHostProcessを入力する
+
+## SYNOPSISは,ローカルプロセスでインタラクティブなセッションに接続し,入ります.
+
+## SYNTAX 
+
+### ProcessIdParameterSet (デフォルト) について
+
+```
+Enter-PSHostProcess [-Id] &lt;Int32&gt; [[-AppDomainName] &lt;String&gt;] [&lt;CommonParameters&gt;]
+```
+
+### プロセスパラメーターセット
+
+```
+Enter-PSHostProcess [-Process] &lt;Process&gt; [[-AppDomainName] &lt;String&gt;] [&lt;CommonParameters&gt;]
+```
+
+### プロセス名 パラメーターセット
+
+```
+Enter-PSHostProcess [-Name] &lt;String&gt; [[-AppDomainName] &lt;String&gt;] [&lt;CommonParameters&gt;]
+```
+
+### PSHostProcessInfoParameterSet について
+
+```
+Enter-PSHostProcess [-HostProcessInfo] &lt;PSHostProcessInfo&gt; [[-AppDomainName] &lt;String&gt;]
+ [&lt;CommonParameters&gt;]
+```
+
+## 記述は,
+
+   `Enter-PSHostProcess`cmdlet は,ローカルプロセスでインタラクティブなセッションに接続し,入力します.
+
+PowerShellをホストしてリモートセッションを実行するための新しいプロセスを作成する代わりに,リモートでインタラクティブなセッションは,すでにPowerShellを実行している既存のプロセスで実行されます.指定されたプロセスでリモートセッションとインタラクションをしている場合,実行ランスペースを数え,実行するランスペースを選択し,実行するいずれかをデバッグします.`Debug-Runspace`     `Enable-RunspaceDebug` .
+
+入力したいプロセスは PowerShell (System.Management.Automation.dll) をホストしている必要があります. プロセスは存在するコンピュータの管理者グループの一員か,またはプロセスの起動したスクリプトを実行しているユーザーかなければなりません.
+
+デバッグするランスペースを選択した後,実行スペースにリモートデバッグセッションが開かれます.当時はコマンドを実行している場合,またはデバッグで停止されている場合.その後,他のリモートセッションスクリプトをデバッグするように,ランスペーススクリプトをデバッグすることができます.
+
+デバッグセッションから脱出し,プロセスとのインタラクティブなセッションを,Exitを2回実行するか,既存のデバッグを終了するコマンドを実行してスクリプトを実行停止する.
+
+**Name**パラメータを使用してプロセスを指定すると,指定された名前で1つのプロセスしか見つからない場合は,プロセスが入力されます.指定された名前で1つ以上のプロセスが見つかった場合,PowerShell はエラーを返し,指定された名前で発見されたすべてのプロセスをリストにします.
+
+遠隔コンピュータのプロセスに接続をサポートするには,`Enter-PSHostProcess`cmdlet は指定されたリモートコンピュータで有効になっているので,リモート PowerShell セッション内のローカルプロセスに接続できます.
+
+## 例えは,
+
+### 例1部: パワーシェル ISE プロセス内のランスペースをデバッグを開始します
+
+この例では,あなたが実行する`Enter-PSHostProcess`PowerShell ISE プロセスに入るために,PowerShell コンソール内の PowerShell コンソールから実行します.結果としてインタラクティブなセッションでは,実行スペースを見つけることができます.`Get-Runspace`実行空間をデバッグする.
+
+```
+PS C:\&gt; Enter-PSHostProcess -Name powershell_ise
+[Process:1520]: PS C:\&gt;  Get-Runspace
+Id    Name          InstanceId                               State           Availability
+--    -------       -----------                              ------          -------------
+1     Runspace1     2d91211d-9cce-42f0-ab0e-71ac258b32b5     Opened          Available
+2     Runspace2     a3855043-cb16-424a-a616-685360c3763b     Opened          RemoteDebug
+3     MyLocalRS     2236dbd8-2105-4dec-a15a-a27d0bfaacb5     Opened          LocalDebug
+4     MyRunspace    771356e9-8c44-4b70-9de5-dd17cb41e48e     Opened          Busy
+5     Runspace8     3e517382-a97a-49ba-9c3c-fd21f6664288     Broken          None
+```
+
+### 例2: 特定のランススペースをデバッグします.
+
+次に,ランスペースID 4をデバッグします.つまり,別のユーザーの長編スクリプトを実行しています.返されたリストから,`Get-Runspace`ランスペースは **State** がオープンし, **Availability** が Busy であることを注意してください.つまり,ランスペースはまだ長編スクリプトを実行している. ランスペースのオブジェクトは  で返されます.`Get-Runspace`また,実行中のコマンドスタックの **NoteProperty** と呼ばれる **ScriptStackTrace** を用意してください.
+
+```
+[Process:1520]: PS C:\&gt;  (Get-Runspace -Id 4).ScriptStackTrace
+Command                    Arguments                           Location
+-------                    ---------                           --------
+MyModuleWorkflowF1         {}                                  TestNoFile3.psm1: line 6
+WFTest1                    {}                                  TestNoFile2.ps1: line 14
+TestNoFile2.ps1            {}                                  TestNoFile2.ps1: line 22
+&lt;ScriptBlock&gt;              {}                                  &lt;No file&gt;
+
+[Process: 1520]: PS C:\&gt;  Debug-Runspace -Id 4
+Hit Line breakpoint on &#x27;C:\TestWFVar1.ps1:83&#x27;
+
+At C:\TestWFVar1.ps1:83 char:1
++ $scriptVar = &quot;Script Variable&quot;
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+[Process: 1520]: [RSDBG: 4]: PS C:\&gt;
+```
+
+このランスペースでインタラクティブなデバッグセッションを開始して,  を実行します.`Debug-Runspace`cmdletです.
+
+### 例3部:デバッグセッションを終了して終了します.
+
+デバッグを完了した後,エグジットデバッグコマンドを実行して,デバッグを添付せずにスクリプトが実行し続けることを許可してください.
+
+プロセスで作業を完了したら,  を実行してプロセスから退出してください.`Exit-PSHostProcess`cmdlet. これは,あなたを返して,  に戻します.`PS C:\&gt;`迅速に.
+
+```
+[Process:346]: [RSDBG: 3]: PS C:\&gt; exit
+[Process:1520]: PS C:\&gt;
+[Process:1520]: PS C:\&gt;  Exit-PSHostProcess
+PS C:\&gt;
+```
+
+## パラメータは
+
+### -AppDomainName
+
+省略された場合接続するアプリケーションドメイン名を指定し, **DefaultAppDomain**を使用します. を使用します.`Get-PSHostProcessInfo`アプリケーションのドメイン名を表示する.
+
+```yaml
+Type: System.String
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: 1
+Default value: DefaultAppDomain
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -HostProcessInfo について
+
+PowerShellで接続できるPSHostProcessInfo**オブジェクトを指定します.`Get-PSHostProcessInfo`対象を入手するために.
+
+```yaml
+Type: Microsoft.PowerShell.Commands.PSHostProcessInfo
+Parameter Sets: PSHostProcessInfoParameterSet
+Aliases:
+
+Required: True
+Position: 0
+Default value: None
+Accept pipeline input: True (ByValue)
+Accept wildcard characters: False
+```
+
+### -Id
+
+プロセスIDによってプロセスを指定します.プロセスIDを取得するには,  を実行します.`Get-Process`cmdletです.
+
+```yaml
+Type: System.Int32
+Parameter Sets: ProcessIdParameterSet
+Aliases:
+
+Required: True
+Position: 0
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -名字は
+
+プロセス名を指定する.プロセス名を取得するには,  を実行します.`Get-Process`cmdlet.タスク管理器のプロセスプロパティのダイアログボックスからプロセス名を入手することもできます.
+
+```yaml
+Type: System.String
+Parameter Sets: ProcessNameParameterSet
+Aliases:
+
+Required: True
+Position: 0
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -プロセス
+
+プロセスオブジェクトによってプロセスを指定します.このパラメータを使用する最も簡単な方法は,結果を保存するということです.`Get-Process`変数に入力したいプロセスを返却するコマンドで,このパラメータの値として変数を指定します.
+
+```yaml
+Type: System.Diagnostics.Process
+Parameter Sets: ProcessParameterSet
+Aliases:
+
+Required: True
+Position: 0
+Default value: None
+Accept pipeline input: True (ByValue)
+Accept wildcard characters: False
+```
+
+# PSHostProcessを入力する
+
+### 共通パラメーター
+
+このcmdletは,共通パラメータをサポートしています: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable.詳細については, [about_CommonParameters](を参照してください.https://go.microsoft.com/fwlink/?LinkID=113216) でした.
+
+## 輸入は
+
+### システム.診断.プロセス
+
+## 輸出は
+
+##  NOTES  記事ができました.
+
+`Enter-PSHostProcess`しかし,別のPowerShellセッション,またはあなたが実行しているセッションと同時に実行されているPowerShell ISEセッションのプロセスを入力することができます.`Enter-PSHostProcess` .
+
+`Enter-PSHostProcess`PowerShellをホストしているプロセスのみを入力できます.つまり,PowerShellエンジンをロードしているということです.
+
+プロセス内のプロセスから出出するには, **exit**を入力し,その後 &lt;kbd&gt;Enter&lt;/kbd&gt; を押します.
+
+## 関連リンク
+
+[PSHostProcess-Exit-PSHostProcess.md] (PSHostProcess.md) を出さないと
+
+[PSHostProcessInfo](Get-PSHostProcessInfo.md) を取得する
+###英語原文###
+# Enter-PSHostProcess
+
+## SYNOPSIS
+Connects to and enters into an interactive session with a local process.
+
+## SYNTAX
+
+### ProcessIdParameterSet (Default)
+
+```
+Enter-PSHostProcess [-Id] &lt;Int32&gt; [[-AppDomainName] &lt;String&gt;] [&lt;CommonParameters&gt;]
+```
+
+### ProcessParameterSet
+
+```
+Enter-PSHostProcess [-Process] &lt;Process&gt; [[-AppDomainName] &lt;String&gt;] [&lt;CommonParameters&gt;]
+```
+
+### ProcessNameParameterSet
+
+```
+Enter-PSHostProcess [-Name] &lt;String&gt; [[-AppDomainName] &lt;String&gt;] [&lt;CommonParameters&gt;]
+```
+
+### PSHostProcessInfoParameterSet
+
+```
+Enter-PSHostProcess [-HostProcessInfo] &lt;PSHostProcessInfo&gt; [[-AppDomainName] &lt;String&gt;]
+ [&lt;CommonParameters&gt;]
+```
+
+## DESCRIPTION
+
+The `Enter-PSHostProcess` cmdlet connects to and enters into an interactive session with a local
+process.
+
+Instead of creating a new process to host PowerShell and run a remote session, the remote,
+interactive session is run in an existing process that is already running PowerShell. When you are
+interacting with a remote session on a specified process, you can enumerate running runspaces, and
+then select a runspace to debug by running either `Debug-Runspace` or `Enable-RunspaceDebug`.
+
+The process that you want to enter must be hosting PowerShell (System.Management.Automation.dll).
+You must be either a member of the Administrators group on the computer on which the process is
+found, or you must be the user who is running the script that started the process.
+
+After you have selected a runspace to debug, a remote debug session is opened for the runspace if it
+is either currently running a command or is stopped in the debugger. You can then debug the runspace
+script in the same way you would debug other remote session scripts.
+
+Detach from a debugging session, and then the interactive session with the process, by running exit
+twice, or stop script execution by running the existing debugger quit command.
+
+If you specify a process by using the **Name** parameter, and there is only one process found with
+the specified name, the process is entered. If more than one process with the specified name is
+found, PowerShell returns an error, and lists all processes found with the specified name.
+
+To support attaching to processes on remote computers, the `Enter-PSHostProcess` cmdlet is enabled
+in a specified remote computer, so that you can attach to a local process within a remote PowerShell
+session.
+
+## EXAMPLES
+
+### Example Part 1: Start debugging a runspace within the PowerShell ISE process
+
+In this example, you run `Enter-PSHostProcess` from within the PowerShell console to enter the
+PowerShell ISE process. In the resulting interactive session, you can find a runspace that you want
+to debug by running `Get-Runspace`, and then debug the runspace.
+
+```
+PS C:\&gt; Enter-PSHostProcess -Name powershell_ise
+[Process:1520]: PS C:\&gt;  Get-Runspace
+Id    Name          InstanceId                               State           Availability
+--    -------       -----------                              ------          -------------
+1     Runspace1     2d91211d-9cce-42f0-ab0e-71ac258b32b5     Opened          Available
+2     Runspace2     a3855043-cb16-424a-a616-685360c3763b     Opened          RemoteDebug
+3     MyLocalRS     2236dbd8-2105-4dec-a15a-a27d0bfaacb5     Opened          LocalDebug
+4     MyRunspace    771356e9-8c44-4b70-9de5-dd17cb41e48e     Opened          Busy
+5     Runspace8     3e517382-a97a-49ba-9c3c-fd21f6664288     Broken          None
+```
+
+### Example part 2: Debug a specific runspace
+
+Next, debug runspace ID 4, that is running another user&#x27;s long-running script. From the list
+returned from `Get-Runspace`, note that the runspace **State** is Opened, and **Availability** is
+Busy, meaning that the runspace is still running the long-running script. The runspace objects
+returned by `Get-Runspace` also have a **NoteProperty** called **ScriptStackTrace** of the running
+command stack, if available.
+
+```
+[Process:1520]: PS C:\&gt;  (Get-Runspace -Id 4).ScriptStackTrace
+Command                    Arguments                           Location
+-------                    ---------                           --------
+MyModuleWorkflowF1         {}                                  TestNoFile3.psm1: line 6
+WFTest1                    {}                                  TestNoFile2.ps1: line 14
+TestNoFile2.ps1            {}                                  TestNoFile2.ps1: line 22
+&lt;ScriptBlock&gt;              {}                                  &lt;No file&gt;
+
+[Process: 1520]: PS C:\&gt;  Debug-Runspace -Id 4
+Hit Line breakpoint on &#x27;C:\TestWFVar1.ps1:83&#x27;
+
+At C:\TestWFVar1.ps1:83 char:1
++ $scriptVar = &quot;Script Variable&quot;
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+[Process: 1520]: [RSDBG: 4]: PS C:\&gt;
+```
+
+Start an interactive debugging session with this runspace by running the `Debug-Runspace` cmdlet.
+
+### Example part 3: Finish the debugging session and exit
+
+After you are finished debugging, allow the script to continue running without the debugger attached
+by running the exit debugger command. Alternatively, you can quit the debugger with the q or Stop
+commands.
+
+When you are finished working in the process, exit the process by running the `Exit-PSHostProcess`
+cmdlet. This returns you to the `PS C:\&gt;` prompt.
+
+```
+[Process:346]: [RSDBG: 3]: PS C:\&gt; exit
+[Process:1520]: PS C:\&gt;
+[Process:1520]: PS C:\&gt;  Exit-PSHostProcess
+PS C:\&gt;
+```
+
+## PARAMETERS
+
+### -AppDomainName
+
+Specifies an application domain name to connect to if omitted, uses **DefaultAppDomain**. Use
+`Get-PSHostProcessInfo` to display the application domain names.
+
+```yaml
+Type: System.String
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: 1
+Default value: DefaultAppDomain
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -HostProcessInfo
+
+Specifies a **PSHostProcessInfo** object that can be connected to with PowerShell. Use
+`Get-PSHostProcessInfo` to get the object.
+
+```yaml
+Type: Microsoft.PowerShell.Commands.PSHostProcessInfo
+Parameter Sets: PSHostProcessInfoParameterSet
+Aliases:
+
+Required: True
+Position: 0
+Default value: None
+Accept pipeline input: True (ByValue)
+Accept wildcard characters: False
+```
+
+### -Id
+
+Specifies a process by the process ID. To get a process ID, run the `Get-Process` cmdlet.
+
+```yaml
+Type: System.Int32
+Parameter Sets: ProcessIdParameterSet
+Aliases:
+
+Required: True
+Position: 0
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Name
+
+Specifies a process by the process name. To get a process name, run the `Get-Process` cmdlet. You
+can also get process names from the Properties dialog box of a process in Task Manager.
+
+```yaml
+Type: System.String
+Parameter Sets: ProcessNameParameterSet
+Aliases:
+
+Required: True
+Position: 0
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Process
+
+Specifies a process by the process object. The simplest way to use this parameter is to save the
+results of a `Get-Process` command that returns process that you want to enter in a variable, and
+then specify the variable as the value of this parameter.
+
+```yaml
+Type: System.Diagnostics.Process
+Parameter Sets: ProcessParameterSet
+Aliases:
+
+Required: True
+Position: 0
+Default value: None
+Accept pipeline input: True (ByValue)
+Accept wildcard characters: False
+```
+
+# Enter-PSHostProcess
+
+### CommonParameters
+
+This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable,
+-InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose,
+-WarningAction, and -WarningVariable. For more information, see
+[about_CommonParameters](https://go.microsoft.com/fwlink/?LinkID=113216).
+
+## INPUTS
+
+### System.Diagnostics.Process
+
+## OUTPUTS
+
+## NOTES
+
+`Enter-PSHostProcess` cannot enter the process of the PowerShell session in which you are running
+the command. You can, however, enter the process of another PowerShell session, or a PowerShell ISE
+session that is running at the same time as the session in which you are running
+`Enter-PSHostProcess`.
+
+`Enter-PSHostProcess` can enter only those processes that are hosting PowerShell. That is, they have
+loaded the PowerShell engine.
+
+To exit a process from within the process, type **exit**, and then press &lt;kbd&gt;Enter&lt;/kbd&gt;.
+
+## RELATED LINKS
+
+[Exit-PSHostProcess](Exit-PSHostProcess.md)
+
+[Get-PSHostProcessInfo](Get-PSHostProcessInfo.md)
+###Microsoft Learn URL###
+https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.core/enter-pshostprocess/?view=powershell-5.1
+</pre></html>

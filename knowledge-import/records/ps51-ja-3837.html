@@ -1,0 +1,625 @@
+<!doctype html><html lang="ja"><meta charset="utf-8"><pre class="record-source">###KnowledgeNo###
+PS51-WS2022-2026-3837
+###FormatID###
+PS51-WS2022
+###CreatedAt###
+2026-08-01 00:00
+###UpdatedAt###
+2026-08-01 00:00
+###タイトル###
+Get-Acl
+###モジュール###
+Microsoft.PowerShell.Security
+###製品###
+Windows PowerShell 5.1
+###対応OS###
+Windows Server 2022
+###日本語訳###
+# Get-Acl を取得する
+
+## SYNOPSISは,ファイルやレジストリキーなどのリソースのセキュリティ記述子を取得します.
+
+## SYNTAXは,のシンタックスです.
+
+### ByPath (デフォルト) 
+
+```
+Get-Acl [[-Path] &lt;String[]&gt;] [-Audit] [-AllCentralAccessPolicies] [-Filter &lt;String&gt;] [-Include &lt;String[]&gt;]
+ [-Exclude &lt;String[]&gt;] [-UseTransaction] [&lt;CommonParameters&gt;]
+```
+
+### ByInputObject
+
+```
+Get-Acl -InputObject &lt;PSObject&gt; [-Audit] [-AllCentralAccessPolicies] [-Filter &lt;String&gt;] [-Include &lt;String[]&gt;]
+ [-Exclude &lt;String[]&gt;] [-UseTransaction] [&lt;CommonParameters&gt;]
+```
+
+### ByLiteralPath について
+
+```
+Get-Acl [-LiteralPath &lt;String[]&gt;] [-Audit] [-AllCentralAccessPolicies] [-Filter &lt;String&gt;] [-Include &lt;String[]&gt;]
+ [-Exclude &lt;String[]&gt;] [-UseTransaction] [&lt;CommonParameters&gt;]
+```
+
+## 記述は,
+
+   `Get-Acl`cmdlet はファイルまたはリソースのセキュリティ記述子を表示するオブジェクトを取得します.セキュリティ記述子はリソースのアクセス制御リスト (ACL) を含む.ACL は,ユーザーがおよびユーザーグループがリソースにアクセスする権限を指定します.
+
+Windows PowerShell 3.0 から始め,  の **InputObject** パラメータを使用できます.`Get-Acl`経路のないオブジェクトのセキュリティデスクリプトを取得します.
+
+## 例えは
+
+### 例1 - フォルダのACLを取得する
+
+この例では,セキュリティ記述符を入力して のセキュリティ記述符を表示します.`C:\Windows`ディレクトリです.
+
+```powershell
+Get-Acl C:\Windows
+```
+
+### 例2 - ワイルドカードを使用してフォルダのACLを取得します
+
+この例では,すべての  の PowerShell パスと SDDL を得ます.`.log`のファイルに含まれるファイルです.`C:\Windows`名前がで始まるディレクトリです.`s` .
+
+```powershell
+Get-Acl C:\Windows\s*.log | Format-List -Property PSPath, Sddl
+```
+
+コマンドは&quot;&quot;を用いています.`Get-Acl`cmdlet は,各ログファイルのセキュリティ記述を表示するオブジェクトを取得します.パイプラインオペレーター () を使用します.`|`) に結果を送る.`Format-List`cmdlet. コマンドは,  の**プロパティ**パラメータを使用します.`Format-List`セキュリティディスクリプターオブジェクトの **PSPath**と **SDDL**のプロパティのみを表示します.
+
+PowerShellでリストはよく使用されます.長値はテーブルで縮小されているので.
+
+**SDDL**値はシステム管理者にとって価値あるものであり,セキュリティ記述子内のすべての情報を含んでいる単純なテキスト文字列であるため,簡単に転送し,保存し,必要に応じて解析することができます.
+
+### 例3 - ACLの監査エントリーのカウントを入手する
+
+この例では,セキュリティ記述者が  の安全性説明を得ます.`.log`のファイルに含まれるファイルです.`C:\Windows`名前がで始まるディレクトリです.`s` .
+
+```powershell
+Get-Acl C:\Windows\s*.log -Audit | ForEach-Object { $_.Audit.Count }
+```
+
+セキュリティ記述器に SACLから監査記録を取得するために **Audit**パラメータを使用します.その後, を使用します.`ForEach-Object`cmdlet は,各ファイルに関連した監査記録の数を数えることができます.結果として,各ログファイルに含まれる監査記録の数を表す数字のリストになります.
+
+### 例4 - レジストリキーにACLを取得する
+
+この例では,という文字を使用しています.`Get-Acl`cmdlet で,コントロールサブキー () のセキュリティ記述子を入手できます.`HKLM:\SYSTEM\CurrentControlSet\Control`) の登録書.
+
+```powershell
+Get-Acl -Path HKLM:\System\CurrentControlSet\Control | Format-List
+```
+
+**Path**パラメータは Control のサブキーを指定します.パイプラインオペレーター () は ()`|`) はセキュリティディスクリプターを通過し,その`Get-Acl`に届く.`Format-List`セキュリティディスクリプターのプロパティをリストとしてフォーマットするコマンドで,読みやすくします.
+
+### 例5 - **InputObject**を使って ACLを取得する.
+
+この例では,  の **InputObject** パラメータを使用しています.`Get-Acl`ストレージサブシステムオブジェクトのセキュリティ記述子を入手するために.
+
+```powershell
+Get-Acl -InputObject (Get-StorageSubSystem -Name S087)
+```
+
+## パラメータは
+
+### -AllCentralAccessPolicies について
+
+コンピュータで有効になっているすべての中央アクセスポリシーに関する情報を入手します.
+
+Windows Server 2012 から,管理者はアクティブディレクトリとグループポリシーを使用して,ユーザーとグループ向けの中央アクセスポリシーを設定できます.詳細については, [ダイナミックアクセス制御:シナリオ概要] (/windows-server/identity/solution-guides/dynamic-access-control--scenario-overview) を参照してください.
+
+このパラメータはWindows PowerShell 3.0で導入されています.
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### - 監査
+
+システムアクセス制御リスト (SACL) からセキュリティ記述子の監査データを入手します.
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### - 排除する
+
+指定された項目を省きます.このパラメータの値は**Path**パラメータを対象とします. 路径要素またはパターンを入力してください.例えば `*.txt`ワイルドカードは許されている.
+
+```yaml
+Type: System.String[]
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: True
+```
+
+### -フィルター
+
+フィルタはプロバイダのフォーマットまたは言語でフィルタを指定します.このパラメータの値は**Path**パラメータを資格化します.ワイルドカードの使用を含むフィルターの構文は,プロバイダに依存します.フィルターは他のパラメータよりも効率的です,なぜなら,プロバイダがオブジェクトを取得する際にそれらを適用するので,PowerShellでオブジェクトをフィルタリングするのではなく,それらを回収した後でフィルタリングします.
+
+```yaml
+Type: System.String
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: True
+```
+
+### - 含めること
+
+指定された項目をのみ取得する.このパラメータの値は**Path**パラメータを対象とする. 路径要素またはパターンを入力する.例えば `*.txt`ワイルドカードは許されている.
+
+```yaml
+Type: System.String[]
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: True
+```
+
+### -InputObject
+
+指定されたオブジェクトのセキュリティ記述子を取得します.オブジェクトを含む変数またはオブジェクトを取得するコマンドを入力します.
+
+経路以外の物体をパイプして に届けるわけにはいかない.`Get-Acl`.代わりに,コマンドで明示的に **InputObject** パラメータを使用してください.
+
+このパラメータはWindows PowerShell 3.0で導入されています.
+
+```yaml
+Type: System.Management.Automation.PSObject
+Parameter Sets: ByInputObject
+Aliases:
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -リテラルパース
+
+資源への経路を指定します. **Path**とは異なり,LiteralPath**パラメータの値は入力されたままに使用されます.文字はワイルドカードとして解釈されません. 経路にエスケープ文字が含まれている場合は,単一の引用符で囲み付けます.単一の引用符はPowerShellにエスケープ文字を連続で解釈しないように言います.
+
+このパラメータはWindows PowerShell 3.0で導入されています.
+
+```yaml
+Type: System.String[]
+Parameter Sets: ByLiteralPath
+Aliases: PSPath
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName, ByValue)
+Accept wildcard characters: False
+```
+
+# Get-Acl を取得する
+
+### - 歩道
+
+資源への経路を指定します. `Get-Acl`路線によって表示されるリソースのセキュリティ記述符が表示されます.ワイルドカードは許可されています. **Path**パラメータを省略した場合, `Get-Acl`現在のディレクトリのセキュリティ ディスプレイターを取得します.
+
+パラメータ名 (&quot;パス&quot;) はオプションです.
+
+```yaml
+Type: System.String[]
+Parameter Sets: ByPath
+Aliases:
+
+Required: False
+Position: 1
+Default value: None
+Accept pipeline input: True (ByPropertyName, ByValue)
+Accept wildcard characters: True
+```
+
+### -UseTransaction 取引を活用する
+
+アクティブトランザクションのコマンドが含まれています.このパラメータは,トランザクションが進行中の場合にのみ有効です.詳細については, [about_Transactions.md]を参照してください.
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases: usetx
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### 共通パラメーター
+
+このcmdletは,共通パラメータをサポートしています: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable.詳細については, [about_CommonParameters](を参照してください.https://go.microsoft.com/fwlink/?LinkID=113216) でした.
+
+## 輸入は
+
+### System.String でした.
+
+このcmdletへの経路を含む文字列をパイプすることができます.
+
+## 輸出は
+
+### システム.セキュリティ.アクセスコントロール.ファイルセキュリティ
+
+### システム.セキュリティ.アクセスコントロール.ディレクトリセキュリティ
+
+### システム.セキュリティ.アクセスコントロール.レジストリセキュリティ
+
+このcmdletは,取得したACLを表示するオブジェクトを返します.オブジェクトタイプはACLタイプに依存します.
+
+##  NOTES  記事ができました.
+
+デフォルトでは, `Get-Acl`PowerShell のリソースへの経路を表示します ()`&lt;provider&gt;::&lt;resource-path&gt;`),リソースの所有者,および&quot;アクセス&quot;,は,リソースの選択的なアクセス制御リスト (DACL) のアクセス制御エントリのリスト (アレンジ) です.DACLリストは,リソース所有者によって制御されます.
+
+リストとして結果をフォーマットすると, ()`Get-Acl | Format-List`),パス,所有者,アクセスリストに加えて,PowerShell では以下のプロパティとプロパティ値が表示されます.
+
+**グループ**: オーナーのセキュリティグループ. - ** Audit**: システムアクセス制御リスト (SACL) のエントリのリスト (アレイ) です. SACL は Windows が監査記録を生成するアクセス試みの種類を指定します. - ** Sddl**: セキュリティ記述者は,セキュリティ記述言語形式で単一の文字文字列で表示されるリソースです. PowerShell はセキュリティ記述者の **GetSddlForm** 方法を使用して,このデータを入手します.
+
+                                                                                       Because Because           Because Because       Because    Because   Because   Because   Because   Because  Because   Because  Because  Because   Because   Because   Because  Because  Because  Because   Because`Get-Acl`ファイルシステムとレジストリプロバイダがサポートしているので,利用できます.`Get-Acl`ファイルやディレクトリなどのファイルシステムオブジェクトのACL,レジストリキーのキーやエントリなどのレジストリオブジェクトのACLを表示します.
+
+## 関連リンク
+
+[Set-Acl](Set-Acl.md) 
+###英語原文###
+# Get-Acl
+
+## SYNOPSIS
+Gets the security descriptor for a resource, such as a file or registry key.
+
+## SYNTAX
+
+### ByPath (Default)
+
+```
+Get-Acl [[-Path] &lt;String[]&gt;] [-Audit] [-AllCentralAccessPolicies] [-Filter &lt;String&gt;] [-Include &lt;String[]&gt;]
+ [-Exclude &lt;String[]&gt;] [-UseTransaction] [&lt;CommonParameters&gt;]
+```
+
+### ByInputObject
+
+```
+Get-Acl -InputObject &lt;PSObject&gt; [-Audit] [-AllCentralAccessPolicies] [-Filter &lt;String&gt;] [-Include &lt;String[]&gt;]
+ [-Exclude &lt;String[]&gt;] [-UseTransaction] [&lt;CommonParameters&gt;]
+```
+
+### ByLiteralPath
+
+```
+Get-Acl [-LiteralPath &lt;String[]&gt;] [-Audit] [-AllCentralAccessPolicies] [-Filter &lt;String&gt;] [-Include &lt;String[]&gt;]
+ [-Exclude &lt;String[]&gt;] [-UseTransaction] [&lt;CommonParameters&gt;]
+```
+
+## DESCRIPTION
+
+The `Get-Acl` cmdlet gets objects that represent the security descriptor of a file or resource. The
+security descriptor contains the access control lists (ACLs) of the resource. The ACL specifies the
+permissions that users and user groups have to access the resource.
+
+Beginning in Windows PowerShell 3.0, you can use the **InputObject** parameter of `Get-Acl` to get
+the security descriptor of objects that do not have a path.
+
+## EXAMPLES
+
+### Example 1- Get an ACL for a folder
+
+This example gets the security descriptor of the `C:\Windows` directory.
+
+```powershell
+Get-Acl C:\Windows
+```
+
+### Example 2 - Get an ACL for a folder using wildcards
+
+This example gets the PowerShell path and SDDL for all of the `.log` files in the `C:\Windows`
+directory whose names begin with `s`.
+
+```powershell
+Get-Acl C:\Windows\s*.log | Format-List -Property PSPath, Sddl
+```
+
+The command uses the `Get-Acl` cmdlet to get objects representing the security descriptors of each
+log file. It uses a pipeline operator (`|`) to send the results to the `Format-List` cmdlet. The
+command uses the **Property** parameter of `Format-List` to display only the **PSPath** and **SDDL**
+properties of each security descriptor object.
+
+Lists are often used in PowerShell, because long values appear truncated in tables.
+
+The **SDDL** values are valuable to system administrators, because they are simple text strings that
+contain all of the information in the security descriptor. As such, they are easy to pass and store,
+and they can be parsed when needed.
+
+### Example 3 - Get count of Audit entries for an ACL
+
+This example gets the security descriptors of the `.log` files in the `C:\Windows` directory whose
+names begin with `s`.
+
+```powershell
+Get-Acl C:\Windows\s*.log -Audit | ForEach-Object { $_.Audit.Count }
+```
+
+It uses the **Audit** parameter to get the audit records from the SACL in the security descriptor.
+Then it uses the `ForEach-Object` cmdlet to count the number of audit records associated with each
+file. The result is a list of numbers representing the number of audit records for each log file.
+
+### Example 4 - Get an ACL for a registry key
+
+This example uses the `Get-Acl` cmdlet to get the security descriptor of the Control subkey
+(`HKLM:\SYSTEM\CurrentControlSet\Control`) of the registry.
+
+```powershell
+Get-Acl -Path HKLM:\System\CurrentControlSet\Control | Format-List
+```
+
+The **Path** parameter specifies the Control subkey. The pipeline operator (`|`) passes the security
+descriptor that `Get-Acl` gets to the `Format-List` command, which formats the properties of the
+security descriptor as a list so that they are easy to read.
+
+### Example 5 - Get an ACL using **InputObject**
+
+This example uses the **InputObject** parameter of `Get-Acl` to get the security descriptor of a
+storage subsystem object.
+
+```powershell
+Get-Acl -InputObject (Get-StorageSubSystem -Name S087)
+```
+
+## PARAMETERS
+
+### -AllCentralAccessPolicies
+
+Gets information about all central access policies that are enabled on the computer.
+
+Beginning in Windows Server 2012, administrators can use Active Directory and Group Policy to set
+central access policies for users and groups. For more information, see
+[Dynamic Access Control: Scenario Overview](/windows-server/identity/solution-guides/dynamic-access-control--scenario-overview).
+
+This parameter is introduced in Windows PowerShell 3.0.
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Audit
+
+Gets the audit data for the security descriptor from the system access control list (SACL).
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Exclude
+
+Omits the specified items. The value of this parameter qualifies the **Path** parameter. Enter a
+path element or pattern, such as `*.txt`. Wildcards are permitted.
+
+```yaml
+Type: System.String[]
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: True
+```
+
+### -Filter
+
+Specifies a filter in the provider&#x27;s format or language. The value of this parameter qualifies the
+**Path** parameter. The syntax of the filter, including the use of wildcards, depends on the
+provider. Filters are more efficient than other parameters, because the provider applies them when
+getting the objects, rather than having PowerShell filter the objects after they are retrieved.
+
+```yaml
+Type: System.String
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: True
+```
+
+### -Include
+
+Gets only the specified items. The value of this parameter qualifies the **Path** parameter. Enter a
+path element or pattern, such as `*.txt`. Wildcards are permitted.
+
+```yaml
+Type: System.String[]
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: True
+```
+
+### -InputObject
+
+Gets the security descriptor for the specified object. Enter a variable that contains the object or
+a command that gets the object.
+
+You cannot pipe an object, other than a path, to `Get-Acl`. Instead, use the **InputObject**
+parameter explicitly in the command.
+
+This parameter is introduced in Windows PowerShell 3.0.
+
+```yaml
+Type: System.Management.Automation.PSObject
+Parameter Sets: ByInputObject
+Aliases:
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -LiteralPath
+
+Specifies the path to a resource. Unlike **Path**, the value of the **LiteralPath** parameter is
+used exactly as it is typed. No characters are interpreted as wildcards. If the path includes escape
+characters, enclose it in single quotation marks. Single quotation marks tell PowerShell not to
+interpret any characters as escape sequences.
+
+This parameter is introduced in Windows PowerShell 3.0.
+
+```yaml
+Type: System.String[]
+Parameter Sets: ByLiteralPath
+Aliases: PSPath
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName, ByValue)
+Accept wildcard characters: False
+```
+
+# Get-Acl
+
+### -Path
+
+Specifies the path to a resource. `Get-Acl` gets the security descriptor of the resource indicated
+by the path. Wildcards are permitted. If you omit the **Path** parameter, `Get-Acl` gets the
+security descriptor of the current directory.
+
+The parameter name (&quot;Path&quot;) is optional.
+
+```yaml
+Type: System.String[]
+Parameter Sets: ByPath
+Aliases:
+
+Required: False
+Position: 1
+Default value: None
+Accept pipeline input: True (ByPropertyName, ByValue)
+Accept wildcard characters: True
+```
+
+### -UseTransaction
+
+Includes the command in the active transaction.
+This parameter is valid only when a transaction is in progress.
+For more information, see [about_Transactions](../Microsoft.PowerShell.Core/About/about_Transactions.md).
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases: usetx
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### CommonParameters
+
+This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable,
+-InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose,
+-WarningAction, and -WarningVariable. For more information, see
+[about_CommonParameters](https://go.microsoft.com/fwlink/?LinkID=113216).
+
+## INPUTS
+
+### System.String
+
+You can pipe a string that contains a path to this cmdlet.
+
+## OUTPUTS
+
+### System.Security.AccessControl.FileSecurity
+
+### System.Security.AccessControl.DirectorySecurity
+
+### System.Security.AccessControl.RegistrySecurity
+
+This cmdlet returns an object that represents the ACLs that it gets. The object type depends upon
+the ACL type.
+
+## NOTES
+
+By default, `Get-Acl` displays the PowerShell path to the resource (`&lt;provider&gt;::&lt;resource-path&gt;`),
+the owner of the resource, and &quot;Access&quot;, a list (array) of the access control entries in the
+discretionary access control list (DACL) for the resource. The DACL list is controlled by the
+resource owner.
+
+When you format the result as a list, (`Get-Acl | Format-List`), in addition to the path, owner,
+and access list, PowerShell displays the following properties and property values:
+
+- **Group**: The security group of the owner.
+- **Audit**:  A list (array) of entries in the system access control list (SACL). The SACL
+  specifies the types of access attempts for which Windows generates audit records.
+- **Sddl**: The security descriptor of the resource displayed in a single text string in Security
+  Descriptor Definition Language format. PowerShell uses the **GetSddlForm** method of security
+  descriptors to get this data.
+
+Because `Get-Acl` is supported by the FileSystem and Registry providers, you can use `Get-Acl` to
+view the ACL of file system objects, such as files and directories, and registry objects, such as
+registry keys and entries.
+
+## RELATED LINKS
+
+[Set-Acl](Set-Acl.md)
+###Microsoft Learn URL###
+https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.security/get-acl/?view=powershell-5.1
+</pre></html>

@@ -1,0 +1,517 @@
+<!doctype html><html lang="ja"><meta charset="utf-8"><pre class="record-source">###KnowledgeNo###
+PS51-WS2022-2026-1136
+###FormatID###
+PS51-WS2022
+###CreatedAt###
+2026-08-01 00:00
+###UpdatedAt###
+2026-08-01 00:00
+###タイトル###
+Move-ClusterVirtualMachineRole
+###モジュール###
+failoverclusters
+###製品###
+Windows PowerShell 5.1
+###対応OS###
+Windows Server 2022
+###日本語訳###
+# Move-ClusterVirtualMachineRole について
+
+## シノプシスは,クラスタ化された仮想マシンを所有する権利を別のノードに移す.
+
+## SYNTAXは,のシンタックスです.
+
+```
+Move-ClusterVirtualMachineRole [[-Name] &lt;String&gt;] [[-Node] &lt;String&gt;] [-Cancel]
+ [-MigrationType &lt;VmMigrationType&gt;] [-IgnoreLocked] [-VMId &lt;Guid&gt;] [-Wait &lt;Int32&gt;]
+ [-InputObject &lt;PSObject&gt;] [-Cluster &lt;String&gt;] [&lt;CommonParameters&gt;]
+```
+
+## 記述は,
+
+   `Move-ClusterVirtualMachineRole`cmdlet はクラスタ化された仮想マシンを所有する権限を別のノードに移す.
+
+このcmdletは,クラスタ化された仮想マシンをライブ移行するために使用されます.`Move-ClusterGroup` after を使用した後`Get-ClusterResource`そして,`Set-ClusterParameter`仮想マシンリソースの **OfflineAction** パラメータを設定して状態,または1の値を保存します.
+
+注:このcmdletは,サーバーコンピュータでCredential Security Service Provider (CredSSP) 認証なしでリモートで実行できない.
+
+## 例えは
+
+### 例1
+
+```powershell
+Move-ClusterVirtualMachineRole -Name &quot;Virtual Machine1&quot; -Node node2
+```
+
+この例では,仮想マシン1というクラスターされた仮想マシンを, というノードに直接移行します.`node2`Windows PowerShell プロンプトは,アクションが完了するまで返ってくるわけではありません.
+
+### 例2
+
+```powershell
+Get-ClusterGroup -Name &quot;Virtual Machine1&quot; | Move-ClusterVirtualMachineRole -Node node2 -Wait 0
+```
+
+この例では,集まった仮想マシンをライブ移行して, という名前で移動します.`Virtual Machine1`というノードに名前をつける.`node2`Windows PowerShell プロンプトは,アクションが開始された直ぐに返されます.
+
+### 例3
+
+```powershell
+Move-ClusterVirtualMachineRole -Name &quot;Virtual Machine1&quot; -Cancel
+```
+
+この例では,クラスターされた仮想マシン (`) への進行中のライブ移行をキャンセルします.
+
+### 例4
+
+```powershell
+$vmGroups = Get-ClusterNode -Name node1 |
+    Get-ClusterGroup |
+    Where-Object -FilterScript {
+        Get-ClusterResource -InputObject $_ |
+            Where-Object ResourceType -Like &quot;Virtual Machine&quot;
+    }
+ForEach-Object -InputObject $vmGroups -Process { $_ | Move-ClusterVirtualMachineRole -Node node2 }
+```
+
+この例では特定のクラスターノードに問い合わせます.`node1`既存のグループを検索するには,この例は,リソースタイプが仮想マシンクラスターリソースである場合,共有グループをさらにフィルタリングします.フィルタ化されたグループは, に保存されます.`$vmGroups`変数のクラスターグループごとに,コマンドは,すべてのクラスターされた仮想マシンを, というノードにライブ移行する.`node2`仮想マシンごとに移動する際には,次の移行が開始される前に完成します.
+
+## パラメータは
+
+### -キャンセルする
+
+仮想マシンが進行中のライブ移行をキャンセルすることを指定します.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -クラスター
+
+このcmdletを実行するクラスターの名前を指定します.このパラメータの入力が である場合は,`.`または削除され,そのときのcmdletはローカルクラスターで実行されます.
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -IgnoreLocked でした
+
+鍵を閉めたグループがcmdletを実行するときに無視されることを指定します.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -InputObject
+
+移動するクラスタ仮想マシンを指定します.
+
+```yaml
+Type: PSObject
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByValue)
+Accept wildcard characters: False
+```
+
+### -MigrationType
+
+仮想マシンに実行する移行の種類を指定します.オプションは以下の通りです.
+
+ - -`Live`: ネットワーク接続が落ちたり,ダウンタイムが認識されないまま,仮想マシンを透明に移動します.
+
+ - -`Quick`: 動作する仮想マシンを最小限のダウンタイムで迅速に移行します.
+
+ - -`Shutdown`: 仮想マシンでのオペレーティングシステムの順序的なシャットダウン (すべてのプロセスの終了を待っている) を実行し,その後仮想マシンを移行します.
+
+ - -`ShutdownForce`: 仮想マシンでのオペレーティングシステムを停止し,遅いプロセスの完了を待つことなく,仮想マシンを移行します.
+
+ - -`TurnOff`: まずオペレーティングシステムをシャットダウンせずに仮想マシンをオフにします.その後,仮想マシンを移行します.これは電源をオフにすると同じです.つまり,データ損失が発生する可能性があります.
+
+```yaml
+Type: VmMigrationType
+Parameter Sets: (All)
+Aliases: 
+Accepted values: TurnOff, Quick, Shutdown, ShutdownForce, Live
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -名字は
+
+移動するクラスターバーチャルマシンの名前を指定します.
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: 0
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -ノード
+
+仮想マシンを移動するクラスターノードの名前を指定します.
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: 1
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -VMId
+
+仮想マシン識別子 (ID) を指定します.
+
+```yaml
+Type: Guid
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### - 待って下さい
+
+秒でcmdletを待つ時間を指定します. **Wait**パラメータが指定されていない場合は,cmdletが完了を待っている.`-Wait 0`指定され,呼び出しが開始され,cmdletが待たないうちに返ってくる.
+
+```yaml
+Type: Int32
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### 共通パラメーター
+
+このcmdletは,共通パラメータをサポートしています: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable.詳細については, [about_CommonParameters](を参照してください.https://go.microsoft.com/fwlink/?LinkID=113216) でした.
+
+## 輸入は
+
+### Microsoft.FailoverClusters.PowerShell.ClusterGroupを表示する
+
+## 輸出は
+
+### Microsoft.FailoverClusters.PowerShell.ClusterGroupを表示する
+
+##  NOTES  記事ができました.
+
+## 関連リンク
+
+[ClusterVirtualMachineRoleを追加する](./Add-ClusterVirtualMachineRole.md)
+
+[Update-ClusterVirtualMachineConfiguration](./Update-ClusterVirtualMachineConfiguration.md) は,現在現在も存在している.
+###英語原文###
+# Move-ClusterVirtualMachineRole
+
+## SYNOPSIS
+Moves the ownership of a clustered virtual machine to a different node.
+
+## SYNTAX
+
+```
+Move-ClusterVirtualMachineRole [[-Name] &lt;String&gt;] [[-Node] &lt;String&gt;] [-Cancel]
+ [-MigrationType &lt;VmMigrationType&gt;] [-IgnoreLocked] [-VMId &lt;Guid&gt;] [-Wait &lt;Int32&gt;]
+ [-InputObject &lt;PSObject&gt;] [-Cluster &lt;String&gt;] [&lt;CommonParameters&gt;]
+```
+
+## DESCRIPTION
+
+The `Move-ClusterVirtualMachineRole` cmdlet moves the ownership of a clustered virtual machine to
+a different node.
+
+This cmdlet is used to live migrate a clustered virtual machine. For quick migration, use
+`Move-ClusterGroup` after using `Get-ClusterResource` and `Set-ClusterParameter` to set the
+**OfflineAction** parameter of the virtual machine resource to save state, or a value of 1.
+
+Note: This cmdlet cannot be run remotely without Credential Security Service Provider (CredSSP)
+authentication on the server computer.
+
+## EXAMPLES
+
+### Example 1
+
+```powershell
+Move-ClusterVirtualMachineRole -Name &quot;Virtual Machine1&quot; -Node node2
+```
+
+This example performs a live migration of the clustered virtual machine named Virtual Machine1 to
+the node named `node2`. The Windows PowerShell prompt doesn&#x27;t return until the action is complete.
+
+### Example 2
+
+```powershell
+Get-ClusterGroup -Name &quot;Virtual Machine1&quot; | Move-ClusterVirtualMachineRole -Node node2 -Wait 0
+```
+
+This example performs a live migration of clustered virtual machine named `Virtual Machine1` to the
+node named `node2`. The Windows PowerShell prompt returns as soon as the action has been initiated.
+
+### Example 3
+
+```powershell
+Move-ClusterVirtualMachineRole -Name &quot;Virtual Machine1&quot; -Cancel
+```
+
+This example cancels the live migration in progress for the clustered virtual machine named `Virtual
+Machine1`.
+
+### Example 4
+
+```powershell
+$vmGroups = Get-ClusterNode -Name node1 |
+    Get-ClusterGroup |
+    Where-Object -FilterScript {
+        Get-ClusterResource -InputObject $_ |
+            Where-Object ResourceType -Like &quot;Virtual Machine&quot;
+    }
+ForEach-Object -InputObject $vmGroups -Process { $_ | Move-ClusterVirtualMachineRole -Node node2 }
+```
+
+This example queries a specific cluster node, `node1`, to find the currently owned groups. The
+example further filters the owned groups where there resource type is a virtual machine cluster
+resource. The filtered groups are stored in the `$vmGroups` variable. For each cluster group in the
+variable, the command will perform a live migration of all clustered virtual machines to the node
+named `node2`. The migration of each virtual machine will complete before the next migration is
+started.
+
+## PARAMETERS
+
+### -Cancel
+
+Specifies that an in-progress live migration of the virtual machine be canceled.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Cluster
+
+Specifies the name of the cluster on which to run this cmdlet. If the input for this parameter is
+`.` or it is omitted, then the cmdlet runs on the local cluster.
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -IgnoreLocked
+
+Specifies that locked groups are ignored when running the cmdlet.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -InputObject
+
+Specifies the clustered virtual machine to move.
+
+```yaml
+Type: PSObject
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByValue)
+Accept wildcard characters: False
+```
+
+### -MigrationType
+
+Specifies the type of migration to perform for the virtual machine. The options are as follows:
+
+- `Live`: Transparently migrates the virtual machine without a dropped network connection or
+  perceived downtime.
+
+- `Quick`: Rapidly migrates a running virtual machine with minimal downtime.
+
+- `Shutdown`: Performs an orderly shutdown of the operating system (waiting for all processes to
+  close) on the virtual machine, and then migrates the virtual machine.
+
+- `ShutdownForce`: Shuts down the operating system on the virtual machine without waiting for slower
+  processes to finish, and then migrates the virtual machine.
+
+- `TurnOff`: Turns off the virtual machine without shutting down the operating system first, then
+  migrates the virtual machine. This is the same as turning off the power, which means that data
+  loss may occur.
+
+```yaml
+Type: VmMigrationType
+Parameter Sets: (All)
+Aliases: 
+Accepted values: TurnOff, Quick, Shutdown, ShutdownForce, Live
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Name
+
+Specifies the name of the clustered virtual machine to move.
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: 0
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Node
+
+Specifies the name of the cluster node to which to move the virtual machine.
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: 1
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -VMId
+
+Specifies the virtual machine identifier (ID).
+
+```yaml
+Type: Guid
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -Wait
+
+Specifies the time in seconds to wait for the cmdlet. If the **Wait** parameter isn&#x27;t specified,
+then the cmdlet waits for completion. If `-Wait 0` is specified, then the call is initiated and the
+cmdlet returns without waiting.
+
+```yaml
+Type: Int32
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### CommonParameters
+
+This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable,
+-InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose,
+-WarningAction, and -WarningVariable. For more information, see
+[about_CommonParameters](https://go.microsoft.com/fwlink/?LinkID=113216).
+
+## INPUTS
+
+### Microsoft.FailoverClusters.PowerShell.ClusterGroup
+
+## OUTPUTS
+
+### Microsoft.FailoverClusters.PowerShell.ClusterGroup
+
+## NOTES
+
+## RELATED LINKS
+
+[Add-ClusterVirtualMachineRole](./Add-ClusterVirtualMachineRole.md)
+
+[Update-ClusterVirtualMachineConfiguration](./Update-ClusterVirtualMachineConfiguration.md)
+###Microsoft Learn URL###
+https://learn.microsoft.com/en-us/powershell/module/failoverclusters/move-clustervirtualmachinerole/?view=windowsserver2022-ps
+</pre></html>

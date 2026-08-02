@@ -1,0 +1,277 @@
+<!doctype html><html lang="ja"><meta charset="utf-8"><pre class="record-source">###KnowledgeNo###
+PS51-WS2022-2026-3607
+###FormatID###
+PS51-WS2022
+###CreatedAt###
+2026-08-01 00:00
+###UpdatedAt###
+2026-08-01 00:00
+###タイトル###
+about_Remote_Output
+###モジュール###
+Microsoft.PowerShell.Core
+###製品###
+Windows PowerShell 5.1
+###対応OS###
+Windows Server 2022
+###日本語訳###
+# about_Remote_Outputについて
+
+## 短編説明
+
+遠隔コマンドの出力を解釈しフォーマットする方法について説明します.
+
+## 長い説明
+
+リモートコンピュータで実行されたコマンドの出力は,ローカルコンピュータで実行された同じコマンドの出力のように見えますが,いくつかの重要な違いがあります.
+
+このトピックでは,リモートコンピュータで実行されるコマンドの出力を解釈し,フォーマットし,表示する方法について説明します.
+
+## コンピュータの名前表示
+
+を使うとき`Invoke-Command`遠隔コンピュータでコマンドを実行するには,cmdletでデータを生成したコンピュータの名前を含むオブジェクトが返されます. **PSComputerName**属性は遠隔コンピュータの名前を含む.
+
+多くのコマンドでは **PSComputerName** がデフォルトで表示されます.例えば,次のコマンドは  を実行します.`Get-Culture`端末は,以下に表示されている,端末には,コマンドが実行された端末の名前が含まれています.
+
+```powershell
+Invoke-Command -ScriptBlock {Get-Culture} -ComputerName Server01, Server02
+```
+
+```Output
+LCID  Name    DisplayName                PSComputerName
+----  ----    -----------                --------------
+1033  en-US   English (United States)    Server01
+1033  es-AR   Spanish (Argentina)        Server02
+```
+
+のパラメータを用いることができます.`Invoke-Command`**PSComputerName**のプロパティを隠すために.このパラメータは,リモートコンピュータから1つだけデータを収集するコマンドに設計されています.
+
+次のコマンドは,  を実行します.`Get-Culture`Server01 リモートコンピュータのコマンドで,PSComputerName**属性および関連属性を隠すために **HideComputerName**パラメータを使用します.
+
+```powershell
+$invokeCommandSplat = @{
+    ScriptBlock = {Get-Culture}
+    ComputerName = &#x27;Server01&#x27;
+    HideComputerName = $true
+}
+Invoke-Command @invokeCommandSplat
+```
+
+```Output
+LCID             Name             DisplayName
+----             ----             -----------
+1033             en-US            English (United States)
+```
+
+**PSComputerName**のプロパティもデフォルトで表示されない場合,表示できます.
+
+例えば,次のコマンドは&quot;&quot;を用います.`Format-Table`遠隔端の出力に **PSComputerName** 属性を追加するには cmdlet を追加します.`Get-Date`命令です.
+
+```powershell
+$invokeCommandSplat = @{
+    ScriptBlock = {Get-Date}
+    ComputerName = &#x27;Server01&#x27;, &#x27;Server02&#x27;
+}
+Invoke-Command @invokeCommandSplat |
+    Format-Table DateTime, PSComputerName -AutoSize
+```
+
+```Output
+DateTime                            PSComputerName
+--------                            --------------
+Monday, July 21, 2008 7:16:58 PM    Server01
+Monday, July 21, 2008 7:16:58 PM    Server02
+```
+
+## 消化物体
+
+輸出を生成するリモートコマンドを実行すると,コマンドの輸出はネットワークを介してローカルコンピュータに送信されます.
+
+.NETのライブオブジェクトがネットワーク上で送信できないため,ライブオブジェクトは _serialised_ またはそのオブジェクトとその性質のXML表示に変換されます.PowerShellはネットワーク全体でシリアライズされたオブジェクトを送信します.
+
+ローカルコンピュータでは,PowerShellがシリアルオブジェクトを受け取って,シリアルオブジェクトを標準的な .NETオブジェクトに変換することによってそれを _deserializes_します.
+
+しかし,消化されたオブジェクトはライブオブジェクトではありません.それはシリアライゼーションの時点でのオブジェクトのスナップショットです.消化されたオブジェクトにはプロパティが含まれていますが,方法はありません.PowerShellでこれらのオブジェクトを使用し管理することができます.パイプラインに通過し,選択されたプロパティを表示し,フォーマットします.
+
+ほとんどの消化物体は,自動的に格式化され,  のエントリによって表示されます.`Types.ps1xml`     `Format.ps1xml`しかし,ローカルコンピュータには,リモートコンピュータで生成されたすべてのオブジェクトのファイルフォーマットが存在しない可能性があります.オブジェクトがフォーマットされていない場合,各オブジェクトのすべての属性はストリーミングリストでコンソールに表示されます.
+
+オブジェクトが自動的にフォーマットされない場合,フォーマットするcmdletsを使用できます.`Format-Table`     `Format-List`選択したプロパティをフォーマットして表示する. または,  を使えます.`Out-GridView`cmdlet はテーブル内のオブジェクトを表示する.
+
+ローカルコンピュータにないcmdletを使用するリモートコンピュータでコマンドを実行すると,コマンドが返信するオブジェクトは,コンピュータにそれらのオブジェクトタイプのフォーマットファイルがない場合,予想通りフォーマットされなくなる可能性があります.`Get-FormatData`そして,`Export-FormatData`cmdletsは,別のコンピュータからフォーマットデータを入手する.
+
+ディレクトリ情報やGUIDなどのオブジェクトは,受信されたときに直作オブジェクトに変換されます.これらのオブジェクトには特別な処理やフォーマットは必要ありません.
+
+## 結果を順序に表示する
+
+コンピュータ名 (cmdlet) のパラメータのコンピュータ名 (ComputerName) の順序は,PowerShell がリモートコンピュータに接続する順序を決定する.しかし,結果は,リモートコンピュータからデータを受け取る順序で表示されます.
+
+を用いることができます.`Sort-Object`*PSComputerName* での結果を分類するcmdlet.Object の他のプロパティを表示すると,異なるコンピュータからの結果が,出力で割り切れます
+
+## また, を参照してください.
+
+[about_Remote][02] - [about_Remote_Variables][01] - [Invoke-Command][03] - [Get-EventLog][04] - [Out-GridView][09] - [Select-Object][10] - [Get-Process][05] - [Get-Service][06] - [Format-Table][08] - [Get-WmiObject][07]
+
+リンク参照 --&gt; [01]: about_Remote_Variables.md [02]: about_Remote.md [03]: xref:Microsoft.PowerShell.Core.Invoke-Command [04]: xref:Microsoft.PowerShell.Management.Get-EventLog [05]: xref:Microsoft.PowerShell.Management.Get-Process [06]: xref:Microsoft.PowerShell.Management.Get-Service [07]: xref:Microsoft.PowerShell.Management.Get-Wmiject [08]: xref:Microsoft.PowerShell.Utility.Format-Table [09]: xref:Microsoft.PowerShell.Utility.Grid-View [10]: xref:Microsoft.PowerShell.Utility.Object-Object 
+###英語原文###
+# about_Remote_Output
+
+## Short description
+
+Describes how to interpret and format the output of remote commands.
+
+## Long description
+
+The output of a command that was run on a remote computer might look like
+output of the same command run on a local computer, but there are some
+significant differences.
+
+This topic explains how to interpret, format, and display the output of
+commands that are run on remote computers.
+
+## Displaying the computer name
+
+When you use the `Invoke-Command` cmdlet to run a command on a remote computer,
+the command returns an object that includes the name of the computer that
+generated the data. The **PSComputerName** property contains the remote
+computer name.
+
+For many commands, **PSComputerName** is displayed by default. For example, the
+following command runs a `Get-Culture` command on two remote computers,
+Server01 and Server02. The output, which appears below, includes the names of
+the remote computers on which the command ran.
+
+```powershell
+Invoke-Command -ScriptBlock {Get-Culture} -ComputerName Server01, Server02
+```
+
+```Output
+LCID  Name    DisplayName                PSComputerName
+----  ----    -----------                --------------
+1033  en-US   English (United States)    Server01
+1033  es-AR   Spanish (Argentina)        Server02
+```
+
+You can use the **HideComputerName** parameter of `Invoke-Command` to hide the
+**PSComputerName** property. This parameter is designed for commands that
+collect data from only one remote computer.
+
+The following command runs a `Get-Culture` command on the Server01 remote
+computer. It uses the **HideComputerName** parameter to hide the
+**PSComputerName** property and related properties.
+
+```powershell
+$invokeCommandSplat = @{
+    ScriptBlock = {Get-Culture}
+    ComputerName = &#x27;Server01&#x27;
+    HideComputerName = $true
+}
+Invoke-Command @invokeCommandSplat
+```
+
+```Output
+LCID             Name             DisplayName
+----             ----             -----------
+1033             en-US            English (United States)
+```
+
+You can also display the **PSComputerName** property if it&#x27;s not displayed
+by default.
+
+For example, the following commands use the `Format-Table` cmdlet to add
+the **PSComputerName** property to the output of a remote `Get-Date` command.
+
+```powershell
+$invokeCommandSplat = @{
+    ScriptBlock = {Get-Date}
+    ComputerName = &#x27;Server01&#x27;, &#x27;Server02&#x27;
+}
+Invoke-Command @invokeCommandSplat |
+    Format-Table DateTime, PSComputerName -AutoSize
+```
+
+```Output
+DateTime                            PSComputerName
+--------                            --------------
+Monday, July 21, 2008 7:16:58 PM    Server01
+Monday, July 21, 2008 7:16:58 PM    Server02
+```
+
+## Deserialized objects
+
+When you run remote commands that generate output, the command output is
+transmitted across the network back to the local computer.
+
+Since live .NET objects can&#x27;t be transmitted over the network, the live objects
+are _serialized_ or converted into XML representations of the object and its
+properties. PowerShell transmits the serialized object across the
+network.
+
+On the local computer, PowerShell receives the serialized object and
+_deserializes_ it by converting the serialized object into a standard .NET
+object.
+
+However, the deserialized object isn&#x27;t a live object. It&#x27;s a snapshot of the
+object at the time of serialization. The deserialized object includes
+properties but no methods. You can use and manage these objects in PowerShell,
+including passing them in pipelines, displaying selected properties, and
+formatting them.
+
+Most deserialized objects are automatically formatted for display by entries in
+the `Types.ps1xml` or `Format.ps1xml` files. However, the local computer might
+not have formatting files for all objects that were generated on a remote
+computer. When objects are not formatted, all of the properties of each object
+appear in the console in a streaming list.
+
+When objects aren&#x27;t formatted automatically, you can use the formatting
+cmdlets, such as `Format-Table` or `Format-List`, to format and display
+selected properties. Or, you can use the `Out-GridView` cmdlet to display
+the objects in a table.
+
+When you run a command on a remote computer that uses cmdlets that you don&#x27;t
+have on your local computer, the objects that the command returns may not be
+formatted as expected if you don&#x27;t have the formatting files for those object
+types on your computer. You use the `Get-FormatData` and `Export-FormatData`
+cmdlets to get formatting data from another computer.
+
+Some object types, such as **DirectoryInfo** objects and GUIDs, are converted
+back into live objects when they&#x27;re received. These objects don&#x27;t need any
+special handling or formatting.
+
+## Ordering the results
+
+The order of the computer names in the **ComputerName** parameter of cmdlets
+determines the order in which PowerShell connects to the remote computers.
+However, the results appear in the order that the data is received from the
+remote computers.
+
+You can use the `Sort-Object` cmdlet to sort the results on the
+**PSComputerName**. When you any other property of the object, the results from
+different computers are interspersed interleaved in the output
+
+## See also
+
+- [about_Remote][02]
+- [about_Remote_Variables][01]
+- [Invoke-Command][03]
+- [Get-EventLog][04]
+- [Out-GridView][09]
+- [Select-Object][10]
+- [Get-Process][05]
+- [Get-Service][06]
+- [Format-Table][08]
+- [Get-WmiObject][07]
+
+&lt;!-- link references --&gt;
+[01]: about_Remote_Variables.md
+[02]: about_Remote.md
+[03]: xref:Microsoft.PowerShell.Core.Invoke-Command
+[04]: xref:Microsoft.PowerShell.Management.Get-EventLog
+[05]: xref:Microsoft.PowerShell.Management.Get-Process
+[06]: xref:Microsoft.PowerShell.Management.Get-Service
+[07]: xref:Microsoft.PowerShell.Management.Get-WmiObject
+[08]: xref:Microsoft.PowerShell.Utility.Format-Table
+[09]: xref:Microsoft.PowerShell.Utility.Out-GridView
+[10]: xref:Microsoft.PowerShell.Utility.Select-Object
+###Microsoft Learn URL###
+https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_remote_output/?view=powershell-5.1
+</pre></html>

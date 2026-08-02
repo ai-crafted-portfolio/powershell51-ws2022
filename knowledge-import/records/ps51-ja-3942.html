@@ -1,0 +1,525 @@
+<!doctype html><html lang="ja"><meta charset="utf-8"><pre class="record-source">###KnowledgeNo###
+PS51-WS2022-2026-3942
+###FormatID###
+PS51-WS2022
+###CreatedAt###
+2026-08-01 00:00
+###UpdatedAt###
+2026-08-01 00:00
+###タイトル###
+Tee-Object
+###モジュール###
+Microsoft.PowerShell.Utility
+###製品###
+Windows PowerShell 5.1
+###対応OS###
+Windows Server 2022
+###日本語訳###
+# Tee-Object について
+
+## SYNOPSISは,ファイルまたは変数にコマンド出力を保存し,パイプラインを下回る.
+
+## SYNTAXは,のシンタックスです.
+
+### ファイル (デフォルト) 
+
+```
+Tee-Object [-InputObject &lt;PSObject&gt;] [-FilePath] &lt;String&gt; [-Append]
+ [&lt;CommonParameters&gt;]
+```
+
+### 文字ファイル
+
+```
+Tee-Object [-InputObject &lt;PSObject&gt;] -LiteralPath &lt;String&gt; [&lt;CommonParameters&gt;]
+```
+
+### 変数
+
+```
+Tee-Object [-InputObject &lt;PSObject&gt;] -Variable &lt;String&gt; [&lt;CommonParameters&gt;]
+```
+
+## 記述は,
+
+   `Tee-Object`cmdlet は,2つの方向で出力を書き出す.この出力をファイルまたは変数に保存し,パイプラインを下に送信します.`Tee-Object`パイプラインの最後のコマンドで,コマンド出力はコンソールで表示されます.
+
+内面では,`Tee-Object`は利用しています.`Set-Variable`そして,`Out-File`このコマンドは, **WhatIf** パラメータをサポートしています.`Tee-Object`コマンドは **WhatIf** パラメータをサポートしていない.しかし,あなたが wrap  をすると,`Tee-Object`**WhatIf**パラメータをサポートするスクリプトまたは関数で,`Tee-Object`**WhatIf**の状態を に渡す.`Set-Variable`そして,`Out-File`命令です.
+
+## 例えは
+
+### 例1: ファイルとコンソールへの輸出プロセスは
+
+この例では,コンピュータで実行されているプロセスの一覧が表示されます.結果がファイルに送られます.第二のパスが指定されていないため,プロセスはコンソールにも表示されます.
+
+```powershell
+Get-Process | Tee-Object -FilePath &quot;C:\Test1\testfile2.txt&quot;
+```
+
+```Output
+Handles  NPM(K)    PM(K)      WS(K) VM(M)   CPU(s)    Id ProcessName
+-------  ------    -----      ----- -----   ------    -- -----------
+83       4     2300       4520    39     0.30    4032 00THotkey
+272      6     1400       3944    34     0.06    3088 alg
+81       3      804       3284    21     2.45     148 ApntEx
+81       4     2008       5808    38     0.75    3684 Apoint
+...
+```
+
+### 例2:変数への出力プロセスと`Select-Object`
+
+この例では,コンピュータ上で実行されているプロセスの一覧が表示されます.`$proc`変数にパイプして,変数にパイプします.`Select-Object` .
+
+```powershell
+Get-Process notepad | Tee-Object -Variable proc | Select-Object ProcessName, Handles
+```
+
+```Output
+ProcessName                              Handles
+-----------                              -------
+notepad                                  43
+notepad                                  37
+notepad                                  38
+notepad                                  38
+```
+
+   `Select-Object`cmdlet では **ProcessName** と **Handles** のプロパティを選択します.`$proc`によって返されたデフォルト情報を含む変数です.`Get-Process` .
+
+### 例3: 2つのログファイルにシステムファイルを出力する
+
+この例では,システムファイルの一覧を2つのログファイル,累積ファイルと現在のファイルに保存します.
+
+```powershell
+Get-ChildItem -Path D: -File -System -Recurse |
+  Tee-Object -FilePath &quot;C:\test\AllSystemFiles.txt&quot; -Append |
+    Out-File C:\test\NewSystemFiles.txt
+```
+
+コマンドは&quot;&quot;を用いています.`Get-ChildItem`cmdlet でD:ドライブ上のシステムファイルをリクセル検索します.パイプラインオペレーター ()`|`) はリストを  に送ります.`Tee-Object`,は,AllSystemFiles.txtファイルにリストを添加し,パイプラインを介してリストを  に渡す.`Out-File`cmdletで,リストを保存する.`NewSystemFiles.txt file` .
+
+### 例4: を使用する`Tee-Object`**WhatIf**パラメータを持つスクリプトに
+
+   `Tee-Object`コマンドは **WhatIf** パラメータをサポートしていない.しかし,あなたが wrap  をすると,`Tee-Object`**WhatIf**パラメータをサポートするスクリプトまたは関数で,`Tee-Object`**WhatIf**の状態を に渡す.`Set-Variable`そして,`Out-File`内部で使用するコマンドです.
+
+```powershell
+PS&gt; function Test-Tee {
+    [Cmdletbinding(SupportsShouldProcess)]
+    Param()
+    $true|tee -Variable b
+    &quot;Variable `$b is set to &#x27;$b&#x27;&quot;
+}
+
+PS&gt; Test-Tee
+
+True
+Variable $b is set to &#x27;True&#x27;
+
+PS&gt; Test-Tee -WhatIf
+True
+What if: Performing the operation &quot;Set variable&quot; on target &quot;Name: b Value: True&quot;.
+Variable $b is set to &#x27;&#x27;
+```
+
+## パラメータは
+
+### -アペンダント
+
+cmdletが指定されたファイルに輸出を添付することを表示します.このパラメータがなければ,新しいコンテンツは警告なしにファイル内の既存のコンテンツを置き換えます.
+
+このパラメータはWindows PowerShell 3.0で導入されました.
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: File
+Aliases:
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -FilePath
+
+このcmdletでオブジェクトを保存するファイルを指定すると,ワイルドカード文字が許可されているが,単一のファイルに解決する必要があります.
+
+```yaml
+Type: System.String
+Parameter Sets: File
+Aliases:
+
+Required: True
+Position: 0
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: True
+```
+
+### -InputObject
+
+保存し表示されるオブジェクトを指定します.オブジェクトを含む変数を入力するか,オブジェクトを取得するコマンドまたは表現を入力します.また,オブジェクトを  にパイプすることができます.`Tee-Object` .
+
+と入力Object**パラメータを使用すると`Tee-Object`命令結果をパイプして instead にする代わりに,`Tee-Object`, **InputObject**の値は,値が集合であるとしても,単一のオブジェクトとして扱われます.
+
+```yaml
+Type: System.Management.Automation.PSObject
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByValue)
+Accept wildcard characters: False
+```
+
+### -リテラルパース
+
+このcmdletがオブジェクトを保存するファイルを指定します. **FilePath**とは異なり,LiteralPath**パラメータの値は入力されたまま使用されます.文字はワイルドカードとして解釈されません.パスにエスケープ文字が含まれている場合は,単一の引用符で囲んでください.単一の引用符はPowerShellに文字をエスケープシーケンスのように解釈しないように言います.
+
+```yaml
+Type: System.String
+Parameter Sets: LiteralFile
+Aliases: PSPath
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -変数
+
+cmdletがオブジェクトを保存する変数を指定します.前回のドルマーク () なしに変数の名前を入力してください.`$`) でした.
+
+```yaml
+Type: System.String
+Parameter Sets: Variable
+Aliases:
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### 共通パラメーター
+
+このcmdletは,共通パラメータをサポートしています: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable.詳細については, [about_CommonParameters](を参照してください.https://go.microsoft.com/fwlink/?LinkID=113216) でした.
+
+## 輸入は
+
+### システム管理自動化PSObject
+
+対象をこのcmdletにパイプすることができます.
+
+## 輸出は
+
+### システム管理自動化PSObject
+
+このcmdletは,リダイレクトしたオブジェクトを返します.
+
+##  NOTES  記事ができました.
+
+Windows PowerShell では,次のアライスがあります.`Tee-Object`:
+
+ - -`tee`
+
+号も使えます.`Out-File`cmdlet またはリダイレクトオペレーターで,どちらもファイルに出力を保存しますが,パイプラインに送らない.
+
+`Tee-Object`ファイルに書き込むときに&quot;ユニコード&quot; (UTF-16LE) のエンコーディングを使用します.別のエンコーディングが必要な場合は,  を使用してください.`Out-File`符号化パラメータを表示するcmdlet.
+
+# Tee-Object について
+
+## 関連リンク
+
+[Compare-Object](Compare-Object.md を比較する)
+
+[ForEach-Object](../Microsoft.PowerShell.Core/ForEach-Object.md) について
+
+[Group-Object](Group-Object.md) について
+
+[Measure-Object](Measure-Object.md) でした.
+
+[New-Object](New-Object.md) 
+
+[Select-Object](Select-Object.md) 
+
+[Sort-Object](Sort-Object.md) 
+
+[Where-Object](../Microsoft.PowerShell.Core/Where-Object.md) について
+
+[about_Redirection](../Microsoft.PowerShell.Core/About/about_Redirection.md) について
+###英語原文###
+# Tee-Object
+
+## SYNOPSIS
+Saves command output in a file or variable and also sends it down the pipeline.
+
+## SYNTAX
+
+### File (Default)
+
+```
+Tee-Object [-InputObject &lt;PSObject&gt;] [-FilePath] &lt;String&gt; [-Append]
+ [&lt;CommonParameters&gt;]
+```
+
+### LiteralFile
+
+```
+Tee-Object [-InputObject &lt;PSObject&gt;] -LiteralPath &lt;String&gt; [&lt;CommonParameters&gt;]
+```
+
+### Variable
+
+```
+Tee-Object [-InputObject &lt;PSObject&gt;] -Variable &lt;String&gt; [&lt;CommonParameters&gt;]
+```
+
+## DESCRIPTION
+
+The `Tee-Object` cmdlet write output in two directions. It stores the output in a file or variable
+and also sends it down the pipeline. If `Tee-Object` is the last command in the pipeline, the
+command output is displayed in the console.
+
+Internally, `Tee-Object` uses the `Set-Variable` and `Out-File` commands. These commands support the
+**WhatIf** parameter. The `Tee-Object` command doesn&#x27;t support the **WhatIf** parameter. However, if
+you wrap `Tee-Object` in a script or function that support the **WhatIf** parameter, `Tee-Object`
+passes the state of **WhatIf** to the `Set-Variable` and `Out-File` commands.
+
+## EXAMPLES
+
+### Example 1: Output processes to a file and to the console
+
+This example gets a list of the processes running on the computer and sends the result to a file.
+Because a second path is not specified, the processes are also displayed in the console.
+
+```powershell
+Get-Process | Tee-Object -FilePath &quot;C:\Test1\testfile2.txt&quot;
+```
+
+```Output
+Handles  NPM(K)    PM(K)      WS(K) VM(M)   CPU(s)    Id ProcessName
+-------  ------    -----      ----- -----   ------    -- -----------
+83       4     2300       4520    39     0.30    4032 00THotkey
+272      6     1400       3944    34     0.06    3088 alg
+81       3      804       3284    21     2.45     148 ApntEx
+81       4     2008       5808    38     0.75    3684 Apoint
+...
+```
+
+### Example 2: Output processes to a variable and `Select-Object`
+
+This example gets a list of the processes running on the computer, saves them to the `$proc`
+variable, and pipes them to `Select-Object`.
+
+```powershell
+Get-Process notepad | Tee-Object -Variable proc | Select-Object ProcessName, Handles
+```
+
+```Output
+ProcessName                              Handles
+-----------                              -------
+notepad                                  43
+notepad                                  37
+notepad                                  38
+notepad                                  38
+```
+
+The `Select-Object` cmdlet selects the **ProcessName** and **Handles** properties. Note that the
+`$proc` variable includes the default information returned by `Get-Process`.
+
+### Example 3: Output system files to two log files
+
+This example saves a list of system files in a two log files, a cumulative file and a current file.
+
+```powershell
+Get-ChildItem -Path D: -File -System -Recurse |
+  Tee-Object -FilePath &quot;C:\test\AllSystemFiles.txt&quot; -Append |
+    Out-File C:\test\NewSystemFiles.txt
+```
+
+The command uses the `Get-ChildItem` cmdlet to do a recursive search for system files on the D:
+drive. A pipeline operator (`|`) sends the list to `Tee-Object`, which appends the list to the
+AllSystemFiles.txt file and passes the list down the pipeline to the `Out-File` cmdlet, which saves
+the list in the `NewSystemFiles.txt file`.
+
+### Example 4: Use `Tee-Object` in a script with the **WhatIf** parameter
+
+The `Tee-Object` command doesn&#x27;t support the **WhatIf** parameter. However, if you wrap `Tee-Object`
+in a script or function that support the **WhatIf** parameter, `Tee-Object` passes the state of
+**WhatIf** to the `Set-Variable` and `Out-File` commands it uses internally.
+
+```powershell
+PS&gt; function Test-Tee {
+    [Cmdletbinding(SupportsShouldProcess)]
+    Param()
+    $true|tee -Variable b
+    &quot;Variable `$b is set to &#x27;$b&#x27;&quot;
+}
+
+PS&gt; Test-Tee
+
+True
+Variable $b is set to &#x27;True&#x27;
+
+PS&gt; Test-Tee -WhatIf
+True
+What if: Performing the operation &quot;Set variable&quot; on target &quot;Name: b Value: True&quot;.
+Variable $b is set to &#x27;&#x27;
+```
+
+## PARAMETERS
+
+### -Append
+
+Indicates that the cmdlet appends the output to the specified file. Without this parameter, the new
+content replaces any existing content in the file without warning.
+
+This parameter was introduced in Windows PowerShell 3.0.
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: File
+Aliases:
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -FilePath
+
+Specifies a file that this cmdlet saves the object to Wildcard characters are permitted, but must
+resolve to a single file.
+
+```yaml
+Type: System.String
+Parameter Sets: File
+Aliases:
+
+Required: True
+Position: 0
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: True
+```
+
+### -InputObject
+
+Specifies the object to be saved and displayed. Enter a variable that contains the objects or type a
+command or expression that gets the objects. You can also pipe an object to `Tee-Object`.
+
+When you use the **InputObject** parameter with `Tee-Object`, instead of piping command results to
+`Tee-Object`, the **InputObject** value is treated as a single object even if the value is a
+collection.
+
+```yaml
+Type: System.Management.Automation.PSObject
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByValue)
+Accept wildcard characters: False
+```
+
+### -LiteralPath
+
+Specifies a file that this cmdlet saves the object to. Unlike **FilePath**, the value of the
+**LiteralPath** parameter is used exactly as it is typed. No characters are interpreted as
+wildcards. If the path includes escape characters, enclose it in single quotation marks. Single
+quotation marks tell PowerShell not to interpret any characters as escape sequences.
+
+```yaml
+Type: System.String
+Parameter Sets: LiteralFile
+Aliases: PSPath
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Variable
+
+Specifies a variable that the cmdlet saves the object to. Enter a variable name without the
+preceding dollar sign (`$`).
+
+```yaml
+Type: System.String
+Parameter Sets: Variable
+Aliases:
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### CommonParameters
+
+This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable,
+-InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose,
+-WarningAction, and -WarningVariable. For more information, see
+[about_CommonParameters](https://go.microsoft.com/fwlink/?LinkID=113216).
+
+## INPUTS
+
+### System.Management.Automation.PSObject
+
+You can pipe objects to this cmdlet.
+
+## OUTPUTS
+
+### System.Management.Automation.PSObject
+
+This cmdlet returns the object that it redirects.
+
+## NOTES
+
+Windows PowerShell includes the following aliases for `Tee-Object`:
+
+  - `tee`
+
+You can also use the `Out-File` cmdlet or the redirection operator, both of which save the output in
+a file but do not send it down the pipeline.
+
+`Tee-Object` uses &quot;Unicode&quot; (UTF-16LE) encoding when it writes to files. If you need a different
+encoding, use the `Out-File` cmdlet with the **Encoding** parameter.
+
+# Tee-Object
+
+## RELATED LINKS
+
+[Compare-Object](Compare-Object.md)
+
+[ForEach-Object](../Microsoft.PowerShell.Core/ForEach-Object.md)
+
+[Group-Object](Group-Object.md)
+
+[Measure-Object](Measure-Object.md)
+
+[New-Object](New-Object.md)
+
+[Select-Object](Select-Object.md)
+
+[Sort-Object](Sort-Object.md)
+
+[Where-Object](../Microsoft.PowerShell.Core/Where-Object.md)
+
+[about_Redirection](../Microsoft.PowerShell.Core/About/about_Redirection.md)
+###Microsoft Learn URL###
+https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.utility/tee-object/?view=powershell-5.1
+</pre></html>

@@ -1,0 +1,444 @@
+<!doctype html><html lang="ja"><meta charset="utf-8"><pre class="record-source">###KnowledgeNo###
+PS51-WS2022-2026-0064
+###FormatID###
+PS51-WS2022
+###CreatedAt###
+2026-08-01 00:00
+###UpdatedAt###
+2026-08-01 00:00
+###タイトル###
+Install-ADServiceAccount
+###モジュール###
+activedirectory
+###製品###
+Windows PowerShell 5.1
+###対応OS###
+Windows Server 2022
+###日本語訳###
+# インストール-ADServiceAccount
+
+## SYNOPSISは,コンピュータにアクティブディレクトリ管理サービスアカウントをインストールするか,コンピュータにグループ管理サービスアカウントをキャッシュする.
+
+## SYNTAXは,のシンタックスです.
+
+```
+Install-ADServiceAccount [-WhatIf] [-Confirm] [-AccountPassword &lt;SecureString&gt;] [-AuthType &lt;ADAuthType&gt;]
+ [-Force] [-Identity] &lt;ADServiceAccount&gt; [-PromptForPassword] [&lt;CommonParameters&gt;]
+```
+
+## 記述 **Install-ADServiceAccount** cmdlet は,既存の Active Directory 管理サービスアカウントを,CMdlet が実行されているコンピュータにインストールします.このCMdlet は,コンピュータが管理サービスアカウントをホストする資格を有していることを確認します.また,CMdlet は,管理サービスアカウントのパスワードを,ユーザーアクションを必要とせずに管理できるように,必要な変更を本地で行います.
+
+*Identity* パラメータは,インストールする Active Directory 管理サービスアカウントを指定します.管理サービスアカウントを,その名前の別名,GUID,セキュリティ識別子 (SID) またはセキュリティアカウントマネージャー (SAM) 口座名によって識別できます.また,パラメータを管理サービスアカウントオブジェクト変数に設定できます.例えば,`$&lt;localServiceAccountObject&gt;`管理サービスアカウントオブジェクトをパイプラインを通って *Identity* パラメータに転送したりします.例えば,Get-ADServiceAccountを使用して管理サービスアカウントオブジェクトを取得し,パイプラインを通ってオブジェクトをInstall-ADServiceAccountに転送できます.
+
+*AccountPassword* パラメータは,独立管理サービスアカウントのパスワードを含む安全な文字列をパスすることを許可し,グループ管理サービスアカウントでは無視されます.代替的に,独立管理サービスアカウントのパスワードを提示するために, *PromptForPassword* パラメータを使用できます.あなたがプロビジョニングしたアカウントをインストールしたい場合は,独立管理サービスアカウントのパスワードを入力する必要があります.これは,読み取りのみドメインコントローラー (例えば,周辺ネットワークまたはDMZ) が備わっているセグメントネットワーク (サイト) にあるサーバーに独立管理サービスアカウントをインストールしているときに必要です.この場合は,独立管理サービスアカウントを作成する必要があります.適切なコンピュータアカウントとリンクし,読み込みのみドメインコントローラーサイトのサーバー上のスタンドラウンマネージドサービスアカウントをインストールする際にパスしなければならない有名なパスワードを割り当てます. *AccountPassword* と *PromptForPassword* の両方のパラメータをパスすると, *AccountPassword* のパラメータが優先されます.
+
+## 例えは
+
+### 例1: 管理サービスアカウントを局所コンピュータにインストールする```
+PS C:\&gt; Install-ADServiceAccount -Identity &#x27;SQL-HR-svc-01&#x27;
+```
+
+このコマンドは,ローカルコンピュータにSQL-HR-svc-01という名前の管理サービスアカウントをインストールします.グループ管理サービスアカウントを使用する場合,サービスアカウントには **PrincipalsAllowedToRetrieveManagedPassword**属性セットが設定されている必要があります.
+
+### 例2:管理サービスアカウントを取得して,ローカルコンピュータにインストールする```
+PS C:\&gt; $Account = Get-ADServiceAccount -Filter &quot;Name -eq &#x27;SQL-HR-svc-01&#x27;&quot;
+PS C:\&gt; Install-ADServiceAccount $Account
+```
+
+このコマンドは,デフォルトディレクトリからSQL-HR-svc-01という名の管理サービスアカウントを入手し,ローカルコンピュータにインストールします.グループ管理サービスアカウントを使用する場合,サービスアカウントには **PrincipalsAllowedToRetrieveManagedPassword**属性セットが設定されている必要があります.
+
+### 例3:読み込みのみのドメインコントローラーサイトに独立した管理サービスアカウントをインストールする```
+PS C:\&gt; Install-ADServiceAccount -Identity &#x27;SQL-HR-svc-01&#x27; -PromptForPassword
+Please enter the current password for &#x27;CN=SQL-HR-svc-01,CN=Managed Service Accounts,DC=contoso,DC=com&#x27;
+Password: *******
+```
+
+このコマンドは,読みのみのドメインコントローラーサイトにSQL-HR-svc-01として識別されたスタンドラウンマネージドサービスアカウントをインストールします.グループマネージドサービスアカウントを使用する場合,サービスアカウントには **PrincipalsAllowedToRetrieveManagedPassword**属性セットが設定されている必要があります.
+
+### 例4: 指定されたパスワードを備えたスタンドアロンの管理サービスアカウントをインストールする```
+PS C:\&gt; Install-ADServiceAccount -Identity &#x27;SQL-HR-svc-01&#x27; -AccountPassword (ConvertTo-SecureString -AsPlainText &quot;p@ssw0rd&quot; -Force)
+```
+
+このコマンドは,読みのみのドメインコントローラーサイトにSQL-HR-svc-01という名前のスタンドラウンマネージドサービスアカウントをインストールし,アカウントパスワードをセキュアな文字列として転送します.グループマネージドサービスアカウントを使用する場合,サービスアカウントには **PrincipalsAllowedToRetrieveManagedPassword**属性セットが設定されている必要があります.
+
+## パラメータは
+
+### -AccountPassword アカウントパスワードを安全な文字列として指定します.このパラメータは,あなたがプロビジョニングし,グループ管理サービスアカウントに無視された独立管理サービスアカウントのパスワードを指定できるようにします.この場合は,読み取りのみのドメインコントローラー (例えば,周辺ネットワークまたはDMZ) を備えたセグメントネットワーク (サイト) に位置するサーバーに独立した管理サービスアカウントをインストールしているときに必要になります.この場合は,独立した管理サービスアカウントを作成し,適切なコンピュータアカウントにリンクし,読み取りのみの管理サービスアカウントにサーバーに独立した管理サービスアカウントをインストールする際に通過しなければならない有名なパスワードを割り当てます.書き込み可能なドメインコントローラにアクセスできないメインコントローラサイト. *AccountPassword* と *PromptForPassword* の両方のパラメータを通過すると, *AccountPassword* のパラメータが優先されます.
+
+```yaml
+Type: SecureString
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -AuthType は,使用する認証方法を指定します.このパラメータの可能な値は以下のとおりです.
+
+- 交渉するまたは0 - 基本または1
+
+デフォルト認証方法は,交渉です.
+
+基本認証方法には,セキュアソケットレイヤ (SSL) 接続が必要となります.
+
+```yaml
+Type: ADAuthType
+Parameter Sets: (All)
+Aliases: 
+Accepted values: Negotiate, Basic
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### - 確認は,cmdletを実行する前に確認を提示します.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: cf
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### - サービスアカウントのインストールをフォースフォースにします.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Identity は,以下の値のうちの1つを提供することで,アクティブディレクトリグループオブジェクトを指定します.括弧の識別子は,属性のLDAP表示名です.このパラメータの受け入れ可能な値は:です.
+
+特徴ある名前 - GUID (objectGUID) - セキュリティ識別子 (objectSid) - セキュリティアカウントマネージャーのアカウント名 (sAMAccountName)
+
+cmdlet は,オブジェクトを見つけるためにデフォルトの命名コンテキストまたはパーティションを探します.もし2つ以上のオブジェクトが見つかったら,cmdlet は,終了しないエラーを返します.
+
+このパラメータは,このオブジェクトをパイプラインを通過させることもできます.または,このパラメータをオブジェクトインスタンスの設定でもできます.
+
+```yaml
+Type: ADServiceAccount
+Parameter Sets: (All)
+Aliases: 
+
+Required: True
+Position: 0
+Default value: None
+Accept pipeline input: True (ByValue)
+Accept wildcard characters: False
+```
+
+# インストール-ADServiceAccount
+
+### -PromptForPassword は,グループ管理サービスアカウントに預設して無視したスタンドアロンの管理サービスアカウントのパスワードを入力できることを示します.これは,書き込み可能なドメインコントローラーへのアクセスがなく,文字専用ドメインコントローラー (RODC) にのみアクセスできるセグメントネットワーク (サイト) に位置するサーバーにスタンドアロンの管理サービスアカウントをインストールしているときに必要になります.この場合は,スタンドアロンの管理サービスアカウントを作成し,適切なコンピュータアカウントにリンクし,RODC専用サイトのサーバーにスタンドアロンの管理サービスアカウントをインストールする際にパスしなければならない有名なパスワードを割り当てます.または, *AccountPassword* と *PromptForPassword* の両方のパラメータをパスする場合は, *AccountPassword* のパラメータが優先されます.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -WhatIf が実行されればどうなるか示します.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: wi
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### 共通パラメータ このcmdletは共通パラメータをサポートしています: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable.詳細については, [about_CommonParameters] を参照してください.https://go.microsoft.com/fwlink/?LinkID=113216) でした.
+
+## 輸入は
+
+### Microsoft.ActiveDirectory.Management.ADServiceAccount *Identity* パラメータで管理サービスアカウントオブジェクトが受信されます.
+
+## 輸出は
+
+### どれもない
+
+## * 注記 * このcmdlet は Active Directory Lightweight Directory Services (AD LDS) と動作しません. * このcmdlet は Active Directory スナップショットで動作しません. * このcmdlet は読み込みのみのドメインコントローラで動作しません. * このcmdlet は,高度な PowerShell セッションから実行する必要があります. * 管理サービスアカウントを成功にインストールするには,サービスアカウントには,最初に New-ADServiceAccount または Set-ADServiceAccount cmdlet を使用して設定された *PrincipalsAllowedToRetrieveManagedPassword* パラメータオプションが設定されなければなりません.
+
+## 関連リンク
+
+[Get-ADServiceAccount](./Get-ADServiceAccount.md) について
+
+[New-ADServiceAccount](./New-ADServiceAccount.md) 
+
+[ADServiceAccount.md]を削除する.
+
+[Reset-ADServiceAccountPassword](./Reset-ADServiceAccountPassword.md) を書き換える
+
+[Set-ADServiceAccount](./Set-ADServiceAccount.md) について
+
+[Uninstall-ADServiceAccount](./Uninstall-ADServiceAccount.md) 
+###英語原文###
+# Install-ADServiceAccount
+
+## SYNOPSIS
+Installs an Active Directory managed service account on a computer or caches a group managed service account on a computer.
+
+## SYNTAX
+
+```
+Install-ADServiceAccount [-WhatIf] [-Confirm] [-AccountPassword &lt;SecureString&gt;] [-AuthType &lt;ADAuthType&gt;]
+ [-Force] [-Identity] &lt;ADServiceAccount&gt; [-PromptForPassword] [&lt;CommonParameters&gt;]
+```
+
+## DESCRIPTION
+The **Install-ADServiceAccount** cmdlet installs an existing Active Directory managed service account on the computer on which the cmdlet is run.
+This cmdlet verifies that the computer is eligible to host the managed service account.
+The cmdlet also makes the required changes locally so that the managed service account password can be managed without requiring any user action.
+
+The *Identity* parameter specifies the Active Directory managed service account to install.
+You can identify a managed service account by its distinguished name, GUID, security identifier (SID), or security accounts manager (SAM) account name.
+You can also set the parameter to a managed service account object variable, such as `$&lt;localServiceAccountObject&gt;` or pass a managed service account object through the pipeline to the *Identity* parameter.
+For example, you can use Get-ADServiceAccount to get a managed service account object and then pass the object through the pipeline to the Install-ADServiceAccount.
+
+The *AccountPassword* parameter allows you to pass a secure string that contains the password of a standalone managed service account and is ignored for group managed service accounts.
+Alternatively, you can use *PromptForPassword* parameter to prompt for the standalone managed service account password.
+You must enter the password of a standalone managed service account if you want to install an account that you have provisioned.
+This is required when you are installing a standalone managed service account on a server located on a segmented network (site) with read-only domain controllers (for example, a perimeter network or DMZ).
+In this case you should create the standalone managed service account, link it with the appropriate computer account, and assign a well-known password that must be passed when installing the standalone managed service account on the server on the read-only domain controller site.
+If you pass both *AccountPassword* and *PromptForPassword* parameters, the *AccountPassword* parameter takes precedence.
+
+## EXAMPLES
+
+### Example 1: Install a managed service account on the local computer
+```
+PS C:\&gt; Install-ADServiceAccount -Identity &#x27;SQL-HR-svc-01&#x27;
+```
+
+This command installs a managed service account with name SQL-HR-svc-01 on the local computer.
+If a group managed service account is used, the service account must have the **PrincipalsAllowedToRetrieveManagedPassword** property set.
+
+### Example 2: Get a managed service account and install it on the local computer
+```
+PS C:\&gt; $Account = Get-ADServiceAccount -Filter &quot;Name -eq &#x27;SQL-HR-svc-01&#x27;&quot;
+PS C:\&gt; Install-ADServiceAccount $Account
+```
+
+This command gets a managed service account with name SQL-HR-svc-01 from the default directory and installs it on the local computer.
+If a group managed service account is used, the service account must have the **PrincipalsAllowedToRetrieveManagedPassword** property set.
+
+### Example 3: Install a standalone managed service account for a read-only domain controller site
+```
+PS C:\&gt; Install-ADServiceAccount -Identity &#x27;SQL-HR-svc-01&#x27; -PromptForPassword
+Please enter the current password for &#x27;CN=SQL-HR-svc-01,CN=Managed Service Accounts,DC=contoso,DC=com&#x27;
+Password: *******
+```
+
+This command installs a standalone managed service account identified as SQL-HR-svc-01 in a read-only domain controller site.
+If a group managed service account is used, the service account must have the **PrincipalsAllowedToRetrieveManagedPassword** property set.
+
+### Example 4: Install a standalone managed service account with the specified password
+```
+PS C:\&gt; Install-ADServiceAccount -Identity &#x27;SQL-HR-svc-01&#x27; -AccountPassword (ConvertTo-SecureString -AsPlainText &quot;p@ssw0rd&quot; -Force)
+```
+
+This command installs a standalone managed service account with the name SQL-HR-svc-01 in a read-only domain controller site, and passes the account password as a secure string.
+If a group managed service account is used, the service account must have the **PrincipalsAllowedToRetrieveManagedPassword** property set.
+
+## PARAMETERS
+
+### -AccountPassword
+Specifies the account password as a secure string.
+This parameter enables you to specify the password of a standalone managed service account that you have provisioned and is ignored for group managed service accounts.
+This is required when you are installing a standalone managed service account on a server located on a segmented network (site) with read-only domain controllers (for example, a perimeter network or DMZ).
+In this case you should create the standalone managed service account, link it with the appropriate computer account, and assign a well-known password that must be passed when installing the standalone managed service account on the server on the read-only domain controller site with no access to writable domain controllers.
+If you pass both *AccountPassword* and *PromptForPassword* parameters, the *AccountPassword* parameter takes precedence.
+
+```yaml
+Type: SecureString
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -AuthType
+Specifies the authentication method to use.
+Possible values for this parameter include: The acceptable values for this parameter are:
+
+- Negotiate or 0
+- Basic or 1
+
+The default authentication method is Negotiate.
+
+A Secure Sockets Layer (SSL) connection is required for the Basic authentication method.
+
+```yaml
+Type: ADAuthType
+Parameter Sets: (All)
+Aliases: 
+Accepted values: Negotiate, Basic
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Confirm
+Prompts you for confirmation before running the cmdlet.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: cf
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Force
+Forces installation of the service account.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Identity
+Specifies an Active Directory group object by providing one of the following values.
+The identifier in parentheses is the LDAP display name for the attribute.
+The acceptable values for this parameter are:
+
+- A distinguished name
+- A GUID (objectGUID) 
+- A security identifier (objectSid) 
+- A security accounts manager account name (sAMAccountName)
+
+The cmdlet searches the default naming context or partition to find the object.
+If two or more objects are found, the cmdlet returns a non-terminating error.
+
+This parameter can also get this object through the pipeline or you can set this parameter to an object instance.
+
+```yaml
+Type: ADServiceAccount
+Parameter Sets: (All)
+Aliases: 
+
+Required: True
+Position: 0
+Default value: None
+Accept pipeline input: True (ByValue)
+Accept wildcard characters: False
+```
+
+# Install-ADServiceAccount
+
+### -PromptForPassword
+Indicates that you can enter the password of a standalone managed service account that you have pre-provisioned and ignored for group managed service accounts.
+This is required when you are installing a standalone managed service account on a server located on a segmented network (site) with no access to writable domain controllers, but only read-only domain controllers (RODCs) (e.g.
+perimeter network or DMZ).
+In this case you should create the standalone managed service account, link it with the appropriate computer account, and assign a well-known password that must be passed when installing the standalone managed service account on the server on the RODC-only site.
+If you pass both *AccountPassword* and *PromptForPassword* parameters the *AccountPassword* parameter takes precedence.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -WhatIf
+Shows what would happen if the cmdlet runs.
+The cmdlet is not run.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: wi
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### CommonParameters
+This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable. For more information, see [about_CommonParameters](https://go.microsoft.com/fwlink/?LinkID=113216).
+
+## INPUTS
+
+### Microsoft.ActiveDirectory.Management.ADServiceAccount
+A managed service account object is received by the *Identity* parameter.
+
+## OUTPUTS
+
+### None
+
+## NOTES
+* This cmdlet does not work with Active Directory Lightweight Directory Services (AD LDS).
+* This cmdlet does not work with an Active Directory snapshot.
+* This cmdlet does not work with a read-only domain controller.
+* This cmdlet must be run from an elevated PowerShell session.
+* To successfully install a managed service account, the service account should have the *PrincipalsAllowedToRetrieveManagedPassword* parameter option set first by using either the New-ADServiceAccount or Set-ADServiceAccount cmdlet first. Otherwise, installation will fail.
+
+## RELATED LINKS
+
+[Get-ADServiceAccount](./Get-ADServiceAccount.md)
+
+[New-ADServiceAccount](./New-ADServiceAccount.md)
+
+[Remove-ADServiceAccount](./Remove-ADServiceAccount.md)
+
+[Reset-ADServiceAccountPassword](./Reset-ADServiceAccountPassword.md)
+
+[Set-ADServiceAccount](./Set-ADServiceAccount.md)
+
+[Uninstall-ADServiceAccount](./Uninstall-ADServiceAccount.md)
+###Microsoft Learn URL###
+https://learn.microsoft.com/en-us/powershell/module/activedirectory/install-adserviceaccount/?view=windowsserver2022-ps
+</pre></html>

@@ -1,0 +1,1188 @@
+<!doctype html><html lang="ja"><meta charset="utf-8"><pre class="record-source">###KnowledgeNo###
+PS51-WS2022-2026-0169
+###FormatID###
+PS51-WS2022
+###CreatedAt###
+2026-08-01 00:00
+###UpdatedAt###
+2026-08-01 00:00
+###タイトル###
+Install-AdcsCertificationAuthority
+###モジュール###
+adcsdeployment
+###製品###
+Windows PowerShell 5.1
+###対応OS###
+Windows Server 2022
+###日本語訳###
+# Install-AdcsCertificationAuthority 設置する権限
+
+## SYNOPSISは,アクティブディレクトリ証明書サービス (AD CS) 認証機関 (CA) の役割サービスのインストールと構成を実行しています.
+
+## SYNTAXは,のシンタックスです.
+
+### NewKeyParameterSet (デフォルト) を設定する
+
+```
+Install-AdcsCertificationAuthority [-AllowAdministratorInteraction]
+ [-ValidityPeriod &lt;ValidityPeriod&gt;] [-ValidityPeriodUnits &lt;Int32&gt;]
+ [-CACommonName &lt;String&gt;] [-CADistinguishedNameSuffix &lt;String&gt;]
+ [-CAType &lt;CAType&gt;] [-CryptoProviderName &lt;String&gt;]
+ [-DatabaseDirectory &lt;String&gt;] [-HashAlgorithmName &lt;String&gt;]
+ [-IgnoreUnicode] [-KeyLength &lt;Int32&gt;] [-LogDirectory &lt;String&gt;]
+ [-OutputCertRequestFile &lt;String&gt;] [-OverwriteExistingCAinDS]
+ [-OverwriteExistingKey] [-ParentCA &lt;String&gt;] [-OverwriteExistingDatabase]
+ [-Credential &lt;PSCredential&gt;] [-Force] [-WhatIf] [-Confirm]
+ [&lt;CommonParameters&gt;]
+```
+
+### 既存の証明書パラメータセット
+
+```
+Install-AdcsCertificationAuthority [-AllowAdministratorInteraction]
+ [-CertFilePassword &lt;SecureString&gt;] [-CertFile &lt;String&gt;] [-CAType &lt;CAType&gt;]
+ [-CertificateID &lt;String&gt;] [-DatabaseDirectory &lt;String&gt;]
+ [-LogDirectory &lt;String&gt;] [-OverwriteExistingKey]
+ [-OverwriteExistingDatabase] [-Credential &lt;PSCredential&gt;] [-Force]
+ [-WhatIf] [-Confirm] [&lt;CommonParameters&gt;]
+```
+
+### 既存のキーパラメーターセット
+
+```
+Install-AdcsCertificationAuthority [-AllowAdministratorInteraction]
+ [-ValidityPeriod &lt;ValidityPeriod&gt;] [-ValidityPeriodUnits &lt;Int32&gt;]
+ [-CADistinguishedNameSuffix &lt;String&gt;] [-CAType &lt;CAType&gt;]
+ [-CryptoProviderName &lt;String&gt;] [-DatabaseDirectory &lt;String&gt;]
+ [-HashAlgorithmName &lt;String&gt;] [-IgnoreUnicode] [-KeyContainerName &lt;String&gt;]
+ [-LogDirectory &lt;String&gt;] [-OutputCertRequestFile &lt;String&gt;]
+ [-OverwriteExistingCAinDS] [-ParentCA &lt;String&gt;]
+ [-OverwriteExistingDatabase] [-Credential &lt;PSCredential&gt;] [-Force]
+ [-WhatIf] [-Confirm] [&lt;CommonParameters&gt;]
+```
+
+## 記述は,
+
+   `Install-AdcsCertificationAuthority`cmdlet は,アクティブディレクトリ証明書サービス (AD CS) 認証機関 (CA) の役割サービスのインストールと構成を実行します.認証機関役割サービスを削除するには,  を使用します.`Uninstall-AdcsCertificationAuthority`cmdletです.
+
+フォローしているコマンドを Windows PowerShell から実行することで,cmdlet をインポートできます.
+
+ - -`Install-WindowsFeature Adcs-Cert-Authority`
+
+CAのインストールに認証機関と証明書テンプレートコンソールを組み込むためには, の最後に**IncludeManagementTools**パラメータを使用する必要があります.`Install-WindowsFeature Adcs-Cert-Authority`命令です.
+
+**Int**は,NET Frameworkで **Int32**に相当する.
+
+## 例えは
+
+### 例1: 標準設定で新しいStandalone Root CAをインストールする
+
+```powershell
+Install-AdcsCertificationAuthority -CAType StandaloneRootCa
+```
+
+このコマンドは,デフォルト設定で新しいStandalone Root CAをインストールします.
+
+### 例2: 特定のプロバイダーとキー長さを利用して新しいエンタープライズルーツ CA をインストールします.
+
+```powershell
+$params = @{
+    CAType             = EnterpriseRootCa
+    CryptoProviderName = &quot;ECDSA_P256#Microsoft Software Key Storage Provider&quot;
+    KeyLength          = 256
+    HashAlgorithmName  = SHA256
+}
+Install-AdcsCertificationAuthority @params
+```
+
+このコマンドは,ECDSA_P256というMicrosoftソフトウェアキーストレージプロバイダー,キー長さ256のプロバイダー,およびSHA 256というハッシュアルゴリズムを使用した新しいエンタープライズルーツCAをインストールします.
+
+### 例3: 特定のプロバイダーと有効期限を使って新しいエンタープライズルーツ CA をインストールする
+
+```powershell
+$params = @{
+    CAType              = EnterpriseRootCa
+    CryptoProviderName  = &quot;RSA#Microsoft Software Key Storage Provider&quot;
+    KeyLength           = 2048
+    HashAlgorithmName   = SHA1
+    ValidityPeriod      = Years
+    ValidityPeriodUnits = 3
+}
+Install-AdcsCertificationAuthority @params
+```
+
+このコマンドは,Microsoft Software Key Storage Providerというプロバイダを使用して,RSAアルゴリズムを使用して新しいエンタープライズルーツ CAをインストールし,キー長さは2048年,ハッシュアルゴリズムはSHA1と,3年間の有効期限です.
+
+### 例4:親 CA を使って新しいエンタープライズサブordinate CA をインストールする
+
+```powershell
+$params = @{
+    CAType   = EnterpriseSubordinateCa
+    ParentCA = &quot;SERVER75.corp.contoso.com\SERVER75-CA&quot;
+}
+Install-AdcsCertificationAuthority @params
+```
+
+このコマンドは新しいエンタープライズ下属CAをインストールし,母 CAは`SERVER75`Contoso.comのCORPドメインに掲載されています.
+
+### 例5:既存の証明書を使って新しいエンタープライズサブordinate CA をインストールする
+
+```powershell
+$params = @{
+    CAType           = EnterpriseSubordinateCa
+    CertFile         = &quot;C:\Cert\SERVER80-CA.p12&quot;
+    CertFilePassword = (Read-Host &quot;Set user password&quot; -AsSecureString)
+}
+Install-AdcsCertificationAuthority @params
+```
+
+このコマンドは,地元の  に位置する PFX/P12 ファイルから既存の証明書を使用してエンタープライズ 準拠 CA をインストールします.`C:\Cert`フォルダ名 `SERVER80-CA.p12` .
+
+## パラメータは
+
+### -AdministratorInteractionを許可する
+
+cmdletがプライベートキーにアクセスするときに提示を有効にすることを示します.これはMicrosoftのデフォルトプロバイダーで必要ありません.ハードウェアセキュリティモジュール (HSM) などの強化セキュリティコンポーネントについては,強化セキュリティコンポーネントのベンダードキュメントをレビューしてください.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -CACommonName
+
+認証機関の一般名称を指定します.
+
+```yaml
+Type: String
+Parameter Sets: NewKeyParameterSet
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -CADの名前の特徴はSuffix
+
+認証機関が指定した名前の表記記記号を指定します.
+
+```yaml
+Type: String
+Parameter Sets: NewKeyParameterSet, ExistingKeyParameterSet
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -CAType
+
+このcmdletがインストールする認証権限の種類を指定します.このパラメータの受け入れ可能な値は:です.
+
+- 企業ルーツCA - 企業サブオーダーナイトCA - スタンダードロートCA - スタンダードロートサボダーナイトCA
+
+```yaml
+Type: CAType
+Parameter Sets: (All)
+Aliases: 
+Accepted values: EnterpriseRootCA, EnterpriseSubordinateCA, StandaloneRootCA, StandaloneSubordinateCA
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -CertFile
+
+認証機関のファイル名を指定します PKCS #12 フォーマットされた証明書ファイル.
+
+```yaml
+Type: String
+Parameter Sets: ExistingCertificateParameterSet
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -CertFilePassword
+
+認証機関証明書ファイルのパスワードを指定します.
+
+```yaml
+Type: SecureString
+Parameter Sets: ExistingCertificateParameterSet
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -CertificateID
+
+認証機関の証明書の指紋またはシリアル番号を指定します.
+
+```yaml
+Type: String
+Parameter Sets: ExistingCertificateParameterSet
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+# Install-AdcsCertificationAuthority 設置する権限
+
+### -確認する
+
+cmdletを実行する前に確認を提示します.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: cf
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### - 信用証
+
+AD DSに接続するための **PSCredential**オブジェクトを指定します.認証オブジェクトを取得するには,  を使用します.`Get-Credential`cmdlet.詳細については,入力してください.`Get-Help Get-Credential`企業認証機関をインストールするには,コンピュータはAD DSドメインに接続され,エンタープライズ管理者グループの一員であるユーザーアカウントが必要です.独立した認証機関をインストールするには,コンピュータはワークグループまたはAD DSドメインに配置されることがあります.コンピュータがワークグループに配置されている場合は,管理者会員であるユーザーアカウントが必要です.コンピュータがAD DSドメインに配置されている場合は,ドメイン管理者の会員であるユーザーアカウントが必要です.
+
+```yaml
+Type: PSCredential
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -CryptoProviderName
+
+暗号化サービスプロバイダー (CSP) またはキーストレージプロバイダー (KSP) の名前を指定します. CA のプライベートキーを生成または保存するために使用されます.
+
+```yaml
+Type: String
+Parameter Sets: NewKeyParameterSet, ExistingKeyParameterSet
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -DatabaseDirectory について
+
+認証機関データベースのフォルダ位置を指定します.
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -フォース
+
+ユーザの確認を要求せずにコマンドを実行するように強制します.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -ハッシュアルゴリズムName
+
+認証機関が使用する署名ハッシュアルゴリズムを指定します.
+
+```yaml
+Type: String
+Parameter Sets: NewKeyParameterSet, ExistingKeyParameterSet
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -IgnoreUnicode でした.
+
+cmdlet は認証機関名文字列の Unicode 文字を許可することを示します.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: NewKeyParameterSet, ExistingKeyParameterSet
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -KeyContainerName
+
+既存のプライベートキーコンテナの名前を指定します.
+
+```yaml
+Type: String
+Parameter Sets: ExistingKeyParameterSet
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -キーレングス
+
+新しい認証権限キーのためのビット長さを指定します.
+
+```yaml
+Type: Int32
+Parameter Sets: NewKeyParameterSet
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -LogDirectory
+
+認証機関データベースログのフォルダ位置を指定します.
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -OutputCertRequestFile
+
+証明書要求ファイルのフォルダの位置を指定します.
+
+```yaml
+Type: String
+Parameter Sets: NewKeyParameterSet, ExistingKeyParameterSet
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -OverwriteExistingCAinDS 存在しているCAinDS
+
+cmdletが同じコンピュータ名を持つアクティブディレクトリ ドメインサービスドメインのコンピュータオブジェクトをオーバーライヴすると表示します.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: NewKeyParameterSet, ExistingKeyParameterSet
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -OverwriteExistingDatabase - 書き残す存在するデータベース
+
+cmdletが既存の認証機関データベースを覆うことを示します.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -OverwriteExistingKey
+
+cmdletが同じ名前を持つ既存のキーコンテナを覆うことを表示します.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: NewKeyParameterSet, ExistingCertificateParameterSet
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -親子さん
+
+このCAを認証する親認証機関の構成文字列を指定します.
+
+```yaml
+Type: String
+Parameter Sets: NewKeyParameterSet, ExistingKeyParameterSet
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -ValidityPeriod
+
+認証機関 (CA) の証明書の有効期限を数時間,数日,数週,数ヶ月,数年に指定します.これは従属 CAである場合は,このパラメータを使用しないでください.有効期限は母 CAによって決定されているからです.
+
+```yaml
+Type: ValidityPeriod
+Parameter Sets: NewKeyParameterSet, ExistingKeyParameterSet
+Aliases: 
+Accepted values: Hours, Days, Weeks, Months, Years
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -ValidityPeriodUnits について
+
+CA証明書の有効期限を指定します.これは下属 CAである場合は,このパラメータを指定しないでください.有効期限は母 CAによって決定されているからです.
+
+```yaml
+Type: Int32
+Parameter Sets: NewKeyParameterSet, ExistingKeyParameterSet
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -WhatIf
+
+cmdletが実行されなければどうなるかを示しています.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: wi
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### 共通パラメーター
+
+このcmdletは,共通のパラメータをサポートしています: `-Debug`     `-ErrorAction`     `-ErrorVariable`     `-InformationAction`     `-InformationVariable`     `-OutVariable`     `-OutBuffer`     `-PipelineVariable`     `-Verbose`     `-WarningAction`そして,そして,`-WarningVariable`.詳細については, [about_CommonParameters]( を参照してください.https://go.microsoft.com/fwlink/?LinkID=113216) でした.
+
+## 輸入は
+
+### システム管理自動化 スイッチパラメータ
+
+### システム.セキュリティ.セキュリティString
+
+### System.String でした.
+
+### Microsoft.CertificateServices.Deployment.Common.CA.ValidityPeriod
+
+### System.Int32
+
+### Microsoft.CertificateServices.Deployment.Common.CA.CAType
+
+### システム管理自動化PSCredentialです
+
+## 輸出は
+
+### Microsoft.CertificateServices.Deployment.Common.CA.CertificationAuthoritySetupResult
+
+# Install-AdcsCertificationAuthority 設置する権限
+
+##  NOTES  記事ができました.
+
+管理者としてWindows PowerShellを実行していることを確認してください.確認のプロンプトを回避するために**force**パラメータを使用できます.パラメータを見るには,次のコマンドを実行してください.
+  
+    `Install-AdcsCertificationAuthority -?`- インストール問題がある場合は,verbose output を取得するために **verbose** パラメータを使用して, %windir%\cerocm.logファイル内の情報をレビューしてください.
+
+## 関連リンク
+
+[Uninstall-AdcsCertificationAuthority](./Uninstall-AdcsCertificationAuthority.md) は,現在,現在,現在,現在,現在,現在,現在,現在,現在,現在,現在,現在,現在,現在,現在,現在,現在,現在,現在,現在,現在,現在,現在,現在,現在,現在,現在,現在,現在,現在,現在,現在,現在,現在,現在,現在,現在,現在,現在,現在,現在,現在,現在,現在,現在,現在,現在,現在,現在,現在,現在,現在,現在,現在,現在,現在,現在,現在,現在,現在,現在,現在,現在,現在,現在,現在,現在,現在,現在,現在,現在,現在,現在,現在,現在,現在,現在,現在,現在,現在,現在,現在,現在,現在,現在,現在,現在,現在,現在,現在,現在,現在,現在,現在,現在,現在,現在,現在,現在,現在,現在,現在,現在,現在,現在,現在,現在,現在,現在,現在,現在,現在,現在,現在,現在,現在,現在,現在,現在,現在,現在,現在,現在,現在,現在,現在,現在,現在,現在,現在,現在,現在,現在,現在,現在,現在,現在,現在,現在,現在,現在,現在,現在,現在,現在,現在,現在,現在,現在,現在,現在,現在,現在,現在,現在,現在,現在,現在,現在,現在,現在,現在,現在,現在,現在,現在,在 www.
+###英語原文###
+# Install-AdcsCertificationAuthority
+
+## SYNOPSIS
+Performs installation and configuration of the Active Directory Certificate Services (AD CS)
+Certification Authority (CA) role service.
+
+## SYNTAX
+
+### NewKeyParameterSet (Default)
+
+```
+Install-AdcsCertificationAuthority [-AllowAdministratorInteraction]
+ [-ValidityPeriod &lt;ValidityPeriod&gt;] [-ValidityPeriodUnits &lt;Int32&gt;]
+ [-CACommonName &lt;String&gt;] [-CADistinguishedNameSuffix &lt;String&gt;]
+ [-CAType &lt;CAType&gt;] [-CryptoProviderName &lt;String&gt;]
+ [-DatabaseDirectory &lt;String&gt;] [-HashAlgorithmName &lt;String&gt;]
+ [-IgnoreUnicode] [-KeyLength &lt;Int32&gt;] [-LogDirectory &lt;String&gt;]
+ [-OutputCertRequestFile &lt;String&gt;] [-OverwriteExistingCAinDS]
+ [-OverwriteExistingKey] [-ParentCA &lt;String&gt;] [-OverwriteExistingDatabase]
+ [-Credential &lt;PSCredential&gt;] [-Force] [-WhatIf] [-Confirm]
+ [&lt;CommonParameters&gt;]
+```
+
+### ExistingCertificateParameterSet
+
+```
+Install-AdcsCertificationAuthority [-AllowAdministratorInteraction]
+ [-CertFilePassword &lt;SecureString&gt;] [-CertFile &lt;String&gt;] [-CAType &lt;CAType&gt;]
+ [-CertificateID &lt;String&gt;] [-DatabaseDirectory &lt;String&gt;]
+ [-LogDirectory &lt;String&gt;] [-OverwriteExistingKey]
+ [-OverwriteExistingDatabase] [-Credential &lt;PSCredential&gt;] [-Force]
+ [-WhatIf] [-Confirm] [&lt;CommonParameters&gt;]
+```
+
+### ExistingKeyParameterSet
+
+```
+Install-AdcsCertificationAuthority [-AllowAdministratorInteraction]
+ [-ValidityPeriod &lt;ValidityPeriod&gt;] [-ValidityPeriodUnits &lt;Int32&gt;]
+ [-CADistinguishedNameSuffix &lt;String&gt;] [-CAType &lt;CAType&gt;]
+ [-CryptoProviderName &lt;String&gt;] [-DatabaseDirectory &lt;String&gt;]
+ [-HashAlgorithmName &lt;String&gt;] [-IgnoreUnicode] [-KeyContainerName &lt;String&gt;]
+ [-LogDirectory &lt;String&gt;] [-OutputCertRequestFile &lt;String&gt;]
+ [-OverwriteExistingCAinDS] [-ParentCA &lt;String&gt;]
+ [-OverwriteExistingDatabase] [-Credential &lt;PSCredential&gt;] [-Force]
+ [-WhatIf] [-Confirm] [&lt;CommonParameters&gt;]
+```
+
+## DESCRIPTION
+
+The `Install-AdcsCertificationAuthority` cmdlet performs installation and configuration of the
+Active Directory Certificate Services (AD CS) Certification Authority (CA) role service. To remove
+the certification authority role service use the `Uninstall-AdcsCertificationAuthority` cmdlet.
+
+You can import the cmdlet by running the following commands from Windows PowerShell:
+
+- `Install-WindowsFeature Adcs-Cert-Authority`
+
+To include the Certification Authority and Certificate Templates consoles in a CA installation, you
+must use the **IncludeManagementTools** parameter at the end of the
+`Install-WindowsFeature Adcs-Cert-Authority` command.
+
+**Int** is equivalent to **Int32** in the
+[.NET Framework](/dotnet/csharp/language-reference/builtin-types/built-in-types).
+
+## EXAMPLES
+
+### Example 1: Install a new Standalone Root CA with default settings
+
+```powershell
+Install-AdcsCertificationAuthority -CAType StandaloneRootCa
+```
+
+This command installs a new Standalone Root CA with default settings.
+
+### Example 2: Install a new Enterprise Root CA using a specific provider and key length
+
+```powershell
+$params = @{
+    CAType             = EnterpriseRootCa
+    CryptoProviderName = &quot;ECDSA_P256#Microsoft Software Key Storage Provider&quot;
+    KeyLength          = 256
+    HashAlgorithmName  = SHA256
+}
+Install-AdcsCertificationAuthority @params
+```
+
+This command installs a new Enterprise Root CA using the provider named ECDSA_P256 Microsoft
+Software Key Storage Provider, key length of 256, and the hash algorithm named SHA 256.
+
+### Example 3: Install a new Enterprise Root CA using a specific provider and a validity period
+
+```powershell
+$params = @{
+    CAType              = EnterpriseRootCa
+    CryptoProviderName  = &quot;RSA#Microsoft Software Key Storage Provider&quot;
+    KeyLength           = 2048
+    HashAlgorithmName   = SHA1
+    ValidityPeriod      = Years
+    ValidityPeriodUnits = 3
+}
+Install-AdcsCertificationAuthority @params
+```
+
+This command installs a new Enterprise Root CA using the RSA algorithm using the provider named
+Microsoft Software Key Storage Provider, a key length of 2048, a hash algorithm named SHA 1, and
+validity period of three years.
+
+### Example 4: Install a new Enterprise Subordinate CA using a parent CA
+
+```powershell
+$params = @{
+    CAType   = EnterpriseSubordinateCa
+    ParentCA = &quot;SERVER75.corp.contoso.com\SERVER75-CA&quot;
+}
+Install-AdcsCertificationAuthority @params
+```
+
+This command installs a new Enterprise subordinate CA, the parent CA is `SERVER75` in the CORP domain
+of Contoso.com.
+
+### Example 5: Install a new Enterprise Subordinate CA using an existing certificate
+
+```powershell
+$params = @{
+    CAType           = EnterpriseSubordinateCa
+    CertFile         = &quot;C:\Cert\SERVER80-CA.p12&quot;
+    CertFilePassword = (Read-Host &quot;Set user password&quot; -AsSecureString)
+}
+Install-AdcsCertificationAuthority @params
+```
+
+This command installs an Enterprise Subordinate CA using an existing certificate from a PFX/P12 file
+that is located on the local `C:\Cert` folder named `SERVER80-CA.p12`.
+
+## PARAMETERS
+
+### -AllowAdministratorInteraction
+
+Indicates that the cmdlet enables prompting when the private key is accessed. This is not required
+for any of the Microsoft default providers. For enhanced security components, such as a hardware
+security module (HSM), review the enhanced security component vendor documentation.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -CACommonName
+
+Specifies the certification authority common name.
+
+```yaml
+Type: String
+Parameter Sets: NewKeyParameterSet
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -CADistinguishedNameSuffix
+
+Specifies the certification authority distinguished name suffix.
+
+```yaml
+Type: String
+Parameter Sets: NewKeyParameterSet, ExistingKeyParameterSet
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -CAType
+
+Specifies the type of certification authority that this cmdlet installs.
+The acceptable values for this parameter are:
+
+- EnterpriseRootCA
+- EnterpriseSubordinateCA
+- StandaloneRootCA
+- StandaloneSubordinateCA
+
+```yaml
+Type: CAType
+Parameter Sets: (All)
+Aliases: 
+Accepted values: EnterpriseRootCA, EnterpriseSubordinateCA, StandaloneRootCA, StandaloneSubordinateCA
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -CertFile
+
+Specifies the file name of certification authority PKCS #12 formatted certificate file.
+
+```yaml
+Type: String
+Parameter Sets: ExistingCertificateParameterSet
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -CertFilePassword
+
+Specifies the password for certification authority certificate file.
+
+```yaml
+Type: SecureString
+Parameter Sets: ExistingCertificateParameterSet
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -CertificateID
+
+Specifies the thumbprint or serial number of certification authority certificate.
+
+```yaml
+Type: String
+Parameter Sets: ExistingCertificateParameterSet
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+# Install-AdcsCertificationAuthority
+
+### -Confirm
+
+Prompts you for confirmation before running the cmdlet.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: cf
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Credential
+
+Specifies a **PSCredential** object for the connection to AD DS. To obtain a credential object, use
+the `Get-Credential` cmdlet. For more information, type `Get-Help Get-Credential`. To install an
+enterprise certification authority, the computer must be joined to an AD DS domain and a user
+account that is a member of the Enterprise Admin group is required. To install a standalone
+certification authority, the computer can be in a workgroup or AD DS domain. If the computer is in a
+workgroup, a user account that is a member of Administrators is required. If the computer is in an
+AD DS domain, a user account that is a member of Domain Admins is required.
+
+```yaml
+Type: PSCredential
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -CryptoProviderName
+
+Specifies the name of the cryptographic service provider (CSP) or key storage provider (KSP) that is
+used to generate or store the private key for the CA.
+
+```yaml
+Type: String
+Parameter Sets: NewKeyParameterSet, ExistingKeyParameterSet
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -DatabaseDirectory
+
+Specifies the folder location of the certification authority database.
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -Force
+
+Forces the command to run without asking for user confirmation.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -HashAlgorithmName
+
+Specifies the signature hash algorithm used by the certification authority.
+
+```yaml
+Type: String
+Parameter Sets: NewKeyParameterSet, ExistingKeyParameterSet
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -IgnoreUnicode
+
+Indicates that the cmdlet allows Unicode characters in the certification authority name string.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: NewKeyParameterSet, ExistingKeyParameterSet
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -KeyContainerName
+
+Specifies the name of an existing private key container.
+
+```yaml
+Type: String
+Parameter Sets: ExistingKeyParameterSet
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -KeyLength
+
+Specifies the bit length for new certification authority key.
+
+```yaml
+Type: Int32
+Parameter Sets: NewKeyParameterSet
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -LogDirectory
+
+Specifies the folder location of the certification authority database log.
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -OutputCertRequestFile
+
+Specifies the folder location for the certificate request file.
+
+```yaml
+Type: String
+Parameter Sets: NewKeyParameterSet, ExistingKeyParameterSet
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -OverwriteExistingCAinDS
+
+Indicates that the cmdlet overwrites the computer object in the Active Directory Domain Service
+domain with the same computer name.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: NewKeyParameterSet, ExistingKeyParameterSet
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -OverwriteExistingDatabase
+
+Indicates that the cmdlet overwrites the existing certification authority database.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -OverwriteExistingKey
+
+Indicates that the cmdlet overwrites the existing key container with the same name.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: NewKeyParameterSet, ExistingCertificateParameterSet
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -ParentCA
+
+Specifies the configuration string of the parent certification authority that will certify this CA.
+
+```yaml
+Type: String
+Parameter Sets: NewKeyParameterSet, ExistingKeyParameterSet
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -ValidityPeriod
+
+Specifies the validity period of the certification authority (CA) certificate in hours, days, weeks,
+months, or years. If this is a subordinate CA, do not use this parameter, because the validity period
+is determined by the parent CA.
+
+```yaml
+Type: ValidityPeriod
+Parameter Sets: NewKeyParameterSet, ExistingKeyParameterSet
+Aliases: 
+Accepted values: Hours, Days, Weeks, Months, Years
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -ValidityPeriodUnits
+
+Specifies the validity period of the CA certificate. If this is a subordinate CA, do not specify
+this parameter because the validity period is determined by the parent CA.
+
+```yaml
+Type: Int32
+Parameter Sets: NewKeyParameterSet, ExistingKeyParameterSet
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -WhatIf
+
+Shows what would happen if the cmdlet runs. The cmdlet is not run.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: wi
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### CommonParameters
+
+This cmdlet supports the common parameters: `-Debug`, `-ErrorAction`, `-ErrorVariable`,
+`-InformationAction`, `-InformationVariable`, `-OutVariable`, `-OutBuffer`, `-PipelineVariable`,
+`-Verbose`, `-WarningAction`, and `-WarningVariable`. For more information, see
+[about_CommonParameters](https://go.microsoft.com/fwlink/?LinkID=113216).
+
+## INPUTS
+
+### System.Management.Automation.SwitchParameter
+
+### System.Security.SecureString
+
+### System.String
+
+### Microsoft.CertificateServices.Deployment.Common.CA.ValidityPeriod
+
+### System.Int32
+
+### Microsoft.CertificateServices.Deployment.Common.CA.CAType
+
+### System.Management.Automation.PSCredential
+
+## OUTPUTS
+
+### Microsoft.CertificateServices.Deployment.Common.CA.CertificationAuthoritySetupResult
+
+# Install-AdcsCertificationAuthority
+
+## NOTES
+
+- Ensure you run Windows PowerShell as an administrator. You can use the **force** parameter to
+  bypass the prompt for confirmation. To see parameters, run the following command:
+  
+      `Install-AdcsCertificationAuthority -?`
+- If you have installation issues, try using the **verbose** parameter to get verbose output and
+  review the information in the %windir%\cerocm.log file.
+
+## RELATED LINKS
+
+[Uninstall-AdcsCertificationAuthority](./Uninstall-AdcsCertificationAuthority.md)
+###Microsoft Learn URL###
+https://learn.microsoft.com/en-us/powershell/module/adcsdeployment/install-adcscertificationauthority/?view=windowsserver2022-ps
+</pre></html>

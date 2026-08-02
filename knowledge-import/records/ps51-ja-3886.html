@@ -1,0 +1,420 @@
+<!doctype html><html lang="ja"><meta charset="utf-8"><pre class="record-source">###KnowledgeNo###
+PS51-WS2022-2026-3886
+###FormatID###
+PS51-WS2022
+###CreatedAt###
+2026-08-01 00:00
+###UpdatedAt###
+2026-08-01 00:00
+###タイトル###
+Get-FormatData
+###モジュール###
+Microsoft.PowerShell.Utility
+###製品###
+Windows PowerShell 5.1
+###対応OS###
+Windows Server 2022
+###日本語訳###
+# Get-FormatData を取得する
+
+## SYNOPSISは,現在のセッションでフォーマットデータを入手します.
+
+## SYNTAXは,のシンタックスです.
+
+```
+Get-FormatData [[-TypeName] &lt;String[]&gt;] [-PowerShellVersion &lt;Version&gt;]
+ [&lt;CommonParameters&gt;]
+```
+
+## 記述は,
+
+   `Get-FormatData`cmdlet は,現在のセッションでフォーマットデータを入手します.
+
+セッションのフォーマットデータには, からフォーマットデータが含まれています.`Format.ps1xml` のようなフォーマットファイル.`$PSHOME`ダイレクトリ,セッションに輸入するモジュールのためのフォーマットデータ,セッションに輸入するコマンドのためのフォーマットデータ`Import-PSSession`cmdletです.
+
+このcmdletを使用してフォーマットデータを調べることができます.その後,あなたは,  を使用することができます.`Export-FormatData`cmdlet でオブジェクトをシリアライズし,XMLに変換し,保存する`Format.ps1xml`ファイル.
+
+PowerShellでファイルフォーマットについての詳細については, [about_Format.ps1xml] (../Microsoft.PowerShell.Core/About/about_Format.ps1xml.md) を参照してください.
+
+## 例えは
+
+### 例1:すべてのフォーマットデータを入手する
+
+この例ではセッション中のすべてのフォーマットデータを入手します.
+
+```powershell
+Get-FormatData
+```
+
+### 例2: 型名によって格式化データを取得します
+
+この例では,名前が&quot;&quot;で始まる格式化データアイテムが表示されます.`System.Management.Automation.Cmd` .
+
+```powershell
+Get-FormatData -TypeName &#x27;System.Management.Automation.Cmd*&#x27;
+```
+
+### 例3: フォーマットデータオブジェクトを検証する
+
+この例では,フォーマットデータオブジェクトを入手し,その性質を検証する方法を示しています.
+
+```powershell
+$F = Get-FormatData -TypeName &#x27;System.Management.Automation.Cmd*&#x27;
+$F
+```
+
+```Output
+TypeName        FormatViewDefinition
+--------        --------------------
+HelpInfoShort   {help , TableControl}
+```
+
+```powershell
+$F.FormatViewDefinition[0].Control
+```
+
+```Output
+Headers          : {System.Management.Automation.TableControlColumnHeader,
+                   System.Management.Automation.TableControlColumnHeader,
+                   System.Management.Automation.TableControlColumnHeader,
+                   System.Management.Automation.TableControlColumnHeader}
+Rows             : {System.Management.Automation.TableControlRow}
+AutoSize         : False
+HideTableHeaders : False
+GroupBy          :
+OutOfBand        : False
+```
+
+```powershell
+$F.FormatViewDefinition[0].Control.Headers
+```
+
+```Output
+Label       Alignment Width
+-----       --------- -----
+CommandType Undefined    15
+Name        Undefined    50
+Version     Undefined    10
+Source      Undefined     0
+```
+
+### 例4: フォーマットデータを入手して輸出する
+
+この例では,どのように使用するか示しています.`Get-FormatData`そして,`Export-FormatData`模[U+5757]が追加するフォーマットデータに輸出します.
+
+```powershell
+$A = Get-FormatData
+Import-Module BitsTransfer
+$B = Get-FormatData
+Compare-Object $A $B
+```
+
+```Output
+InputObject                                                SideIndicator
+-----------                                                -------------
+Microsoft.BackgroundIntelligentTransfer.Management.BitsJob =&gt;
+```
+
+```powershell
+Get-FormatData *bits* | Export-FormatData -FilePath C:\test\Bits.format.ps1xml
+Get-Content C:\test\Bits.format.ps1xml
+```
+
+```Output
+&lt;?xml version=&quot;1.0&quot; encoding=&quot;utf-8&quot;?&gt;&lt;Configuration&gt;&lt;ViewDefinitions&gt;
+&lt;View&gt;&lt;Name&gt;Microsoft.BackgroundIntelligentTransfer.Management.BitsJob&lt;/Name&gt;
+...
+```
+
+最初の4つのコマンドは&quot;&quot;を用いています.`Get-FormatData`     `Import-Module`そして,そして,`Compare-Object`cmdletsは,BitsTransfer モジュールがセッションに追加するフォーマットタイプを特定します.
+
+第5コマンドは&quot;&quot;を用いています.`Get-FormatData`図書cmdletで,BitsTransfer モジュールが追加するフォーマットタイプを入手できます.このモジュールではパイプラインオペレーター () を使います.`|`) を,形式型オブジェクトを  に送る.`Export-FormatData`cmdletで,XMLに変換して指定された に保存します.`Bits.format.ps1xml`ファイル.
+
+最終コマンドは,  の抜粋を示します.`format.ps1xml`ファイル内容です.
+
+### 例5: PowerShellの指定されたバージョンに基づいてフォーマットデータを取得します
+
+この例では,どのように使用するか示しています.`Get-FormatData`指定された **TypeName**とPowerShellバージョンのフォーマットデータを入手します.
+
+```powershell
+Get-FormatData -TypeName &#x27;Microsoft.Powershell.Utility.FileHash&#x27; -PowerShellVersion $PSVersionTable.PSVersion
+
+TypeNames                               FormatViewDefinition
+---------                               --------------------
+{Microsoft.Powershell.Utility.FileHash} {Microsoft.Powershell.Utility.FileHash}
+```
+
+&gt;!IMPORTANT] &gt; 完全なタイプフォーマット情報が返されるようにするには,常に適切なバージョンのパラメータを&quot;&gt; **PowerShellVersion**&quot;に追加する必要があります.パラメータと値は&quot;&gt;省略されている場合,すべての正しいタイプ情報を入手できない可能性があります.
+
+## パラメータは
+
+### -PowerShellVersion でした.
+
+このcmdletがフォーマットデータに対して得るPowerShellのバージョンを指定します.期間によって分離された2桁の数字を入力します.
+
+このパラメータは,PowerShell 5.1で追加され,古いバージョンのPowerShellを実行しているコンピュータをリモートすると互換性を向上させる.
+
+```yaml
+Type: System.Version
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -TypeName
+
+このcmdletがフォーマットデータに取得するタイプ名を指定します.タイプ名を入力します.ワイルドカードが許可されています.
+
+```yaml
+Type: System.String[]
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: 0
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: True
+```
+
+### 共通パラメーター
+
+このcmdletは,共通パラメータをサポートしています: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable.詳細については, [about_CommonParameters](を参照してください.https://go.microsoft.com/fwlink/?LinkID=113216) でした.
+
+## 輸入は
+
+### どれもない
+
+このcmdletに物体をパイプすることはできません.
+
+## 輸出は
+
+### システム管理自動化拡張型型定義
+
+##  NOTES  記事ができました.
+
+## 関連リンク
+
+[Export-FormatData](Export-FormatData.md) 
+
+[Update-FormatData](Update-FormatData.md) について
+###英語原文###
+# Get-FormatData
+
+## SYNOPSIS
+Gets the formatting data in the current session.
+
+## SYNTAX
+
+```
+Get-FormatData [[-TypeName] &lt;String[]&gt;] [-PowerShellVersion &lt;Version&gt;]
+ [&lt;CommonParameters&gt;]
+```
+
+## DESCRIPTION
+
+The `Get-FormatData` cmdlet gets the formatting data in the current session.
+
+The formatting data in the session includes formatting data from `Format.ps1xml` formatting files,
+such as those in the `$PSHOME` directory, formatting data for modules that you import into the
+session, and formatting data for commands that you import into your session by using the
+`Import-PSSession` cmdlet.
+
+You can use this cmdlet to examine the formatting data. Then, you can use the `Export-FormatData`
+cmdlet to serialize the objects, convert them to XML, and save them in `Format.ps1xml` files.
+
+For more information about formatting files in PowerShell, see
+[about_Format.ps1xml](../Microsoft.PowerShell.Core/About/about_Format.ps1xml.md).
+
+## EXAMPLES
+
+### Example 1: Get all formatting data
+
+This example gets all the formatting data in the session.
+
+```powershell
+Get-FormatData
+```
+
+### Example 2: Get formatting data by type name
+
+This example gets the formatting data items whose names begin with
+`System.Management.Automation.Cmd`.
+
+```powershell
+Get-FormatData -TypeName &#x27;System.Management.Automation.Cmd*&#x27;
+```
+
+### Example 3: Examine a formatting data object
+
+This example shows how to get a formatting data object and examine its properties.
+
+```powershell
+$F = Get-FormatData -TypeName &#x27;System.Management.Automation.Cmd*&#x27;
+$F
+```
+
+```Output
+TypeName        FormatViewDefinition
+--------        --------------------
+HelpInfoShort   {help , TableControl}
+```
+
+```powershell
+$F.FormatViewDefinition[0].Control
+```
+
+```Output
+Headers          : {System.Management.Automation.TableControlColumnHeader,
+                   System.Management.Automation.TableControlColumnHeader,
+                   System.Management.Automation.TableControlColumnHeader,
+                   System.Management.Automation.TableControlColumnHeader}
+Rows             : {System.Management.Automation.TableControlRow}
+AutoSize         : False
+HideTableHeaders : False
+GroupBy          :
+OutOfBand        : False
+```
+
+```powershell
+$F.FormatViewDefinition[0].Control.Headers
+```
+
+```Output
+Label       Alignment Width
+-----       --------- -----
+CommandType Undefined    15
+Name        Undefined    50
+Version     Undefined    10
+Source      Undefined     0
+```
+
+### Example 4: Get formatting data and export it
+
+This example shows how to use `Get-FormatData` and `Export-FormatData` to export the formatting
+data that is added by a module.
+
+```powershell
+$A = Get-FormatData
+Import-Module BitsTransfer
+$B = Get-FormatData
+Compare-Object $A $B
+```
+
+```Output
+InputObject                                                SideIndicator
+-----------                                                -------------
+Microsoft.BackgroundIntelligentTransfer.Management.BitsJob =&gt;
+```
+
+```powershell
+Get-FormatData *bits* | Export-FormatData -FilePath C:\test\Bits.format.ps1xml
+Get-Content C:\test\Bits.format.ps1xml
+```
+
+```Output
+&lt;?xml version=&quot;1.0&quot; encoding=&quot;utf-8&quot;?&gt;&lt;Configuration&gt;&lt;ViewDefinitions&gt;
+&lt;View&gt;&lt;Name&gt;Microsoft.BackgroundIntelligentTransfer.Management.BitsJob&lt;/Name&gt;
+...
+```
+
+The first four commands use the `Get-FormatData`, `Import-Module`, and `Compare-Object` cmdlets to
+identify the format type that the **BitsTransfer** module adds to the session.
+
+The fifth command uses the `Get-FormatData` cmdlet to get the format type that the **BitsTransfer**
+module adds. It uses a pipeline operator (`|`) to send the format type object to the
+`Export-FormatData` cmdlet, which converts it back to XML and saves it in the specified
+`Bits.format.ps1xml` file.
+
+The final command shows an excerpt of the `format.ps1xml` file content.
+
+### Example 5: Get formatting data based on the specified version of PowerShell
+
+This example shows how to use `Get-FormatData` to get format data for a specified **TypeName** and
+PowerShell version.
+
+```powershell
+Get-FormatData -TypeName &#x27;Microsoft.Powershell.Utility.FileHash&#x27; -PowerShellVersion $PSVersionTable.PSVersion
+
+TypeNames                               FormatViewDefinition
+---------                               --------------------
+{Microsoft.Powershell.Utility.FileHash} {Microsoft.Powershell.Utility.FileHash}
+```
+
+&gt; [!IMPORTANT]
+&gt; To ensure that the complete type formatting information is returned, you should always include the
+&gt; **PowerShellVersion** parameter with the appropriate version. If the parameter and value are
+&gt; omitted, you may not get all the correct type information.
+
+## PARAMETERS
+
+### -PowerShellVersion
+
+Specify the version of PowerShell this cmdlet gets for the formatting data. Enter a two digit number
+separated by a period.
+
+This parameter was added in PowerShell 5.1 to improve compatibility when remoting computers running
+older versions of PowerShell.
+
+```yaml
+Type: System.Version
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -TypeName
+
+Specifies the type names that this cmdlet gets for the formatting data.
+Enter the type names.
+Wildcards are permitted.
+
+```yaml
+Type: System.String[]
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: 0
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: True
+```
+
+### CommonParameters
+
+This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable,
+-InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose,
+-WarningAction, and -WarningVariable. For more information, see
+[about_CommonParameters](https://go.microsoft.com/fwlink/?LinkID=113216).
+
+## INPUTS
+
+### None
+
+You can&#x27;t pipe objects to this cmdlet.
+
+## OUTPUTS
+
+### System.Management.Automation.ExtendedTypeDefinition
+
+## NOTES
+
+## RELATED LINKS
+
+[Export-FormatData](Export-FormatData.md)
+
+[Update-FormatData](Update-FormatData.md)
+###Microsoft Learn URL###
+https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.utility/get-formatdata/?view=powershell-5.1
+</pre></html>

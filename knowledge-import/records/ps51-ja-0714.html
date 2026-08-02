@@ -1,0 +1,498 @@
+<!doctype html><html lang="ja"><meta charset="utf-8"><pre class="record-source">###KnowledgeNo###
+PS51-WS2022-2026-0714
+###FormatID###
+PS51-WS2022
+###CreatedAt###
+2026-08-01 00:00
+###UpdatedAt###
+2026-08-01 00:00
+###タイトル###
+Restore-DfsrPreservedFiles
+###モジュール###
+dfsr
+###製品###
+Windows PowerShell 5.1
+###対応OS###
+Windows Server 2022
+###日本語訳###
+# 保存されたファイルを復元するDfsr
+
+## SYNOPSISは,DFS Replicationが以前保存していたファイルとフォルダを回復します.
+
+## SYNTAXは,のシンタックスです.
+
+### RestorePath (デフォルト) ```
+Restore-DfsrPreservedFiles [-Path] &lt;String&gt; [-RestoreToPath] &lt;String&gt; [-RestoreAllVersions] [-CopyFiles]
+ [-AllowClobber] [-Force] [-WhatIf] [-Confirm] [&lt;CommonParameters&gt;]
+```
+
+### RestoreOrigin を復元する```
+Restore-DfsrPreservedFiles [-Path] &lt;String&gt; [-RestoreToOrigin] [-RestoreAllVersions] [-CopyFiles]
+ [-AllowClobber] [-Force] [-WhatIf] [-Confirm] [&lt;CommonParameters&gt;]
+```
+
+## 記述 復元Dfsr保存ファイル*のcmdletは保存されたファイルとフォルダを復元します.分散ファイルシステム (DFS) 複製サービスは以下のファイルとフォルダを保存します:
+
+複製が収束する前に複数のサーバーで同じファイルに変更を加えれば,ファイルが現在のバージョンと衝突する可能性があります.DFS複製は,ファイルの以前の矛盾したバージョンを保存します. -削除.メンバーコンピュータが複製ファイルを削除すると,他のメンバーもそのファイルを削除します.会員設定に応じて,コンピュータは削除されたファイルを保存することができます.メンバーコンピュータが削除されたファイルを保存するか否かを修正するには, **Set-DfsrMembership** cmdlet を使用します. - Preexisting. DFS複製が初期同期中にファイルを覆す場合は,DFS複製はそれらのファイルを保存します.
+
+DFS 複製は3つのタイプにおいて,ファイルを\&lt;replicated folder\&gt;\DfsrPrivate\ConflictAndDeletedまたは\&lt;&lt;replicated folder\&gt;\DfsrPrivate\Preexistingに移動します.DFS 複製はこれらのファイルをマニフェストに記録します.いずれにせよ, ConflictAndDeletedManifest.xmlまたはPreExistingManifest.xmlです. conflictandDeletedManifest.xml マニフェストを指定して,対立したファイルとフォルダを復元します. preexisting files and foldersを復元する PreexistingManifest.xml マニフェストを指定します.保存されたファイルとフォルダを表示するには **Get-DfsrPreservedFiles** cmdlet を使用できます.
+
+警告 デフォルトでは,このcmdletはすべてのファイルを移動し,古いバージョンを含む既存の保存されたファイルを削除します.このcmdletを使用する前に,紛争と削除と既存のフォルダをバックアップすることを検討してください.
+
+## 例えは
+
+### 例1: 既存のファイルを元の位置に復元する```
+PS C:\&gt; Restore-DfsrPreservedFiles -Path &quot;C:\RF01\DfsrPrivate\PreExistingManifest.xml&quot; -RestoreToOrigin
+```
+
+このコマンドは,複製されたフォルダC:\RF01の既存のファイルとフォルダを元の位置に戻します.このコマンドは *CopyFiles* パラメータを指定していません.したがって,ファイルを移動し,Preexisting フォルダを空にしてしまいます.
+
+### 例2:既存のファイルを別の場所に復元する```
+PS C:\&gt; Restore-DfsrPreservedFiles -Path &quot;C:\RF01\DfsrPrivate\PreExistingManifest.xml&quot; -RestoreToPath &quot;C:\DFSRTest&quot; -CopyFiles -AllowClobber -Verbose
+VERBOSE: Loading Preserved file Manifest C:\rf01\DfsrPrivate\PreExistingManifest.xml
+VERBOSE: Restoring Preserved Files from manifest C:\rf01\DfsrPrivate\PreExistingManifest.xml
+```
+
+このコマンドは,複製されたフォルダC:\RF01の既存のファイルとフォルダのコピーを,C:\DFSRTestの位置に復元します.コマンドは, *RestoreToPath* パラメータを使用して位置を指定します.コマンドは, *AllowClobber* パラメータを使用します.したがって,指定された位置で同じ名前を持つ既存のファイルをオーバーライティングします.コマンドは,コンソールで情報を表示するために *Verbose* パラメータを使用します.
+
+### 例3: 矛盾したファイルと削除されたファイルを別の場所に復元する```
+PS C:\&gt; Restore-DfsrPreservedFiles -Path &quot;C:\RF01\DfsrPrivate\ConflictAndDeletedManifest.xml&quot; -RestoreToPath &quot;C:\DFSRRestore&quot; -RestoreAllVersions -Force
+PS C:\&gt; Get-ChildItem -Path &quot;C:\DFSRRestore&quot;
+    Directory: C:\dfsrrestore
+
+Mode                LastWriteTime     Length Name
+----                -------------     ------ ----
+-a---          4/5/2013   9:58 AM     848294 canary.bmp
+-a---          4/5/2013   9:58 AM     848294 canary2013_04_05_17_00_00Z.bmp
+-a---          4/5/2013   9:58 AM     848294 canary2013_04_05_17_17_37Z.bmp
+-a---          4/5/2013   9:58 AM     848294 canary2013_04_05_17_17_47Z.bmp
+```
+
+この例では,矛盾したファイルと削除されたファイルの複数のバージョンを指定された場所に復元します.
+
+最初のコマンドは,複製されたフォルダ C:\FR01 の衝突した,削除されたファイルとフォルダを C:\DFSRRestore の場所に復元します.コマンドは,保存されたすべてのバージョンのファイルを復元します.コマンドには, *Force* パラメータが含まれ,したがって,確認を提示せず,目的地のファイルを覆います.
+
+2番目のコマンドは,復元されたファイルに関する情報を表示するために, **Get-ChildItem** cmdlet を使用します.詳細については,  を入力してください.`Get-Help Get-ChildItem`この例では,最初のコマンドは,同じファイルの複数のバージョンを復元します.
+
+## パラメータは
+
+### -AllowClobber 指定する際,cmdletは現在目的地で存在する同名のファイルをオーバーライティングすると表示される.このパラメータを指定していない場合は,cmdletは既存のファイルをオーバーライティングする前に提示します.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### - 確認は,cmdletを実行する前に確認を提示します.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: cf
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -CopyFiles ファイルコピーする場合は,cmdletがファイルを移動する代わりにコピーすることを示します.
+
+このパラメータを指定しない場合は,cmdletは保存されたファイルを移動しますが,ファイルの最新バージョンのみを復元します.あなたは対立したまたは削除されたファイルの以前のバージョンを失うでしょう.既存のファイルには決して複数のバージョンはありません.以前のバージョンをなくさないために,ConflictAndDeletedフォルダをバックアップすることを検討してください.代替として, *RestoreAllVersions*パラメータを指定してください.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: 3
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### - ユーザの確認を要求せずにコマンドを実行するように強制します.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Path はマニフェストの経路を指定します.デフォルトでは,マニフェストファイルは \&lt;Replicated Folder\&gt;\DfsrPrivateフォルダに存在します. 矛盾したファイルと削除されたファイルを復元するために,ConflictAndDeletedManifest.xmlを指定します. 既存のファイルを復元するために,PreExistingManifest.xmlを指定します.
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases: 
+
+Required: True
+Position: 0
+Default value: None
+Accept pipeline input: True (ByPropertyName, ByValue)
+Accept wildcard characters: False
+```
+
+# 保存されたファイルを復元するDfsr
+
+### -RestoreAllVersions ファイルのすべてのバージョンを cmdlet が復元することを表示します.このcmdlet はファイル名にタイムスタンプを追加します.このパラメータは,対立したファイルまたは削除されたファイルのみに影響します.既存のファイルには決して複数のバージョンはありません.
+
+このパラメータを指定しない場合は,cmdletはファイルの最新バージョンのみを復元します.このパラメータを指定せず, *CopyFiles*パラメータを指定しない場合は,cmdletは最新のバージョンを復元し,ConflictsAndDeletedフォルダからすべてのバージョンを削除します.この cmdletを使用する前に,ConflictAndDeletedフォルダをバックアップすることを検討してください.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: 2
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -RestoreToOrigin は,CmdletがConflictAndDeletedManifest.xml マニフェストまたはPreExistingManifest.xml マニフェストに記録されたすべてのファイルとフォルダを元の場所に復元することを表示します.別の場所に復元するには, *RestoreToPath* パラメータを使用してパス指定してください.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: RestoreOrigin
+Aliases: 
+
+Required: True
+Position: 1
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -RestoreToPathは,ConflictAndDeletedManifest.xml マニフェストまたはPreExistingManifest.xml マニフェストに記録されたファイルとフォルダの位置を指定します.元の位置に復元するには, *RestoreToOrigin* パラメータを指定します.
+
+```yaml
+Type: String
+Parameter Sets: RestorePath
+Aliases: 
+
+Required: True
+Position: 1
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -WhatIf が実行されればどうなるか示します.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: wi
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### 共通パラメータ このcmdletは共通パラメータをサポートしています: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable.詳細については, [about_CommonParameters](を参照してください.https://go.microsoft.com/fwlink/?LinkID=113216) でした.
+
+## 輸入は
+
+### 文字列
+
+## 輸出は
+
+### どれもない
+
+##  NOTES  記事ができました.
+
+## 関連リンク
+
+[Get-DfsrPreservedFiles](./Get-DfsrPreservedFiles.md) を表示する
+
+[DfsrMembership.md]の設定を設定する
+###英語原文###
+# Restore-DfsrPreservedFiles
+
+## SYNOPSIS
+Restores files and folders that DFS Replication previously preserved.
+
+## SYNTAX
+
+### RestorePath (Default)
+```
+Restore-DfsrPreservedFiles [-Path] &lt;String&gt; [-RestoreToPath] &lt;String&gt; [-RestoreAllVersions] [-CopyFiles]
+ [-AllowClobber] [-Force] [-WhatIf] [-Confirm] [&lt;CommonParameters&gt;]
+```
+
+### RestoreOrigin
+```
+Restore-DfsrPreservedFiles [-Path] &lt;String&gt; [-RestoreToOrigin] [-RestoreAllVersions] [-CopyFiles]
+ [-AllowClobber] [-Force] [-WhatIf] [-Confirm] [&lt;CommonParameters&gt;]
+```
+
+## DESCRIPTION
+The **Restore-DfsrPreservedFiles** cmdlet restores preserved files and folders.
+The Distributed File System (DFS) Replication service preserves the following kinds of files and folders: 
+
+- Conflicted.
+If users make changes to the same file on multiple servers before replication converges, a file might conflict with the current version.
+DFS Replication preserves previous conflicting versions of the file.
+- Deleted.
+When a member computer deletes a replicated file, other members also remove that file.
+Depending on membership settings, computers can preserve deleted files.
+To modify whether a member computer preserves deleted files, use the **Set-DfsrMembership** cmdlet. 
+- Preexisting.
+If DFS Replication overwrites files during its initial synchronization, DFS Replication preserves those files.
+
+For all three types, DFS Replication moves the files to \&lt;replicated folder\&gt;\DfsrPrivate\ConflictAndDeleted or \&lt;replicated folder\&gt;\DfsrPrivate\Preexisting.
+DFS Replication records these files in a manifest, either ConflictAndDeletedManifest.xml or PreExistingManifest.xml, as appropriate.
+Specify the ConflictAndDeletedManifest.xml manifest to restore conflicted and deleted files and folders.
+Specify the PreExistingManifest.xml manifest to restore preexisting files and folders.
+You can use the **Get-DfsrPreservedFiles** cmdlet to view preserved files and folders.
+
+CAUTION By default, this cmdlet moves all files and removes any existing preserved files, including older versions of files.
+Consider backing up the ConflictsAndDeleted and Preexisting folder before you use this cmdlet.
+
+## EXAMPLES
+
+### Example 1: Restore preexisting files to their original locations
+```
+PS C:\&gt; Restore-DfsrPreservedFiles -Path &quot;C:\RF01\DfsrPrivate\PreExistingManifest.xml&quot; -RestoreToOrigin
+```
+
+This command restores preexisting files and folders in the replicated folder C:\RF01 to their original locations.
+The command does not specify the *CopyFiles* parameter.
+Therefore, it moves the files and leaves the Preexisting folder empty.
+
+### Example 2: Restore copies of preexisting files to a different location
+```
+PS C:\&gt; Restore-DfsrPreservedFiles -Path &quot;C:\RF01\DfsrPrivate\PreExistingManifest.xml&quot; -RestoreToPath &quot;C:\DFSRTest&quot; -CopyFiles -AllowClobber -Verbose
+VERBOSE: Loading Preserved file Manifest C:\rf01\DfsrPrivate\PreExistingManifest.xml
+VERBOSE: Restoring Preserved Files from manifest C:\rf01\DfsrPrivate\PreExistingManifest.xml
+```
+
+This command restores copies of preexisting files and folders in the replicated folder C:\RF01 to the location C:\DFSRTest.
+The command specifies the location by using the *RestoreToPath* parameter.
+The command uses the *AllowClobber* parameter.
+Therefore, it overwrites existing files that have the same names in the specified location.
+The command uses the *Verbose* parameter to display information in the console.
+
+### Example 3: Restore conflicted and deleted files to a different location
+```
+PS C:\&gt; Restore-DfsrPreservedFiles -Path &quot;C:\RF01\DfsrPrivate\ConflictAndDeletedManifest.xml&quot; -RestoreToPath &quot;C:\DFSRRestore&quot; -RestoreAllVersions -Force
+PS C:\&gt; Get-ChildItem -Path &quot;C:\DFSRRestore&quot;
+    Directory: C:\dfsrrestore
+
+Mode                LastWriteTime     Length Name
+----                -------------     ------ ----
+-a---          4/5/2013   9:58 AM     848294 canary.bmp
+-a---          4/5/2013   9:58 AM     848294 canary2013_04_05_17_00_00Z.bmp
+-a---          4/5/2013   9:58 AM     848294 canary2013_04_05_17_17_37Z.bmp
+-a---          4/5/2013   9:58 AM     848294 canary2013_04_05_17_17_47Z.bmp
+```
+
+This example restores multiple versions of conflicted and deleted files to a specified location.
+
+The first command restores conflicted and deleted files and folders for the replicated folder C:\FR01 to the location C:\DFSRRestore.
+The command restores all preserved versions of the files.
+The command includes the *Force* parameter, and therefore, it does not prompt you for confirmation and overwrites any files in the destination.
+
+The second command uses the **Get-ChildItem** cmdlet to display information about the restored files.
+For more information, type `Get-Help Get-ChildItem`.
+In this example, the first command restores multiple versions of the same file.
+
+## PARAMETERS
+
+### -AllowClobber
+Indicates that the cmdlet overwrites files of the same name that currently exist in the destination.
+If you do not specify this parameter, the cmdlet prompts you before overwriting existing files.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Confirm
+Prompts you for confirmation before running the cmdlet.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: cf
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -CopyFiles
+Indicates that the cmdlet copies files instead of moving them.
+
+If you do not specify this parameter, the cmdlet moves the preserved files but restores only the latest version of a file.
+You will lose previous versions of conflicted or deleted files.
+Preexisting files never have multiple versions.
+To avoid losing previous versions, consider backing up the ConflictsAndDeleted folder.
+As an alternative, specify the *RestoreAllVersions* parameter.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: 3
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Force
+Forces the command to run without asking for user confirmation.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Path
+Specifies the path of a manifest.
+By default, the manifest files exist in the \&lt;Replicated Folder\&gt;\DfsrPrivate folder.
+Specify ConflictAndDeletedManifest.xml to restore conflicted and deleted files.
+Specify PreExistingManifest.xml to restore preexisting files.
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases: 
+
+Required: True
+Position: 0
+Default value: None
+Accept pipeline input: True (ByPropertyName, ByValue)
+Accept wildcard characters: False
+```
+
+# Restore-DfsrPreservedFiles
+
+### -RestoreAllVersions
+Indicates that the cmdlet restores all versions of a file.
+The cmdlet adds a time stamp to the file name.
+This parameter affects only conflicted files or deleted files.
+Preexisting files never have multiple versions.
+
+If you do not specify this parameter, the cmdlet restores only the most recent version of the file.
+If you do not specify this parameter and do not specify the *CopyFiles* parameter, the cmdlet restores the most recent version and removes all versions from the ConflictsAndDeleted folder.
+Consider backing up the ConflictsAndDeleted folder before you use this cmdlet.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: 2
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -RestoreToOrigin
+Indicates that the cmdlet restores all files and folders recorded in the ConflictAndDeletedManifest.xml manifest or the PreExistingManifest.xml manifest to their original locations.
+To restore to a different location, specify a path by using the *RestoreToPath* parameter.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: RestoreOrigin
+Aliases: 
+
+Required: True
+Position: 1
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -RestoreToPath
+Specifies a location for files and folders recorded in the ConflictAndDeletedManifest.xml manifest or the PreExistingManifest.xml manifest.
+To restore to the original locations, specify the *RestoreToOrigin* parameter.
+
+```yaml
+Type: String
+Parameter Sets: RestorePath
+Aliases: 
+
+Required: True
+Position: 1
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -WhatIf
+Shows what would happen if the cmdlet runs.
+The cmdlet is not run.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: wi
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### CommonParameters
+This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable. For more information, see [about_CommonParameters](https://go.microsoft.com/fwlink/?LinkID=113216).
+
+## INPUTS
+
+### string
+
+## OUTPUTS
+
+### None
+
+## NOTES
+
+## RELATED LINKS
+
+[Get-DfsrPreservedFiles](./Get-DfsrPreservedFiles.md)
+
+[Set-DfsrMembership](./Set-DfsrMembership.md)
+###Microsoft Learn URL###
+https://learn.microsoft.com/en-us/powershell/module/dfsr/restore-dfsrpreservedfiles/?view=windowsserver2022-ps
+</pre></html>

@@ -1,0 +1,164 @@
+<!doctype html><html lang="ja"><meta charset="utf-8"><pre class="record-source">###KnowledgeNo###
+PS51-WS2022-2026-3578
+###FormatID###
+PS51-WS2022
+###CreatedAt###
+2026-08-01 00:00
+###UpdatedAt###
+2026-08-01 00:00
+###タイトル###
+about_Parameter_Binding
+###モジュール###
+Microsoft.PowerShell.Core
+###製品###
+Windows PowerShell 5.1
+###対応OS###
+Windows Server 2022
+###日本語訳###
+# について_パラメータ_結合
+
+## 短編説明
+
+パラメータ結合は,PowerShellでどのパラメータセットが使われているかを判断し,コマンドのパラメータに値 (bind) を関連付けるために使用するプロセスです.これらの値はコマンドラインやパイプラインから得られます.
+
+## 長い説明
+
+パラメータ結合プロセスはコマンドライン引数を結合することで始まります.
+
+1.Bind named parameters をバインドする
+
+命令行でダッシュで始まる引数のないトークンを検索する.トークンがコロンで終われば,そのトークンが必要となる.コロンがない場合は,パラメータのタイプを見て,そのパラメータが必要かどうか確認する.値が求められれば,そのパラメータが要求するタイプにトークンを変換しようと試みる.変換が成功すれば,パラメータを結合させる.
+
+1.ポジショナルのパラメータを縛る
+
+未使用コマンドラインの引数がある場合は,位置パラメータを捉える未結合パラメータを探して,それらを結合してみてください.
+
+パイプラインの入力を拘束したコマンドラインの議論の後,PowerShellはパイプラインの入力を拘束しようとします.パイプラインから値が結合される方法は2つあります.パイプライン入力を受け入れるパラメータは,以下の属性の一つまたは両方を持っています:
+
+[ValueFromPipeline][02] - パイプラインの値は,その種類に基づいてパラメータに結合する. 引数のタイプは,パラメータの種類と一致しなければならない. - [ValueFromPipelineByPropertyName][03] - パイプラインの値は,その名称に基づいてパラメータに結合する. パイプラインのオブジェクトには,パラメータの名前またはそのニックネームと一致する属性がある必要があります. 属性のタイプは,パラメータのタイプと一致するまたは変換可能である必要があります.
+
+PowerShellでパイプライン入力を次の順に結合しようとします.
+
+1. を縛るよう努力する`ValueFromPipeline`型変換なしのパラメータ:
+
+パイプラインから正確なタイプマッチの値で結合する.コマンドにパイプライン入力があり,まだ無結合のパラメータがある場合は,タイプに正確に一致するパラメータに結合してみてください.
+
+1. を縛るよう努力する`ValueFromPipelineByPropertyName`型変換なしのパラメータ:
+
+値一致が見つからない場合は,正確な一致性を持つ名前でパイプラインから結合してください.入力オブジェクトにパラメータの名前またはそのニックネームに一致する属性を探してください.タイプが正確に一致する場合は,パラメータを結合してください.
+
+1.パイプライン入力が縛られていなかった場合,  を縛ってみてください.`ValueFromPipeline`タイプ変換のパラメータ:
+
+パイプライン入力を必要なタイプに変換しようとします.変換が失敗した場合,パラメータは拘束されていません.
+
+1.パイプライン入力が縛られていなかった場合,  を縛ってみてください.`ValueFromPipelineByPropertyName`タイプ変換のパラメータ:
+
+属性の名前は,パラメータの名前またはその別名と一致しなければならない.入力型が一致しない場合は,入力型を一致型に変換しようとしてください.変換が失敗した場合,パラメータは拘束されません.
+
+## 設定の結合を表示するパラメータを表示します
+
+パラメータ結合の問題のトラブルシューティングは難しい.パラメータ結合プロセスを視覚化するために, [Trace-Command][04] cmdlet を使用できます.以下の例は,単純なパイプラインのパラメータ結合を追跡する方法を示します.
+
+```powershell
+Trace-Command -PSHost -Name ParameterBinding -Expression {
+    Get-Item *.txt | Remove-Item
+}
+```
+
+出力は **Expression** のコマンドのパラメータ結合プロセスの一歩をすべて表示します.出力は動詞化されても,なぜパラメータが予想通り結合されていないのか理解するのに役立ちます.完全な例については,[パラメータ結合を表示する][01] 記事を参照してください.
+
+&lt;!--リンク参照 --&gt; [01]: /powershell/scripting/learn/deep-dives/visualize-parameter-binding [02]: about_Functions_Advanced_Parameters.md#valuefrompipeline-argument [03]: about_Functions_Advanced_Parameters.md#valuefrompipelinebypropertyname-argument [04]: xref:Microsoft.PowerShell.Utility.Trace-Command
+###英語原文###
+# about_Parameter_Binding
+
+## Short description
+
+Parameter binding is the process that PowerShell uses to determine which
+parameter set is being used and to associate (bind) values to the parameters of
+a command. These values can come from the command line and the pipeline.
+
+## Long description
+
+The parameter binding process starts by binding command-line arguments.
+
+1. Bind named parameters
+
+   Find unquoted tokens on the command line that start with a dash. If the
+   token ends with a colon, an argument is required. If there&#x27;s no colon, look
+   at the type of the parameter and see if an argument is required. If a value
+   is required, attempt to convert the type of argument to the type required by
+   the parameter, and the conversion is successful, bind the parameter.
+
+1. Bind positional parameters
+
+   If there are any unused command-line arguments, look for unbound parameters
+   that take positional parameters and try to bind them.
+
+After binding command-line arguments, PowerShell tries to bind any pipeline
+input. There are two ways that values are bound from the pipeline. Parameters
+that accept pipeline input have one or both of the following attributes:
+
+- [ValueFromPipeline][02] - The value from the pipeline is bound to the
+  parameter based on its type. The type of the argument must match the type of
+  the parameter.
+- [ValueFromPipelineByPropertyName][03] - The value from the pipeline is bound
+  to the parameter based on its name. The object in the pipeline must have a
+  property that matches the name of the parameter or one of its aliases. The
+  type of the property must match or be convertible to the type of the
+  parameter.
+
+PowerShell tries to bind pipeline input in the following order:
+
+1. Try to bind `ValueFromPipeline` parameters without type conversion:
+
+   Bind from the pipeline by value with exact type match. If the command has
+   pipeline input and there are still unbound parameters, try to bind to a
+   parameter that matches the type exactly.
+
+1. Try to bind `ValueFromPipelineByPropertyName` parameters without type
+   conversion:
+
+   If no value match is found, then bind from the pipeline by name with exact
+   match. Look for a property on the input object that matches the name of the
+   parameter or one of its aliases. If the types exactly match, bind the
+   parameter.
+
+1. If the pipeline input hasn&#x27;t been bound, try to bind `ValueFromPipeline`
+   parameters with type conversion:
+
+   Attempt to convert the pipeline input to the required type. If the
+   conversion fails, the parameter isn&#x27;t bound.
+
+1. If the pipeline input hasn&#x27;t been bound, try to bind
+   `ValueFromPipelineByPropertyName` parameters with type conversion:
+
+   The name of the property must match the name of the parameter or one of its
+   aliases. If the input type doesn&#x27;t match, attempt to convert the input to
+   the matching type. If the conversion fails, the parameter isn&#x27;t bound.
+
+## Visualize parameter binding
+
+Troubleshooting parameter binding issues can be challenging. You can use the
+[Trace-Command][04] cmdlet to visualize the parameter binding process. The
+following example shows how to trace the parameter binding for a simple
+pipeline.
+
+```powershell
+Trace-Command -PSHost -Name ParameterBinding -Expression {
+    Get-Item *.txt | Remove-Item
+}
+```
+
+The output shows every step of the parameter binding process for the commands
+in the **Expression**. The output can be verbose, but it can help you
+understand why a parameter isn&#x27;t being bound as expected. For a complete
+example, see the [Visualize parameter binding][01] article.
+
+&lt;!-- link references --&gt;
+[01]: /powershell/scripting/learn/deep-dives/visualize-parameter-binding
+[02]: about_Functions_Advanced_Parameters.md#valuefrompipeline-argument
+[03]: about_Functions_Advanced_Parameters.md#valuefrompipelinebypropertyname-argument
+[04]: xref:Microsoft.PowerShell.Utility.Trace-Command
+###Microsoft Learn URL###
+https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_parameter_binding/?view=powershell-5.1
+</pre></html>

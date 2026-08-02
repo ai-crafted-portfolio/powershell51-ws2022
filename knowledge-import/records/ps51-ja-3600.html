@@ -1,0 +1,617 @@
+<!doctype html><html lang="ja"><meta charset="utf-8"><pre class="record-source">###KnowledgeNo###
+PS51-WS2022-2026-3600
+###FormatID###
+PS51-WS2022
+###CreatedAt###
+2026-08-01 00:00
+###UpdatedAt###
+2026-08-01 00:00
+###タイトル###
+about_Redirection
+###モジュール###
+Microsoft.PowerShell.Core
+###製品###
+Windows PowerShell 5.1
+###対応OS###
+Windows Server 2022
+###日本語訳###
+# about_Redirectionについて
+
+## 短編説明
+
+PowerShellからテキストファイルに輸出を転送する方法を説明します.
+
+## 長い説明
+
+デフォルトでは,PowerShell が出力をPowerShell ホストに送信します.通常はコンソールアプリケーションです.しかし,出力をテキストファイルにリダイレクトし,エラー出力を通常の出力ストリームにリダイレクトすることができます.
+
+輸出をリダイレクトするには,以下の方法を使用できます.
+
+ - を用いること`Out-File`cmdletで,テキストファイルにコマンド出力を送信します.通常,あなたは  を使います.`Out-File`設定のパラメータを用いるときに cmdlet を表示します.例えば,`Encoding`     `Force`     `Width`       `NoClobber`パラメータです.
+
+ - を用いること`Tee-Object`cmdletは,テキストファイルにコマンド出力を送信し,パイプラインに送信します.
+
+PowerShellコマンドの輸出 (cmdlet,関数,スクリプト) をリダイレクト操作符 () を使用してリダイレクトする.`&gt;`) は,機能的にパイプを  に配る同等です.`Out-File`追加パラメータなしです.
+
+
+ストリームに関する詳細については,[about_Output_Streams][04]を参照してください.
+
+## 転送可能な出力ストリーム
+
+PowerShellでは,次の出力ストリームをリダイレクトする機能がサポートされています.
+
+ストリーム・説明 紹介された 写作・Cmdlet 作成した ストリーム・説明 公開された ストリーム・エクスプレス パワーシェル 2.0`Write-Output`エラーストリーム PowerShell 2.0`Write-Error`PowerShell 3.0の警告ストリームを公開します.`Write-Warning`ヴァルボス・ストリーム パワーシェル 3.0`Write-Verbose`パーシェル30.0のデバッグストリーム`Write-Debug`PowerShell 5.0で情報ストリームを公開します.`Write-Information`     `Write-Host`すべてのストリームをPowerShell 3.0で配信しています.
+
+PowerShell で **Progress** ストリームも存在しますが,リダイレクトには対応しません.
+
+[!IMPORTANT] &gt; **Success**と **Error**のストリームは,他のシェルのストーアウトとストーダーr &gt;ストリームに似ている.しかし,ストーディンは入力のためのPowerShell &gt;パイプラインに接続されていない.
+
+## PowerShell リダイレクトオペレーター
+
+PowerShell リダイレクトオペレータは以下のとおり,`n`ストリーム番号を表しています. **Success** stream ()`1`) は,未指定のストリームがない場合のデフォルトです.
+
+操作者の説明 構文`&gt;`特定のストリームをファイルに送信します.`n&gt;`◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎`&gt;&gt;`ファイルに指定されたストリームを添付します.`n&gt;&gt;`◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎ ◎`&gt;&amp;1`指定されたストリームを成功ストリームに転送します.`n&gt;&amp;1`≪ ≫ ≫ ≫ ≫ ≫
+
+&gt; [!NOTE] &gt;Unixのシェルの違い,他のストリームを &gt; **Success**ストリームにしか転送することはできません.
+
+## 例文
+
+### 例1:エラーと出力をファイルに転送する
+
+この例は,実行します.`dir`成功した項目と失敗した項目についてです.
+
+```powershell
+dir C:\, fakepath 2&gt;&amp;1 &gt; .\dir.log
+```
+
+ を使っています.`2&gt;&amp;1`**Error**を **Success**にリダイレクトし,`&gt;`取得した **Success** ストリームを,ファイル名に送信します.`dir.log`
+
+### 例2:すべての成功ストリームデータをファイルに送信する
+
+この例では,すべての **Success** ストリームデータをファイルに送信します.`script.log` .
+
+```powershell
+.\script.ps1 &gt; script.log
+```
+
+### 例3: ファイルに成功,警告,エラーストリームを送信する
+
+この例では,リダイレクトオペレータを組み合わせ,望ましい結果を達成する方法を示しています.
+
+```powershell
+&amp;{
+   Write-Warning &quot;hello&quot;
+   Write-Error &quot;hello&quot;
+   Write-Output &quot;hi&quot;
+} 3&gt;&amp;1 2&gt;&amp;1 &gt; C:\Temp\redirection.log
+```
+
+ - -`3&gt;&amp;1`**警告**ストリームを **成功**ストリームに転送します. - `2&gt;&amp;1`**Error**を **Success**に転送する (現在はすべての **Warning**のストリームデータを含む) - `&gt;`**Success**ストリーム (現在は **Warning**と **Error**の両方を含む) をファイルに転送します.`C:\temp\redirection.log` .
+
+### 例4:すべてのストリームをファイルにリダイレクトする
+
+この例では,すべてのストリームをスクリプトから送信します.`script.ps1`というファイルに追加しました.`script.log` .
+
+```powershell
+.\script.ps1 *&gt; script.log
+```
+
+### 例5:すべてのWrite-Hostと情報ストリームデータを削除します
+
+この例では,すべての情報ストリームデータを削除します. **情報ストリーム・cmdletsについて詳しくは, [Write-Host][11]および [Write-Information][12] を参照してください.
+
+```powershell
+&amp;{
+   Write-Host &quot;Hello&quot;
+   Write-Information &quot;Hello&quot; -InformationAction Continue
+} 6&gt; $null
+```
+
+### 例6:アクション・プレバインドスの効果を表示する
+
+アクション・プレフィアレンス変数とパラメータは,特定のストリームに書き込まれることを変更する可能性があります.この例の脚本では, の値がどのように変化するか示しています.`$ErrorActionPreference`**Error**ストリームに書き込まれているものに影響します.
+
+```powershell
+$ErrorActionPreference = &#x27;Continue&#x27;
+$ErrorActionPreference &gt; log.txt
+Get-Item /not-here 2&gt;&amp;1 &gt;&gt; log.txt
+
+$ErrorActionPreference = &#x27;SilentlyContinue&#x27;
+$ErrorActionPreference &gt;&gt; log.txt
+Get-Item /not-here 2&gt;&amp;1 &gt;&gt; log.txt
+
+$ErrorActionPreference = &#x27;Stop&#x27;
+$ErrorActionPreference &gt;&gt; log.txt
+try {
+    Get-Item /not-here 2&gt;&amp;1 &gt;&gt; log.txt
+}
+catch {
+    &quot;`tError caught!&quot; &gt;&gt; log.txt
+}
+$ErrorActionPreference = &#x27;Ignore&#x27;
+$ErrorActionPreference &gt;&gt; log.txt
+Get-Item /not-here 2&gt;&amp;1 &gt;&gt; log.txt
+
+$ErrorActionPreference = &#x27;Inquire&#x27;
+$ErrorActionPreference &gt;&gt; log.txt
+Get-Item /not-here 2&gt;&amp;1 &gt;&gt; log.txt
+
+$ErrorActionPreference = &#x27;Continue&#x27;
+```
+
+このスクリプトを実行すると,いつに提示されるか分かります.`$ErrorActionPreference` に設定されています.`Inquire` .
+
+```powershell
+PS C:\temp&gt; .\test.ps1
+
+Confirm
+Can&#x27;t find path &#x27;C:\not-here&#x27; because it doesn&#x27;t exist.
+[Y] Yes  [A] Yes to All  [H] Halt Command  [S] Suspend  [?] Help (default is &quot;Y&quot;): H
+Get-Item: C:\temp\test.ps1:23
+Line |
+  23 |  Get-Item /not-here 2&gt;&amp;1 &gt;&gt; log.txt
+     |  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | The running command stopped because the user selected the Stop option.
+```
+
+ログファイルを調べると,以下のことがわかります.
+
+```powershell
+PS C:\temp&gt; Get-Content .\log.txt
+Continue
+
+Get-Item: C:\temp\test.ps1:3
+Line |
+   3 |  Get-Item /not-here 2&gt;&amp;1 &gt;&gt; log.txt
+     |  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | Cannot find path &#x27;C:\not-here&#x27; because it does not exist.
+
+SilentlyContinue
+Stop
+    Error caught!
+Ignore
+Inquire
+```
+
+## 筆記
+
+データ添付しないリダイレクトオペレータ ()`&gt;`そして,`n&gt;`) は警告なしに指定したファイルの現在の内容を書き換えます.
+
+しかし,ファイルが読み込みのみ,隠されたファイル,システムファイルであれば,リダイレクトは**失敗**. 追加リダイレクトオペレーター () は**`&gt;&gt;`そして,`n&gt;&gt;`) は読み込みのみのファイルに書き留めていないが,システムや隠されたファイルにコンテンツを添付する.
+
+コンテンツを読み込みのみ,隠されたファイル,システムファイルに転送することを強制するには,  を使います.`Out-File`のcmdletを表示する.`Force`パラメーターです.
+
+ファイルに書き込むとき,リダイレクトオペレーターは&quot;&quot;を使用します.`UTF8NoBOM`ファイルに別のコードが付いている場合,出力が正しくフォーマットされていない可能性があります. 異なるコードが付いたファイルに書き込むには,  を使ってください.`Out-File`のcmdletを表示する.`Encoding`パラメーターです.
+
+# about_Redirectionについて
+
+### ファイルに書き込むときに出力幅
+
+ファイルに書き込みしているときに,いずれかを使って書き込みします.`Out-File`PowerShellは,実行中のコンソールの幅に基づいて,表出力をファイルに格式化します.例えば,表出力をファイルにログインする際に, のようなコマンドを使用してログインします.`Get-ChildItem Env:\Path &gt; path.log`コンソール幅が80列に設定されているシステムでは,ファイル内の出力は80文字に縮小されます.
+
+```Output
+Name                         Value
+----                         -----
+Path                         C:\Program Files\PowerShell\7;C:\WINDOWS…
+```
+
+コンピュータのコンソール幅が,スクリプトが実行されているシステムで任意に設定される可能性があることを考えると,代わりに指定した幅に基づいてファイルに PowerShell 形式の表出力を好むかもしれません.
+
+   `Out-File`cmdlet は,テーブル出力に対して,あなたが望む幅を設定する**Width** パラメータを提供します.`-Width 2000`あなたが呼んでいるあらゆる場所へ`Out-File` を使って,`$PSDefaultParameterValues`変数のすべての用途にこの値を設定するには,`Out-File`スクリプトのcmdlet. そして,リダイレクトオペレータ () が使っているから ()`&gt;`そして,`&gt;&gt;`) は,実際にのの偽名である.`Out-File` を設定する`Out-File:Width`スクリプト全体のためのパラメータは,リダイレクトオペレーターにとってもフォーマット幅に影響します.次のコマンドをスクリプトの上部に貼って設定します.`Out-File:Width`脚本全体について:
+
+```powershell
+$PSDefaultParameterValues[&#x27;Out-File:Width&#x27;] = 2000
+```
+
+輸出幅を拡大すると,テーブルをフォーマットした出力をログインする際にメモリ消費が増加する.あなたがファイルに多くの表データをログインしている場合,より小さな幅でうまくいくことを知っている場合は,より小さな幅を使用してください.
+
+など,ある場合,`Get-Service`余剰幅を利用するには,輸出をパイプで を通す必要があります.`Format-Table -AutoSize`ファイルに出力する前に.
+
+```powershell
+$PSDefaultParameterValues[&#x27;Out-File:Width&#x27;] = 2000
+Get-Service | Format-Table -AutoSize &gt; services.log
+```
+
+に関する詳細については,`$PSDefaultParameterValues`[about_Preference_Variables] を参照.
+
+### バイナリデータをリダイレクトする
+
+PowerShellでは二重データのリダイレクトをサポートしません.バイトストリームデータをリダイレクトすると,PowerShellはデータを文字列として処理します.このリダイレクトは,データに不正をもたらします.
+
+### 比較オペレータとの潜在的混乱です
+
+   `&gt;`[Greater-than][02]比較オペレータ (しばしば&quot;&quot;と表示される) と混同しない.`&gt;`(他のプログラミング言語で).
+
+比較されるオブジェクトによって,輸出は  を使って出力します.`&gt;`正確に見える (36は42より大きいわけではないので).
+
+```powershell
+PS&gt; if (36 &gt; 42) { &quot;true&quot; } else { &quot;false&quot; }
+false
+```
+
+しかし,ローカルファイルシステムのチェックでは, というファイルが存在していることを確認できます.`42`内容とともに書かれたものです.`36` .
+
+```powershell
+PS&gt; dir
+
+Mode                LastWriteTime         Length Name
+----                -------------         ------ ----
+------          1/02/20  10:10 am              3 42
+
+PS&gt; cat 42
+36
+```
+
+逆の比較を試みる`&lt;`(より少ない) は,システムエラーを生成します:
+
+```powershell
+PS&gt; if (36 &lt; 42) { &quot;true&quot; } else { &quot;false&quot; }
+At line:1 char:8
++ if (36 &lt; 42) { &quot;true&quot; } else { &quot;false&quot; }
++        ~
+The &#x27;&lt;&#x27; operator is reserved for future use.
+    + CategoryInfo          : ParserError: (:) [], ParentContainsErrorRecordException
+    + FullyQualifiedErrorId : RedirectionNotSupported
+```
+
+数値比較が求められる操作である場合,`-lt`そして,`-gt`詳細については,  を参照してください.`-gt`operator in [about_Comparison_Operators][02].
+
+## また, を参照してください.
+
+[about_Command_Syntax][01] - [about_Operators][03] - [about_Output_Streams][04] - [about_Path_Syntax][05] - [Out-File][07] - [Tee-Object][08] - [Write-Debug][09] - [Write-Error][10] - [Write-Host][11] - [Write-Information][12] - [Write-Output][13] - [Write-Progress][14] - [Write-Verbose][15] - [Write-Warning][16] -
+
+リンク参照 --&gt; [01]: about_Command_Syntax.md [02]: about_Comparison_Operators.md#-gt--ge--lt-and--le [03]: about_Operators.md [04]: about_Output_Streams.md [05]: about_Path_Syntax.md [06]: about_Preference_Variables.md#psdefaultparametervalues [07]: xref:Microsoft.PowerShell.Utility.Out-File [08]: xref:Microsoft.PowerShell.Utility.Tee-Object [09]: xref:Microsoft.Shell.Utility.Write-De-De-De [10]: xref:PowerShell.Utility.Write-Write-PowerShell:Microsoft:Write-Write-Write-Write-Write-Write-Write-Write-Write-Write-Write:Microsoft:Write-Write-Write-Write-Write-Write-Write-Write-Write-Write-Write-Write-Write-Write-Write-Write-Write-Write:Microsoft:X:Write-Write-Write-Write-Write-Write-Write-Write-Write-Write-Write-Write:Microsoft:X: Microsoft:WriteWriteWriteWriteWriteWriteWriteWriteWriteWriteWriteWrite: Microsoft:X:WriteWriteWriteWriteWriteWriteWriteWrit: Microsoft:X:WriteWriteWriteWrit:X:Writ:WriteWrit:X:Writ:Written:Written x-Written x-Written x-Written x-Written x-Written x-Written x-Written x-Written x-Written x-Written x-Written:Written:Written:Written:Written:Written by-Written by-Written:Written by-Written:rShell.Utility.Write-Verbose [16]: xref:Microsoft.PowerShell.Utility.Write-Warning
+###英語原文###
+# about_Redirection
+
+## Short description
+
+Explains how to redirect output from PowerShell to text files.
+
+## Long description
+
+By default, PowerShell sends output to the PowerShell host. Usually this is the
+console application. However, you can redirect the output to a text file and
+you can redirect error output to the regular output stream.
+
+You can use the following methods to redirect output:
+
+- Use the `Out-File` cmdlet, which sends command output to a text file.
+  Typically, you use the `Out-File` cmdlet when you need to use its parameters,
+  such as the `Encoding`, `Force`, `Width`, or `NoClobber` parameters.
+
+- Use the `Tee-Object` cmdlet, which sends command output to a text file and
+  then sends it to the pipeline.
+
+- Use the PowerShell redirection operators. Redirecting the output of a
+  PowerShell command (cmdlet, function, script) using the redirection operator
+  (`&gt;`) is functionally equivalent to piping to `Out-File` with no extra
+  parameters. 
+
+
+For more information about streams, see [about_Output_Streams][04].
+
+## Redirectable output streams
+
+PowerShell supports redirection of the following output streams.
+
+| Stream # |      Description       | Introduced in  |    Write Cmdlet     |
+| -------- | ---------------------- | -------------- | ------------------- |
+| 1        | **Success** Stream     | PowerShell 2.0 | `Write-Output`      |
+| 2        | **Error** Stream       | PowerShell 2.0 | `Write-Error`       |
+| 3        | **Warning** Stream     | PowerShell 3.0 | `Write-Warning`     |
+| 4        | **Verbose** Stream     | PowerShell 3.0 | `Write-Verbose`     |
+| 5        | **Debug** Stream       | PowerShell 3.0 | `Write-Debug`       |
+| 6        | **Information** Stream | PowerShell 5.0 | `Write-Information`, `Write-Host` |
+| *        | All Streams            | PowerShell 3.0 |                     |
+
+There is also a **Progress** stream in PowerShell, but it doesn&#x27;t support
+redirection.
+
+&gt; [!IMPORTANT]
+&gt; The **Success** and **Error** streams are similar to the stdout and stderr
+&gt; streams of other shells. However, stdin isn&#x27;t connected to the PowerShell
+&gt; pipeline for input.
+
+## PowerShell redirection operators
+
+The PowerShell redirection operators are as follows, where `n` represents
+the stream number. The **Success** stream ( `1` ) is the default if no stream
+is specified.
+
+| Operator |                         Description                         | Syntax |
+| -------- | ----------------------------------------------------------- | ------ |
+| `&gt;`      | Send specified stream to a file.                            | `n&gt;`   |
+| `&gt;&gt;`     | **Append** specified stream to a file.                      | `n&gt;&gt;`  |
+| `&gt;&amp;1`    | _Redirects_ the specified stream to the **Success** stream. | `n&gt;&amp;1` |
+
+&gt; [!NOTE]
+&gt; Unlike some Unix shells, you can only redirect other streams to the
+&gt; **Success** stream.
+
+## Examples
+
+### Example 1: Redirect errors and output to a file
+
+This example runs `dir` on one item that succeeds, and one that fails.
+
+```powershell
+dir C:\, fakepath 2&gt;&amp;1 &gt; .\dir.log
+```
+
+It uses `2&gt;&amp;1` to redirect the **Error** stream to the **Success** stream, and
+`&gt;` to send the resultant **Success** stream to a file called `dir.log`
+
+### Example 2: Send all Success stream data to a file
+
+This example sends all **Success** stream data to a file called `script.log`.
+
+```powershell
+.\script.ps1 &gt; script.log
+```
+
+### Example 3: Send Success, Warning, and Error streams to a file
+
+This example shows how you can combine redirection operators to achieve a
+desired result.
+
+```powershell
+&amp;{
+   Write-Warning &quot;hello&quot;
+   Write-Error &quot;hello&quot;
+   Write-Output &quot;hi&quot;
+} 3&gt;&amp;1 2&gt;&amp;1 &gt; C:\Temp\redirection.log
+```
+
+- `3&gt;&amp;1` redirects the **Warning** stream to the **Success** stream.
+- `2&gt;&amp;1` redirects the **Error** stream to the **Success** stream (which also
+  now includes all **Warning** stream data)
+- `&gt;` redirects the **Success** stream (which now contains both **Warning**
+  and **Error** streams) to a file called `C:\temp\redirection.log`.
+
+### Example 4: Redirect all streams to a file
+
+This example sends all streams output from a script called `script.ps1` to a
+file called `script.log`.
+
+```powershell
+.\script.ps1 *&gt; script.log
+```
+
+### Example 5: Suppress all Write-Host and Information stream data
+
+This example suppresses all information stream data. To read more about
+**Information** stream cmdlets, see
+[Write-Host][11] and
+[Write-Information][12]
+
+```powershell
+&amp;{
+   Write-Host &quot;Hello&quot;
+   Write-Information &quot;Hello&quot; -InformationAction Continue
+} 6&gt; $null
+```
+
+### Example 6: Show the effect of Action Preferences
+
+Action Preference variables and parameters can change what gets written to a
+particular stream. The script in this example shows how the value of
+`$ErrorActionPreference` affects what gets written to the **Error** stream.
+
+```powershell
+$ErrorActionPreference = &#x27;Continue&#x27;
+$ErrorActionPreference &gt; log.txt
+Get-Item /not-here 2&gt;&amp;1 &gt;&gt; log.txt
+
+$ErrorActionPreference = &#x27;SilentlyContinue&#x27;
+$ErrorActionPreference &gt;&gt; log.txt
+Get-Item /not-here 2&gt;&amp;1 &gt;&gt; log.txt
+
+$ErrorActionPreference = &#x27;Stop&#x27;
+$ErrorActionPreference &gt;&gt; log.txt
+try {
+    Get-Item /not-here 2&gt;&amp;1 &gt;&gt; log.txt
+}
+catch {
+    &quot;`tError caught!&quot; &gt;&gt; log.txt
+}
+$ErrorActionPreference = &#x27;Ignore&#x27;
+$ErrorActionPreference &gt;&gt; log.txt
+Get-Item /not-here 2&gt;&amp;1 &gt;&gt; log.txt
+
+$ErrorActionPreference = &#x27;Inquire&#x27;
+$ErrorActionPreference &gt;&gt; log.txt
+Get-Item /not-here 2&gt;&amp;1 &gt;&gt; log.txt
+
+$ErrorActionPreference = &#x27;Continue&#x27;
+```
+
+When we run this script we get prompted when `$ErrorActionPreference` is set to
+`Inquire`.
+
+```powershell
+PS C:\temp&gt; .\test.ps1
+
+Confirm
+Can&#x27;t find path &#x27;C:\not-here&#x27; because it doesn&#x27;t exist.
+[Y] Yes  [A] Yes to All  [H] Halt Command  [S] Suspend  [?] Help (default is &quot;Y&quot;): H
+Get-Item: C:\temp\test.ps1:23
+Line |
+  23 |  Get-Item /not-here 2&gt;&amp;1 &gt;&gt; log.txt
+     |  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | The running command stopped because the user selected the Stop option.
+```
+
+When we examine the log file we see the following:
+
+```powershell
+PS C:\temp&gt; Get-Content .\log.txt
+Continue
+
+Get-Item: C:\temp\test.ps1:3
+Line |
+   3 |  Get-Item /not-here 2&gt;&amp;1 &gt;&gt; log.txt
+     |  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | Cannot find path &#x27;C:\not-here&#x27; because it does not exist.
+
+SilentlyContinue
+Stop
+    Error caught!
+Ignore
+Inquire
+```
+
+## Notes
+
+The redirection operators that don&#x27;t append data (`&gt;` and `n&gt;`) overwrite the
+current contents of the specified file without warning.
+
+However, if the file is a read-only, hidden, or system file, the redirection
+**fails**. The append redirection operators (`&gt;&gt;` and `n&gt;&gt;`) don&#x27;t write to a
+read-only file, but they append content to a system or hidden file.
+
+To force the redirection of content to a read-only, hidden, or system file,
+use the `Out-File` cmdlet with its `Force` parameter.
+
+When you are writing to files, the redirection operators use `UTF8NoBOM`
+encoding. If the file has a different encoding, the output might not be
+formatted correctly. To write to files with a different encoding, use the
+`Out-File` cmdlet with its `Encoding` parameter.
+
+# about_Redirection
+
+### Width of output when writing to a file
+
+When you are writing to a file using either `Out-File` or the redirection
+operators, PowerShell formats table output to the file based on the width of
+the console it&#x27;s running within. For instance, when logging table output
+to file using a command like `Get-ChildItem Env:\Path &gt; path.log` on a system
+where the console width is set to 80 columns, the output in the file is
+truncated to 80 characters:
+
+```Output
+Name                         Value
+----                         -----
+Path                         C:\Program Files\PowerShell\7;C:\WINDOWS…
+```
+
+Considering that the console width may be set arbitrarily on systems where
+your script is run, you may prefer that PowerShell format table output to
+files based on a width that you specify instead.
+
+The `Out-File` cmdlet provides a **Width** parameter that allows you to set
+the width you would like for table output. Rather than having to add
+`-Width 2000` everywhere you invoke `Out-File`, you can use the
+`$PSDefaultParameterValues` variable to set this value for all usages of the
+`Out-File` cmdlet in a script. And since the redirection operators (`&gt;` and
+`&gt;&gt;`) are effectively aliases for `Out-File`, setting the `Out-File:Width`
+parameter for the whole script impacts the formatting width for the
+redirection operators as well. Put the following command near the top of your
+script to set `Out-File:Width` for the whole script:
+
+```powershell
+$PSDefaultParameterValues[&#x27;Out-File:Width&#x27;] = 2000
+```
+
+Increasing the output width will increase memory consumption when logging
+table formatted output. If you are logging a lot of tabular data to file and
+you know you can get by with a smaller width, use the smaller width.
+
+In some cases, such as `Get-Service` output, in order to use the extra width
+you will need to pipe the output through `Format-Table -AutoSize` before
+outputting to file.
+
+```powershell
+$PSDefaultParameterValues[&#x27;Out-File:Width&#x27;] = 2000
+Get-Service | Format-Table -AutoSize &gt; services.log
+```
+
+For more information about `$PSDefaultParameterValues`, see
+[about_Preference_Variables][06].
+
+### Redirecting binary data
+
+PowerShell doesn&#x27;t support the redirection of binary data. If you redirect
+byte-stream data, PowerShell treats the data as strings. This redirection
+results in corrupted data.
+
+### Potential confusion with comparison operators
+
+The `&gt;` operator isn&#x27;t to be confused with the [Greater-than][02] comparison
+operator (often denoted as `&gt;` in other programming languages).
+
+Depending on the objects being compared, the output using `&gt;` can appear to be
+correct (because 36 isn&#x27;t greater than 42).
+
+```powershell
+PS&gt; if (36 &gt; 42) { &quot;true&quot; } else { &quot;false&quot; }
+false
+```
+
+However, a check of the local filesystem can see that a file called `42` was
+written, with the contents `36`.
+
+```powershell
+PS&gt; dir
+
+Mode                LastWriteTime         Length Name
+----                -------------         ------ ----
+------          1/02/20  10:10 am              3 42
+
+PS&gt; cat 42
+36
+```
+
+Attempting to use the reverse comparison `&lt;` (less than), yields a system error:
+
+```powershell
+PS&gt; if (36 &lt; 42) { &quot;true&quot; } else { &quot;false&quot; }
+At line:1 char:8
++ if (36 &lt; 42) { &quot;true&quot; } else { &quot;false&quot; }
++        ~
+The &#x27;&lt;&#x27; operator is reserved for future use.
+    + CategoryInfo          : ParserError: (:) [], ParentContainsErrorRecordException
+    + FullyQualifiedErrorId : RedirectionNotSupported
+```
+
+If numeric comparison is the required operation, `-lt` and `-gt` should be
+used. For more information, see the `-gt` operator in
+[about_Comparison_Operators][02].
+
+## See also
+
+- [about_Command_Syntax][01]
+- [about_Operators][03]
+- [about_Output_Streams][04]
+- [about_Path_Syntax][05]
+- [Out-File][07]
+- [Tee-Object][08]
+- [Write-Debug][09]
+- [Write-Error][10]
+- [Write-Host][11]
+- [Write-Information][12]
+- [Write-Output][13]
+- [Write-Progress][14]
+- [Write-Verbose][15]
+- [Write-Warning][16]
+
+&lt;!-- link references --&gt;
+[01]: about_Command_Syntax.md
+[02]: about_Comparison_Operators.md#-gt--ge--lt-and--le
+[03]: about_Operators.md
+[04]: about_Output_Streams.md
+[05]: about_Path_Syntax.md
+[06]: about_Preference_Variables.md#psdefaultparametervalues
+[07]: xref:Microsoft.PowerShell.Utility.Out-File
+[08]: xref:Microsoft.PowerShell.Utility.Tee-Object
+[09]: xref:Microsoft.PowerShell.Utility.Write-Debug
+[10]: xref:Microsoft.PowerShell.Utility.Write-Error
+[11]: xref:Microsoft.PowerShell.Utility.Write-Host
+[12]: xref:Microsoft.PowerShell.Utility.Write-Information
+[13]: xref:Microsoft.PowerShell.Utility.Write-Output
+[14]: xref:Microsoft.PowerShell.Utility.Write-Progress
+[15]: xref:Microsoft.PowerShell.Utility.Write-Verbose
+[16]: xref:Microsoft.PowerShell.Utility.Write-Warning
+###Microsoft Learn URL###
+https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_redirection/?view=powershell-5.1
+</pre></html>

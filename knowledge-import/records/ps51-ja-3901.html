@@ -1,0 +1,528 @@
+<!doctype html><html lang="ja"><meta charset="utf-8"><pre class="record-source">###KnowledgeNo###
+PS51-WS2022-2026-3901
+###FormatID###
+PS51-WS2022
+###CreatedAt###
+2026-08-01 00:00
+###UpdatedAt###
+2026-08-01 00:00
+###タイトル###
+Import-Clixml
+###モジュール###
+Microsoft.PowerShell.Utility
+###製品###
+Windows PowerShell 5.1
+###対応OS###
+Windows Server 2022
+###日本語訳###
+# 輸入-Clixml
+
+## SYNOPSISは CLIXML ファイルを輸入し,PowerShellで対応するオブジェクトを作成します.
+
+## SYNTAXは,のシンタックスです.
+
+### ByPath (デフォルト) 
+
+```
+Import-Clixml [-Path] &lt;String[]&gt; [-IncludeTotalCount] [-Skip &lt;UInt64&gt;] [-First &lt;UInt64&gt;]
+ [&lt;CommonParameters&gt;]
+```
+
+### ByLiteralPath について
+
+```
+Import-Clixml -LiteralPath &lt;String[]&gt; [-IncludeTotalCount] [-Skip &lt;UInt64&gt;]
+ [-First &lt;UInt64&gt;] [&lt;CommonParameters&gt;]
+```
+
+## 記述は,
+
+   `Import-Clixml`cmdlet は,CLI (Common Language Infrastructure) XML ファイルにシリアル化されたオブジェクトを輸入します.`Import-Clixml`Windows コンピュータの場合は,安全XMLとして輸出された認証ファイルとセキュアな文字列を輸入し,  を使用します.`Export-Clixml`. [例 #2](#example-2-import-a-secure-credential-object) は,使用方法を示しています.`Import-Clixml`安全な認証オブジェクトを輸入する.
+
+CLIXMLデータはPowerShellオブジェクトに復元され,復元されます.しかし,復元されたオブジェクトはライブオブジェクトではありません. 復元された時点でのオブジェクトのスナップショットです. 復元されたオブジェクトには属性が含まれていますが,方法はありません.
+
+**TypeNames**のプロパティには,原型名前の前記に&quot;&quot;が付いている.`Deserialized`. [例 #3](#example-3-inspect-the-typenames-property-of-a-deserialized-object) は,deserialized object の **TypeNames** 属性を表示しています.
+
+`Import-Clixml`ファイルのエンコーディング形式を検出するためにバイト・オーダーマーク (BOM) を使用します.ファイルにBOMがない場合は,エンコーディングが UTF8であると仮定します.
+
+&gt; [!NOTE] &gt; `[System.Management.Automation.ScriptBlock]`オブジェクトは序列化され, に並べられる.`&lt;SKB&gt;`&gt; CLIXML の要素.しかし,その`&lt;SKB&gt;`要素は常に string に deserialized されます.
+
+CLIに関する詳細については, [言語独立] (/dotnet/standard/language-independence) を参照してください.
+
+## 例えは
+
+### 例1: シリアライズされたファイルを輸入してオブジェクトを再作成します.
+
+この例では,という文字を使用しています.`Export-Clixml`によって返還されたプロセス情報のシリアライズされたコピーを保存するcmdlet`Get-Process`  `Import-Clixml`シリアライズされたファイルの内容を回収し, に保存されているオブジェクトを再現します.`$Processes`変数です.
+
+```powershell
+Get-Process | Export-Clixml -Path .\pi.xml
+$Processes = Import-Clixml -Path .\pi.xml
+```
+
+### 例2: 安全な認証オブジェクトを輸入する
+
+この例では,あなたが保存した認証を&quot;&quot;に保存したものです.`$Credential`変数を実行することで変数を実行します.`Get-Credential`cmdlet,あなたは,  を実行することができます.`Export-Clixml`cmdlet で,ディスクにクレジット・リジレンスを保存します.
+
+&gt; [!IMPORTANT] &gt; `Export-Clixml`Windows で暗号化された認証を輸出するだけ.Windows以外のOSやLinuxなどのOSOSOSOSOSOSOSOSOSOSOSOSOSOSOSOSOSOSOSOSは,文字直かに認証を輸出する.
+
+```powershell
+$Credxmlpath = Join-Path (Split-Path $PROFILE) TestScript.ps1.credential
+$Credential | Export-Clixml $Credxmlpath
+$Credxmlpath = Join-Path (Split-Path $PROFILE) TestScript.ps1.credential
+$Credential = Import-Clixml $Credxmlpath
+```
+
+   `Export-Clixml`cmdlet は Windows [Data Protection API] (/previous-versions/windows/apps/hh464970) を利用して認証オブジェクトを暗号化します.暗号化により,認証オブジェクトの内容を暗号化できるのはユーザーアカウントのみです.`CLIXML`ファイルは別のコンピュータや別のユーザーによって使用できない.
+
+例では,認証証明書の保存ファイルは, で表示されています.`TestScript.ps1.credential`**TestScript**を,その認証証明書を読み込む脚本名に置き換える.
+
+認証対象をパイプラインを下に,  に送ります.`Export-Clixml`道路に保存して,`$Credxmlpath`命令の1番に指定した.
+
+脚本に認証を自動的に輸入するには,最後の2つのコマンドを実行します.`Import-Clixml`セキュリティーのある認証オブジェクトをスクリプトにインポートする.このインポートはスクリプトに素文字パスワードが暴露されるリスクを排除します.
+
+### 例3: デセリア化されたオブジェクトのTypeNames属性を検査する
+
+この例では,CLIXMLデータとして保存されたオブジェクトを輸入することを示しています.データはPowerShellオブジェクトに復元されます.しかし,復元されたオブジェクトはライブオブジェクトではありません. 復元された時のオブジェクトのスナップショットです.復元されたオブジェクトには属性が含まれていますが方法はありません.
+
+```powershell
+$original = [pscustomobject] @{
+    Timestamp = Get-Date
+    Label     = &#x27;Meeting event&#x27;
+}
+$original | Add-Member -MemberType ScriptMethod -Name GetDisplay -Value {
+    &#x27;{0:yyyy-MM-dd HH:mm} {1}&#x27; -f $this.Timestamp, $this.Label
+}
+$original | Get-Member -MemberType ScriptMethod
+```
+
+```Output
+   TypeName: System.Management.Automation.PSCustomObject
+
+Name        MemberType   Definition
+----        ----------   ----------
+Equals      Method       bool Equals(System.Object obj)
+GetHashCode Method       int GetHashCode()
+GetType     Method       type GetType()
+ToString    Method       string ToString()
+Label       NoteProperty string Label=Meeting event
+Timestamp   NoteProperty System.DateTime Timestamp=1/31/2024 2:27:59 PM
+GetDisplay  ScriptMethod System.Object GetDisplay();
+```
+
+```powershell
+$original | Export-Clixml -Path event.clixml
+$deserialized = Import-CliXml -Path event.clixml
+$deserialized | Get-Member
+```
+
+```Output
+   TypeName: Deserialized.System.Management.Automation.PSCustomObject
+
+Name        MemberType   Definition
+----        ----------   ----------
+Equals      Method       bool Equals(System.Object obj)
+GetHashCode Method       int GetHashCode()
+GetType     Method       type GetType()
+ToString    Method       string ToString()
+Label       NoteProperty string Label=Meeting event
+Timestamp   NoteProperty System.DateTime Timestamp=1/31/2024 2:27:59 PM
+```
+
+ のオブジェクトのタイプは,`$original`** isSystem.Management.Automation.PSCustomObject**,しかし,Object の種類は,`$deserialized`** isDeserialized.System.Management.Automation.PSCustomObject**. また,その`GetDisplay()`消化されたオブジェクトにはメソッドが欠けている.
+
+## パラメータは
+
+### -First ファースト
+
+指定された数値だけ取得する.取得する数値を入力する.
+
+```yaml
+Type: System.UInt64
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -IncludeTotalCount を含む生計を表示する
+
+データの集合内のオブジェクトの総数を報告する.選択されたオブジェクトが続く.もしcmdletが総数を決定できない場合は, **Unknown total count**を表示します.整数には**Accuracy**属性があり,総数の信頼性を示す. **Accuracy**の値は から等しいです.`0.0` に`1.0`どこに?`0.0`つまり,cmdletがオブジェクトを数えることができなかったということです.`1.0`計数が正確であり,値が  の間の値であることを意味します.`0.0`そして,`1.0`信頼性が高くなる見積もりを示しています.
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -リテラルパース
+
+XMLファイルへのパス指定します. **Path**とは異なり,LiteralPath**パラメータの値は入力されたままに使用されます.文字はワイルドカードとして解釈されません.パスにエスケープ文字が含まれている場合は,単一の引用符で囲み付けます.単一の引用符はPowerShellに文字をエスケープシーケンスのように解釈しないように言います.
+
+```yaml
+Type: System.String[]
+Parameter Sets: ByLiteralPath
+Aliases: PSPath
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+# 輸入-Clixml
+
+### - 歩道
+
+XMLファイルへの経路を指定します.
+
+```yaml
+Type: System.String[]
+Parameter Sets: ByPath
+Aliases:
+
+Required: True
+Position: 0
+Default value: None
+Accept pipeline input: True (ByPropertyName, ByValue)
+Accept wildcard characters: False
+```
+
+### -Skip 
+
+指定された数値を無視して,残りの数値を取得する. 跳ね出す数値を入力します.
+
+```yaml
+Type: System.UInt64
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### 共通パラメーター
+
+このcmdletは,共通パラメータをサポートしています: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable.詳細については, [about_CommonParameters](を参照してください.https://go.microsoft.com/fwlink/?LinkID=113216) でした.
+
+## 輸入は
+
+### System.String でした.
+
+このcmdletへの経路を含む文字列をパイプすることができます.
+
+## 輸出は
+
+### システム管理自動化PSObject
+
+このcmdletは,保存されたXMLファイルから消化されたオブジェクトを返します.
+
+##  NOTES  記事ができました.
+
+あるパラメータの複数の値を指定する際には,コマを使って値を分離します.例えば, `&lt;parameter-name&gt; &lt;value1&gt;, &lt;value2&gt;` .
+
+## 関連リンク
+
+[Export-Clixml](Export-Clixml.md) 
+
+[XML Serializationを導入する](/dotnet/standard/serialization/introducing-xml-serialization)
+
+[Join-Path](../Microsoft.PowerShell.Management/Join-Path.md) 
+
+[ディスク上の安全保存認証](https://powershellcookbook.com/recipe/PukO/securely-store-credentials-on-disk) 
+
+[Legacy Systemsに認証を渡すためのPowerShellを使用する]https://devblogs.microsoft.com/scripting/use-powershell-to-pass-credentials-to-legacy-systems/) 
+###英語原文###
+# Import-Clixml
+
+## SYNOPSIS
+Imports a CLIXML file and creates corresponding objects in PowerShell.
+
+## SYNTAX
+
+### ByPath (Default)
+
+```
+Import-Clixml [-Path] &lt;String[]&gt; [-IncludeTotalCount] [-Skip &lt;UInt64&gt;] [-First &lt;UInt64&gt;]
+ [&lt;CommonParameters&gt;]
+```
+
+### ByLiteralPath
+
+```
+Import-Clixml -LiteralPath &lt;String[]&gt; [-IncludeTotalCount] [-Skip &lt;UInt64&gt;]
+ [-First &lt;UInt64&gt;] [&lt;CommonParameters&gt;]
+```
+
+## DESCRIPTION
+
+The `Import-Clixml` cmdlet imports objects that have been serialized into a Common Language
+Infrastructure (CLI) XML file. A valuable use of `Import-Clixml` on Windows computers is to import
+credentials and secure strings that were exported as secure XML using `Export-Clixml`.
+[Example #2](#example-2-import-a-secure-credential-object) shows how to use `Import-Clixml` to
+import a secure credential object.
+
+The CLIXML data is deserialized back into PowerShell objects. However, the deserialized objects
+aren&#x27;t a live objects. They are a snapshot of the objects at the time of serialization. The
+deserialized objects include properties but no methods.
+
+The **TypeNames** property contains the original type name prefixed with `Deserialized`.
+[Example #3](#example-3-inspect-the-typenames-property-of-a-deserialized-object) show the
+**TypeNames** property of a deserialized object.
+
+`Import-Clixml` uses the byte-order-mark (BOM) to detect the encoding format of the file. If the
+file has no BOM, it assumes the encoding is UTF8.
+
+&gt; [!NOTE]
+&gt; `[System.Management.Automation.ScriptBlock]` objects are serialized into the `&lt;SKB&gt;` element in
+&gt; CLIXML. However, the `&lt;SKB&gt;` element is always deserialized to **Strings**.
+
+For more information about CLI, see
+[Language independence](/dotnet/standard/language-independence).
+
+## EXAMPLES
+
+### Example 1: Import a serialized file and recreate an object
+
+This example uses the `Export-Clixml` cmdlet to save a serialized copy of the process information
+returned by `Get-Process`. `Import-Clixml` retrieves the serialized file&#x27;s contents and recreates an
+object that is stored in the `$Processes` variable.
+
+```powershell
+Get-Process | Export-Clixml -Path .\pi.xml
+$Processes = Import-Clixml -Path .\pi.xml
+```
+
+### Example 2: Import a secure credential object
+
+In this example, given a credential that you&#x27;ve stored in the `$Credential` variable by running the
+`Get-Credential` cmdlet, you can run the `Export-Clixml` cmdlet to save the credential to disk.
+
+&gt; [!IMPORTANT]
+&gt; `Export-Clixml` only exports encrypted credentials on Windows. On non-Windows operating systems
+&gt; such as macOS and Linux, credentials are exported in plain text.
+
+```powershell
+$Credxmlpath = Join-Path (Split-Path $PROFILE) TestScript.ps1.credential
+$Credential | Export-Clixml $Credxmlpath
+$Credxmlpath = Join-Path (Split-Path $PROFILE) TestScript.ps1.credential
+$Credential = Import-Clixml $Credxmlpath
+```
+
+The `Export-Clixml` cmdlet encrypts credential objects by using the Windows
+[Data Protection API](/previous-versions/windows/apps/hh464970(v=win.10)). The encryption ensures
+that only your user account can decrypt the contents of the credential object. The exported `CLIXML`
+file can&#x27;t be used on a different computer or by a different user.
+
+In the example, the file in which the credential is stored is represented by
+`TestScript.ps1.credential`. Replace **TestScript** with the name of the script with which you&#x27;re
+loading the credential.
+
+You send the credential object down the pipeline to `Export-Clixml`, and save it to the path,
+`$Credxmlpath`, that you specified in the first command.
+
+To import the credential automatically into your script, run the final two commands. Run
+`Import-Clixml` to import the secured credential object into your script. This import eliminates the
+risk of exposing plain-text passwords in your script.
+
+### Example 3: Inspect the TypeNames property of a deserialized object
+
+This example shows importing an object stored as CLIXML data. The data is deserialized back into a
+PowerShell object. However, the deserialized object aren&#x27;t a live objects. They are a snapshot of
+the objects at the time of serialization. The deserialized objects include properties but no
+methods.
+
+```powershell
+$original = [pscustomobject] @{
+    Timestamp = Get-Date
+    Label     = &#x27;Meeting event&#x27;
+}
+$original | Add-Member -MemberType ScriptMethod -Name GetDisplay -Value {
+    &#x27;{0:yyyy-MM-dd HH:mm} {1}&#x27; -f $this.Timestamp, $this.Label
+}
+$original | Get-Member -MemberType ScriptMethod
+```
+
+```Output
+   TypeName: System.Management.Automation.PSCustomObject
+
+Name        MemberType   Definition
+----        ----------   ----------
+Equals      Method       bool Equals(System.Object obj)
+GetHashCode Method       int GetHashCode()
+GetType     Method       type GetType()
+ToString    Method       string ToString()
+Label       NoteProperty string Label=Meeting event
+Timestamp   NoteProperty System.DateTime Timestamp=1/31/2024 2:27:59 PM
+GetDisplay  ScriptMethod System.Object GetDisplay();
+```
+
+```powershell
+$original | Export-Clixml -Path event.clixml
+$deserialized = Import-CliXml -Path event.clixml
+$deserialized | Get-Member
+```
+
+```Output
+   TypeName: Deserialized.System.Management.Automation.PSCustomObject
+
+Name        MemberType   Definition
+----        ----------   ----------
+Equals      Method       bool Equals(System.Object obj)
+GetHashCode Method       int GetHashCode()
+GetType     Method       type GetType()
+ToString    Method       string ToString()
+Label       NoteProperty string Label=Meeting event
+Timestamp   NoteProperty System.DateTime Timestamp=1/31/2024 2:27:59 PM
+```
+
+Note that the type of the object in `$original` is **System.Management.Automation.PSCustomObject**,
+but the type of the object in `$deserialized` is
+**Deserialized.System.Management.Automation.PSCustomObject**. Also, the `GetDisplay()` method is
+missing from the deserialized object.
+
+## PARAMETERS
+
+### -First
+
+Gets only the specified number of objects. Enter the number of objects to get.
+
+```yaml
+Type: System.UInt64
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -IncludeTotalCount
+
+Reports the total number of objects in the data set followed by the selected objects. If the cmdlet
+can&#x27;t determine the total count, it displays **Unknown total count**. The integer has an
+**Accuracy** property that indicates the reliability of the total count value. The value of
+**Accuracy** ranges from `0.0` to `1.0` where `0.0` means that the cmdlet couldn&#x27;t count the
+objects, `1.0` means that the count is exact, and a value between `0.0` and `1.0` indicates an
+increasingly reliable estimate.
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -LiteralPath
+
+Specifies the path to the XML files. Unlike **Path**, the value of the **LiteralPath** parameter is
+used exactly as it&#x27;s typed. No characters are interpreted as wildcards. If the path includes escape
+characters, enclose it in single quotation marks. Single quotation marks tell PowerShell not to
+interpret any characters as escape sequences.
+
+```yaml
+Type: System.String[]
+Parameter Sets: ByLiteralPath
+Aliases: PSPath
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+# Import-Clixml
+
+### -Path
+
+Specifies the path to the XML files.
+
+```yaml
+Type: System.String[]
+Parameter Sets: ByPath
+Aliases:
+
+Required: True
+Position: 0
+Default value: None
+Accept pipeline input: True (ByPropertyName, ByValue)
+Accept wildcard characters: False
+```
+
+### -Skip
+
+Ignores the specified number of objects and then gets the remaining objects. Enter the number of
+objects to skip.
+
+```yaml
+Type: System.UInt64
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### CommonParameters
+
+This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable,
+-InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose,
+-WarningAction, and -WarningVariable. For more information, see
+[about_CommonParameters](https://go.microsoft.com/fwlink/?LinkID=113216).
+
+## INPUTS
+
+### System.String
+
+You can pipe a string containing a path to this cmdlet.
+
+## OUTPUTS
+
+### System.Management.Automation.PSObject
+
+This cmdlet returns objects that were deserialized from the stored XML files.
+
+## NOTES
+
+When specifying multiple values for a parameter, use commas to separate the values. For example,
+`&lt;parameter-name&gt; &lt;value1&gt;, &lt;value2&gt;`.
+
+## RELATED LINKS
+
+[Export-Clixml](Export-Clixml.md)
+
+[Introducing XML Serialization](/dotnet/standard/serialization/introducing-xml-serialization)
+
+[Join-Path](../Microsoft.PowerShell.Management/Join-Path.md)
+
+[Securely Store Credentials on Disk](https://powershellcookbook.com/recipe/PukO/securely-store-credentials-on-disk)
+
+[Use PowerShell to Pass Credentials to Legacy Systems](https://devblogs.microsoft.com/scripting/use-powershell-to-pass-credentials-to-legacy-systems/)
+###Microsoft Learn URL###
+https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.utility/import-clixml/?view=powershell-5.1
+</pre></html>

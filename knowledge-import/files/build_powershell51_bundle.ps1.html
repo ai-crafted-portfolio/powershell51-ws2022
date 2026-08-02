@@ -1,0 +1,27 @@
+<!doctype html><html lang="ja"><meta charset="utf-8"><pre class="file-source">param(
+  [string]$RecordsDir = &#x27;.\records&#x27;,
+  [string]$OutputPath = &#x27;.\powershell51_knowledge_bundle_cp932.txt&#x27;
+)
+$ErrorActionPreference = &#x27;Stop&#x27;
+$ExpectedRecords = 4030
+$Encoding932 = [System.Text.Encoding]::GetEncoding(932)
+$recordFiles = Get-ChildItem -LiteralPath $RecordsDir -Filter &#x27;PS51-WS2022-2026-*.txt&#x27; -File | Sort-Object Name
+if ($recordFiles.Count -ne $ExpectedRecords) {
+  throw &quot;records ?????? $ExpectedRecords ????????: $($recordFiles.Count)&quot;
+}
+$builder = New-Object System.Text.StringBuilder
+foreach ($recordFile in $recordFiles) {
+  $text = Get-Content -LiteralPath $recordFile.FullName -Raw -Encoding UTF8
+  if (-not $text.StartsWith(&#x27;###KnowledgeNo###&#x27;)) {
+    throw &quot;??????????: $($recordFile.Name)&quot;
+  }
+  $normalized = $text -replace &quot;`r`n&quot;, &quot;`n&quot; -replace &quot;`r&quot;, &quot;`n&quot;
+  $normalized = $normalized.TrimEnd(&quot;`n&quot;)
+  [void]$builder.Append($normalized.Replace(&quot;`n&quot;, &quot;`r`n&quot;))
+  [void]$builder.Append(&quot;`r`n&quot;)
+}
+$bundleText = $builder.ToString()
+$bundleBytes = $Encoding932.GetBytes($bundleText)
+[System.IO.File]::WriteAllBytes((Join-Path (Get-Location) $OutputPath), $bundleBytes)
+Write-Host &quot;BUILD PASS output=$OutputPath records=$($recordFiles.Count) encoding=CP932 line_endings=CRLF&quot;
+</pre></html>

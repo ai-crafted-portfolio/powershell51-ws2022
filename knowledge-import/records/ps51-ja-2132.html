@@ -1,0 +1,263 @@
+<!doctype html><html lang="ja"><meta charset="utf-8"><pre class="record-source">###KnowledgeNo###
+PS51-WS2022-2026-2132
+###FormatID###
+PS51-WS2022
+###CreatedAt###
+2026-08-01 00:00
+###UpdatedAt###
+2026-08-01 00:00
+###タイトル###
+New-NetIPsecMainModeCryptoProposal
+###モジュール###
+netsecurity
+###製品###
+Windows PowerShell 5.1
+###対応OS###
+Windows Server 2022
+###日本語訳###
+# New-NetIPsecMainModeCryptoProposal について
+
+## SYNOPSISは,IPsecのメインモードでの他のコンピュータとの交渉で提供する暗号プロトコルセットを指定するメインモード暗号提案を作成します.
+
+## SYNTAXは,のシンタックスです.
+
+```
+New-NetIPsecMainModeCryptoProposal [-Encryption &lt;EncryptionAlgorithm&gt;] [-KeyExchange &lt;DiffieHellmanGroup&gt;]
+ [-Hash &lt;HashAlgorithm&gt;] [&lt;CommonParameters&gt;]
+```
+
+## 記述 ニュー・ネットIPsecMainModeCryptoProposal** cmdlet は,メインモード交渉で使用する単一の暗号提案を作成します.
+
+**NetIPsecMainModeCryptoProposal**オブジェクトは,メインモードセキュリティ協会 (SA) の交渉に必要な4つのパラメータのうち3つを提供しています.暗号アルゴリズムは *Encryption*パラメータで提供され, *Hash*パラメータでハッシュアルゴリズムが提供され, *KeyExchange*パラメータでベースキー素材に使用されるディフィー・ヘルマン (DH) キー交換グループが提供されます.残りのパラメータは,Kerberos v5,証明書,または先共有鍵認証などの認証方法が **NetIPsecPhaseAuthSet**および **NetIPsecPhase2AuthSet**オブジェクトを通じて提供されます.
+
+**NetIPsecMainModeCryptoProposal** 複数のフィールドが単一の NetIPsecMainModeCryptoSet オブジェクトにグループ化されます.メインモード交換は,応答者が送信者と共通している最初の提案を使用します. **NetIPsecPhase1AuthSet** オブジェクトと **NetIPsecMainModeCryptoSet** オブジェクトは,カスタマイズされたメインモード交渉に必要なすべての SA パラメータを提供するために, **NetIPsecMainModeRule** オブジェクトに関連付けられます.
+
+## 例えは
+
+### 例1 ```
+PS C:\&gt;$proposal1 = (New-NetIPsecMainModeCryptoProposal -Encryption DES3 -Hash MD5 -KeyExchange DH1)
+
+
+
+PS C:\&gt;$proposal2 = (New-NetIPsecMainModeCryptoProposal -Encryption AES192 -Hash MD5 -KeyExchange DH14)
+
+
+
+PS C:\&gt;$proposal3 = (New-NetIPsecMainModeCryptoProposal -Encryption DES3 -Hash MD5 -KeyExchange DH19)
+
+
+
+PS C:\&gt;$mMCryptoSet= (New-NetIPsecMainModeCryptoSet -DisplayName &quot;Main Mode Crypto Set&quot; -Proposal $proposal1,$proposal2,$proposal3)
+
+
+This cmdlet shows an alternative method of accomplishing the previous steps.
+PS C:\&gt;$mMCryptoSet = New-NetIPsecMainModeCryptoSet -DisplayName &quot;Main Mode Crypto Set&quot; -Proposal (New-NetIPsecMainModeCryptoProposal -Encryption DES3 -Hash MD5 -KeyExchange DH1),(New-NetIPsecMainModeCryptoProposal -Encryption AES192 -Hash MD5 -KeyExchange DH14),(New-NetIPsecMainModeCryptoProposal -Encryption DES3 -Hash MD5 -KeyExchange DH19) 
+
+
+
+PS C:\&gt;New-NetIPsecMainModeRule -DisplayName &quot;Main Mode Rule&quot; -MainModeCryptoSet $mMCryptoSet.Name
+```
+
+この例では,暗号セットにリンクされたメインモードルールが作成され,暗号提案が3つ含まれています.
+
+## パラメータは
+
+### -暗号化 IPsec メインモードセキュリティ関連交渉に使用する暗号化アルゴリズムを指定します.暗号化およびハッシングアルゴリズムのブロックサイズは同じである必要があります.このパラメータの受け入れ可能な値は: None, DES, DES3, AES128, AES192, AES256, AESGCM128, AESGCM192,または AESGCM256です.どれもRFC標準による Null Encryption を意味しません.デフォルト値は AES256です.暗号化のためのGCMも,ハッシングのためのGMACも,メインモードではサポートされていません.これらは快速モードのみです.
+
+```yaml
+Type: EncryptionAlgorithm
+Parameter Sets: (All)
+Aliases: 
+Accepted values: None, DES, DES3, AES128, AES192, AES256, AESGCM128, AESGCM192, AESGCM256
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Hash は,IPsec メインモードセキュリティ関連交渉に使用するハッシュ機能を指定します.暗号化とハッシュアルゴリズムのブロックサイズは同じであるべきです.このパラメータの受け入れ可能な値は: None, MD5, SHA1, SHA256, SHA384, AESGMAC128, AESGMAC192,または AESGMAC256.デフォルト値は SHA384.
+
+```yaml
+Type: HashAlgorithm
+Parameter Sets: (All)
+Aliases: 
+Accepted values: None, MD5, SHA1, SHA256, SHA384, AESGMAC128, AESGMAC192, AESGMAC256
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -KeyExchange は,IPsec メインモードセキュリティ関連交渉に使用する Diffie-Hellman グループを指定します.このパラメータの受け入れ可能な値は: None, DH1, DH2, DH14, DH19, DH20,または DH24.デフォルト値は Noneです. SameAsMainMode は,SameAsMainMode を使用して指定された PerfectForwardSecrecyGroup (PFS) を用いて快モード暗号セットに追加された提案のみで有効です.
+
+```yaml
+Type: DiffieHellmanGroup
+Parameter Sets: (All)
+Aliases: 
+Accepted values: None, DH1, DH2, DH14, DH19, DH20, DH24, SameAsMainMode
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### 共通パラメータ このcmdletは共通パラメータをサポートしています: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable.詳細については, [about_CommonParameters](を参照してください.https://go.microsoft.com/fwlink/?LinkID=113216) でした.
+
+## 輸入は
+
+### どれもない
+
+## 輸出は
+
+### Microsoft.Management.Infrastructure.CimInstance#root\StandardCimv2\NetIPsec メインモードCryptoProposal ザ `Microsoft.Management.Infrastructure.CimInstance`Windows Management Instrumentation (WMI) のオブジェクトを表示する包装クラスです.ポンドサインの後に行進するパス () は,`#`) は,元々のWMIオブジェクトの名前空間とクラス名を提供します.
+
+##  NOTES  記事ができました.
+
+## 関連リンク
+
+[New-NetIPsecMainModeRule](./New-NetIPsecMainModeRule.md) について
+
+[New-NetIPsecMainModeCryptoSet](./New-NetIPsecMainModeCryptoSet.md) は,新しいModeCryptoSetを設定する.
+###英語原文###
+# New-NetIPsecMainModeCryptoProposal
+
+## SYNOPSIS
+Creates a main mode cryptographic proposal that specifies a suite of cryptographic protocols to offer in IPsec main mode negotiations with other computers.
+
+## SYNTAX
+
+```
+New-NetIPsecMainModeCryptoProposal [-Encryption &lt;EncryptionAlgorithm&gt;] [-KeyExchange &lt;DiffieHellmanGroup&gt;]
+ [-Hash &lt;HashAlgorithm&gt;] [&lt;CommonParameters&gt;]
+```
+
+## DESCRIPTION
+The **New-NetIPsecMainModeCryptoProposal** cmdlet creates a single cryptographic proposal to be used in main mode negotiations.
+
+A **NetIPsecMainModeCryptoProposal** object provides three of the mandatory four parameters for the negotiation of a main mode security association (SA): The encryption algorithm is provided in the *Encryption* parameter, the hashing algorithm in the *Hash* parameter, and the Diffie-Hellman (DH) key exchange group to be used for the base keying material in the *KeyExchange* parameter.
+The remaining parameter; the authentication method, such as Kerberos v5, certificate, or pre-shared key authentication, is given through **NetIPsecPhase1AuthSet** and **NetIPsecPhase2AuthSet** objects.
+
+Multiple **NetIPsecMainModeCryptoProposal** fields are grouped into a single NetIPsecMainModeCryptoSet object.
+The main mode exchange will use the first proposal that the responder has in common with the sender.
+A **NetIPsecPhase1AuthSet** object and a **NetIPsecMainModeCryptoSet** object get associated to a **NetIPsecMainModeRule** object to provide all the necessary SA parameters for customized main mode negotiations.
+
+## EXAMPLES
+
+### EXAMPLE 1
+```
+PS C:\&gt;$proposal1 = (New-NetIPsecMainModeCryptoProposal -Encryption DES3 -Hash MD5 -KeyExchange DH1)
+
+
+
+PS C:\&gt;$proposal2 = (New-NetIPsecMainModeCryptoProposal -Encryption AES192 -Hash MD5 -KeyExchange DH14)
+
+
+
+PS C:\&gt;$proposal3 = (New-NetIPsecMainModeCryptoProposal -Encryption DES3 -Hash MD5 -KeyExchange DH19)
+
+
+
+PS C:\&gt;$mMCryptoSet= (New-NetIPsecMainModeCryptoSet -DisplayName &quot;Main Mode Crypto Set&quot; -Proposal $proposal1,$proposal2,$proposal3)
+
+
+This cmdlet shows an alternative method of accomplishing the previous steps.
+PS C:\&gt;$mMCryptoSet = New-NetIPsecMainModeCryptoSet -DisplayName &quot;Main Mode Crypto Set&quot; -Proposal (New-NetIPsecMainModeCryptoProposal -Encryption DES3 -Hash MD5 -KeyExchange DH1),(New-NetIPsecMainModeCryptoProposal -Encryption AES192 -Hash MD5 -KeyExchange DH14),(New-NetIPsecMainModeCryptoProposal -Encryption DES3 -Hash MD5 -KeyExchange DH19) 
+
+
+
+PS C:\&gt;New-NetIPsecMainModeRule -DisplayName &quot;Main Mode Rule&quot; -MainModeCryptoSet $mMCryptoSet.Name
+```
+
+This example creates a main mode rule linked to a cryptographic set that contains three cryptographic proposals.
+
+## PARAMETERS
+
+### -Encryption
+Specifies the encryption algorithm to use for IPsec main mode security association negotiations.
+The block size of the encryption and hashing algorithms must be the same. 
+The acceptable values for this parameter are: None, DES, DES3, AES128, AES192, AES256, AESGCM128, AESGCM192, or AESGCM256.
+None implies Null Encryption per the RFC standard.
+The default value is AES256.
+Neither GCM, for encryption, nor GMAC, for hashing, are supported in main mode.
+These are quick mode only.
+
+```yaml
+Type: EncryptionAlgorithm
+Parameter Sets: (All)
+Aliases: 
+Accepted values: None, DES, DES3, AES128, AES192, AES256, AESGCM128, AESGCM192, AESGCM256
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Hash
+Specifies the hashing function to use for IPsec main mode security association negotiations.
+The block size of the encryption and hashing algorithms should be the same. 
+The acceptable values for this parameter are: None, MD5, SHA1, SHA256, SHA384, AESGMAC128, AESGMAC192, or AESGMAC256.
+The default value is SHA384.
+
+```yaml
+Type: HashAlgorithm
+Parameter Sets: (All)
+Aliases: 
+Accepted values: None, MD5, SHA1, SHA256, SHA384, AESGMAC128, AESGMAC192, AESGMAC256
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -KeyExchange
+Specifies the Diffie-Hellman group to use for IPsec main mode security association negotiations. 
+The acceptable values for this parameter are: None, DH1, DH2, DH14, DH19, DH20, or DH24.
+The default value is None.
+SameAsMainMode is only valid for proposals added to quick mode cryptographic sets with PerfectForwardSecrecyGroup (PFS) specified using SameAsMainMode.
+
+```yaml
+Type: DiffieHellmanGroup
+Parameter Sets: (All)
+Aliases: 
+Accepted values: None, DH1, DH2, DH14, DH19, DH20, DH24, SameAsMainMode
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### CommonParameters
+This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable. For more information, see [about_CommonParameters](https://go.microsoft.com/fwlink/?LinkID=113216).
+
+## INPUTS
+
+### None
+
+## OUTPUTS
+
+### Microsoft.Management.Infrastructure.CimInstance#root\StandardCimv2\NetIPsecMainModeCryptoProposal
+The `Microsoft.Management.Infrastructure.CimInstance` object is a wrapper class that displays Windows Management Instrumentation (WMI) objects.
+The path after the pound sign (`#`) provides the namespace and class name for the underlying WMI object.
+
+## NOTES
+
+## RELATED LINKS
+
+[New-NetIPsecMainModeRule](./New-NetIPsecMainModeRule.md)
+
+[New-NetIPsecMainModeCryptoSet](./New-NetIPsecMainModeCryptoSet.md)
+###Microsoft Learn URL###
+https://learn.microsoft.com/en-us/powershell/module/netsecurity/new-netipsecmainmodecryptoproposal/?view=windowsserver2022-ps
+</pre></html>

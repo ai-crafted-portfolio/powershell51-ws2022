@@ -1,0 +1,591 @@
+<!doctype html><html lang="ja"><meta charset="utf-8"><pre class="record-source">###KnowledgeNo###
+PS51-WS2022-2026-3721
+###FormatID###
+PS51-WS2022
+###CreatedAt###
+2026-08-01 00:00
+###UpdatedAt###
+2026-08-01 00:00
+###タイトル###
+Start-Transcript
+###モジュール###
+Microsoft.PowerShell.Host
+###製品###
+Windows PowerShell 5.1
+###対応OS###
+Windows Server 2022
+###日本語訳###
+# Start-Transcript を書き換える
+
+## SYNOPSISは,PowerShellセッションの一部または全部をテキストファイルに記録する.
+
+## SYNTAX 
+
+### ByPath (デフォルト) 
+
+```
+Start-Transcript [[-Path] &lt;String&gt;] [-Append] [-Force] [-NoClobber]
+ [-IncludeInvocationHeader] [-WhatIf] [-Confirm] [&lt;CommonParameters&gt;]
+```
+
+### ByLiteralPath について
+
+```
+Start-Transcript [[-LiteralPath] &lt;String&gt;] [-Append] [-Force] [-NoClobber]
+ [-IncludeInvocationHeader] [-WhatIf] [-Confirm] [&lt;CommonParameters&gt;]
+```
+
+### ByOutputDirectory でした.
+
+```
+Start-Transcript [[-OutputDirectory] &lt;String&gt;] [-Append] [-Force] [-NoClobber]
+ [-IncludeInvocationHeader] [-WhatIf] [-Confirm] [&lt;CommonParameters&gt;]
+```
+
+## 記述は,
+
+   `Start-Transcript`cmdlet は PowerShell セッションの一部または全部をテキストファイルに記録する.このレコーディングには,ユーザが入力するすべてのコマンドと,コンソール上で表示されるすべての出力が含まれます.
+
+デフォルトでは, `Start-Transcript`脚本を以下の場所に保存し,デフォルト名を使用します:
+
+- デフォルト位置: `$HOME\Documents`デフォルトファイル名は です.`PowerShell_transcript.&lt;computername&gt;.&lt;random&gt;.&lt;timestamp&gt;.txt` .
+
+Windows PowerShell 5.0 で起動すると,`Start-Transcript`すべてのトランスクリプトの生成されたファイル名にホスト名が含まれています.ファイル名には,同時に2個または複数のトランスクリプトを起動する際に潜在的な重写または複製を防ぐために名前の中にランダムな文字が含まれています.トランスクリプトを集中的な場所に保管する場合,コンピュータ名を含むことは有用です.ランダムな文字文字列は,ファイル名を推測してファイルに未許可アクセスを得るのを防ぐ.
+
+**Append**パラメータを使用する際には,ターゲットファイルにバイトオーダーマーク (BOM) がない場合`Start-Transcript`へのデフォルト`ASCII`この行動は,レコーディング中のマルチバイト文字の不正なエンコーディングに繋がる可能性があります.
+
+## 例えは,
+
+### 例1: 既定設定でトランスクリプトファイルを起動します
+
+```powershell
+Start-Transcript
+```
+
+このコマンドは,デフォルトファイル位置でトランスクリプトを起動します.
+
+### 例2:特定の場所からトランスクリプトファイルを起動します.
+
+```powershell
+Start-Transcript -Path &quot;C:\transcripts\transcript0.txt&quot; -NoClobber
+```
+
+このコマンドは,  の文字で書き換えを起動します.`Transcript0.txt`ファイルに載っている.`C:\transcripts`**NoClobber**パラメータは,既存のファイルが覆われるのを防ぐ.`Transcript0.txt`ファイルはすでに存在し,コマンドが失敗します.
+
+### 例3: 独自の名前でトランスクリプトファイルを起動し,ファイル共有に保存します.
+
+次の例では,共有された場所に保存できるだけのユニークな名前を持つレコーディングファイルを作成します.ファイル名はユーザーの名前,PowerShellを実行しているコンピュータのホスト名,PowerShellのバージョン,および日付と時間から構築されています.レコーディングは に保存されます.`\\Server01\Transcripts`ファイル共有.
+
+```powershell
+$sharePath  = &#x27;\\Server01\Transcripts&#x27;
+$username   = $Env:USERNAME
+$hostname   = hostname
+$version    = $PSVersionTable.PSVersion.ToString()
+$datetime   = Get-Date -F &#x27;yyyyMMddHHmmss&#x27;
+$filename   = &quot;Transcript-${username}-${hostname}-${version}-${datetime}.txt&quot;
+$Transcript = (Join-Path -Path $sharePath -ChildPath $filename).ToString()
+Start-Transcript
+```
+
+脚本ファイルへの完全な経路は, に保存されます.`$Transcript`優先順位変数について詳しくは,`$Transcript`優先順位変数については, [about_Preference_Variables] を参照してください.
+
+### 例4:Windowsシステムにおける相対的な経路を使用してレコーディングを開始します.
+
+Windows でOutputDirectory** パラメータを搭載した相対的なパスを使用すると,パスがあなたの  に相対的に表示されます.`Documents`ディレクトリです.
+
+```powershell
+Start-Transcript -Path .\transcripts
+```
+
+```Output
+Transcript started, output file is C:\Users\username\Documents\.\transcripts\PowerShell_transcript.HOSTNAME.8S6RpEfN.20251105152247.txt
+```
+
+## パラメータは
+
+### -アペンダント
+
+このcmdletは既存のファイルの端に新しいレコーディングを追加することを示します.ファイル指定するには **Path**パラメータを使用します.
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -フォース
+
+cmdlet は,既存の読み書きのみのファイルに文字を添付することを許可します.読み書きのみのファイルで使用された場合,cmdlet は読み書きのファイル許可を変更します.このパラメータを使用すると,cmdlet はセキュリティ制限を覆すことはできません.
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -IncludeInvocationHeader を含める
+
+このcmdletがコマンドを実行するときにタイムスタンプを記録することを示します.
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -リテラルパース
+
+脚本ファイルに位置を指定する. **Path**パラメータとは異なり,LiteralPath**パラメータの値は入力されたまま使用されます.文字はワイルドカードとして解釈されません.パスにエスケープ文字が含まれている場合は,単一の引用符で囲み込む.単一の引用符はPowerShellにエスケープシーケンスのように解釈しないように通知します.
+
+```yaml
+Type: System.String
+Parameter Sets: ByLiteralPath
+Aliases: PSPath
+
+Required: False
+Position: 0
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### - ノックロバー
+
+このcmdletは既存のファイルに重書きをしていないことを示します.デフォルトでは,指定されたパスでトランスクリプトファイルが存在した場合, `Start-Transcript`警告なしにファイルを書き換えます.
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases: NoOverwrite
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -OutputDirectory
+
+PowerShellで自動的にテキスト名を割り当てます.相対的なパスを使用すると,パスはあなたの  に相対です.`Documents`Windowsのディレクトリ.
+
+```yaml
+Type: System.String
+Parameter Sets: ByOutputDirectory
+Aliases:
+
+Required: False
+Position: 0
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### - 歩道
+
+テキストファイルに位置を指定します. へのパス入力します.`.txt`ワイルドカードは許可されていません. パス内のディレクトリが存在しない場合は,コマンドが失敗します.
+
+経路を指定しない場合は, `Start-Transcript`の値でパスを使用します.`$Transcript`この変数を作成していない場合は,  グローバル変数です.`Start-Transcript`文字をデフォルトの位置とファイル名で保存します.
+
+```yaml
+Type: System.String
+Parameter Sets: ByPath
+Aliases:
+
+Required: False
+Position: 0
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -確認
+
+cmdletを実行する前に確認を提示します.
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases: cf
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+# Start-Transcript を書き換える
+
+### -WhatIf
+
+実行されないcmdletが実行されればどうなるかを示しています.
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases: wi
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### 共通パラメーター
+
+このcmdletは,共通パラメータをサポートしています: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable.詳細については, [about_CommonParameters](を参照してください.https://go.microsoft.com/fwlink/?LinkID=113216) でした.
+
+## 輸入は
+
+### どれもない
+
+このcmdletに物体をパイプすることはできません.
+
+## 輸出は
+
+### System.String でした.
+
+このcmdletでは,確認メッセージと出力ファイルへの経路を含む文字列が返されます.
+
+##  NOTES  記事ができました.
+
+書き換えを停止するには,  を使います.`Stop-Transcript`cmdletです.
+
+セッション全体を記録するには,  を追加します.`Start-Transcript`詳細については, [about_Profiles] (.../Microsoft.PowerShell.Core/About/about_Profiles.md) を参照してください.
+
+&gt; [!NOTE] &gt; 活用する際には`Start-Transcript`のデフォルト値である.`$InformationPreference`&gt;  に変更されました.`Continue`からの出力`Write-Information`コンソールに書き込まれているが,トランスクリプト &gt;ファイルに書き込まれていない.`$InformationPreference` に設定されています.`SilentlyContinue`情報のメッセージは &gt;コンソールに書かれていないが,トランスクリプトファイルに書かれています.これはPowerShell 6および&gt;上では修正されています.
+
+## 関連リンク
+
+[Stop-Transcript](Stop-Transcript.md) 
+
+[about_Preference_Variables](../Microsoft.PowerShell.Core/About/about_Preference_Variables.md#transcript) について
+###英語原文###
+# Start-Transcript
+
+## SYNOPSIS
+Creates a record of all or part of a PowerShell session to a text file.
+
+## SYNTAX
+
+### ByPath (Default)
+
+```
+Start-Transcript [[-Path] &lt;String&gt;] [-Append] [-Force] [-NoClobber]
+ [-IncludeInvocationHeader] [-WhatIf] [-Confirm] [&lt;CommonParameters&gt;]
+```
+
+### ByLiteralPath
+
+```
+Start-Transcript [[-LiteralPath] &lt;String&gt;] [-Append] [-Force] [-NoClobber]
+ [-IncludeInvocationHeader] [-WhatIf] [-Confirm] [&lt;CommonParameters&gt;]
+```
+
+### ByOutputDirectory
+
+```
+Start-Transcript [[-OutputDirectory] &lt;String&gt;] [-Append] [-Force] [-NoClobber]
+ [-IncludeInvocationHeader] [-WhatIf] [-Confirm] [&lt;CommonParameters&gt;]
+```
+
+## DESCRIPTION
+
+The `Start-Transcript` cmdlet creates a record of all or part of a PowerShell session to a text
+file. The transcript includes all command that the user types and all output that appears on the
+console.
+
+By default, `Start-Transcript` stores the transcript in the following location using the default
+name:
+
+- Default location: `$HOME\Documents`
+The default filename is `PowerShell_transcript.&lt;computername&gt;.&lt;random&gt;.&lt;timestamp&gt;.txt`.
+
+Starting in Windows PowerShell 5.0, `Start-Transcript` includes the hostname in the generated file
+name of all transcripts. The filename also includes random characters in names to prevent potential
+overwrites or duplication when you start two or more transcripts simultaneously. Including the
+computer name is useful if you store your transcripts in a centralized location. The random
+character string prevents guessing of the filename to gain unauthorized access to the file.
+
+When using the **Append** parameter, if the target file doesn&#x27;t have a Byte Order Mark (BOM)
+`Start-Transcript` defaults to `ASCII` encoding in the target file. This behavior can result in
+improper encoding of multibyte characters in the transcript.
+
+## EXAMPLES
+
+### Example 1: Start a transcript file with default settings
+
+```powershell
+Start-Transcript
+```
+
+This command starts a transcript in the default file location.
+
+### Example 2: Start a transcript file at a specific location
+
+```powershell
+Start-Transcript -Path &quot;C:\transcripts\transcript0.txt&quot; -NoClobber
+```
+
+This command starts a transcript in the `Transcript0.txt` file in `C:\transcripts`. **NoClobber**
+parameter prevents any existing files from being overwritten. If the `Transcript0.txt` file already
+exists, the command fails.
+
+### Example 3: Start a transcript file with a unique name and store it on a file share
+
+The following example creates a transcript file with a name unique enough to be stored on in a
+shared location. The filename is constructed from the user&#x27;s name, the hostname of the computer
+running PowerShell, the version of PowerShell, and the date and time. The transcript is stored in
+the `\\Server01\Transcripts` file share.
+
+```powershell
+$sharePath  = &#x27;\\Server01\Transcripts&#x27;
+$username   = $Env:USERNAME
+$hostname   = hostname
+$version    = $PSVersionTable.PSVersion.ToString()
+$datetime   = Get-Date -F &#x27;yyyyMMddHHmmss&#x27;
+$filename   = &quot;Transcript-${username}-${hostname}-${version}-${datetime}.txt&quot;
+$Transcript = (Join-Path -Path $sharePath -ChildPath $filename).ToString()
+Start-Transcript
+```
+
+The full path to the transcript file is stored in the `$Transcript` preference variable. For more
+information about the `$Transcript` preference variable, see
+[about_Preference_Variables](../Microsoft.PowerShell.Core/About/about_Preference_Variables.md#transcript).
+
+### Example 4: Start a transcript using a relative path on Windows systems
+
+When you use a relative path with the **OutputDirectory** parameter on Windows, the path is relative
+to your `Documents` directory.
+
+```powershell
+Start-Transcript -Path .\transcripts
+```
+
+```Output
+Transcript started, output file is C:\Users\username\Documents\.\transcripts\PowerShell_transcript.HOSTNAME.8S6RpEfN.20251105152247.txt
+```
+
+## PARAMETERS
+
+### -Append
+
+Indicates that this cmdlet adds the new transcript to the end of an existing file. Use the **Path**
+parameter to specify the file.
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Force
+
+Allows the cmdlet to append the transcript to an existing read-only file. When used on a read-only
+file, the cmdlet changes the file permission to read-write. The cmdlet can&#x27;t override security
+restrictions when this parameter is used.
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -IncludeInvocationHeader
+
+Indicates that this cmdlet logs the time stamp when commands are run.
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -LiteralPath
+
+Specifies a location to the transcript file. Unlike the **Path** parameter, the value of the
+**LiteralPath** parameter is used exactly as it&#x27;s typed. No characters are interpreted as wildcards.
+If the path includes escape characters, enclose it in single quotation marks. Single quotation marks
+inform PowerShell not to interpret any characters as escape sequences.
+
+```yaml
+Type: System.String
+Parameter Sets: ByLiteralPath
+Aliases: PSPath
+
+Required: False
+Position: 0
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -NoClobber
+
+Indicates that this cmdlet doesn&#x27;t overwrite an existing file. By default, if a transcript file
+exists in the specified path, `Start-Transcript` overwrites the file without warning.
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases: NoOverwrite
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -OutputDirectory
+
+Specifies a specific path and folder in which to save a transcript. PowerShell automatically assigns
+the transcript name. If you use a relative path, the path is relative to your `Documents` directory
+on Windows.
+
+```yaml
+Type: System.String
+Parameter Sets: ByOutputDirectory
+Aliases:
+
+Required: False
+Position: 0
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Path
+
+Specifies a location to the transcript file. Enter a path to a `.txt` file. Wildcards aren&#x27;t
+permitted. If any of the directories in the path don&#x27;t exist, the command fails.
+
+If you don&#x27;t specify a path, `Start-Transcript` uses the path in the value of the `$Transcript`
+global variable. If you haven&#x27;t created this variable, `Start-Transcript` stores the transcripts in
+the default location and filename.
+
+```yaml
+Type: System.String
+Parameter Sets: ByPath
+Aliases:
+
+Required: False
+Position: 0
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Confirm
+
+Prompts you for confirmation before running the cmdlet.
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases: cf
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+# Start-Transcript
+
+### -WhatIf
+
+Shows what would happen if the cmdlet runs. The cmdlet isn&#x27;t run.
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases: wi
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### CommonParameters
+
+This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable,
+-InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose,
+-WarningAction, and -WarningVariable. For more information, see
+[about_CommonParameters](https://go.microsoft.com/fwlink/?LinkID=113216).
+
+## INPUTS
+
+### None
+
+You can&#x27;t pipe objects to this cmdlet.
+
+## OUTPUTS
+
+### System.String
+
+This cmdlet returns a string containing a confirmation message and the path to the output file.
+
+## NOTES
+
+To stop a transcript, use the `Stop-Transcript` cmdlet.
+
+To record an entire session, add the `Start-Transcript` command to your profile. For more
+information, see [about_Profiles](../Microsoft.PowerShell.Core/About/about_Profiles.md).
+
+&gt; [!NOTE]
+&gt; When you use `Start-Transcript`, the default value of `$InformationPreference` is changed to
+&gt; `Continue`. Output from `Write-Information` is written to the console, but not to the transcript
+&gt; file. If the `$InformationPreference` is set to `SilentlyContinue`, Information messages aren&#x27;t
+&gt; written to the console, but are written to the transcript file. This is fixed in PowerShell 6 and
+&gt; higher.
+
+## RELATED LINKS
+
+[Stop-Transcript](Stop-Transcript.md)
+
+[about_Preference_Variables](../Microsoft.PowerShell.Core/About/about_Preference_Variables.md#transcript)
+###Microsoft Learn URL###
+https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.host/start-transcript/?view=powershell-5.1
+</pre></html>

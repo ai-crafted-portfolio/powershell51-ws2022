@@ -1,0 +1,867 @@
+<!doctype html><html lang="ja"><meta charset="utf-8"><pre class="record-source">###KnowledgeNo###
+PS51-WS2022-2026-3599
+###FormatID###
+PS51-WS2022
+###CreatedAt###
+2026-08-01 00:00
+###UpdatedAt###
+2026-08-01 00:00
+###タイトル###
+about_Quoting_Rules
+###モジュール###
+Microsoft.PowerShell.Core
+###製品###
+Windows PowerShell 5.1
+###対応OS###
+Windows Server 2022
+###日本語訳###
+# 引用法について
+
+## 短編説明
+
+PowerShellで単一の引用符とダブル引用符を使用するためのルールについて説明します.
+
+## 長い説明
+
+パースティングでは,PowerShell は最初に入力を表現として解釈するよう探します.しかしコマンド呼び出しが遭遇すると,パースティングは議論モードで続きます.引用のない数値以外の議論は文字列として扱われます.パスなどのスペースを含む議論がある場合は,それらの議論値を引用に付加する必要があります.議論の解析に関する詳細については,[about_Parsing][02]の **Argument mode**セクションを参照してください.
+
+字面文字列を指定するために引用符が用いられる.単一の引用符に文字列を付加することができます ().`&#x27;`) または2倍引数 () を表示する.`&quot;`) でした.
+
+引用符は, _here-string_ を作成するためにも使用されます. 引用符は単行引用または双重引用文字で解釈される文字列です. 引用符は複数行を網羅することができます. 引用符には含まれていないにもかかわらず,すべての行は文字列として解釈されます.
+
+リモートコンピュータのコマンドでは,引用符がコマンドの部分を定義し,リモートコンピュータで実行されます.リモートセッションでは,引用符が命令内の変数を先ずローカルコンピュータで解釈するか,リモートコンピュータで解釈するかも決定します.
+
+[!NOTE] &gt; PowerShellでは,スマート引用符,また,タイプグラフィックまたはクローリー &gt;引用符,文字列の通常の引用符として扱われます.文字列を囲むためにスマート引用符を使用しないでください.スマート引用符を含む文字列を書くときは,この文書の &gt; [文字列に引用符を含む][01]セクションのガイドラインに従ってください.
+
+## 双重引用文字列
+
+双引号に囲まれた文字列は _expandable_文字列である.ドル記号 () が先行する変数の名前 (変数名) が表示されます.`$`) は文字列を処理命令に転送する前に変数の値に置き換えられます.
+
+例えば:
+
+```powershell
+$i = 5
+&quot;The value of $i is $i.&quot;
+```
+
+このコマンドの出力は:
+
+```Output
+The value of 5 is 5.
+```
+
+また,二重引用文字列では,表現が評価され,結果は文字列に挿入されます.例えば:
+
+```powershell
+&quot;The value of $(2+3) is 5.&quot;
+```
+
+このコマンドの出力は:
+
+```Output
+The value of 5 is 5.
+```
+
+拡張可能な文字列に直接埋め込むことができるのは,基本的な変数参照のみである.アレイインデックスまたはメンバーアクセスを使用する変数参照は,サブ表現に閉じ込める必要があります.例えば:
+
+```powershell
+&quot;PS version: $($PSVersionTable.PSVersion)&quot;
+```
+
+```Output
+PS version:  5.1.22621.4111
+```
+
+文字列の次のような文字から変数の名前を分離するには,括弧に閉じ込め ()`{}`これは特に重要なことですが,変数の名前には大腸 () が続く場合です.`:`プーシェルで,すべてのものを考慮します.`$`そして,その `:`範囲指定器で,通常解釈が失敗する.`&quot;$HOME: where the heart is.&quot;`誤りを見せるが,`&quot;${HOME}: where the heart is.&quot;`意図されたように作りました.
+
+双引引列で変数値が置き換えられるのを防ぐために,バックティック文字 (`) を使ってください.` ``),これはPowerShell エスケープキャラクターです.
+
+次の例では,最初の文字の前でバックティック文字が記されている.`$i`PowerShellで変数の名前をその値に置き換えることができない.例えば:
+
+```powershell
+$i = 5
+&quot;The value of `$i is $i.&quot;
+```
+
+このコマンドの出力は:
+
+```Output
+The value of $i is 5.
+```
+
+## シングル・コチドの文字列
+
+単一の引用符に囲まれた文字列は _verbatim_文字列です.文字列は,あなたが入力したように命令に転送されます.置き換えは行いません.例えば:
+
+```powershell
+$i = 5
+&#x27;The value of $i is $i.&#x27;
+```
+
+このコマンドの出力は:
+
+```Output
+The value $i is $i.
+```
+
+同様に,単語の引用文字列の表現は評価されない.文字列文字列として解釈される.例えば:
+
+```powershell
+&#x27;The value of $(2+3) is 5.&#x27;
+```
+
+このコマンドの出力は:
+
+```Output
+The value of $(2+3) is 5.
+```
+
+## 文字列の引用文字を含む.
+
+文字列に二重引用符を表示するには,文字列全体を単一の引用符に閉じます.例えば:
+
+```powershell
+&#x27;As they say, &quot;live and learn.&quot;&#x27;
+```
+
+このコマンドの出力は:
+
+```Output
+As they say, &quot;live and learn.&quot;
+```
+
+単一の引用文字列を双重引用文字列に収めることもできます.例えば:
+
+```powershell
+&quot;As they say, &#x27;live and learn.&#x27;&quot;
+```
+
+このコマンドの出力は:
+
+```Output
+As they say, &#x27;live and learn.&#x27;
+```
+
+あるいは,二重引用された文の周りに引用符を倍加する.例えば:
+
+```powershell
+&quot;As they say, &quot;&quot;live and learn.&quot;&quot;&quot;
+```
+
+このコマンドの出力は:
+
+```Output
+As they say, &quot;live and learn.&quot;
+```
+
+単一の引用文字列に単一の引用符を入れると,連続で2番目の単一の引用符を使用します.例えば:
+
+```powershell
+&#x27;don&#x27;&#x27;t&#x27;
+```
+
+このコマンドの出力は:
+
+```Output
+don&#x27;t
+```
+
+PowerShellが文字通り2つの引用符を解釈するように強制するには,バックティック文字を使用します.これは PowerShellが引用符を文字列の境界線として解釈することを妨げます.例えば:
+
+```powershell
+&quot;Use a quotation mark (`&quot;) to begin a string.&quot;
+&#x27;Use a quotation mark (`&quot;) to begin a string.&#x27;
+```
+
+単語の文字列の内容が文字通り解釈されているため,バックティック文字は文字文字として扱われ,出力で表示される.
+
+```Output
+Use a quotation mark (&quot;) to begin a string.
+Use a quotation mark (`&quot;) to begin a string.
+```
+
+なぜならPowerShellがスマート・引用符を解釈しているからです.`‘`     `’`     `“`そして,そして,`”`標準的な引用符として,スマート引用符も回避する必要があります.例えば:
+
+```powershell
+&quot;Double ““smart quotation marks`” must be escaped in a double-quoted string.&quot;
+&#x27;Single ‘‘smart quotation marks’’ must be escaped in a single-quoted string.&#x27;
+```
+
+```Output
+Double “smart quotation marks” must be escaped in a double-quoted string.
+Single ‘smart quotation marks’ must be escaped in a single-quoted string.
+```
+
+# 引用法について
+
+## 弦の音は,ここから.
+
+引用法では,ここ文字列の引数が少し違う.
+
+A-string は,単語の引用または双重引用の文字列で,文字 () に囲まれています.`@`引用符は,文字列の内にある引用符を文字通り解釈する.
+
+A-string:
+
+-複数の行を網羅する - 開頭記号から始まる,そして新記号から続く - 閉幕記号から続く新記号から終わる - 開頭記号と閉幕記号の間のすべての行が単一の文字列の一部として含まれます
+
+普通の文字列と同様に,変数は双引引いたここ文字列でその値に置き換えられる.単引いたここ文字列では,変数はその値に置き換えられるわけではありません.
+
+どんなテキストでも,ここ文字列を用いることができますが,特に以下のテキストには便利です.
+
+-文字文字の引用符を含むテキスト - HTMLやXMLブロックのテキストなどの複数の文字列 - スクリプトまたは関数文書のHelpテキスト
+
+A-stringは以下の形式にいずれかを持つことができます.`&lt;Enter&gt;`&lt;kbd&gt;ENTER&lt;/kbd&gt; キーを押すと追加されるラインフィードまたはニューライン隠された文字を表します.
+
+ダブル・クォーツ:
+
+```
+@&quot;&lt;Enter&gt;
+&lt;string&gt; [string] ...&lt;Enter&gt;
+&quot;@
+```
+
+シングル・クォーツ:
+
+```
+@&#x27;&lt;Enter&gt;
+&lt;string&gt; [string] ...&lt;Enter&gt;
+&#x27;@
+```
+
+&gt; [!NOTE] &gt;最後の新行文字は,閉記記の一部です.この文字列に追加されていません.
+
+A文字列には開示と閉幕の間のすべてのテキストが含まれています.A文字列では,すべての引用符が文字通り解釈されます.例えば:
+
+```powershell
+@&quot;
+For help, type &quot;Get-Help&quot;
+&quot;@
+```
+
+このコマンドの出力は:
+
+```Output
+For help, type &quot;Get-Help&quot;
+```
+
+here-string を使えばコマンドで文字列を使用することで簡素化できます.例えば:
+
+```powershell
+@&quot;
+Use a quotation mark, like &#x27; or &quot;, to begin a string.
+&quot;@
+```
+
+このコマンドの出力は:
+
+```Output
+Use a quotation mark, like &#x27; or &quot;, to begin a string.
+```
+
+単一の引用の文字列では,変数は文字通り解釈され,正確に再現されます.例えば:
+
+```powershell
+@&#x27;
+The $PROFILE variable contains the path
+of your PowerShell profile.
+&#x27;@
+```
+
+このコマンドの出力は:
+
+```Output
+The $PROFILE variable contains the path
+of your PowerShell profile.
+```
+
+双引引した&quot;Here-strings&quot;では,変数は値に置き換えられる.例えば:
+
+```powershell
+@&quot;
+Even if you have not created a profile,
+the path of the profile file is:
+$PROFILE.
+&quot;@
+```
+
+このコマンドの出力は:
+
+```Output
+Even if you have not created a profile,
+the path of the profile file is:
+C:\Users\User1\Documents\WindowsPowerShell\Microsoft.PowerShell_profile.ps1.
+```
+
+変数に複数の行を割り当てるために,通常はHere-strings を使用されます.例えば,次のHere-string は,XML のページを$page変数に割り当てます.
+
+```powershell
+$page = [xml] @&quot;
+&lt;command:command xmlns:maml=&quot;http://schemas.microsoft.com/maml/2004/10&quot;
+xmlns:command=&quot;http://schemas.microsoft.com/maml/dev/command/2004/10&quot;
+xmlns:dev=&quot;http://schemas.microsoft.com/maml/dev/2004/10&quot;&gt;
+&lt;command:details&gt;
+        &lt;command:name&gt;
+               Format-Table
+        &lt;/command:name&gt;
+        &lt;maml:description&gt;
+            &lt;maml:para&gt;Formats the output as a table.&lt;/maml:para&gt;
+        &lt;/maml:description&gt;
+        &lt;command:verb&gt;format&lt;/command:verb&gt;
+        &lt;command:noun&gt;table&lt;/command:noun&gt;
+        &lt;dev:version&gt;&lt;/dev:version&gt;
+&lt;/command:details&gt;
+...
+&lt;/command:command&gt;
+&quot;@
+```
+
+また,Here-strings は,入力用の便利な形式です.`ConvertFrom-StringData`cmdletで, here-strings をハッシュテーブルに変換する.詳細については,  を参照してください.`ConvertFrom-StringData` .
+
+&gt; [!NOTE] &gt; PowerShellで,ダブルまたは単一の引用文字列が複数の行を横切れるように,  を使用せずに,複数の行を横切れるようにします.`@`しかし,フル・ヘア・ストリング &gt; シンタックスが優先使用です.
+
+## 拡張可能な弦の解釈
+
+拡張文字列は,コンソールで見られるデフォルト出力と同じようなものとは限らない.
+
+アレイを含むコレクションは,要素の文字列表示の間に単一のスペースを置き,文字列に変換されます. 優先順位変数を設定することによって別の分離器を指定することができます.`$OFS`詳細については, [] を参照してください.`$OFS`偏見変数[04].
+
+他のどのタイプのインスタンスは,文字列に変換され,  を呼び出す.`ToString()`方法が意味のある表現をできない場合もあります.例えば:
+
+```powershell
+&quot;hashtable: $(@{ key = &#x27;value&#x27; })&quot;
+```
+
+```Output
+hashtable: System.Collections.Hashtable
+```
+
+コンソールと同じ出力を取得するには,パイプを  にするサブ表現を使用します.`Out-String` を適用する.`Trim()`前の行と後の行を削除したい場合は,この方法を使います.
+
+```powershell
+&quot;hashtable:`n$((@{ key = &#x27;value&#x27; } | Out-String).Trim())&quot;
+```
+
+```Output
+hashtable:
+Name                           Value
+----                           -----
+key                            value
+```
+
+## 文化設定は文字列解釈に影響します
+
+   `ToString()`方法は,現在の設定された文化設定を使用して,値を文字列に変換します.例えば,次のPowerShellセッションの文化は,  に設定されます.`de-DE`が来たとき.`ToString()`の値を変換する方法です.`$x`文字列に符号符を連結する際には,逗号 () を使います.`,`) は,数値分別数である.また,`ToString()`この方法は,ドイツ語ローケルの設定に適切なフォーマットを使用して日付を文字列に変換します.
+
+```powershell
+PS&gt; Get-Culture
+
+LCID             Name             DisplayName
+----             ----             -----------
+1031             de-DE            German (Germany)
+
+PS&gt; $x = 1.2
+PS&gt; $x.ToString()
+1,2
+
+PS&gt; (Get-Date 2024-03-19).ToString()
+19.03.2024 00:00:00
+```
+
+しかし,PowerShellは拡張可能な文字列表現を解釈する際に不変の文化を使用します.
+
+```powershell
+PS? &quot;$x&quot;
+1.2
+
+PS&gt; &quot;$(Get-Date 2024-03-19)&quot;
+03/19/2024 00:00:00
+```
+
+## 引用文字列を外部コマンドに転送する
+
+一部のネイティブコマンドは,引用文字を含む議論を期待する.PowerShellは引用文字列を解釈し,外部コマンドに転送する.この解釈は外部引用文字を取り除きます.
+
+この行動についての詳細については,[about_Parsing][03] の記事を参照してください.
+
+&gt; [!WARNING] &gt; Windowsでは,バッチファイルに議論を転送する際,その議論は原始コマンドライン文字列として,  に渡されます.`cmd.exe`. PowerShellと &gt; 基礎 API があなたのパラメータを安全に解釈しようとしたが,信頼されていない入力 &gt; は別の方法で転送されるべきである.
+
+## また, を参照してください.
+
+[about_Special_Characters][05] - [ConvertFrom-StringData][07] -
+
+&lt;!--リンク参照 --&gt; [01]: #including-quote-characters-in-a-string [02]: about_Parsing.md#argument-mode [03]: about_Parsing.md#passing-arguments-that-contain-quote-characters [04]: about_Preference_Variables.md#ofs [05]: about_Special_Characters.md [06]: https://en.wikipedia.org/wiki/Quotation_marks_in_English#Smart_quotes[07]: xref:Microsoft.PowerShell.Utility.ConvertFrom-StringData
+###英語原文###
+# about_Quoting_Rules
+
+## Short description
+
+Describes rules for using single and double quotation marks in PowerShell.
+
+## Long description
+
+When parsing, PowerShell first looks to interpret input as an expression. But
+when a command invocation is encountered, parsing continues in argument mode.
+Non-numeric arguments without quotes are treated as strings. If you have
+arguments that contain spaces, such as paths, then you must enclose those
+argument values in quotes. For more information about argument parsing, see the
+**Argument mode** section of [about_Parsing][02].
+
+Quotation marks are used to specify a literal string. You can enclose a string
+in single quotation marks (`&#x27;`) or double quotation marks (`&quot;`).
+
+Quotation marks are also used to create a _here-string_. A here-string is a
+single-quoted or double-quoted string in which quotation marks are interpreted
+literally. A here-string can span multiple lines. All the lines in a
+here-string are interpreted as strings, even though they&#x27;re not enclosed in
+quotation marks.
+
+In commands to remote computers, quotation marks define the parts of the
+command that are run on the remote computer. In a remote session, quotation
+marks also determine whether the variables in a command are interpreted first
+on the local computer or on the remote computer.
+
+&gt; [!NOTE]
+&gt; PowerShell treats smart quotation marks, also called typographic or curly
+&gt; quotes, as normal quotation marks for strings. Don&#x27;t use smart quotation
+&gt; marks to enclose strings. When writing strings that contain smart quotation
+&gt; marks, follow the guidance in the
+&gt; [Including quote characters in a string][01] section of this document. For
+&gt; more information about smart quotation marks, see the _Smart Quotes_ section
+&gt; in the Wikipedia article [Quotation marks in English][06].
+
+## Double-quoted strings
+
+A string enclosed in double quotation marks is an _expandable_ string. Variable
+names preceded by a dollar sign (`$`) are replaced with the variable&#x27;s value
+before the string is passed to the command for processing.
+
+For example:
+
+```powershell
+$i = 5
+&quot;The value of $i is $i.&quot;
+```
+
+The output of this command is:
+
+```Output
+The value of 5 is 5.
+```
+
+Also, in a double-quoted string, expressions are evaluated, and the result is
+inserted in the string. For example:
+
+```powershell
+&quot;The value of $(2+3) is 5.&quot;
+```
+
+The output of this command is:
+
+```Output
+The value of 5 is 5.
+```
+
+Only basic variable references can be directly embedded in an expandable
+string. Variables references using array indexing or member access must be
+enclosed in a subexpression. For example:
+
+```powershell
+&quot;PS version: $($PSVersionTable.PSVersion)&quot;
+```
+
+```Output
+PS version:  5.1.22621.4111
+```
+
+To separate a variable name from subsequent characters in the string, enclose
+it in braces (`{}`). This is especially important if the variable name is
+followed by a colon (`:`). PowerShell considers everything between the `$` and
+the `:` a scope specifier, typically causing the interpretation to fail. For
+example, `&quot;$HOME: where the heart is.&quot;` throws an error, but
+`&quot;${HOME}: where the heart is.&quot;` works as intended.
+
+To prevent the substitution of a variable value in a double-quoted string, use
+the backtick character (`` ` ``), which is the PowerShell escape character.
+
+In the following example, the backtick character that precedes the first `$i`
+variable prevents PowerShell from replacing the variable name with its value.
+For example:
+
+```powershell
+$i = 5
+&quot;The value of `$i is $i.&quot;
+```
+
+The output of this command is:
+
+```Output
+The value of $i is 5.
+```
+
+## Single-quoted strings
+
+A string enclosed in single quotation marks is a _verbatim_ string. The string
+is passed to the command exactly as you type it. No substitution is performed.
+For example:
+
+```powershell
+$i = 5
+&#x27;The value of $i is $i.&#x27;
+```
+
+The output of this command is:
+
+```Output
+The value $i is $i.
+```
+
+Similarly, expressions in single-quoted strings aren&#x27;t evaluated. They&#x27;re
+interpreted as string literals. For example:
+
+```powershell
+&#x27;The value of $(2+3) is 5.&#x27;
+```
+
+The output of this command is:
+
+```Output
+The value of $(2+3) is 5.
+```
+
+## Including quote characters in a string
+
+To make double-quotation marks appear in a string, enclose the entire string
+in single quotation marks. For example:
+
+```powershell
+&#x27;As they say, &quot;live and learn.&quot;&#x27;
+```
+
+The output of this command is:
+
+```Output
+As they say, &quot;live and learn.&quot;
+```
+
+You can also enclose a single-quoted string in a double-quoted string. For
+example:
+
+```powershell
+&quot;As they say, &#x27;live and learn.&#x27;&quot;
+```
+
+The output of this command is:
+
+```Output
+As they say, &#x27;live and learn.&#x27;
+```
+
+Or, double the quotation marks around a double-quoted phrase. For example:
+
+```powershell
+&quot;As they say, &quot;&quot;live and learn.&quot;&quot;&quot;
+```
+
+The output of this command is:
+
+```Output
+As they say, &quot;live and learn.&quot;
+```
+
+To include a single quotation mark in a single-quoted string, use a second
+consecutive single quote. For example:
+
+```powershell
+&#x27;don&#x27;&#x27;t&#x27;
+```
+
+The output of this command is:
+
+```Output
+don&#x27;t
+```
+
+To force PowerShell to interpret a double quotation mark literally, use a
+backtick character. This prevents PowerShell from interpreting the quotation
+mark as a string delimiter. For example:
+
+```powershell
+&quot;Use a quotation mark (`&quot;) to begin a string.&quot;
+&#x27;Use a quotation mark (`&quot;) to begin a string.&#x27;
+```
+
+Because the contents of single-quoted strings are interpreted literally, the
+backtick character is treated as a literal character and displayed in the
+output.
+
+```Output
+Use a quotation mark (&quot;) to begin a string.
+Use a quotation mark (`&quot;) to begin a string.
+```
+
+Because PowerShell interprets smart quotation marks, like `‘`, `’`, `“`, and
+`”`, as normal quotation marks, smart quotation marks also need to be escaped.
+For example:
+
+```powershell
+&quot;Double ““smart quotation marks`” must be escaped in a double-quoted string.&quot;
+&#x27;Single ‘‘smart quotation marks’’ must be escaped in a single-quoted string.&#x27;
+```
+
+```Output
+Double “smart quotation marks” must be escaped in a double-quoted string.
+Single ‘smart quotation marks’ must be escaped in a single-quoted string.
+```
+
+# about_Quoting_Rules
+
+## Here-strings
+
+The quotation rules for here-strings are slightly different.
+
+A here-string is a single-quoted or double-quoted string surrounded by at signs
+(`@`). Quotation marks within a here-string are interpreted literally.
+
+A here-string:
+
+- spans multiple lines
+- begins with the opening mark followed by a newline
+- ends with a newline followed by the closing mark
+- includes every line between the opening and closing marks as part of a single
+  string
+
+Like regular strings, variables are replaced by their values in double-quoted
+here-strings. In single-quoted here-strings, variables aren&#x27;t replaced by their
+values.
+
+You can use here-strings for any text, but they&#x27;re particularly useful for the
+following kinds of text:
+
+- Text that contains literal quotation marks
+- Multiple lines of text, such as the text in an HTML or XML block
+- The Help text for a script or function document
+
+A here-string can have either of the following formats, where `&lt;Enter&gt;`
+represents the linefeed or newline hidden character that&#x27;s added when you press
+the &lt;kbd&gt;ENTER&lt;/kbd&gt; key.
+
+Double-quotes:
+
+```
+@&quot;&lt;Enter&gt;
+&lt;string&gt; [string] ...&lt;Enter&gt;
+&quot;@
+```
+
+Single-quotes:
+
+```
+@&#x27;&lt;Enter&gt;
+&lt;string&gt; [string] ...&lt;Enter&gt;
+&#x27;@
+```
+
+&gt; [!NOTE]
+&gt; The final newline character is part of the closing mark. It&#x27;s not added to
+&gt; the here-string.
+
+A here-string contains all the text between the opening and closing marks. In
+the here-string, all quotation marks are interpreted literally. For example:
+
+```powershell
+@&quot;
+For help, type &quot;Get-Help&quot;
+&quot;@
+```
+
+The output of this command is:
+
+```Output
+For help, type &quot;Get-Help&quot;
+```
+
+Using a here-string can simplify using a string in a command. For example:
+
+```powershell
+@&quot;
+Use a quotation mark, like &#x27; or &quot;, to begin a string.
+&quot;@
+```
+
+The output of this command is:
+
+```Output
+Use a quotation mark, like &#x27; or &quot;, to begin a string.
+```
+
+In single-quoted here-strings, variables are interpreted literally and
+reproduced exactly. For example:
+
+```powershell
+@&#x27;
+The $PROFILE variable contains the path
+of your PowerShell profile.
+&#x27;@
+```
+
+The output of this command is:
+
+```Output
+The $PROFILE variable contains the path
+of your PowerShell profile.
+```
+
+In double-quoted here-strings, variables are replaced by their values. For
+example:
+
+```powershell
+@&quot;
+Even if you have not created a profile,
+the path of the profile file is:
+$PROFILE.
+&quot;@
+```
+
+The output of this command is:
+
+```Output
+Even if you have not created a profile,
+the path of the profile file is:
+C:\Users\User1\Documents\WindowsPowerShell\Microsoft.PowerShell_profile.ps1.
+```
+
+Here-strings are typically used to assign multiple lines to a variable. For
+example, the following here-string assigns a page of XML to the $page variable.
+
+```powershell
+$page = [xml] @&quot;
+&lt;command:command xmlns:maml=&quot;http://schemas.microsoft.com/maml/2004/10&quot;
+xmlns:command=&quot;http://schemas.microsoft.com/maml/dev/command/2004/10&quot;
+xmlns:dev=&quot;http://schemas.microsoft.com/maml/dev/2004/10&quot;&gt;
+&lt;command:details&gt;
+        &lt;command:name&gt;
+               Format-Table
+        &lt;/command:name&gt;
+        &lt;maml:description&gt;
+            &lt;maml:para&gt;Formats the output as a table.&lt;/maml:para&gt;
+        &lt;/maml:description&gt;
+        &lt;command:verb&gt;format&lt;/command:verb&gt;
+        &lt;command:noun&gt;table&lt;/command:noun&gt;
+        &lt;dev:version&gt;&lt;/dev:version&gt;
+&lt;/command:details&gt;
+...
+&lt;/command:command&gt;
+&quot;@
+```
+
+Here-strings are also a convenient format for input to the
+`ConvertFrom-StringData` cmdlet, which converts here-strings to hash tables.
+For more information, see `ConvertFrom-StringData`.
+
+&gt; [!NOTE]
+&gt; PowerShell allows double- or single-quoted strings to span multiple lines
+&gt; without using the `@` syntax of here-strings. However, full here-string
+&gt; syntax is the preferred usage.
+
+## Interpretation of expandable strings
+
+Expanded strings don&#x27;t necessarily look the same as the default output that you
+see in the console.
+
+Collections, including arrays, are converted to strings by placing a single
+space between the string representations of the elements. A different separator
+can be specified by setting preference variable `$OFS`. For more information,
+see the [`$OFS` preference variable][04].
+
+Instances of any other type are converted to strings by calling the
+`ToString()` method, which may not give a meaningful representation. For
+example:
+
+```powershell
+&quot;hashtable: $(@{ key = &#x27;value&#x27; })&quot;
+```
+
+```Output
+hashtable: System.Collections.Hashtable
+```
+
+To get the same output as in the console, use a subexpression in which you pipe
+to `Out-String`. Apply the `Trim()` method if you want to remove any leading
+and trailing empty lines.
+
+```powershell
+&quot;hashtable:`n$((@{ key = &#x27;value&#x27; } | Out-String).Trim())&quot;
+```
+
+```Output
+hashtable:
+Name                           Value
+----                           -----
+key                            value
+```
+
+## Culture settings affect string interpretation
+
+The `ToString()` methods uses the current configured culture settings to
+convert values to strings. For example, the culture of the following PowerShell
+session is set to `de-DE`. When the `ToString()` method converts the value of
+`$x` to a string it uses a comma (`,`) for the decimal separator. Also, the
+`ToString()` method converts the date to a string using the appropriate format
+for the German locale settings.
+
+```powershell
+PS&gt; Get-Culture
+
+LCID             Name             DisplayName
+----             ----             -----------
+1031             de-DE            German (Germany)
+
+PS&gt; $x = 1.2
+PS&gt; $x.ToString()
+1,2
+
+PS&gt; (Get-Date 2024-03-19).ToString()
+19.03.2024 00:00:00
+```
+
+However, PowerShell uses the invariant culture when interpreting expandable
+string expressions.
+
+```powershell
+PS? &quot;$x&quot;
+1.2
+
+PS&gt; &quot;$(Get-Date 2024-03-19)&quot;
+03/19/2024 00:00:00
+```
+
+## Passing quoted strings to external commands
+
+Some native commands expect arguments that contain quote characters. PowerShell
+interprets the quoted string before passing it to the external command. This
+interpretation removes the outer quote characters.
+
+For more information about this behavior, see the [about_Parsing][03] article.
+
+&gt; [!WARNING]
+&gt; On Windows, when passing arguments to batch files, the arguments are passed
+&gt; as raw command-line strings to `cmd.exe`. Although PowerShell and the
+&gt; underlying API attempt to interpret your parameters safely, untrusted input
+&gt; should be passed another way.
+
+## See also
+
+- [about_Special_Characters][05]
+- [ConvertFrom-StringData][07]
+
+&lt;!-- link references --&gt;
+[01]: #including-quote-characters-in-a-string
+[02]: about_Parsing.md#argument-mode
+[03]: about_Parsing.md#passing-arguments-that-contain-quote-characters
+[04]: about_Preference_Variables.md#ofs
+[05]: about_Special_Characters.md
+[06]: https://en.wikipedia.org/wiki/Quotation_marks_in_English#Smart_quotes
+[07]: xref:Microsoft.PowerShell.Utility.ConvertFrom-StringData
+###Microsoft Learn URL###
+https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_quoting_rules/?view=powershell-5.1
+</pre></html>

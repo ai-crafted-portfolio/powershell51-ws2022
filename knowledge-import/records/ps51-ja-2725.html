@@ -1,0 +1,849 @@
+<!doctype html><html lang="ja"><meta charset="utf-8"><pre class="record-source">###KnowledgeNo###
+PS51-WS2022-2026-2725
+###FormatID###
+PS51-WS2022
+###CreatedAt###
+2026-08-01 00:00
+###UpdatedAt###
+2026-08-01 00:00
+###タイトル###
+Set-RemoteAccessAccounting
+###モジュール###
+remoteaccess
+###製品###
+Windows PowerShell 5.1
+###対応OS###
+Windows Server 2022
+###日本語訳###
+# 遠隔アクセスアカウント設定を設定する
+
+## SYNOPSIS は,外部 RADIUS と Windows の会計の両方に対して,受信箱とRADIUS の会計の有効状態を設定し,有効になったときの設定を設定します.
+
+## SYNTAXは,のシンタックスです.
+
+### EnableAccounting (デフォルト) を可能にしておく```
+Set-RemoteAccessAccounting [-ComputerName &lt;String&gt;] [-PassThru] [-RadiusServer &lt;String&gt;]
+ [-SharedSecret &lt;String&gt;] [-RadiusPort &lt;UInt16&gt;] [-RadiusScore &lt;Byte&gt;] [-RadiusTimeout &lt;UInt32&gt;]
+ [-AccountingOnOffMsg &lt;String&gt;] [-EnableAccountingType] &lt;String&gt; [-CimSession &lt;CimSession[]&gt;]
+ [-ThrottleLimit &lt;Int32&gt;] [-AsJob] [-WhatIf] [-Confirm] [&lt;CommonParameters&gt;]
+```
+
+### DisableAccounting を残した```
+Set-RemoteAccessAccounting -DisableAccountingType &lt;String&gt; [-ComputerName &lt;String&gt;] [-PassThru]
+ [-CimSession &lt;CimSession[]&gt;] [-ThrottleLimit &lt;Int32&gt;] [-AsJob] [-WhatIf] [-Confirm] [&lt;CommonParameters&gt;]
+```
+
+## 記述 **Set-RemoteAccessAccounting** cmdlet は,外部 RADIUS と Windows の両方のインボックスとRADIUS 会計の有効状態を設定し,有効になったときの設定を設定します.
+
+会計設定は,グローバルに適用される,例えば,特定の種類の会計が有効または無効である場合,その特定のタイプの会計は,企業ネットワーク内のすべてのリモートアクセス (RA) サーバで有効または無効である.関連設定は,企業ネットワーク全体に適用される. 
+                       
+-- すべてのRAサーバーは,同じ構成された会計RADIUSサーバーを持っています. 
+                       
+メール便会計ストアサイズに設定されたデフォルト制限は,すべてのRAサーバーで同じです.
+
+したがって,このcmdletは,複数のサイト展開によって影響を受けません.
+
+インボックス会計とRADIUS会計の両方が同時にアクティブになる.RADIUS会計にはWindows会計,外部RADIUS会計とローカルネットワークポリシーサーバー (NPS) の会計が含まれていますが,いつでもアクティブになるのは1種類の会計のみです. **RadiusServer**, **SharedSecret**, **RadiusPort**, **RadiusScore**, **RadiusTimeout**, **AccountingOnOffMsg**は,RADIUS会計が有効である場合にのみ適用され,インボックス会計が有効であるときに指定することはできません.
+
+以下の行動は,外部RADIUS会計を有効にする行為に関連しています. 
+                       
+経理が有効なVPN展開がある場合,および同じRAサーバーに DirectAccess (DA) がインストールされている場合,経理も自動的に有効にされ,設定は変わっていない.注:VPNでWindows Accountingが有効にされている場合,これはDAのサポートされていない設定であるため,DAでは動作しません.このシナリオでは,DAの経理が機能するためには,NPSを本地でインストールするか,外部RADIUSサーバを設定する必要があります.外線半径サーバは,Add-RemoteAccessRadius cmdlet を使用して追加できます. 
+                       
+もしユーザーがRADIUSサーバを指定していない場合,このcmdletは自動的にWindows会計を設定します: 注:このシナリオでは,DAの会計が機能するためには,RAサーバーにNPSがインストールされなければなりません.
+
+Windows 会計から外部 RADIUS 会計に切り替わり,外部 RADIUS 会計からWindows 会計に切り替える.
+                       
+現在の設定がWindows会計である場合は,ユーザーは以下のいずれかをすることによって外部RADIUS会計に切り替えることができます.
+                       
+----同じcmdletを実行してRADIUS会計を有効にし,外部RADIUSサーバを指定します 
+                       
+---- Add-RemoteAccessRadius cmdlet を使用した外部 RADIUS サーバを追加します.これはこの cmdlet を実行せずに RADIUS 会計を可能にします. 
+                       
+ユーザーは,設定されたすべての外部RADIUSサーバーを削除することによって,Windows会計に戻ることができます.
+
+## 例えは
+
+### 例1 ```
+PS C:\&gt;Set-RemoteAccessAccounting -EnableAccountingType Inbox -ComputerName edge2 -PassThru
+WARNING-GPO updates cannot be applied to edge2.corp.contoso.com. Changes will not take effect until the next policy refresh. 
+RadiusAccountingStatus          : Disabled 
+RemoteRadiusServerList          : 
+InboxAccountingStatus           : Enabled 
+InboxStoreLimit                 : 12m 
+InboxStoreUsedBytes             : 0 
+InboxStoreUsedBytesInPercentage : 0 
+InboxStoreFreeBytes             : 4282318848 
+InboxStoreFreeBytesInPercentage : 99.7055053710938 
+InboxStoreFirstRecordDate       : 12/17/2011 6:53:24 PM 
+InboxStoreLastRecordDate        : 12/17/2011 6:53:24 PM 
+
+The accounting store is configured to retain data for up to 2 years.
+PS C:\&gt;Set-RemoteAccessInboxAccountingStore -StoreLimit 2y
+```
+
+この例では,この展開のインボックス会計が可能になります.このcmdletが実行されている RA サーバは **ComputerName** パラメータを使用して指定されます.
+
+### 例2 ```
+PS C:\&gt;Set-RemoteAccessAccounting -EnableAccountingType ExternalRadius -RadiusServer radius1.corp.contoso.com -RadiusTimeout 5 -SharedSecret s3cr3t -RadiusPort 1813 -RadiusScore 30
+RadiusAccountingStatus          : ExternalRadius 
+RemoteRadiusServerList          : {radius1.corp.contoso.com} 
+InboxAccountingStatus           : Enabled 
+InboxStoreLimit                 : 12m 
+InboxStoreUsedBytes             : 0 
+InboxStoreUsedBytesInPercentage : 0 
+InboxStoreFreeBytes             : 4282318848 
+InboxStoreFreeBytesInPercentage : 99.7055053710938 
+InboxStoreFirstRecordDate       : 12/17/2011 6:53:24 PM 
+InboxStoreLastRecordDate        : 12/17/2011 6:53:24 PM
+```
+
+この例では,RAがRADIUS会計を構成パラメータで利用するように設定します.
+
+### 例 3 ```
+PS C:\&gt;Set-RemoteAccessAccounting -DisableAccountingType ExternalRadius
+RadiusAccountingStatus          : Disabled 
+RemoteRadiusServerList          : 
+InboxAccountingStatus           : Enabled 
+InboxStoreLimit                 : 12m 
+InboxStoreUsedBytes             : 0 
+InboxStoreUsedBytesInPercentage : 0 
+InboxStoreFreeBytes             : 4282318848 
+InboxStoreFreeBytesInPercentage : 99.7055053710938 
+InboxStoreFirstRecordDate       : 12/17/2011 6:53:24 PM 
+InboxStoreLastRecordDate        : 12/17/2011 6:53:24 PM
+```
+
+この例では,RADIUS会計が無効化され,受信箱会計が維持されます.
+
+## パラメータは
+
+### -AccountingOnOffMsg オン・オフメッセージの送受信の有効状態を指定します.このパラメータの受け入れ可能な値は:
+                         
+有効にしました. 
+                         
+-- 障害者
+                         
+デフォルト値は Disabledです.
+
+```yaml
+Type: String
+Parameter Sets: EnableAccounting
+Aliases: 
+Accepted values: Enabled, Disabled
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -AsJobは,背景作業としてcmdletを実行する.このパラメータを使用して,完了するのに時間がかかるコマンドを実行します.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+# 遠隔アクセスアカウント設定を設定する
+
+### -CimSession は,リモートセッションまたはリモートコンピュータでcmdletを実行します.コンピュータ名またはセッションオブジェクトを入力します.例えば,[New-CimSession]の出力です.https://go.microsoft.com/fwlink/p/?LinkId=227967) または [Get-CimSession]https://go.microsoft.com/fwlink/p/?LinkId=227966標準的には,ローカルコンピュータの現在のセッションです.
+
+```yaml
+Type: CimSession[]
+Parameter Sets: (All)
+Aliases: Session
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -ComputerName は,RAサーバーコンピュータの特定のタスクを実行するコンピュータの IPv4 または IPv6 アドレス,またはホスト名を指定します.
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases: Cn
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### - 確認は,cmdletを実行する前に確認を提示します.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: cf
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -DisableAccountingType 障害を起こす会計タイプを表示します.このパラメータの受け入れ可能な値は:です.
+                         
+メールボックスです.  --
+                         
+-- 外部ラジウス.
+
+```yaml
+Type: String
+Parameter Sets: DisableAccounting
+Aliases: 
+Accepted values: Inbox, ExternalRadius
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -EnableAccountingType 有効にする必要がある会計タイプを表示します.このパラメータの受け入れ可能な値は:
+                         
+--Inbox: 店舗サイズは自動的に12ヶ月に設定されます.Set-RemoteAccessInboxAccountingStore cmdlet は個々の RA サーバーの店舗サイズを変更するために使用されます. 
+                         
+--ExternalRadius: また,同じコンピュータに本地的にインストールされたNPSでWindows会計または会計を有効にするために使用できます.
+
+```yaml
+Type: String
+Parameter Sets: EnableAccounting
+Aliases: 
+Accepted values: Inbox, ExternalRadius
+
+Required: True
+Position: 1
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -PassThru は,あなたが取り組んでいるアイテムを表すオブジェクトを返します.デフォルトでは,このcmdlet は出力を生成しません.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -RadiusPortは,RADIUSサーバが認証要求を受け入れるポート番号を指定します. 
+                         
+デフォルト値は1813です. 
+                         
+このパラメータは, **EnableAccountingType** パラメータがExternalRadiusと指定された場合にのみ設定できます.
+
+```yaml
+Type: UInt16
+Parameter Sets: EnableAccounting
+Aliases: Port
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -RadiusScore は初期スコアを指定します. 
+                         
+デフォルト値は30です. 
+                         
+このパラメータは, **EnableAccountingType** パラメータがExternalRadiusと指定された場合にのみ設定できます.
+
+```yaml
+Type: Byte
+Parameter Sets: EnableAccounting
+Aliases: Score
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -RadiusServer は,会計のために使用される外部RADIUSサーバの IPv4 または IPv6 アドレス,またはホスト名を指定します.このパラメータは, **EnableAccountingType** パラメータが ExternalRadius と指定された場合にのみ設定できます.
+
+```yaml
+Type: String
+Parameter Sets: EnableAccounting
+Aliases: ServerName
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -RadiusTimeout RAサーバが次のRADIUSサーバに接続しようとする前に,RAサーバがRADIUSサーバからの応答を待たす秒間の時間を指定します.デフォルト値は5です. **EnableAccountingType**パラメータのためにExternalRadiusを指定した場合にのみこのパラメータを指定します.
+
+```yaml
+Type: UInt32
+Parameter Sets: EnableAccounting
+Aliases: Timeout
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -SharedSecret RAサーバーと指定された外部RADIUSサーバー間の共有秘密を指定します.この秘密は,両サーバーの間の成功的な通信に必要なものです.注意:秘密は,明瞭なテキストで指定されています.このパラメータは, **EnableAccountingType**パラメータが ExternalRadiusとして指定された場合にのみ設定できます.
+
+```yaml
+Type: String
+Parameter Sets: EnableAccounting
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -ThrottleLimit は,cmdletを実行するために設定できる最大限の同時操作数を指定します.このパラメータを省略した場合,または値が  の値である場合.`0`入力すると,Windows PowerShell(R) は,コンピュータ上で実行されている CIM cmdlets の数に基づいて cmdlet の最適な加速度制限を計算します.加速度制限は,セッションやコンピュータにではなく,現在の cmdlet にのみ適用されます.
+
+```yaml
+Type: Int32
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -WhatIf が実行されればどうなるか示します.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: wi
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### 共通パラメータ このcmdletは共通パラメータをサポートしています: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable.詳細については, [about_CommonParameters](を参照してください.https://go.microsoft.com/fwlink/?LinkID=113216) でした.
+
+## 輸入は
+
+### System.String でした.
+
+### System.UInt16 を表示しています.
+
+### System.Byte を表示する.
+
+### System.UInt32
+
+## 輸出は
+
+### Microsoft.Management.Infrastructure.CimInstance は,マイクロソフトの管理,インフラストラクチャ,CimInstance について説明しています.
+
+# 遠隔アクセスアカウント設定を設定する
+
+### Microsoft.Management.Infrastructure.CimInstance#RemoteAccessAccounting
+
+   `Microsoft.Management.Infrastructure.CimInstance`Windows Management Instrumentation (WMI) のオブジェクトを表示する包装クラスです.ポンドサインの後に行進するパス () は,`#`) は,元々のWMIオブジェクトの名前空間とクラス名を提供します.
+                         
+RemoteAccessAccounting オブジェクトは,以下のプロパティで構成されています.
+                         
+レイジウス会計の状態 (障害者,Windows,またはExternalRadius) と,レイジウスサーバーのリストを表示します.もし外部ラジウス会計が有効でない場合,レイジウスサーバーのリストは空です. 
+                         
+メールボックス会計の状態 (有効または無効) と関連する属性についてです.
+                         
+店の時間帯. -- 
+                         
+-- 使用したバイト数. 
+                         
+-- 百分比で使用したバイト. 
+                         
+バイトの数値が無料です.
+                         
+-- 百分比無料バイト. 
+                         
+-- データベースの最初の記録のタイムスタンプ. 
+                         
+-- データベースの最後の記録のタイムスタンプ.
+
+##  NOTES  記事ができました.
+
+## 関連リンク
+
+[RemoteAccessRadiusを追加する](./Add-RemoteAccessRadius.md)
+
+[Get-RemoteAccessAccounting](./Get-RemoteAccessAccounting.md) 
+
+[RemoteAccessInboxAccountingStoreを設定する](./Set-RemoteAccessInboxAccountingStore.mdを設定する)
+###英語原文###
+# Set-RemoteAccessAccounting
+
+## SYNOPSIS
+Sets the enabled state for inbox and RADIUS accounting for both external RADIUS and Windows accounting and configures the settings when enabled.
+
+## SYNTAX
+
+### EnableAccounting (Default)
+```
+Set-RemoteAccessAccounting [-ComputerName &lt;String&gt;] [-PassThru] [-RadiusServer &lt;String&gt;]
+ [-SharedSecret &lt;String&gt;] [-RadiusPort &lt;UInt16&gt;] [-RadiusScore &lt;Byte&gt;] [-RadiusTimeout &lt;UInt32&gt;]
+ [-AccountingOnOffMsg &lt;String&gt;] [-EnableAccountingType] &lt;String&gt; [-CimSession &lt;CimSession[]&gt;]
+ [-ThrottleLimit &lt;Int32&gt;] [-AsJob] [-WhatIf] [-Confirm] [&lt;CommonParameters&gt;]
+```
+
+### DisableAccounting
+```
+Set-RemoteAccessAccounting -DisableAccountingType &lt;String&gt; [-ComputerName &lt;String&gt;] [-PassThru]
+ [-CimSession &lt;CimSession[]&gt;] [-ThrottleLimit &lt;Int32&gt;] [-AsJob] [-WhatIf] [-Confirm] [&lt;CommonParameters&gt;]
+```
+
+## DESCRIPTION
+The **Set-RemoteAccessAccounting** cmdlet sets the enabled state for inbox and RADIUS accounting for both external RADIUS and Windows accounting and configures the settings when enabled.
+
+The accounting configuration is globally applicable, such as if a particular kind of accounting is Enabled or Disabled, then that particular kind of accounting is Enabled or Disabled on all Remote Access (RA) servers in the corporate network.
+The associated configuration is also applicable for all of the corporate network. 
+                       
+ -- All RA servers have the same configured accounting RADIUS servers. 
+                       
+ -- The default limit set for the inbox accounting store size is the same on all RA servers.
+
+Therefore, this cmdlet is not impacted by a multi-site deployment.
+
+Both inbox accounting and RADIUS accounting can be active at the same time.
+RADIUS accounting includes Windows accounting, external RADIUS accounting and accounting on the local Network Policy Server (NPS), but only one type of accounting can be active at any time.
+The **RadiusServer**, **SharedSecret**, **RadiusPort**, **RadiusScore**, **RadiusTimeout**, and **AccountingOnOffMsg** parameters are applicable only when RADIUS accounting is Enabled and cannot be specified when inbox accounting is Enabled.
+
+The following is the behavior associated with enabling External RADIUS accounting. 
+                       
+ -- If there is a VPN deployment with accounting enabled and if DirectAccess (DA) is installed on the same RA server then accounting is automatically enabled for DA also and the configuration remains unchanged.
+Note: If Windows Accounting is enabled for VPN, then it will not work for DA as this is not a supported configuration for DA.
+For accounting to work for DA in this scenario either NPS needs to be installed locally or an external RADIUS server needs to be configured for accounting.
+The external radius server can be added using the Add-RemoteAccessRadius cmdlet. 
+                       
+ -- If user does not specify a RADIUS server then this cmdlet automatically configures Windows accounting: Note: In this scenario, for accounting to work for DA, NPS needs to be installed on the RA server.
+
+Switching from Windows Accounting to external RADIUS accounting and switching from external RADIUS accounting to Windows Accounting. 
+                       
+ -- If the current configuration is Windows accounting a user can switch to external RADIUS accounting by doing one of the following: 
+                       
+ ---- Run the same cmdlet to enable RADIUS accounting and specify an external RADIUS server 
+                       
+ ---- Add an external RADIUS server using the Add-RemoteAccessRadius cmdlet.
+This enables RADIUS accounting without running this cmdlet. 
+                       
+ -- A user can switch back to Windows accounting by deleting all the configured external RADIUS servers.
+
+## EXAMPLES
+
+### EXAMPLE 1
+```
+PS C:\&gt;Set-RemoteAccessAccounting -EnableAccountingType Inbox -ComputerName edge2 -PassThru
+WARNING-GPO updates cannot be applied to edge2.corp.contoso.com. Changes will not take effect until the next policy refresh. 
+RadiusAccountingStatus          : Disabled 
+RemoteRadiusServerList          : 
+InboxAccountingStatus           : Enabled 
+InboxStoreLimit                 : 12m 
+InboxStoreUsedBytes             : 0 
+InboxStoreUsedBytesInPercentage : 0 
+InboxStoreFreeBytes             : 4282318848 
+InboxStoreFreeBytesInPercentage : 99.7055053710938 
+InboxStoreFirstRecordDate       : 12/17/2011 6:53:24 PM 
+InboxStoreLastRecordDate        : 12/17/2011 6:53:24 PM 
+
+The accounting store is configured to retain data for up to 2 years.
+PS C:\&gt;Set-RemoteAccessInboxAccountingStore -StoreLimit 2y
+```
+
+This example enables inbox accounting for this deployment.
+The RA server on which this cmdlet is run is specified using the **ComputerName** parameter.
+
+### EXAMPLE 2
+```
+PS C:\&gt;Set-RemoteAccessAccounting -EnableAccountingType ExternalRadius -RadiusServer radius1.corp.contoso.com -RadiusTimeout 5 -SharedSecret s3cr3t -RadiusPort 1813 -RadiusScore 30
+RadiusAccountingStatus          : ExternalRadius 
+RemoteRadiusServerList          : {radius1.corp.contoso.com} 
+InboxAccountingStatus           : Enabled 
+InboxStoreLimit                 : 12m 
+InboxStoreUsedBytes             : 0 
+InboxStoreUsedBytesInPercentage : 0 
+InboxStoreFreeBytes             : 4282318848 
+InboxStoreFreeBytesInPercentage : 99.7055053710938 
+InboxStoreFirstRecordDate       : 12/17/2011 6:53:24 PM 
+InboxStoreLastRecordDate        : 12/17/2011 6:53:24 PM
+```
+
+This example configures RA to use RADIUS accounting with configuration parameters.
+
+### EXAMPLE 3
+```
+PS C:\&gt;Set-RemoteAccessAccounting -DisableAccountingType ExternalRadius
+RadiusAccountingStatus          : Disabled 
+RemoteRadiusServerList          : 
+InboxAccountingStatus           : Enabled 
+InboxStoreLimit                 : 12m 
+InboxStoreUsedBytes             : 0 
+InboxStoreUsedBytesInPercentage : 0 
+InboxStoreFreeBytes             : 4282318848 
+InboxStoreFreeBytesInPercentage : 99.7055053710938 
+InboxStoreFirstRecordDate       : 12/17/2011 6:53:24 PM 
+InboxStoreLastRecordDate        : 12/17/2011 6:53:24 PM
+```
+
+This example disables RADIUS accounting while still retaining inbox accounting.
+
+## PARAMETERS
+
+### -AccountingOnOffMsg
+Specifies the enabled state for the sending of accounting on and off messages.
+The acceptable values for this parameter are:
+                         
+ -- Enabled. 
+                         
+ -- Disabled. 
+                         
+The default value is Disabled.
+
+```yaml
+Type: String
+Parameter Sets: EnableAccounting
+Aliases: 
+Accepted values: Enabled, Disabled
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -AsJob
+Runs the cmdlet as a background job. Use this parameter to run commands that take a long time to complete.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+# Set-RemoteAccessAccounting
+
+### -CimSession
+Runs the cmdlet in a remote session or on a remote computer.
+Enter a computer name or a session object, such as the output of a [New-CimSession](https://go.microsoft.com/fwlink/p/?LinkId=227967) or [Get-CimSession](https://go.microsoft.com/fwlink/p/?LinkId=227966) cmdlet.
+The default is the current session on the local computer.
+
+```yaml
+Type: CimSession[]
+Parameter Sets: (All)
+Aliases: Session
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -ComputerName
+Specifies the IPv4 or IPv6 address, or host name, of the computer on which the RA server computer specific tasks should be run.
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases: Cn
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Confirm
+Prompts you for confirmation before running the cmdlet.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: cf
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -DisableAccountingType
+Indicates the accounting type that has to be disabled.
+The acceptable values for this parameter are:
+                         
+ -- Inbox. 
+                         
+ -- ExternalRadius.
+
+```yaml
+Type: String
+Parameter Sets: DisableAccounting
+Aliases: 
+Accepted values: Inbox, ExternalRadius
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -EnableAccountingType
+Indicates the accounting type that needs to be enabled.
+The acceptable values for this parameter are:
+                         
+ -- Inbox: The store size is set to 12 months automatically.
+The Set-RemoteAccessInboxAccountingStore cmdlet is used to change the store size on individual RA servers. 
+                         
+ -- ExternalRadius: Can also be used to enable Windows Accounting or Accounting on the NPS installed locally on the same computer.
+
+```yaml
+Type: String
+Parameter Sets: EnableAccounting
+Aliases: 
+Accepted values: Inbox, ExternalRadius
+
+Required: True
+Position: 1
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -PassThru
+Returns an object representing the item with which you are working.
+By default, this cmdlet does not generate any output.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -RadiusPort
+Specifies the port number on which the RADIUS server is accepting authentication requests. 
+                         
+The default value is 1813. 
+                         
+This parameter can be configured only if the **EnableAccountingType** parameter is specified to be ExternalRadius.
+
+```yaml
+Type: UInt16
+Parameter Sets: EnableAccounting
+Aliases: Port
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -RadiusScore
+Specifies the initial score. 
+                         
+The default value is 30. 
+                         
+This parameter can be configured only if the **EnableAccountingType** parameter is specified to be ExternalRadius.
+
+```yaml
+Type: Byte
+Parameter Sets: EnableAccounting
+Aliases: Score
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -RadiusServer
+Specifies the IPv4 or IPv6 address, or host name, of the external RADIUS server that is used for accounting.
+This parameter can be configured only if the **EnableAccountingType** parameter is specified to be ExternalRadius.
+
+```yaml
+Type: String
+Parameter Sets: EnableAccounting
+Aliases: ServerName
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -RadiusTimeout
+Specifies the time in seconds that the RA server waits for a response from the RADIUS server before the RA server tries to connect to the next RADIUS server.
+The default value is 5.
+Specify this parameter only if you specify ExternalRadius for the **EnableAccountingType** parameter.
+
+```yaml
+Type: UInt32
+Parameter Sets: EnableAccounting
+Aliases: Timeout
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -SharedSecret
+Specifies the shared secret between the RA server and the specified external RADIUS server which is required for successful communication between the two servers. 
+Note: The secret is specified in clear text.
+This parameter can be configured only if the **EnableAccountingType** parameter is specified to be ExternalRadius.
+
+```yaml
+Type: String
+Parameter Sets: EnableAccounting
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -ThrottleLimit
+Specifies the maximum number of concurrent operations that can be established to run the cmdlet.
+If this parameter is omitted or a value of `0` is entered, then Windows PowerShell(R) calculates an optimum throttle limit for the cmdlet based on the number of CIM cmdlets that are running on the computer.
+The throttle limit applies only to the current cmdlet, not to the session or to the computer.
+
+```yaml
+Type: Int32
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -WhatIf
+Shows what would happen if the cmdlet runs.
+The cmdlet is not run.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: wi
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### CommonParameters
+This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable. For more information, see [about_CommonParameters](https://go.microsoft.com/fwlink/?LinkID=113216).
+
+## INPUTS
+
+### System.String
+
+### System.UInt16
+
+### System.Byte
+
+### System.UInt32
+
+## OUTPUTS
+
+### Microsoft.Management.Infrastructure.CimInstance
+
+# Set-RemoteAccessAccounting
+
+### Microsoft.Management.Infrastructure.CimInstance#RemoteAccessAccounting
+
+The `Microsoft.Management.Infrastructure.CimInstance` object is a wrapper class that displays Windows Management Instrumentation (WMI) objects.
+The path after the pound sign (`#`) provides the namespace and class name for the underlying WMI object.
+                         
+The RemoteAccessAccounting object consists of the following properties: 
+                         
+ -- The status of RADIUS accounting (Disabled, Windows, or ExternalRadius) and the list of RADIUS servers in the case of ExternalRadius accounting.
+If there is no external radius accounting enabled, then the list of Radius servers is empty. 
+                         
+ -- The status of inbox accounting (Enabled or Disabled) and the associated properties. 
+                         
+ -- Time span of the store. 
+                         
+ -- Number of used bytes. 
+                         
+ -- Percentage of used bytes. 
+                         
+ -- Number of free bytes. 
+                         
+ -- Percentage of free bytes. 
+                         
+ -- Time stamp of the first record in the database. 
+                         
+ -- Time stamp of the last record in the database.
+
+## NOTES
+
+## RELATED LINKS
+
+[Add-RemoteAccessRadius](./Add-RemoteAccessRadius.md)
+
+[Get-RemoteAccessAccounting](./Get-RemoteAccessAccounting.md)
+
+[Set-RemoteAccessInboxAccountingStore](./Set-RemoteAccessInboxAccountingStore.md)
+###Microsoft Learn URL###
+https://learn.microsoft.com/en-us/powershell/module/remoteaccess/set-remoteaccessaccounting/?view=windowsserver2022-ps
+</pre></html>

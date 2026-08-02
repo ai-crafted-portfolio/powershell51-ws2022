@@ -1,0 +1,210 @@
+<!doctype html><html lang="ja"><meta charset="utf-8"><pre class="record-source">###KnowledgeNo###
+PS51-WS2022-2026-3595
+###FormatID###
+PS51-WS2022
+###CreatedAt###
+2026-08-01 00:00
+###UpdatedAt###
+2026-08-01 00:00
+###タイトル###
+about_PSModulePath
+###モジュール###
+Microsoft.PowerShell.Core
+###製品###
+Windows PowerShell 5.1
+###対応OS###
+Windows Server 2022
+###日本語訳###
+# about_PSModulePathについて
+
+## 短編説明
+
+この記事では,このの用途と使用について説明します.`$Env:PSModulePath`環境の変数.
+
+## 長い説明
+
+   `$Env:PSModulePath`環境変数にはフォルダの位置のリストがあります.PowerShellは,各フォルダをモジュール () に回転的に検索します.`.psd1`    `.psm1`) ファイル.
+
+デフォルトでは,有効な位置が  に割り当てられている.`$Env:PSModulePath`は:
+
+- **CurrentUser**の範囲にインストールされたモジュールが, に保存されます.`$HOME\Documents\WindowsPowerShell\Modules`**AllUsers**の範囲にインストールされたモジュールが, に保存されます.`$Env:ProgramFiles\WindowsPowerShell\Modules`- に保存されているWindows PowerShellを搭載するモジュール`$PSHOME\Modules`これは,です.`$Env:SystemRoot\System32\WindowsPowerShell\1.0\Modules` .
+
+## PowerShell PSModulePathの建設について
+
+の値が`$Env:PSModulePath`PowerShellが起動するたびに作成されます.その値は,PowerShellのバージョンと,どのように起動したかによって異なります.
+
+### Windows PowerShell スタートアップ
+
+Windows PowerShellでは,次の論理を用いて,  を構築します.`PSModulePath`スタートアップ:
+
+- もし -`PSModulePath`存在していないので,CurrentUser,AllUsers,と`$PSHOME`モジュール経路 - If `PSModulePath`存在しません: - If `PSModulePath`は含んでいる.`$PSHOME`モジュールパス: - **AllUsers** モジュールパスは,前に入力される前に挿入されます.`$PSHOME`モジュールパス - else: - Just use `PSModulePath`定義されたように,ユーザーが意図的に を削除したからです.`$PSHOME`位置 位置
+
+**CurrentUser** モジュールパスは,ユーザー範囲の範囲に限定された場合にのみ前記されます.`$Env:PSModulePath`存在しない.そうでなければ,ユーザー範囲は`$Env:PSModulePath`定義されたように使用されます.
+
+## モジュール検索行動
+
+PowerShellは,PSModulePath**の各フォルダを回帰的に模組 () を検索する.`.psd1`     `.psm1`) ファイル.この検索パターンは,同じモジュールの数々のバージョンを異なるフォルダにインストールすることを可能にします.例えば:
+
+```Output
+    Directory: C:\Program Files\WindowsPowerShell\Modules\PowerShellGet
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+d----           8/14/2020  5:56 PM                1.0.0.1
+d----           9/13/2019  3:53 PM                2.1.2
+```
+
+デフォルトでは,PowerShellが複数のバージョンが発見されたときにモジュールの中で最も高いバージョン番号をロードします.特定のバージョンをロードするには,  を使用します.`Import-Module`**FullyQualifiedName**パラメータを持つ.詳細については, [Import-Module][03]を参照してください.
+
+## PSModulePathを修正する
+
+ほとんどの場合,模[U+5757]をデフォルトモジュール位置にインストールする必要があります.しかし,その値を変更する必要があるかもしれません.`PSModulePath`環境の変数.
+
+例えば,一時的に  を追加するには,`C:\Program Files\Fabrikam\Modules`へのディレクトリ`$Env:PSModulePath`現在のセッションでは,入力してください:
+
+```powershell
+$Env:PSModulePath = $Env:PSModulePath+&quot;;C:\Program Files\Fabrikam\Modules&quot;
+```
+
+の値を変更するには,`PSModulePath`各セッションで,登録キーを編集して, を保存します.`PSModulePath`値です.`PSModulePath`値がレジストリに _unexpanded_ strings として保存されます.`PSModulePath`拡張_文字列として,値を用いると,`GetValue()`副鍵のメソッドで直接値を編集します.
+
+次の例では,を足す.`C:\Program Files\Fabrikam\Modules`の値へのパス`PSModulePath`拡張されていない文字列を拡張せずに環境変数です.
+
+```powershell
+$key = (Get-Item &#x27;HKLM:\SYSTEM\CurrentControlSet\Control\Session Manager\Environment&#x27;)
+$path = $key.GetValue(&#x27;PSModulePath&#x27;,&#x27;&#x27;,&#x27;DoNotExpandEnvironmentNames&#x27;)
+$path += &#x27;;%ProgramFiles%\Fabrikam\Modules&#x27;
+$key.SetValue(&#x27;PSModulePath&#x27;,$path,[Microsoft.Win32.RegistryValueKind]::ExpandString)
+```
+
+ユーザー設定にパスを追加するには,次のコードを使用してください.
+
+```powershell
+$key = (Get-Item &#x27;HKCU:\Environment&#x27;)
+$path = $key.GetValue(&#x27;PSModulePath&#x27;,&#x27;&#x27;,&#x27;DoNotExpandEnvironmentNames&#x27;)
+$path += &#x27;;%ProgramFiles%\Fabrikam\Modules&#x27;
+$key.SetValue(&#x27;PSModulePath&#x27;,$path,[Microsoft.Win32.RegistryValueKind]::ExpandString)
+```
+
+## また, を参照してください.
+
+[about_Modules][01] - [about_Windows_PowerShell_Compatibility][02] -
+
+&lt;!--リンク参照 --&gt; [01]: about_Modules.md [02]: /powershell/module/microsoft.powershell.core/about/about_windows_powershell_compatibility [03]: xref:Microsoft.PowerShell.Core.Import-Module
+###英語原文###
+# about_PSModulePath
+
+## Short description
+
+This article describes the purpose and usage of the `$Env:PSModulePath`
+environment variable.
+
+## Long description
+
+The `$Env:PSModulePath` environment variable contains a list of folder
+locations. PowerShell recursively searches each folder for module (`.psd1` or
+`.psm1`) files.
+
+By default, the effective locations assigned to `$Env:PSModulePath` are:
+
+- Modules installed in the **CurrentUser** scope are stored in
+  `$HOME\Documents\WindowsPowerShell\Modules`.
+- Modules installed in the **AllUsers** scope are stored in
+  `$Env:ProgramFiles\WindowsPowerShell\Modules`.
+- Modules that ship with Windows PowerShell stored in `$PSHOME\Modules`, which
+  is `$Env:SystemRoot\System32\WindowsPowerShell\1.0\Modules`.
+
+## PowerShell PSModulePath construction
+
+The value of `$Env:PSModulePath` is constructed each time PowerShell starts.
+The value varies by version of PowerShell and how you launched it.
+
+### Windows PowerShell startup
+
+Windows PowerShell uses the following logic to construct the `PSModulePath` at
+startup:
+
+- If `PSModulePath` doesn&#x27;t exist, combine **CurrentUser**, **AllUsers**, and
+  the `$PSHOME` modules paths
+- If `PSModulePath` does exist:
+  - If `PSModulePath` contains `$PSHOME` modules path:
+    - **AllUsers** modules path is inserted before `$PSHOME` modules path
+  - else:
+    - Just use `PSModulePath` as defined since the user deliberately removed
+      the `$PSHOME` location
+
+The **CurrentUser** module path is prefixed only if the User scope
+`$Env:PSModulePath` doesn&#x27;t exist. Otherwise, the User scope
+`$Env:PSModulePath` is used as defined.
+
+## Module search behavior
+
+PowerShell recursively searches each folder in the **PSModulePath** for module
+(`.psd1` or `.psm1`) files. This search pattern allows multiple versions of the
+same module to be installed in different folders. For example:
+
+```Output
+    Directory: C:\Program Files\WindowsPowerShell\Modules\PowerShellGet
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+d----           8/14/2020  5:56 PM                1.0.0.1
+d----           9/13/2019  3:53 PM                2.1.2
+```
+
+By default, PowerShell loads the highest version number of a module when
+multiple versions are found. To load a specific version, use `Import-Module`
+with the **FullyQualifiedName** parameter. For more information, see
+[Import-Module][03].
+
+## Modifying PSModulePath
+
+For most situations, you should be installing modules in the default module
+locations. However, you might need to change the value of the `PSModulePath`
+environment variable.
+
+For example, to temporarily add the `C:\Program Files\Fabrikam\Modules`
+directory to `$Env:PSModulePath` for the current session, type:
+
+```powershell
+$Env:PSModulePath = $Env:PSModulePath+&quot;;C:\Program Files\Fabrikam\Modules&quot;
+```
+
+To change the value of `PSModulePath` in every session, edit the registry key
+storing the `PSModulePath` values. The `PSModulePath` values are stored in the
+registry as _unexpanded_ strings. To avoid permanently saving the
+`PSModulePath` values as _expanded_ strings, use the `GetValue()` method on the
+subkey and edit the value directly.
+
+The following example adds the `C:\Program Files\Fabrikam\Modules` path to the
+value of the `PSModulePath` environment variable without expanding the
+unexpanded strings.
+
+```powershell
+$key = (Get-Item &#x27;HKLM:\SYSTEM\CurrentControlSet\Control\Session Manager\Environment&#x27;)
+$path = $key.GetValue(&#x27;PSModulePath&#x27;,&#x27;&#x27;,&#x27;DoNotExpandEnvironmentNames&#x27;)
+$path += &#x27;;%ProgramFiles%\Fabrikam\Modules&#x27;
+$key.SetValue(&#x27;PSModulePath&#x27;,$path,[Microsoft.Win32.RegistryValueKind]::ExpandString)
+```
+
+To add a path to the user setting, use the following code:
+
+```powershell
+$key = (Get-Item &#x27;HKCU:\Environment&#x27;)
+$path = $key.GetValue(&#x27;PSModulePath&#x27;,&#x27;&#x27;,&#x27;DoNotExpandEnvironmentNames&#x27;)
+$path += &#x27;;%ProgramFiles%\Fabrikam\Modules&#x27;
+$key.SetValue(&#x27;PSModulePath&#x27;,$path,[Microsoft.Win32.RegistryValueKind]::ExpandString)
+```
+
+## See also
+
+- [about_Modules][01]
+- [about_Windows_PowerShell_Compatibility][02]
+
+&lt;!-- link references --&gt;
+[01]: about_Modules.md
+[02]: /powershell/module/microsoft.powershell.core/about/about_windows_powershell_compatibility
+[03]: xref:Microsoft.PowerShell.Core.Import-Module
+###Microsoft Learn URL###
+https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_psmodulepath/?view=powershell-5.1
+</pre></html>

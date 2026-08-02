@@ -1,0 +1,702 @@
+<!doctype html><html lang="ja"><meta charset="utf-8"><pre class="record-source">###KnowledgeNo###
+PS51-WS2022-2026-3606
+###FormatID###
+PS51-WS2022
+###CreatedAt###
+2026-08-01 00:00
+###UpdatedAt###
+2026-08-01 00:00
+###タイトル###
+about_Remote_Jobs
+###モジュール###
+Microsoft.PowerShell.Core
+###製品###
+Windows PowerShell 5.1
+###対応OS###
+Windows Server 2022
+###日本語訳###
+# 遠隔_就職について
+
+## 短編説明
+
+遠隔コンピュータで背景の仕事を実行する方法について説明します.
+
+## 長い説明
+
+PowerShellは,同時にジョブを通じてコマンドとスクリプトを実行します.PowerShellが同期をサポートする3つのジョブタイプがあります.
+
+ - -`RemoteJob`- コマンドとスクリプトはリモートセッションで実行されます. - `BackgroundJob`- コマンドとスクリプトはローカルマシンで別々のプロセスで実行されます.詳細については, [about_Jobs] (about_Jobs.md) を参照してください. - `PSTaskJob`    `ThreadJob`- コマンドとスクリプトは,ローカルマシンで同じプロセス内で別のスレッドで実行されます.詳細については, [about_Thread_Jobs] (/powershell/module/Microsoft.PowerShell.Core/About/about_Thread_Jobs) を参照してください.
+
+遠隔で,別のマシンで,または別のプロセスでスクリプトを実行すると,大きな隔離がもたらされます.遠隔作業で発生するエラーは,他の実行作業や作業を開始した親セッションに影響しません.しかし,遠隔層はオブジェクトシリーズ化を含むオーバーヘッドを追加します.すべてのオブジェクトは親セッションと遠隔 (仕事) セッションの間に転送されるようにシリア化され,消化されます.大規模な複雑なデータオブジェクトのシリア化は大量の計算とメモリリソースを消費し,ネットワーク全体に大量のデータを転送することができます.
+
+[!IMPORTANT] &gt; 仕事を創った親セッションは,仕事の状態を監視し,パイプラインデータを収集する. 仕事を終えた状態に達すると親子プロセスによって仕事の子プロセスが終了します. 親セッションが終了した場合,すべての実行中の子供仕事と子供 &gt; プロセスが終了します.
+
+この状況に対処する方法は2つあります.
+
+ 1 を使って下さい.`Invoke-Command`接続が切れたセッションで実行される仕事を作成する.この記事の [detached processes] (#how-to-run-as-a-detached-process) セクションを参照してください.`Start-Process`詳細については, [Start-Process] (xref:Microsoft.PowerShell.Management.Start-Process) を参照してください.
+
+## 遠隔の仕事です.
+
+3つの異なる方法を使ってリモートコンピュータで作業を実行できます.
+
+遠隔コンピュータでインタラクティブセッションを開始します. その後,インタラクティブセッションで作業を開始します.手順は,ローカルワークを実行するように同じです.しかしすべてのアクションは遠隔コンピュータで実行されます.
+
+遠隔コンピュータで作業を実行して,その結果をローカルコンピュータに返します.この方法を使用して,仕事の結果を収集し,ローカルコンピュータの中央位置に保存したいとき.
+
+遠隔コンピュータで結果を保存する遠隔コンピュータで作業を実行します.この作業データは,発生するコンピュータでより安全に保存されたときにこの方法を使用します.
+
+### インタラクティブなセッションで仕事を開始します.
+
+遠隔コンピュータでインタラクティブセッションを開始し,インタラクティブセッション中に仕事を開始することができます.インタラクティブセッションに関する詳細については, [about_Remote](about_Remote.md) を参照し,  を参照してください.`Enter-PSSession` .
+
+インタラクティブセッションで作業を開始する手順は,ローカルコンピュータでバックグラウンド作業を開始する手順とほぼ同じです.しかし,すべての操作はローカルコンピュータではなくリモートコンピュータで行われます.
+
+ 1 を使って`Enter-PSSession`遠隔コンピュータでインタラクティブなセッションを開始するには cmdlet を使用できます.`Enter-PSSession`または,セッションパラメータを使用して PowerShell セッション (PSSession) でインタラクティブなセッションを実行することができます.
+
+次のコマンドは Server01 コンピュータでインタラクティブなセッションを開始します.
+
+    ```powershell
+   C:\PS&gt; Enter-PSSession -ComputerName Server01
+   ```
+
+コマンドプロンプトが変更され,現在 Server01 コンピュータに接続されていることを表示します.
+
+    ```
+   Server01\C:&gt;
+   ```
+
+1.セッションでリモートワークを起動するには,  を使ってください.`Start-Job`cmdlet.次のコマンドは,サーバー01のコンピュータのWindows PowerShellイベントログのイベントを入手するリモートワークを実行します.`Start-Job`cmdlet は,その仕事を代表するオブジェクトを返します.
+
+このコマンドは,  の作業オブジェクトを保存します.`$job`変数です.
+
+    ```powershell
+   Server01\C:&gt; $job = Start-Job -ScriptBlock {
+     Get-EventLog &quot;Windows PowerShell&quot;
+   }
+   ```
+
+作業が実行されている間に,他の作業を含む他のコマンドを実行するためにインタラクティブセッションを使用できます.しかし,作業が完了するまでインタラクティブセッションをオープンにする必要があります.セッションを終了すると,作業が中断され,結果は失われます.
+
+1. 作業が完了したかどうかを確認するには,  の値を表示します.`$job`変数を使用するか.`Get-Job`職を得るためのcmdlet. 次のコマンドは,  を使います.`Get-Job`職務を表示するcmdlet.
+
+    ```powershell
+   Server01\C:&gt; Get-Job $job
+
+   SessionId  Name  State      HasMoreData  Location   Command
+   ---------  ----  -----      -----------  --------   -------
+   1          Job1  Complete   True         localhost  Get-EventLog &quot;Windows...
+   ```
+
+   `Get-Job`作業が起動され,同じコンピュータ (この場合は Server01) で実行されているため,その作業が&quot;ローカルホスト&quot;コンピュータで実行されていることを示しています.
+
+1.仕事の結果を入手するには,  を使ってください.`Receive-Job`cmdlet.インタラクティブなセッションで結果を表示したり,リモートコンピュータのファイルに保存したりできます.次のコマンドは$job変数で仕事の結果を取得します.コマンドはリダイレクトオペレータ () を使用します.`&gt;`) を Server01 コンピュータの PsLog.txt ファイルに保存する.
+
+    ```powershell
+   Server01\C:&gt; Receive-Job $job &gt; C:\logs\PsLog.txt
+   ```
+
+1.インタラクティブなセッションを終了するには,  を使ってください.`Exit-PSSession`cmdlet. コマンドプロンプトは変更され,ローカルコンピュータの元のセッションに戻ったことを示します.
+
+    ```powershell
+   Server01\C:&gt; Exit-PSSession
+   C:\PS&gt;
+   ```
+
+1. の内容を表示するには`PsLog.txt`Server01 コンピュータのファイルにいつでも,別のインタラクティブセッションを開始するか,リモートコマンドを実行する.このコマンドは,PSSession (持続接続) で実行されるのが最善です.`PsLog.txt`PSSSessionsに関する詳細については, [about_PSSessions] (PSSessions.md) を参照してください.
+
+次のコマンドは,  を使っています.`New-PSSession`cmdlet は Server01 コンピュータに接続された **PSSession** を作成し,その上で  を使用します.`Invoke-Command`cmdlet を実行するには,`Get-Content`PSSession のコマンドでファイルの内容を表示します.
+
+    ```powershell
+   $s = New-PSSession -ComputerName Server01
+   Invoke-Command -Session $s -ScriptBlock {
+     Get-Content C:\logs\pslog.txt}
+   ```
+
+# 遠隔_就職について
+
+### 遠隔作業を開始して,その結果を局部コンピュータに返します (AsJob)
+
+遠隔コンピュータでコマンド結果を局部コンピュータに返信する作業を開始するには,cmdletの**AsJob**パラメータを使用してください.`Invoke-Command`cmdletです.
+
+**AsJob**パラメータを使用すると,作業がリモートコンピュータで実行されているにもかかわらず,実際の作業オブジェクトはローカルコンピュータで作成されます.作業が完了すると,結果はローカルコンピュータに返されます.
+
+任意のcmdletによって作成された任意の作業を管理するためにJob名詞 (Job cmdlets) を含むcmdletsを使用できます. **AsJob**パラメータを持つcmdletsの多くはPowerShellリモートを使用しませんので,リモートに設定されていないコンピュータでも使用できます.
+
+1.次のコマンドは,  の **AsJob** パラメータを使用します.`Invoke-Command`Server01 コンピュータで作業を開始する.`Get-Eventlog`システムログのイベントを記録するコマンドです.JobNameパラメータを使用して,作業に表示名を割り当てることができます.
+
+    ```powershell
+   Invoke-Command -ComputerName Server01 -ScriptBlock {
+     Get-EventLog System} -AsJob
+   ```
+
+コマンドの結果は,次のサンプル出力に似ている.
+
+    ```Output
+   SessionId   Name   State    HasMoreData   Location   Command
+   ---------   ----   -----    -----------   --------   -------
+   1           Job1   Running  True          Server01   Get-EventLog System
+   ```
+
+**AsJob**パラメータが使用された場合,`Invoke-Command`と同じ種類のオブジェクトを返します.`Start-Job`作業オブジェクトを変数に保存するか,返信符を用いることもできます.`Get-Job`職を得るためのコマンドです.
+
+位置属性の値は Server01 コンピュータで実行されたことを示していることに注意してください.
+
+1. の **AsJob**パラメータを使用して開始された仕事を管理する`Invoke-Command`遠隔作業を表示する作業オブジェクトがローカルコンピュータにあるため,作業を管理するには遠隔コマンドを実行する必要はありません.
+
+作業が完了しているか判断するには,  を使ってください.`Get-Job`次のコマンドは,現在のセッションで開始されたすべての作業を表示します.
+
+    ```powershell
+   Get-Job
+   ```
+
+遠隔作業が現在のセッションで開始されたため,地元の `Get-Job`命令が完成したことを示す,作業オブジェクトのステートプロパティです.
+
+    ```Output
+   SessionId   Name   State      HasMoreData   Location   Command
+   ---------   ----   -----      -----------   --------   -------
+   1           Job1   Completed  True          Server01   Get-EventLog System
+   ```
+
+1.仕事の結果を入手するには,  を使ってください.`Receive-Job`cmdlet. 作業結果が自動的に作業対象が所在するコンピュータに返されるので,ローカルで結果を取得できます.`Receive-Job`命令です.
+
+次のコマンドは,  を使っています.`Receive-Job`cmdlet は,仕事の結果を表示する.このコマンドは,仕事の結果を$results変数で保存します.また,結果をファイルにリダイレクトすることもできます.
+
+    ```powershell
+   $results = Receive-Job -Id 1
+   ```
+
+### 遠隔作業を開始して,結果を遠隔コンピュータに保存します.
+
+遠隔コンピュータでコマンド結果を保持する遠隔コンピュータで作業を開始するには,  を使ってください.`Invoke-Command`cmdlet を実行するには,`Start-Job`遠隔コンピュータのコマンドで,この方法を使用して複数のコンピュータで作業を実行できます.
+
+を走らせるときは`Start-Job`遠隔操作では,作業オブジェクトはリモートコンピュータで作成され,作業結果はリモートコンピュータで保存されます.仕事という観点から,すべての操作はローカルです. 遠隔操作では,ローカル作業をリモートコンピュータで管理するだけです.
+
+ 1 を使って`Invoke-Command`cmdlet を実行するには,`Start-Job`リモートコンピュータのコマンドです.
+
+このコマンドには,PSSession (持続的な接続) が必要です.コンピュータ名パラメータを使用すると,`Invoke-Command`暫定的な接続を確立するために, `Invoke-Command`命令は,仕事オブジェクトが返されたときに完了すると考えられます.その結果,一時的な接続が閉鎖され,仕事はキャンセルされます.
+
+次のコマンドは,  を使っています.`New-PSSession`cmdlet で Server01 コンピュータに接続された PSSession を作成します.このコマンドは,PSSession を  ファイルで保存します.`$s`変数です.
+
+    ```powershell
+   $s = New-PSSession -ComputerName Server01
+   ```
+
+次のコマンドは,  を使います.`Invoke-Command`cmdlet を実行するには,`Start-Job`PSSession のコマンドで,`Start-Job`コマンドと `Get-Eventlog`コマンドはブレーキに閉じ込められている.
+
+    ```powershell
+   Invoke-Command -Session $s -ScriptBlock {
+     Start-Job -ScriptBlock {Get-EventLog System}}
+   ```
+
+結果は以下のサンプル出力に似ている.
+
+    ```Output
+   Id       Name    State      HasMoreData     Location   Command
+   --       ----    -----      -----------     --------   -------
+   2        Job2    Running    True            Localhost  Get-EventLog System
+   ```
+
+を走らせるときは`Start-Job`遠隔でコマンドをします.`Invoke-Command`と同じ種類のオブジェクトを返します.`Start-Job`作業オブジェクトを変数に保存するか,返信符を用いることもできます.`Get-Job`職を得るためのコマンドです.
+
+**Location**のプロパティの値は, Server01 のコンピュータで実行されたものの, &quot;LocalHost&quot;として知られるローカルコンピュータで実行されたことを示すことに注意してください. 作業オブジェクトは Server01 のコンピュータで作成され,同じコンピュータで実行されているため,ローカルバックグラウンドの仕事と考えられています.
+
+1.リモート・ワークを管理するには,**Job** cmdlets を使用します.仕事対象がリモートコンピュータにあるので,作業結果を取得,停止,待機,または取得するためにリモートコマンドを実行する必要があります.
+
+作業が完了したかどうかを確認するには,  を使ってください.`Invoke-Command`コマンドを実行するコマンドです.`Get-Job`Server01コンピュータに接続されているPSSESsionのコマンドです.
+
+    ```powershell
+   Invoke-Command -Session $s -ScriptBlock {Get-Job}
+   ```
+
+命令は,仕事オブジェクトを返します. 命令が成功して完了したことを表示する,仕事オブジェクトの **State** 属性です.
+
+    ```Output
+   SessionId   Name  State      HasMoreData   Location   Command
+   ---------   ----  -----      -----------   --------   -------
+   2           Job2  Completed  True          LocalHost   Get-EventLog System
+   ```
+
+1.仕事の結果を入手するには,  を使ってください.`Invoke-Command`cmdlet を実行するには,`Receive-Job`Server01コンピュータに接続されているPSSESsionのコマンドです.
+
+次のコマンドは,  を使っています.`Receive-Job`作業の結果を入手するにはcmdletを使用します.作業を識別するためにセッションIDを使用します.このコマンドは,作業結果を に保存します.`$results`変数の Keep パラメータを使用します.`Receive-Job`遠隔コンピュータの職務キャッシュに結果を保存します.
+
+    ```powershell
+   $results = Invoke-Command -Session $s -ScriptBlock {
+     Receive-Job -SessionId 2 -Keep
+   }
+   ```
+
+また,結果をローカルまたはリモートコンピュータのファイルにリダイレクトすることもできます.次のコマンドはリダイレクトオペレータを使用して,結果を Server01 コンピュータのファイルに保存します.
+
+    ```powershell
+   Invoke-Command -Session $s -Command {
+     Receive-Job -SessionId 2 &gt; C:\logs\pslog.txt
+   }
+   ```
+
+# 遠隔_就職について
+
+## 独立したプロセスとして実行する方法
+
+先ほど述べたように,親セッションが終了すると,すべての実行中の児童作業が,その子プロセスとともに終了します.現在のPowerShellセッションに接続されていない作業を実行するために,ローカルマシンでリモートを使用できます.
+
+ローカルマシンで新しいPowerShellセッションを作成します.`Invoke-Command`このセッションで仕事を開始します. `Invoke-Command`遠隔セッションを断断ち,母セッションを終了させる.その後,新しいPowerShellセッションを開始し,以前の断断線セッションに接続して,仕事を監視を再開することができます.しかし,元のPowerShellセッションに返されたデータは,そのセッションが終了すると失われます.断線後に生成された新しいデータオブジェクトのみが,再接続時に返されます.
+
+```powershell
+
+# Create remote session on local machine
+PS&gt; $session = New-PSSession -Cn localhost
+
+# Start remote job
+PS&gt; $job = Invoke-Command -Session $session -ScriptBlock { 1..60 | % { sleep 1; &quot;Output $_&quot; } } -AsJob
+PS&gt; $job
+
+Id     Name     PSJobTypeName   State         HasMoreData     Location      Command
+--     ----     -------------   -----         -----------     --------      -------
+1      Job1     RemoteJob       Running       True            localhost     1..60 | % { sleep 1; ...
+
+# Disconnect the job session
+PS&gt; Disconnect-PSSession $session
+
+Id Name         Transport ComputerName    ComputerType    State         ConfigurationName     Availability
+-- ----         --------- ------------    ------------    -----         -----------------     ------------
+1 Runspace1     WSMan     localhost       RemoteMachine   Disconnected  Microsoft.PowerShell          None
+
+PS&gt; $job
+
+Id     Name     PSJobTypeName   State         HasMoreData     Location      Command
+--     ----     -------------   -----         -----------     --------      -------
+1      Job1     RemoteJob       Disconnected  True            localhost     1..60 | % { sleep 1;
+
+# Reconnect the session to a new job object
+PS&gt; $jobNew = Receive-PSSession -Session $session -OutTarget Job
+PS&gt; $job | Wait-Job | Receive-Job
+Output 9
+Output 10
+Output 11
+...
+```
+
+この例では,仕事はまだ親のPowerShellセッションに付いている.しかし,親のセッションは元のPowerShellセッションではない.`Invoke-Command`実行されました.
+
+## また, を参照してください.
+
+[about_Jobs] ((about_Jobs.md) - [about_Job_Details] ((about_Job_Details.md) - [about_Remote] ((about_Remote_Variables) - [about_Remote_Variables] ((about_Remote_Variables.md) - [Invoke-Command] (xref:Microsoft.PowerShell.Core.Invoke-Command) - [Get-Job] (xref:Microsoft.PowerShell.Core.Job) - [Remove-Job] (exref:Microsoft.PowerShell.Core.Remove-Job) - [Store-Exref:Microsoft.PowerShell.Core.Remove-Job) - [Ex:Microsoft.Shell.Core.PSCore.Job] (PSPSCore-NewJob) - [Storet-PowerShell.Core-Job] - [Storet-PowerShell.Core-Section] - [Storet-Storet-Storet-Storet-Storet-Storet-Storet-Set-Set-Set-Set-Set-Set-Set-Set-Set-Set-Set-Set-Set-Set-Set-Set-Set-Set-Set-Set-Set-Set-Set-Set-Set-Set-Set-Set-Set-Set-Set-Set-Set-Set-Set-Set-Set-Set-Set-Set-Set-Set-Set-Set-Set-Set-Set-Set-Set-Set-Set-Set-Set-Set-Set-Set-Set-Set-Set-Set-Set-Set-Set-Set-Set-Set-Set-Set-Set-Set-Set-Set-Set-Set-Set-Set-Set-S
+###英語原文###
+# about_Remote_Jobs
+
+## Short description
+
+Describes how to run background jobs on remote computers.
+
+## Long description
+
+PowerShell concurrently runs commands and scripts through jobs. There are three
+jobs types provided by PowerShell to support concurrency.
+
+- `RemoteJob` - Commands and scripts run in a remote session.
+- `BackgroundJob` - Commands and scripts run in a separate process on the local
+  machine. For more information, see [about_Jobs](about_Jobs.md).
+- `PSTaskJob` or `ThreadJob` - Commands and scripts run in a separate thread
+  within the same process on the local machine. For more information, see
+  [about_Thread_Jobs](/powershell/module/Microsoft.PowerShell.Core/About/about_Thread_Jobs).
+
+Running scripts remotely, on a separate machine or in a separate process,
+provide great isolation. Any errors that occur in the remote job do not affect
+other running jobs or the parent session that started the job. However, the
+remoting layer adds overhead, including object serialization. All objects are
+serialized and deserialized as they are passed between the parent session and
+the remote (job) session. Serialization of large complex data objects can
+consume large amounts of compute and memory resources and transfer large
+amounts of data across the network.
+
+&gt; [!IMPORTANT]
+&gt; The parent session that created the job also monitors the job status and
+&gt; collects pipeline data. The job child process is terminated by the parent
+&gt; process once the job reaches a finished state. If the parent session is
+&gt; terminated, all running child jobs are terminated along with their child
+&gt; processes.
+
+There are two ways work around this situation:
+
+1. Use `Invoke-Command` to create jobs that run in disconnected sessions. See
+   the [detached processes](#how-to-run-as-a-detached-process) section of this
+   article.
+1. Use `Start-Process` to create a new process rather than a job. For more
+   information, see
+   [Start-Process](xref:Microsoft.PowerShell.Management.Start-Process).
+
+## Remote jobs
+
+You can run jobs on remote computers by using three different
+methods.
+
+- Start an interactive session on a remote computer. Then start a job in the
+  interactive session. The procedures are the same as running a local job,
+  although all actions are performed on the remote computer.
+
+- Run a job on a remote computer that returns its results to the
+  local computer. Use this method when you want to collect the results of
+  jobs and maintain them in a central location on the local
+  computer.
+
+- Run a job on a remote computer that maintains its results on the
+  remote computer. Use this method when the job data is more securely
+  maintained on the originating computer.
+
+### Start a job in an interactive session
+
+You can start an interactive session with a remote computer and then start a
+job during the interactive session. For more information about interactive
+sessions, see [about_Remote](about_Remote.md), and see `Enter-PSSession`.
+
+The procedure for starting a job in an interactive session is almost identical
+to the procedure for starting a background job on the local computer. However,
+all of the operations occur on the remote computer, not the local computer.
+
+1. Use the `Enter-PSSession` cmdlet to start an interactive session with a
+   remote computer. You can use the ComputerName parameter of `Enter-PSSession`
+   to establish a temporary connection for the interactive session. Or, you can
+   use the Session parameter to run the interactive session in a PowerShell
+   session (PSSession).
+
+   The following command starts an interactive session on the Server01
+   computer.
+
+   ```powershell
+   C:\PS&gt; Enter-PSSession -ComputerName Server01
+   ```
+
+   The command prompt changes to show that you are now connected to the
+   Server01 computer.
+
+   ```
+   Server01\C:&gt;
+   ```
+
+1. To start a remote job in the session, use the `Start-Job` cmdlet. The
+   following command runs a remote job that gets the events in the Windows
+   PowerShell event log on the Server01 computer. The `Start-Job` cmdlet
+   returns an object that represents the job.
+
+   This command saves the job object in the `$job` variable.
+
+   ```powershell
+   Server01\C:&gt; $job = Start-Job -ScriptBlock {
+     Get-EventLog &quot;Windows PowerShell&quot;
+   }
+   ```
+
+   While the job runs, you can use the interactive session to run other
+   commands, including other jobs. However, you must keep the interactive
+   session open until the job is completed. If you end the session, the job is
+   interrupted, and the results are lost.
+
+1. To find out if the job is complete, display the value of the `$job`
+   variable, or use the `Get-Job` cmdlet to get the job. The following command
+   uses the `Get-Job` cmdlet to display the job.
+
+   ```powershell
+   Server01\C:&gt; Get-Job $job
+
+   SessionId  Name  State      HasMoreData  Location   Command
+   ---------  ----  -----      -----------  --------   -------
+   1          Job1  Complete   True         localhost  Get-EventLog &quot;Windows...
+   ```
+
+   The `Get-Job` output shows that job is running on the &quot;localhost&quot; computer
+   because the job was started on and is running on the same computer (in this
+   case, Server01).
+
+1. To get the results of the job, use the `Receive-Job` cmdlet. You can display
+   the results in the interactive session or save them to a file on the remote
+   computer. The following command gets the results of the job in the $job
+   variable. The command uses the redirection operator (`&gt;`) to save the
+   results of the job in the PsLog.txt file on the Server01 computer.
+
+   ```powershell
+   Server01\C:&gt; Receive-Job $job &gt; C:\logs\PsLog.txt
+   ```
+
+1. To end the interactive session, use the `Exit-PSSession` cmdlet. The command
+   prompt changes to show that you are back in the original session on the
+   local computer.
+
+   ```powershell
+   Server01\C:&gt; Exit-PSSession
+   C:\PS&gt;
+   ```
+
+1. To view the contents of the `PsLog.txt` file on the Server01 computer at any
+   time, start another interactive session, or run a remote command. This type
+   of command is best run in a PSSession (a persistent connection) in case you
+   want to use several commands to investigate and manage the data in the
+   `PsLog.txt` file. For more information about PSSessions, see
+   [about_PSSessions](about_PSSessions.md).
+
+   The following commands use the `New-PSSession` cmdlet to create a
+   **PSSession** that is connected to the Server01 computer, and they use the
+   `Invoke-Command` cmdlet to run a `Get-Content` command in the PSSession to
+   view the contents of the file.
+
+   ```powershell
+   $s = New-PSSession -ComputerName Server01
+   Invoke-Command -Session $s -ScriptBlock {
+     Get-Content C:\logs\pslog.txt}
+   ```
+
+# about_Remote_Jobs
+
+### Start a remote job that returns the results to the local computer (AsJob)
+
+To start a job on a remote computer that returns the command results to the
+local computer, use the **AsJob** parameter of a cmdlet such as the
+`Invoke-Command` cmdlet.
+
+When you use the **AsJob** parameter, the job object is actually created on the
+local computer even though the job runs on the remote computer. When the job is
+completed, the results are returned to the local computer.
+
+You can use the cmdlets that contain the Job noun (the Job cmdlets) to manage
+any job created by any cmdlet. Many of the cmdlets that have **AsJob**
+parameters do not use PowerShell remoting, so you can use them even on
+computers that are not configured for remoting and that do not meet the
+requirements for remoting.
+
+1. The following command uses the **AsJob** parameter of `Invoke-Command` to
+   start a job on the Server01 computer. The job runs a `Get-Eventlog` command
+   that gets the events in the System log. You can use the JobName parameter to
+   assign a display name to the job.
+
+   ```powershell
+   Invoke-Command -ComputerName Server01 -ScriptBlock {
+     Get-EventLog System} -AsJob
+   ```
+
+   The results of the command resemble the following sample output.
+
+   ```Output
+   SessionId   Name   State    HasMoreData   Location   Command
+   ---------   ----   -----    -----------   --------   -------
+   1           Job1   Running  True          Server01   Get-EventLog System
+   ```
+
+   When the **AsJob** parameter is used, `Invoke-Command` returns the same type
+   of job object that `Start-Job` returns. You can save the job object in a
+   variable, or you can use a `Get-Job` command to get the job.
+
+   Note that the value of the Location property shows that the job ran on the
+   Server01 computer.
+
+1. To manage a job started by using the **AsJob** parameter of the
+   `Invoke-Command` cmdlet, use the Job cmdlets. Because the job object that
+   represents the remote job is on the local computer, you do not need to run
+   remote commands to manage the job.
+
+   To determine whether the job is complete, use a `Get-Job` command. The
+   following command gets all of the jobs that were started in the current
+   session.
+
+   ```powershell
+   Get-Job
+   ```
+
+   Because the remote job was started in the current session, a local `Get-Job`
+   command gets the job. The State property of the job object shows that the
+   command was completed successfully.
+
+   ```Output
+   SessionId   Name   State      HasMoreData   Location   Command
+   ---------   ----   -----      -----------   --------   -------
+   1           Job1   Completed  True          Server01   Get-EventLog System
+   ```
+
+1. To get the results of the job, use the `Receive-Job` cmdlet. Because the job
+   results are automatically returned to the computer where the job object
+   resides, you can get the results with a local `Receive-Job` command.
+
+   The following command uses the `Receive-Job` cmdlet to get the results of
+   the job. It uses the session ID to identify the job. This command saves the
+   job results in the $results variable. You can also redirect the results to a
+   file.
+
+   ```powershell
+   $results = Receive-Job -Id 1
+   ```
+
+### Start a remote job that keeps the results on the remote computer
+
+To start a job on a remote computer that keeps the command results on the
+remote computer, use the `Invoke-Command` cmdlet to run a `Start-Job` command
+on a remote computer. You can use this method to run jobs on multiple
+computers.
+
+When you run a `Start-Job` command remotely, the job object is created on the
+remote computer, and the job results are maintained on the remote computer.
+From the perspective of the job, all operations are local. You are just running
+commands remotely to manage a local job on the remote computer.
+
+1. Use the `Invoke-Command` cmdlet to run a `Start-Job` command on a remote
+   computer.
+
+   This command requires a PSSession (a persistent connection). If you use the
+   ComputerName parameter of `Invoke-Command` to establish a temporary
+   connection, the `Invoke-Command` command is considered to be complete when
+   the job object is returned. As a result, the temporary connection is closed,
+   and the job is canceled.
+
+   The following command uses the `New-PSSession` cmdlet to create a PSSession
+   that is connected to the Server01 computer. The command saves the PSSession
+   in the `$s` variable.
+
+   ```powershell
+   $s = New-PSSession -ComputerName Server01
+   ```
+
+   The next command uses the `Invoke-Command` cmdlet to run a `Start-Job`
+   command in the PSSession. The `Start-Job` command and the `Get-Eventlog`
+   command are enclosed in braces.
+
+   ```powershell
+   Invoke-Command -Session $s -ScriptBlock {
+     Start-Job -ScriptBlock {Get-EventLog System}}
+   ```
+
+   The results resemble the following sample output.
+
+   ```Output
+   Id       Name    State      HasMoreData     Location   Command
+   --       ----    -----      -----------     --------   -------
+   2        Job2    Running    True            Localhost  Get-EventLog System
+   ```
+
+   When you run a `Start-Job` command remotely, `Invoke-Command` returns the
+   same type of job object that `Start-Job` returns. You can save the job
+   object in a variable, or you can use a `Get-Job` command to get the job.
+
+   Note that the value of the **Location** property shows that the job ran on
+   the local computer, known as &quot;LocalHost&quot;, even though the job ran on the
+   Server01 computer. Because the job object is created on the Server01
+   computer and the job runs on the same computer, it is considered to be a
+   local background job.
+
+1. To manage a remote job, use the **Job** cmdlets. Because the job object is
+   on the remote computer, you need to run remote commands to get, stop, wait
+   for, or retrieve the job results.
+
+   To see if the job is complete, use an `Invoke-Command` command to run a
+   `Get-Job` command in the PSSession that is connected to the Server01
+   computer.
+
+   ```powershell
+   Invoke-Command -Session $s -ScriptBlock {Get-Job}
+   ```
+
+   The command returns a job object. The **State** property of the job object
+   shows that the command was completed successfully.
+
+   ```Output
+   SessionId   Name  State      HasMoreData   Location   Command
+   ---------   ----  -----      -----------   --------   -------
+   2           Job2  Completed  True          LocalHost   Get-EventLog System
+   ```
+
+1. To get the results of the job, use the `Invoke-Command` cmdlet to run a
+   `Receive-Job` command in the PSSession that is connected to the Server01
+   computer.
+
+   The following command uses the `Receive-Job` cmdlet to get the results of
+   the job. It uses the session ID to identify the job. This command saves the
+   job results in the `$results` variable. It uses the Keep parameter of
+   `Receive-Job` to keep the result in the job cache on the remote computer.
+
+   ```powershell
+   $results = Invoke-Command -Session $s -ScriptBlock {
+     Receive-Job -SessionId 2 -Keep
+   }
+   ```
+
+   You can also redirect the results to a file on the local or remote computer.
+   The following command uses a redirection operator to save the results in a
+   file on the Server01 computer.
+
+   ```powershell
+   Invoke-Command -Session $s -Command {
+     Receive-Job -SessionId 2 &gt; C:\logs\pslog.txt
+   }
+   ```
+
+# about_Remote_Jobs
+
+## How to run as a detached process
+
+As previously mentioned, when the parent session is terminated, all running
+child jobs are terminated along with their child processes. You can use
+remoting on the local machine to run jobs that are not attached to the current
+PowerShell session.
+
+Create a new PowerShell session on the local machine. The use `Invoke-Command`
+to start a job in this session. `Invoke-Command` allows you to disconnect a
+remote session and terminate the parent session. Later, you can start a new
+PowerShell session and connect to the previously disconnected session to resume
+monitoring the job. However, any data that was returned to the original
+PowerShell session is lost when that session is terminated. Only new data
+objects generated after the disconnect are returned when re-connected.
+
+```powershell
+
+# Create remote session on local machine
+PS&gt; $session = New-PSSession -Cn localhost
+
+# Start remote job
+PS&gt; $job = Invoke-Command -Session $session -ScriptBlock { 1..60 | % { sleep 1; &quot;Output $_&quot; } } -AsJob
+PS&gt; $job
+
+Id     Name     PSJobTypeName   State         HasMoreData     Location      Command
+--     ----     -------------   -----         -----------     --------      -------
+1      Job1     RemoteJob       Running       True            localhost     1..60 | % { sleep 1; ...
+
+# Disconnect the job session
+PS&gt; Disconnect-PSSession $session
+
+Id Name         Transport ComputerName    ComputerType    State         ConfigurationName     Availability
+-- ----         --------- ------------    ------------    -----         -----------------     ------------
+1 Runspace1     WSMan     localhost       RemoteMachine   Disconnected  Microsoft.PowerShell          None
+
+PS&gt; $job
+
+Id     Name     PSJobTypeName   State         HasMoreData     Location      Command
+--     ----     -------------   -----         -----------     --------      -------
+1      Job1     RemoteJob       Disconnected  True            localhost     1..60 | % { sleep 1;
+
+# Reconnect the session to a new job object
+PS&gt; $jobNew = Receive-PSSession -Session $session -OutTarget Job
+PS&gt; $job | Wait-Job | Receive-Job
+Output 9
+Output 10
+Output 11
+...
+```
+
+For this example, the jobs are still attached to a parent PowerShell session.
+However, the parent session is not the original PowerShell session where
+`Invoke-Command` was run.
+
+## See also
+
+- [about_Jobs](about_Jobs.md)
+- [about_Job_Details](about_Job_Details.md)
+- [about_Remote](about_Remote.md)
+- [about_Remote_Variables](about_Remote_Variables.md)
+- [Invoke-Command](xref:Microsoft.PowerShell.Core.Invoke-Command)
+- [Get-Job](xref:Microsoft.PowerShell.Core.Get-Job)
+- [Remove-Job](xref:Microsoft.PowerShell.Core.Remove-Job)
+- [Start-Job](xref:Microsoft.PowerShell.Core.Start-Job)
+- [Stop-Job](xref:Microsoft.PowerShell.Core.Stop-Job)
+- [Wait-Job](xref:Microsoft.PowerShell.Core.Wait-Job)
+- [Enter-PSSession](xref:Microsoft.PowerShell.Core.Enter-PSSession)
+- [Exit-PSSession](xref:Microsoft.PowerShell.Core.Exit-PSSession)
+- [New-PSSession](xref:Microsoft.PowerShell.Core.New-PSSession)
+###Microsoft Learn URL###
+https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_remote_jobs/?view=powershell-5.1
+</pre></html>

@@ -1,0 +1,895 @@
+<!doctype html><html lang="ja"><meta charset="utf-8"><pre class="record-source">###KnowledgeNo###
+PS51-WS2022-2026-1505
+###FormatID###
+PS51-WS2022
+###CreatedAt###
+2026-08-01 00:00
+###UpdatedAt###
+2026-08-01 00:00
+###タイトル###
+New-VM
+###モジュール###
+hyper-v
+###製品###
+Windows PowerShell 5.1
+###対応OS###
+Windows Server 2022
+###日本語訳###
+# New-VM
+
+## シノプシスです.
+
+新しい仮想マシンを作成します.
+
+## SYNTAXは,のシンタックスです.
+
+### VHD (デフォルト) はありません.
+
+```
+New-VM [[-Name] &lt;String&gt;] [[-MemoryStartupBytes] &lt;Int64&gt;] [-BootDevice &lt;BootDevice&gt;] [-NoVHD]
+ [-SwitchName &lt;String&gt;] [-Path &lt;String&gt;] [-Version &lt;Version&gt;] [-Prerelease] [-Experimental]
+ [[-Generation] &lt;Int16&gt;] [-Force] [-AsJob] [-CimSession &lt;CimSession[]&gt;] [-ComputerName &lt;String[]&gt;]
+ [-Credential &lt;PSCredential[]&gt;] [-WhatIf] [-Confirm] [&lt;CommonParameters&gt;]
+```
+
+### 新しいVHD
+
+```
+New-VM [[-Name] &lt;String&gt;] [[-MemoryStartupBytes] &lt;Int64&gt;] [-BootDevice &lt;BootDevice&gt;] [-SwitchName &lt;String&gt;]
+ -NewVHDPath &lt;String&gt; -NewVHDSizeBytes &lt;UInt64&gt; [-Path &lt;String&gt;] [-Version &lt;Version&gt;] [-Prerelease]
+ [-Experimental] [[-Generation] &lt;Int16&gt;] [-Force] [-AsJob] [-CimSession &lt;CimSession[]&gt;]
+ [-ComputerName &lt;String[]&gt;] [-Credential &lt;PSCredential[]&gt;] [-WhatIf] [-Confirm] [&lt;CommonParameters&gt;]
+```
+
+### 既存のVHD
+
+```
+New-VM [[-Name] &lt;String&gt;] [[-MemoryStartupBytes] &lt;Int64&gt;] [-BootDevice &lt;BootDevice&gt;] [-SwitchName &lt;String&gt;]
+ -VHDPath &lt;String&gt; [-Path &lt;String&gt;] [-Version &lt;Version&gt;] [-Prerelease] [-Experimental] [[-Generation] &lt;Int16&gt;]
+ [-Force] [-AsJob] [-CimSession &lt;CimSession[]&gt;] [-ComputerName &lt;String[]&gt;] [-Credential &lt;PSCredential[]&gt;]
+ [-WhatIf] [-Confirm] [&lt;CommonParameters&gt;]
+```
+
+## 記述は,
+
+**New-VM** cmdlet は新しい仮想マシンを作成します.
+
+## 例えは
+
+### 例1
+
+```powershell
+New-VM -Name &quot;new 1&quot; -MemoryStartupBytes 512MB
+```
+
+この例では,新しい1という名前の新しい仮想マシンが作成され,メモリが512MBである.
+
+### 例2
+
+```powershell
+New-VM -Name &quot;new 2&quot; -MemoryStartupBytes 1GB -NewVHDPath d:\vhd\base.vhdx -NewVHDSizeBytes 40GB
+```
+
+この例では,ニュー2という名前の仮想マシンが作成され,1GBのメモリがあり,VHDXフォーマットを使用する新しい40GBの仮想ハードディスクに接続されています.
+
+### 例3
+
+```powershell
+New-VM -Name &quot;new 3&quot; -MemoryStartupBytes 1GB -VHDPath d:\vhd\BaseImage.vhdx
+```
+
+この例では,ニュー3という名前の仮想マシンが1GBのメモリを持つ1GBのメモリを作り,VHDXフォーマットを使用する既存の仮想ハードディスクに接続します.
+
+### 例4
+
+```powershell
+New-VM -Name &quot;new 4&quot; -MemoryStartupBytes 2GB -Credential (Get-Credential) -ComputerName HostServer01
+```
+
+この例では,認証を要求し,新しい4という名前の仮想マシンを作成し,ホストサーバー01というサーバーに2GBのメモリを備えています.
+
+### 例5
+
+```powershell
+New-VM -Name &quot;new 5&quot; -Generation 1 -BootDevice CD -NoVHD
+```
+
+この例では,new 5という名前の仮想マシンが作成されます.このマシンにはVHDディスクがないため,CDから起動するように設定されています.
+
+### 例 6
+
+```powershell
+$oldVM = Get-VM &quot;old 1&quot;
+$memory = (Get-VMMemory -VMName $oldVM.name).Startup
+$switch = (Get-VMNetworkAdapter -VMName $oldVM.name).SwitchName
+New-VM -Name &quot;new 6&quot; -Generation $oldVM.Generation -MemoryStartupBytes $memory -SwitchName $switch
+```
+
+この例では,ニュー6という仮想マシンが作成されます.このマシンには,旧1という既存のマシンと同じ生成と割り当てられたメモリがおり,同じネットワークスイッチに接続されます.
+
+## パラメータは
+
+### - バイトとして
+
+背景作業としてcmdletを実行します.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -ボートデバイス
+
+新しい仮想マシンに起動するデバイスとして使用するデバイスを指定します.許可された値は **CD**, **Floppy**, **LegacyNetworkAdapter**, **IDE**, NetworkAdapter,および VHDです.
+
+LegacyNetworkAdapterが指定された場合,新しい仮想マシンをネットワークアダプターで構成し,PXEブートを実行し,ネットワークインストールサーバーからオペレーティングシステムをインストールできます.
+
+注: 2代仮想マシンでは Floppy, LegacyNetworkAdapter,または IDE をサポートしていません.これらの値を2代仮想マシンで使用するとエラーが発生します.
+
+VHDとNetworkAdapterは2世代仮想マシンに新しくなりました.1世代仮想マシンに指定すると,それぞれIDEとLegacyNetworkAdapterと解釈されます.
+
+```yaml
+Type: BootDevice
+Parameter Sets: (All)
+Aliases:
+Accepted values: Floppy, CD, IDE, LegacyNetworkAdapter, NetworkAdapter, VHD
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -CimSession でした
+
+遠隔セッションまたは遠隔コンピュータでcmdletを実行します.コンピュータ名またはセッションオブジェクトを入力してください.例えば,[New-CimSession] (/powershell/module/cimcmdlets/new-cimsession) または [Get-CimSession]の出力です.https://go.microsoft.com/fwlink/p/?LinkId=227966標準的には,ローカルコンピュータの現在のセッションです.
+
+```yaml
+Type: CimSession[]
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -コンピュータ名
+
+仮想マシンが作成される Hyper-V ホストの1つまたは複数のものを指定します.NetBIOS名,IPアドレス,および完全に資格のあるドメイン名が許可されています.デフォルトはローカルコンピュータです.ローカルホストまたはドット (.) を使用してローカルコンピュータを明確に指定します.
+
+```yaml
+Type: String[]
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -確認する
+
+cmdletを実行する前に確認を提示します.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: cf
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### - 信用証
+
+このアクションを実行する許可を有するユーザーアカウント (または複数のアカウント) を指定します.デフォルトは現在のユーザーです.
+
+```yaml
+Type: PSCredential[]
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -実験的
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -フォース
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -世代
+
+仮想マシンに整数として生成された世代を指定します.このバージョンのWindowsでは有効な値は1と2です.
+
+```yaml
+Type: Int16
+Parameter Sets: (All)
+Aliases:
+Accepted values: 1, 2
+
+Required: False
+Position: 2
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -メモリスタートアップバイト
+
+バーチャルマシンに割り当てられるバイトで,メモリ量を指定します.デフォルト値は512MBです.
+
+```yaml
+Type: Int64
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: 1
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -名字は
+
+新しい仮想マシンの名前を指定します.デフォルト名は&quot;新しい仮想マシン&quot;です.
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases: VMName
+
+Required: False
+Position: 0
+Default value: None
+Accept pipeline input: True (ByPropertyName, ByValue)
+Accept wildcard characters: False
+```
+
+# New-VM
+
+### -NewVHDPath
+
+指定されたパスで新しい仮想ハードディスクを作成し,新しい仮想マシンに接続します.絶対的なパスが許可されています.ファイル名のみが指定されている場合,ホストに設定されたデフォルトパスで仮想ハードディスクが作成されます.
+
+```yaml
+Type: String
+Parameter Sets: New VHD
+Aliases:
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -NewVHDSizeBytes でした
+
+新しい仮想マシンに作成し,接続するダイナミックな仮想ハードディスクのサイズを指定します.
+
+```yaml
+Type: UInt64
+Parameter Sets: New VHD
+Aliases:
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -NOVHD
+
+仮想ハードディスクを付属せずに仮想マシンを作成します.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: No VHD
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### - 歩道
+
+新しい仮想マシンにファイルを保存するディレクトリを指定します.
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### - プレリーズ
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -SwitchName
+
+新しい仮想マシンを既存の仮想スイッチに接続してネットワークに接続できるようにしたい場合は,仮想スイッチの友好的な名前を指定します.Hyper-Vは自動的に1つの仮想ネットワークアダプタで仮想マシンを作成しますが,仮想スイッチに接続することはオプションです.
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -VHDPath
+
+仮想ハードディスクファイルへのパス指定します.
+
+```yaml
+Type: String
+Parameter Sets: Existing VHD
+Aliases:
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Version
+
+```yaml
+Type: Version
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -WhatIf
+
+cmdletが実行されなければどうなるかを示しています.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: wi
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### 共通パラメーター
+
+このcmdletは,共通パラメータをサポートしています: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable.詳細については, [about_CommonParameters](を参照してください.https://go.microsoft.com/fwlink/?LinkID=113216) でした.
+
+## 輸入は
+
+## 輸出は
+
+### Microsoft.HyperV.PowerShell.VirtualMachine について
+
+##  NOTES  記事ができました.
+
+## 関連リンク
+###英語原文###
+# New-VM
+
+## SYNOPSIS
+
+Creates a new virtual machine.
+
+## SYNTAX
+
+### No VHD (Default)
+
+```
+New-VM [[-Name] &lt;String&gt;] [[-MemoryStartupBytes] &lt;Int64&gt;] [-BootDevice &lt;BootDevice&gt;] [-NoVHD]
+ [-SwitchName &lt;String&gt;] [-Path &lt;String&gt;] [-Version &lt;Version&gt;] [-Prerelease] [-Experimental]
+ [[-Generation] &lt;Int16&gt;] [-Force] [-AsJob] [-CimSession &lt;CimSession[]&gt;] [-ComputerName &lt;String[]&gt;]
+ [-Credential &lt;PSCredential[]&gt;] [-WhatIf] [-Confirm] [&lt;CommonParameters&gt;]
+```
+
+### New VHD
+
+```
+New-VM [[-Name] &lt;String&gt;] [[-MemoryStartupBytes] &lt;Int64&gt;] [-BootDevice &lt;BootDevice&gt;] [-SwitchName &lt;String&gt;]
+ -NewVHDPath &lt;String&gt; -NewVHDSizeBytes &lt;UInt64&gt; [-Path &lt;String&gt;] [-Version &lt;Version&gt;] [-Prerelease]
+ [-Experimental] [[-Generation] &lt;Int16&gt;] [-Force] [-AsJob] [-CimSession &lt;CimSession[]&gt;]
+ [-ComputerName &lt;String[]&gt;] [-Credential &lt;PSCredential[]&gt;] [-WhatIf] [-Confirm] [&lt;CommonParameters&gt;]
+```
+
+### Existing VHD
+
+```
+New-VM [[-Name] &lt;String&gt;] [[-MemoryStartupBytes] &lt;Int64&gt;] [-BootDevice &lt;BootDevice&gt;] [-SwitchName &lt;String&gt;]
+ -VHDPath &lt;String&gt; [-Path &lt;String&gt;] [-Version &lt;Version&gt;] [-Prerelease] [-Experimental] [[-Generation] &lt;Int16&gt;]
+ [-Force] [-AsJob] [-CimSession &lt;CimSession[]&gt;] [-ComputerName &lt;String[]&gt;] [-Credential &lt;PSCredential[]&gt;]
+ [-WhatIf] [-Confirm] [&lt;CommonParameters&gt;]
+```
+
+## DESCRIPTION
+
+The **New-VM** cmdlet creates a new virtual machine.
+
+## EXAMPLES
+
+### Example 1
+
+```powershell
+New-VM -Name &quot;new 1&quot; -MemoryStartupBytes 512MB
+```
+
+This example creates a new virtual machine named new 1 that has 512 MB of memory.
+
+### Example 2
+
+```powershell
+New-VM -Name &quot;new 2&quot; -MemoryStartupBytes 1GB -NewVHDPath d:\vhd\base.vhdx -NewVHDSizeBytes 40GB
+```
+
+This example creates a virtual machine named new 2 that has 1 GB of memory and that is connected to a new 40 GB virtual hard disk that uses the VHDX format.
+
+### Example 3
+
+```powershell
+New-VM -Name &quot;new 3&quot; -MemoryStartupBytes 1GB -VHDPath d:\vhd\BaseImage.vhdx
+```
+
+This example creates a virtual machine named new 3 that has 1 GB of memory and connects it to an existing virtual hard disk that uses the VHDX format.
+
+### Example 4
+
+```powershell
+New-VM -Name &quot;new 4&quot; -MemoryStartupBytes 2GB -Credential (Get-Credential) -ComputerName HostServer01
+```
+
+This example asks for credentials, then creates a virtual machine named new 4, which has 2 GB of memory, on the server named HostServer01.
+
+### Example 5
+
+```powershell
+New-VM -Name &quot;new 5&quot; -Generation 1 -BootDevice CD -NoVHD
+```
+
+This example creates a virtual machine named new 5. The machine doesn&#x27;t have any VHD disk and is set to boot from CD.
+
+### Example 6
+
+```powershell
+$oldVM = Get-VM &quot;old 1&quot;
+$memory = (Get-VMMemory -VMName $oldVM.name).Startup
+$switch = (Get-VMNetworkAdapter -VMName $oldVM.name).SwitchName
+New-VM -Name &quot;new 6&quot; -Generation $oldVM.Generation -MemoryStartupBytes $memory -SwitchName $switch
+```
+
+This example creates a virtual machine named new 6. The machine has the same generation and amount of assigned memory as the existing machine named old 1 and connects to the same network switch.
+
+## PARAMETERS
+
+### -AsJob
+
+Runs the cmdlet as a background job.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -BootDevice
+
+Specifies the device to use as the boot device for the new virtual machine.
+Allowed values are **CD**, **Floppy**, **LegacyNetworkAdapter**, **IDE**, NetworkAdapter, and VHD.
+
+When LegacyNetworkAdapter is specified, this configures the new virtual machine with a network adapter that can be used to perform a PXE boot and install an operating system from a network installation server.
+
+Note: Generation 2 virtual machines do not support Floppy, LegacyNetworkAdapter or IDE.
+Using these values with a Generation 2 virtual machine will cause an error.
+
+VHD and NetworkAdapter are new to Generation 2 virtual machines.
+If you specify them on a Generation 1 virtual machine, then they are interpreted to be IDE and LegacyNetworkAdapter, respectively.
+
+```yaml
+Type: BootDevice
+Parameter Sets: (All)
+Aliases:
+Accepted values: Floppy, CD, IDE, LegacyNetworkAdapter, NetworkAdapter, VHD
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -CimSession
+
+Runs the cmdlet in a remote session or on a remote computer.
+Enter a computer name or a session object, such as the output of a [New-CimSession](/powershell/module/cimcmdlets/new-cimsession) or [Get-CimSession](https://go.microsoft.com/fwlink/p/?LinkId=227966) cmdlet.
+The default is the current session on the local computer.
+
+```yaml
+Type: CimSession[]
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -ComputerName
+
+Specifies one or more Hyper-V hosts on which the virtual machine is to be created.
+NetBIOS names, IP addresses, and fully qualified domain names are allowable.
+The default is the local computer.
+Use localhost or a dot (.) to specify the local computer explicitly.
+
+```yaml
+Type: String[]
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Confirm
+
+Prompts you for confirmation before running the cmdlet.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: cf
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Credential
+
+Specifies one or more user accounts that have permission to perform this action.
+The default is the current user.
+
+```yaml
+Type: PSCredential[]
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Experimental
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Force
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Generation
+
+Specifies the generation, as an integer, for the virtual machine.
+The values that are valid in this version of Windows are 1 and 2.
+
+```yaml
+Type: Int16
+Parameter Sets: (All)
+Aliases:
+Accepted values: 1, 2
+
+Required: False
+Position: 2
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -MemoryStartupBytes
+
+Specifies the amount of memory, in bytes, to assign to the virtual machine.
+The default value is 512 MB.
+
+```yaml
+Type: Int64
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: 1
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Name
+
+Specifies the name of the new virtual machine.
+The default name is New virtual machine.
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases: VMName
+
+Required: False
+Position: 0
+Default value: None
+Accept pipeline input: True (ByPropertyName, ByValue)
+Accept wildcard characters: False
+```
+
+# New-VM
+
+### -NewVHDPath
+
+Creates a new virtual hard disk with the specified path and connects it to the new virtual machine.
+Absolute paths are allowed.
+If only a file name is specified, the virtual hard disk is created in the default path configured for the host.
+
+```yaml
+Type: String
+Parameter Sets: New VHD
+Aliases:
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -NewVHDSizeBytes
+
+Specifies the size of the dynamic virtual hard disk that is created and attached to the new virtual machine.
+
+```yaml
+Type: UInt64
+Parameter Sets: New VHD
+Aliases:
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -NoVHD
+
+Creates a virtual machine without attaching any virtual hard disks.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: No VHD
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Path
+
+Specifies the directory to store the files for the new virtual machine.
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Prerelease
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -SwitchName
+
+Specifies the friendly name of the virtual switch if you want to connect the new virtual machine to an existing virtual switch to provide connectivity to a network.
+Hyper-V automatically creates a virtual machine with one virtual network adapter, but connecting it to a virtual switch is optional.
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -VHDPath
+
+Specifies the path to a virtual hard disk file.
+
+```yaml
+Type: String
+Parameter Sets: Existing VHD
+Aliases:
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Version
+
+```yaml
+Type: Version
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -WhatIf
+
+Shows what would happen if the cmdlet runs.
+The cmdlet is not run.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: wi
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### CommonParameters
+
+This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable. For more information, see [about_CommonParameters](https://go.microsoft.com/fwlink/?LinkID=113216).
+
+## INPUTS
+
+## OUTPUTS
+
+### Microsoft.HyperV.PowerShell.VirtualMachine
+
+## NOTES
+
+## RELATED LINKS
+###Microsoft Learn URL###
+https://learn.microsoft.com/en-us/powershell/module/hyper-v/new-vm/?view=windowsserver2022-ps
+</pre></html>

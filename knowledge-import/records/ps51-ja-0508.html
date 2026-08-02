@@ -1,0 +1,258 @@
+<!doctype html><html lang="ja"><meta charset="utf-8"><pre class="record-source">###KnowledgeNo###
+PS51-WS2022-2026-0508
+###FormatID###
+PS51-WS2022
+###CreatedAt###
+2026-08-01 00:00
+###UpdatedAt###
+2026-08-01 00:00
+###タイトル###
+Get-SbecBackupConfig
+###モジュール###
+booteventcollector
+###製品###
+Windows PowerShell 5.1
+###対応OS###
+Windows Server 2022
+###日本語訳###
+# Get-SbecBackupConfig について
+
+## SYNOPSIS 復元するために利用可能なバックアップ設定ファイルを取得します.
+
+## SYNTAXは,のシンタックスです.
+
+```
+Get-SbecBackupConfig [[-ComputerName] &lt;String[]&gt;] [[-CimSession] &lt;CimSession[]&gt;] [&lt;CommonParameters&gt;]
+```
+
+## 記述 **Get-SbecBackupConfig** cmdletは,復元するために利用可能なバックアップ設定ファイルを取得します.
+
+起動イベントコレクターに新しい設定が設定されたときは,古い設定がバックアップファイルに保存されます (詳細については Checkpoint-SbecActiveConfig を参照).通常,バックアップファイルには,YYYYMMDDhhmmssfffffff (&quot;f&quot;は秒分の割数の数字である) という名前が含まれます. これにより,変更の歴史を追跡し,古い設定を再生することができます.コレクターは *noCfgHistory* 切り替えで起動した場合は,最後の設定が固定名前のファイルに保存され,最後の変更タイムスタンプは設定タイムスタンプを追跡するために使用されます.サービス用のスイッチを指定する方法は,登録を作成します.y値&quot;HKLM:\SYSTEM\CurrentControlSet\Services\BootEventCollector\Parameters\noCfgHistory&quot;は,REG_DWORDタイプが1に設定された場合,Y値が&quot;HKLM:\SYSTEM\CurrentControlSet\Services\BootEventCollector\Parameters\noCfgHistory&quot;である.
+
+**Get-SbecBackupConfig**は,最新のから最も古いまでの順序で利用可能なバックアップ設定ファイルの一覧を返します.これらのファイルを,Restore-SbecBackupConfigで明示的に復元するか,Undo-SbecActiveConfigとRedo-SbecActiveConfigで順次ナビゲーションを行うことができます.
+
+バックアップファイルを将来のタイムスタンプ (手動でまたはコンピュータの時間の概念が急に戻ると) で作成可能であり,これらのファイルは **Get-SbecBackupConfig** によってリストされているが,それらのファイルは **Undo-SbecActiveConfig** と **Redo-SbecActiveConfig** コマンドによって無視されます.
+
+このコマンドは,要素を記入したハッシュテーブルを返します.`&lt;OriginalTimestamp&gt;`そして,`&lt;Files&gt;`         `&lt;OriginalTimestamp&gt;`現在のアクティブ構成要素のオリジナルタイムスタンプ (つまり,元に設定された時間) が含まれています.どの構成がアクティブか,どの構成がアンドとレドコマンドで復元されるかを判断するために,バックアップファイルのタイムスタンプと比較できます.他のSbecコマンドのタイムスタンプと同様に,バイナリ FILETIME 形式です.
+
+このコードでバイナリ FILETIME フォーマットをPowerShell 時間に変換できます.`\[DateTime\]::FromFileTimeUtc($filetime)`
+
+このコードでPowerShell時間を FILETIME 形式に変換できます.`$datetime.ToFileTimeUtc()`
+
+パワーシェルタイム (UTCタイムとマークされている場合) を,このコードで設定バックアップファイルの名前で使用されるタイムスタンプフォーマットに変換できます.`$datetime.ToString(&quot;yyyyMMddHHmmssfffffff&quot;)`
+
+逆変換は,このコードで実行できます: `\[DateTime\]::ParseExact($fnametm, &quot;yyyyMMddHHmmssfffffff&quot;, $null, &quot;AssumeUniversal, AdjustToUniversal&quot;)`
+
+PowerShellの時間が UTC時間としてマークされているかどうかを確認するには,このコードを使用します: `$datetime.Kind -eq &quot;Utc&quot;`
+
+ローカル表示のPowerShell時間を,このコードでUTC表示に変換できます.`\[DateTime\]::FromFileTimeUtc($datetime.ToFileTimeUtc())`
+
+   `&lt;Files&gt;`各エントリは,利用可能なバックアップファイルを記述するエントリ数列を含んでいます.各エントリは,フィールド名 (ファイル名を含む), FILETIME形式で元のタイムスタンプを含むタイムスタンプ,および現地時間で元のタイムスタンプを含む時間です.このエントリーは,便利のために,PowerShell DateTime形式に変換されます.
+
+このコマンドを実行するには,Builtin Administratorの権限を有している必要があります.
+
+## 例えは
+
+### 例1: バックアップ設定ファイルを利用できるようにします.```
+PS C:\&gt; Get-SbecBackupConfig | Format-List
+```
+
+このコマンドは,利用可能なバックアップ設定ファイルのリストを取得し,パイプラインオペレーターを使用して,フォーマットリストに転送します.
+
+## パラメータは
+
+### -CimSession は,リモートコンピュータでリモートセッションでCMdlet を実行します. **New-CimSession**や **Get-CimSession**のCMdlet の出力などのセッションオブジェクトを入力します.またはこれらのオブジェクトのアレイです.デフォルトは,ローカルコンピュータでCMdlet を実行することです.詳細については,About_CimSession を参照してください.
+
+```yaml
+Type: CimSession[]
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: 1
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -ComputerName 操作を行うために使用したいコンピュータの名前を指定します.各コンピュータの完全資格ドメイン名 (FQDN),NetBIOS名,またはIPアドレスを指定できます.詳細については, [Invoke-CimMethod] を参照してください.https://go.microsoft.com/fwlink/?LinkId=808801) に関するMSDN.
+
+```yaml
+Type: String[]
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: 0
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### 共通パラメータ このcmdletは共通パラメータをサポートしています: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable.詳細については, [about_CommonParameters](を参照してください.https://go.microsoft.com/fwlink/?LinkID=113216) でした.
+
+## 輸入は
+
+### どれもありません.
+
+## 輸出は
+
+### このハッシュテーブルのcmdletは,二つの要素を持つハッシュテーブルを返します.
+
+ - -`&lt;OriginalTimestamp&gt;` - -`&lt;Files&gt;`
+
+   `&lt;OriginalTimestamp&gt;`要素は,現在のアクティブ設定の FILETIME 形式の元のタイムスタンプ (つまり,最初設定された時間) を含む.
+
+   `&lt;Files&gt;`要素は,利用可能なバックアップファイルを記述するエントリーの配列を含んでいます.各エントリはフィールドのハッシュです: 
+
+ - -`&lt;Name&gt;` - -`&lt;Timestamp&gt;` - -`&lt;Time&gt;`
+
+`&lt;Name&gt;`ファイル名が含まれています.`&lt;Timestamp&gt;`元のタイムスタンプは FILETIME 形式で書かれています.`&lt;Time&gt;`簡単に利用するため,元のタイムスタンプが PowerShell DateTime フォーマットに変換され,地元時間で表示されます. アレイ内のエントリは,最新のから古いまで順序付けされています.
+
+##  NOTES  記事ができました.
+
+## 関連リンク
+
+[Checkpoint-SbecActiveConfig](./Checkpoint-SbecActiveConfig.md) は,チェックポイントでSbecActiveConfig.md を設定する.
+
+[Redo-SbecActiveConfig](./Redo-SbecActiveConfig.md) 
+
+[Restore-SbecBackupConfig](./Restore-SbecBackupConfig.md) は,バックアップコンfigを回復する
+
+[Undo-SbecActiveConfig](./Undo-SbecActiveConfig.md) 
+###英語原文###
+# Get-SbecBackupConfig
+
+## SYNOPSIS
+Get the backup configuration files that are available to restore.
+
+## SYNTAX
+
+```
+Get-SbecBackupConfig [[-ComputerName] &lt;String[]&gt;] [[-CimSession] &lt;CimSession[]&gt;] [&lt;CommonParameters&gt;]
+```
+
+## DESCRIPTION
+The **Get-SbecBackupConfig** cmdlet gets the backup configuration files that are available to restore.
+
+Whenever a new configuration is set in the Boot Event Collector, the old configuration is saved to a backup file (see Checkpoint-SbecActiveConfig for more information).
+Normally, the backup files contain the UTC timestamp in the format YYYYMMDDhhmmssfffffff (&quot;f&quot; being the digits of the fractions of a second) in their names, allowing you to track the history of changes and to restore the older configurations.
+If the collector was started with the *noCfgHistory* switch, only one last configuration is kept in a file with the fixed name, and the last modification timestamp on it is used to track the configuration timestamp.
+The way to specify the switch for the service is by creating the registry value &quot;HKLM:\SYSTEM\CurrentControlSet\Services\BootEventCollector\Parameters\noCfgHistory&quot; with type REG_DWORD set to 1.
+
+**Get-SbecBackupConfig** returns the list of the available backup configuration files, in the order from the most recent to the oldest.
+You can restore these files explicitly with Restore-SbecBackupConfig, or navigate them sequentially with Undo-SbecActiveConfig and Redo-SbecActiveConfig.
+
+Even though it&#x27;s possible to create the backup files with future timestamps (either manually or when the computer&#x27;s notion of time is moved back abruptly), and these files are listed by **Get-SbecBackupConfig**, they are ignored by the **Undo-SbecActiveConfig** and **Redo-SbecActiveConfig** commands.
+You can use **Restore-SbecActiveConfig** to restore them.
+
+This command returns a hash table with the elements `&lt;OriginalTimestamp&gt;` and `&lt;Files&gt;`.
+The `&lt;OriginalTimestamp&gt;` element contains the original timestamp (that is, the time it was originally set) of the current active configuration.
+You can compare it to the timestamps of the backup files to determine which configuration is active, and which configurations would be restored with the Undo and Redo commands.
+It is in the binary FILETIME format, as are the timestamps in the other Sbec commands.
+
+You can convert the binary FILETIME format to the PowerShell time with this code: `\[DateTime\]::FromFileTimeUtc($filetime)`
+
+You can convert the PowerShell time to the FILETIME format with this code: `$datetime.ToFileTimeUtc()`
+
+You can convert the PowerShell time (if it is marked as UTC time) to the timestamp format used in the names of the configuration backup files with this code: `$datetime.ToString(&quot;yyyyMMddHHmmssfffffff&quot;)`
+
+The reverse conversion can be done with this code: `\[DateTime\]::ParseExact($fnametm, &quot;yyyyMMddHHmmssfffffff&quot;, $null, &quot;AssumeUniversal, AdjustToUniversal&quot;)`
+
+To check whether a PowerShell time is marked as UTC time, use this code: `$datetime.Kind -eq &quot;Utc&quot;`
+
+You can convert a PowerShell time in the local representation to the UTC representation with this code: `\[DateTime\]::FromFileTimeUtc($datetime.ToFileTimeUtc())`
+
+The `&lt;Files&gt;` element contains an array of entries describing the available backup files.
+Each entry is a hash with fields Name (containing the file name), Timestamp containing its original timestamp in the FILETIME format, and Time containing its original timestamp converted to the PowerShell DateTime format in local time, for convenience.
+The entries in the array are ordered from the most recent to the oldest.
+
+You must have Builtin Administrator privilege to run this command.
+
+## EXAMPLES
+
+### Example 1: Get available backup configuration files
+```
+PS C:\&gt; Get-SbecBackupConfig | Format-List
+```
+
+This command gets the list of available backup configuration files and uses the pipeline operator to pass them to Format-List.
+
+## PARAMETERS
+
+### -CimSession
+Runs the cmdlet on the remote computers through a remote session.
+Enter a session object, such as the output of a **New-CimSession** or **Get-CimSession** cmdlet, or an array of these objects.
+The default is to run the cmdlet on the local computer.
+For more information, see About_CimSession.
+
+```yaml
+Type: CimSession[]
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: 1
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -ComputerName
+Specifies the names of the computers on which you want to perform the operation.
+You can specify a fully qualified domain name (FQDN), a NetBIOS name, or an IP address for each computer.
+For more information see [Invoke-CimMethod](https://go.microsoft.com/fwlink/?LinkId=808801) on MSDN.
+
+```yaml
+Type: String[]
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: 0
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### CommonParameters
+This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable. For more information, see [about_CommonParameters](https://go.microsoft.com/fwlink/?LinkID=113216).
+
+## INPUTS
+
+### None.
+
+## OUTPUTS
+
+### hash table
+This cmdlet returns a hash table with two elements: 
+
+- `&lt;OriginalTimestamp&gt;`
+- `&lt;Files&gt;`
+
+The `&lt;OriginalTimestamp&gt;` element contains the original timestamp (that is, the time it was originally set) of the current active configuration in FILETIME format.
+
+The `&lt;Files&gt;` element contains an array of entries describing the available backup files.
+Each entry is a hash with fields: 
+
+- `&lt;Name&gt;` 
+- `&lt;Timestamp&gt;` 
+- `&lt;Time&gt;`
+
+`&lt;Name&gt;` contains the file name, `&lt;Timestamp&gt;` contains its original timestamp in the FILETIME format, and `&lt;Time&gt;` contains its original timestamp converted to the PowerShell DateTime format in local time, for convenience.
+The entries in the array are ordered from the most recent to the oldest.
+
+## NOTES
+
+## RELATED LINKS
+
+[Checkpoint-SbecActiveConfig](./Checkpoint-SbecActiveConfig.md)
+
+[Redo-SbecActiveConfig](./Redo-SbecActiveConfig.md)
+
+[Restore-SbecBackupConfig](./Restore-SbecBackupConfig.md)
+
+[Undo-SbecActiveConfig](./Undo-SbecActiveConfig.md)
+###Microsoft Learn URL###
+https://learn.microsoft.com/en-us/powershell/module/booteventcollector/get-sbecbackupconfig/?view=windowsserver2022-ps
+</pre></html>

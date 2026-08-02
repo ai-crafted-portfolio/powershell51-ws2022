@@ -1,0 +1,473 @@
+<!doctype html><html lang="ja"><meta charset="utf-8"><pre class="record-source">###KnowledgeNo###
+PS51-WS2022-2026-3551
+###FormatID###
+PS51-WS2022
+###CreatedAt###
+2026-08-01 00:00
+###UpdatedAt###
+2026-08-01 00:00
+###タイトル###
+about_Functions_OutputTypeAttribute
+###モジュール###
+Microsoft.PowerShell.Core
+###製品###
+Windows PowerShell 5.1
+###対応OS###
+Windows Server 2022
+###日本語訳###
+# about_Functions_OutputTypeAttributeについて
+
+## 短編説明
+
+函数が返したオブジェクトの種類を報告する属性を記述します.
+
+## 長い説明
+
+**OutputType**属性は,関数が返される .NET型オブジェクトをリストする.各パラメータセットの異なる輸出型をリストするためにオプションの **ParameterSetName**パラメータを使用できます.
+
+**OutputType**属性はシンプルで高度な機能でサポートされています. これは **CmdletBinding**属性から独立しています. **OutputType**属性は **System.Management.Automation.FunctionInfo**の **OutputType**属性の値を提供します.`Get-Command`cmdlet が返されます.
+
+&gt; [!NOTE] &gt; **OutputType**属性値は,関数コードから引き出されず,実際の関数出力と比較して,その値は &gt;不正確である可能性があります.
+
+**OutputType**属性は,以下のような状況でタブの完了結果を知らせます.`Command | Select &lt;Tab&gt;`そして,`Command | Where &lt;Tab&gt;` .
+
+## シンタックス
+
+**OutputType** の関数属性は,次の構文に成り立つ.
+
+```
+[OutputType([&lt;TypeLiteral&gt;], ParameterSetName=&quot;&lt;Name&gt;&quot;)]
+[OutputType(&quot;&lt;TypeNameString&gt;&quot;, ParameterSetName=&quot;&lt;Name&gt;&quot;)]
+```
+
+** 設定名前のパラメータはオプションです.
+
+**OutputType**属性で複数のタイプをリストすることができます.
+
+```
+[OutputType([&lt;Type1&gt;],[&lt;Type2&gt;],[&lt;Type3&gt;])]
+```
+
+**ParameterSetName**を用い,異なるパラメータセットが異なるタイプを返すことを表示できます.
+
+```
+[OutputType([&lt;Type1&gt;], ParameterSetName=(&quot;&lt;Set1&gt;&quot;,&quot;&lt;Set2&gt;&quot;))]
+[OutputType([&lt;Type2&gt;], ParameterSetName=&quot;&lt;Set3&gt;&quot;)]
+```
+
+ の前にある属性リストに **OutputType**属性記述を入れます.`param`声明.
+
+次の例では,単純な関数で **OutputType**属性の配置を示しています.
+
+```powershell
+function SimpleFunction2
+{
+  [OutputType([&lt;Type&gt;])]
+  param ($Parameter1)
+
+  &lt;function body&gt;
+}
+```
+
+次の例では,高度な関数における **OutputType**属性の配置を示しています.
+
+```powershell
+function AdvancedFunction1
+{
+  [OutputType([&lt;Type&gt;])]
+  param (
+    [Parameter(Mandatory=$true)]
+    [string[]]
+    $Parameter1
+  )
+
+  &lt;function body&gt;
+}
+
+function AdvancedFunction2
+{
+  [CmdletBinding(SupportsShouldProcess=&lt;Boolean&gt;)]
+  [OutputType([&lt;Type&gt;])]
+  param (
+    [Parameter(Mandatory=$true)]
+    [string[]]
+    $Parameter1
+  )
+
+  &lt;function body&gt;
+}
+```
+
+## 例文
+
+### 例1: 文字列のOutputType を持つ関数を作成します.
+
+```powershell
+function Send-Greeting
+{
+  [OutputType([string])]
+  param ($Name)
+
+  &quot;Hello, $Name&quot;
+}
+```
+
+結果的に出力型属性を表示するには,  を使ってください.`Get-Command`cmdletです.
+
+```powershell
+(Get-Command Send-Greeting).OutputType
+```
+
+```Output
+Name                                               Type
+----                                               ----
+System.String                                      System.String
+```
+
+### 例2: ダイナミックな出力タイプを表示するには,OutputType属性を使用します
+
+次の高度な関数は,関数コマンドで使用されるパラメータセットに応じて,関数が異なるタイプを返すことを示すために **OutputType**属性を使用します.
+
+```powershell
+function Get-User
+{
+  [CmdletBinding(DefaultParameterSetName=&quot;ID&quot;)]
+
+  [OutputType(&quot;System.Int32&quot;, ParameterSetName=&quot;ID&quot;)]
+  [OutputType([string], ParameterSetName=&quot;Name&quot;)]
+
+  param (
+    [Parameter(Mandatory=$true, ParameterSetName=&quot;ID&quot;)]
+    [int]
+    $UserID,
+
+    [Parameter(Mandatory=$true, ParameterSetName=&quot;Name&quot;)]
+    [string[]]
+    $UserName
+  )
+
+  &lt;function body&gt;
+}
+```
+
+### 例3:実際の出力がOutputTypeと異なるときに表示される.
+
+次の例では,出力型属性値は,不正であっても **OutputType**属性の値を表示することを示しています.
+
+   `Get-Time`機能は,任意の **DateTime** オブジェクトの時間の短縮形式を含む文字列を返します.しかし, **OutputType** アトリビューットは **System.DateTime** オブジェクトを返すと報告します.
+
+```powershell
+function Get-Time
+{
+  [OutputType([datetime])]
+  param (
+    [Parameter(Mandatory=$true)]
+    [datetime]$DateTime
+  )
+
+  $DateTime.ToShortTimeString()
+}
+```
+
+   `GetType()`方法によって,関数が文字列を返信すると確認されます.
+
+```powershell
+(Get-Time -DateTime (Get-Date)).GetType().FullName
+```
+
+```Output
+System.String
+```
+
+しかし,その値を **OutputType**属性から得ている **OutputType** 属性では,その関数は **DateTime** オブジェクトを返却すると報告されます.
+
+```powershell
+(Get-Command Get-Time).OutputType
+```
+
+```Output
+Name                                      Type
+----                                      ----
+System.DateTime                           System.DateTime
+```
+
+### 例4:出力しない関数
+
+次の例では,アクションを実行すべきが,返さないカスタム関数を示しています.
+
+```powershell
+function Invoke-Notepad
+{
+  [OutputType([System.Void])]
+  param ()
+  &amp; notepad.exe | Out-Null
+}
+```
+
+## 筆記
+
+**FunctionInfo**オブジェクトの **OutputType**属性の値は, **System.Management.Automation.PSTypeName**オブジェクトの数列であり,それぞれが **Name**および **Type**属性を有する.
+
+各出力タイプの名前だけを得るには,次の形式のコマンドを使用します.
+
+```powershell
+(Get-Command Get-Date).OutputType | Select-Object -ExpandProperty Name
+```
+
+あるいは,より短いバージョンです.
+
+```powershell
+(Get-Command Get-Date).OutputType.Name
+```
+
+**OutputType**のプロパティの値は,無効である可能性があります.関数が **Success**ストリームに出力書き込みがない場合,無効値を使用します.関数が出力書き込みが,種類を知らない場合は, **System.Object** を使用します.
+
+## また, を参照してください.
+
+[about_Functions] ((about_Functions.md) - [about_Functions_Advanced] ((about_Functions_Advanced.md) - [about_Functions_Advanced.md) - [about_Functions_Advanced_Methods] ((about_Functions_Advanced_Methods.md) - [about_Functions_Advanced_Parameters] ((about_Functions_Advanced_Parameters.md) - [about_Functions_CmdletBindingAttribute] ((about_Functions_CmdBindingAttribute.md) -
+###英語原文###
+# about_Functions_OutputTypeAttribute
+
+## Short description
+
+Describes an attribute that reports the type of object that the function
+returns.
+
+## Long description
+
+The **OutputType** attribute lists the .NET types of objects that the functions
+returns. You can use its optional **ParameterSetName** parameter to list
+different output types for each parameter set.
+
+The **OutputType** attribute is supported on simple and advanced functions.
+It&#x27;s independent of the **CmdletBinding** attribute. The **OutputType**
+attribute provides the value of the **OutputType** property of the
+**System.Management.Automation.FunctionInfo** object that the `Get-Command`
+cmdlet returns.
+
+&gt; [!NOTE]
+&gt; The **OutputType** attribute value isn&#x27;t derived from the function code or
+&gt; compared to the actual function output. As such, the value might be
+&gt; inaccurate.
+
+The **OutputType** attribute also informs tab completion results for situations
+like: `Command | Select &lt;Tab&gt;` and `Command | Where &lt;Tab&gt;`.
+
+## Syntax
+
+The **OutputType** attribute of functions has the following syntax:
+
+```
+[OutputType([&lt;TypeLiteral&gt;], ParameterSetName=&quot;&lt;Name&gt;&quot;)]
+[OutputType(&quot;&lt;TypeNameString&gt;&quot;, ParameterSetName=&quot;&lt;Name&gt;&quot;)]
+```
+
+The **ParameterSetName** parameter is optional.
+
+You can list multiple types in the **OutputType** attribute.
+
+```
+[OutputType([&lt;Type1&gt;],[&lt;Type2&gt;],[&lt;Type3&gt;])]
+```
+
+You can use the **ParameterSetName** parameter to indicate that different
+parameter sets return different types.
+
+```
+[OutputType([&lt;Type1&gt;], ParameterSetName=(&quot;&lt;Set1&gt;&quot;,&quot;&lt;Set2&gt;&quot;))]
+[OutputType([&lt;Type2&gt;], ParameterSetName=&quot;&lt;Set3&gt;&quot;)]
+```
+
+Place the **OutputType** attribute statements in the attributes list that
+precedes the `param` statement.
+
+The following example shows the placement of the **OutputType** attribute in a
+simple function.
+
+```powershell
+function SimpleFunction2
+{
+  [OutputType([&lt;Type&gt;])]
+  param ($Parameter1)
+
+  &lt;function body&gt;
+}
+```
+
+The following example shows the placement of the **OutputType** attribute in
+advanced functions.
+
+```powershell
+function AdvancedFunction1
+{
+  [OutputType([&lt;Type&gt;])]
+  param (
+    [Parameter(Mandatory=$true)]
+    [string[]]
+    $Parameter1
+  )
+
+  &lt;function body&gt;
+}
+
+function AdvancedFunction2
+{
+  [CmdletBinding(SupportsShouldProcess=&lt;Boolean&gt;)]
+  [OutputType([&lt;Type&gt;])]
+  param (
+    [Parameter(Mandatory=$true)]
+    [string[]]
+    $Parameter1
+  )
+
+  &lt;function body&gt;
+}
+```
+
+## Examples
+
+### Example 1: Create a function that has the OutputType of String
+
+```powershell
+function Send-Greeting
+{
+  [OutputType([string])]
+  param ($Name)
+
+  &quot;Hello, $Name&quot;
+}
+```
+
+To see the resulting output type property, use the `Get-Command` cmdlet.
+
+```powershell
+(Get-Command Send-Greeting).OutputType
+```
+
+```Output
+Name                                               Type
+----                                               ----
+System.String                                      System.String
+```
+
+### Example 2: Use the OutputType attribute to indicate dynamic output types
+
+The following advanced function uses the **OutputType** attribute to indicate
+that the function returns different types depending on the parameter set used
+in the function command.
+
+```powershell
+function Get-User
+{
+  [CmdletBinding(DefaultParameterSetName=&quot;ID&quot;)]
+
+  [OutputType(&quot;System.Int32&quot;, ParameterSetName=&quot;ID&quot;)]
+  [OutputType([string], ParameterSetName=&quot;Name&quot;)]
+
+  param (
+    [Parameter(Mandatory=$true, ParameterSetName=&quot;ID&quot;)]
+    [int]
+    $UserID,
+
+    [Parameter(Mandatory=$true, ParameterSetName=&quot;Name&quot;)]
+    [string[]]
+    $UserName
+  )
+
+  &lt;function body&gt;
+}
+```
+
+### Example 3: Shows when an actual output differs from the OutputType
+
+The following example demonstrates that the output type property value
+displays the value of the **OutputType** attribute, even when it&#x27;s inaccurate.
+
+The `Get-Time` function returns a string that contains the short form of the
+time in any **DateTime** object. However, the **OutputType** attribute reports
+that it returns a **System.DateTime** object.
+
+```powershell
+function Get-Time
+{
+  [OutputType([datetime])]
+  param (
+    [Parameter(Mandatory=$true)]
+    [datetime]$DateTime
+  )
+
+  $DateTime.ToShortTimeString()
+}
+```
+
+The `GetType()` method confirms that the function returns a string.
+
+```powershell
+(Get-Time -DateTime (Get-Date)).GetType().FullName
+```
+
+```Output
+System.String
+```
+
+However, the **OutputType** property, which gets its value from the
+**OutputType** attribute, reports that the function returns a **DateTime**
+object.
+
+```powershell
+(Get-Command Get-Time).OutputType
+```
+
+```Output
+Name                                      Type
+----                                      ----
+System.DateTime                           System.DateTime
+```
+
+### Example 4: A function  that shouldn&#x27;t have output
+
+The following example shows a custom function that should perform an action
+but not return anything.
+
+```powershell
+function Invoke-Notepad
+{
+  [OutputType([System.Void])]
+  param ()
+  &amp; notepad.exe | Out-Null
+}
+```
+
+## Notes
+
+The value of the **OutputType** property of a **FunctionInfo** object is an
+array of **System.Management.Automation.PSTypeName** objects, which each have
+**Name** and **Type** properties.
+
+To get only the name of each output type, use a command with the following
+format.
+
+```powershell
+(Get-Command Get-Date).OutputType | Select-Object -ExpandProperty Name
+```
+
+Or its shorter version.
+
+```powershell
+(Get-Command Get-Date).OutputType.Name
+```
+
+The value of the **OutputType** property can be null. Use a null value when the
+function doesn&#x27;t write any output to the **Success** stream. If the function
+writes output, but you don&#x27;t know the type, use **System.Object**.
+
+## See also
+
+- [about_Functions](about_Functions.md)
+- [about_Functions_Advanced](about_Functions_Advanced.md)
+- [about_Functions_Advanced_Methods](about_Functions_Advanced_Methods.md)
+- [about_Functions_Advanced_Parameters](about_Functions_Advanced_Parameters.md)
+- [about_Functions_CmdletBindingAttribute](about_Functions_CmdletBindingAttribute.md)
+###Microsoft Learn URL###
+https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_functions_outputtypeattribute/?view=powershell-5.1
+</pre></html>

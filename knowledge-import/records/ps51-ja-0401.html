@@ -1,0 +1,383 @@
+<!doctype html><html lang="ja"><meta charset="utf-8"><pre class="record-source">###KnowledgeNo###
+PS51-WS2022-2026-0401
+###FormatID###
+PS51-WS2022
+###CreatedAt###
+2026-08-01 00:00
+###UpdatedAt###
+2026-08-01 00:00
+###タイトル###
+Test-AppLockerPolicy
+###モジュール###
+applocker
+###製品###
+Windows PowerShell 5.1
+###対応OS###
+Windows Server 2022
+###日本語訳###
+# テスト・AppLocker ポリシー
+
+## SYNOPSISは,入力ファイルが特定のユーザーに実行されるかどうかを判断するためにAppLockerポリシーを指定します.
+
+## SYNTAXは,のシンタックスです.
+
+### ByXmlPolicy (デフォルト) ```
+Test-AppLockerPolicy [-XmlPolicy] &lt;String&gt; -Path &lt;System.Collections.Generic.List`1[System.String]&gt;
+ [-User &lt;String&gt;]
+ [-Filter &lt;System.Collections.Generic.List`1[Microsoft.Security.ApplicationId.PolicyManagement.PolicyDecision]&gt;]
+ [&lt;CommonParameters&gt;]
+```
+
+### ByXmlPolicyAppx ```
+Test-AppLockerPolicy [-XmlPolicy] &lt;String&gt;
+ -Packages &lt;System.Collections.Generic.List`1[Microsoft.Windows.Appx.PackageManager.Commands.AppxPackage]&gt;
+ [-User &lt;String&gt;]
+ [-Filter &lt;System.Collections.Generic.List`1[Microsoft.Security.ApplicationId.PolicyManagement.PolicyDecision]&gt;]
+ [&lt;CommonParameters&gt;]
+```
+
+### ByPolicyObject ```
+Test-AppLockerPolicy [-PolicyObject] &lt;AppLockerPolicy&gt; -Path &lt;System.Collections.Generic.List`1[System.String]&gt;
+ [-User &lt;String&gt;]
+ [-Filter &lt;System.Collections.Generic.List`1[Microsoft.Security.ApplicationId.PolicyManagement.PolicyDecision]&gt;]
+ [&lt;CommonParameters&gt;]
+```
+
+## 記述 **Test-AppLockerPolicy** cmdletでは,指定されたユーザーにローカルコンピュータでファイルリストが実行されるかどうかを判断するために,AppLockerポリシーを指定します.
+
+巣箱グループのためのAppLockerルールをテストするには,巣箱グループ内の代表メンバーが *ユーザー*パラメータに指定する必要があります.例えば,すべてのグループが calc.exeを実行できるようにするルールが, *ユーザー*パラメータのための巣箱金融グループが指定されたときに正しく適用されないように見えるかもしれません.代わりに, *ユーザー*パラメータのために,金融グループの代表メンバーが指定されるべきです.
+
+## 例えは
+
+### 例1:プログラムが実行される場合の報告をします.```
+PS C:\&gt; Test-AppLockerPolicy -XMLPolicy C:\Policy.xml -Path c:\windows\system32\calc.exe, C:\windows\system32\notepad.exe -User Everyone
+```
+
+この例では,C:\Policies.xmlで指定されたポリシーの下で,すべての人のために calc.exe と notepad.exe が実行されるかどうか報告します.
+
+### 例2: 政策なしで指定された実行可能なリスト```
+PS C:\&gt; Get-ChildItem C:\windows\system32\*.exe | Test-AppLockerPolicy c:\Policy.xml -Filter DeniedByDefault
+```
+
+この例では,C:\Windows\System32の実行可能なものをリストする.すべての者がC:\Policy.xmlで指定されたポリシーによって拒否されるのは,ファイルに明確なルールがないためです.
+
+### 例3:テキストファイルにポリシーがないと指定された実行可能なリスト```
+PS C:\&gt; Get-AppLockerPolicy -Local | Test-AppLockerPolicy -Path C:\Windows\System32\*.exe -User contoso\saradavis -Filter Denied | Format-List -Property | Set-Content ([U+A78C]C:\temp\DeniedFiles.txt[U+A78C])
+```
+
+この例では,ローカルなAppLockerポリシーが表示されます.このポリシーを使用して,C:\Windows\System32で実行可能な実行可能なものを特定します.その場合, contoso\saradavisは実行するアクセスを明示的に拒否され,そのリストをテキストファイルに転送します.
+
+### 例4:パッケージをリストし,ポリシーにテストします.```
+PS C:\&gt; Get-AppxPackage -AllUsers | Test-AppLockerPolicy -XmlPolicy .\SamplePolicy.xml
+```
+
+この例では,すべてのユーザーのためにこのコンピュータにインストールされているすべてのパッケージをリストし,保存されたポリシーとテストします.
+
+## パラメータは
+
+### -フィルタは,各入力ファイルの出力をフィルタするポリシー決定を指定します.このパラメータの受け入れ可能な値は:許可,拒否,拒否ByDefault,または許可ByDefaultです.
+
+```yaml
+Type: System.Collections.Generic.List`1[Microsoft.Security.ApplicationId.PolicyManagement.PolicyDecision]
+Parameter Sets: (All)
+Aliases: 
+Accepted values: Allowed, AllowedByDefault, Denied, DeniedByDefault
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -パケット インストールされたパッケージ化されたアプリケーションのリストを指定し,そこからファイル情報を取得します.
+
+```yaml
+Type: System.Collections.Generic.List`1[Microsoft.Windows.Appx.PackageManager.Commands.AppxPackage]
+Parameter Sets: ByXmlPolicyAppx
+Aliases: 
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName, ByValue)
+Accept wildcard characters: False
+```
+
+### -Path テストするファイル経路のリストを指定します.通常の表現はサポートされています.
+
+```yaml
+Type: System.Collections.Generic.List`1[System.String]
+Parameter Sets: ByXmlPolicy, ByPolicyObject
+Aliases: 
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName, ByValue)
+Accept wildcard characters: False
+```
+
+### -PoliceObject は Applocker ポリシーを指定します.Get-AppLocker ポリシーまたはNew-AppLocker ポリシーのcmdletから入手できます.
+
+```yaml
+Type: AppLockerPolicy
+Parameter Sets: ByPolicyObject
+Aliases: 
+
+Required: True
+Position: 0
+Default value: None
+Accept pipeline input: True (ByPropertyName, ByValue)
+Accept wildcard characters: False
+```
+
+### -User は,指定された AppLocker ポリシーでルールをテストするために使用するユーザーまたはグループを定義します.このパラメータの受け入れ可能な値は:
+
+DNSユーザー名 ()`domain\username`) - ユーザーメイン名 ()`username@domain.com`) - SAMユーザー名 ()`username`) - セキュリティ識別子 ()`S-1-5-21-3165297888-301567370-576410423-1103`) 
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -XmlPolicy ファイルパスと,AppLockerポリシーを含むXMLフォーマットされたファイルの名前を指定します.
+
+```yaml
+Type: String
+Parameter Sets: ByXmlPolicy, ByXmlPolicyAppx
+Aliases: 
+
+Required: True
+Position: 0
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### 共通パラメータ このcmdletは共通パラメータをサポートしています: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable.詳細については, [about_CommonParameters](を参照してください.https://go.microsoft.com/fwlink/?LinkID=113216) でした.
+
+## 輸入は
+
+### Microsoft.Security.ApplicationId.PolicyManagement.PolicyModel.AppLockerPolicy **AppLockerPolicy**を表示する
+
+## 輸出は
+
+### Microsoft.Security.ApplicationId.PolicyManagement.AppLockerPolicyDecision について
+
+##  NOTES  記事ができました.
+
+## 関連リンク
+
+[Get-AppLockerFileInformation](./Get-AppLockerFileInformation.md) について
+
+[Get-AppLockerPolicy](./Get-AppLockerPolicy.md) を表示しています.
+
+[New-AppLockerPolicy](./New-AppLockerPolicy.md) について
+
+[AppLockerPolicyを設定する](./Set-AppLockerPolicy.md) 
+###英語原文###
+# Test-AppLockerPolicy
+
+## SYNOPSIS
+Specifies the AppLocker policy to determine whether the input files will be allowed to run for a given user.
+
+## SYNTAX
+
+### ByXmlPolicy (Default)
+```
+Test-AppLockerPolicy [-XmlPolicy] &lt;String&gt; -Path &lt;System.Collections.Generic.List`1[System.String]&gt;
+ [-User &lt;String&gt;]
+ [-Filter &lt;System.Collections.Generic.List`1[Microsoft.Security.ApplicationId.PolicyManagement.PolicyDecision]&gt;]
+ [&lt;CommonParameters&gt;]
+```
+
+### ByXmlPolicyAppx
+```
+Test-AppLockerPolicy [-XmlPolicy] &lt;String&gt;
+ -Packages &lt;System.Collections.Generic.List`1[Microsoft.Windows.Appx.PackageManager.Commands.AppxPackage]&gt;
+ [-User &lt;String&gt;]
+ [-Filter &lt;System.Collections.Generic.List`1[Microsoft.Security.ApplicationId.PolicyManagement.PolicyDecision]&gt;]
+ [&lt;CommonParameters&gt;]
+```
+
+### ByPolicyObject
+```
+Test-AppLockerPolicy [-PolicyObject] &lt;AppLockerPolicy&gt; -Path &lt;System.Collections.Generic.List`1[System.String]&gt;
+ [-User &lt;String&gt;]
+ [-Filter &lt;System.Collections.Generic.List`1[Microsoft.Security.ApplicationId.PolicyManagement.PolicyDecision]&gt;]
+ [&lt;CommonParameters&gt;]
+```
+
+## DESCRIPTION
+The **Test-AppLockerPolicy** cmdlet specifies the AppLocker policy to determine whether a list of files is allowed to run on the local computer for a specified user.
+
+To test AppLocker rules for a nested group, a representative member of the nested group should be specified for the *User* parameter.
+For example, a rule that allows the Everyone group to run calc.exe may not appear to apply correctly when the nested Finance group for the *User* parameter is specified.
+Instead, a representative member of the Finance group should be specified for the *User* parameter.
+
+## EXAMPLES
+
+### Example 1: Report if programs are allowed to run
+```
+PS C:\&gt; Test-AppLockerPolicy -XMLPolicy C:\Policy.xml -Path c:\windows\system32\calc.exe, C:\windows\system32\notepad.exe -User Everyone
+```
+
+This example reports if calc.exe and notepad.exe will be allowed to run for Everyone under the policy specified by C:\Policy.xml.
+
+### Example 2: List executables specified by no policy
+```
+PS C:\&gt; Get-ChildItem C:\windows\system32\*.exe | Test-AppLockerPolicy c:\Policy.xml -Filter DeniedByDefault
+```
+
+This example lists the executables under C:\Windows\System32 that everyone will be denied by the policy specified by C:\Policy.xml because there is no explicit rule for the file.
+
+### Example 3: List executables specified by no policy to a text file
+```
+PS C:\&gt; Get-AppLockerPolicy -Local | Test-AppLockerPolicy -Path C:\Windows\System32\*.exe -User contoso\saradavis -Filter Denied | Format-List -Property | Set-Content ([U+A78C]C:\temp\DeniedFiles.txt[U+A78C])
+```
+
+This example gets the local AppLocker policy, uses the policy to determine which executables in C:\Windows\System32 that contoso\saradavis is explicitly denied access to run, and then redirects the list to a text file.
+
+### Example 4: Lists packages and test against a policy
+```
+PS C:\&gt; Get-AppxPackage -AllUsers | Test-AppLockerPolicy -XmlPolicy .\SamplePolicy.xml
+```
+
+This example lists all the packages installed on this computer, for all the users, and tests them against a saved policy.
+
+## PARAMETERS
+
+### -Filter
+Specifies the policy decision by which to filter the output for each input file.
+The acceptable values for this parameter are: Allowed, Denied, DeniedByDefault, or AllowedByDefault.
+
+```yaml
+Type: System.Collections.Generic.List`1[Microsoft.Security.ApplicationId.PolicyManagement.PolicyDecision]
+Parameter Sets: (All)
+Aliases: 
+Accepted values: Allowed, AllowedByDefault, Denied, DeniedByDefault
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Packages
+Specifies a list of installed packaged applications, from which the file information is retrieved.
+
+```yaml
+Type: System.Collections.Generic.List`1[Microsoft.Windows.Appx.PackageManager.Commands.AppxPackage]
+Parameter Sets: ByXmlPolicyAppx
+Aliases: 
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName, ByValue)
+Accept wildcard characters: False
+```
+
+### -Path
+Specifies the list of the file paths to test.
+Regular expressions are supported.
+
+```yaml
+Type: System.Collections.Generic.List`1[System.String]
+Parameter Sets: ByXmlPolicy, ByPolicyObject
+Aliases: 
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName, ByValue)
+Accept wildcard characters: False
+```
+
+### -PolicyObject
+Specifies the Applocker policy.
+Can be obtained from the Get-AppLockerPolicy or the New-AppLockerPolicy cmdlet.
+
+```yaml
+Type: AppLockerPolicy
+Parameter Sets: ByPolicyObject
+Aliases: 
+
+Required: True
+Position: 0
+Default value: None
+Accept pipeline input: True (ByPropertyName, ByValue)
+Accept wildcard characters: False
+```
+
+### -User
+Defines the user or group to be used for testing the rules in a specified AppLocker policy.
+The acceptable values for this parameter are:
+
+- DNS user name (`domain\username`) 
+- User Principal Name (`username@domain.com`) 
+- SAM user name (`username`) 
+- Security identifier (`S-1-5-21-3165297888-301567370-576410423-1103`)
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -XmlPolicy
+Specifies the file path and name of the XML-formatted file that contains the AppLocker policy.
+
+```yaml
+Type: String
+Parameter Sets: ByXmlPolicy, ByXmlPolicyAppx
+Aliases: 
+
+Required: True
+Position: 0
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### CommonParameters
+This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable. For more information, see [about_CommonParameters](https://go.microsoft.com/fwlink/?LinkID=113216).
+
+## INPUTS
+
+### Microsoft.Security.ApplicationId.PolicyManagement.PolicyModel.AppLockerPolicy
+**AppLockerPolicy**
+
+## OUTPUTS
+
+### Microsoft.Security.ApplicationId.PolicyManagement.AppLockerPolicyDecision
+
+## NOTES
+
+## RELATED LINKS
+
+[Get-AppLockerFileInformation](./Get-AppLockerFileInformation.md)
+
+[Get-AppLockerPolicy](./Get-AppLockerPolicy.md)
+
+[New-AppLockerPolicy](./New-AppLockerPolicy.md)
+
+[Set-AppLockerPolicy](./Set-AppLockerPolicy.md)
+###Microsoft Learn URL###
+https://learn.microsoft.com/en-us/powershell/module/applocker/test-applockerpolicy/?view=windowsserver2022-ps
+</pre></html>

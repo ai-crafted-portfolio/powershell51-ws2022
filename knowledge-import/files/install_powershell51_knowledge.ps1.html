@@ -1,0 +1,131 @@
+<!doctype html><html lang="ja"><meta charset="utf-8"><pre class="file-source">param(
+  [string]$KnowledgeRoot = &#x27;C:\KnowledgeMgr&#x27;,
+  [switch]$Check,
+  [switch]$Overwrite
+)
+$ErrorActionPreference = &#x27;Stop&#x27;
+$FormatId = &#x27;PS51-WS2022&#x27;
+$ExpectedRecords = 4030
+$ExpectedBundleHash = &#x27;4b5cf06c143e3dfefc90dbd7c543aa4396b99d52bc532334916b9a3445fbab21&#x27;
+$ExpectedFormatHash = &#x27;2519158d0f402ab2a28bfe22584e12cde543b62c2edba6ae34e9f8c209ce93b6&#x27;
+$Here = Split-Path -Parent $MyInvocation.MyCommand.Path
+$Bundle = Join-Path $Here &#x27;powershell51_knowledge_bundle_cp932.txt&#x27;
+$Format = Join-Path $Here &#x27;PS51-WS2022.txt&#x27;
+
+function Assert-True([bool]$Condition, [string]$Message) {
+  if (-not $Condition) { throw $Message }
+}
+
+$splitterSource = @&#x27;
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Text;
+
+public static class KnowledgeBundleSplitter
+{
+    public static int Split(string bundlePath, string outputDirectory, string formatId, bool writeFiles)
+    {
+        byte[] data = File.ReadAllBytes(bundlePath);
+        byte[] marker = Encoding.ASCII.GetBytes(&quot;###KnowledgeNo###\r\n&quot;);
+        var starts = new List&lt;int&gt;();
+        for (int i = 0; i &lt;= data.Length - marker.Length; i++)
+        {
+            if (data[i] != marker[0]) continue;
+            bool match = true;
+            for (int j = 1; j &lt; marker.Length; j++)
+            {
+                if (data[i + j] != marker[j]) { match = false; break; }
+            }
+            if (match) { starts.Add(i); i += marker.Length - 1; }
+        }
+        if (starts.Count == 0 || starts[0] != 0)
+            throw new InvalidDataException(&quot;先頭が###KnowledgeNo###ではありません&quot;);
+        for (int i = 0; i &lt; data.Length; i++)
+        {
+            if (data[i] == 10 &amp;&amp; (i == 0 || data[i - 1] != 13))
+                throw new InvalidDataException(&quot;LF単独改行があります&quot;);
+            if (data[i] == 13 &amp;&amp; (i + 1 &gt;= data.Length || data[i + 1] != 10))
+                throw new InvalidDataException(&quot;CR単独改行があります&quot;);
+        }
+        if (!writeFiles) return starts.Count;
+        Directory.CreateDirectory(outputDirectory);
+        for (int i = 0; i &lt; starts.Count; i++)
+        {
+            int end = i + 1 &lt; starts.Count ? starts[i + 1] : data.Length;
+            string number = String.Format(&quot;{0}-2026-{1:D4}.txt&quot;, formatId, i + 1);
+            string path = Path.Combine(outputDirectory, number);
+            using (var output = new FileStream(path, FileMode.Create, FileAccess.Write, FileShare.None))
+                output.Write(data, starts[i], end - starts[i]);
+        }
+        return starts.Count;
+    }
+}
+&#x27;@
+
+try {
+  Assert-True (Test-Path -LiteralPath $KnowledgeRoot -PathType Container) &quot;KnowledgeMgrルートがありません: $KnowledgeRoot&quot;
+  $bundleHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $Bundle).Hash.ToLowerInvariant()
+  $formatHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $Format).Hash.ToLowerInvariant()
+  Assert-True ($bundleHash -eq $ExpectedBundleHash) &#x27;投入バンドルのSHA-256が不一致です&#x27;
+  Assert-True ($formatHash -eq $ExpectedFormatHash) &#x27;フォーマット定義のSHA-256が不一致です&#x27;
+  if (-not (&#x27;KnowledgeBundleSplitter&#x27; -as [type])) { Add-Type -TypeDefinition $splitterSource -Language CSharp }
+  $recordCount = [KnowledgeBundleSplitter]::Split($Bundle, $null, $FormatId, $false)
+  Assert-True ($recordCount -eq $ExpectedRecords) &quot;レコード数が不正です: $recordCount&quot;
+  Write-Host &quot;PRECHECK PASS format=$FormatId records=$recordCount encoding=CP932 line_endings=CRLF&quot;
+  if ($Check) {
+    Write-Host &#x27;CHECK ONLY: KnowledgeMgrは変更していません。&#x27;
+    exit 0
+  }
+
+  $formatsDir = Join-Path $KnowledgeRoot &#x27;formats&#x27;
+  $dataDir = Join-Path (Join-Path $KnowledgeRoot &#x27;data&#x27;) $FormatId
+  $formatTarget = Join-Path $formatsDir &quot;$FormatId.txt&quot;
+  $collisions = New-Object System.Collections.Generic.List[string]
+  if (Test-Path -LiteralPath $formatTarget) { $collisions.Add($formatTarget) }
+  for ($index = 1; $index -le $ExpectedRecords; $index++) {
+    $number = &#x27;{0}-2026-{1:d4}&#x27; -f $FormatId, $index
+    $target = Join-Path $dataDir &quot;$number.txt&quot;
+    if (Test-Path -LiteralPath $target) { $collisions.Add($target) }
+  }
+  if ($collisions.Count -gt 0 -and -not $Overwrite) {
+    throw &quot;既存資材が$($collisions.Count)件あります。上書きする場合は -Overwrite を指定してください。&quot;
+  }
+
+  $backup = $null
+  if ($collisions.Count -gt 0) {
+    $backup = Join-Path (Join-Path $KnowledgeRoot &#x27;backup&#x27;) (&#x27;powershell51_import_&#x27; + (Get-Date -Format &#x27;yyyyMMdd_HHmmss&#x27;))
+    New-Item -ItemType Directory -Path $backup -Force | Out-Null
+    foreach ($path in $collisions) {
+      $relative = $path.Substring($KnowledgeRoot.TrimEnd(&#x27;\&#x27;).Length).TrimStart(&#x27;\&#x27;)
+      $backupTarget = Join-Path $backup $relative
+      New-Item -ItemType Directory -Path (Split-Path -Parent $backupTarget) -Force | Out-Null
+      Copy-Item -LiteralPath $path -Destination $backupTarget -Force
+    }
+  }
+
+  $stage = Join-Path $env:TEMP (&#x27;ps51_km_&#x27; + [guid]::NewGuid().ToString(&#x27;N&#x27;))
+  try {
+    $stageFormats = Join-Path $stage &#x27;formats&#x27;
+    $stageData = Join-Path (Join-Path $stage &#x27;data&#x27;) $FormatId
+    New-Item -ItemType Directory -Path $stageFormats -Force | Out-Null
+    New-Item -ItemType Directory -Path $stageData -Force | Out-Null
+    Copy-Item -LiteralPath $Format -Destination (Join-Path $stageFormats &quot;$FormatId.txt&quot;)
+    $stagedCount = [KnowledgeBundleSplitter]::Split($Bundle, $stageData, $FormatId, $true)
+    Assert-True ($stagedCount -eq $ExpectedRecords) &#x27;ステージング分割件数が不正です&#x27;
+    Assert-True (@(Get-ChildItem -LiteralPath $stageData -Filter &#x27;*.txt&#x27; -File).Count -eq $ExpectedRecords) &#x27;ステージング件数が不正です&#x27;
+    New-Item -ItemType Directory -Path $formatsDir -Force | Out-Null
+    New-Item -ItemType Directory -Path $dataDir -Force | Out-Null
+    Copy-Item -LiteralPath (Join-Path $stageFormats &quot;$FormatId.txt&quot;) -Destination $formatTarget -Force
+    Copy-Item -Path (Join-Path $stageData &#x27;*.txt&#x27;) -Destination $dataDir -Force
+  } finally {
+    if (Test-Path -LiteralPath $stage) { Remove-Item -LiteralPath $stage -Recurse -Force }
+  }
+  Write-Host &quot;INSTALL PASS format=$formatTarget records=$ExpectedRecords data=$dataDir&quot;
+  if ($null -ne $backup) { Write-Host &quot;BACKUP $backup&quot; }
+  exit 0
+} catch {
+  Write-Error &quot;FAIL $($_.Exception.Message)&quot;
+  exit 1
+}
+</pre></html>

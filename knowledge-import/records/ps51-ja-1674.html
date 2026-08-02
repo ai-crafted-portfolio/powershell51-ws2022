@@ -1,0 +1,856 @@
+<!doctype html><html lang="ja"><meta charset="utf-8"><pre class="record-source">###KnowledgeNo###
+PS51-WS2022-2026-1674
+###FormatID###
+PS51-WS2022
+###CreatedAt###
+2026-08-01 00:00
+###UpdatedAt###
+2026-08-01 00:00
+###タイトル###
+Add-IpamSubnet
+###モジュール###
+ipamserver
+###製品###
+Windows PowerShell 5.1
+###対応OS###
+Windows Server 2022
+###日本語訳###
+# アド・IpamSubnet 
+
+## SYNOPSISはIPAMにサブネットを追加します.
+
+## SYNTAXは,のシンタックスです.
+
+```
+Add-IpamSubnet [-Name] &lt;String&gt; [-NetworkId] &lt;String&gt; [-NetworkType &lt;VirtualizationType&gt;]
+ [-AddressSpace &lt;String&gt;] [-Owner &lt;String&gt;] [-Description &lt;String&gt;] [-VlanId &lt;UInt16[]&gt;]
+ [-VmmLogicalNetwork &lt;String&gt;] [-NetworkSite &lt;String&gt;] [-VirtualSubnetId &lt;UInt32&gt;]
+ [-CustomConfiguration &lt;String&gt;] [-PassThru] [-CimSession &lt;CimSession[]&gt;] [-ThrottleLimit &lt;Int32&gt;] [-AsJob]
+ [-WhatIf] [-Confirm] [&lt;CommonParameters&gt;]
+```
+
+## 記述 **Add-IpamSubnet** cmdlet は IP アドレス管理 (IPAM) サーバに IP サブネットを追加します.この cmdlet を使用して IPAM に非仮想化,プロバイダーまたは顧客 IP サブネットを追加します.追加するサブネットのネットワークタイプがプロバイダーまたは非仮想化であれば,この cmdlet は,アドレススペースを指定しない限り,デフォルトアドレススペースに追加します.追加する範囲のネットワークタイプが顧客である場合は,アドレススペースを指定する必要があります.
+
+仮想化されたサブネット,プロバイダーまたは顧客を論理ネットワークとネットワークサイトと関連付けることができます.これらの属性は物理ネットワークの抽象を表し,このサブネットをマッピングするすべての範囲とアドレスによって継承されます.
+
+## 例えは
+
+### 例1:サブネットを追加する```
+PS C:\&gt; Add-IpamSubnet -Name &quot;Contoso_2&quot; -NetworkId &quot;10.12.0.0/16&quot; -VlanId 13,10 -PassThru
+Name                 : Contoso_2
+
+NetworkId            : 10.12.0.0/16
+
+NetworkType          : NonVirtualized
+
+Overlapping          : False
+
+NetworkSite          :
+
+VmmLogicalNetwork    :
+
+ProviderAddressSpace : Default
+
+CustomerAddressSpace :
+
+VlanId               : {13, 10}
+
+Owner                :
+```
+
+このコマンドは,ネットワーク ID 10.12.0.0/16 にContoso_2 という IPv4サブネットを追加し,VLAN 13.10 と関連付けます.
+
+コマンドには *PassThru* パラメータが含まれていますので,結果がコンソールに表示されます.
+
+### 例2: デフォルトアドレススペースにサブネットを追加する```
+PS C:\&gt; Add-IpamSubnet -Name &quot;Contoso_3&quot; -NetworkId &quot;10.13.0.0/16&quot; -NetworkType Provider -VmmLogicalNetwork Storage -NetworkSite &quot;Site03&quot; -VlanId 13,10 -PassThru
+
+Name                 : Contoso_3
+
+NetworkId            : 10.13.0.0/16
+
+NetworkType          : Provider
+
+Overlapping          : False
+
+NetworkSite          : Site03
+
+VmmLogicalNetwork    : Storage
+
+ProviderAddressSpace : Default
+
+CustomerAddressSpace :
+
+VlanId               : {13, 10}
+
+Owner                :
+```
+
+このコマンドは,デフォルトアドレススペースにネットワークタイププロバイダーを持つContoso_3という IPV4サブネットを追加します.また,このコマンドは,IPV4サブネットをネットワークID 10.13.0.0/16 に追加し,NetworkSite名をSite03に設定します.
+
+コマンドには *PassThru* パラメータが含まれていますので,結果がコンソールに表示されます.
+
+### 例3: 顧客ネットワークタイプにサブネットを追加する```
+PS C:\&gt; Add-IpamSubnet -Name &quot;Contoso_4&quot; -NetworkId &quot;10.13.0.0/16&quot; -NetworkType Customer -AddressSpace &quot;NetCat&quot; -VmmLogicalNetwork Storage -NetworkSite &quot;Site03 -VirtualSubnetId 10 -PassThru
+Name                 : Contoso_4
+
+NetworkId            : 10.13.0.0/16
+
+NetworkType          : Customer
+
+Overlapping          : False
+
+NetworkSite          : Site03
+
+VmmLogicalNetwork    : Storage
+
+ProviderAddressSpace : ContosoDatacenter
+
+CustomerAddressSpace : NetCat
+
+VlanId               : {13, 10}
+
+Owner                :
+```
+
+このコマンドは,ネットワークと前記10.13.0.0/16のネットワークとコントソ_4という IPv4サブネットを追加し,ネットワークタイプクライアントを持っています.このコマンドは,アドレススペースをNetCatとネットワークサイトをSite03.と設定します.
+
+コマンドには *PassThru* パラメータが含まれていますので,結果がコンソールに表示されます.
+
+### 例4:サブネットを追加してメタデータに添付する```
+PS C:\&gt; Add-IpamSubnet -Name &quot;Contosov6_10&quot; -NetworkId 2001:db8::ff00/120 -CustomConfiguration &quot;Country=United States;ADSite=Site01&quot; | Format-List Name, NetworkId, Overlapping, CustomConfiguration
+Name                : Contosov6_10
+
+NetworkId           : 2001:db8::ff00/120
+
+Overlapping         : False
+
+CustomConfiguration : Country=United States;ADSite=Site01;
+```
+
+このコマンドは,Contosov6_10という物理的なサブネットを追加し,AD Site メタデータをサブネットに添付します.
+
+コマンドには *PassThru* パラメータが含まれていますので,結果がコンソールに表示されます.
+
+## パラメータは
+
+### -AddressSpace このIPアドレスサブネットが属するアドレススペースを指定します.アドレススペースを指定していない場合は,cmdletはIPAMで構成されたすべてのアドレススペースのデータを回収します.
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -AsJobは,背景作業としてcmdletを実行する.このパラメータを使用して,完了するのに時間がかかるコマンドを実行します. 
+
+cmdlet はすぐに,その仕事を代表するオブジェクトを返して,コマンドプロンプトを表示します.作業が完了する間,セッションで作業を続けることができます.作業を管理するには,  を使ってください.`*-Job`職の結果を入手するには, [Receive-Job] (cmdlets) を使ってください.https://go.microsoft.com/fwlink/?LinkID=113372) cmdlet. 
+
+Windows PowerShell の背景の仕事に関する詳細については, [about_Jobs] (※) を参照してください.https://go.microsoft.com/fwlink/?LinkID=113251) でした.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -CimSession は,リモートセッションまたはリモートコンピュータでcmdletを実行します.コンピュータ名またはセッションオブジェクトを入力します.例えば,[New-CimSession]の出力です.https://go.microsoft.com/fwlink/p/?LinkId=227967) または [Get-CimSession]https://go.microsoft.com/fwlink/p/?LinkId=227966標準的には,ローカルコンピュータの現在のセッションです.
+
+```yaml
+Type: CimSession[]
+Parameter Sets: (All)
+Aliases: Session
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Confirm は,cmdlet を実行する前に確認を提示します.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: cf
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -CustomConfiguration は半角分別 (;) の名前/値ペアを指定します.このパラメータは,アドレススペースに関連したカスタムメタデータを指定します.
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -Description サブネットの説明を指定します.
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -Name サブネットの名前を指定します.
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases: 
+
+Required: True
+Position: 1
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -NetworkId ネットワークと与えられたサブネットのプレフィックスを指定します. ネットワークIDをクラスレスインタードメインルーティング (CIDR) の符号で Network/Prefix 形式で指定します.
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases: 
+
+Required: True
+Position: 2
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+# アド・IpamSubnet 
+
+### -NetworkSite 論理ネットワークと関連しているネットワークサイトを指定し,物理ネットワークの抽象化を形成する.論理ネットワークには多くのネットワークサイトが含まれます.この属性は,与えられたサブネットに関連するすべての範囲とアドレスによって継承されます.
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -NetworkType 追加するアドレスのためのネットワークタイプの配列を指定します.このパラメータの受け入れ可能な値は:です.
+
+提供者 - 顧客 - 非仮想化
+
+*AddressSpace*パラメータの値はデフォルトである場合,このパラメータは ProviderまたはNonVirtualizedの値を取る可能性があります. *AddressSpace*パラメータの値は Providerである場合,このパラメータの値は,指定された場合,Providerである必要があります.このパラメータのための他の値を指定するとエラーが生じる.同様に, *AddressSpace*パラメータの値は顧客である場合,このパラメータの値は,指定された場合,顧客である必要があります.このパラメータのための他の値を指定するとエラーが生じる.
+
+このパラメータを指定しない場合は,ネットワークタイプは,NonVirtualizedにデフォルトで設定されます.
+
+```yaml
+Type: VirtualizationType
+Parameter Sets: (All)
+Aliases: 
+Accepted values: NonVirtualized, Provider, Customer
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -Owner サブネットの所有者の名前を指定します.
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -PassThru は,あなたが取り組んでいるアイテムを表すオブジェクトを返します.デフォルトでは,このcmdlet は出力を生成しません.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -ThrottleLimit は,cmdletを実行するために設定できる最大限の同時操作数を指定します.このパラメータを省略した場合,または値が  の値である場合.`0`入力すると,Windows PowerShell(R) は,コンピュータ上で実行されている CIM cmdlets の数に基づいて cmdlet の最適な加速度制限を計算します.加速度制限は,セッションやコンピュータにではなく,現在の cmdlet にのみ適用されます.
+
+```yaml
+Type: Int32
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### 仮想サブネットId は仮想サブネットID を指定します.ネットワーク仮想化を使用する際,このプロパティと顧客アドレスとプロバイダーアドレスとともに,特定の顧客仮想マシンへのパッケージのルーティングに使用されます.
+
+```yaml
+Type: UInt32
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -VlanId 仮想ローカル エリアネットワーク (VLAN) のユニークな識別子数列を指定します.
+
+```yaml
+Type: UInt16[]
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -VmmLogicalNetwork 物理ネットワークの抽象を指定し,バックエンドやフロントエンドなどの環境における特定の機能を記述します.
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -WhatIf が実行されればどうなるか示します.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: wi
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### 共通パラメータ このcmdletは共通パラメータをサポートしています: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable.詳細については, [about_CommonParameters](を参照してください.https://go.microsoft.com/fwlink/?LinkID=113216) でした.
+
+## 輸入は
+
+## 輸出は
+
+### CimInstance#ROOT/microsoft/ipam/MSFT_IPAM_Subnet このcmdletは,IPAM ServerにおけるIP Subnetを代表するオブジェクトを返します.
+
+##  NOTES  記事ができました.
+
+## 関連リンク
+
+[Export-IpamSubnet](./Export-IpamSubnet.md) について
+
+[Get-IpamSubnet](./Get-IpamSubnet.md) 
+
+[Import-IpamSubnet](./Import-IpamSubnet.md) について
+
+[Remove-IpamSubnet](./Remove-IpamSubnet.md) 
+
+[Set-IpamSubnet](./Set-IpamSubnet.md) 
+###英語原文###
+# Add-IpamSubnet
+
+## SYNOPSIS
+Adds a subnet to IPAM.
+
+## SYNTAX
+
+```
+Add-IpamSubnet [-Name] &lt;String&gt; [-NetworkId] &lt;String&gt; [-NetworkType &lt;VirtualizationType&gt;]
+ [-AddressSpace &lt;String&gt;] [-Owner &lt;String&gt;] [-Description &lt;String&gt;] [-VlanId &lt;UInt16[]&gt;]
+ [-VmmLogicalNetwork &lt;String&gt;] [-NetworkSite &lt;String&gt;] [-VirtualSubnetId &lt;UInt32&gt;]
+ [-CustomConfiguration &lt;String&gt;] [-PassThru] [-CimSession &lt;CimSession[]&gt;] [-ThrottleLimit &lt;Int32&gt;] [-AsJob]
+ [-WhatIf] [-Confirm] [&lt;CommonParameters&gt;]
+```
+
+## DESCRIPTION
+The **Add-IpamSubnet** cmdlet adds an IP subnet to an IP Address Management (IPAM) server.
+Use the cmdlet to add a NonVirtualized, Provider or Customer IP subnet in IPAM.
+If the network type of the subnet to add is Provider or NonVirtualized, the cmdlet will add it to the default address space, unless you specify an address space.
+If the network type of the range to add is Customer, you must specify an address space.
+
+You can associate virtualized subnets, either provider or customer, with a logical network and a network site.
+These properties represent an abstraction of a physical network and are inherited by all ranges and addresses that map to this subnet.
+
+## EXAMPLES
+
+### Example 1: Add a subnet
+```
+PS C:\&gt; Add-IpamSubnet -Name &quot;Contoso_2&quot; -NetworkId &quot;10.12.0.0/16&quot; -VlanId 13,10 -PassThru
+Name                 : Contoso_2
+
+NetworkId            : 10.12.0.0/16
+
+NetworkType          : NonVirtualized
+
+Overlapping          : False
+
+NetworkSite          :
+
+VmmLogicalNetwork    :
+
+ProviderAddressSpace : Default
+
+CustomerAddressSpace :
+
+VlanId               : {13, 10}
+
+Owner                :
+```
+
+This command adds an IPv4 subnet named Contoso_2 to the network ID 10.12.0.0/16 and associates it with VLAN 13,10.
+
+The command includes the *PassThru* parameter, so it displays results to the console.
+
+### Example 2: Add a subnet to the default address space
+```
+PS C:\&gt; Add-IpamSubnet -Name &quot;Contoso_3&quot; -NetworkId &quot;10.13.0.0/16&quot; -NetworkType Provider -VmmLogicalNetwork Storage -NetworkSite &quot;Site03&quot; -VlanId 13,10 -PassThru
+
+Name                 : Contoso_3
+
+NetworkId            : 10.13.0.0/16
+
+NetworkType          : Provider
+
+Overlapping          : False
+
+NetworkSite          : Site03
+
+VmmLogicalNetwork    : Storage
+
+ProviderAddressSpace : Default
+
+CustomerAddressSpace :
+
+VlanId               : {13, 10}
+
+Owner                :
+```
+
+This command adds an IPV4 subnet named Contoso_3 with network type provider to the default address space.
+The command also adds the IPV4 subnet to the network ID 10.13.0.0/16 and sets the NetworkSite name to Site03.
+
+The command includes the *PassThru* parameter, so it displays results to the console.
+
+### Example 3: Add a subnet for a customer network type
+```
+PS C:\&gt; Add-IpamSubnet -Name &quot;Contoso_4&quot; -NetworkId &quot;10.13.0.0/16&quot; -NetworkType Customer -AddressSpace &quot;NetCat&quot; -VmmLogicalNetwork Storage -NetworkSite &quot;Site03 -VirtualSubnetId 10 -PassThru
+Name                 : Contoso_4
+
+NetworkId            : 10.13.0.0/16
+
+NetworkType          : Customer
+
+Overlapping          : False
+
+NetworkSite          : Site03
+
+VmmLogicalNetwork    : Storage
+
+ProviderAddressSpace : ContosoDatacenter
+
+CustomerAddressSpace : NetCat
+
+VlanId               : {13, 10}
+
+Owner                :
+```
+
+This command adds an IPv4 subnet named Contoso_4 with the network and prefix of 10.13.0.0/16 and has the network type customer.
+The command also sets the address space as NetCat and the network site as Site03.
+
+The command includes the *PassThru* parameter, so it displays results to the console.
+
+### Example 4: Add a subnet and attach metadata
+```
+PS C:\&gt; Add-IpamSubnet -Name &quot;Contosov6_10&quot; -NetworkId 2001:db8::ff00/120 -CustomConfiguration &quot;Country=United States;ADSite=Site01&quot; | Format-List Name, NetworkId, Overlapping, CustomConfiguration
+Name                : Contosov6_10
+
+NetworkId           : 2001:db8::ff00/120
+
+Overlapping         : False
+
+CustomConfiguration : Country=United States;ADSite=Site01;
+```
+
+This command adds physical subnets named Contosov6_10 and attaches AD Site metadata to the subnets.
+
+The command includes the *PassThru* parameter, so it displays results to the console.
+
+## PARAMETERS
+
+### -AddressSpace
+Specifies an address space to which this IP address subnet belongs.
+If you do not specify an address space, the cmdlet retrieves data for all address spaces configured in IPAM.
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -AsJob
+Runs the cmdlet as a background job. Use this parameter to run commands that take a long time to complete. 
+
+The cmdlet immediately returns an object that represents the job and then displays the command prompt. 
+You can continue to work in the session while the job completes. 
+To manage the job, use the `*-Job` cmdlets. 
+To get the job results, use the [Receive-Job](https://go.microsoft.com/fwlink/?LinkID=113372) cmdlet. 
+
+For more information about Windows PowerShell background jobs, see [about_Jobs](https://go.microsoft.com/fwlink/?LinkID=113251).
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -CimSession
+Runs the cmdlet in a remote session or on a remote computer.
+Enter a computer name or a session object, such as the output of a [New-CimSession](https://go.microsoft.com/fwlink/p/?LinkId=227967) or [Get-CimSession](https://go.microsoft.com/fwlink/p/?LinkId=227966) cmdlet.
+The default is the current session on the local computer.
+
+```yaml
+Type: CimSession[]
+Parameter Sets: (All)
+Aliases: Session
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Confirm
+Prompts you for confirmation before running the cmdlet.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: cf
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -CustomConfiguration
+Specifies semicolon-separated (;) name/value pairs.
+This parameter specifies custom metadata that is associated with the address space.
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -Description
+Specifies a description of the subnet.
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -Name
+Specifies a name for the subnet.
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases: 
+
+Required: True
+Position: 1
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -NetworkId
+Specifies the network and the prefix for the given subnet.
+Specify the network ID in Classless Interdomain Routing (CIDR) notation in the format Network/Prefix.
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases: 
+
+Required: True
+Position: 2
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+# Add-IpamSubnet
+
+### -NetworkSite
+Specifies a network site that is associated with a logical network and forms an abstraction of the physical network.
+A logical network can contain many network sites.
+This property is inherited by all ranges and addresses associated with the given subnet.
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -NetworkType
+Specifies an array of network types for the addresses to add.
+The acceptable values for this parameter are:
+
+- Provider
+- Customer
+- NonVirtualized
+
+ If the value of the *AddressSpace* parameter is Default, then this parameter can take the value Provider or NonVirtualized.
+If the value of the *AddressSpace* parameter is Provider, then the value of this parameter, if specified, must be Provider.
+Specifying any other value for this parameter will result in an error.
+Similarly, if the value of the *AddressSpace* parameter is Customer, then the value of this parameter, if specified, must be Customer.
+Specifying any other value for this parameter will result in an error.
+
+If you do not specify this parameter, the network type defaults to NonVirtualized.
+
+```yaml
+Type: VirtualizationType
+Parameter Sets: (All)
+Aliases: 
+Accepted values: NonVirtualized, Provider, Customer
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -Owner
+Specifies the name of an owner for the subnet.
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -PassThru
+Returns an object representing the item with which you are working.
+By default, this cmdlet does not generate any output.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -ThrottleLimit
+Specifies the maximum number of concurrent operations that can be established to run the cmdlet.
+If this parameter is omitted or a value of `0` is entered, then Windows PowerShell(R) calculates an optimum throttle limit for the cmdlet based on the number of CIM cmdlets that are running on the computer.
+The throttle limit applies only to the current cmdlet, not to the session or to the computer.
+
+```yaml
+Type: Int32
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -VirtualSubnetId
+Specifies a virtual subnet ID.
+When you use network virtualization, this property, along with Customer address and Provider address is used to route packets to a particular customer virtual machine.
+
+```yaml
+Type: UInt32
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -VlanId
+Specifies an array of unique identifiers for virtual local area networks (VLAN).
+
+```yaml
+Type: UInt16[]
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -VmmLogicalNetwork
+Specifies the abstraction of a physical network that describes a particular function in your environment such as backend or frontend.
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -WhatIf
+Shows what would happen if the cmdlet runs.
+The cmdlet is not run.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: wi
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### CommonParameters
+This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable. For more information, see [about_CommonParameters](https://go.microsoft.com/fwlink/?LinkID=113216).
+
+## INPUTS
+
+## OUTPUTS
+
+### CimInstance#ROOT/microsoft/ipam/MSFT_IPAM_Subnet
+This cmdlet returns an object that represents an IP Subnet in IPAM Server.
+
+## NOTES
+
+## RELATED LINKS
+
+[Export-IpamSubnet](./Export-IpamSubnet.md)
+
+[Get-IpamSubnet](./Get-IpamSubnet.md)
+
+[Import-IpamSubnet](./Import-IpamSubnet.md)
+
+[Remove-IpamSubnet](./Remove-IpamSubnet.md)
+
+[Set-IpamSubnet](./Set-IpamSubnet.md)
+###Microsoft Learn URL###
+https://learn.microsoft.com/en-us/powershell/module/ipamserver/add-ipamsubnet/?view=windowsserver2022-ps
+</pre></html>

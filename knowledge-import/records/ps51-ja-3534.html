@@ -1,0 +1,2029 @@
+<!doctype html><html lang="ja"><meta charset="utf-8"><pre class="record-source">###KnowledgeNo###
+PS51-WS2022-2026-3534
+###FormatID###
+PS51-WS2022
+###CreatedAt###
+2026-08-01 00:00
+###UpdatedAt###
+2026-08-01 00:00
+###タイトル###
+about_Enum
+###モジュール###
+Microsoft.PowerShell.Core
+###製品###
+Windows PowerShell 5.1
+###対応OS###
+Windows Server 2022
+###日本語訳###
+# について_Enum
+
+## 短編説明
+
+   `enum`リストは,リストリストと呼ばれる名前のついたラベルの集合で構成される別のタイプである.
+
+## 長い説明
+
+   `enum`ステートメントは,厳格にタイプされたラベルをセットする際に役立ちます.このリストをコードで解析したり,綴り間違いをチェックしたりせずに使用できます.
+
+リスト列は,初期値がゼロである,統合値タイプとして内部で表示されます.默[U+8BA4]的に,PowerShellのリスト列は **System.Int32** () を使用します.`[int]`) が基因型である.默[U+8BA4]的に,PowerShellはリストの最初のラベルにゼロ値を割り当てます.默[U+8BA4]的に,PowerShellは残りのラベルに連続した整数で割り当てます.
+
+## SYNTAXは,のシンタックスです.
+
+定義では,ラベルに任意の整数値を与えることができます.割り当てられた値のないラベルは次の整数値を取ります.
+
+Enum ラベルには文字,文字,文字が含まれており,数字が数値で始まるべきではない.ラベルは引用文字列ではない.ただし,文字列として解析する必要があります.ラベルは文字列として解析され,キーワードではない.したがって,言語キーワードと同じ名前を持つラベルを作成できます (例えば ).`return`) でした.
+
+リスト列は以下の構文を使用します.
+
+- 整数数表記定義構文
+
+    ```Syntax
+  [[&lt;attribute&gt;]...] enum &lt;enum-name&gt; {
+      &lt;label&gt; [= &lt;int-value&gt;]
+      ...
+  }
+  ```
+
+- フラグリストの定義構文
+
+    ```Syntax
+  [[&lt;attribute&gt;]...] [Flags()] enum &lt;enum-name&gt;[ : &lt;underlying-type-name&gt;] {
+      &lt;label 0&gt; [= 1]
+      &lt;label 1&gt; [= 2]
+      &lt;label 2&gt; [= 4]
+      &lt;label 3&gt; [= 8]
+      ...
+      ...
+  }
+  ```
+
+- リストアクセス構文
+
+    ```Syntax
+  [&lt;enum-name&gt;]::&lt;label&gt;
+  ```
+
+## 例文
+
+### 例1 - 最小の清算
+
+次のコードブロックは,3つのラベルで**MarkdownUnorderedListCharacter**のリストを定義しています.このブロックは,いかなるラベルにも明示的な値を割り当てません.
+
+```powershell
+enum MarkdownUnorderedListCharacter {
+    Asterisk
+    Dash
+    Plus
+}
+```
+
+次のコードブロックは,整数と文字列の値が,数え式タイプに投げられたときにどのように振る舞うかを示します.
+
+```powershell
+$ValuesToConvert = @(0, &#x27;Asterisk&#x27;, 1, &#x27;Dash&#x27;, 2, &#x27;Plus&#x27;)
+foreach ($Value in $ValuesToConvert) {
+    [MarkdownUnorderedListCharacter]$EnumValue = $Value
+
+    [pscustomobject]@{
+        AssignedValue = $Value
+        Enumeration   = $EnumValue
+        AreEqual      = $Value -eq $EnumValue
+    }
+}
+```
+
+```Output
+AssignedValue Enumeration AreEqual
+------------- ----------- --------
+            0    Asterisk     True
+     Asterisk    Asterisk     True
+            1        Dash     True
+         Dash        Dash     True
+            2        Plus     True
+         Plus        Plus     True
+```
+
+リストの値に等しい整数をキャスティングすると,そのリストが返されます.リストのラベルと同じキャスティング文字列で,そのリストが返されます.
+
+### 例2 - 明確に同義した清算値
+
+次の例では,メディアファイルに関連したオブジェクトの清算を示しています.定義は,明示的に, の基底の値に明確な値を割り当てます.`music`     `picture`     `video`ラベルは,明示された割り当て直後に次の整数値を取得する.同じ値を別のラベルに割り当てることで同義詞を作成できます.次のために構築された値を参照してください: `ogg`     `oga`     `mogg`       `jpg`     `jpeg`       `mpg`     `mpeg` .
+
+```powershell
+enum MediaTypes {
+    unknown
+    music   = 10
+    mp3
+    aac
+    ogg     = 15
+    oga     = 15
+    mogg    = 15
+    picture = 20
+    jpg
+    jpeg    = 21
+    png
+    video   = 40
+    mpg
+    mpeg    = 41
+    avi
+    m4v
+}
+```
+
+   `GetEnumNames()`方法によって,リストのリストが返されます.
+
+```powershell
+[MediaTypes].GetEnumNames()
+```
+
+```Output
+unknown
+music
+mp3
+aac
+ogg
+oga
+mogg
+picture
+jpg
+jpeg
+png
+video
+mpg
+mpeg
+avi
+m4v
+```
+
+   `GetEnumValues()`方法によって,数え方のための値のリストが返されます.
+
+```powershell
+[MediaTypes].GetEnumValues()
+```
+
+```Output
+unknown
+music
+mp3
+aac
+oga
+oga
+oga
+picture
+jpeg
+jpeg
+png
+video
+mpeg
+mpeg
+avi
+m4v
+```
+
+&gt; [!NOTE] &gt; `GetEnumNames()`そして,`GetEnumValues()`同じ結果が返ってくるようで,a &gt;名値リストです.しかし,内部では,`GetEnumValues()`&gt;値をリストにまとめ,その後に値を名前に映し出します.リストを注意深く読んで,あなたは &gt;  を注目にします.`ogg`     `oga`そして,そして,`mogg`&gt;  の出力で表示されます.`GetEnumNames()` の出力量が`GetEnumValues()`番組のみです.`oga`. &gt;  に対して同じことが起こる.`jpg`     `jpeg`そして,そして,`mpg`     `mpeg`.PowerShell &gt; synonym valuesの返還の名前が決定的ではない.
+
+を用いることができます.`GetEnumName()`特定の値に関連した名前を得る方法.値に関連した複数の名前がある場合は,この方法は文字列で最初の名前を返します.
+
+```powershell
+[MediaTypes].GetEnumName(15)
+```
+
+```Output
+oga
+```
+
+次の例では,それぞれの名前をその値に映し出す方法を示しています.
+
+```powershell
+[MediaTypes].GetEnumNames() | ForEach-Object {
+  [pscustomobject]@{
+    Name = $_
+    Value = [int]([MediaTypes]::$_)
+  }
+}
+```
+
+```Output
+Name    Value
+----    -----
+unknown     0
+music      10
+mp3        11
+aac        12
+ogg        15
+oga        15
+mogg       15
+picture    20
+jpg        21
+jpeg       21
+png        22
+video      40
+mpg        41
+mpeg       41
+avi        42
+m4v        43
+```
+
+単一のenum値を,そのレーベルで,文法で指定することができます.`[&lt;enum-name&gt;]::&lt;label&gt;` .
+
+```powershell
+[MediaTypes]::png
+[MediaTypes]::png -eq 22
+```
+
+```Output
+png
+True
+```
+
+### 例3 - 列挙は旗として
+
+次のコードブロックは,ビットフラグの集合として**FileAttributes**の清算を作成します.各ラベルの値は,以前のラベルの2倍です.
+
+```powershell
+[Flags()] enum FileAttributes {
+    Archive    = 1
+    Compressed = 2
+    Device     = 4
+    Directory  = 8
+    Encrypted  = 16
+    Hidden     = 32
+}
+
+[FileAttributes]$file1 =  [FileAttributes]::Archive
+[FileAttributes]$file1 += [FileAttributes]::Compressed
+[FileAttributes]$file1 += [FileAttributes]::Device
+&quot;file1 attributes are: $file1&quot;
+
+[FileAttributes]$file2 = [FileAttributes]28 ## =&gt; 16 + 8 + 4
+&quot;file2 attributes are: $file2&quot;
+```
+
+```Output
+file1 attributes are: Archive, Compressed, Device
+file2 attributes are: Device, Directory, Encrypted
+```
+
+特定のフラグが設定されているかどうかをテストするには,二進比較オペレータを使用できます.`-band`この例では,デバイスとアーカイブの属性をテストし,値値の値がである.`$file2` .
+
+```powershell
+PS &gt; ($file2 -band [FileAttributes]::Device) -eq [FileAttributes]::Device
+True
+
+PS &gt; ($file2 -band [FileAttributes]::Archive) -eq [FileAttributes]::Archive
+False
+```
+
+号も使えます.`HasFlag()`この例では, の値で **Device** と **Hidden** の属性をテストします.`$file1` .
+
+```powershell
+PS &gt; $file1.HasFlag([FileAttributes]::Device)
+True
+
+PS &gt; $file1.HasFlag([FileAttributes]::Hidden)
+False
+```
+
+# について_Enum
+
+### 例4 - 項目の数値として表記する
+
+次の例では,関数  を示します.`ConvertTo-LineEndingRegex`**InputObject**パラメータを定義し, **EndOfLine**というタイプで定義する.
+
+```powershell
+enum EndOfLine {
+    CR   = 1
+    LF   = 2
+    CRLF = 3
+}
+
+function ConvertTo-LineEndingRegex {
+    [CmdletBinding()]
+    param (
+        [Parameter(ValueFromPipeline)]
+        [EndOfLine[]]$InputObject
+    )
+
+    process {
+        switch ($InputObject) {
+            CR   {  &#x27;\r&#x27;  }
+            LF   {  &#x27;\n&#x27;  }
+            CRLF { &#x27;\r\n&#x27; }
+        }
+    }
+}
+
+[EndOfLine]::CR | ConvertTo-LineEndingRegex
+
+&#x27;CRLF&#x27; | ConvertTo-LineEndingRegex
+
+ConvertTo-LineEndingRegex 2
+```
+
+```Output
+\r
+
+\r\n
+
+\n
+```
+
+この例では,最初の文が&quot;&quot;と呼ぶ.`ConvertTo-LineEndingRegex` の項目の数値を過ぎていく.`CR`第2項は文字列を過ぎていく.`&#x27;CRLF&#x27;`ラインエンドに設定される.第3項は,値を指定します.`2` にマップするパラメータのために`LF`ラベルです.
+
+PowerShell プロンプトに以下のテキストを入力することで,議論の完了オプションを表示できます.
+
+```powershell
+ConvertTo-LineEndingRegex -InputObject &lt;Tab&gt;
+```
+
+パラメータの無効なラベル名または数値を指定すると,関数はエラーが発生します.
+
+```powershell
+ConvertTo-LineEndingRegex -InputObject 0
+```
+
+```output
+ConvertTo-LineEndingRegex : Cannot process argument transformation on
+parameter &#x27;InputObject&#x27;. Cannot convert value &quot;0&quot; to type &quot;EndOfLine[]&quot;.
+Error: &quot;Cannot convert value &quot;0&quot; to type &quot;EndOfLine&quot; due to enumeration
+values that are not valid. Specify one of the following enumeration values
+and try again. The possible enumeration values are &quot;CR,LF,CRLF&quot;.&quot;
+At line:1 char:40
++ ConvertTo-LineEndingRegex -InputObject 0
++                                        ~
+    + CategoryInfo          : InvalidData: (:) [ConvertTo-LineEndingRegex]
+   , ParameterBindingArgumentTransformationException
+    + FullyQualifiedErrorId : ParameterArgumentTransformationError,Convert
+   To-LineEndingRegex
+```
+
+## リストリスト方法
+
+次のリストにはPowerShellで数えられる有用な方法と,それらをどのように使うかが含まれています.
+
+### フォーマット
+
+   `Format()`静的方法は,特定の数値型,数値値,フォーマット文字列のフォーマットされた文字列出力を返します.出力は,指定されたフォーマット文字列の値で [ToString][01] 方法を呼び出すようなものです.
+
+静的方法は, **System.Enum** のベースクラスタイプまたは特定の数値型で使用できます.
+
+```Syntax
+[System.Enum]::Format([&lt;enum-name&gt;], &lt;value&gt;, &lt;format-string&gt;)
+```
+
+```Syntax
+[&lt;enum-name&gt;]::Format([&lt;enum-name&gt;], &lt;value&gt;, &lt;format-string&gt;)
+```
+
+格式の有効文字列は,`G`    `g`     `D`    `d`     `X`    `x`そして,そして,`F`    `f`詳細については,[数値格式文字列]をご覧ください.
+
+次の例では,サポートされている数値格式文字列をそれぞれ使って,TaskState**数値を文字列表示に変換します.
+
+```powershell
+enum TaskState {
+    ToDo
+    Doing
+    Done
+}
+
+# String format template for the statements
+$Statement = &quot;[System.Enum]::Format([TaskState], {0}, &#x27;{1}&#x27;)&quot;
+
+foreach ($Format in @(&#x27;G&#x27;, &#x27;D&#x27;, &#x27;X&#x27;, &#x27;F&#x27;)) {
+    $StatementToDo  = $Statement -f 0, $Format
+    $StatementDoing = $Statement -f &quot;([TaskState]&#x27;Doing&#x27;)&quot;, $Format
+    $StatementDone  = $Statement -f &#x27;[TaskState]::Done&#x27;, $Format
+    $FormattedToDo  = [System.Enum]::Format(
+      [TaskState], 0, $Format
+    )
+    $FormattedDoing = [System.Enum]::Format(
+        [TaskState], ([TaskState]&#x27;Doing&#x27;), $Format
+    )
+    $FormattedDone  = [System.Enum]::Format(
+      [TaskState], [TaskState]::Done, $Format
+    )
+
+    &quot;{0,-62} =&gt; {1}&quot; -f $StatementToDo,  $FormattedToDo
+    &quot;{0,-62} =&gt; {1}&quot; -f $StatementDoing, $FormattedDoing
+    &quot;{0,-62} =&gt; {1}&quot; -f $StatementDone,  $FormattedDone
+}
+```
+
+```Output
+[System.Enum]::Format([TaskState], 0, &#x27;G&#x27;)                     =&gt; ToDo
+[System.Enum]::Format([TaskState], ([TaskState]&#x27;Doing&#x27;), &#x27;G&#x27;)  =&gt; Doing
+[System.Enum]::Format([TaskState], [TaskState]::Done, &#x27;G&#x27;)     =&gt; Done
+[System.Enum]::Format([TaskState], 0, &#x27;D&#x27;)                     =&gt; 0
+[System.Enum]::Format([TaskState], ([TaskState]&#x27;Doing&#x27;), &#x27;D&#x27;)  =&gt; 1
+[System.Enum]::Format([TaskState], [TaskState]::Done, &#x27;D&#x27;)     =&gt; 2
+[System.Enum]::Format([TaskState], 0, &#x27;X&#x27;)                     =&gt; 00000000
+[System.Enum]::Format([TaskState], ([TaskState]&#x27;Doing&#x27;), &#x27;X&#x27;)  =&gt; 00000001
+[System.Enum]::Format([TaskState], [TaskState]::Done, &#x27;X&#x27;)     =&gt; 00000002
+[System.Enum]::Format([TaskState], 0, &#x27;F&#x27;)                     =&gt; ToDo
+[System.Enum]::Format([TaskState], ([TaskState]&#x27;Doing&#x27;), &#x27;F&#x27;)  =&gt; Doing
+[System.Enum]::Format([TaskState], [TaskState]::Done, &#x27;F&#x27;)     =&gt; Done
+```
+
+### GetEnumName を取得しました.
+
+   `GetEnumName()`反映方法は特定の数値の名前を返す.入力値は,整数,または数値のような数値の有効な基底タイプでなければならない.値に関連した複数の名前がある場合は,この方法は,字母順のファーストネームを返します.
+
+```Syntax
+[&lt;enum-name&gt;].GetEnumName(&lt;value&gt;)
+```
+
+```powershell
+enum GateState {
+    Unknown
+    Open
+    Opening
+    Closing
+    Closed
+}
+
+foreach ($Value in 0..4) {
+    [pscustomobject]@{
+      IntegerValue = $Value
+      EnumName     = [GateState].GetEnumName($Value)
+    }
+}
+```
+
+```Output
+IntegerValue EnumName
+------------ --------
+           0 Unknown
+           1 Open
+           2 Opening
+           3 Closing
+           4 Closed
+```
+
+### GetEnumNames  を取得しました.
+
+   `GetEnumNames()`反射法では,各項の項目的の名前を文字列として返します.出力には同義詞が含まれます.
+
+```Syntax
+[&lt;enum-name&gt;].GetEnumNames()
+```
+
+```powershell
+enum Season {
+    Unknown
+    Spring
+    Summer
+    Autumn
+    Winter
+    Fall   = 3
+}
+
+[Season].GetEnumNames()
+```
+
+```Output
+Unknown
+Spring
+Summer
+Fall
+Autumn
+Winter
+```
+
+### GetEnumUnderlyingType を取得する
+
+   `GetEnumUnderlyingType()`反映方法は,数え値の基因型を返します.
+
+```Syntax
+[&lt;enum-name&gt;].GetEnumUnderlyingType()
+```
+
+```powershell
+enum IntBasedEnum {
+    Zero
+    One
+    Two
+}
+
+$NonIntEnum = [System.Management.Automation.Tracing.PowerShellTraceKeywords]
+
+foreach ($EnumType in @([IntBasedEnum], $NonIntEnum)) {
+    [pscustomobject]@{
+        EnumType = $EnumType
+        ValueType = $EnumType.GetEnumUnderlyingType()
+    }
+}
+```
+
+```Output
+EnumType                                                     ValueType
+--------                                                     ---------
+IntBasedEnum                                                 System.Int32
+System.Management.Automation.Tracing.PowerShellTraceKeywords System.UInt64
+```
+
+### GetEnumValues を獲得する
+
+   `GetEnumValues()`反射法では,数え方のために定義されたすべての値を返します.
+
+```Syntax
+[&lt;enum-name&gt;].GetEnumValues()
+```
+
+```powershell
+enum Season {
+    Unknown
+    Spring
+    Summer
+    Autumn
+    Winter
+    Fall   = 3
+}
+
+[Season].GetEnumValues()
+```
+
+```Output
+Unknown
+Spring
+Summer
+Autumn
+Autumn
+Winter
+```
+
+# について_Enum
+
+### ハスフラグ
+
+   `HasFlag`この方法を使うと,二進比較と等価チェックよりも短いし読みやすくなる.
+
+```Syntax
+&lt;enum-value&gt;.HasFlag(&lt;enum-flag-value&gt;)
+```
+
+次の例では,ModuleFeatures フラグのリストを定義し,どのフラグが値を示しているかを示します.`39`持っている.
+
+```powershell
+[Flags()] enum ModuleFeatures {
+    Commands  = 1
+    Classes   = 2
+    Enums     = 4
+    Types     = 8
+    Formats   = 16
+    Variables = 32
+}
+
+$Features = [ModuleFeatures]39
+
+foreach ($Feature in [ModuleFeatures].GetEnumValues()) {
+    &quot;Has flag {0,-12}: {1}&quot; -f &quot;&#x27;$Feature&#x27;&quot;, ($Features.HasFlag($Feature))
+}
+```
+
+```Output
+Has flag &#x27;Commands&#x27;  : True
+Has flag &#x27;Classes&#x27;   : True
+Has flag &#x27;Enums&#x27;     : True
+Has flag &#x27;Types&#x27;     : False
+Has flag &#x27;Formats&#x27;   : False
+Has flag &#x27;Variables&#x27; : True
+```
+
+### IsDefined
+
+   `IsDefined()`静的方法が返ってくる.`$true`入力値は,数え方のために定義されている場合,その他の場合`$false`この方法を使用して,無効な議論エラーを処理する必要なしに,値が数えられるために有効かどうかを確認します.
+
+静的方法は, **System.Enum** のベースクラスタイプまたは特定の数値型で使用できます.
+
+```Syntax
+[System.Enum]::IsDefined([&lt;enum-name&gt;], &lt;value&gt;)
+```
+
+```Syntax
+[&lt;enum-name&gt;]::IsDefined([&lt;enum-name&gt;], &lt;value&gt;)
+```
+
+```powershell
+enum Season {
+    Unknown
+    Spring
+    Summer
+    Autumn
+    Winter
+    Fall   = 3
+}
+
+foreach ($Value in 0..5) {
+    $IsValid   = [Season]::IsDefined([Season], $Value)
+    $EnumValue = if ($IsValid) { [Season]$Value }
+
+    [pscustomobject] @{
+        InputValue = $Value
+        IsValid    = $IsValid
+        EnumValue  = $EnumValue
+    }
+}
+```
+
+```Output
+InputValue IsValid EnumValue
+---------- ------- ---------
+         0    True   Unknown
+         1    True    Spring
+         2    True    Summer
+         3    True    Autumn
+         4    True    Winter
+         5   False
+```
+
+### トストリング
+
+   `ToString()`インスタンスの方法では,エンセンサ値のラベルを返します.この方法は,エンセンサ値が出力として表示される方法のデフォルトビューでもあります.オプションとして,値が表示される方法を制御するためにフォーマット文字列を指定できます.フォーマットに関する詳細については, [エンセンサ値のフォーマット][03]を参照してください.
+
+特定の値の同義詞を定義する表記について,コードを書かないでください.`ToString()`. この方法は,値の任意の有効な &gt; 名前を返せる.
+
+```Syntax
+&lt;enum-value&gt;.ToString([&lt;format-string&gt;])
+```
+
+次の例では,Shade**の表記式を&quot;&quot;で定義します.`Gray`の同義語として`Grey`. その後,実際の enum 値, enum を文字列, enum を整数として示すオブジェクトを出力します.
+
+```powershell
+enum Shade {
+    White
+    Grey
+    Gray = 1
+    Black
+}
+
+[Shade].GetEnumValues() | ForEach-Object -Process {
+    [pscustomobject]@{
+        EnumValue    = $_
+        StringValue  = $_.ToString()
+        IntegerValue = [int]$_
+    }
+}
+```
+
+```Output
+numValue StringValue IntegerValue
+--------- ----------- ------------
+    White White                  0
+     Grey Grey                   1
+     Grey Grey                   1
+    Black Black                  2
+```
+
+## リストリスト値の同義詞
+
+同じ整数値に異なる名前を付ける表記式を定義できます.そうすると,同じ基底値を指す表記式を _synonyms_ と атайます.同義詞を持つ表記式は,同じ値に異なる名前指定できるようにします.
+
+同義詞で表記する表記を定義する際,特定の名前に __ を変換する同義詞値に依存するコードを書かないでください.同義詞文字列を表記値に変換するコードを信頼に適した方法で書き込むことができます.表記値自体で作業する際には,常に文字列ではなく表記値またはその基因タイプとして比較してください.
+
+次のコードブロックは,Shade**の表記を定義し,`Grey`そして,`Gray`同義語として使用します.
+
+```powershell
+enum Shade {
+    White
+    Grey
+    Gray = 1
+    Black
+}
+
+[Shade]&#x27;Grey&#x27; -eq [Shade]::Gray
+[Shade]::Grey -eq 1
+[Shade]&#x27;Gray&#x27; -eq 1
+```
+
+```Output
+True
+True
+True
+```
+
+## 列挙は旗として
+
+リストの一般的な用途の一つは,相互に排斥する値の集合を表すものです.例えば,**ArrivalStatus**インスタンスは,早期,オンタイム,または遅刻の値を持つことができます.**ArrivalStatus**インスタンスの値は,複数のリスト定数を反映することは意味がない.
+
+しかし,他の場合,数値オブジェクトの値は複数の数値メンバーを含むことができ,各メンバーは数値値内のビットフィールドを表します. [FlagsAttribute][04] を使用して,数値はユーザーが組み合わせることができるフラッグとしてビットフィールドで構成されていることを示します.
+
+列挙がフラグとして正しく機能するためには,各ラベルの整数値を2乗に設定する必要があります.ラベルの値を指定していない場合は,PowerShellで前のラベルよりも1乗に設定されます.
+
+標準的に使われていたフラッグ組み合わせの値を定義できますので,ユーザーがフラッグを同時に指定できるようにします.その値の名前にはフラッグの組み合わせの名前でなければなりません.整数値はフラッグ値の合計でなければなりません.
+
+特定のフラグが値に設定されているかどうかを判断するには,  を使ってください.`HasFlag()`値の方法または二進比較オペレータを使用します.`-band` .
+
+旗の表記を用いて,旗が設定されているかどうかを確認するサンプルについては, [例 3][05]を参照してください.
+
+## 項目の数値として表記する
+
+型としてenumを使用するcmdletパラメータを定義できます.パラメータのタイプとしてenumを指定すると,ユーザーはパラメータの値の自動完了と検証を受けます.議論の完了は,enumの有効なラベルのリストを示唆します.
+
+あるパラメータが型として enum を持つとき,以下のいずれかを指定することができます.
+
+- のような数値表`[&lt;EnumType&gt;]::&lt;Label&gt;`- 文字列として数えられるラベル - リストの数値
+
+計算型パラメータの振る舞いを示すサンプルについては,[例 4][06]を参照してください.
+
+# について_Enum
+
+## 形式化表記値
+
+スタティック [Format][08] メソッドとインスタンスの [ToString][09] メソッドのオーバーロードを呼び,数え値を文字列の表現に変換できます. 文字列として数え値が表される正確な制御方法をフォーマット文字列で操作できます.詳細については, [Enumeration Format Strings][02]を参照してください.
+
+次の例では,サポートされている数値格式文字列 () のそれぞれを使用します.`G`     `g`     `D`     `d`     `X`     `x`そして,`F`     `f`) は,タスクステート**の各メンバーを文字列表現に変換する.
+
+```powershell
+enum TaskState {
+    ToDo
+    Doing
+    Done
+}
+
+[TaskState].GetEnumValues() | ForEach-Object {
+    [pscustomobject]@{
+        &quot;ToString(&#x27;G&#x27;)&quot; = $_.ToString(&#x27;G&#x27;)
+        &quot;ToString(&#x27;D&#x27;)&quot; = $_.ToString(&#x27;D&#x27;)
+        &quot;ToString(&#x27;X&#x27;)&quot; = $_.ToString(&#x27;X&#x27;)
+        &quot;ToString(&#x27;F&#x27;)&quot; = $_.ToString(&#x27;F&#x27;)
+    }
+}
+```
+
+```Output
+ToString(&#x27;G&#x27;) ToString(&#x27;D&#x27;) ToString(&#x27;X&#x27;) ToString(&#x27;F&#x27;)
+------------- ------------- ------------- -------------
+ToDo          0             00000000      ToDo
+Doing         1             00000001      Doing
+Done          2             00000002      Done
+```
+
+次の例では,フラグの表記値の格式文字列を使用します.
+
+```powershell
+[Flags()] enum FlagEnum {
+    A = 1
+    B = 2
+    C = 4
+}
+
+$FlagValues = @(
+    [FlagEnum]::A                                 # 1
+    [FlagEnum]::B                                 # 2
+    [FlagEnum]::A + [FlagEnum]::B                 # 3
+    [FlagEnum]::C                                 # 4
+    [FlagEnum]::C + [FlagEnum]::A                 # 5
+    [FlagEnum]::C + [FlagEnum]::B                 # 6
+    [FlagEnum]::C + [FlagEnum]::A + [FlagEnum]::B # 7
+    [FlagEnum]::C + [FlagEnum]::C                 # 8
+)
+
+foreach ($Value in $FlagValues) {
+    [pscustomobject]@{
+        &quot;ToString(&#x27;G&#x27;)&quot; = $Value.ToString(&#x27;G&#x27;)
+        &quot;ToString(&#x27;D&#x27;)&quot; = $Value.ToString(&#x27;D&#x27;)
+        &quot;ToString(&#x27;X&#x27;)&quot; = $Value.ToString(&#x27;X&#x27;)
+        &quot;ToString(&#x27;F&#x27;)&quot; = $Value.ToString(&#x27;F&#x27;)
+    }
+}
+```
+
+```Output
+ToString(&#x27;G&#x27;) ToString(&#x27;D&#x27;) ToString(&#x27;X&#x27;) ToString(&#x27;F&#x27;)
+------------- ------------- ------------- -------------
+A             1             00000001      A
+B             2             00000002      B
+A, B          3             00000003      A, B
+C             4             00000004      C
+A, C          5             00000005      A, C
+B, C          6             00000006      B, C
+A, B, C       7             00000007      A, B, C
+8             8             00000008      8
+```
+
+記事が表示されているのは,フラッグのリストに,  が含まれていることに注意してください.`G`そして,`F`フォーマット文字列は,逗号で制限された値の設定フラッグのリストを表示します.最後の値は, です.`8`列挙フラグは,実際に有効なフラグセットではないので,列挙フラグを組み合わせて,合計のを得ることはできません.`8`少なくとも1つの旗を複製することなく.
+
+## Update-TypeDataで拡張方法を定義する
+
+リストの仕様を定義することはできません.リストの機能を拡張するには, を定義するために[Update-TypeData][10] cmdlet を使用できます.`ScriptMethod`メンバーは,数えられる.
+
+次の例では,という文字を使用します.`Update-TypeData`cmdlet to add a  を追加する`GetFlags()`**FileAttributes**フラグのリストに付いた方法.この方法は,値に設定されたフラグの配列を返します.
+
+```powershell
+[Flags()] enum FileAttributes {
+    Archive    = 1
+    Compressed = 2
+    Device     = 4
+    Directory  = 8
+    Encrypted  = 16
+    Hidden     = 32
+}
+
+$MemberDefinition = @{
+    TypeName   = &#x27;FileAttributes&#x27;
+    MemberName = &#x27;GetFlags&#x27;
+    MemberType = &#x27;ScriptMethod&#x27;
+    Value      = {
+        foreach ($Flag in $this.GetType().GetEnumValues()) {
+          if ($this.HasFlag($Flag)) { $Flag }
+        }
+    }
+}
+
+Update-TypeData @MemberDefinition
+
+$File = [FileAttributes]28
+
+$File.GetFlags()
+```
+
+```Output
+Device
+Directory
+Encrypted
+```
+
+## タイプ加速器で表記を輸出する
+
+デフォルトでは,PowerShell モジュールが自動的にPowerShellで定義されたクラスと清算を輸出しない.カスタムタイプは,  を呼び出さずにモジュールの外で利用できない.`using module`声明.
+
+しかし,モジュールがタイプ加速器を追加した場合,ユーザーはモジュールを輸入した後,そのタイプ加速器はセッション中にすぐに利用可能になります.
+
+&gt; [!NOTE] &gt;セッションにタイプ加速器を追加するには,内部 (公開されていない) API を使用します. &gt;このAPIを使用すると,衝突が生じることがあります.下記に説明されているパターンは,モジュールをインポートする際に同じ名前を持つタイプ加速器が既に存在している場合,エラーを投げます.また,モジュールをセッションから削除するときにタイプ加速器を削除します. &gt; &gt; このパターンは,セッションでタイプが利用可能であることを保証します. これは,VS Codeでスクリプトファイルを作成する際にIntelliSenseまたは完了に影響しません. &gt;VS Codeでスクリプトファイルを作成する際にIntelliSenseと完成の提案を入手するには,&gt; スタイムファイルを追加する必要があります.`using module`脚本の上部に表示される.
+
+次のパターンは PowerShell クラ[U+C2A4][U+C640]表記をモジュール内のタイプ加速器として登録する方法を示しています.任意のタイプ定義の後,ルートスクリプトモジュールにスニペットを追加します.  を確認してください.`$ExportableTypes`モジュールを輸入する際にユーザーに利用できるようにしたい各種類が含まれる.他のコードには編集は必要ありません.
+
+```powershell
+
+# Define the types to export with type accelerators.
+$ExportableTypes =@(
+    [DefinedTypeName]
+)
+
+# Get the internal TypeAccelerators class to use its static methods.
+$TypeAcceleratorsClass = [psobject].Assembly.GetType(
+    &#x27;System.Management.Automation.TypeAccelerators&#x27;
+)
+
+# Ensure none of the types would clobber an existing type accelerator.
+
+# If a type accelerator with the same name exists, throw an exception.
+$ExistingTypeAccelerators = $TypeAcceleratorsClass::Get
+foreach ($Type in $ExportableTypes) {
+    if ($Type.FullName -in $ExistingTypeAccelerators.Keys) {
+        $Message = @(
+            &quot;Unable to register type accelerator &#x27;$($Type.FullName)&#x27;&quot;
+            &#x27;Accelerator already exists.&#x27;
+        ) -join &#x27; - &#x27;
+
+        throw [System.Management.Automation.ErrorRecord]::new(
+            [System.InvalidOperationException]::new($Message),
+            &#x27;TypeAcceleratorAlreadyExists&#x27;,
+            [System.Management.Automation.ErrorCategory]::InvalidOperation,
+            $Type.FullName
+        )
+    }
+}
+
+# Add type accelerators for every exportable type.
+foreach ($Type in $ExportableTypes) {
+    $TypeAcceleratorsClass::Add($Type.FullName, $Type)
+}
+
+# Remove type accelerators when the module is removed.
+$MyInvocation.MyCommand.ScriptBlock.Module.OnRemove = {
+    foreach($Type in $ExportableTypes) {
+        $TypeAcceleratorsClass::Remove($Type.FullName)
+    }
+}.GetNewClosure()
+```
+
+ユーザーがモジュールを輸入するときは,セッションのタイプ加速器に追加されたタイプはすぐにIntelliSenseと完成のために利用可能になります.モジュールが削除されると,タイプ加速器も利用可能になります.
+
+# について_Enum
+
+## PowerShell モジュールから数値を手動に輸入する
+
+`Import-Module`そして,その `#Requires`単行本が定義する模組機能,偽名,変数を輸入するだけ.表記は輸入されません.
+
+クラスと表記を定義するモジュールが,そのタイプにタイプ加速器を追加しない場合は,  を使用します.`using module`輸入する声明です.
+
+   `using module`根モジュールから輸入するクラスとリストを表示する () 記述`ModuleToProcess`脚本モジュールまたはバイナリモジュール (SCRM) のスクリプトモジュール (SCRM) のクラス. 固いモジュールで定義されたクラスまたはルートモジュールに点ソースされたスクリプトで定義されたクラスを一貫して輸入しません. ルーツモジュールの外で直接ユーザーに利用できるようにしたいクラスを定義します.
+
+について詳しい情報はこちらから`using`声明,参照 [about_Using][11].
+
+## 開発中に新しく変更されたコードをロードする
+
+スクリプトモジュールの開発中に,コードに変更を加え,その後の新しいバージョンのモジュールを  を使用してロードすることが一般的です.`Import-Module`これは,ルーツモジュールでの機能変更のみで有効です. `Import-Module`巣のモジュールも再ロードしないし,更新されたクラスも再ロードできない.
+
+最新バージョンを実行していることを確認するには,新しいセッションを開始する必要があります. PowerShellで定義されたクラスと清算が,  で輸入されています.`using`声明が解読できない.
+
+共通の開発の別の慣習は,コードを異なるファイルに分割することです.別のモジュールで定義された数値を使用するファイル内の機能がある場合は,  を使用する必要があります.`using module`函数には必要な数値定義があることを確認する記述です.
+
+## 制限は限られている.
+
+- Windows PowerShellで特定の基底タイプで表記を定義することはできません. **System.Int32** の基底タイプで表記を定義することができます.
+
+ワークラウンド:PowerShell 6.2またはそれ以降を使用します.PowerShell 6.2から始め,特定の基底タイプで清算を定義できます.
+
+PowerShellで定義された数値を属性で飾る事はできません.ただ数値宣言そのものを飾るだけなのですが,[FlagsAttribute][04]で,数値をビットフラグの集合として定義します.
+
+ワークラウンド:誰もいない
+
+- リストの定義の中にメソッドを定義することはできません.PowerShellではC#のような[拡張方法]を定義するサポートはありません.
+
+ワークラウンド: 更新型データ[10] cmdlet を使用して定義します.`ScriptMethod`メンバーは,数えられる.
+
+参照リンク定義 --&gt; [01]: #tostring [02]: /dotnet/standard/base-types/enumeration-format-strings [03]: #formatting-enumeration-values [04]: xref:System.FlagsAttribute [05]: #example-3---enumeration-as-flags [06]: #example-4---enumeration-as-a-parameter &lt;!-- [07]: /net/csharp/language-reference/builtin-type/integral-numeric-types --&gt; [08]: /net/system/dot/apies.enum.format [09]: xref:System.E.To.String [10]: xPower:Microsoft.Sh.Utipe-Update:Utipe-type:Utipe_up_up_up_up_up_up_up_up_up_up_up_up_up_up_up_up_up_up_up_up_up_up_up_up_up_up_up_up_up_up_up_up_up_up_up_up_up_up_up_up_up_up_up_up_up_up_up_up_up_up_up_up_up_up_up_up_up_up_up_up_up_up_up_up_up_up_up_up_up_up_up_up_up_up_up_up_up_up_up_up_up_up_up_up_up_up_up_up_up_up_up_up_up_up_up_up_up_up_up_up_up_up_up_up_up_up_up_up_up_up_up_up_up_up_up_up_up_up_up_up_up_up_up_up_up_up_up_up_up_up_up_up_up_up_up_up_up_up_up_up_up_up_up_up_up_up_up_up_up_up_up_up_up_up_up_up_
+###英語原文###
+# about_Enum
+
+## Short description
+
+The `enum` statement declares an enumeration. An enumeration is a
+distinct type that consists of a set of named labels called the enumerator
+list.
+
+## Long description
+
+The `enum` statement allows you to create a strongly typed set of labels. You
+can use that enumeration in the code without having to parse or check for
+spelling errors.
+
+Enumerations are internally represented as integral value types with a starting
+value of zero. By default, PowerShell enumerations use **System.Int32**
+(`[int]`) as the underlying type. By default, PowerShell assigns the first
+label in the list the value zero. By default, PowerShell assigns the remaining
+labels with consecutive integers.
+
+## SYNTAX
+
+In the definition, you can give labels any integer value. Labels with no value
+assigned take the next integer value.
+
+Enum labels can only contain letters, underscores and digits, but must not
+start with a digit. The label can&#x27;t be a quoted string; it must parse as a
+bareword string. Labels are parsed as strings not keywords. Therefore, it&#x27;s
+possible to create a label that&#x27;s the same name as a language keyword (such as
+`return`).
+
+Enumerations use the following syntaxes:
+
+- Integer enumeration definition syntax
+
+  ```Syntax
+  [[&lt;attribute&gt;]...] enum &lt;enum-name&gt; {
+      &lt;label&gt; [= &lt;int-value&gt;]
+      ...
+  }
+  ```
+
+- Flag enumeration definition syntax
+
+  ```Syntax
+  [[&lt;attribute&gt;]...] [Flags()] enum &lt;enum-name&gt;[ : &lt;underlying-type-name&gt;] {
+      &lt;label 0&gt; [= 1]
+      &lt;label 1&gt; [= 2]
+      &lt;label 2&gt; [= 4]
+      &lt;label 3&gt; [= 8]
+      ...
+      ...
+  }
+  ```
+
+- Enumeration access syntax
+
+  ```Syntax
+  [&lt;enum-name&gt;]::&lt;label&gt;
+  ```
+
+## Examples
+
+### Example 1 - Minimal enumeration
+
+The following code block defines the **MarkdownUnorderedListCharacter**
+enumeration with three labels. It doesn&#x27;t assign explicit values to any label.
+
+```powershell
+enum MarkdownUnorderedListCharacter {
+    Asterisk
+    Dash
+    Plus
+}
+```
+
+The next code block shows how both integer and string values behave when cast
+to the enumeration type.
+
+```powershell
+$ValuesToConvert = @(0, &#x27;Asterisk&#x27;, 1, &#x27;Dash&#x27;, 2, &#x27;Plus&#x27;)
+foreach ($Value in $ValuesToConvert) {
+    [MarkdownUnorderedListCharacter]$EnumValue = $Value
+
+    [pscustomobject]@{
+        AssignedValue = $Value
+        Enumeration   = $EnumValue
+        AreEqual      = $Value -eq $EnumValue
+    }
+}
+```
+
+```Output
+AssignedValue Enumeration AreEqual
+------------- ----------- --------
+            0    Asterisk     True
+     Asterisk    Asterisk     True
+            1        Dash     True
+         Dash        Dash     True
+            2        Plus     True
+         Plus        Plus     True
+```
+
+Casting integers that are equal to the value of an enumeration returns that
+enumeration. Casting strings that are the same as the label of an enumeration
+returns that enumeration.
+
+### Example 2 - Explicit and synonym enumeration values
+
+The following example shows an enumeration of objects that correlate to media
+files. The definition assigns explicit values to the underlying values of
+`music`, `picture`, `video`. Labels immediately following an explicit
+assignment get the next integer value. You can create synonyms by assigning the
+same value to another label; see the constructed values for: `ogg`, `oga`,
+`mogg`, or `jpg`, `jpeg`, or `mpg`, `mpeg`.
+
+```powershell
+enum MediaTypes {
+    unknown
+    music   = 10
+    mp3
+    aac
+    ogg     = 15
+    oga     = 15
+    mogg    = 15
+    picture = 20
+    jpg
+    jpeg    = 21
+    png
+    video   = 40
+    mpg
+    mpeg    = 41
+    avi
+    m4v
+}
+```
+
+The `GetEnumNames()` method returns the list of the labels for the enumeration.
+
+```powershell
+[MediaTypes].GetEnumNames()
+```
+
+```Output
+unknown
+music
+mp3
+aac
+ogg
+oga
+mogg
+picture
+jpg
+jpeg
+png
+video
+mpg
+mpeg
+avi
+m4v
+```
+
+The `GetEnumValues()` method returns the list of the values for the
+enumeration.
+
+```powershell
+[MediaTypes].GetEnumValues()
+```
+
+```Output
+unknown
+music
+mp3
+aac
+oga
+oga
+oga
+picture
+jpeg
+jpeg
+png
+video
+mpeg
+mpeg
+avi
+m4v
+```
+
+&gt; [!NOTE]
+&gt; `GetEnumNames()` and `GetEnumValues()` seem to return the same results; a
+&gt; list of named values. However, internally, `GetEnumValues()` enumerates the
+&gt; values, then maps values into names. Read the list carefully and you&#x27;ll
+&gt; notice that `ogg`, `oga`, and `mogg` appear in the output of
+&gt; `GetEnumNames()`, but the output of `GetEnumValues()` only shows `oga`. The
+&gt; same thing happens for `jpg`, `jpeg`, and `mpg`, `mpeg`. The name PowerShell
+&gt; returns for synonym values isn&#x27;t deterministic.
+
+You can use the `GetEnumName()` method to get a name associated with a specific
+value. If there are multiple names associated with a value, the method returns
+the alphabetically first name.
+
+```powershell
+[MediaTypes].GetEnumName(15)
+```
+
+```Output
+oga
+```
+
+The following example shows how to map each name to its value.
+
+```powershell
+[MediaTypes].GetEnumNames() | ForEach-Object {
+  [pscustomobject]@{
+    Name = $_
+    Value = [int]([MediaTypes]::$_)
+  }
+}
+```
+
+```Output
+Name    Value
+----    -----
+unknown     0
+music      10
+mp3        11
+aac        12
+ogg        15
+oga        15
+mogg       15
+picture    20
+jpg        21
+jpeg       21
+png        22
+video      40
+mpg        41
+mpeg       41
+avi        42
+m4v        43
+```
+
+You can specify a single enum value by its label with the syntax
+`[&lt;enum-name&gt;]::&lt;label&gt;`.
+
+```powershell
+[MediaTypes]::png
+[MediaTypes]::png -eq 22
+```
+
+```Output
+png
+True
+```
+
+### Example 3 - Enumeration as flags
+
+The following code block creates the **FileAttributes** enumeration as a set of
+bit flags. The value for each label is double the value of the prior label.
+
+```powershell
+[Flags()] enum FileAttributes {
+    Archive    = 1
+    Compressed = 2
+    Device     = 4
+    Directory  = 8
+    Encrypted  = 16
+    Hidden     = 32
+}
+
+[FileAttributes]$file1 =  [FileAttributes]::Archive
+[FileAttributes]$file1 += [FileAttributes]::Compressed
+[FileAttributes]$file1 += [FileAttributes]::Device
+&quot;file1 attributes are: $file1&quot;
+
+[FileAttributes]$file2 = [FileAttributes]28 ## =&gt; 16 + 8 + 4
+&quot;file2 attributes are: $file2&quot;
+```
+
+```Output
+file1 attributes are: Archive, Compressed, Device
+file2 attributes are: Device, Directory, Encrypted
+```
+
+To test whether a specific flag is set, you can use the binary comparison
+operator `-band`. This example tests for the **Device** and the **Archive**
+attributes in the value of `$file2`.
+
+```powershell
+PS &gt; ($file2 -band [FileAttributes]::Device) -eq [FileAttributes]::Device
+True
+
+PS &gt; ($file2 -band [FileAttributes]::Archive) -eq [FileAttributes]::Archive
+False
+```
+
+You can also use the `HasFlag()` method to test whether a specific flag is set.
+This example tests for the **Device** and **Hidden** attributes in the value of
+`$file1`.
+
+```powershell
+PS &gt; $file1.HasFlag([FileAttributes]::Device)
+True
+
+PS &gt; $file1.HasFlag([FileAttributes]::Hidden)
+False
+```
+
+# about_Enum
+
+### Example 4 - Enumeration as a parameter
+
+In the following example, the function `ConvertTo-LineEndingRegex` defines the
+**InputObject** parameter with the type **EndOfLine**.
+
+```powershell
+enum EndOfLine {
+    CR   = 1
+    LF   = 2
+    CRLF = 3
+}
+
+function ConvertTo-LineEndingRegex {
+    [CmdletBinding()]
+    param (
+        [Parameter(ValueFromPipeline)]
+        [EndOfLine[]]$InputObject
+    )
+
+    process {
+        switch ($InputObject) {
+            CR   {  &#x27;\r&#x27;  }
+            LF   {  &#x27;\n&#x27;  }
+            CRLF { &#x27;\r\n&#x27; }
+        }
+    }
+}
+
+[EndOfLine]::CR | ConvertTo-LineEndingRegex
+
+&#x27;CRLF&#x27; | ConvertTo-LineEndingRegex
+
+ConvertTo-LineEndingRegex 2
+```
+
+```Output
+\r
+
+\r\n
+
+\n
+```
+
+In the example, the first statement calling `ConvertTo-LineEndingRegex` passes
+the enumeration value for `CR`. The second statement passes the string
+`&#x27;CRLF&#x27;`, which is cast to a **LineEnding**. The third statement specifies the
+value `2` for the parameter, which maps to the `LF` label.
+
+You can see the argument completion options by typing the following text into
+your PowerShell prompt:
+
+```powershell
+ConvertTo-LineEndingRegex -InputObject &lt;Tab&gt;
+```
+
+When you specify an invalid label name or numerical value for the parameter,
+the function raises an error.
+
+```powershell
+ConvertTo-LineEndingRegex -InputObject 0
+```
+
+```output
+ConvertTo-LineEndingRegex : Cannot process argument transformation on
+parameter &#x27;InputObject&#x27;. Cannot convert value &quot;0&quot; to type &quot;EndOfLine[]&quot;.
+Error: &quot;Cannot convert value &quot;0&quot; to type &quot;EndOfLine&quot; due to enumeration
+values that are not valid. Specify one of the following enumeration values
+and try again. The possible enumeration values are &quot;CR,LF,CRLF&quot;.&quot;
+At line:1 char:40
++ ConvertTo-LineEndingRegex -InputObject 0
++                                        ~
+    + CategoryInfo          : InvalidData: (:) [ConvertTo-LineEndingRegex]
+   , ParameterBindingArgumentTransformationException
+    + FullyQualifiedErrorId : ParameterArgumentTransformationError,Convert
+   To-LineEndingRegex
+```
+
+## Enumeration methods
+
+The following list includes useful methods available to enumerations in
+PowerShell and how to use them.
+
+### Format
+
+The `Format()` static method returns the formatted string output for a given
+enumeration type, enumeration value, and format string. The output is the same
+as calling the [ToString][01] method on the value with the specified format
+string.
+
+You can use the static method on the **System.Enum** base class type or a
+specific enumeration type.
+
+```Syntax
+[System.Enum]::Format([&lt;enum-name&gt;], &lt;value&gt;, &lt;format-string&gt;)
+```
+
+```Syntax
+[&lt;enum-name&gt;]::Format([&lt;enum-name&gt;], &lt;value&gt;, &lt;format-string&gt;)
+```
+
+The valid format strings are `G` or `g`, `D` or `d`, `X` or `x`, and `F` or
+`f`. For more information, see [Enumeration Format Strings][02].
+
+The following example uses each of the supported enumeration format strings to
+convert each value of the **TaskState** enumeration to its string
+representations.
+
+```powershell
+enum TaskState {
+    ToDo
+    Doing
+    Done
+}
+
+# String format template for the statements
+$Statement = &quot;[System.Enum]::Format([TaskState], {0}, &#x27;{1}&#x27;)&quot;
+
+foreach ($Format in @(&#x27;G&#x27;, &#x27;D&#x27;, &#x27;X&#x27;, &#x27;F&#x27;)) {
+    $StatementToDo  = $Statement -f 0, $Format
+    $StatementDoing = $Statement -f &quot;([TaskState]&#x27;Doing&#x27;)&quot;, $Format
+    $StatementDone  = $Statement -f &#x27;[TaskState]::Done&#x27;, $Format
+    $FormattedToDo  = [System.Enum]::Format(
+      [TaskState], 0, $Format
+    )
+    $FormattedDoing = [System.Enum]::Format(
+        [TaskState], ([TaskState]&#x27;Doing&#x27;), $Format
+    )
+    $FormattedDone  = [System.Enum]::Format(
+      [TaskState], [TaskState]::Done, $Format
+    )
+
+    &quot;{0,-62} =&gt; {1}&quot; -f $StatementToDo,  $FormattedToDo
+    &quot;{0,-62} =&gt; {1}&quot; -f $StatementDoing, $FormattedDoing
+    &quot;{0,-62} =&gt; {1}&quot; -f $StatementDone,  $FormattedDone
+}
+```
+
+```Output
+[System.Enum]::Format([TaskState], 0, &#x27;G&#x27;)                     =&gt; ToDo
+[System.Enum]::Format([TaskState], ([TaskState]&#x27;Doing&#x27;), &#x27;G&#x27;)  =&gt; Doing
+[System.Enum]::Format([TaskState], [TaskState]::Done, &#x27;G&#x27;)     =&gt; Done
+[System.Enum]::Format([TaskState], 0, &#x27;D&#x27;)                     =&gt; 0
+[System.Enum]::Format([TaskState], ([TaskState]&#x27;Doing&#x27;), &#x27;D&#x27;)  =&gt; 1
+[System.Enum]::Format([TaskState], [TaskState]::Done, &#x27;D&#x27;)     =&gt; 2
+[System.Enum]::Format([TaskState], 0, &#x27;X&#x27;)                     =&gt; 00000000
+[System.Enum]::Format([TaskState], ([TaskState]&#x27;Doing&#x27;), &#x27;X&#x27;)  =&gt; 00000001
+[System.Enum]::Format([TaskState], [TaskState]::Done, &#x27;X&#x27;)     =&gt; 00000002
+[System.Enum]::Format([TaskState], 0, &#x27;F&#x27;)                     =&gt; ToDo
+[System.Enum]::Format([TaskState], ([TaskState]&#x27;Doing&#x27;), &#x27;F&#x27;)  =&gt; Doing
+[System.Enum]::Format([TaskState], [TaskState]::Done, &#x27;F&#x27;)     =&gt; Done
+```
+
+### GetEnumName
+
+The `GetEnumName()` reflection method returns the name for a specific
+enumeration value. The input value must be a valid underlying type for an
+enumeration, like an integer, or an enumeration value. If there are multiple
+names associated with a value, the method returns the alphabetically first
+name.
+
+```Syntax
+[&lt;enum-name&gt;].GetEnumName(&lt;value&gt;)
+```
+
+```powershell
+enum GateState {
+    Unknown
+    Open
+    Opening
+    Closing
+    Closed
+}
+
+foreach ($Value in 0..4) {
+    [pscustomobject]@{
+      IntegerValue = $Value
+      EnumName     = [GateState].GetEnumName($Value)
+    }
+}
+```
+
+```Output
+IntegerValue EnumName
+------------ --------
+           0 Unknown
+           1 Open
+           2 Opening
+           3 Closing
+           4 Closed
+```
+
+### GetEnumNames
+
+The `GetEnumNames()` reflection method returns the names for every enumeration
+value as strings. The output includes synonyms.
+
+```Syntax
+[&lt;enum-name&gt;].GetEnumNames()
+```
+
+```powershell
+enum Season {
+    Unknown
+    Spring
+    Summer
+    Autumn
+    Winter
+    Fall   = 3
+}
+
+[Season].GetEnumNames()
+```
+
+```Output
+Unknown
+Spring
+Summer
+Fall
+Autumn
+Winter
+```
+
+### GetEnumUnderlyingType
+
+The `GetEnumUnderlyingType()` reflection method returns the underlying type for
+the enumeration values.
+
+```Syntax
+[&lt;enum-name&gt;].GetEnumUnderlyingType()
+```
+
+```powershell
+enum IntBasedEnum {
+    Zero
+    One
+    Two
+}
+
+$NonIntEnum = [System.Management.Automation.Tracing.PowerShellTraceKeywords]
+
+foreach ($EnumType in @([IntBasedEnum], $NonIntEnum)) {
+    [pscustomobject]@{
+        EnumType = $EnumType
+        ValueType = $EnumType.GetEnumUnderlyingType()
+    }
+}
+```
+
+```Output
+EnumType                                                     ValueType
+--------                                                     ---------
+IntBasedEnum                                                 System.Int32
+System.Management.Automation.Tracing.PowerShellTraceKeywords System.UInt64
+```
+
+### GetEnumValues
+
+The `GetEnumValues()` reflection method returns every defined value for the
+enumeration.
+
+```Syntax
+[&lt;enum-name&gt;].GetEnumValues()
+```
+
+```powershell
+enum Season {
+    Unknown
+    Spring
+    Summer
+    Autumn
+    Winter
+    Fall   = 3
+}
+
+[Season].GetEnumValues()
+```
+
+```Output
+Unknown
+Spring
+Summer
+Autumn
+Autumn
+Winter
+```
+
+# about_Enum
+
+### HasFlag
+
+The `HasFlag` instance method determines whether a bit flag is set for a flag
+enumeration value. Using this method is shorter and easier to read than doing a
+binary comparison and equivalency check.
+
+```Syntax
+&lt;enum-value&gt;.HasFlag(&lt;enum-flag-value&gt;)
+```
+
+The following example defines the **ModuleFeatures** flag enumeration and shows
+which flags the value `39` has.
+
+```powershell
+[Flags()] enum ModuleFeatures {
+    Commands  = 1
+    Classes   = 2
+    Enums     = 4
+    Types     = 8
+    Formats   = 16
+    Variables = 32
+}
+
+$Features = [ModuleFeatures]39
+
+foreach ($Feature in [ModuleFeatures].GetEnumValues()) {
+    &quot;Has flag {0,-12}: {1}&quot; -f &quot;&#x27;$Feature&#x27;&quot;, ($Features.HasFlag($Feature))
+}
+```
+
+```Output
+Has flag &#x27;Commands&#x27;  : True
+Has flag &#x27;Classes&#x27;   : True
+Has flag &#x27;Enums&#x27;     : True
+Has flag &#x27;Types&#x27;     : False
+Has flag &#x27;Formats&#x27;   : False
+Has flag &#x27;Variables&#x27; : True
+```
+
+### IsDefined
+
+The `IsDefined()` static method returns `$true` if the input value is defined
+for the enumeration and otherwise `$false`. Use this method to check whether a
+value is valid for an enumeration without needing to handle invalid argument
+errors.
+
+You can use the static method on the **System.Enum** base class type or a
+specific enumeration type.
+
+```Syntax
+[System.Enum]::IsDefined([&lt;enum-name&gt;], &lt;value&gt;)
+```
+
+```Syntax
+[&lt;enum-name&gt;]::IsDefined([&lt;enum-name&gt;], &lt;value&gt;)
+```
+
+```powershell
+enum Season {
+    Unknown
+    Spring
+    Summer
+    Autumn
+    Winter
+    Fall   = 3
+}
+
+foreach ($Value in 0..5) {
+    $IsValid   = [Season]::IsDefined([Season], $Value)
+    $EnumValue = if ($IsValid) { [Season]$Value }
+
+    [pscustomobject] @{
+        InputValue = $Value
+        IsValid    = $IsValid
+        EnumValue  = $EnumValue
+    }
+}
+```
+
+```Output
+InputValue IsValid EnumValue
+---------- ------- ---------
+         0    True   Unknown
+         1    True    Spring
+         2    True    Summer
+         3    True    Autumn
+         4    True    Winter
+         5   False
+```
+
+### ToString
+
+The `ToString()` instance method returns the label for an enumeration value.
+This method is also the default view for how an enumeration value displays as
+output. Optionally, you can specify a format string to control how the value
+displays. For more information about formatting, see
+[Formatting enumeration values][03].
+
+&gt; [!NOTE]
+&gt; For enumerations that define synonyms for a specific value, don&#x27;t write code
+&gt; that depends on the output of `ToString()`. The method can return any valid
+&gt; name for the value.
+
+```Syntax
+&lt;enum-value&gt;.ToString([&lt;format-string&gt;])
+```
+
+The following example defines the **Shade** enumeration with `Gray` as a
+synonym for `Grey`. It then outputs objects that show the actual enum value,
+the enum as a string, and the enum as an integer.
+
+```powershell
+enum Shade {
+    White
+    Grey
+    Gray = 1
+    Black
+}
+
+[Shade].GetEnumValues() | ForEach-Object -Process {
+    [pscustomobject]@{
+        EnumValue    = $_
+        StringValue  = $_.ToString()
+        IntegerValue = [int]$_
+    }
+}
+```
+
+```Output
+numValue StringValue IntegerValue
+--------- ----------- ------------
+    White White                  0
+     Grey Grey                   1
+     Grey Grey                   1
+    Black Black                  2
+```
+
+## Enumeration value synonyms
+
+You can define enumerations that give different names to the same integer
+value. When you do, the names that point to the same underlying value are
+called _synonyms_. Enumerations with synonyms enable users to specify different
+names for the same value.
+
+When you define an enumeration with synonyms, don&#x27;t write code that depends on
+a synonym value converting _to_ a specific name. You can reliably write code
+that converts a synonym string to the enumeration value. When working with the
+enumeration value itself, always compare it as an enumeration value or its
+underlying type instead of as a string.
+
+The following code block defines the **Shade** enumeration with `Grey` and
+`Gray` as synonyms.
+
+```powershell
+enum Shade {
+    White
+    Grey
+    Gray = 1
+    Black
+}
+
+[Shade]&#x27;Grey&#x27; -eq [Shade]::Gray
+[Shade]::Grey -eq 1
+[Shade]&#x27;Gray&#x27; -eq 1
+```
+
+```Output
+True
+True
+True
+```
+
+## Enumerations as flags
+
+One common use of an enumeration is to represent a set of mutually exclusive
+values. For example, an **ArrivalStatus** instance can have a value of Early,
+OnTime, or Late. It makes no sense for the value of an **ArrivalStatus**
+instance to reflect more than one enumeration constant.
+
+In other cases, however, the value of an enumeration object can include
+multiple enumeration members, and each member represents a bit field in the
+enumeration value. You can use the [FlagsAttribute][04] to indicate that the
+enumeration consists of bit fields as flags that users can combine.
+
+For enumerations as flags to work properly, you must set each label&#x27;s integer
+value to a power of two. If you don&#x27;t specify a value for a label, PowerShell
+sets the value to one higher than the previous label.
+
+You can define values for commonly used flag combinations to make it easier for
+users to specify a set of flags at once. The name for the value should be the
+combined names of the flags. The integer value should be the sum of the flag
+values.
+
+To determine whether a specific flag is set for a value, use the `HasFlag()`
+method on the value or use the binary comparison operator `-band`.
+
+For a sample showing how to use flag enumerations and check whether a flag is
+set, see [Example 3][05].
+
+## Enumerations as parameters
+
+You can define cmdlet parameters that use an enum as their type. When you
+specify an enum as the type for a parameter, users get automatic completion for
+and validation of the parameter&#x27;s value. The argument completion suggests the
+list of valid labels for the enum.
+
+When a parameter has an enum as its type, you can specify any of:
+
+- An enumeration, like `[&lt;EnumType&gt;]::&lt;Label&gt;`
+- The label for an enumeration as a string
+- The numerical value of an enumeration
+
+For a sample showing the behavior of an enumeration-typed parameter, see
+[Example 4][06].
+
+# about_Enum
+
+## Formatting enumeration values
+
+You can convert enumeration values to their string representations by calling
+the static [Format][08] method, as well as the overloads of the instance
+[ToString][09] method. You can use a format string to control the precise way
+in which an enumeration value is represented as a string. For more information,
+see [Enumeration Format Strings][02].
+
+The following example uses each of the supported enumeration format strings
+(`G` or `g`, `D` or `d`, `X` or `x`, and `F` or `f` ) to convert each member of
+the **TaskState** enumeration to its string representations.
+
+```powershell
+enum TaskState {
+    ToDo
+    Doing
+    Done
+}
+
+[TaskState].GetEnumValues() | ForEach-Object {
+    [pscustomobject]@{
+        &quot;ToString(&#x27;G&#x27;)&quot; = $_.ToString(&#x27;G&#x27;)
+        &quot;ToString(&#x27;D&#x27;)&quot; = $_.ToString(&#x27;D&#x27;)
+        &quot;ToString(&#x27;X&#x27;)&quot; = $_.ToString(&#x27;X&#x27;)
+        &quot;ToString(&#x27;F&#x27;)&quot; = $_.ToString(&#x27;F&#x27;)
+    }
+}
+```
+
+```Output
+ToString(&#x27;G&#x27;) ToString(&#x27;D&#x27;) ToString(&#x27;X&#x27;) ToString(&#x27;F&#x27;)
+------------- ------------- ------------- -------------
+ToDo          0             00000000      ToDo
+Doing         1             00000001      Doing
+Done          2             00000002      Done
+```
+
+The following example uses the format strings for values of a flag enumeration.
+
+```powershell
+[Flags()] enum FlagEnum {
+    A = 1
+    B = 2
+    C = 4
+}
+
+$FlagValues = @(
+    [FlagEnum]::A                                 # 1
+    [FlagEnum]::B                                 # 2
+    [FlagEnum]::A + [FlagEnum]::B                 # 3
+    [FlagEnum]::C                                 # 4
+    [FlagEnum]::C + [FlagEnum]::A                 # 5
+    [FlagEnum]::C + [FlagEnum]::B                 # 6
+    [FlagEnum]::C + [FlagEnum]::A + [FlagEnum]::B # 7
+    [FlagEnum]::C + [FlagEnum]::C                 # 8
+)
+
+foreach ($Value in $FlagValues) {
+    [pscustomobject]@{
+        &quot;ToString(&#x27;G&#x27;)&quot; = $Value.ToString(&#x27;G&#x27;)
+        &quot;ToString(&#x27;D&#x27;)&quot; = $Value.ToString(&#x27;D&#x27;)
+        &quot;ToString(&#x27;X&#x27;)&quot; = $Value.ToString(&#x27;X&#x27;)
+        &quot;ToString(&#x27;F&#x27;)&quot; = $Value.ToString(&#x27;F&#x27;)
+    }
+}
+```
+
+```Output
+ToString(&#x27;G&#x27;) ToString(&#x27;D&#x27;) ToString(&#x27;X&#x27;) ToString(&#x27;F&#x27;)
+------------- ------------- ------------- -------------
+A             1             00000001      A
+B             2             00000002      B
+A, B          3             00000003      A, B
+C             4             00000004      C
+A, C          5             00000005      A, C
+B, C          6             00000006      B, C
+A, B, C       7             00000007      A, B, C
+8             8             00000008      8
+```
+
+Notice that for flags enumerations, the `G` and `F` format strings display the
+list of set flags for the value delimited with commas. The last value, `8`,
+doesn&#x27;t list any flags because it&#x27;s not actually a valid flag set. You can&#x27;t
+combine the enumeration flags to get a sum of `8` without duplicating at least
+one flag.
+
+## Defining extension methods with Update-TypeData
+
+You can&#x27;t define methods in the declaration for an enumeration. To extend the
+functionality of an enumeration, you can use the [Update-TypeData][10] cmdlet
+to define `ScriptMethod` members for the enumeration.
+
+The following example uses the `Update-TypeData` cmdlet to add a `GetFlags()`
+method to the **FileAttributes** flag enumeration. It returns an array of the
+flags set for the value.
+
+```powershell
+[Flags()] enum FileAttributes {
+    Archive    = 1
+    Compressed = 2
+    Device     = 4
+    Directory  = 8
+    Encrypted  = 16
+    Hidden     = 32
+}
+
+$MemberDefinition = @{
+    TypeName   = &#x27;FileAttributes&#x27;
+    MemberName = &#x27;GetFlags&#x27;
+    MemberType = &#x27;ScriptMethod&#x27;
+    Value      = {
+        foreach ($Flag in $this.GetType().GetEnumValues()) {
+          if ($this.HasFlag($Flag)) { $Flag }
+        }
+    }
+}
+
+Update-TypeData @MemberDefinition
+
+$File = [FileAttributes]28
+
+$File.GetFlags()
+```
+
+```Output
+Device
+Directory
+Encrypted
+```
+
+## Exporting enumerations with type accelerators
+
+By default, PowerShell modules don&#x27;t automatically export classes and
+enumerations defined in PowerShell. The custom types aren&#x27;t available outside
+of the module without calling a `using module` statement.
+
+However, if a module adds type accelerators, those type accelerators are
+immediately available in the session after users import the module.
+
+&gt; [!NOTE]
+&gt; Adding type accelerators to the session uses an internal (not public) API.
+&gt; Using this API may cause conflicts. The pattern described below throws an
+&gt; error if a type accelerator with the same name already exists when you import
+&gt; the module. It also removes the type accelerators when you remove the module
+&gt; from the session.
+&gt;
+&gt; This pattern ensures that the types are available in a session. It doesn&#x27;t
+&gt; affect IntelliSense or completion when authoring a script file in VS Code.
+&gt; To get IntelliSense and completion suggestions for custom types in VS Code,
+&gt; you need to add a `using module` statement to the top of the script.
+
+The following pattern shows how you can register PowerShell classes and
+enumerations as type accelerators in a module. Add the snippet to the root
+script module after any type definitions. Make sure the `$ExportableTypes`
+variable contains each of the types you want to make available to users when
+they import the module. The other code doesn&#x27;t require any editing.
+
+```powershell
+
+# Define the types to export with type accelerators.
+$ExportableTypes =@(
+    [DefinedTypeName]
+)
+
+# Get the internal TypeAccelerators class to use its static methods.
+$TypeAcceleratorsClass = [psobject].Assembly.GetType(
+    &#x27;System.Management.Automation.TypeAccelerators&#x27;
+)
+
+# Ensure none of the types would clobber an existing type accelerator.
+
+# If a type accelerator with the same name exists, throw an exception.
+$ExistingTypeAccelerators = $TypeAcceleratorsClass::Get
+foreach ($Type in $ExportableTypes) {
+    if ($Type.FullName -in $ExistingTypeAccelerators.Keys) {
+        $Message = @(
+            &quot;Unable to register type accelerator &#x27;$($Type.FullName)&#x27;&quot;
+            &#x27;Accelerator already exists.&#x27;
+        ) -join &#x27; - &#x27;
+
+        throw [System.Management.Automation.ErrorRecord]::new(
+            [System.InvalidOperationException]::new($Message),
+            &#x27;TypeAcceleratorAlreadyExists&#x27;,
+            [System.Management.Automation.ErrorCategory]::InvalidOperation,
+            $Type.FullName
+        )
+    }
+}
+
+# Add type accelerators for every exportable type.
+foreach ($Type in $ExportableTypes) {
+    $TypeAcceleratorsClass::Add($Type.FullName, $Type)
+}
+
+# Remove type accelerators when the module is removed.
+$MyInvocation.MyCommand.ScriptBlock.Module.OnRemove = {
+    foreach($Type in $ExportableTypes) {
+        $TypeAcceleratorsClass::Remove($Type.FullName)
+    }
+}.GetNewClosure()
+```
+
+When users import the module, any types added to the type accelerators for the
+session are immediately available for IntelliSense and completion. When the
+module is removed, so are the type accelerators.
+
+# about_Enum
+
+## Manually importing enumerations from a PowerShell module
+
+`Import-Module` and the `#Requires` statement only import the module functions,
+aliases, and variables, as defined by the module. Enumerations aren&#x27;t imported.
+
+If a module defines classes and enumerations but doesn&#x27;t add type accelerators
+for those types, use a `using module` statement to import them.
+
+The `using module` statement imports classes and enumerations from the root
+module (`ModuleToProcess`) of a script module or binary module. It doesn&#x27;t
+consistently import classes defined in nested modules or classes defined in
+scripts that are dot-sourced into the root module. Define classes that you want
+to be available to users outside of the module directly in the root module.
+
+For more information about the `using` statement, see [about_Using][11].
+
+## Loading newly changed code during development
+
+During development of a script module, it&#x27;s common to make changes to the code
+then load the new version of the module using `Import-Module` with the
+**Force** parameter. This works for changes to functions in the root module
+only. `Import-Module` doesn&#x27;t reload any nested modules. Also, there&#x27;s no way
+to load any updated classes.
+
+To ensure that you&#x27;re running the latest version, you must start a new session.
+Classes and enumerations defined in PowerShell and imported with a `using`
+statement can&#x27;t be unloaded.
+
+Another common development practice is to separate your code into different
+files. If you have function in one file that use enumerations defined in
+another module, you should using the `using module` statement to ensure that
+the functions have the enumeration definitions that are needed.
+
+## Limitations
+
+- You can&#x27;t define enumerations in Windows PowerShell with a specific
+  underlying type. You can only define enumerations with an underlying type of
+  **System.Int32**.
+
+  Workaround: Use PowerShell 6.2 or newer. Starting in PowerShell 6.2, you can
+  define enumerations with a specific underlying type.
+
+- You can&#x27;t decorate enumeration values defined in PowerShell with attributes.
+  You can only decorate the enumeration declaration itself, as with the
+  [FlagsAttribute][04] for defining an enumeration as a set of bit flags.
+
+  Workaround: None
+
+- You can&#x27;t define methods inside enumeration definitions and PowerShell
+  doesn&#x27;t support defining [extension methods] like C#.
+
+  Workaround: Use the [Update-TypeData][10] cmdlet to define `ScriptMethod`
+  members for the enumeration.
+
+&lt;!-- Reference link definitions --&gt;
+[01]: #tostring
+[02]: /dotnet/standard/base-types/enumeration-format-strings
+[03]: #formatting-enumeration-values
+[04]: xref:System.FlagsAttribute
+[05]: #example-3---enumeration-as-flags
+[06]: #example-4---enumeration-as-a-parameter
+&lt;!-- [07]: /dotnet/csharp/language-reference/builtin-types/integral-numeric-types --&gt;
+[08]: /dotnet/api/system.enum.format
+[09]: xref:System.Enum.ToString
+[10]: xref:Microsoft.PowerShell.Utility.Update-TypeData
+[11]: about_Using.md
+###Microsoft Learn URL###
+https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_enum/?view=powershell-5.1
+</pre></html>

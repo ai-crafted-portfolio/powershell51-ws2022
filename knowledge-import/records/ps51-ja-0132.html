@@ -1,0 +1,939 @@
+<!doctype html><html lang="ja"><meta charset="utf-8"><pre class="record-source">###KnowledgeNo###
+PS51-WS2022-2026-0132
+###FormatID###
+PS51-WS2022
+###CreatedAt###
+2026-08-01 00:00
+###UpdatedAt###
+2026-08-01 00:00
+###タイトル###
+Set-ADDomain
+###モジュール###
+activedirectory
+###製品###
+Windows PowerShell 5.1
+###対応OS###
+Windows Server 2022
+###日本語訳###
+# セット-ADDomain
+
+## SYNOPSISは,アクティブディレクトリドメインを修正する.
+
+## SYNTAXは,のシンタックスです.
+
+### アイデンティティ```
+Set-ADDomain [-WhatIf] [-Confirm] [-Add &lt;Hashtable&gt;] [-AllowedDNSSuffixes &lt;Hashtable&gt;] [-AuthType &lt;ADAuthType&gt;]
+ [-Clear &lt;String[]&gt;] [-Credential &lt;PSCredential&gt;] [-Identity] &lt;ADDomain&gt;
+ [-LastLogonReplicationInterval &lt;TimeSpan&gt;] [-ManagedBy &lt;ADPrincipal&gt;] [-PassThru]
+ [-PublicKeyRequiredPasswordRolling &lt;Boolean&gt;] [-Remove &lt;Hashtable&gt;] [-Replace &lt;Hashtable&gt;] [-Server &lt;String&gt;]
+ [&lt;CommonParameters&gt;]
+```
+
+### 文脈の例です.```
+Set-ADDomain [-WhatIf] [-Confirm] [-AllowedDNSSuffixes &lt;Hashtable&gt;] [-AuthType &lt;ADAuthType&gt;]
+ [-Credential &lt;PSCredential&gt;] -Instance &lt;ADDomain&gt; [-LastLogonReplicationInterval &lt;TimeSpan&gt;]
+ [-ManagedBy &lt;ADPrincipal&gt;] [-PassThru] [-PublicKeyRequiredPasswordRolling &lt;Boolean&gt;] [-Server &lt;String&gt;]
+ [&lt;CommonParameters&gt;]
+```
+
+## 記述 **Set-ADDomain** cmdlet は Active Directory ドメインのプロパティを修正する.あなたは,cmdlet パラメータを使用して一般的に使用されるプロパティ値を修正することができます.cmdlet パラメータに関連していないプロパティ値は, *Add*, *Replace*, *Clear*, *Remove* パラメータを使用して変更することができます.
+
+*Identity* パラメータは,変更するドメインを指定します.そのドメインを特徴的な名前,GUID,セキュリティ識別子 (SID),DNSドメイン名,またはNetBIOS名によって識別できます.また, *Identity* パラメータをオブジェクト変数に設定できます.例えば `$&lt;localDomainObject&gt;`ダイレクトファイルは,ドメインオブジェクトを検索するために,またはパイプラインを通過して, *Identity* パラメータにオブジェクトを送信できます.例えば,Get-ADDomain cmdlet を使用してドメインオブジェクトを取得し,パイプラインを通過して, **Set-ADDomain** cmdlet に転送できます.
+
+*インスタンスの*パラメータは,ドメインオブジェクトのコピーに変更を加えることでドメインオブジェクトを更新する方法を提供します.変更されたアクティブディレクトリドメインオブジェクトのコピーに *インスタンスの*パラメータを設定すると, **Set-ADDomain** cmdlet は元のドメインオブジェクトに同じ変更を行います.変更されるオブジェクトのコピーを取得するには,Get-ADDomainオブジェクトを使用します. *インスタンスの*パラメータを指定すると, *Identity*パラメータを過ぎません. *インスタンスの*パラメータについての詳細については, *Instance*パラメータ説明を参照してください.
+
+## 例えは
+
+### 例1: ドメイン内のプロパティの値を設定する```
+PS C:\&gt; Set-ADDomain -Identity USER01 -AllowedDNSSuffixes @{Replace=&quot;USER01.com&quot;,&quot;corp.USER01.com&quot;}
+```
+
+このコマンドは,USER01.comのドメインUSER01の {&quot;USER01.com&quot;,&quot;corp.USER01.com&quot;} に **AllowedDNSSuffixes**の値を設定します.
+
+### 例2: ドメイン内のプロパティの値を設定する```
+PS C:\&gt; Set-ADDomain -Identity USER01 -AllowedDNSSuffixes @{Add=&quot;corp.USER01.com&quot;}
+```
+
+このコマンドは,USER01.comのドメインUSER01の **AllowedDNSSuffixes** に corp.USER01.comの値を追加します.
+
+### 例3: ドメインに ManagedBy 属性を設定する```
+PS C:\&gt; Set-ADDomain -Identity USER01 -ManagedBy &#x27;CN=Domain Admins,CN=Users,DC=USER01,DC=COM&#x27;
+```
+
+このコマンドは,USER01ドメインの **ManagedBy**プロパティを CN=Domain Admins,CN=Users,DC=USER01,DC=COMに設定します.
+
+### 例4: ユーザにログインされた現在の複製時間を数日に設定する```
+PS C:\&gt; Get-ADDomain | Set-ADDomain -LastLogonReplicationInterval &quot;10&quot;
+```
+
+このコマンドは,ユーザドメインにログインされた現在の **LastLogonReplicationInterval**を10に設定します.
+
+### 例5: ドメインの ManagedBy 属性を設定する```
+PS C:\&gt; $Domain = Get-ADDomain -Identity London
+PS C:\&gt; $Domain.ManagedBy = PattiFuller
+PS C:\&gt; Set-ADDomain -Instance $Domain
+```
+
+このコマンドは,ロンドンドメインの **ManagedBy**属性を修正します.この例では,ロンドンドメインのローカルインスタンスを修正し,ローカルインスタンスを指定し,現在のcmdletの *Instance* パラメータをローカルインスタンスを指定します.
+
+### 例 6: パスワードの有効期限を有効にして,公開鍵を入力するためにロールリングを有効にします.```
+PS C:\&gt; Set-ADDomain -Identity FABRIKAM -PublicKeyRequiredPasswordRolling $True
+```
+
+このコマンドは,FABRIKAMドメインの **msDS-ExpirePasswordsOnSmartCardOnlyAccounts**属性を$Trueに設定します.この設定は,サインインするには公開鍵を必要とするユーザーアカウントのパスワードの有効期限とロールを可能にします.
+
+## パラメータは
+
+### -Add は,オブジェクト属性に追加する値を指定します.このパラメータを使用して,cmdlet パラメータを使用して変更できない属性に1つまたは複数の値を追加します.オブジェクト属性を変更するには,ライトウェイトディレクトリ アクセス プロトコル (LDAP) ディスプレイ名を使用する必要があります. 逗号別列の値リストと,半角を用いることで複数の属性に複数の値を指定することで,複数の値を指定できます.このパラメータのフォーマットはです.
+
+`-Add @{Attribute1LDAPDisplayName=value1, value2, ...;   Attribute2LDAPDisplayName=value1, value2, ...; AttributeNLDAPDisplayName=value1, value2, ...}`
+
+*追加*, *交換*, *クリア*, *削除* パラメータを組み合わせると,操作は次の順に行われます.
+
+**削除** - **追加** - **交換** - **クリア** - **
+
+```yaml
+Type: Hashtable
+Parameter Sets: Identity
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -AllowedDNSSuffixes ドメイン名サーバー (DNS) のサフィキスのリストを修正する.このパラメータは,ドメインDNS**オブジェクトの **msDS-AllowedDNSSuffixes**属性の値を設定します.このパラメータは,次の構文を使用して,DNSサフィキスの値を追加,削除,交換,またはクリアします.
+
+追加する値:
+
+`-AllowedDNSSuffixes @{Add=value1,value2,...}`
+
+値を取り除くために:
+
+`-AllowedDNSSuffixes @{Remove=value3,value4,...}
+
+値を変更するには:
+
+`-AllowedDNSSuffixes @{Replace=value1,value2,...}`
+
+すべての値をクリアするには:
+
+`-AllowedDNSSuffixes $Null`
+
+半球で分離したリストを使用して,1 以上の変更を指定できます.例えば,次の構文を使用して,DNSサフフックス値を追加して削除します.
+
+`@{Add=value1,value2,...};@{Remove=value3,value4,...}`
+
+*追加*, *交換*, *削除*, *削除* パラメータを組み合わせると,操作は次の順に行われます.
+
+**削除** - **追加** - **交換** - **クリア** - **
+
+```yaml
+Type: Hashtable
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -AuthType は,使用する認証方法を指定します.このパラメータの受け入れ可能な値は:です.
+
+- 交渉するまたは0 - 基本または1
+
+デフォルト認証方法は,交渉です.
+
+基本認証方法には,セキュアソケットレイヤ (SSL) 接続が必要となります.
+
+```yaml
+Type: ADAuthType
+Parameter Sets: (All)
+Aliases: 
+Accepted values: Negotiate, Basic
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+# セット-ADDomain
+
+### -Clear は,ディレクトリでクリアされたオブジェクトプロパティのアレイを指定します.このパラメータを使用して,cmdletパラメータを使用して変更できないプロパティの1つまたは複数の値をクリアします.オブジェクトプロパティを変更するには,LDAP表示名を使用する必要があります. 逗号別列を指定することによって複数のプロパティを変更できます.このパラメータのフォーマットは:
+
+`-Clear Attribute1LDAPDisplayName, Attribute2LDAPDisplayName`
+
+*追加*, *交換*, *削除*, *削除* パラメータを組み合わせると,操作は次の順に行われます.
+
+**削除** - **追加** - **交換** - **クリア** - **
+
+```yaml
+Type: String[]
+Parameter Sets: Identity
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### - 確認は,cmdletを実行する前に確認を提示します.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: cf
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Credential この作業を実行するために使用するユーザーアカウントの認証を指定します.当時はログインしているユーザーに,Cmdlet がWindows PowerShell プロバイダードライブのアクティブディレクトリ モジュールから実行されていない限り,デフォルトで実行される認証です.Cmdlet がそのようなプロバイダードライブから実行されている場合,ドライブに関連したアカウントはデフォルトです.
+
+このパラメータを指定するには,ユーザー名,例えば User1 または Domain01\User01 を入力するか,PSCredential** オブジェクトを指定することもできます.このパラメータのユーザー名を指定すると,cmdlet はパスワードを提示します.
+
+また,スクリプトを使用して **PSCredential** オブジェクトを作成したり, **Get-Credential** cmdlet を使用したりできます.その後, **PSCredential** オブジェクトに *Credential* パラメータを設定できます.
+
+実行する認証がタスクを実行するためのディレクトリレベルの許可がない場合,Windows PowerShell用のアクティブディレクトリモジュールでは終了エラーが返されます.
+
+```yaml
+Type: PSCredential
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Identity Active Directory ドメインオブジェクトを括弧で識別する際には,以下のプロパティ値のうちの1つを指定します.括弧の識別子は,属性のLDAP表示名です.すべての値は,ドメインを表す **domainDNS**オブジェクトです.このパラメータの受け入れ可能な値は:
+
+優れた名前 - GUID (objectGUID) - セキュリティ識別子 (objectSid) - DNS ドメイン名 - NetBIOS ドメイン名
+
+cmdlet は,オブジェクトを見つけるためにデフォルトの命名コンテキストまたはパーティションを探します.もし2つ以上のオブジェクトが見つかったら,cmdlet は,終了しないエラーを返します.
+
+このパラメータは,このオブジェクトをパイプラインを通過させることもできます.または,このパラメータをドメインオブジェクトインスタンスの設定でもできます.
+
+```yaml
+Type: ADDomain
+Parameter Sets: Identity
+Aliases: 
+
+Required: True
+Position: 0
+Default value: None
+Accept pipeline input: True (ByValue)
+Accept wildcard characters: False
+```
+
+### -インスタンスは,実際の Active Directory ドメインオブジェクトを更新するために使用するドメインオブジェクトの変更されたコピーを指定します.このパラメータを使用すると,オブジェクトの変更されたコピーに変更されたものは,対応する Active Directoryオブジェクトにも変更されます.cmdletは変更されたオブジェクト属性を更新します.
+
+*インスタンスの*パラメータは,Get-ADDomain cmdletを使用して取得したドメインオブジェクトのみを更新できます. *インスタンスの*パラメータを指定すると,オブジェクトに属性設定する他のパラメータを指定することはできません.
+
+```yaml
+Type: ADDomain
+Parameter Sets: Instance
+Aliases: 
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -LastLogonReplicationInterval は,アカウントの最後のログオン時間をドメイン内のすべてのドメインコントローラーで複製しなければならない時間,すなわち数日に指定する.このパラメータはドメインの **LastLogonReplicationInterval** 属性を設定します.この属性のLDAP表示名 (**ldapDisplayName**) は **msDS-LogonTimeSyncInterval** です.最後のログオン複製間隔は少なくとも1日である必要があります.最後のログオン複製間隔を低値に設定すると,ドメイン全体の複製を大幅に増加させることができます.
+
+```yaml
+Type: TimeSpan
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -ManagedBy は,以下のプロパティ値のうちの1つを提供することでオブジェクトを管理するユーザーまたはグループを指定します.注:括弧の識別子は,プロパティのLDAP表示名です.このパラメータの受け入れ可能な値は:です.
+
+特徴ある名前 - GUID (objectGUID) - セキュリティ識別子 (objectSid) - SAMアカウント名 (sAMAccountName)
+
+このパラメータは, managedBy の LDAP ディスプレイ名で,アクティブディレクトリ属性を設定します.
+
+```yaml
+Type: ADPrincipal
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -PassThru は,あなたが取り組んでいるアイテムを表すオブジェクトを返します.デフォルトでは,このcmdlet は出力を生成しません.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -PublicKeyRequiredPasswordRolling ドメインがインタラクティブなサインインのためにスマートカードを必要とするユーザーアカウントのパスワードの有効期限とロールを有効にしているか指定します.
+
+```yaml
+Type: Boolean
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Remove は,cmdlet がオブジェクト属性の値を削除することを指定します.このパラメータを使用して,cmdlet パラメータを使用して変更できない属性の1つまたは複数の値を削除します.オブジェクト属性を削除するには,LDAP ディスプレイ名を使用する必要があります.半角別列リストを指定することによって,1以上の属性を削除できます.このパラメータのフォーマットは:
+
+`-Remove @{Attribute1LDAPDisplayName=value[];   Attribute2LDAPDisplayName=value[]}`
+
+*追加*, *交換*, *クリア*, *削除* パラメータを組み合わせると,操作は次の順に行われます.
+
+**削除** - **追加** - **交換** - **クリア** - **
+
+```yaml
+Type: Hashtable
+Parameter Sets: Identity
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+# セット-ADDomain
+
+### -Cmdletパラメータを使用して変更できない属性の1つまたは複数の値を置き換えるためにこのパラメータを使用します.オブジェクト属性を変更するには,LDAP表示名を使用する必要があります. 逗号別値リストを指定することによって,複数の属性値を指定し,半角を用いることで複数の属性を分離します. このパラメータのフォーマットは:
+
+`-Replace @{Attribute1LDAPDisplayName=value1, value2, ...;   Attribute2LDAPDisplayName=value1, value2, ...; AttributeNLDAPDisplayName=value1, value2, ...}`
+
+*追加*, *削除*, *交換*, *クリア* パラメータを一緒に使用すると,操作は次の順に実行されます.
+
+**削除** - **追加** - **交換** - **クリア** - **
+
+```yaml
+Type: Hashtable
+Parameter Sets: Identity
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Serverは,対応するドメイン名またはディレクトリサーバーに以下の値のうちの1つを提供することで,接続するアクティブディレクトリ ドメインサービスインスタンスを指定します.サービスは以下のいずれかかもしれません.
+
+次の方法の一つで,アクティブディレクトリ ドメインサービスインスタンスを指定してください.
+
+ドメイン名値:
+
+- 完全資格ドメイン名 - NetBIOS名
+
+ディレクトリサーバーの値: 
+
+- 完全資格のあるディレクトリサーバー名 - NetBIOS名 - 完全資格のあるディレクトリサーバー名とポート
+
+このパラメータのデフォルト値は,次の方法のうちの1つによって,列挙された順序で決定されます:
+
+パイプラインを通過したオブジェクトから *Server* 値を利用することで - Active Directory Domain Services Windows PowerShell プロバイダードライブに関連したサーバー情報を利用することで,当ドライブでcmdlet が実行される場合 - Windows PowerShell を実行しているコンピュータのドメインを使用して -
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -WhatIf が実行されればどうなるか示します.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: wi
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### 共通パラメータ このcmdletは共通パラメータをサポートしています: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable.詳細については, [about_CommonParameters](を参照してください.https://go.microsoft.com/fwlink/?LinkID=113216) でした.
+
+## 輸入は
+
+### Microsoft.ActiveDirectory.Management.ADDomain None.ActiveDirectory.ADDomain ドメインオブジェクトは, *Identity* パラメータで受信されます.
+
+Get-ADDomain cmdletを使用して取得し,変更されたドメインオブジェクトは, *Instance* パラメータで受信されます.
+
+## 輸出は
+
+### None.ActiveDirectory.Management.ADDomain このcmdletは, *PassThru* パラメータが指定されたときに変更されたドメインオブジェクトを返します.デフォルトでは,このcmdletは出力を生成しません.
+
+## 注記 * このcmdlet は Active Directory Lightweight Directory Services (AD LDS) で動作しません. * このcmdlet は Active Directory のスナップショットで動作しません. * このcmdlet は読み込みのみのドメインコントローラで動作しません.
+
+## 関連リンク
+
+[Get-ADDomain](./Get-ADDomain.md) 
+
+[Get-ADDomainController](./Get-ADDomainController.md) 
+###英語原文###
+# Set-ADDomain
+
+## SYNOPSIS
+Modifies an Active Directory domain.
+
+## SYNTAX
+
+### Identity
+```
+Set-ADDomain [-WhatIf] [-Confirm] [-Add &lt;Hashtable&gt;] [-AllowedDNSSuffixes &lt;Hashtable&gt;] [-AuthType &lt;ADAuthType&gt;]
+ [-Clear &lt;String[]&gt;] [-Credential &lt;PSCredential&gt;] [-Identity] &lt;ADDomain&gt;
+ [-LastLogonReplicationInterval &lt;TimeSpan&gt;] [-ManagedBy &lt;ADPrincipal&gt;] [-PassThru]
+ [-PublicKeyRequiredPasswordRolling &lt;Boolean&gt;] [-Remove &lt;Hashtable&gt;] [-Replace &lt;Hashtable&gt;] [-Server &lt;String&gt;]
+ [&lt;CommonParameters&gt;]
+```
+
+### Instance
+```
+Set-ADDomain [-WhatIf] [-Confirm] [-AllowedDNSSuffixes &lt;Hashtable&gt;] [-AuthType &lt;ADAuthType&gt;]
+ [-Credential &lt;PSCredential&gt;] -Instance &lt;ADDomain&gt; [-LastLogonReplicationInterval &lt;TimeSpan&gt;]
+ [-ManagedBy &lt;ADPrincipal&gt;] [-PassThru] [-PublicKeyRequiredPasswordRolling &lt;Boolean&gt;] [-Server &lt;String&gt;]
+ [&lt;CommonParameters&gt;]
+```
+
+## DESCRIPTION
+The **Set-ADDomain** cmdlet modifies the properties of an Active Directory domain.
+You can modify commonly used property values by using the cmdlet parameters.
+Property values that are not associated with cmdlet parameters can be modified by using the *Add*, *Replace*, *Clear*, and *Remove* parameters.
+
+The *Identity* parameter specifies the domain to modify.
+You can identify a domain by its distinguished name, GUID, security identifier (SID), DNS domain name, or NetBIOS name.
+You can also set the *Identity* parameter to an object variable such as `$&lt;localDomainObject&gt;`, or you can pass an object through the pipeline to the *Identity* parameter.
+For example, you can use the Get-ADDomain cmdlet to retrieve a domain object and then pass the object through the pipeline to the **Set-ADDomain** cmdlet.
+
+The *Instance* parameter provides a way to update a domain object by applying the changes made to a copy of the domain object.
+When you set the *Instance* parameter to a copy of an Active Directory domain object that has been modified, the **Set-ADDomain** cmdlet makes the same changes to the original domain object.
+To get a copy of the object to modify, use the Get-ADDomain object.
+When you specify the *Instance* parameter you should not pass the *Identity* parameter.
+For more information about the *Instance* parameter, see the *Instance* parameter description.
+
+## EXAMPLES
+
+### Example 1: Set the value of a property in a domain
+```
+PS C:\&gt; Set-ADDomain -Identity USER01 -AllowedDNSSuffixes @{Replace=&quot;USER01.com&quot;,&quot;corp.USER01.com&quot;}
+```
+
+This command sets the value of **AllowedDNSSuffixes** to {&quot;USER01.com&quot;,&quot;corp.USER01.com&quot;} in domain USER01.
+
+### Example 2: Set the value of a property in a domain
+```
+PS C:\&gt; Set-ADDomain -Identity USER01 -AllowedDNSSuffixes @{Add=&quot;corp.USER01.com&quot;}
+```
+
+This command adds the value corp.USER01.com to the **AllowedDNSSuffixes** in domain USER01.
+
+### Example 3: Set the ManagedBy property in a domain
+```
+PS C:\&gt; Set-ADDomain -Identity USER01 -ManagedBy &#x27;CN=Domain Admins,CN=Users,DC=USER01,DC=COM&#x27;
+```
+
+This command sets the **ManagedBy** property in domain USER01 to CN=Domain Admins,CN=Users,DC=USER01,DC=COM.
+
+### Example 4: Set the time in days for replication for the current logged on user
+```
+PS C:\&gt; Get-ADDomain | Set-ADDomain -LastLogonReplicationInterval &quot;10&quot;
+```
+
+This command sets the **LastLogonReplicationInterval** of the current logged on user domain to 10.
+
+### Example 5: Set the ManagedBy property for a domain
+```
+PS C:\&gt; $Domain = Get-ADDomain -Identity London
+PS C:\&gt; $Domain.ManagedBy = PattiFuller
+PS C:\&gt; Set-ADDomain -Instance $Domain
+```
+
+This command modifies the **ManagedBy** property for the London domain.
+The example modifies a local instance of the London domain, and then specifies the *Instance* parameter for the current cmdlet as the local instance.
+
+### Example 6: Enable password expiration and rolling for public key to sign in
+```
+PS C:\&gt; Set-ADDomain -Identity FABRIKAM -PublicKeyRequiredPasswordRolling $True
+```
+
+This command sets the **msDS-ExpirePasswordsOnSmartCardOnlyAccounts** attribute for the FABRIKAM domain to $True.
+This setting enables password expiration and rolling for user accounts that require a public key to sign in.
+
+## PARAMETERS
+
+### -Add
+Specifies values to add to an object property.
+Use this parameter to add one or more values to a property that cannot be modified using a cmdlet parameter.
+To modify an object property, you must use the Lightweight Directory Access Protocol (LDAP) display name.
+You can specify multiple values to a property by specifying a comma-separated list of values and more than one property by separating them using a semicolon.
+The format for this parameter is
+
+`-Add @{Attribute1LDAPDisplayName=value1, value2, ...;   Attribute2LDAPDisplayName=value1, value2, ...; AttributeNLDAPDisplayName=value1, value2, ...}`
+
+When you use the *Add*, *Replace*, *Clear*, and *Remove* parameters together, the operations are performed in the following order:
+
+- **Remove**
+- **Add**
+- **Replace**
+- **Clear**
+
+```yaml
+Type: Hashtable
+Parameter Sets: Identity
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -AllowedDNSSuffixes
+Modifies the list of domain name server (DNS) suffixes that are allowed in a domain.
+This parameter sets the value of the **msDS-AllowedDNSSuffixes** attribute of the **domainDNS** object.
+This parameter uses the following syntax to add, remove, replace, or clear DNS suffix values.
+
+To add values:
+
+`-AllowedDNSSuffixes @{Add=value1,value2,...}`
+
+To remove values:
+
+``-AllowedDNSSuffixes @{Remove=value3,value4,...}
+
+To replace values:
+
+`-AllowedDNSSuffixes @{Replace=value1,value2,...}`
+
+To clear all values:
+
+`-AllowedDNSSuffixes $Null`
+
+You can specify more than one change by using a list separated by semicolons.
+For example, use the following syntax to add and remove DNS suffix values:
+
+`@{Add=value1,value2,...};@{Remove=value3,value4,...}`
+
+When you use the *Add*, *Replace*, *Clear*, and *Remove* parameters together, the operations are performed in the following order:
+
+- **Remove**
+- **Add**
+- **Replace**
+- **Clear**
+
+```yaml
+Type: Hashtable
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -AuthType
+Specifies the authentication method to use.
+The acceptable values for this parameter are:
+
+- Negotiate or 0
+- Basic or 1
+
+The default authentication method is Negotiate.
+
+A Secure Sockets Layer (SSL) connection is required for the Basic authentication method.
+
+```yaml
+Type: ADAuthType
+Parameter Sets: (All)
+Aliases: 
+Accepted values: Negotiate, Basic
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+# Set-ADDomain
+
+### -Clear
+Specifies an array of object properties that are cleared in the directory.
+Use this parameter to clear one or more values of a property that cannot be modified using a cmdlet parameter.
+To modify an object property, you must use the LDAP display name.
+You can modify more than one property by specifying a comma-separated list.
+The format for this parameter is:
+
+`-Clear Attribute1LDAPDisplayName, Attribute2LDAPDisplayName`
+
+When you use the *Add*, *Replace*, *Clear*, and *Remove* parameters together, the operations are performed in the following order:
+
+- **Remove**
+- **Add**
+- **Replace**
+- **Clear**
+
+```yaml
+Type: String[]
+Parameter Sets: Identity
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Confirm
+Prompts you for confirmation before running the cmdlet.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: cf
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Credential
+Specifies the user account credentials to use to perform this task.
+The default credentials are the credentials of the currently logged on user unless the cmdlet is run from an Active Directory module for Windows PowerShell provider drive.
+If the cmdlet is run from such a provider drive, the account associated with the drive is the default.
+
+To specify this parameter, you can type a user name, such as User1 or Domain01\User01 or you can specify a **PSCredential** object.
+If you specify a user name for this parameter, the cmdlet prompts for a password.
+
+You can also create a **PSCredential** object by using a script or by using the **Get-Credential** cmdlet.
+You can then set the *Credential* parameter to the **PSCredential** object.
+
+If the acting credentials do not have directory-level permission to perform the task, Active Directory module for Windows PowerShell returns a terminating error.
+
+```yaml
+Type: PSCredential
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Identity
+Specifies an Active Directory domain object by providing one of the following property values.
+The identifier in parentheses is the LDAP display name for the attribute.
+All values are for the **domainDNS** object that represents the domain.
+The acceptable values for this parameter are:
+
+- A distinguished name
+- A GUID (objectGUID) 
+- A security identifier (objectSid) 
+- A DNS domain name
+- A NetBIOS domain name
+
+The cmdlet searches the default naming context or partition to find the object.
+If two or more objects are found, the cmdlet returns a non-terminating error.
+
+This parameter can also get this object through the pipeline or you can set this parameter to a domain object instance.
+
+```yaml
+Type: ADDomain
+Parameter Sets: Identity
+Aliases: 
+
+Required: True
+Position: 0
+Default value: None
+Accept pipeline input: True (ByValue)
+Accept wildcard characters: False
+```
+
+### -Instance
+Specifies a modified copy of a domain object to use to update the actual Active Directory domain object.
+When this parameter is used, any modifications made to the modified copy of the object are also made to the corresponding Active Directory object.
+The cmdlet only updates the object properties that have changed.
+
+The *Instance* parameter can only update domain objects that have been retrieved by using the Get-ADDomain cmdlet.
+When you specify the *Instance* parameter, you cannot specify other parameters that set properties on the object.
+
+```yaml
+Type: ADDomain
+Parameter Sets: Instance
+Aliases: 
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -LastLogonReplicationInterval
+Specifies the time, in days, within which the last logon time of an account must be replicated across all domain controllers in the domain.
+This parameter sets the **LastLogonReplicationInterval** property for a domain.
+The LDAP display name (**ldapDisplayName**) for this property is **msDS-LogonTimeSyncInterval**.
+The last logon replication interval must be at least one day.
+Setting the last logon replication interval to a low value can significantly increase domain-wide replication.
+
+```yaml
+Type: TimeSpan
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -ManagedBy
+Specifies the user or group that manages the object by providing one of the following property values.
+Note: The identifier in parentheses is the LDAP display name for the property.
+The acceptable values for this parameter are:
+
+- A distinguished name
+- A GUID (objectGUID) 
+- A security identifier (objectSid) 
+- A SAM account name (sAMAccountName)
+
+This parameter sets the Active Directory attribute with an LDAP display name of managedBy.
+
+```yaml
+Type: ADPrincipal
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -PassThru
+Returns an object representing the item with which you are working.
+By default, this cmdlet does not generate any output.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -PublicKeyRequiredPasswordRolling
+Specifies whether the domain enables password expiration and rolling for user account that require a smart card for interactive sign in.
+
+```yaml
+Type: Boolean
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Remove
+Specifies that the cmdlet remove values of an object property.
+Use this parameter to remove one or more values of a property that cannot be modified using a cmdlet parameter.
+To remove an object property, you must use the LDAP display name.
+You can remove more than one property by specifying a semicolon-separated list.
+The format for this parameter is:
+
+`-Remove @{Attribute1LDAPDisplayName=value[];   Attribute2LDAPDisplayName=value[]}`
+
+When you use the *Add*, *Replace*, *Clear*, and *Remove* parameters together, the operations will be performed in the following order:
+
+- **Remove**
+- **Add**
+- **Replace**
+- **Clear**
+
+```yaml
+Type: Hashtable
+Parameter Sets: Identity
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+# Set-ADDomain
+
+### -Replace
+Specifies values for an object property that will replace the current values.
+Use this parameter to replace one or more values of a property that cannot be modified using a cmdlet parameter.
+To modify an object property, you must use the LDAP display name.
+You can specify multiple values to a property by specifying a comma-separated list of values, and more than one property by separating them using a semicolon.
+The format for this parameter is:
+
+`-Replace @{Attribute1LDAPDisplayName=value1, value2, ...;   Attribute2LDAPDisplayName=value1, value2, ...; AttributeNLDAPDisplayName=value1, value2, ...}`
+
+When you use the *Add*, *Remove*, *Replace*, and *Clear* parameters together, the operations will be performed in the following order:
+
+- **Remove**
+- **Add**
+- **Replace**
+- **Clear**
+
+```yaml
+Type: Hashtable
+Parameter Sets: Identity
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Server
+Specifies the Active Directory Domain Services instance to connect to, by providing one of the following values for a corresponding domain name or directory server.
+The service may be any of the following:  Active Directory Lightweight Domain Services, Active Directory Domain Services or Active Directory snapshot instance.
+
+Specify the Active Directory Domain Services instance in one of the following ways:  
+
+Domain name values:
+
+- Fully qualified domain name
+- NetBIOS name
+
+Directory server values: 
+
+- Fully qualified directory server name
+- NetBIOS name
+- Fully qualified directory server name and port
+
+The default value for this parameter is determined by one of the following methods in the order that they are listed:
+
+- By using the *Server* value from objects passed through the pipeline
+- By using the server information associated with the Active Directory Domain Services Windows PowerShell provider drive, when the cmdlet runs in that drive
+- By using the domain of the computer running Windows PowerShell
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -WhatIf
+Shows what would happen if the cmdlet runs.
+The cmdlet is not run.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: wi
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### CommonParameters
+This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable. For more information, see [about_CommonParameters](https://go.microsoft.com/fwlink/?LinkID=113216).
+
+## INPUTS
+
+### None or Microsoft.ActiveDirectory.Management.ADDomain
+A domain object is received by the *Identity* parameter.
+
+A domain object that was retrieved by using the Get-ADDomain cmdlet and then modified is received by the *Instance* parameter.
+
+## OUTPUTS
+
+### None or Microsoft.ActiveDirectory.Management.ADDomain
+This cmdlet returns the modified domain object when the *PassThru* parameter is specified.
+By default, this cmdlet does not generate any output.
+
+## NOTES
+* This cmdlet does not work with Active Directory Lightweight Directory Services (AD LDS).
+* This cmdlet does not work with an Active Directory snapshot.
+* This cmdlet does not work with a read-only domain controller.
+
+## RELATED LINKS
+
+[Get-ADDomain](./Get-ADDomain.md)
+
+[Get-ADDomainController](./Get-ADDomainController.md)
+###Microsoft Learn URL###
+https://learn.microsoft.com/en-us/powershell/module/activedirectory/set-addomain/?view=windowsserver2022-ps
+</pre></html>

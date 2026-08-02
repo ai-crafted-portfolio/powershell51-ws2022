@@ -1,0 +1,569 @@
+<!doctype html><html lang="ja"><meta charset="utf-8"><pre class="record-source">###KnowledgeNo###
+PS51-WS2022-2026-3884
+###FormatID###
+PS51-WS2022
+###CreatedAt###
+2026-08-01 00:00
+###UpdatedAt###
+2026-08-01 00:00
+###タイトル###
+Get-EventSubscriber
+###モジュール###
+Microsoft.PowerShell.Utility
+###製品###
+Windows PowerShell 5.1
+###対応OS###
+Windows Server 2022
+###日本語訳###
+# Get-EventSubscriber を取得する
+
+## SYNOPSISは,現在のセッションでイベントのサブスクリプションを入手します.
+
+## SYNTAXは,のシンタックスです.
+
+### BySource (デフォルト) 
+
+```
+Get-EventSubscriber [[-SourceIdentifier] &lt;String&gt;] [-Force] [&lt;CommonParameters&gt;]
+```
+
+### バイId
+
+```
+Get-EventSubscriber [-SubscriptionId] &lt;Int32&gt; [-Force] [&lt;CommonParameters&gt;]
+```
+
+## 記述は,
+
+   `Get-EventSubscriber`cmdlet は,現在のセッションでイベントのサブスクリプションを取得します.
+
+Registerイベントのcmdletを使用してイベントに登録する際,イベントのサブスクリプションが Windows PowerShell セッションに追加され,登録したイベントは,イベントのキューに追加されるたびに,そのサブスクリプションが上がります.イベントのサブスクリプションをキャンセルするには,イベントのサブスクリプションを削除し,  を使ってイベントのサブスクリプションを削除します.`Unregister-Event`cmdletです.
+
+## 例えは,
+
+### 例1:タイムイベントのイベント登録者を取得する
+
+この例では,という文字を使用しています.`Get-EventSubscriber`タイムイベントのイベントサブスクリプションを入手するコマンドです.
+
+最初のコマンドは,を用います.`New-Object`cmdlet でタイムリーオブジェクトのインスタンスを作成します.このインスタンスは新しいタイムリーオブジェクトを  に保存します.`$Timer`変数です.
+
+第二のコマンドは,  を使っています.`Get-Member`cmdlet でタイムリーオブジェクトに利用可能なイベントを表示します.このコマンドは,  のタイプパラメータを使用します.`Get-Member`事件の値を持つcmdlet.
+
+```powershell
+$Timer = New-Object Timers.Timer
+$Timer | Get-Member -Type Event
+```
+
+```Output
+    TypeName: System.Timers.Timer
+
+Name     MemberType Definition
+----     ---------- ----------
+Disposed Event      System.EventHandler Disposed(System.Object, System.EventArgs)
+Elapsed  Event      System.Timers.ElapsedEventHandler Elapsed(System.Object, System.Timers.ElapsedEventArgs)
+```
+
+```powershell
+Register-ObjectEvent -InputObject $Timer -EventName Elapsed -SourceIdentifier Timer.Elapsed
+Get-EventSubscriber
+```
+
+```Output
+SubscriptionId   : 4
+SourceObject     : System.Timers.Timer
+EventName        : Elapsed
+SourceIdentifier : Timer.Elapsed
+Action           :
+HandlerDelegate  :
+SupportEvent     : False
+ForwardEvent     : False
+```
+
+第三のコマンドは,  を使っています.`Register-ObjectEvent`タイムロックのオブジェクトで**Elapsed**イベントを登録するには cmdlet.
+
+第4コマンドは,という文字を使用します.`Get-EventSubscriber`イベントの登録者 (e) を獲得するには,cmdlet をクリックしてください.
+
+### 例2:イベントのサブスクリプションのアクション属性においてPSEventJobのダイナミックモジュールを使用します.
+
+この例では,イベントサブスクリプションの **Action** 属性における **PSEventJob** オブジェクトのダイナミックモジュールを使用する方法を示しています.
+
+最初のコマンドは,を用います.`New-Object`タイムレットのオブジェクトを作成するにはcmdletを入力します.第2コマンドは,タイムレットの間隔を500 (ミリ秒) に設定します.
+
+```powershell
+$Timer = New-Object Timers.Timer
+$Timer.Interval = 500
+$params = @{
+    InputObject = $Timer
+    EventName = &#x27;Elapsed&#x27;
+    SourceIdentifier = &#x27;Timer.Random&#x27;
+    Action = { $Random = Get-Random -Min 0 -Max 100 }
+}
+Register-ObjectEvent @params
+```
+
+```Output
+Id  Name           State      HasMoreData  Location  Command
+--  ----           -----      -----------  --------  -------
+3   Timer.Random   NotStarted False                  $Random = Get-Random ...
+```
+
+```powershell
+$Timer.Enabled = $true
+$Subscriber = Get-EventSubscriber -SourceIdentifier Timer.Random
+($Subscriber.Action).GetType().FullName
+```
+
+```Output
+System.Management.Automation.PSEventJob
+```
+
+```powershell
+$Subscriber.Action | Format-List -Property *
+```
+
+```Output
+State         : Running
+Module        : __DynamicModule_6b5cbe82-d634-41d1-ae5e-ad7fe8d57fe0
+StatusMessage :
+HasMoreData   : True
+Location      :
+Command       : $random = Get-Random -Min 0 -Max 100
+JobStateInfo  : Running
+Finished      : System.Threading.ManualResetEvent
+InstanceId    : 88944290-133d-4b44-8752-f901bd8012e2
+Id            : 1
+Name          : Timer.Random
+ChildJobs     : {}
+...
+```
+
+```powershell
+&amp; $Subscriber.Action.Module {$Random}
+```
+
+第三のコマンドは,  を使っています.`Register-ObjectEvent`cmdlet は,タイマーオブジェクトの Elapsed イベントを登録する.コマンドには,イベントを処理するアクションが含まれます.タイマー間隔が経過するたびに,イベントが挙がって,アクションのコマンドが実行されます.この場合,  は  を実行します.`Get-Random`cmdlet は,0 から 100 の間のランダムな数を生成し,それを  に保存します.`$Random`イベントのソース識別子は,タイムラドム.
+
+で **Action**パラメータを使用すると`Register-ObjectEvent`コマンドでは,アクションを表す **PSEventJob** オブジェクトが返されます.
+
+第4コマンドはタイマーを有効にする.
+
+第5コマンドは&quot;&quot;を用いています.`Get-EventSubscriber`事件のイベントサブスクリプションを入手するには,cmdletを入力します.このイベントサブスクリプションオブジェクトは,イベントサブスクリプションオブジェクトを保存します.`$Subscriber`変数です.
+
+第6コマンドは,イベントサブスクリプションオブジェクトのアクションプロパティに **PSEventJob**オブジェクトが含まれていることを示しています.実際には,このオブジェクトは, の同じ **PSEventJob**オブジェクトを含んでいます.`Register-ObjectEvent`命令が返ってきた.
+
+第7コマンドは&quot;&quot;を用いています.`Format-List`リスト内のアクションプロパティに **PSEventJob** オブジェクトのすべてのプロパティを表示するcmdlet. 結果は, **PSEventJob** オブジェクトがアクションを実行するダイナミックスクリプトモジュールを含むモジュールプロパティを持っていることを明らかにします.
+
+残りのコマンドはコールオペレータ () を使っています.`&amp;`$Random変数の値を表示するために,モジュール内のコマンドを呼び出すために, $Random変数の値を表示します. 輸出されていないコマンドを含むモジュール内の任意のコマンドを呼び出すために,コールオペレータを使用できます. この場合,コマンドは Elapsed イベントが発生するときに生成されているランダム番号を表示します.
+
+モジュールに関する詳細については, [about_Modules] (../Microsoft.PowerShell.Core/About/about_Modules.md) を参照してください.
+
+### 例3:隠されたイベントの登録者を取得します.
+
+この例では,イベントのサブスクリプションを **PowerShell.Exiting** イベントに登録します.このサブスクリプションは **SupportEvent** パラメータを使用して登録されます.このパラメータは,イベントのサブスクリプションを のデフォルト出力から隠します.`Get-EventSubscriber`cmdlet. 隠されたサブスクリプションを含むすべてのイベントのサブスクリプションを取得するには, **Force** パラメータを使用する必要があります.
+
+```powershell
+Register-EngineEvent -SourceIdentifier PowerShell.Exiting -SupportEvent -Action {
+    Get-History | Export-Clixml D:\temp\history.clixml
+}
+Get-EventSubscriber  # No output - must use -Force
+Get-EventSubscriber -Force
+```
+
+```Output
+SubscriptionId   : 1
+SourceObject     :
+EventName        :
+SourceIdentifier : PowerShell.Exiting
+Action           : System.Management.Automation.PSEventJob
+HandlerDelegate  :
+SupportEvent     : True
+ForwardEvent     : False
+```
+
+## パラメータは
+
+### -フォース
+
+このcmdletは,イベントのすべてのサブスクリプション,包括して,SupportEvent**のパラメータを利用して隠されているイベントのサブスクリプションを表示します.`Register-ObjectEvent`     `Register-WmiEvent`そして,そして,`Register-EngineEvent` .
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: 1
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -SourceIdentifier について
+
+**SourceIdentifier**のプロパティ値を指定し,イベントのサブスクリプションのみを取得します.`Get-EventSubscriber`セッションですべてのイベントのサブスクリプションを取得します.ワイルドカードは許可されていません.このパラメータはケースセンシティブです.
+
+```yaml
+Type: System.String
+Parameter Sets: BySource
+Aliases:
+
+Required: False
+Position: 0
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+# Get-EventSubscriber を取得する
+
+### - サブスクリプションId
+
+このcmdletが取得するサブスクリプション識別子を指定します.デフォルトでは, `Get-EventSubscriber`セッションですべてのイベントのサブスクリプションを獲得します.
+
+```yaml
+Type: System.Int32
+Parameter Sets: ById
+Aliases: Id
+
+Required: True
+Position: 0
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### 共通パラメーター
+
+このcmdletは,共通パラメータをサポートしています: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable.詳細については, [about_CommonParameters](を参照してください.https://go.microsoft.com/fwlink/?LinkID=113216) でした.
+
+## 輸入は
+
+### どれもない
+
+このcmdletに物体をパイプすることはできません.
+
+## 輸出は
+
+### システム管理自動化PSEvent サブスクリプション
+
+このcmdletは,イベントの各会員に対して **PSEventSubscriber**オブジェクトを返します.
+
+##  NOTES  記事ができました.
+
+   `New-Event`パーツオーダーイベントを作成するcmdletは,サブスクリプションを生成しません.したがって, は`Get-EventSubscriber`cmdlet ではこれらのイベントのサブスクリプションオブジェクトが見つからない.しかし,もし  を使えば,`Register-EngineEvent`cmdletでカスタムイベントを登録する (イベントを転送したり,アクションを指定したりする) `Get-EventSubscriber`登録者がそれを発見する.`Register-EngineEvent`生成する.
+
+イベント,イベントサブスクリプション,イベントキューは,現在のセッションでのみ存在します.現在のセッションを閉じる場合は,イベントキューは廃棄され,イベントサブスクリプションはキャンセルされます.
+
+## 関連リンク
+
+[Get-Event](Get-Event.md) 
+
+[New-Event](New-Event.md) 
+
+[Register-EngineEvent](Register-EngineEvent.md) は,登録された
+
+[Register-ObjectEvent](Register-ObjectEvent.md) は,登録されたもの.
+
+[Remove-Event](Remove-Event.md) 
+
+[Unregister-Event](Unregister-Event.md) 
+
+[Wait-Event](Wait-Event.md) 
+###英語原文###
+# Get-EventSubscriber
+
+## SYNOPSIS
+Gets the event subscribers in the current session.
+
+## SYNTAX
+
+### BySource (Default)
+
+```
+Get-EventSubscriber [[-SourceIdentifier] &lt;String&gt;] [-Force] [&lt;CommonParameters&gt;]
+```
+
+### ById
+
+```
+Get-EventSubscriber [-SubscriptionId] &lt;Int32&gt; [-Force] [&lt;CommonParameters&gt;]
+```
+
+## DESCRIPTION
+
+The `Get-EventSubscriber` cmdlet gets the event subscribers in the current session.
+
+When you subscribe to an event by using a Register event cmdlet, an event subscriber is added to
+your Windows PowerShell session, and the events to which you subscribed are added to your event
+queue whenever they are raised. To cancel an event subscription, delete the event subscriber by
+using the `Unregister-Event` cmdlet.
+
+## EXAMPLES
+
+### Example 1: Get the event subscriber for a timer event
+
+This example uses a `Get-EventSubscriber` command to get the event subscriber for a timer event.
+
+The first command uses the `New-Object` cmdlet to create an instance of a timer object. It saves the
+new timer object in the `$Timer` variable.
+
+The second command uses the `Get-Member` cmdlet to display the events that are available for timer
+objects. The command uses the Type parameter of the `Get-Member` cmdlet with a value of Event.
+
+```powershell
+$Timer = New-Object Timers.Timer
+$Timer | Get-Member -Type Event
+```
+
+```Output
+    TypeName: System.Timers.Timer
+
+Name     MemberType Definition
+----     ---------- ----------
+Disposed Event      System.EventHandler Disposed(System.Object, System.EventArgs)
+Elapsed  Event      System.Timers.ElapsedEventHandler Elapsed(System.Object, System.Timers.ElapsedEventArgs)
+```
+
+```powershell
+Register-ObjectEvent -InputObject $Timer -EventName Elapsed -SourceIdentifier Timer.Elapsed
+Get-EventSubscriber
+```
+
+```Output
+SubscriptionId   : 4
+SourceObject     : System.Timers.Timer
+EventName        : Elapsed
+SourceIdentifier : Timer.Elapsed
+Action           :
+HandlerDelegate  :
+SupportEvent     : False
+ForwardEvent     : False
+```
+
+The third command uses the `Register-ObjectEvent` cmdlet to register for the **Elapsed** event on
+the timer object.
+
+The fourth command uses the `Get-EventSubscriber` cmdlet to get the event subscriber for the
+**Elapsed** event.
+
+### Example 2: Use the dynamic module in PSEventJob in the Action property of the event subscriber
+
+This example shows how to use the dynamic module in the **PSEventJob** object in the **Action**
+property of the event subscriber.
+
+The first command uses the `New-Object` cmdlet to create a timer object. The second command sets the
+interval of the timer to 500 (milliseconds).
+
+```powershell
+$Timer = New-Object Timers.Timer
+$Timer.Interval = 500
+$params = @{
+    InputObject = $Timer
+    EventName = &#x27;Elapsed&#x27;
+    SourceIdentifier = &#x27;Timer.Random&#x27;
+    Action = { $Random = Get-Random -Min 0 -Max 100 }
+}
+Register-ObjectEvent @params
+```
+
+```Output
+Id  Name           State      HasMoreData  Location  Command
+--  ----           -----      -----------  --------  -------
+3   Timer.Random   NotStarted False                  $Random = Get-Random ...
+```
+
+```powershell
+$Timer.Enabled = $true
+$Subscriber = Get-EventSubscriber -SourceIdentifier Timer.Random
+($Subscriber.Action).GetType().FullName
+```
+
+```Output
+System.Management.Automation.PSEventJob
+```
+
+```powershell
+$Subscriber.Action | Format-List -Property *
+```
+
+```Output
+State         : Running
+Module        : __DynamicModule_6b5cbe82-d634-41d1-ae5e-ad7fe8d57fe0
+StatusMessage :
+HasMoreData   : True
+Location      :
+Command       : $random = Get-Random -Min 0 -Max 100
+JobStateInfo  : Running
+Finished      : System.Threading.ManualResetEvent
+InstanceId    : 88944290-133d-4b44-8752-f901bd8012e2
+Id            : 1
+Name          : Timer.Random
+ChildJobs     : {}
+...
+```
+
+```powershell
+&amp; $Subscriber.Action.Module {$Random}
+```
+
+The third command uses the `Register-ObjectEvent` cmdlet to register the Elapsed event of the timer
+object. The command includes an action that handles the event. Whenever the timer interval elapses,
+an event is raised and the commands in the action run. In this case, the `Get-Random` cmdlet
+generates a random number between 0 and 100 and saves it in the `$Random` variable. The source
+identifier of the event is Timer.Random.
+
+When you use an **Action** parameter in a `Register-ObjectEvent` command, the command returns a
+**PSEventJob** object that represents the action.
+
+The fourth command enables the timer.
+
+The fifth command uses the `Get-EventSubscriber` cmdlet to get the event subscriber of the
+**Timer.Random** event. It saves the event subscriber object in the `$Subscriber` variable.
+
+The sixth command shows that the Action property of the event subscriber object contains a
+**PSEventJob** object. In fact, it contains the same **PSEventJob** object that the
+`Register-ObjectEvent` command returned.
+
+The seventh command uses the `Format-List` cmdlet to display all of the properties of the
+**PSEventJob** object in the Action property in a list. The result reveals that the **PSEventJob**
+object has a Module property that contains a dynamic script module that implements the action.
+
+The remaining commands use the call operator (`&amp;`) to invoke the command in the module and display
+the value of the $Random variable. You can use the call operator to invoke any command in a module,
+including commands that are not exported. In this case, the commands show the random number that is
+being generated when the Elapsed event occurs.
+
+For more information about modules, see
+[about_Modules](../Microsoft.PowerShell.Core/About/about_Modules.md).
+
+### Example 3: Get hidden event subscribers
+
+This example registers an event subscriber for the **PowerShell.Exiting** event. The subscription is
+registered using the **SupportEvent** parameter, which hides the event subscriber from the default
+output of the `Get-EventSubscriber` cmdlet. You must use the **Force** parameter to get all event
+subscribers, including hidden subscribers.
+
+```powershell
+Register-EngineEvent -SourceIdentifier PowerShell.Exiting -SupportEvent -Action {
+    Get-History | Export-Clixml D:\temp\history.clixml
+}
+Get-EventSubscriber  # No output - must use -Force
+Get-EventSubscriber -Force
+```
+
+```Output
+SubscriptionId   : 1
+SourceObject     :
+EventName        :
+SourceIdentifier : PowerShell.Exiting
+Action           : System.Management.Automation.PSEventJob
+HandlerDelegate  :
+SupportEvent     : True
+ForwardEvent     : False
+```
+
+## PARAMETERS
+
+### -Force
+
+Indicates that this cmdlet gets all event subscribers, including subscribers for events that are
+hidden by using the **SupportEvent** parameter of `Register-ObjectEvent`, `Register-WmiEvent`, and
+`Register-EngineEvent`.
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: 1
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -SourceIdentifier
+
+Specifies the **SourceIdentifier** property value that gets only the event subscribers. By default,
+`Get-EventSubscriber` gets all event subscribers in the session. Wildcards are not permitted. This
+parameter is case-sensitive.
+
+```yaml
+Type: System.String
+Parameter Sets: BySource
+Aliases:
+
+Required: False
+Position: 0
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+# Get-EventSubscriber
+
+### -SubscriptionId
+
+Specifies the subscription identifier that this cmdlet gets. By default, `Get-EventSubscriber` gets
+all event subscribers in the session.
+
+```yaml
+Type: System.Int32
+Parameter Sets: ById
+Aliases: Id
+
+Required: True
+Position: 0
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### CommonParameters
+
+This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable,
+-InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose,
+-WarningAction, and -WarningVariable. For more information, see
+[about_CommonParameters](https://go.microsoft.com/fwlink/?LinkID=113216).
+
+## INPUTS
+
+### None
+
+You can&#x27;t pipe objects to this cmdlet.
+
+## OUTPUTS
+
+### System.Management.Automation.PSEventSubscriber
+
+This cmdlet returns a **PSEventSubscriber** object for each event subscriber.
+
+## NOTES
+
+The `New-Event` cmdlet, which creates a custom event, does not generate a subscriber. Therefore, the
+`Get-EventSubscriber` cmdlet will not find a subscriber object for these events. However, if you use
+the `Register-EngineEvent` cmdlet to subscribe to a custom event (in order to forward the event or
+to specify an action), `Get-EventSubscriber` will find the subscriber that `Register-EngineEvent`
+generates.
+
+Events, event subscriptions, and the event queue exist only in the current session. If you close the
+current session, the event queue is discarded and the event subscription is canceled.
+
+## RELATED LINKS
+
+[Get-Event](Get-Event.md)
+
+[New-Event](New-Event.md)
+
+[Register-EngineEvent](Register-EngineEvent.md)
+
+[Register-ObjectEvent](Register-ObjectEvent.md)
+
+[Remove-Event](Remove-Event.md)
+
+[Unregister-Event](Unregister-Event.md)
+
+[Wait-Event](Wait-Event.md)
+###Microsoft Learn URL###
+https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.utility/get-eventsubscriber/?view=powershell-5.1
+</pre></html>

@@ -1,0 +1,955 @@
+<!doctype html><html lang="ja"><meta charset="utf-8"><pre class="record-source">###KnowledgeNo###
+PS51-WS2022-2026-3766
+###FormatID###
+PS51-WS2022
+###CreatedAt###
+2026-08-01 00:00
+###UpdatedAt###
+2026-08-01 00:00
+###タイトル###
+Get-Process
+###モジュール###
+Microsoft.PowerShell.Management
+###製品###
+Windows PowerShell 5.1
+###対応OS###
+Windows Server 2022
+###日本語訳###
+# Get-Processは,
+
+## SYNOPSISは,ローカルコンピュータやリモートコンピュータで実行されているプロセスを入手します.
+
+## SYNTAX 
+
+### 名前 (デフォルト) 
+
+```
+Get-Process [[-Name] &lt;String[]&gt;] [-ComputerName &lt;String[]&gt;] [-Module] [-FileVersionInfo]
+ [&lt;CommonParameters&gt;]
+```
+
+### 名前WithUserName
+
+```
+Get-Process [[-Name] &lt;String[]&gt;] [-IncludeUserName] [&lt;CommonParameters&gt;]
+```
+
+### IdWithUserName
+
+```
+Get-Process -Id &lt;Int32[]&gt; [-IncludeUserName] [&lt;CommonParameters&gt;]
+```
+
+### Id でした.
+
+```
+Get-Process -Id &lt;Int32[]&gt; [-ComputerName &lt;String[]&gt;] [-Module] [-FileVersionInfo]
+ [&lt;CommonParameters&gt;]
+```
+
+### InputObjectWithUserName を使用する
+
+```
+Get-Process -InputObject &lt;Process[]&gt; [-IncludeUserName] [&lt;CommonParameters&gt;]
+```
+
+### InputObject を入力する
+
+```
+Get-Process -InputObject &lt;Process[]&gt; [-ComputerName &lt;String[]&gt;] [-Module] [-FileVersionInfo]
+ [&lt;CommonParameters&gt;]
+```
+
+## 記述は,
+
+   `Get-Process`cmdlet は,ローカルまたはリモートコンピュータでプロセスを取得します.
+
+参数がないと,このcmdletは,ローカルコンピュータ上のすべてのプロセスを入手します.また,プロセス名またはプロセスID (PID) によって特定のプロセスを指定するか,またはこのcmdletにシステム.診断.プロセス**オブジェクトをパイプすることによって,特定のプロセスを指定することもできます.
+
+デフォルトでは,このcmdletはプロセスに関する詳細な情報を持つ**プロセスオブジェクトを返します.そして,それを制御する方法をサポートします.パラメータを使用して,このcmdletが返した情報の種類を変更できます.
+
+**Module**:プロセスにロードされた各モジュールに関する情報を取得する. - **FileVersionInfo**:プロセスのメインモジュールに関するファイルバージョン情報を取得する.
+
+&gt; [!NOTE] &gt; モジュールとは,プロセスにロードされた実行ファイルまたはダイナミックリンクライブラリ (DLL) です.プロセスには1つまたは複数のモジュールがあります.メインモジュールとは,プロセスを開始するために使用されるモジュールです.詳細については, [ProcessModule Class](/dotnet/api/system.diagnostics.processmodule) を参照してください.
+
+## 例えは,
+
+### 例1: ローカルコンピュータで実行されているすべてのプロセスのリストを取得します.
+
+```powershell
+Get-Process
+```
+
+このコマンドは,ローカルコンピュータで実行されているすべてのプロセスのリストを取得します.各表示列の定義については, [NOTES](#notes) セクションを参照してください.
+
+**プロセス**オブジェクトのすべての性質を見るには,  を使用してください.`Get-Process | Get-Member`默[U+8BA4]で,PowerShell は,キロバイト (K) とメガバイト (M) のような単位を使用して特定のプロパティ値を表示します.`.`) はバイトであります.
+
+### 例2: 一か複数のプロセスに関する詳細な情報を表示します.
+
+```powershell
+Get-Process winword, explorer | Format-List *
+```
+
+このパイプラインでは, に関する詳細な情報が表示されます.`winword`そして,`explorer`コンピュータ上のプロセスは,そのプロセスの指定に**Name**パラメータを使用しますが,オプションのパラメータ名を省きます.パイプラインオペレーター () は,`|`) 管 **プロセス** 対象を  に送る`Format-List`cmdletで,すべての利用可能なプロパティを表示します ().`*`) と各オブジェクトの値について.
+
+また,プロセスIDでプロセスを識別することもできます.例えば,`Get-Process -Id 664, 2060` .
+
+### 例3: 指定したサイズよりも大きい作業セットですべてのプロセスを取得します
+
+```powershell
+Get-Process | Where-Object { $_.WorkingSet -gt 20971520 }
+Get-Process | Where-Object WorkingSet -GT 20MB
+```
+
+   `Get-Process`cmdlet は実行プロセスを返します.出力はパイプで  に送られます.`Where-Object`cmdletで, 20,971,520バイト以上のWorkingSet**値を持つオブジェクトを選択します.
+
+最初の例では,`Where-Object`プロセス・オブジェクトの **WorkingSet** 属性を比較するためにスクリプトブロックを使用します.第2例では, `Where-Object`cmdlet は,WorkingSet** 属性を比較するために簡素化された構文を使用しています.`-GT`2番目の例では,簡潔な代替として[数字文字の足尾] (../Microsoft.PowerShell.Core/About/about_Numeric_Literals.md) を使用しています.`20971520`. PowerShellで, `MB`メビバイト (MiB) の倍数を表しています.`20MB`は 20,971,520バイトに等しい.
+
+### 例4: 優先順位に基づいてグループに分けてコンピュータ上のプロセスを表示します.
+
+```powershell
+$processes = Get-Process
+$processes | Sort-Object { $_.PriorityClass } | Format-Table -View Priority
+```
+
+これらのコマンドは,コンピュータ上のプロセスをグループに分けて,その [優先順位クラス] (/dotnet/api/system.diagnostics.processpriorityclass) に基づいて表示します.最初のコマンドは,コンピュータ上のすべてのプロセスを入手し,そのデータを  に保存します.`$processes`変数です.
+
+第二のコマンドは, に保存されている **プロセス** オブジェクトをパイプします.`$processes`変数に変数する.`Sort-Object`cmdlet,その後は,cmdletへ.`Format-Table`cmdletで,優先度表示を使用してプロセスをフォーマットします.
+
+**優先度表示**と他の表示は, で定義されています.`.ps1xml`PowerShellホームディレクトリに格式ファイル () を配置する.`$PSHOME`) でした.
+
+### 例5: 既定にプロパティを追加する`Get-Process`display output を表示する
+
+```powershell
+Get-Process -Name powershell | Format-Table -Property @(
+    &#x27;Handles&#x27;
+    @{ Name = &#x27;NPM(K)&#x27;; Expression = { [int] ($_.NPM / 1KB) } }
+    @{ Name = &#x27;PM(K)&#x27;;  Expression = { [int] ($_.PM / 1KB) } }
+    @{ Name = &#x27;WS(K)&#x27;;  Expression = { [int] ($_.WS / 1KB) } }
+    @{ Name = &#x27;CPU(s)&#x27;; Expression = { if ($_.CPU) { $_.CPU.ToString(&#x27;N&#x27;) } } }
+    &#x27;Id&#x27;
+    @{ Name = &#x27;SI&#x27;; Expression = &#x27;SessionId&#x27; }
+    &#x27;ProcessName&#x27;
+    &#x27;StartTime&#x27;
+) -AutoSize
+```
+
+```Output
+Handles NPM(K) PM(K) WS(K) CPU(s)   Id SI ProcessName StartTime
+------- ------ ----- ----- ------   -- -- ----------- ---------
+    655     34 69424 83424 2.20   4240  1 powershell  4/14/2025 10:40:10 AM
+    572     36 68768 57260 7.41   4968  1 powershell  4/13/2025 3:33:50 PM
+    405     26 38144 30340 1.80   8776  1 powershell  4/14/2025 9:54:27 AM
+```
+
+この例では,ローカルコンピュータからプロセスを取り出し,各個が**プロセス**オブジェクトを にパイプします.`Format-Table`cmdlet. `Format-Table`**Process**オブジェクトのデフォルト出力表示を再現する.プロパティ名と [計算されたプロパティ]の混合を使用して **Process**オブジェクトのデフォルト出力表示を再現する.表示にはデフォルト表示に存在しない追加の **StartTime**プロパティが含まれます.
+
+### 例 6:プロセスに関するバージョン情報を取得する
+
+```powershell
+Get-Process -Name powershell -FileVersionInfo
+```
+
+```Output
+ProductVersion   FileVersion      FileName
+--------------   -----------      --------
+10.0.19041.320   10.0.19041.32... C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe
+```
+
+このコマンドは,ファイルバージョン情報パラメータを使用して,  のメインモジュールに関するファイルバージョン情報を入手します.`powershell`メインモジュールとは,プロセスを起動するために使用されたファイルであり,この場合は,`powershell.exe` .
+
+このコマンドは,Windows Vistaおよび後のバージョンのWindowsで所有していないプロセスで使用するには,拡張ユーザー権限を持つPowerShellを実行する必要があります (**管理者として実行します**).
+
+### 例7: 指定されたプロセスでモジュールをロードする
+
+```powershell
+Get-Process -Name SQL* -Module
+```
+
+このコマンドは,すべてのプロセスでモジュールが読み込まれることを目的として,Module**パラメータを使用します.`SQL` .
+
+このコマンドは,Windows Vistaおよび後のバージョンのWindowsで所有していないプロセスで使用するには,拡張ユーザー権限を持つPowerShellを実行する必要があります (**管理者として実行します**).
+
+# Get-Processは,
+
+### 例8: プロセスの主人公を見つけます
+
+```powershell
+Get-Process -Name powershell -IncludeUserName
+```
+
+```Output
+Handles      WS(K)   CPU(s)     Id UserName            ProcessName
+-------      -----   ------     -- --------            -----------
+    782     132080     2.08   2188 DOMAIN01\user01     powershell
+```
+
+```powershell
+Get-CimInstance -ClassName Win32_Process -Filter &quot;name=&#x27;powershell.exe&#x27;&quot; |
+    Invoke-CimMethod -MethodName GetOwner
+```
+
+```Output
+Domain   ReturnValue User   PSComputerName
+------   ----------- ----   --------------
+DOMAIN01           0 user01
+```
+
+最初のコマンドは,プロセスの主人公の取得方法を示します. **IncludeUserName**のパラメータは,ユーザー権限を高くする (**Run as Administrator**) を要求します.輸出は,主人が であることを明らかにします.`DOMAIN01\user01` .
+
+2番目のパイプラインは,プロセス所有者を利用する別の方法を示しています.`Get-CimInstance`そして,`Invoke-CimMethod`. フィルター付きの **Win32_Process** クラスで検索されます.`powershell`呼び出されたプロセスとプロセスについてです.`GetOwner()`この方法は,プロセスのドメインとユーザに関する情報を返します.この方法は,ユーザー権利の向上を必要としません.
+
+### 例9: 現在のセッションをホストするプロセスを識別するために自動変数を使用します.
+
+```powershell
+Get-Process -Name powershell
+```
+
+```Output
+Handles  NPM(K)    PM(K)      WS(K)     CPU(s)     Id  SI ProcessName
+-------  ------    -----      -----     ------     --  -- -----------
+    561      44    47564      40740       6.48   2604   1 powershell
+    642      40    72040      24372      23.53   3576   1 powershel
+```
+
+```powershell
+Get-Process -Id $PID
+```
+
+```Output
+Handles  NPM(K)    PM(K)      WS(K)     CPU(s)     Id  SI ProcessName
+-------  ------    -----      -----     ------     --  -- -----------
+    647      40    72464      30716      23.67   3576   1 powershell
+```
+
+このコマンドは,  の使い方を示しています.`$PID`現在のPowerShellセッションをホストしているプロセスを識別する自動変数です.この方法を使用してホストプロセスを他のプロセスから区別することができます.`powershell`制御したいかもしれないプロセスです.
+
+最初のコマンドは全てを得る.`powershell`実行する.第2コマンドは,プロセスを獲得します.`powershell`プロセスが現在のセッションをホストしている.
+
+### 例10:主窓のタイトルを持つすべてのプロセスを取得し,表に表示します
+
+```powershell
+Get-Process |
+    Where-Object -Property MainWindowTitle |
+    Format-Table -Property Id, Name, MainWindowTitle -AutoSize
+```
+
+このパイプラインは,メインウィンドウのタイトルを持つすべてのプロセスを取り出し,プロセスIDと名前を含む表に表示します.
+
+**MainWindowTitle**は, **Diagnostics.Process** オブジェクトタイプの多くの有用な属性のうちの一つで,`Get-Process`返品.すべてのプロパティを表示するには,返品を使用します.`Get-Process | Get-Member` .
+
+## パラメータは
+
+### -コンピュータ名
+
+このcmdletが実行するプロセスのコンピュータを指定します.デフォルトはローカルコンピュータです.
+
+コンピュータの&quot;つまたは複数のコンピュータの NetBIOS 名前,IP アドレス,または完全認証ドメイン名 (FQDN) を指定してください.ローカルコンピュータを指定するには,コンピュータ名,点 () を使用してください.`.`),または,`localhost` .
+
+このパラメータはWindows PowerShell リモートに依存していない.このcmdletの**ComputerName**パラメータをコンピューターがリモートコマンドを実行するように設定されていない場合でも使用できます.
+
+```yaml
+Type: System.String[]
+Parameter Sets: Name, Id, InputObject
+Aliases: Cn
+
+Required: False
+Position: Named
+Default value: Local computer
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -FileVersionInfo でした.
+
+このcmdletがプロセスで実行されているプログラムに関するファイルバージョン情報を入手することを示します.
+
+Windows VistaおよびWindowsの後バージョンでは,あなたが所有していないプロセスでこのパラメータを使用するには,拡張ユーザー権限 (**管理者として実行**) の PowerShell を実行する必要があります.
+
+**FileVersionInfo**と **ComputerName**のパラメータを一緒に使用することはできません.
+
+リモートコンピュータのプロセスに関するファイルバージョン情報を入手するには,  号を使用します.`Invoke-Command`cmdletです.
+
+このパラメータを使用すると,各プロセスオブジェクトの **MainModule.FileVersionInfo**属性にアクセスすることと同じです.このパラメータを使用すると,`Get-Process`このパラメータを使用して生成されたパイプ出力は,プロセスオブジェクトを返すことを期待するcmdletに,返却することはできません.`Stop-Process` .
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: Name, Id, InputObject
+Aliases: FV, FVI
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Id
+
+プロセスID (PID) によって1つまたは複数のプロセスを指定します. 逗号によって分離された複数のIDを指定できます. プロセスのPIDを取得するには,  を使用します.`Get-Process`.現在のPowerShellセッションのPIDを取得するには,使用してください.`$PID` .
+
+```yaml
+Type: System.Int32[]
+Parameter Sets: IdWithUserName, Id
+Aliases: PID
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -IncludeUserName を含む
+
+このコマンドは返済された **プロセス** オブジェクトに **UserName** 属性を追加することを示します.
+
+このパラメータを使用するには,拡張ユーザー権限 (管理者として実行する) の PowerShell を実行する必要があります.
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: NameWithUserName, IdWithUserName, InputObjectWithUserName
+Aliases:
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -InputObject
+
+対象を含む変数,または対象を得るコマンドまたは表情を使用します.
+
+```yaml
+Type: System.Diagnostics.Process[]
+Parameter Sets: InputObjectWithUserName, InputObject
+Aliases:
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: True (ByValue)
+Accept wildcard characters: False
+```
+
+### -モジュール
+
+このcmdletがプロセスが読み込んだモジュールを受け取ることを示します.
+
+Windows VistaおよびWindowsの後バージョンでは,あなたが所有していないプロセスでこのパラメータを使用するには,拡張ユーザー権限 (**管理者として実行**) の PowerShell を実行する必要があります.
+
+リモートコンピュータのプロセスでモジュールがロードされるようにするには,  を使ってください.`Invoke-Command`cmdletです.
+
+このパラメータを使用すると,各プロセスオブジェクトのモジュール属性にアクセスすると同じです.このパラメータを使用すると,`Get-Process`このパラメータを使用して生成されたパイプ出力は, などの,プロセスオブジェクトを期待するcmdletに返却することはできません.`Stop-Process` .
+
+**Module**と **FileVersionInfo**のパラメータを一緒に使用すると,このcmdletはすべてのモジュールのファイルバージョンに関する情報を含む **FileVersionInfo**オブジェクトを返します.
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: Name, Id, InputObject
+Aliases:
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -名字は
+
+プロセス名によって1つまたは複数のプロセスを指定します. 逗号で分離した複数のプロセス名を指定し,ワイルドカード文字を使用できます.  を使って.`-Name`パラメータはオプションです.
+
+```yaml
+Type: System.String[]
+Parameter Sets: Name, NameWithUserName
+Aliases: ProcessName
+
+Required: False
+Position: 0
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: True
+```
+
+# Get-Processは,
+
+### 共通パラメーター
+
+このcmdletは,共通パラメータである: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction,および -WarningVariableをサポートしています.詳細については, [about_CommonParameters]をご覧ください.
+
+## 輸入は
+
+### システム.診断.プロセス
+
+このcmdletに,プロセスオブジェクトをパイプすることができます.
+
+## 輸出は
+
+### システム.診断.プロセス
+
+デフォルトでは,このcmdletは **System.Diagnostics.Process**オブジェクトを返します.
+
+### システム.診断.ファイルバージョン情報
+
+**FileVersionInfo**パラメータを使用すると,このcmdletは **System.Diagnostics.FileVersionInfo**オブジェクトを返します.
+
+### システム.診断.プロセスモジュール
+
+**FileVersionInfo**のパラメータなしで **Module**パラメータを使用すると,このcmdletは **System.Diagnostics.ProcessModule**オブジェクトを返します.
+
+##  NOTES  記事ができました.
+
+Windows PowerShell では,次のアライスがあります.`Get-Process`:
+
+ - -`gps` - -`ps`
+
+64ビットWindowsを搭載しているコンピュータでは,64ビットバージョンのPowerShellがメインモジュールと64ビットプロセスモジュールを受け取る.32ビットバージョンのPowerShellは32ビットプロセスモジュールのみを受け取る.
+
+&gt; [!WARNING] &gt; 活用する際には`Get-Process`PowerShellの32ビットバージョンで64ビットプロセスを取得するには,プロパティ &gt; などのプロパティを入力してください.`Path`そして,`MainModule`返済された**プロセス**オブジェクトの2つの要素は,`$null`. .あなたは&quot;&gt; PowerShellの64ビットバージョンか&quot;&gt; [Win32_Process] (/windows/desktop/CIMWin32Prov/win32-process) クラスを使用する必要があります.
+
+リモートコンピュータからプロセス情報を入手するには,  を使ってください.`Invoke-Command`cmdlet.詳細については, [Invoke-Command.md] を参照してください.
+
+PowerShellでWindows管理機器 (WMI) [Win32_Process] ((/windows/desktop/CIMWin32Prov/win32-process) クラスを使用することができます.`Get-Process`詳細については, . を参照してください.
+
+- [例8:プロセスの主人公を見つけ](#example-8-find-the-owner-of-a-process) - [Get-CimInstance](../CimCmdlets/Get-CimInstance.md) 
+
+**Process**オブジェクトのデフォルト表示は,次の列を含む表表示です.
+
+**Handles**:プロセスが開いたハンドルの数. - **NPM(K) **:プロセスが使用しているページ以外のメモリの量,キロバイト. - **PM(K) **:プロセスが使用しているページ可能なメモリの量,キロバイト. - **WS(K) **:プロセスの作業セットのサイズ,キロバイト.作業セットは,プロセスが最近参照したメモリのページで構成されています. - **CPU) **:プロセスのプロセスがすべてのプロセッサで使用したプロセッサ時間の量,秒. - **Id**:プロセスのプロセスID (PID). - **SI**:プロセスのセッションID. - **ProcessName**:プロセスの名前.
+
+で利用可能な **プロセス** オブジェクトの内蔵の代替ビューを使用できます.`Format-Table`**StartTime**や **Priority**など,独自のビューをデザインすることもできます.
+
+入手可能なすべての ** プロセス ** オブジェクトメンバーの説明については, [ プロセスプロパティ ] [xref:System.Diagnostics.Process#プロパティ ] と [ プロセス方法 ] [xref:System.Diagnostics.Process#methods ] を参照してください.
+
+## 関連リンク
+
+[デバッグ・プロセス](デバッグ・プロセス.md)
+
+[Get-Process](Get-Process.md) について
+
+[Start-Process](Start-Process.md) 
+
+[Stop-Process](Stop-Process.md) でした.
+
+[Wait-Process](Wait-Process.md) 
+
+[Where-Object](../Microsoft.PowerShell.Core/Where-Object.md) について
+###英語原文###
+# Get-Process
+
+## SYNOPSIS
+Gets the processes that are running on the local computer or a remote computer.
+
+## SYNTAX
+
+### Name (Default)
+
+```
+Get-Process [[-Name] &lt;String[]&gt;] [-ComputerName &lt;String[]&gt;] [-Module] [-FileVersionInfo]
+ [&lt;CommonParameters&gt;]
+```
+
+### NameWithUserName
+
+```
+Get-Process [[-Name] &lt;String[]&gt;] [-IncludeUserName] [&lt;CommonParameters&gt;]
+```
+
+### IdWithUserName
+
+```
+Get-Process -Id &lt;Int32[]&gt; [-IncludeUserName] [&lt;CommonParameters&gt;]
+```
+
+### Id
+
+```
+Get-Process -Id &lt;Int32[]&gt; [-ComputerName &lt;String[]&gt;] [-Module] [-FileVersionInfo]
+ [&lt;CommonParameters&gt;]
+```
+
+### InputObjectWithUserName
+
+```
+Get-Process -InputObject &lt;Process[]&gt; [-IncludeUserName] [&lt;CommonParameters&gt;]
+```
+
+### InputObject
+
+```
+Get-Process -InputObject &lt;Process[]&gt; [-ComputerName &lt;String[]&gt;] [-Module] [-FileVersionInfo]
+ [&lt;CommonParameters&gt;]
+```
+
+## DESCRIPTION
+
+The `Get-Process` cmdlet gets the processes on a local or remote computer.
+
+Without parameters, this cmdlet gets all processes on the local computer. You can also specify a
+specific process by process name or process ID (PID), or by piping a **System.Diagnostics.Process**
+object to this cmdlet.
+
+By default, this cmdlet returns a **Process** object that has detailed information about the process
+and supports methods that let you control it. With parameters, you can change the type of
+information returned by this cmdlet.
+
+- **Module**: Retrieve information for each module loaded into the process.
+- **FileVersionInfo**: Retrieve file version information for the main module of the process.
+
+&gt; [!NOTE]
+&gt; A module is an executable file or a dynamic link library (DLL) loaded into a process. A process
+&gt; has one or more modules. The main module is the module used to initially start the process. For
+&gt; more information, see [ProcessModule Class](/dotnet/api/system.diagnostics.processmodule).
+
+## EXAMPLES
+
+### Example 1: Get a list of all running processes on the local computer
+
+```powershell
+Get-Process
+```
+
+This command gets a list of all running processes on the local computer. For a definition of each
+display column, see the [NOTES](#notes) section.
+
+To see all properties of a **Process** object, use `Get-Process | Get-Member`. By default,
+PowerShell displays certain property values using units such as kilobytes (K) and megabytes (M). The
+actual values when accessed with the member-access operator (`.`) are in bytes.
+
+### Example 2: Display detailed information about one or more processes
+
+```powershell
+Get-Process winword, explorer | Format-List *
+```
+
+This pipeline displays detailed information about the `winword` and `explorer` processes on the
+computer. It uses the **Name** parameter to specify the processes, but it omits the optional
+parameter name. The pipeline operator (`|`) pipes **Process** objects to the `Format-List`
+cmdlet, which displays all available properties (`*`) and their values for each object.
+
+You can also identify the processes by their process IDs. For instance, `Get-Process -Id 664, 2060`.
+
+### Example 3: Get all processes with a working set greater than a specified size
+
+```powershell
+Get-Process | Where-Object { $_.WorkingSet -gt 20971520 }
+Get-Process | Where-Object WorkingSet -GT 20MB
+```
+
+The `Get-Process` cmdlet returns the running processes. The output is piped to the `Where-Object`
+cmdlet, which selects the objects with a **WorkingSet** value greater than 20,971,520 bytes.
+
+In the first example, `Where-Object` uses a scriptblock to compare the **WorkingSet** property of
+each **Process** object. In the second example, the `Where-Object` cmdlet uses the simplified syntax
+to compare the **WorkingSet** property. In this case, `-GT` is a parameter, not a comparison
+operator. The second example also uses a
+[numeric literal suffix](../Microsoft.PowerShell.Core/About/about_Numeric_Literals.md) as a concise
+alternative to `20971520`. In PowerShell, `MB` represents a mebibyte (MiB) multiplier. `20MB` is
+equal to 20,971,520 bytes.
+
+### Example 4: Display processes on the computer in groups based on priority
+
+```powershell
+$processes = Get-Process
+$processes | Sort-Object { $_.PriorityClass } | Format-Table -View Priority
+```
+
+These commands display processes on the computer in groups based on their
+[priority class](/dotnet/api/system.diagnostics.processpriorityclass). The first command gets all
+processes on the computer and stores them in the `$processes` variable.
+
+The second command pipes the **Process** objects stored in the `$processes` variable to the
+`Sort-Object` cmdlet, then to the `Format-Table` cmdlet, which formats the processes using the
+**Priority** view.
+
+The **Priority** view, and other views, are defined in the `.ps1xml` format files in the PowerShell
+home directory (`$PSHOME`).
+
+### Example 5: Add a property to the default `Get-Process` output display
+
+```powershell
+Get-Process -Name powershell | Format-Table -Property @(
+    &#x27;Handles&#x27;
+    @{ Name = &#x27;NPM(K)&#x27;; Expression = { [int] ($_.NPM / 1KB) } }
+    @{ Name = &#x27;PM(K)&#x27;;  Expression = { [int] ($_.PM / 1KB) } }
+    @{ Name = &#x27;WS(K)&#x27;;  Expression = { [int] ($_.WS / 1KB) } }
+    @{ Name = &#x27;CPU(s)&#x27;; Expression = { if ($_.CPU) { $_.CPU.ToString(&#x27;N&#x27;) } } }
+    &#x27;Id&#x27;
+    @{ Name = &#x27;SI&#x27;; Expression = &#x27;SessionId&#x27; }
+    &#x27;ProcessName&#x27;
+    &#x27;StartTime&#x27;
+) -AutoSize
+```
+
+```Output
+Handles NPM(K) PM(K) WS(K) CPU(s)   Id SI ProcessName StartTime
+------- ------ ----- ----- ------   -- -- ----------- ---------
+    655     34 69424 83424 2.20   4240  1 powershell  4/14/2025 10:40:10 AM
+    572     36 68768 57260 7.41   4968  1 powershell  4/13/2025 3:33:50 PM
+    405     26 38144 30340 1.80   8776  1 powershell  4/14/2025 9:54:27 AM
+```
+
+This example retrieves processes from the local computer and pipes each **Process** object to the
+`Format-Table` cmdlet. `Format-Table` recreates the default output display of a **Process** object
+using a mixture of property names and
+[calculated properties](../Microsoft.PowerShell.Core/About/about_Calculated_Properties.md). The
+display includes an additional **StartTime** property not present in the default display.
+
+### Example 6: Get version information for a process
+
+```powershell
+Get-Process -Name powershell -FileVersionInfo
+```
+
+```Output
+ProductVersion   FileVersion      FileName
+--------------   -----------      --------
+10.0.19041.320   10.0.19041.32... C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe
+```
+
+This command uses the **FileVersionInfo** parameter to get file version information for the main
+module of the `powershell` process. The main module is the file used to start the process, which
+in this case is `powershell.exe`.
+
+To use this command with processes that you don&#x27;t own on Windows Vista and later versions of
+Windows, you must run PowerShell with elevated user rights (**Run as administrator**).
+
+### Example 7: Get modules loaded with the specified process
+
+```powershell
+Get-Process -Name SQL* -Module
+```
+
+This command uses the **Module** parameter to get the modules loaded by all processes with a name
+beginning with `SQL`.
+
+To use this command with processes that you don&#x27;t own on Windows Vista and later versions of
+Windows, you must run PowerShell with elevated user rights (**Run as administrator**).
+
+# Get-Process
+
+### Example 8: Find the owner of a process
+
+```powershell
+Get-Process -Name powershell -IncludeUserName
+```
+
+```Output
+Handles      WS(K)   CPU(s)     Id UserName            ProcessName
+-------      -----   ------     -- --------            -----------
+    782     132080     2.08   2188 DOMAIN01\user01     powershell
+```
+
+```powershell
+Get-CimInstance -ClassName Win32_Process -Filter &quot;name=&#x27;powershell.exe&#x27;&quot; |
+    Invoke-CimMethod -MethodName GetOwner
+```
+
+```Output
+Domain   ReturnValue User   PSComputerName
+------   ----------- ----   --------------
+DOMAIN01           0 user01
+```
+
+The first command shows how to get the owner of a process. The **IncludeUserName** parameter
+requires elevated user rights (**Run as Administrator**). The output reveals that the owner is
+`DOMAIN01\user01`.
+
+The second pipeline shows a different way to get the owner of a process using `Get-CimInstance` and
+`Invoke-CimMethod`. The **Win32_Process** class with a filter retrieves `powershell` processes and
+the invoked `GetOwner()` method returns information on the process&#x27;s **Domain** and **User**. This
+method doesn&#x27;t require elevated user rights.
+
+### Example 9: Use an automatic variable to identify the process hosting the current session
+
+```powershell
+Get-Process -Name powershell
+```
+
+```Output
+Handles  NPM(K)    PM(K)      WS(K)     CPU(s)     Id  SI ProcessName
+-------  ------    -----      -----     ------     --  -- -----------
+    561      44    47564      40740       6.48   2604   1 powershell
+    642      40    72040      24372      23.53   3576   1 powershel
+```
+
+```powershell
+Get-Process -Id $PID
+```
+
+```Output
+Handles  NPM(K)    PM(K)      WS(K)     CPU(s)     Id  SI ProcessName
+-------  ------    -----      -----     ------     --  -- -----------
+    647      40    72464      30716      23.67   3576   1 powershell
+```
+
+These commands show how to use the `$PID` automatic variable to identify the process that&#x27;s hosting
+the current PowerShell session. You can use this method to distinguish the host process from other
+`powershell` processes that you might want to control.
+
+The first command gets all `powershell` processes running. The second command gets the `powershell`
+process that&#x27;s hosting the current session.
+
+### Example 10: Get all processes that have a main window title and display them in a table
+
+```powershell
+Get-Process |
+    Where-Object -Property MainWindowTitle |
+    Format-Table -Property Id, Name, MainWindowTitle -AutoSize
+```
+
+This pipeline gets all processes that have a main window title, and displays them in a table with
+the process ID and name.
+
+**MainWindowTitle** is one of many useful properties of the **Diagnostics.Process** object type that
+`Get-Process` returns. To view all properties, use `Get-Process | Get-Member`.
+
+## PARAMETERS
+
+### -ComputerName
+
+Specifies the computers for which this cmdlet gets running processes. The default is the local
+computer.
+
+Specify the NetBIOS name, an IP address, or a fully qualified domain name (FQDN) of one or more
+computers. To specify the local computer, use the computer name, a dot (`.`), or `localhost`.
+
+This parameter doesn&#x27;t rely on Windows PowerShell remoting. You can use the **ComputerName**
+parameter of this cmdlet even if your computer isn&#x27;t configured to run remote commands.
+
+```yaml
+Type: System.String[]
+Parameter Sets: Name, Id, InputObject
+Aliases: Cn
+
+Required: False
+Position: Named
+Default value: Local computer
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -FileVersionInfo
+
+Indicates that this cmdlet gets the file version information for the program that runs in the
+process.
+
+On Windows Vista and later versions of Windows, you must run PowerShell with elevated user rights
+(**Run as administrator**) to use this parameter on processes that you don&#x27;t own.
+
+You can&#x27;t use the **FileVersionInfo** and **ComputerName** parameters together.
+
+To get file version information for a process on a remote computer, use the `Invoke-Command` cmdlet.
+
+Using this parameter is the same as accessing the **MainModule.FileVersionInfo** property of each
+**Process** object. When you use this parameter, `Get-Process` returns a **FileVersionInfo**
+object, not a **Process** object. You can&#x27;t pipe output produced using this parameter to a cmdlet
+that expects a **Process** object, such as `Stop-Process`.
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: Name, Id, InputObject
+Aliases: FV, FVI
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Id
+
+Specifies one or more processes by process ID (PID). You can specify multiple IDs separated by
+commas. To get the PID of a process, use `Get-Process`. To get the PID of the current PowerShell
+session, use `$PID`.
+
+```yaml
+Type: System.Int32[]
+Parameter Sets: IdWithUserName, Id
+Aliases: PID
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -IncludeUserName
+
+Indicates that this command adds a **UserName** property to each returned **Process** object.
+
+You must run PowerShell with elevated user rights (**Run as administrator**) to use this
+parameter.
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: NameWithUserName, IdWithUserName, InputObjectWithUserName
+Aliases:
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -InputObject
+
+Specifies one or more **Process** objects. Use a variable that contains the objects, or a command
+or expression that gets the objects.
+
+```yaml
+Type: System.Diagnostics.Process[]
+Parameter Sets: InputObjectWithUserName, InputObject
+Aliases:
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: True (ByValue)
+Accept wildcard characters: False
+```
+
+### -Module
+
+Indicates that this cmdlet gets the modules that the process has loaded.
+
+On Windows Vista and later versions of Windows, you must run PowerShell with elevated user rights
+(**Run as administrator**) to use this parameter on processes that you don&#x27;t own.
+
+To get the modules loaded by a process on a remote computer, use the `Invoke-Command` cmdlet.
+
+Using this parameter is the same as accessing the **Modules** property of each **Process** object.
+When you use this parameter, `Get-Process` returns a **ProcessModule** object, not a **Process**
+object. You can&#x27;t pipe output produced using this parameter to a cmdlet that expects a **Process**
+object, such as `Stop-Process`.
+
+When you use both the **Module** and **FileVersionInfo** parameters together, this cmdlet returns a
+**FileVersionInfo** object with information about the file version of all modules.
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: Name, Id, InputObject
+Aliases:
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Name
+
+Specifies one or more processes by process name. You can specify multiple process names separated by
+commas and use wildcard characters. Using the `-Name` parameter is optional.
+
+```yaml
+Type: System.String[]
+Parameter Sets: Name, NameWithUserName
+Aliases: ProcessName
+
+Required: False
+Position: 0
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: True
+```
+
+# Get-Process
+
+### CommonParameters
+
+This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable,
+-InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose,
+-WarningAction, and -WarningVariable. For more information, see
+[about_CommonParameters](../Microsoft.PowerShell.Core/About/about_CommonParameters.md).
+
+## INPUTS
+
+### System.Diagnostics.Process
+
+You can pipe **Process** objects to this cmdlet.
+
+## OUTPUTS
+
+### System.Diagnostics.Process
+
+By default, this cmdlet returns a **System.Diagnostics.Process** object.
+
+### System.Diagnostics.FileVersionInfo
+
+If you use the **FileVersionInfo** parameter, this cmdlet returns a
+**System.Diagnostics.FileVersionInfo** object.
+
+### System.Diagnostics.ProcessModule
+
+If you use the **Module** parameter, without the **FileVersionInfo** parameter, this cmdlet returns
+a **System.Diagnostics.ProcessModule** object.
+
+## NOTES
+
+Windows PowerShell includes the following aliases for `Get-Process`:
+
+- `gps`
+- `ps`
+
+On computers running 64-bit Windows, the 64-bit version of PowerShell gets the main module and
+64-bit process modules. The 32-bit version of PowerShell gets only 32-bit process modules.
+
+&gt; [!WARNING]
+&gt; When you use `Get-Process` to get a 64-bit process in the 32-bit version of PowerShell, properties
+&gt; such as `Path` and `MainModule` of the returned **Process** object are `$null`. You must use
+&gt; either the 64-bit version of PowerShell or the
+&gt; [Win32_Process](/windows/desktop/CIMWin32Prov/win32-process) class.
+
+To get process information from a remote computer, use the `Invoke-Command` cmdlet. For more
+information, see [Invoke-Command](../Microsoft.PowerShell.Core/Invoke-Command.md).
+
+You can use the Windows Management Instrumentation (WMI)
+[Win32_Process](/windows/desktop/CIMWin32Prov/win32-process) class in PowerShell as an alternative
+to `Get-Process`. For more information, see:
+
+- [Example 8: Find the owner of a process](#example-8-find-the-owner-of-a-process)
+- [Get-CimInstance](../CimCmdlets/Get-CimInstance.md)
+
+The default display of a **Process** object is a table view that includes the following columns.
+
+- **Handles**: The number of handles that the process has opened.
+- **NPM(K)**: The amount of non-paged memory that the process is using, in kilobytes.
+- **PM(K)**: The amount of pageable memory that the process is using, in kilobytes.
+- **WS(K)**: The size of the working set of the process, in kilobytes. The working set consists of
+  the pages of memory that were recently referenced by the process.
+- **CPU(s)**: The amount of processor time that the process has used on all processors, in seconds.
+- **Id**: The process ID (PID) of the process.
+- **SI**: The session ID of the process.
+- **ProcessName**: The name of the process.
+
+You can use the built-in alternate views for **Process** objects available with `Format-Table`, such
+as **StartTime** and **Priority**. You can also design your own views.
+
+For a description of all available **Process** object members, see
+[Process Properties](xref:System.Diagnostics.Process#properties) and
+[Process Methods](xref:System.Diagnostics.Process#methods).
+
+## RELATED LINKS
+
+[Debug-Process](Debug-Process.md)
+
+[Get-Process](Get-Process.md)
+
+[Start-Process](Start-Process.md)
+
+[Stop-Process](Stop-Process.md)
+
+[Wait-Process](Wait-Process.md)
+
+[Where-Object](../Microsoft.PowerShell.Core/Where-Object.md)
+###Microsoft Learn URL###
+https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.management/get-process/?view=powershell-5.1
+</pre></html>

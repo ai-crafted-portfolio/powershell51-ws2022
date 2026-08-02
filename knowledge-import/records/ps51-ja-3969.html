@@ -1,0 +1,829 @@
+<!doctype html><html lang="ja"><meta charset="utf-8"><pre class="record-source">###KnowledgeNo###
+PS51-WS2022-2026-3969
+###FormatID###
+PS51-WS2022
+###CreatedAt###
+2026-08-01 00:00
+###UpdatedAt###
+2026-08-01 00:00
+###タイトル###
+New-WSManInstance
+###モジュール###
+Microsoft.WSMan.Management
+###製品###
+Windows PowerShell 5.1
+###対応OS###
+Windows Server 2022
+###日本語訳###
+# New-WSManInstance について
+
+## SYNOPSIS は管理リソースの新しいインスタンスを作成します.
+
+## SYNTAXは,のシンタックスです.
+
+### コンピュータ名 (デフォルト) 
+
+```
+New-WSManInstance [-ApplicationName &lt;String&gt;] [-ComputerName &lt;String&gt;]
+ [-FilePath &lt;String&gt;] [-OptionSet &lt;Hashtable&gt;] [-Port &lt;Int32&gt;] [-ResourceURI] &lt;Uri&gt;
+ [-SelectorSet] &lt;Hashtable&gt; [-SessionOption &lt;SessionOption&gt;] [-UseSSL]
+ [-ValueSet &lt;Hashtable&gt;] [-Credential &lt;PSCredential&gt;]
+ [-Authentication &lt;AuthenticationMechanism&gt;] [-CertificateThumbprint &lt;String&gt;]
+ [&lt;CommonParameters&gt;]
+```
+
+### URI 
+
+```
+New-WSManInstance [-ConnectionURI &lt;Uri&gt;] [-FilePath &lt;String&gt;] [-OptionSet &lt;Hashtable&gt;]
+ [-ResourceURI] &lt;Uri&gt; [-SelectorSet] &lt;Hashtable&gt; [-SessionOption &lt;SessionOption&gt;]
+ [-ValueSet &lt;Hashtable&gt;] [-Credential &lt;PSCredential&gt;]
+ [-Authentication &lt;AuthenticationMechanism&gt;] [-CertificateThumbprint &lt;String&gt;]
+ [&lt;CommonParameters&gt;]
+```
+
+## 記述は,
+
+   `New-WSManInstance`cmdlet は管理リソースの新しいインスタンスを作成します.管理リソースの新しいインスタンスを作成するために,リソース URIと値セットまたは入力ファイルを使用します.
+
+このcmdletでは WinRM接続/輸送層を使用して管理リソースインスタンスを作成します.
+
+## 例えは
+
+### 例1: HTTPS リスナーを作成する
+
+このコマンドは,すべてのIPアドレスでWS-Management HTTPSリスナーのインスタンスを作成します.
+
+```powershell
+New-WSManInstance winrm/config/Listener -SelectorSet @{Transport=&#x27;HTTPS&#x27;; Address=&#x27;*&#x27;} -ValueSet @{Hostname=&quot;HOST&quot;;CertificateThumbprint=&quot;XXXXXXXXXX&quot;}
+```
+
+## パラメータは
+
+### -ApplicationName
+
+接続中のアプリケーション名を指定します. **ApplicationName**パラメータのデフォルト値は **WSMAN** です. リモートエンドポイントの完全な識別子は以下の形式です:
+
+`&lt;transport&gt;://&lt;server&gt;:&lt;port&gt;/&lt;ApplicationName&gt;`
+
+例えば:
+
+`http://server01:8080/WSMAN`
+
+セッションをホストするインターネット情報サービス (IIS) は,このエンドポイントで要求を指定されたアプリケーションに送信します.このデフォルト設定の **WSMAN**はほとんどの用途に適しています.このパラメータは,Windows PowerShellを実行しているコンピュータに複数のコンピュータがリモート接続を確立するときに使用するように設計されています.この場合,IISは Web Services for Management (WS-Management) を効率的にホストします.
+
+```yaml
+Type: System.String
+Parameter Sets: ComputerName
+Aliases:
+
+Required: False
+Position: Named
+Default value: Wsman
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -認証
+
+サーバーで使用する認証メカニズムを指定します.可能な値は以下の通りです.
+
+- 基本: 基本は,ユーザ名とパスワードがサーバーまたはプロキシに明晰テキストで送信されるスキームです. - デフォルト:WS-Management プロトコルによって実装された認証方法を使用します. これはデフォルトです. - ダイジェスト:ダイジェストは,チャレンジのためにサーバーに指定されたデータ文字列を使用するチャレンジ応答スキームです. - カーベロス: クライアントコンピュータとサーバーは,カーベロス証明書を使用して相互認証します. - 交渉:交渉は,サーバーまたはプロキシと交渉して認証のために使用するスキームを決定するチャレンジ応答スキームです.例えば,このパラメータ値は,Kerberos プロトコルまたはNTLMを使用するか否かを判断するために交渉を可能にします. - 商議: クレデントセキュリティサポートプロバイダー (CredSSP) 認証を使用します.このオプションは,あるリモートコンピュータで実行されるコマンドに設計されていますが,他のリモートコンピュータでデータ収集または追加コマンドを実行します.
+
+&gt; [!CAUTION] &gt; CredSSPは,ローカルコンピュータからリモートコンピュータにユーザーの認証情報を委託する.この慣行により,リモート操作のセキュリティリスクが増加する.リモートコンピュータが &gt; 侵害されている場合,認証が渡されたとき,認証はネットワーク &gt; セッションを制御するために使用できます.
+
+```yaml
+Type: Microsoft.WSMan.Management.AuthenticationMechanism
+Parameter Sets: (All)
+Aliases: auth, am
+Accepted values: None, Default, Digest, Negotiate, Basic, Kerberos, ClientCertificate, Credssp
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -CertificateThumbprint について
+
+この操作を行う許可を有するユーザーアカウントのデジタル公開鍵証明書 (X509) を指定します.証明書の証明書指紋を入力します.
+
+証明書はクライアント証明書ベースの認証に使用されます.彼らはローカルユーザーアカウントにのみマッピングできます.彼らはドメインアカウントと動作しません.
+
+証明書指紋を取得するには,  を使ってください.`Get-Item`    `Get-ChildItem`PowerShell Cert: drive のコマンドで表示されています.
+
+```yaml
+Type: System.String
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -コンピュータ名
+
+管理操作を実行したいコンピュータを指定します.その値は完全に資格のあるドメイン名,NetBIOS名,またはIPアドレスかもしれません.ローカルコンピュータ名,ローカルホスト,またはドット () を使用してください.`.`ローカルコンピュータはデフォルトで,リモートコンピュータがユーザーと異なるドメインに存在する場合,完全に資格のあるドメイン名を使用する必要があります.このパラメータの値をcmdletにパイプすることができます.
+
+```yaml
+Type: System.String
+Parameter Sets: ComputerName
+Aliases: cn
+
+Required: False
+Position: Named
+Default value: Localhost
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -ConnectionURI
+
+接続エンドポイントを指定します.この文字列のフォーマットは:
+
+`&lt;Transport&gt;://&lt;Server&gt;:&lt;Port&gt;/&lt;ApplicationName&gt;`
+
+次の文字列は,このパラメータのために適切にフォーマットされた値です:
+
+`http://Server01:8080/WSMAN`
+
+URIは完全に合格する必要があります.
+
+```yaml
+Type: System.Uri
+Parameter Sets: URI
+Aliases: CURI, CU
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### - 信用証
+
+このアクションを実行する許可を有するユーザーアカウントを指定します.デフォルトは現在のユーザーです. &quot;User01&quot;, &quot;Domain01\User01&quot;,または &quot;User@Domain.com&quot;などのユーザー名を入力します.または,PSCredentialオブジェクトを入力します.例えば,返信されたもの.`Get-Credential`cmdlet.ユーザー名を入力すると,パスワードが提示されます.
+
+```yaml
+Type: System.Management.Automation.PSCredential
+Parameter Sets: (All)
+Aliases: cred, c
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -FilePath
+
+管理リソースを作成するために使用されるファイルの経路を指定します. **ResourceURI**パラメータと **SelectorSet**パラメータを使用して管理リソースを指定します.例えば,次のコマンドは **File**パラメータを使用します:
+
+```powershell
+$params = @{
+    Action         = &#x27;StopService&#x27;
+    ResourceUri    = &#x27;wmi/cimv2/Win32_Service&#x27;
+    SelectorSet    = @{Name = &#x27;spooler&#x27;}
+    File           = &#x27;C:\input.xml&#x27;
+    Authentication = &#x27;Default&#x27;
+}
+Invoke-WSManAction @params
+```
+
+このコマンドは,ファイルからの入力を使用して,スプーラーサービス上の **StopService** 方法を呼び出す.`Input.xml`内容は以下のとおりです.
+
+`&lt;p:StopService_INPUT xmlns:p=&quot;http://schemas.microsoft.com/wbem/wsman/1/wmi/root/cimv2/Win32_Service&quot; /&gt;`
+
+```yaml
+Type: System.String
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+# New-WSManInstance について
+
+### -OptionSet
+
+要求の性質を修正または精錬するために,一連のスイッチをサービスに転送します.これらのスイッチは,サービス特有のため,コマンドラインシェルで使用されるスイッチに類似します.任意の数々のオプションを指定することができます.
+
+次の例では,a,b,cパラメータの値1,2,3を過ぎる構文が示されています.
+
+`-OptionSet @{a=1;b=2;c=3}`
+
+```yaml
+Type: System.Collections.Hashtable
+Parameter Sets: (All)
+Aliases: os
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -ポート
+
+クライアントがWinRMサービスに接続するときに使用するポートを指定します.輸送がHTTPである場合,デフォルトポートは80です.輸送がHTTPSである場合,デフォルトポートは443です.
+
+HTTPSを輸送手段として使用する際には, **ComputerName** パラメータの値はサーバーの証明書通称 (CN) に一致する必要があります.しかし, **SkipCNCheck** パラメータが **SessionOption** パラメータの一部として指定されている場合,サーバーの証明書通称はサーバーのホスト名と一致する必要はありません. **SkipCNCheck** パラメータは信頼されるコンピュータのみに使用されるべきです.
+
+```yaml
+Type: System.Int32
+Parameter Sets: ComputerName
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -ResourceURI
+
+資源クラスまたはインスタンスの統一リソース識別子 (URI) を含んでいる.URIはコンピュータ上のディスクまたはプロセスなどの特定の種類のリソースを識別するために使用されます.
+
+A URIは,前音とリソースへの経路で構成されています.例えば:
+
+`http://schemas.microsoft.com/wbem/wsman/1/wmi/root/cimv2/Win32_LogicalDisk`
+
+`http://schemas.dmtf.org/wbem/wscim/1/cim-schema/2/CIM_NumericSensor`
+
+```yaml
+Type: System.Uri
+Parameter Sets: (All)
+Aliases: ruri
+
+Required: True
+Position: 0
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -SelectorSet
+
+特定の管理リソースインスタンスを選択するために使用される値ペアの集合を指定します. **SelectorSet**パラメータは,リソースの複数のインスタンスの存在で使用されます. **SelectorSet**パラメータの値はハッシュテーブルである必要があります.
+
+次の例では,このパラメータの値を入力する方法を示しています.
+
+`-SelectorSet @{Name=&quot;WinRM&quot;;ID=&quot;yyy&quot;}`
+
+```yaml
+Type: System.Collections.Hashtable
+Parameter Sets: (All)
+Aliases:
+
+Required: True
+Position: 1
+Default value: None
+Accept pipeline input: True (ByValue)
+Accept wildcard characters: False
+```
+
+### -SessionOption について
+
+WS-Managementセッションの拡張オプションを定義する. を使って作成した **SessionOption** オブジェクトを入力します.`New-WSManSessionOption`cmdlet.利用可能なオプションについての詳細については,  を参照してください.`New-WSManSessionOption` .
+
+```yaml
+Type: Microsoft.WSMan.Management.SessionOption
+Parameter Sets: (All)
+Aliases: so
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -UseSSL を使って
+
+遠隔コンピュータに接続するために,セキュアソケットレイヤル (SSL) プロトコルを使用すべきであると指定します.デフォルトでは,SSLは使用されません.
+
+WS-Managementはネットワーク上で送信されるすべての Windows PowerShell コンテンツを暗号化します. **UseSSL** パラメータは,HTTPの代わりに HTTPS の追加保護を指定することができます.接続に使用されているポートで SSL が利用できない場合,このパラメータを指定するとコマンドが失敗します.
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: ComputerName
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -ValueSet
+
+管理リソースを変更するのに役立つハッシュテーブルを指定します.ResourceURI**パラメータとSelectorSet**パラメータを使用して管理リソースを指定します. **ValueSet**パラメータの値はハッシュテーブルである必要があります.
+
+```yaml
+Type: System.Collections.Hashtable
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### 共通パラメーター
+
+このcmdletは,共通パラメータである: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction,および -WarningVariableをサポートしています.詳細については, [about_CommonParameters]をご覧ください.
+
+## 輸入は
+
+### どれもない
+
+このcmdletに物体をパイプすることはできません.
+
+## 輸出は
+
+### System.Xml.XmlElement
+
+このcmdletは,作成されたWSManインスタンスを **XmlElement**オブジェクトとして返します.
+
+##  NOTES  記事ができました.
+
+   `Set-WmiInstance`cmdlet というWindows管理機器 (WMI) cmdlet は類似しています.`Set-WmiInstance`DCOM接続/輸送層を使用して,WMIインスタンスを作成または更新します.
+
+## 関連リンク
+
+[Connect-WSMan](Connect-WSMan.md) 
+
+[Disable-WSManCredSSP](Disable-WSManCredSSP.md) でした.
+
+[Disconnect-WSMan](Disconnect-WSMan.md) 
+
+[Enable-WSManCredSSP](Enable-WSManCredSSP.md) 
+
+[Get-WSManCredSSP](Get-WSManCredSSP.md) について
+
+[Get-WSManInstance](Get-WSManInstance.md) について
+
+[インボーク-WSManAction](インボーク-WSManAction.md)
+
+[New-WSManSessionOption](New-WSManSessionOption.md) について
+
+[Remove-WSManInstance](Remove-WSManInstance.md) 
+
+[Set-WSManInstance](Set-WSManInstance.md) でした.
+
+[Set-WSManQuickConfig](Set-WSManQuickConfig.md) は,このままに設定されている.
+
+[テスト-WSMan](テスト-WSMan.md)
+###英語原文###
+# New-WSManInstance
+
+## SYNOPSIS
+Creates a new instance of a management resource.
+
+## SYNTAX
+
+### ComputerName (Default)
+
+```
+New-WSManInstance [-ApplicationName &lt;String&gt;] [-ComputerName &lt;String&gt;]
+ [-FilePath &lt;String&gt;] [-OptionSet &lt;Hashtable&gt;] [-Port &lt;Int32&gt;] [-ResourceURI] &lt;Uri&gt;
+ [-SelectorSet] &lt;Hashtable&gt; [-SessionOption &lt;SessionOption&gt;] [-UseSSL]
+ [-ValueSet &lt;Hashtable&gt;] [-Credential &lt;PSCredential&gt;]
+ [-Authentication &lt;AuthenticationMechanism&gt;] [-CertificateThumbprint &lt;String&gt;]
+ [&lt;CommonParameters&gt;]
+```
+
+### URI
+
+```
+New-WSManInstance [-ConnectionURI &lt;Uri&gt;] [-FilePath &lt;String&gt;] [-OptionSet &lt;Hashtable&gt;]
+ [-ResourceURI] &lt;Uri&gt; [-SelectorSet] &lt;Hashtable&gt; [-SessionOption &lt;SessionOption&gt;]
+ [-ValueSet &lt;Hashtable&gt;] [-Credential &lt;PSCredential&gt;]
+ [-Authentication &lt;AuthenticationMechanism&gt;] [-CertificateThumbprint &lt;String&gt;]
+ [&lt;CommonParameters&gt;]
+```
+
+## DESCRIPTION
+
+The `New-WSManInstance` cmdlet creates a new instance of a management resource. It uses a resource
+URI and a value set or input file to create the new instance of the management resource.
+
+This cmdlet uses the WinRM connection/transport layer to create the management resource instance.
+
+## EXAMPLES
+
+### Example 1: Create a HTTPS listener
+
+This command creates an instance of a WS-Management HTTPS listener on all IP addresses.
+
+```powershell
+New-WSManInstance winrm/config/Listener -SelectorSet @{Transport=&#x27;HTTPS&#x27;; Address=&#x27;*&#x27;} -ValueSet @{Hostname=&quot;HOST&quot;;CertificateThumbprint=&quot;XXXXXXXXXX&quot;}
+```
+
+## PARAMETERS
+
+### -ApplicationName
+
+Specifies the application name in the connection. The default value of the **ApplicationName**
+parameter is **WSMAN**. The complete identifier for the remote endpoint is in the following format:
+
+`&lt;transport&gt;://&lt;server&gt;:&lt;port&gt;/&lt;ApplicationName&gt;`
+
+For example:
+
+`http://server01:8080/WSMAN`
+
+Internet Information Services (IIS), which hosts the session, forwards requests with this endpoint
+to the specified application. This default setting of **WSMAN** is appropriate for most uses. This
+parameter is designed to be used when numerous computers establish remote connections to one
+computer that is running Windows PowerShell. In this case, IIS hosts Web Services for Management
+(WS-Management) for efficiency.
+
+```yaml
+Type: System.String
+Parameter Sets: ComputerName
+Aliases:
+
+Required: False
+Position: Named
+Default value: Wsman
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Authentication
+
+Specifies the authentication mechanism to be used at the server. Possible values are:
+
+- Basic: Basic is a scheme in which the username and password are sent in clear text to the server
+  or proxy.
+- Default: Use the authentication method implemented by the WS-Management protocol. This is the
+  default.
+- Digest: Digest is a challenge-response scheme that uses a server-specified data string for the
+  challenge.
+- Kerberos: The client computer and the server mutually authenticate using Kerberos certificates.
+- Negotiate: Negotiate is a challenge-response scheme that negotiates with the server or proxy to
+  determine the scheme to use for authentication. For example, this parameter value allows
+  negotiation to determine whether the Kerberos protocol or NTLM is used.
+- CredSSP: Use Credential Security Support Provider (CredSSP) authentication, which allows the user
+  to delegate credentials. This option is designed for commands that run on one remote computer but
+  collect data from or run additional commands on other remote computers.
+
+&gt; [!CAUTION]
+&gt; CredSSP delegates the user&#x27;s credentials from the local computer to a remote computer. This
+&gt; practice increases the security risk of the remote operation. If the remote computer is
+&gt; compromised, when credentials are passed to it, the credentials can be used to control the network
+&gt; session.
+
+```yaml
+Type: Microsoft.WSMan.Management.AuthenticationMechanism
+Parameter Sets: (All)
+Aliases: auth, am
+Accepted values: None, Default, Digest, Negotiate, Basic, Kerberos, ClientCertificate, Credssp
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -CertificateThumbprint
+
+Specifies the digital public key certificate (X509) of a user account that has permission to perform
+this action. Enter the certificate thumbprint of the certificate.
+
+Certificates are used in client certificate-based authentication. They can be mapped only to local
+user accounts; they do not work with domain accounts.
+
+To get a certificate thumbprint, use the `Get-Item` or `Get-ChildItem` command in the PowerShell
+Cert: drive.
+
+```yaml
+Type: System.String
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -ComputerName
+
+Specifies the computer against which you want to run the management operation. The value can be a
+fully qualified domain name, a NetBIOS name, or an IP address. Use the local computer name, use
+localhost, or use a dot (`.`) to specify the local computer. The local computer is the default. When
+the remote computer is in a different domain from the user, you must use a fully qualified domain
+name must be used. You can pipe a value for this parameter to the cmdlet.
+
+```yaml
+Type: System.String
+Parameter Sets: ComputerName
+Aliases: cn
+
+Required: False
+Position: Named
+Default value: Localhost
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -ConnectionURI
+
+Specifies the connection endpoint.
+The format of this string is:
+
+`&lt;Transport&gt;://&lt;Server&gt;:&lt;Port&gt;/&lt;ApplicationName&gt;`
+
+The following string is a properly formatted value for this parameter:
+
+`http://Server01:8080/WSMAN`
+
+The URI must be fully qualified.
+
+```yaml
+Type: System.Uri
+Parameter Sets: URI
+Aliases: CURI, CU
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Credential
+
+Specifies a user account that has permission to perform this action. The default is the current
+user. Type a user name, such as &quot;User01&quot;, &quot;Domain01\User01&quot;, or &quot;User@Domain.com&quot;. Or, enter a
+PSCredential object, such as one returned by the `Get-Credential` cmdlet. When you type a user name,
+you will be prompted for a password.
+
+```yaml
+Type: System.Management.Automation.PSCredential
+Parameter Sets: (All)
+Aliases: cred, c
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -FilePath
+
+Specifies the path of a file that is used to create a management resource. You specify the
+management resource using the **ResourceURI** parameter and the **SelectorSet** parameter . For
+example, the following command uses the **File** parameter:
+
+```powershell
+$params = @{
+    Action         = &#x27;StopService&#x27;
+    ResourceUri    = &#x27;wmi/cimv2/Win32_Service&#x27;
+    SelectorSet    = @{Name = &#x27;spooler&#x27;}
+    File           = &#x27;C:\input.xml&#x27;
+    Authentication = &#x27;Default&#x27;
+}
+Invoke-WSManAction @params
+```
+
+This command calls the **StopService** method on the Spooler service using input from a file. The
+file, `Input.xml`, contains the following content:
+
+`&lt;p:StopService_INPUT xmlns:p=&quot;http://schemas.microsoft.com/wbem/wsman/1/wmi/root/cimv2/Win32_Service&quot; /&gt;`
+
+```yaml
+Type: System.String
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+# New-WSManInstance
+
+### -OptionSet
+
+Passes a set of switches to a service to modify or refine the nature of the request. These are
+similar to switches used in command-line shells because they are service specific. Any number of
+options can be specified.
+
+The following example demonstrates the syntax that passes the values 1, 2, and 3 for the a, b, and c
+parameters:
+
+`-OptionSet @{a=1;b=2;c=3}`
+
+```yaml
+Type: System.Collections.Hashtable
+Parameter Sets: (All)
+Aliases: os
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Port
+
+Specifies the port to use when the client connects to the WinRM service. When the transport is HTTP,
+the default port is 80. When the transport is HTTPS, the default port is 443.
+
+When you use HTTPS as the transport, the value of the **ComputerName** parameter must match the
+server&#x27;s certificate common name (CN). However, if the **SkipCNCheck** parameter is specified as
+part of the **SessionOption** parameter, the certificate common name of the server does not have to
+match the host name of the server. The **SkipCNCheck** parameter should be used only for trusted
+computers.
+
+```yaml
+Type: System.Int32
+Parameter Sets: ComputerName
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -ResourceURI
+
+Contains the Uniform Resource Identifier (URI) of the resource class or instance. The URI is used to
+identify a specific type of resource, such as disks or processes, on a computer.
+
+A URI consists of a prefix and a path to a resource. For example:
+
+`http://schemas.microsoft.com/wbem/wsman/1/wmi/root/cimv2/Win32_LogicalDisk`
+
+`http://schemas.dmtf.org/wbem/wscim/1/cim-schema/2/CIM_NumericSensor`
+
+```yaml
+Type: System.Uri
+Parameter Sets: (All)
+Aliases: ruri
+
+Required: True
+Position: 0
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -SelectorSet
+
+Specifies a set of value pairs that are used to select particular management resource instances. The
+**SelectorSet** parameter is used when more than one instance of the resource exists. The value of
+the **SelectorSet** parameter must be a hash table.
+
+The following example shows how to enter a value for this parameter:
+
+`-SelectorSet @{Name=&quot;WinRM&quot;;ID=&quot;yyy&quot;}`
+
+```yaml
+Type: System.Collections.Hashtable
+Parameter Sets: (All)
+Aliases:
+
+Required: True
+Position: 1
+Default value: None
+Accept pipeline input: True (ByValue)
+Accept wildcard characters: False
+```
+
+### -SessionOption
+
+Defines a set of extended options for the WS-Management session. Enter a **SessionOption** object
+that you create using the `New-WSManSessionOption` cmdlet. For more information about the options
+that are available, see `New-WSManSessionOption`.
+
+```yaml
+Type: Microsoft.WSMan.Management.SessionOption
+Parameter Sets: (All)
+Aliases: so
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -UseSSL
+
+Specifies that the Secure Sockets Layer (SSL) protocol should be used to establish a connection to
+the remote computer. By default, SSL is not used.
+
+WS-Management encrypts all the Windows PowerShell content that is transmitted over the network. The
+**UseSSL** parameter lets you specify the additional protection of HTTPS instead of HTTP. If SSL is
+not available on the port that is used for the connection and you specify this parameter, the
+command fails.
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: ComputerName
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -ValueSet
+
+Specifies a hash table that helps modify a management resource. You specify the management resource
+using the **ResourceURI** parameter and the **SelectorSet** parameter. The value of the **ValueSet**
+parameter must be a hash table.
+
+```yaml
+Type: System.Collections.Hashtable
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### CommonParameters
+
+This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable,
+-InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose,
+-WarningAction, and -WarningVariable. For more information, see
+[about_CommonParameters](../Microsoft.PowerShell.Core/About/about_CommonParameters.md).
+
+## INPUTS
+
+### None
+
+You can&#x27;t pipe objects to this cmdlet.
+
+## OUTPUTS
+
+### System.Xml.XmlElement
+
+This cmdlet returns the created WSMan instance as an **XmlElement** object.
+
+## NOTES
+
+The `Set-WmiInstance` cmdlet, a Windows Management Instrumentation (WMI) cmdlet, is similar.
+`Set-WmiInstance` uses the DCOM connection/transport layer to create or update WMI instances.
+
+## RELATED LINKS
+
+[Connect-WSMan](Connect-WSMan.md)
+
+[Disable-WSManCredSSP](Disable-WSManCredSSP.md)
+
+[Disconnect-WSMan](Disconnect-WSMan.md)
+
+[Enable-WSManCredSSP](Enable-WSManCredSSP.md)
+
+[Get-WSManCredSSP](Get-WSManCredSSP.md)
+
+[Get-WSManInstance](Get-WSManInstance.md)
+
+[Invoke-WSManAction](Invoke-WSManAction.md)
+
+[New-WSManSessionOption](New-WSManSessionOption.md)
+
+[Remove-WSManInstance](Remove-WSManInstance.md)
+
+[Set-WSManInstance](Set-WSManInstance.md)
+
+[Set-WSManQuickConfig](Set-WSManQuickConfig.md)
+
+[Test-WSMan](Test-WSMan.md)
+###Microsoft Learn URL###
+https://learn.microsoft.com/en-us/powershell/module/microsoft.wsman.management/new-wsmaninstance/?view=powershell-5.1
+</pre></html>

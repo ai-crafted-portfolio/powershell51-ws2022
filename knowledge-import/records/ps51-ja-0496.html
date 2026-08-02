@@ -1,0 +1,1692 @@
+<!doctype html><html lang="ja"><meta charset="utf-8"><pre class="record-source">###KnowledgeNo###
+PS51-WS2022-2026-0496
+###FormatID###
+PS51-WS2022
+###CreatedAt###
+2026-08-01 00:00
+###UpdatedAt###
+2026-08-01 00:00
+###タイトル###
+Start-BitsTransfer
+###モジュール###
+bitstransfer
+###製品###
+Windows PowerShell 5.1
+###対応OS###
+Windows Server 2022
+###日本語訳###
+# スタートビットトランスファー
+
+## SYNOPSISはBITS転送の仕事を作成します.
+
+## SYNTAXは,のシンタックスです.
+
+```
+Start-BitsTransfer [-Asynchronous] [-Dynamic] [-CustomHeadersWriteOnly] [-Authentication &lt;String&gt;]
+ [-Credential &lt;PSCredential&gt;] [-Description &lt;String&gt;] [-HttpMethod &lt;String&gt;] [[-Destination] &lt;String[]&gt;]
+ [-DisplayName &lt;String&gt;] [-Priority &lt;String&gt;] [-TransferPolicy &lt;CostStates&gt;] [-ACLFlags &lt;ACLFlagValue&gt;]
+ [-SecurityFlags &lt;SecurityFlagValue&gt;] [-UseStoredCredential &lt;AuthenticationTargetValue&gt;]
+ [-ProxyAuthentication &lt;String&gt;] [-ProxyBypass &lt;String[]&gt;] [-ProxyCredential &lt;PSCredential&gt;]
+ [-ProxyList &lt;Uri[]&gt;] [-ProxyUsage &lt;String&gt;] [-RetryInterval &lt;Int32&gt;] [-RetryTimeout &lt;Int32&gt;]
+ [-MaxDownloadTime &lt;Int32&gt;] [-Source] &lt;String[]&gt; [-Suspended] [-TransferType &lt;String&gt;]
+ [-CustomHeaders &lt;String[]&gt;] [-NotifyFlags &lt;NotifyFlagValue&gt;] [-NotifyCmdLine &lt;String[]&gt;]
+ [-CertStoreLocation &lt;CertStoreLocationValue&gt;] [-CertStoreName &lt;String&gt;] [-CertHash &lt;Byte[]&gt;] [-WhatIf]
+ [-Confirm] [&lt;CommonParameters&gt;]
+```
+
+## 記述 **Start-BitsTransfer** cmdlet はクライアントコンピュータとサーバーの間に1つまたは複数のファイルを転送するためにバックグラウンドインテリジェント・トランスファー・サービス (BITS) 転送作業を作成します. *TransferType* パラメータは転送の方向を指定します.デフォルトでは,cmdlet が転送を開始した後,コマンドプロンプトは転送が完了するまでまたは転送がエラー状態に入るまで利用できません.返還された **BitsJob** オブジェクトの状態がエラーである場合,エラーコードと説明はオブジェクト内に含まれ,分析に使用できます.
+
+**Start-BitsTransfer** cmdlet は,複数のファイルをサーバーからクライアントコンピュータにダウンロードすることをサポートしていますが,通常はクライアントコンピュータからサーバーに複数のファイルをアップロードすることをサポートしません.複数のファイルをアップロードする必要がある場合は,輸出を **Add-BitsFile** cmdlet にパイプするために **Import-Csv** cmdlet を使用できます.または,複数のファイルをアップロードする必要がある場合は,キャビネットファイル (.cab) または圧縮ファイル (.zip) を考慮してください.
+
+## 例えは
+
+### 例1:BITS転送作業を作成して,ファイルをダウンロードする.```
+PS C:\&gt; Start-BitsTransfer -Source &quot;http://server01/servertestdir/testfile1.txt&quot; -Destination &quot;c:\clienttestdir\testfile1.txt&quot;
+```
+
+このコマンドは,サーバーからファイルをダウンロードするBITS転送作業を作成します.ファイルのローカル・リモート・名前が *ソース*と *目的地*パラメータで指定されています.デフォルト転送タイプがダウンロードなので, は`http://Server01/servertestdir/testfile1.txt`ファイルは,  に転送されます.`C:\clienttestdir\testfile1.txt`ファイル転送が完了したときに,またはエラーステートに入るとコマンドプロンプトが返されます.
+
+HTTP 場所へファイルをアップロードする際には, *TransferType* パラメータが **Upload** に設定する必要があります.
+
+**Start-BitsTransfer** cmdletでは,最初のパラメータがソースであり,第二のパラメータが目的地であり,値が指定されていないので,このコマンドは以下のように簡素化できます.
+
+`Start-BitsTransfer &quot;http://server01/servertestdir/testfile1.txt&quot; &quot;c:\clienttestdir\testfile1.txt&quot;`
+
+### 例2:複数のファイルをダウンロードするBITS転送職を作成する```
+PS C:\&gt; Import-CSV filelist.txt | Start-BitsTransfer
+```
+
+このコマンドは,サーバから複数のファイルをダウンロードするBITS転送作業を作成します.
+
+コマンドはソースと宛先のファイル位置を輸入し,その場所を**Start-BitsTransfer** コマンドにパイプします.**Start-BitsTransfer** コマンドは,各ファイルに新しいBITS転送作業を作成します.`filelist.txt`そして同時にクライアントに転送します.
+
+filelist.txt ファイルの内容は,以下の情報に似ている:
+
+ソース,目的地 http://server01/servertestdir/testfile1.txt,c:\clienttestdir\testfile1.txt http://server01/servertestdir/testfile2.txt,c:\clienttestdir\testfile2.txt http://server01/servertestdir/testfile3.txt,c:\clienttestdir\testfile3.txt http://server01/servertestdir/testfile4.txt,c:\clienttestdir\testfile4.txt
+
+**注:** ファイルの最初の行には,例のように Source,Destination header が含まれなければならない.
+
+### 例3: ファイルをアップロードするBITS転送作業を作成します.```
+PS C:\&gt; Start-BitsTransfer -Source &quot;c:\clienttestdir\testfile1.txt&quot; -Destination &quot;http://server01/servertestdir/testfile1.txt&quot; -TransferType Upload
+```
+
+このコマンドは,ファイルをサーバーにアップロードするBITS転送作業を作成します.ファイルのローカルおよびリモート名は **ソース**と **目的地**のパラメータで指定されています.デフォルト転送タイプがダウンロードなので, *トランスファータイプ*のパラメータは **アップロード**に設定する必要があります. `C:\clienttestdir\testfile1.txt`クライアントのファイルは,  に転送されます.`http://Server01/servertestdir/testfile1.txt`. ファイル転送が完了したときにコマンドプロンプトが返ってくるか,エラーステートに入ると.
+
+**Start-BitsTransfer** cmdlet は,複数のファイルをサーバーからクライアントコンピュータにダウンロードしますが,通常はクライアントコンピュータからサーバーに複数のファイルをアップロードしません.この制限を回避するには, **Import-Csv** cmdlet を使用して,輸出を **Start-BitsTransfer** cmdlet にパイプします.複数のファイルをアップロードする必要がある場合は, .cab または .zip ファイルを使用することもできます.
+
+**Start-BitsTransfer** cmdletでは,最初のパラメータがソースであり,第二のパラメータが目的地であり,値が指定されていないので,このコマンドは以下のように簡素化できます.
+
+`Start-BitsTransfer &quot;c:\clienttestdir\testfile1.txt&quot; &quot;http://server01/servertestdir/testfile1.txt&quot; -TransferType Upload`
+
+### 例4:複数のファイルをダウンロードするBITS転送作業を作成します.```
+PS C:\&gt; Start-BitsTransfer -Source &quot;http://server01/servertestdir/testfile1.txt&quot;, &quot;http://server01/servertestdir/testfile2.txt&quot; -Destination &quot;c:\clienttestdir\testfile1.txt&quot;, &quot;c:\clienttestdir\testfile2.txt&quot;
+```
+
+このコマンドは,サーバーから複数のファイルをダウンロードするBITS転送作業を作成します.
+
+ファイルのローカル・リモート・名前には, *ソース* と * 目的地* のパラメータで指定されています. * 転送タイプ* のパラメータのデフォルトはダウンロードなので,  は ダウンロードです.`http://Server01/servertestdir/testfile1.txt`そして,`http://Server01/servertestdir/testfile2.txt`ファイルは,  に転送されます.`C:\clienttestdir\testfile1.txt`そして,`C:\clienttestdir\testfile2.txt`クライアントコンピュータで,コマンドプロンプトは,ファイル転送が完了したときに返されます.またはエラー状態に入ります.
+
+### 例5:特定の認証セットを使用してファイルをダウンロードするBITS転送作業を作成します.```
+PS C:\&gt; $Cred = Get-Credential
+PS C:\&gt; Start-BitsTransfer -DisplayName MyJob -Credential $Cred -Source &quot;http://server01/servertestdir/testfile1.txt&quot; -Destination &quot;c:\clienttestdir\testfile1.txt&quot;
+```
+
+この例では,特定の認証セットを使用してサーバーからファイルをダウンロードするBITS転送作業を作成します.
+
+最初のコマンドは, **Get-Credential** cmdlet を呼び,ユーザーから一連の認証情報を取得します.返された **PSCredential** オブジェクトは $Cred 変数に保存されます.
+
+第二のコマンドは,$Cred変数に保存されている **PSCredential**オブジェクトを, **Start-BitsTransfer** cmdlet に渡すために, *Credential*パラメータを使用します.新しいBITS転送作業が作成され, をダウンロードします.`http://server01/servertestdir/testfile1.txt`指定された認証はサーバーでユーザを認証するために使用されます.さらに,オプションの *DisplayName* パラメータが使われてBITS転送作業にユニークな名前を与えます.
+
+# スタートビットトランスファー
+
+### 例 6:複数のファイルをダウンロードするBITS転送職を作成する```
+PS C:\&gt; Import-CSV filelist.txt | Start-BitsTransfer -Asynchronous -Priority Normal
+```
+
+このコマンドは,複数のファイルをサーバーからダウンロードするBITS転送作業を作成します.ファイルは順序的にダウンロードされますが,転送作業が完了するとすぐに利用できます.
+
+コマンドはソースと目的のファイル位置を輸入し,それを先端からスタートビットトランスファー コマンドに送ります.このコマンドは,filelist.txtのファイルそれぞれに新しいBITS転送作業を作成し,その後,順次的にクライアントに転送します.
+
+filelist.txt ファイルの内容は,以下の情報に似ている:
+
+ソース,目的地 http://server01/servertestdir/testfile1.txt,c:\clienttestdir\testfile1.txt http://server01/servertestdir/testfile2.txt,c:\clienttestdir\testfile2.txt http://server01/servertestdir/testfile3.txt,c:\clienttestdir\testfile3.txt http://server01/servertestdir/testfile4.txt,c:\clienttestdir\testfile4.txt
+
+**注:** ファイルの最初の行には,例のように Source,Destination header が含まれなければならない.
+
+### 例7:複数のファイルをダウンロードするBITS転送作業を作成します.```
+PS C:\&gt; Start-BitsTransfer -Source C:\clientsourcedir\*.txt -Destination c:\clientdir\ -TransferType Download
+```
+
+前例では,Start-BitsTransfer コマンドが新しいBITS転送作業を作成します.すべてのファイルがこの作業に追加され,順次的にクライアントに転送されます.
+
+&gt; [!NOTE] &gt; 目的地パスにはワイルドカード文字が使用できない.目的地パスには相対ディレクトリ,ルーツパス,または暗黙ディレクトリ (つまり現在のディレクトリ) がサポートされている.目的地ファイルはワイルドカード文字を使用して名前変更することはできません.さらに,HTTPとHTTPS URLはワイルドカードと動作しません.ワイルドカードはUNCパスとローカルディレクトリのみで有効です.
+
+### 例8:複数のファイルをアップロードするBITS転送職を作成する```
+PS C:\&gt; Import-CSV filelist.txt | Start-BitsTransfer -TransferType Upload
+```
+
+このコマンドは,複数のファイルをサーバーにアップロードするBITS転送作業を作成します.
+
+コマンドはソースと宛先のファイル位置を輸入し,それを先端からスタートビットトランスファー コマンドに送ります.このコマンドは,filelist.txtのファイルそれぞれに新しいBITS転送作業を作成し,同時にサーバーに転送します.
+
+filelist.txt ファイルの内容は,以下の情報に似ている:
+
+ソース,目的地 c:\clienttestdir\testfile1.txt, http://server01/servertestdir/testfile1.txtc:\clienttestdir\testfile2.txt, http://server01/servertestdir/testfile2.txtc:\clienttestdir\testfile3.txt, http://server01/servertestdir/testfile3.txtc:\clienttestdir\testfile4.txt, http://server01/servertestdir/testfile4.txt
+
+**注:** ファイルの最初の行には,例のように Source,Destination header が含まれなければならない.
+
+### 例9: ネットワーク上のサーバーから,プロキシサーバーで接続された別のネットワーク上のクライアントにファイルをダウンロードする```
+PS C:\&gt; Start-BitsTransfer -Source .\Patch0416.msu -Destination $env:temp\Patch0416.msu -ProxyUsage Override -ProxyList BitsProxy:8080 -ProxyCredential Server01\Admin01
+```
+
+このコマンドは,ネットワークがプロキシサーバーのみで接続されている場合,あるネットワーク上のサーバーから別のネットワーク上のクライアントにパッチファイルをコピーするために, **Start-BitsTransfer** cmdlet を使用します.
+
+このシナリオは,インターネットに接続されたサーバーがファイルをダウンロードして,インターネットにアクセスできない断断線または孤立したネットワーク上のコンピュータに配布するときに発生します.
+
+BITSは,プロキシサーバーの設定を自動的に検出することができます.しかし,プロキシサーバーが自動検出に設定されていない場合,この例で示されているように,自動検出メカニズムを覆い,プロキシサーバーを明確に識別することができます.
+
+コマンドは,サーバーコンピュータのパッチの位置を指定するために *ソース* パラメータを使用し,クライアントコンピュータのパッチの意図された位置を指定するために *目的地* パラメータを使用します.自動プロキシサーバー検出メカニズムを覆すために **Override** の値を持つ *プロキシユーザー利用* パラメータを使用します.プロキシサーバーを識別するために, *プロキシリスト* パラメータを使用します. *プロキシリスト* パラメータの値は,  の URI です.`&lt;Name:Port&gt;`最後に,プロキシ認証法 (ProxyCredential) を使って,プロキシサーバーに接続する許可を有する管理者の認証を指定します.
+
+## パラメータは
+
+### -ACLFlags 転送作業のために保持する所有者およびアクセス制御リスト (ACL) 情報を指定します.以下の値のうち1つまたは複数の値を指定します:
+
+o:ファイルに所有者情報をコピーする. - g:ファイルにグループ情報をコピーする. - d:ファイルに diskrectionary access control list (DACL) 情報をコピーする. - s:ファイルにシステムアクセス制御リスト (SACL) 情報をコピーする.
+
+```yaml
+Type: ACLFlagValue
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Asynchronous は,cmdletが背景にBITS転送作業を作成し処理することを示します.BITS転送作業が作成された直後にコマンドプロンプトが再び表示されます.返された**BitsJob**オブジェクトは,状態と進行を監視するために使用できます.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Authentication サーバで使用する認証メカニズムを指定する.このパラメータの受け入れられる値は:です.
+
+**BASIC**:BASICは,ユーザ名とパスワードが,サーバーやプロキシに明晰文で送信されるスキームです.
+
+- **Digest**: Digest は,課題に対してサーバー指定データ文字列を使用するチャレンジ応答計画です.
+
+- **Ntlm**: NT LAN Manager (NTLM) は,Windowsベースのネットワーク環境で認証のためにユーザーの認証情報を利用するチャレンジ応答スキームです.
+
+**Negotiate** (デフォルト):Negotiate は,サーバーまたはプロキシと交渉して認証のためにどのスキームを使用するか決定するチャレンジ応答計画です.例えば,このパラメータ値は,KerberosプロトコルまたはNTLMが使用されているかどうかを交渉することを可能にします.
+
+**パスポート**:パスポートは,Microsoftが提供する中央集権認証サービスで,会員サイトに単一のログインを提供しています.
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases: 
+Accepted values: Basic, Digest, Ntlm, Negotiate, Passport
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -CertHash 証明書を識別する SHA1 ハッシュを指定します.
+
+```yaml
+Type: Byte[]
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -CertStoreLocation 証明書検索に使用する証明書ストアロケーションを指定します.有効値は:
+
+- CURRENT_USER - LOCAL_MACHINE - CURRENT_SERVICE - SERVICES - USERS - CURRENT_USER_GROUP_POLICY - LOCAL_MACHINE_GROUP_POLICY - LOCAL_MACHINE_ENTERPRISE - ローカル_マシーン_企業
+
+```yaml
+Type: CertStoreLocationValue
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+# スタートビットトランスファー
+
+### -CertStoreName 証明書ストアの名前を指定します.有効値は:
+
+CA:認定機関証明書 - MY:個人証明書 - ROOT:Root証明書 - SPC:ソフトウェア出版商証明書
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### - 確認は,cmdletを実行する前に確認を提示します.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: cf
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Credential 認証は,当時のユーザーを指定した *Source* パラメータの値で指定されたサーバーにユーザを認証するために使用する認証を指定します.
+
+&quot;User01&quot;, &quot;Domain01\User01&quot;,または&quot;User@Contoso.com&quot;などのユーザー名を入力します.または,このパラメータの値を作成するために **Get-Credential** cmdlet を使用します.ユーザー名を入力すると,パスワードが提示されます.
+
+```yaml
+Type: PSCredential
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -CustomHeaders サーバーへの要求に含まれるカスタム HTTP ヘッダーを1つまたは複数の指定します.文字列の配列を指定します.
+
+```yaml
+Type: String[]
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -CustomHeadersWriteOnly この仕事用の HTTP パーツオーダーヘッダは書き込みのみであることを表示します.
+
+設定されたヘッダにセキュリティ情報が含まれている場合,このパラメータを使用します.同じコンピュータにある他のプログラムではヘッダを読み取れない.BITSプロセスはヘッダを読み取り,HTTP接続で送信することができます.
+
+職種でこの値を変更することはできません.ヘッダを書き込みのみに設定した後です.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Description BITS転送作業を記述する.説明は,1024文字に限定されています.
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -目的地 指定するマレイで目的地と転送したいファイル名が含まれています.目的地名と対応するソースファイル名がペアされます.例えば, *Source* パラメータで指定された最初のファイル名は, *Destination* パラメータで最初のファイル名と, *Source* パラメータで2番目のファイル名は, *Destination* パラメータで2番目のファイル名と一致します. *Source* と *Destination* パラメータには同じ数の要素が表示されなければなりません.そうでなければ,コマンドはエラーを生む.
+
+```yaml
+Type: String[]
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: 1
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -DisplayName BITS転送作業の表示名を指定する.表示名は,BITS転送作業を区別するための使いやすい方法を提供します.
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -ダイナミック 転送がダイナミック設定を使用することを表示します.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -HttpMethod 既定方法 GET以外の転送方法を指定します.GET を指定すると,パラメータは効果がありません.
+
+方法を指定すると,その仕事は前向きな優先順位を付け,変更できない.
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -MaxDownloadTimeは,仕事の中でファイルを転送する最大限時間を秒で指定します.デフォルトは7,776,000秒,または90日です.
+
+```yaml
+Type: Int32
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -CmdLineの通知 作業が完了した後,またはエラーが発生した後,実行するプログラムを指定します.このcmdletを実行するユーザーの文脈でプログラムが実行されます.
+
+プログラム名とすべてのパラメータを文字列の配列として指定します.
+
+```yaml
+Type: String[]
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -NotifyFlags は,転職イベントなどのイベント通知が受け取りたいイベントの種類を指定します.有効値は:
+
+- 1: 作業中のすべてのファイルが転送されたときにイベントを生成します. - 2: エラーが発生したときにイベントを生成します. - 4: 通知を無効にする.
+
+デフォルト値は1つ2です.
+
+```yaml
+Type: NotifyFlagValue
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -優先順位は,帯域幅使用に影響を与えるBITS転送作業の優先順位を設定します.このパラメータの受け入れ可能な値は:です.
+
+**Foreground** (デフォルト):前方での作業を転送する.前方での転送は他のアプリケーションとネットワーク帯域幅に競合し,ユーザーの全体的なネットワーク体験を妨げる可能性があります.しかし,もし**Start-BitsTransfer** cmdlet がインタラクティブに使用されている場合,これはおそらく最良のオプションです.これは最高優先レベルです.
+
+- **High**: 高い優先順位でバックグラウンドで仕事を転送します.バックグラウンド転送は,クライアントコンピュータの無効なネットワーク帯域幅を利用してファイルを転送します.
+
+- **普通**: 作業を背景に正常な優先順位で転送する. 背景転送は,クライアントコンピュータの無効なネットワーク帯域幅を使用してファイルを転送する.
+
+- **低**: 背景の優先順位が低い背景での作業を転送する. 背景の転送は,クライアントの無効なネットワーク帯域幅を利用してファイルを転送する. これは最も低い背景優先順位レベルです.
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases: 
+Accepted values: Foreground, High, Normal, Low
+
+Required: False
+Position: Named
+Default value: Foreground
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+# スタートビットトランスファー
+
+### -ProxyAuthentication ウェブプロキシで使用する認証メカニズムを指定する.このパラメータの受け入れ可能な値は:です.
+
+**BASIC**: Basicは,ユーザ名とパスワードが,クリアテキストでサーバーまたはプロキシに送信されるスキームです.
+
+- **Digest**: Digest は,課題に対してサーバー指定データ文字列を使用するチャレンジ応答計画です.
+
+- **Ntlm**: NTLMは,Windowsベースのネットワーク環境で認証のためにユーザーの認証情報を利用するチャレンジ応答のスキームです.
+
+**Negotiate** (デフォルト):Negotiate は,サーバーまたはプロキシと交渉して認証のためにどのスキームを使用するか決定するチャレンジ応答計画です.例えば,このパラメータ値は,KerberosプロトコルまたはNTLMが使用されているかどうかを判断するために交渉を可能にします.
+
+**パスポート**:パスポートは,Microsoftが提供する中央集権認証サービスで,会員サイトに単一のログインを提供しています.
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases: 
+Accepted values: Basic, Digest, Ntlm, Negotiate, Passport
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -ProxyBypass は直接接続に使用するホスト名の一覧を指定します.リスト内のホストは,成功的な接続が達成されるまで順番で試されます.このパラメータを指定すると,cmdlet は代理を回避します.このパラメータを使用すると, *ProxyUsage* パラメータが **Override** に設定する必要があります.そうでなければ,エラーが発生します.
+
+```yaml
+Type: String[]
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -ProxyCredential 代理でユーザを認証するために使用する認証情報を指定します.このパラメータの値を作成するには, **Get-Credential** cmdlet を使用できます.
+
+```yaml
+Type: PSCredential
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -ProxyList は使用するプロキシリストを指定します.リスト内のプロキシは,成功な接続が達成されるまで順順に試みられます.このパラメータが指定され, *ProxyUsage* が **Override**以外の値に設定された場合,cmdlet はエラーを生成します.
+
+```yaml
+Type: Uri[]
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -ProxyUsage プロキシ利用設定を指定します.このパラメータの受け入れ可能な値は:
+
+**SystemDefault** (デフォルト): - システムデフォルトプロキシ設定を使用します.
+
+**NoProxy**:ファイル転送にはプロキシを使用しないでください.ローカルエリアネットワーク (LAN) の内部でファイルを転送する際にこのオプションを使用してください.
+
+- **AutoDetect**: 自動でプロキシ設定を検出する.BITSは,その作業中の各ファイルにプロキシ設定を検出する.
+
+**Override**:使用する代理またはサーバーを指定します.もし *ProxyList* パラメータも指定されている場合,そのリストの代理も使用されます.もし *ProxyBypass* パラメータも指定されている場合,そのリストのサーバーも使用されます.両場合,リストの最初のメンバーが使用されます.最初のメンバーがアクセスできない場合は,メンバーが成功して連絡されるまで,次なるメンバーを試されます.
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases: 
+Accepted values: SystemDefault, NoProxy, AutoDetect, Override
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -RetryInterval は,BITS が一時的なエラーを遭遇した後に,BITS がファイルを転送しようと試みる前に,秒でBITS が待つ最小の時間を指定します.最小の許可値は60秒です.この値は**BitsJob**オブジェクトからのRetryTimeout値を超えると,BITS は転送を再試みません.代わりに,BITS はBITS 転送作業の状態をエラー状態に設定します.
+
+デフォルトは600秒 (10分) です.
+
+```yaml
+Type: Int32
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -RetryTimeout は,最初の一時的なエラーが発生した後,BITSがファイルを転送しようと試みる時間,秒数で,どれ程の時間を指定します.再試期間を0に設定すると再試を阻止し,作業を強制的に に押し込むことができます.`BG_JOB_STATE_ERROR`誤差が発生すると記述します.リトライ期間値がJobInactivityTimeout Group Policy設定を超えると (90日デフォルト),BITSはJobInactivityTimeout Group Policy設定が超えられた後に仕事をキャンセルします.
+
+デフォルトは1,209,600秒 (14日) です.
+
+```yaml
+Type: Int32
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -SecurityFlags HTTP リクエストのセキュリティフラグを指定します.
+
+最小のビットから設定できるフラグは,次のビットです.
+
+- 1: CRLチェックを有効にする. - 2:サーバー証明書に誤った通用名を無視する. - 3: サーバー証明書に誤った日付を無視する. - 4: サーバー証明書に誤った認証当局を無視する. - 5: サーバー証明書の誤った使用を無視する. - 12: HTTPS から HTTP に転送を許可する.
+
+転送ポリシーを実行するために,ビット9から11を活用してください.
+
+-0.0,0:リダイレクトは自動的に許可されています. -0.0,1:リダイレクトが起こるとリモート名は更新されます. -0,1,0:リダイレクトが起こるとBITSは作業に失敗します.
+
+```yaml
+Type: SecurityFlagValue
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Source はソース位置と,転送したいファイル名を指定します.ソースファイル名は,対応する目的地ファイル名とペアされます.例えば, *Source* パラメータで指定された最初のファイル名は, *Destination* パラメータで最初のファイル名と, *Source* パラメータで2番目のファイル名は, *Destination* パラメータで2番目のファイル名と一致します. *Source* と *Destination* パラメータには,同じ数の要素が含まれなければなりません.そうでなければ,エラーが生じます.あなたは星座 (*) と質問マーク (?) のような標準ワイルドカード文字を使用できます.または&quot;,\[a-r\r\&quot;のような範囲操作符を使用できます.
+
+```yaml
+Type: String[]
+Parameter Sets: (All)
+Aliases: 
+
+Required: True
+Position: 0
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -Suspended は,cmdletがBITS転送作業を停止することを示します. *Suspended* パラメータが指定されていない場合,作業は自動的に転送作業を開始します. *Suspended* パラメータが指定されている場合,コマンドプロンプトはBITS転送作業が作成された直後に返されます. 転送作業を開始するには, **Resume-BitsTransfer** cmdlet を使用できます.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+# スタートビットトランスファー
+
+### -TransferPolicy ネットワークコスト状態を指定する.ネットワークの現在のコスト状態は,この時点で転送を予定していた場合,どのような費用がかかるかを示すビットマスクです.このコスト状態はビットマスクを表します.現在のネットワークコスト状態に対応するビットが設定されている場合,転送を予定することができます.現在のネットワークコスト状態に対応するビットが設定されていない場合,転送はスケジュール目的で無視されます.ここに記載された任意の値を提出するか,またはそれらを組み合わせてカスタム値を提供することができます.
+
+このパラメータの受け入れられる値は:
+
+- **Unrestricted** (または未知) : 0x00000001 :このネットワークのコスト状態は不明.
+
+- **Capped**: 0x00000002 : このネットワークのコスト状態は,制限されたプラン,またはデータ利用制限があるプランです.
+
+-BelowCap*: 0x00000004: このネットワークのコスト状態はデータプランの制限値を下回っている.
+
+- **NearCap**: 0x00000008: このネットワークのコスト状態はデータプランの制限に近い.
+
+- **OverCapCharged**: 0x00000010: このネットワークのコスト状態はデータプランの制限を超え,そのような利用料金がかかります.
+
+- **OverCapThrottled**: 0x00000020: このネットワークのコスト状態はデータプランの上限を超え,そのような利用は制限されます.
+
+- **UseBased**: 0x00000040: このネットワークのコスト状態は,使用量に基づいて請求されます.
+
+ローミング**: 0x00000080: このネットワークのコスト状態はローミング料金が発生する.コスト状態には,また1つのオプション (IgnoreCongestion) と標準ポリシー (Uncosted, Standard, NoSurcharge, NotRoaming, and Always) が含まれています.これらは,ディスクリートビット値の組み合わせです.
+
+- **IgnoreCongestion**: 0x80000000: ネットワークプロバイダがネットワークが混雑していると報告しても,作業をスケジュールすることができます.
+
+- **PolicyUnrestricted**: 0x80000021: 制限されたプランの配当を消費しない,または追加料金を負わないコストステートセット.
+
+標準的な*: 0x80000067: 中程度の優先順位の転送に適したコスト状態の集合.
+
+- **NoSurcharge**: 0x8000006f:使用料を課さないコストステートセットです.
+
+-NotRoaming**: 0x8000007f: ローミング状態を排除するコストステートセットです.
+
+- Always: 0x800000ff:すべてのコスト状態の集合.
+
+コストステートはまた,1つのオプション (IgnoreCongestion) と標準ポリシー (Always, NotRoaming, NoSurcharge, Standard, and Uncosted) を含む.
+
+```yaml
+Type: CostStates
+Parameter Sets: (All)
+Aliases: 
+Accepted values: None, Unrestricted, Capped, BelowCap, NearCap, OverCapCharged, OverCapThrottled, UsageBased, Roaming, IgnoreCongestion, PolicyUnrestricted, Standard, NoSurcharge, NotRoaming, Always
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -TransferType はBITS転送作業のタイプを指定します.このパラメータの受け入れ可能な値は:
+
+**ダウンロード** (デフォルト): 転送作業がクライアントコンピュータにファイルをダウンロードすることを指定します.
+
+- **Upload**: 転送作業がサーバーにファイルをアップロードすることを指定します.
+
+- **UploadReply**: 転送作業がサーバーにファイルをアップロードし,サーバーから応答ファイルを受信することを指定します.
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases: 
+Accepted values: Download, Upload, UploadReply
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -UseStoredCredential 指定する Windows Credential Manager に保存されている認証は,指定されたターゲットサーバータイプに必要なときに認証に使用されるべきだと指定します.このパラメータが指定されていない場合,サーバーが認証を必要とする場合, *Credential*または *ProxyCredential* パラメータを使用して明示的な認証は含まれなければなりません.このパラメータは,値が組み合わせて,望ましい行動を生み出すためのフラッグパラメータです.
+
+このパラメータの受け入れられる値は:
+
+**None**: *Credential*または *ProxyCredential* パラメータによって提供された認証のみを使用します.このパラメータが指定されていない場合,これはデフォルトの動作です.
+
+**プロキシ**:Windows Credential Managerに保存されている認証は,認証を必要とするプロキシサーバーの認証に使用されます.Windows Credential Managerの認証は認証を必要とするプロキシサーバーに一致しない場合は, *ProxyCredential* パラメータを使用して認証を指定する必要があります.
+
+- **サーバー**: この値はサポートされていませんが,指定した場合エラーを生成します.
+
+```yaml
+Type: AuthenticationTargetValue
+Parameter Sets: (All)
+Aliases: 
+Accepted values: None, Server, Proxy
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -WhatIf が実行されればどうなるか示します.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: wi
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### 共通パラメータ このcmdletは共通パラメータをサポートしています: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable.詳細については, [about_CommonParameters] を参照してください.https://go.microsoft.com/fwlink/?LinkID=113216) でした.
+
+## 輸入は
+
+### このcmdletは入力を受け付けていません.
+
+## 輸出は
+
+### Microsoft.BackgroundIntelligentTransfer.Management.BitsJob *Asynchronous* パラメータで呼び出されたとき,このcmdletは新しいBITS転送作業に関連した **BitsJob** オブジェクトを輸出として通過します.そうでなければ,出力生成されません.
+
+## * 注記 * シナクロモードで実行中の転送作業を,CTRL+Cを押してキャンセルできます.
+
+BITS サービスは同期ファイル転送作業中に停止した場合,ファイル転送作業はエラーで失敗し,ファイル転送作業はBitsTransfer 列から削除されません.BitsTransfer 列に残っているファイル転送作業を **Get-BitsTransfer** cmdlet を介して表示できます.BitsTransfer 列に残っているファイル転送作業は,BitsTransfer cmdlet を使用して削除できます.BITS サービスが再起動されると,ファイル転送作業が回復し,ファイル転送作業を再開します.ただし,ファイル転送作業が中間で削除されていない限り.
+
+## 関連リンク
+
+[BitsFileを追加する](./Add-BitsFile.md)
+
+[Complete-BitsTransfer](./Complete-BitsTransfer.md) について
+
+[Get-BitsTransfer](./Get-BitsTransfer.md) 
+
+[Remove-BitsTransfer](./Remove-BitsTransfer.md) 
+
+[Resume-BitsTransfer](./Resume-BitsTransfer.md) について
+
+[Set-BitsTransfer](./Set-BitsTransfer.md) 
+
+[Suspend-BitsTransfer](./Suspend-BitsTransfer.md) 
+###英語原文###
+# Start-BitsTransfer
+
+## SYNOPSIS
+Creates a BITS transfer job.
+
+## SYNTAX
+
+```
+Start-BitsTransfer [-Asynchronous] [-Dynamic] [-CustomHeadersWriteOnly] [-Authentication &lt;String&gt;]
+ [-Credential &lt;PSCredential&gt;] [-Description &lt;String&gt;] [-HttpMethod &lt;String&gt;] [[-Destination] &lt;String[]&gt;]
+ [-DisplayName &lt;String&gt;] [-Priority &lt;String&gt;] [-TransferPolicy &lt;CostStates&gt;] [-ACLFlags &lt;ACLFlagValue&gt;]
+ [-SecurityFlags &lt;SecurityFlagValue&gt;] [-UseStoredCredential &lt;AuthenticationTargetValue&gt;]
+ [-ProxyAuthentication &lt;String&gt;] [-ProxyBypass &lt;String[]&gt;] [-ProxyCredential &lt;PSCredential&gt;]
+ [-ProxyList &lt;Uri[]&gt;] [-ProxyUsage &lt;String&gt;] [-RetryInterval &lt;Int32&gt;] [-RetryTimeout &lt;Int32&gt;]
+ [-MaxDownloadTime &lt;Int32&gt;] [-Source] &lt;String[]&gt; [-Suspended] [-TransferType &lt;String&gt;]
+ [-CustomHeaders &lt;String[]&gt;] [-NotifyFlags &lt;NotifyFlagValue&gt;] [-NotifyCmdLine &lt;String[]&gt;]
+ [-CertStoreLocation &lt;CertStoreLocationValue&gt;] [-CertStoreName &lt;String&gt;] [-CertHash &lt;Byte[]&gt;] [-WhatIf]
+ [-Confirm] [&lt;CommonParameters&gt;]
+```
+
+## DESCRIPTION
+The **Start-BitsTransfer** cmdlet creates a Background Intelligent Transfer Service (BITS) transfer job to transfer one or more files between a client computer and a server.
+The *TransferType* parameter specifies the direction of the transfer.
+By default, after the cmdlet begins the transfer, the command prompt is not available until the transfer is complete or until the transfer enters an error state.
+If the state of the returned **BitsJob** object is Error, the error code and description are contained in the object and can be used for analysis.
+
+The **Start-BitsTransfer** cmdlet supports the download of multiple files from a server to a client computer, but it does not generally support the upload of multiple files from a client computer to a server.
+If you need to upload more than one file, you can use the **Import-Csv** cmdlet to pipe the output to the **Add-BitsFile** cmdlet to upload multiple files.
+Or, if you need to upload more than one file, consider a cabinet file (.cab) or a compressed file (.zip).
+
+## EXAMPLES
+
+### Example 1: Create a BITS transfer job that downloads a file
+```
+PS C:\&gt; Start-BitsTransfer -Source &quot;http://server01/servertestdir/testfile1.txt&quot; -Destination &quot;c:\clienttestdir\testfile1.txt&quot;
+```
+
+This command creates a BITS transfer job that downloads a file from a server.
+The local and remote names of the file are specified in the *Source* and *Destination* parameters.
+Because the default transfer type is Download, the `http://Server01/servertestdir/testfile1.txt` file is transferred to `C:\clienttestdir\testfile1.txt` on the client.
+The command prompt returns when the file transfer is complete or when it enters an error state.
+
+When you upload files to an HTTP location, the *TransferType* parameter must be set to **Upload**.
+
+Because the **Start-BitsTransfer** cmdlet assumes that the first parameter is the source and that the second parameter is the destination when no value is specified, this command could be simplified as follows:
+
+`Start-BitsTransfer &quot;http://server01/servertestdir/testfile1.txt&quot; &quot;c:\clienttestdir\testfile1.txt&quot;`
+
+### Example 2: Create BITS transfer jobs that download multiple files
+```
+PS C:\&gt; Import-CSV filelist.txt | Start-BitsTransfer
+```
+
+This command creates BITS transfer jobs that download multiple files from a server.
+
+The command imports the source and destination file locations and then pipes the locations to the **Start-BitsTransfer** command.
+The **Start-BitsTransfer** command creates a new BITS transfer job for each of the files in `filelist.txt` and then transfers them concurrently to the client.
+
+The contents of the filelist.txt file resemble the following information:
+
+Source, Destination
+http://server01/servertestdir/testfile1.txt, c:\clienttestdir\testfile1.txt
+http://server01/servertestdir/testfile2.txt, c:\clienttestdir\testfile2.txt
+http://server01/servertestdir/testfile3.txt, c:\clienttestdir\testfile3.txt
+http://server01/servertestdir/testfile4.txt, c:\clienttestdir\testfile4.txt
+
+**Note:** First line of the file must include Source, Destination header as in the example.
+
+### Example 3: Create a BITS transfer job that uploads a file
+```
+PS C:\&gt; Start-BitsTransfer -Source &quot;c:\clienttestdir\testfile1.txt&quot; -Destination &quot;http://server01/servertestdir/testfile1.txt&quot; -TransferType Upload
+```
+
+This command creates a BITS transfer job that uploads a file to a server.
+The local and remote names of the file are specified in the **Source** and **Destination** parameters.
+Because the default transfer type is Download, the *TransferType* parameter must be set to **Upload**.
+The `C:\clienttestdir\testfile1.txt` file on the client is transferred to `http://Server01/servertestdir/testfile1.txt`.
+The command prompt returns when the file transfer is complete or enters an error state.
+
+The **Start-BitsTransfer** cmdlet downloads multiple files from a server to a client computer, but it does not typically upload multiple files from a client computer to a server.
+It is possible to work around this limitation by using the **Import-Csv** cmdlet to pipe the output to the **Start-BitsTransfer** cmdlet.
+If you need to upload more than one file, you can also use a .cab or .zip file.
+
+Because the **Start-BitsTransfer** cmdlet assumes that the first parameter is the source and that the second parameter is the destination when no value is specified, this command could be simplified as follows:
+
+`Start-BitsTransfer &quot;c:\clienttestdir\testfile1.txt&quot; &quot;http://server01/servertestdir/testfile1.txt&quot; -TransferType Upload`
+
+### Example 4: Create a BITS transfer job that downloads multiple files
+```
+PS C:\&gt; Start-BitsTransfer -Source &quot;http://server01/servertestdir/testfile1.txt&quot;, &quot;http://server01/servertestdir/testfile2.txt&quot; -Destination &quot;c:\clienttestdir\testfile1.txt&quot;, &quot;c:\clienttestdir\testfile2.txt&quot;
+```
+
+This command creates a BITS transfer job that downloads multiple files from a server.
+
+The local and remote names of the files are specified in the *Source* and *Destination* parameters.
+Because the default of the *TransferType* parameter is Download, the `http://Server01/servertestdir/testfile1.txt` and `http://Server01/servertestdir/testfile2.txt` files are transferred to `C:\clienttestdir\testfile1.txt` and `C:\clienttestdir\testfile2.txt` on the client computer.
+The command prompt returns when the file transfer is complete or enters an error state.
+
+### Example 5: Create a BITS transfer job that downloads a file using a specific set of credentials
+```
+PS C:\&gt; $Cred = Get-Credential
+PS C:\&gt; Start-BitsTransfer -DisplayName MyJob -Credential $Cred -Source &quot;http://server01/servertestdir/testfile1.txt&quot; -Destination &quot;c:\clienttestdir\testfile1.txt&quot;
+```
+
+This example creates a BITS transfer job that downloads a file from a server by using a specific set of credentials.
+
+The first command retrieves a set of credentials from the user by calling the **Get-Credential** cmdlet.
+The returned **PSCredential** object is stored in the $Cred variable.
+
+The second command uses the *Credential* parameter to pass the **PSCredential** object that is stored in the $Cred variable to the **Start-BitsTransfer** cmdlet.
+A new BITS transfer job is created that downloads the `http://server01/servertestdir/testfile1.txt` file to the client.
+The specified credentials are used to authenticate the user at the server.
+Additionally, the optional *DisplayName* parameter is used to give the BITS transfer job a unique name.
+
+# Start-BitsTransfer
+
+### Example 6: Create BITS transfer jobs that download multiple files
+```
+PS C:\&gt; Import-CSV filelist.txt | Start-BitsTransfer -Asynchronous -Priority Normal
+```
+
+This command creates BITS transfer jobs that download multiple files from a server.
+The files are downloaded sequentially, but they are available immediately when the transfer job is complete.
+
+The command imports the source and destination file locations and then pipes them to the **Start-BitsTransfer** command.
+The **Start-BitsTransfer** command creates a new BITS transfer job for each of the files in filelist.txt and then transfers them sequentially to the client.
+
+The contents of the filelist.txt file resemble the following information:
+
+Source, Destination
+http://server01/servertestdir/testfile1.txt, c:\clienttestdir\testfile1.txt
+http://server01/servertestdir/testfile2.txt, c:\clienttestdir\testfile2.txt
+http://server01/servertestdir/testfile3.txt, c:\clienttestdir\testfile3.txt
+http://server01/servertestdir/testfile4.txt, c:\clienttestdir\testfile4.txt
+
+**Note:** First line of the file must include Source, Destination header as in the example.
+
+### Example 7: Create a BITS transfer job that downloads multiple files 
+```
+PS C:\&gt; Start-BitsTransfer -Source C:\clientsourcedir\*.txt -Destination c:\clientdir\ -TransferType Download
+```
+
+In the preceding example, the **Start-BitsTransfer** command creates a new BITS transfer job. All of the files are added to this job and transferred sequentially to the client.
+
+&gt; [!NOTE]
+&gt; The destination path cannot use wildcard characters. The destination path supports relative directories, root paths, or implicit directories (that is, the current directory). Destination files cannot be renamed by using a wildcard character. Additionally, HTTP and HTTPS URLs do not work with wildcards. Wildcards are only valid for UNC paths and local directories.
+
+### Example 8: Create BITS transfer jobs that upload multiple files
+```
+PS C:\&gt; Import-CSV filelist.txt | Start-BitsTransfer -TransferType Upload
+```
+
+This command creates BITS transfer jobs that upload multiple files to a server.
+
+The command imports the source and destination file locations and then pipes them to the **Start-BitsTransfer** command.
+The **Start-BitsTransfer** command creates a new BITS transfer job for each of the files in filelist.txt and then transfers them concurrently to the server.
+
+The contents of the filelist.txt file resemble the following information:
+
+Source, Destination
+c:\clienttestdir\testfile1.txt, http://server01/servertestdir/testfile1.txt
+c:\clienttestdir\testfile2.txt, http://server01/servertestdir/testfile2.txt
+c:\clienttestdir\testfile3.txt, http://server01/servertestdir/testfile3.txt
+c:\clienttestdir\testfile4.txt, http://server01/servertestdir/testfile4.txt
+
+**Note:** First line of the file must include Source, Destination header as in the example.
+
+### Example 9: Download a file from a server on a network to a client on a different network that are connected by a proxy server
+```
+PS C:\&gt; Start-BitsTransfer -Source .\Patch0416.msu -Destination $env:temp\Patch0416.msu -ProxyUsage Override -ProxyList BitsProxy:8080 -ProxyCredential Server01\Admin01
+```
+
+This command uses the **Start-BitsTransfer** cmdlet to copy a patch file from a server on one network to a client on a different network when the networks are connected only by a proxy server.
+
+This scenario arises when an Internet-connected server downloads files and then distributes them to computers on disconnected or isolated networks that have no Internet access.
+
+BITS can detect proxy server settings automatically.
+However, if the proxy servers are not configured for automatic detection, you can override the automatic detection mechanism and identify the proxy server explicitly, as shown in this example.
+
+The command uses the *Source* parameter to specify the location of the patch on the server computer and the *Destination* parameter to specify the intended location of patch on the client computer.
+It uses the *ProxyUsage* parameter with a value of **Override** to override the automatic proxy server detection mechanism.
+To identify the proxy server, it uses the *ProxyList* parameter.
+The value of the *ProxyList* parameter is a URI with a `&lt;Name:Port&gt;` format.
+Finally, it uses the *ProxyCredential* parameter to specify the credentials of an administrator who has permission to connect to the proxy server.
+
+## PARAMETERS
+
+### -ACLFlags
+Specifies the owner and access control list (ACL) information to maintain for the transfer job.
+Specify one or more of the following values:
+
+- o: Copy owner information with file.
+- g: Copy group information with file.
+- d: Copy discretionary access control list (DACL) information with file.
+- s: Copy system access control list (SACL) information with file.
+
+```yaml
+Type: ACLFlagValue
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Asynchronous
+Indicates that the cmdlet creates and processes BITS transfer job in the background.
+The command prompt reappears immediately after the BITS transfer job is created.
+The returned **BitsJob** object can be used to monitor status and progress.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Authentication
+Specifies the authentication mechanism to be used at the server.
+The acceptable values for this parameter are:
+
+- **Basic**: Basic is a scheme in which the user name and password are sent in clear text to the server or proxy.
+
+- **Digest**: Digest is a challenge-response scheme that uses a server-specified data string for the challenge.
+
+- **Ntlm**: NT LAN Manager (NTLM) is a challenge-response scheme that uses the credentials of the user for authentication in a Windows-based network environment.
+
+- **Negotiate** (the default): Negotiate is a challenge-response scheme that negotiates with the server or proxy to determine which scheme to use for authentication. For example, this parameter value allows negotiation to determine whether the Kerberos protocol or NTLM is used.
+
+- **Passport**: Passport is a centralized authentication service provided by Microsoft that offers a single logon for member sites.
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases: 
+Accepted values: Basic, Digest, Ntlm, Negotiate, Passport
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -CertHash
+Specifies a SHA1 hash that identifies the certificate.
+
+```yaml
+Type: Byte[]
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -CertStoreLocation
+Specifies the certificate store location to use for to look up the certificate. Valid values are:
+
+- CURRENT_USER
+- LOCAL_MACHINE
+- CURRENT_SERVICE
+- SERVICES
+- USERS
+- CURRENT_USER_GROUP_POLICY
+- LOCAL_MACHINE_GROUP_POLICY
+- LOCAL_MACHINE_ENTERPRISE
+
+```yaml
+Type: CertStoreLocationValue
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+# Start-BitsTransfer
+
+### -CertStoreName
+Specifies the name of the certificate store. Valid values are:
+
+- CA: Certification Authority certificates
+- MY: Personal certificates
+- ROOT: Root certificates
+- SPC: Software Publisher Certificate
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Confirm
+Prompts you for confirmation before running the cmdlet.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: cf
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Credential
+Specifies the credentials to use to authenticate the user to the server that is specified in the value of the *Source* parameter.
+The default is the current user.
+
+Type a user name, such as &quot;User01&quot;, &quot;Domain01\User01&quot;, or &quot;User@Contoso.com&quot;.
+Or, use the **Get-Credential** cmdlet to create the value for this parameter.
+When you type a user name, you are prompted for a password.
+
+```yaml
+Type: PSCredential
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -CustomHeaders
+Specifies one or more custom HTTP headers to include in the request to the server. Specify an array of strings.
+
+```yaml
+Type: String[]
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -CustomHeadersWriteOnly
+Indicates that the HTTP custom headers for this job are write-only.
+
+Use this parameter when your custom headers include security information.
+Other programs on the same computer can’t read the header.
+The BITS process can read the headers and send them over the HTTP connection.
+
+You cannot change this value for a job after you set headers to write-only.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Description
+Describes the BITS transfer job.
+The description is limited to 1,024 characters.
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Destination
+Specifies an array that contains the destination location and the names of the files that you want to transfer.
+The destination names are paired with the corresponding source file names.
+For example, the first file name specified in the *Source* parameter corresponds to the first file name in the *Destination* parameter, and the second file name in the *Source* parameter corresponds to the second file name in the *Destination* parameter.
+The *Source* and *Destination* parameters must have the same number of elements; otherwise, the command produces an error.
+
+```yaml
+Type: String[]
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: 1
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -DisplayName
+Specifies a display name for the BITS transfer job.
+The display name provides a user-friendly way to differentiate BITS transfer jobs.
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Dynamic
+Indicates that the transfer uses the dynamic setting.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -HttpMethod
+Specifies a method for the transfer other than the default method GET.
+If you specify GET, the parameter has no effect.
+
+If you specify a method, the job takes foreground priority, which can&#x27;t be changed.
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -MaxDownloadTime
+Specifies the maximum time, in seconds, for transferring the files in a job.
+The default is 7,776,000 seconds or 90 days.
+
+```yaml
+Type: Int32
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -NotifyCmdLine
+Specifies a program to run after the job finishes or encounters an error.
+The program runs in the context of the user who runs this cmdlet.
+
+Specify the program name and any parameters as an array of strings.
+
+```yaml
+Type: String[]
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -NotifyFlags
+Specifies the type of event notification you want to receive, such as job transferred events.
+Valid values are:
+
+- 1: Generates an event when all files in the job have been transferred.
+- 2: Generates an event when an error occurs.
+- 4: Disables notifications.
+
+The default value is 1|2.
+
+```yaml
+Type: NotifyFlagValue
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Priority
+Sets the priority of the BITS transfer job, which affects bandwidth usage.
+The acceptable values for this parameter are:
+
+- **Foreground** (default): Transfers the job in the foreground. Foreground transfers compete for network bandwidth with other applications, which can impede the user&#x27;s overall network experience. However, if the **Start-BitsTransfer** cmdlet is being used interactively, this is likely the best option. This is the highest priority level.
+
+- **High**: Transfers the job in the background with a high priority. Background transfers use the idle network bandwidth of the client computer to transfer files.
+
+- **Normal**: Transfers the job in the background with a normal priority. Background transfers use the idle network bandwidth of the client computer to transfer files.
+
+- **Low**: Transfers the job in the background with a low priority. Background transfers use the idle network bandwidth of the client to transfer files. This is the lowest background priority level.
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases: 
+Accepted values: Foreground, High, Normal, Low
+
+Required: False
+Position: Named
+Default value: Foreground
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+# Start-BitsTransfer
+
+### -ProxyAuthentication
+Specifies the authentication mechanism to use at the Web proxy.
+The acceptable values for this parameter are:
+
+- **Basic**: Basic is a scheme in which the user name and password are sent in clear-text to the server or proxy.
+
+- **Digest**: Digest is a challenge-response scheme that uses a server-specified data string for the challenge.
+
+- **Ntlm**: NTLM is a challenge-response scheme that uses the credentials of the user for authentication in a Windows-based network environment.
+
+- **Negotiate** (the default): Negotiate is a challenge-response scheme that negotiates with the server or proxy to determine which scheme to use for authentication. For instance, this parameter value allows negotiation to determine whether the Kerberos protocol or NTLM is used.
+
+- **Passport**: Passport is a centralized authentication service provided by Microsoft that offers a single logon for member sites.
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases: 
+Accepted values: Basic, Digest, Ntlm, Negotiate, Passport
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -ProxyBypass
+Specifies a list of host names to use for a direct connection.
+The hosts in the list are tried in order until a successful connection is achieved.
+If you specify this parameter the cmdlet bypasses the proxy.
+If this parameter is used, the *ProxyUsage* parameter must be set to **Override**; otherwise, an error occurs.
+
+```yaml
+Type: String[]
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -ProxyCredential
+Specifies the credentials to use to authenticate the user at the proxy.
+You can use the **Get-Credential** cmdlet to create a value for this parameter.
+
+```yaml
+Type: PSCredential
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -ProxyList
+Specifies a list of proxies to use.
+The proxies in the list are tried in order until a successful connection is achieved.
+If this parameter is specified and *ProxyUsage* is set to a value other than **Override**, the cmdlet generates an error.
+
+```yaml
+Type: Uri[]
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -ProxyUsage
+Specifies the proxy usage settings.
+The acceptable values for this parameter are:
+
+- **SystemDefault** (the default): Use the system default proxy settings.
+
+- **NoProxy**: Do not use a proxy to transfer files. Use this option when you transfer files within a local area network (LAN).
+
+- **AutoDetect**: Automatically detect proxy settings. BITS detects proxy settings for each file in the job.
+
+- **Override**: Specify the proxies or servers to use. If the *ProxyList* parameter is also specified, the proxies in that list are used. If the *ProxyBypass* parameter is also specified, the servers in that list are used. In both cases, the first member of the list is used. If the first member is unreachable, the subsequent members are tried until a member is contacted successfully.
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases: 
+Accepted values: SystemDefault, NoProxy, AutoDetect, Override
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -RetryInterval
+Specifies the minimum length of time, in seconds, that BITS waits before an attempt to transfer the file after BITS encounters a transient error.
+The minimum allowed value is 60 seconds.
+If this value exceeds the RetryTimeout value from the **BitsJob** object, BITS does not retry the transfer.
+Instead, BITS sets the state of the BITS transfer job to the Error state.
+
+The default is 600 seconds (10 minutes).
+
+```yaml
+Type: Int32
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -RetryTimeout
+Specifies the length of time, in seconds, that BITS attempts to transfer the file after the first transient error occurs.
+Setting the retry period to 0 prevents retries and forces the job into the `BG_JOB_STATE_ERROR` state when an error occurs.
+If the retry period value exceeds the JobInactivityTimeout Group Policy setting (90-day default), BITS cancels the job after the JobInactivityTimeout Group Policy setting is exceeded.
+
+The default is 1,209,600 seconds (14 days).
+
+```yaml
+Type: Int32
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -SecurityFlags
+Specifies security flags for the HTTP request.
+
+The flags you can set, from the least significant bit, are the following bits:
+
+- 1: Enable CRL Check.
+- 2: Ignore incorrect common names in the server certificate.
+- 3: Ignore incorrect dates in the server certificate.
+- 4: Ignore incorrect certification authorities in the server certificate.
+- 5: Ignore incorrect usage of the server certificate.
+- 12: Allow redirection from HTTPS to HTTP.
+
+Use bits 9 through 11 to implement your redirection policy:
+
+- 0,0,0: Redirects are automatically allowed.
+- 0,0,1: Remote name is updated if a redirect occurs.
+-0,1,0: BITS fails the job if a redirect occurs.
+
+```yaml
+Type: SecurityFlagValue
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Source
+Specifies the source location and the names of the files that you want to transfer.
+The source file names are paired with the corresponding destination file names.
+For example, the first file name specified in the *Source* parameter corresponds to the first file name in the *Destination* parameter, and the second file name in the *Source* parameter corresponds to the second file name in the *Destination* parameter.
+The *Source* and *Destination* parameters must have the same number of elements; otherwise, the command produces an error.
+You can use standard wildcard characters such as the asterisk (*) and the question mark (?).
+Or, you can use a range operator such as &quot;\[a-r\]&quot;.
+
+```yaml
+Type: String[]
+Parameter Sets: (All)
+Aliases: 
+
+Required: True
+Position: 0
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -Suspended
+Indicates that the cmdlet suspends the BITS transfer job.
+If the *Suspended* parameter is not specified, the job automatically begins the transfer job.
+If the *Suspended* parameter is specified, the command prompt returns immediately after the BITS transfer job is created.
+You can use the **Resume-BitsTransfer** cmdlet to start the transfer job.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+# Start-BitsTransfer
+
+### -TransferPolicy
+Specifies the network cost states in which the transfer is allowed to be scheduled.
+The current cost state of the network is a bitmask that indicates the kinds of charges that would be incurred if a transfer was scheduled at this time.
+This cost state represents a bitmask; if the bit corresponding to the current network cost state is set, the transfer can be scheduled.
+If the bit corresponding to the current network cost state is not set, the transfer is ignored for scheduling purposes.
+You can submit any of the named values listed here, or add them together to provide a custom value.
+
+The acceptable values for this parameter are:
+
+- **Unrestricted** (or unknown) : 0x00000001 : the cost state for this network is not known.
+
+- **Capped** : 0x00000002 : the cost state for this network is a capped plan, or a plan that has a data usage limit.
+
+- **BelowCap** : 0x00000004 : the cost state for this network is below the data plan cap.
+
+- **NearCap** : 0x00000008 : the cost state for this network is near the data plan cap.
+
+- **OverCapCharged** : 0x00000010 : the cost state for this network is above the data plan cap, and such usage is charged.
+
+- **OverCapThrottled** : 0x00000020 : the cost state for this network is above the data plan cap, and such usage is throttled.
+
+- **UsageBased** : 0x00000040 : the cost state for this network is charged based on usage.
+
+- **Roaming** : 0x00000080 : the cost state for this network incurs roaming charges.
+The cost state also includes one option (IgnoreCongestion) and a set of standard policies (Uncosted, Standard, NoSurcharge, NotRoaming, and Always) which are combinations of the discrete bit values.
+
+- **IgnoreCongestion** : 0x80000000 : the job can be scheduled even if the network provider reports that the network is congested.
+
+- **PolicyUnrestricted** : 0x80000021 : the set of cost states that do not consume the quota of a capped plan, or incur extra charges.
+
+- **Standard** : 0x80000067 : a set of cost states suitable for moderate-priority transfers.
+
+- **NoSurcharge** : 0x8000006f : the set of cost states that incur no surcharge for use.
+
+- **NotRoaming** : 0x8000007f : the set of cost states that exclude the roaming state.
+
+- **Always** : 0x800000ff : the set of all cost states.
+
+The cost state also includes one option (IgnoreCongestion) and a set of standard policies (Always, NotRoaming, NoSurcharge, Standard, and Uncosted) which are combinations of the discrete bit values.
+
+```yaml
+Type: CostStates
+Parameter Sets: (All)
+Aliases: 
+Accepted values: None, Unrestricted, Capped, BelowCap, NearCap, OverCapCharged, OverCapThrottled, UsageBased, Roaming, IgnoreCongestion, PolicyUnrestricted, Standard, NoSurcharge, NotRoaming, Always
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -TransferType
+Specifies the BITS transfer job type.
+The acceptable values for this parameter are:
+
+- **Download** (the default): Specifies that the transfer job downloads files to the client computer.
+
+- **Upload**: Specifies that the transfer job uploads a file to the server.
+
+- **UploadReply**: Specifies that the transfer job uploads a file to the server and receives a reply file from the server.
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases: 
+Accepted values: Download, Upload, UploadReply
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -UseStoredCredential
+Specifies that credentials stored in the Windows Credential Manager should be used for authentication when required for the specified target server type.
+If this parameter is not specified and a server requires authentication, then explicit credentials must be included by using the *Credential* or *ProxyCredential* parameters.
+This parameter is a flag parameter whose values can be added together to create the desired behavior.
+
+The acceptable values for this parameter are:
+
+- **None**: Use only credentials provided by the *Credential* or *ProxyCredential* parameters.
+This is the default behavior if the parameter is not specified.
+
+- **Proxy**: Credentials stored in the Windows Credential Manager are used for authentication for any proxy server that requires authentication.
+If no credentials in the Windows Credential Manager match the proxy server needing authentication, then you must specify credentials by using the *ProxyCredential* parameter.
+
+- **Server**: This value is not supported and generates an error if specified.
+
+```yaml
+Type: AuthenticationTargetValue
+Parameter Sets: (All)
+Aliases: 
+Accepted values: None, Server, Proxy
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -WhatIf
+Shows what would happen if the cmdlet runs.
+The cmdlet is not run.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: wi
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### CommonParameters
+This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable. For more information, see [about_CommonParameters](https://go.microsoft.com/fwlink/?LinkID=113216).
+
+## INPUTS
+
+### None
+This cmdlet does not accept an input.
+
+## OUTPUTS
+
+### Microsoft.BackgroundIntelligentTransfer.Management.BitsJob
+When called with the *Asynchronous* parameter, this cmdlet passes the **BitsJob** object that is associated with the new BITS transfer job as output.
+Otherwise, no output is generated.
+
+## NOTES
+* You can cancel a transfer job that is running in synchronous mode by pressing CTRL+C.
+
+  If the BITS service is stopped during a synchronous file transfer job, then file transfer job will fail with an error and the file transfer job will not get removed from the BitsTransfer queue.
+You can view the file transfer job that remains in the BitsTransfer queue through the **Get-BitsTransfer** cmdlet.
+The file transfer job that remains in the BitsTransfer queue can be removed using the **Remove-BitsTransfer** cmdlet.
+Once the BITS service is restarted, the file transfer job will recover and resume the file transfer job, unless the file transfer job has been removed in the interim.
+
+## RELATED LINKS
+
+[Add-BitsFile](./Add-BitsFile.md)
+
+[Complete-BitsTransfer](./Complete-BitsTransfer.md)
+
+[Get-BitsTransfer](./Get-BitsTransfer.md)
+
+[Remove-BitsTransfer](./Remove-BitsTransfer.md)
+
+[Resume-BitsTransfer](./Resume-BitsTransfer.md)
+
+[Set-BitsTransfer](./Set-BitsTransfer.md)
+
+[Suspend-BitsTransfer](./Suspend-BitsTransfer.md)
+###Microsoft Learn URL###
+https://learn.microsoft.com/en-us/powershell/module/bitstransfer/start-bitstransfer/?view=windowsserver2022-ps
+</pre></html>

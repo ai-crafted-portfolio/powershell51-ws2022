@@ -1,0 +1,898 @@
+<!doctype html><html lang="ja"><meta charset="utf-8"><pre class="record-source">###KnowledgeNo###
+PS51-WS2022-2026-3846
+###FormatID###
+PS51-WS2022
+###CreatedAt###
+2026-08-01 00:00
+###UpdatedAt###
+2026-08-01 00:00
+###タイトル###
+Set-Acl
+###モジュール###
+Microsoft.PowerShell.Security
+###製品###
+Windows PowerShell 5.1
+###対応OS###
+Windows Server 2022
+###日本語訳###
+# セット-Acl
+
+## シンプシス 指定されたアイテムのセキュリティ記述子を変更するファイルやレジストリキーなど
+
+## SYNTAXは,のシンタックスです.
+
+### ByPath (デフォルト) 
+
+```
+Set-Acl [-Path] &lt;String[]&gt; [-AclObject] &lt;Object&gt; [[-CentralAccessPolicy] &lt;String&gt;]
+ [-ClearCentralAccessPolicy] [-PassThru] [-Filter &lt;String&gt;] [-Include &lt;String[]&gt;]
+ [-Exclude &lt;String[]&gt;] [-WhatIf] [-Confirm]  [-UseTransaction] [&lt;CommonParameters&gt;]
+```
+
+### ByInputObject
+
+```
+Set-Acl [-InputObject] &lt;PSObject&gt; [-AclObject] &lt;Object&gt; [-PassThru] [-Filter &lt;String&gt;]
+ [-Include &lt;String[]&gt;]  [-Exclude &lt;String[]&gt;] [-WhatIf] [-Confirm] [-UseTransaction]
+ [&lt;CommonParameters&gt;]
+```
+
+### ByLiteralPath について
+
+```
+Set-Acl -LiteralPath &lt;String[]&gt; [-AclObject] &lt;Object&gt; [[-CentralAccessPolicy] &lt;String&gt;]
+ [-ClearCentralAccessPolicy] [-PassThru] [-Filter &lt;String&gt;] [-Include &lt;String[]&gt;]
+ [-Exclude &lt;String[]&gt;] [-WhatIf] [-Confirm] [-UseTransaction] [&lt;CommonParameters&gt;]
+```
+
+## 記述は,
+
+   `Set-Acl`cmdlet は,ファイルやレジストリキーなどの指定項目のセキュリティ記述子を変更して,あなたが提供するセキュリティ記述の値に一致します.
+
+  を使用するには`Set-Acl`**Path**または **InputObject**を用い,そのセキュリティ記述子を変更したい項目を特定する.その後,あなたが適用したい値を備えたセキュリティ記述子を提供するために **AclObject**または **SecurityDescriptor**のパラメータを使用します. `Set-Acl`提供されたセキュリティ記述子を適用します.モデルとして **AclObject**パラメータの値を用い,アイテムのセキュリティ記述子の値を変更して **AclObject**パラメータの値と一致します.
+
+## 例えは
+
+### 例1: セキュリティデスクリプトをファイルからファイルにコピーする
+
+```powershell
+$DogACL = Get-Acl -Path &quot;C:\Dog.txt&quot;
+Set-Acl -Path &quot;C:\Cat.txt&quot; -AclObject $DogACL
+```
+
+これらのコマンドは, Dog.txt ファイルのセキュリティ記述から Cat.txt ファイルのセキュリティ記述に値をコピーする.コマンドが完了すると, Dog.txt と Cat.txt ファイルのセキュリティ記述は同一になります.
+
+最初のコマンドは,を用います.`Get-Acl`Dog.txt ファイルのセキュリティ ディスクリプタを入手するには cmdlet を使用します.割り当て操作符 () は,`=`) は$DogACL変数の値でセキュリティ記述子を保存します.
+
+第二のコマンドは,使用します.`Set-Acl`Cat.txt の ACL の値を,  の値に変更するには,`$DogACL` .
+
+**Path**の値はCat.txtファイルへのパスです. **AclObject**の値はモデル ACLです.この場合は, Dog.txtの ACLが で保存されているようにです.`$DogACL`変数です.
+
+### 例2:パイプラインオペレーターを使って記述符をパスします.
+
+```powershell
+Get-Acl -Path &quot;C:\Dog.txt&quot; | Set-Acl -Path &quot;C:\Cat.txt&quot;
+```
+
+このコマンドは,前例のコマンドとほぼ同じですが,パイプラインオペレーター () を使っていることに例外です.`|`) からセキュリティディスクリプターを送信する.`Get-Acl`の命令に命令する.`Set-Acl`命令です.
+
+最初のコマンドは,を用います.`Get-Acl`Dog.txt ファイルのセキュリティ ディスクリプタを入手するには cmdlet を使用します.パイプラインオペレーター () は`|`) は, Dog.txt セキュリティ ディスクリプターを表すオブジェクトを,  に渡す.`Set-Acl`cmdletです.
+
+第二のコマンドは,使用します.`Set-Acl`Dog.txt のセキュリティ記述子を Cat.txt に適用する.コマンドが完了すると, Dog.txt と Cat.txt の ACL は同じになります.
+
+### 例3:複数のファイルにセキュリティデスクリプトを適用する
+
+```powershell
+$NewAcl = Get-Acl File0.txt
+Get-ChildItem -Path &quot;C:\temp&quot; -Recurse -Include &quot;*.txt&quot; -Force | Set-Acl -AclObject $NewAcl
+```
+
+これらのコマンドは,File0.txtファイル内のセキュリティ記述を,File0.txtファイル内のすべてのテキストファイルに適用します.`C:\Temp`ディレクトリとそのサブディレクトリすべて.
+
+最初のコマンドは,現在のディレクトリでFile0.txtファイルのセキュリティ記述子を取得し,割り当て操作符 () を使用します.`=`) を,  に保存する.`$NewACL`変数です.
+
+パイプラインの最初のコマンドは,Get-ChildItem cmdlet を使用して,すべてのテキストファイルを入力します.`C:\Temp`リスト. **Recurse** パラメータは,命令を全部のサブディレクトリに拡張します.`C:\temp`**Include**パラメータは,取得したファイルを,  ファイルに限定する.`.txt`ファイル名拡張子. **Force** パラメータは,他の場合除外される隠されたファイルを取得します. (You cannot use )`C:\temp\*.txt`, **Recurse**パラメータはファイルではなくディレクトリで動作しているからです.)
+
+管道事業者は ()`|`) は,回収したファイルを代表するオブジェクトを,  に送信します.`Set-Acl`cmdletでは,AcclObjectのセキュリティデスクリプトをパイプライン内のすべてのファイルに適用します.
+
+実践的には,すべての  を含む**WhatIf**パラメータを使用することが最善です.`Set-Acl`複数の項目に影響を与えるコマンドです.この場合は,パイプライン内の第2コマンドは, です.`Set-Acl -AclObject $NewAcl -WhatIf`このコマンドは,コマンドによって影響を受けるファイルをリストにします.結果をレビューした後,コマンドを再び実行できます **WhatIf**パラメータなしで.
+
+### 例4: 遺産を無効にし,遺産のアクセスルールを保存します.
+
+```powershell
+$NewAcl = Get-Acl -Path &quot;C:\Pets\Dog.txt&quot;
+$isProtected = $true
+$preserveInheritance = $true
+$NewAcl.SetAccessRuleProtection($isProtected, $preserveInheritance)
+Set-Acl -Path &quot;C:\Pets\Dog.txt&quot; -AclObject $NewAcl
+```
+
+これらのコマンドは,既にある相続アクセスルールを維持しながら,親フォルダからのアクセス遺産を無効にします.
+
+最初のコマンドは,を用います.`Get-Acl`のセキュリティ記述子を入手するには cmdlet を使用します.`Dog.txt`ファイル.
+
+次に,継承されたアクセスルールを明示的なアクセスルールを変換する変数は作成されます.それに関連したアクセスルールを継承から保護するには, を設定します.`$isProtected` 変数から変数へ`$true`遺産を許可するには,set  を設定します.`$isProtected` に`$false`.詳細については, [セットアクセスルール保護](xref:System.Security.AccessControl.ObjectSecurity.SetAccessRuleProtection%2A) を参照してください.
+
+ を設定する`$preserveInheritance` 変数から変数へ`$true`継承されたアクセスルールを保存する.`$false`継承されたアクセスルールを削除する.その後,アクセスルールの保護は **SetAccessRuleProtection()**方法を使用して更新されます.
+
+最後のコマンドは,使用します.`Set-Acl`セキュリティデスクリプトを適用するには,`Dog.txt`命令が実行された時.
+
+完成すると,  の ACL が完成します.`Dog.txt`ペットフォルダから継承されたものは,直接  に適用されます.`Dog.txt`ペットに追加された新しいアクセスポリシーによって,ペットへのアクセスが変わることはありません.`Dog.txt` .
+
+### 例5: 補助管理者 ファイルの完全なコントロール
+
+```powershell
+$NewAcl = Get-Acl -Path &quot;C:\Pets\Dog.txt&quot;
+
+# Set properties
+$identity = &quot;BUILTIN\Administrators&quot;
+$fileSystemRights = &quot;FullControl&quot;
+$type = &quot;Allow&quot;
+
+# Create new rule
+$fileSystemAccessRuleArgumentList = $identity, $fileSystemRights, $type
+$newParams = @{
+  TypeName     = &#x27;System.Security.AccessControl.FileSystemAccessRule&#x27;
+    ArgumentList = $fileSystemAccessRuleArgumentList
+}
+$fileSystemAccessRule = New-Object @newParams
+
+# Apply new rule
+$NewAcl.SetAccessRule($fileSystemAccessRule)
+Set-Acl -Path &quot;C:\Pets\Dog.txt&quot; -AclObject $NewAcl
+```
+
+このコマンドは,BUILTIN\Administrators**グループに の完全なコントロールを与える.`Dog.txt`ファイル.
+
+最初のコマンドは,を用います.`Get-Acl`のセキュリティ記述子を入手するには cmdlet を使用します.`Dog.txt`ファイル.
+
+次の変数は,BUILTIN\Administrators**グループに の完全なコントロールを与えるために作成されます.`Dog.txt`ファイルは,ファイルです.`$identity`変数 [ユーザーアカウント]の名前に設定されている.xref:System.Security.AccessControl.FileSystemAccessRule.%23ctor%2A).`$fileSystemRights`フルコントロールに設定され,アクセスルールに関連した操作の種類を指定する [FileSystemRights] (xref:System.Security.AccessControl.FileSystemRights) の任意の変数である.`$type`&quot;Allow&quot;に設定された場合は,操作を許可するか否かを指定します.`$fileSystemAccessRuleArgumentList`新しいFileSystemAccessRule**オブジェクトを作成する際に,参数リストが通過する.その後,新しいFileSystemAccessRule**オブジェクトが作成され,FileSystemAccessRule**オブジェクトがSetAccessRule (設定アクセスルール) 方法に転送され,新しいアクセスルールを追加します.
+
+最後のコマンドは,使用します.`Set-Acl`セキュリティデスクリプトを適用するには, to  のセキュリティデスクリプトを適用します.`Dog.txt`命令が完了すると,BUILTIN\Administrators** グループが の完全なコントロールを握る.`Dog.txt` .
+
+## パラメータは
+
+### -AclObject 
+
+指定した ACL を指定し,望ましいプロパティ値を持つ. `Set-Acl`**Path**または **InputObject**パラメータで指定された項目のACLは,指定されたセキュリティオブジェクトの値に一致するように変更されます.
+
+ の出力を保存することができます.`Get-Acl`変数内のコマンドを入力し,その変数を渡すために **AclObject** パラメータを使用するか,または a  を入力してください.`Get-Acl`命令です.
+
+```yaml
+Type: System.Object
+Parameter Sets: (All)
+Aliases:
+
+Required: True
+Position: 1
+Default value: None
+Accept pipeline input: True (ByValue)
+Accept wildcard characters: False
+```
+
+### -中央アクセス政策
+
+項目の中央アクセスポリシーを設定または変更します.コンピュータに中央アクセスポリシーの CAP ID または友好的な名前を入力します.
+
+Windows Server 2012 から,管理者はアクティブディレクトリとグループポリシーを使用して,ユーザーとグループ向けの中央アクセスポリシーを設定できます.詳細については, [ダイナミックアクセス制御:シナリオ概要] (/windows-server/identity/solution-guides/dynamic-access-control--scenario-overview) を参照してください.
+
+このパラメータはWindows PowerShell 3.0で導入されました.
+
+```yaml
+Type: System.String
+Parameter Sets: ByPath, ByLiteralPath
+Aliases:
+
+Required: False
+Position: 2
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -ClearCentralAccessPolicy について
+
+指定された項目から中央アクセスポリシーを削除します.
+
+Windows Server 2012 から,管理者はアクティブディレクトリとグループポリシーを使用して,ユーザーとグループ向けの中央アクセスポリシーを設定できます.詳細については, [ダイナミックアクセス制御:シナリオ概要] (/windows-server/identity/solution-guides/dynamic-access-control--scenario-overview) を参照してください.
+
+このパラメータはWindows PowerShell 3.0で導入されました.
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: ByPath, ByLiteralPath
+Aliases:
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### - 排除する
+
+指定された項目を省きます.このパラメータの値は**Path**パラメータを対象とします. 路径要素またはパターンを入力してください.例えば `*.txt`ワイルドカードは許されている.
+
+```yaml
+Type: System.String[]
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: True
+```
+
+### -フィルター
+
+フィルタはプロバイダのフォーマットまたは言語でフィルタを指定します.このパラメータの値は**Path**パラメータを資格化します.ワイルドカードの使用を含むフィルターの構文は,プロバイダに依存します.フィルターは他のパラメータよりも効率的です,なぜなら,プロバイダが PowerShellでオブジェクトを検索した後にフィルタをフィルタにするのではなく,オブジェクトを回収する際に適用します.
+
+```yaml
+Type: System.String
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: True
+```
+
+### - 含めること
+
+指定された項目を変更するだけです.このパラメータの値は**Path**パラメータを対象とします. 路径要素またはパターンを入力してください.例えば `*.txt`ワイルドカードは許されている.
+
+```yaml
+Type: System.String[]
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: True
+```
+
+### -InputObject
+
+指定されたオブジェクトのセキュリティ記述子を変更します.オブジェクトを含む変数またはオブジェクトを取得するコマンドを入力します.
+
+変更されるオブジェクトをパイプして,  に変えることはできません.`Set-Acl`.代わりに,コマンドで明示的に **InputObject** パラメータを使用してください.
+
+このパラメータはWindows PowerShell 3.0で導入されました.
+
+```yaml
+Type: System.Management.Automation.PSObject
+Parameter Sets: ByInputObject
+Aliases:
+
+Required: True
+Position: 0
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -リテラルパース
+
+指定された項目のセキュリティ記述子を変更します. **Path**とは異なり, **LiteralPath**パラメータの値は入力されたまま使用されます.文字はワイルドカードとして解釈されません. パスにエスケープ文字が含まれている場合は,単一の引用符で囲んでください ().`&#x27;`) 単行引用符は,PowerShellに文字をエスケープシーケンスのように解釈しないように指示します.
+
+このパラメータはWindows PowerShell 3.0で導入されました.
+
+```yaml
+Type: System.String[]
+Parameter Sets: ByLiteralPath
+Aliases: PSPath
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -PassThru でした.
+
+変更されたセキュリティ記述符を表示するオブジェクトを返します.デフォルトでは,このcmdletは出力生成しません.
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### - 歩道
+
+指定された項目のセキュリティ記述符を変更します.ファイルまたはレジストリキーへのパスなど,項目的経路を入力します.ワイルドカードは許可されています.
+
+セキュリティオブジェクトを  に渡す場合`Set-Acl`(AclObject**やSecurityDescriptor**のパラメータを使用するか,セキュリティオブジェクトを からパスすることで)`Get-Acl` に`Set-Acl`),そして,あなたは**Path**パラメータ (名前と値) を省略します.`Set-Acl`セキュリティオブジェクトに含まれるパスを使用します.
+
+```yaml
+Type: System.String[]
+Parameter Sets: ByPath
+Aliases:
+
+Required: True
+Position: 0
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: True
+```
+
+### -UseTransaction 取引を活用する
+
+アクティブトランザクションのコマンドが含まれています.このパラメータは,トランザクションが進行中の場合にのみ有効です.詳細については, [about_Transactions.md]を参照してください.
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases: usetx
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+# セット-Acl
+
+### -確認
+
+cmdletを実行する前に確認を提示します.
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases: cf
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -WhatIf
+
+cmdletが実行されなければどうなるかを示しています.
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases: wi
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### 共通パラメーター
+
+このcmdletは,共通パラメータをサポートしています: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable.詳細については, [about_CommonParameters](を参照してください.https://go.microsoft.com/fwlink/?LinkID=113216) でした.
+
+## 輸入は
+
+### System.Security.AccessControl.ObjectSecurity は,システム・セキュリティ・アクセス・コントロール・オブジェクト・セキュリティです.
+
+ACLオブジェクトをこのcmdletにパイプすることができます.
+
+### システム.セキュリティ.アクセスコントロール.共通セキュリティ ディスクリプト
+
+このcmdletにセキュリティディスクリプターをパイプすることができます.
+
+## 輸出は
+
+### どれもない
+
+デフォルトでは,このcmdletは出力返さない.
+
+### システム.セキュリティ.アクセスコントロール.ファイルセキュリティ
+
+**PassThru**パラメータを使用すると,このcmdletはセキュリティオブジェクトを返します.セキュリティオブジェクトの種類は,アイテムの種類に依存します.
+
+##  NOTES  記事ができました.
+
+   `Set-Acl`cmdlet はPowerShell FileSystemとレジストリプロバイダーによってサポートされています.したがって,ファイル,ディレクトリ,レジストリキーのセキュリティ記述子を変更するために使用できます.
+
+## 関連リンク
+
+[Get-Acl](Get-Acl.md) 
+
+[FileSystemAccessRule](xref:System.Security.AccessControl.FileSystemAccessRule.%23ctor%2A) について
+
+[ObjectSecurity.SetAccessRuleProtection](xref:System.Security.AccessControl.ObjectSecurity.SetAccessRuleProtection%2A) 
+
+[FileSystemRights](xref:System.Security.AccessControl.FileSystemRights) について
+###英語原文###
+# Set-Acl
+
+## SYNOPSIS
+Changes the security descriptor of a specified item, such as a file or a registry key.
+
+## SYNTAX
+
+### ByPath (Default)
+
+```
+Set-Acl [-Path] &lt;String[]&gt; [-AclObject] &lt;Object&gt; [[-CentralAccessPolicy] &lt;String&gt;]
+ [-ClearCentralAccessPolicy] [-PassThru] [-Filter &lt;String&gt;] [-Include &lt;String[]&gt;]
+ [-Exclude &lt;String[]&gt;] [-WhatIf] [-Confirm]  [-UseTransaction] [&lt;CommonParameters&gt;]
+```
+
+### ByInputObject
+
+```
+Set-Acl [-InputObject] &lt;PSObject&gt; [-AclObject] &lt;Object&gt; [-PassThru] [-Filter &lt;String&gt;]
+ [-Include &lt;String[]&gt;]  [-Exclude &lt;String[]&gt;] [-WhatIf] [-Confirm] [-UseTransaction]
+ [&lt;CommonParameters&gt;]
+```
+
+### ByLiteralPath
+
+```
+Set-Acl -LiteralPath &lt;String[]&gt; [-AclObject] &lt;Object&gt; [[-CentralAccessPolicy] &lt;String&gt;]
+ [-ClearCentralAccessPolicy] [-PassThru] [-Filter &lt;String&gt;] [-Include &lt;String[]&gt;]
+ [-Exclude &lt;String[]&gt;] [-WhatIf] [-Confirm] [-UseTransaction] [&lt;CommonParameters&gt;]
+```
+
+## DESCRIPTION
+
+The `Set-Acl` cmdlet changes the security descriptor of a specified item, such as a file or a
+registry key, to match the values in a security descriptor that you supply.
+
+To use `Set-Acl`, use the **Path** or **InputObject** parameter to identify the item whose security
+descriptor you want to change. Then, use the **AclObject** or **SecurityDescriptor** parameters to
+supply a security descriptor that has the values you want to apply. `Set-Acl` applies the security
+descriptor that is supplied. It uses the value of the **AclObject** parameter as a model and changes
+the values in the item&#x27;s security descriptor to match the values in the **AclObject** parameter.
+
+## EXAMPLES
+
+### Example 1: Copy a security descriptor from one file to another
+
+```powershell
+$DogACL = Get-Acl -Path &quot;C:\Dog.txt&quot;
+Set-Acl -Path &quot;C:\Cat.txt&quot; -AclObject $DogACL
+```
+
+These commands copy the values from the security descriptor of the Dog.txt file to the security
+descriptor of the Cat.txt file. When the commands complete, the security descriptors of the Dog.txt
+and Cat.txt files are identical.
+
+The first command uses the `Get-Acl` cmdlet to get the security descriptor of the Dog.txt file.
+The assignment operator (`=`) stores the security descriptor in the value of the $DogACL variable.
+
+The second command uses `Set-Acl` to change the values in the ACL of Cat.txt to the values in
+`$DogACL`.
+
+The value of the **Path** parameter is the path to the Cat.txt file. The value of the **AclObject**
+parameter is the model ACL, in this case, the ACL of Dog.txt as saved in the `$DogACL` variable.
+
+### Example 2: Use the pipeline operator to pass a descriptor
+
+```powershell
+Get-Acl -Path &quot;C:\Dog.txt&quot; | Set-Acl -Path &quot;C:\Cat.txt&quot;
+```
+
+This command is almost the same as the command in the previous example, except that it uses a
+pipeline operator (`|`) to send the security descriptor from a `Get-Acl` command to a `Set-Acl`
+command.
+
+The first command uses the `Get-Acl` cmdlet to get the security descriptor of the Dog.txt file. The
+pipeline operator (`|`) passes an object that represents the Dog.txt security descriptor to the
+`Set-Acl` cmdlet.
+
+The second command uses `Set-Acl` to apply the security descriptor of Dog.txt to Cat.txt.
+When the command completes, the ACLs of the Dog.txt and Cat.txt files are identical.
+
+### Example 3: Apply a security descriptor to multiple files
+
+```powershell
+$NewAcl = Get-Acl File0.txt
+Get-ChildItem -Path &quot;C:\temp&quot; -Recurse -Include &quot;*.txt&quot; -Force | Set-Acl -AclObject $NewAcl
+```
+
+These commands apply the security descriptors in the File0.txt file to all text files in the `C:\Temp`
+directory and all of its subdirectories.
+
+The first command gets the security descriptor of the File0.txt file in the current directory and
+uses the assignment operator (`=`) to store it in the `$NewACL` variable.
+
+The first command in the pipeline uses the Get-ChildItem cmdlet to get all of the text files in the
+`C:\Temp` directory. The **Recurse** parameter extends the command to all subdirectories of
+`C:\temp`. The **Include** parameter limits the files retrieved to those with the `.txt` file name
+extension. The **Force** parameter gets hidden files, which would otherwise be excluded. (You cannot
+use `C:\temp\*.txt`, because the **Recurse** parameter works on directories, not on files.)
+
+The pipeline operator (`|`) sends the objects representing the retrieved files to the `Set-Acl`
+cmdlet, which applies the security descriptor in the **AclObject** parameter to all of the files in
+the pipeline.
+
+In practice, it is best to use the **WhatIf** parameter with all `Set-Acl` commands that can affect
+more than one item. In this case, the second command in the pipeline would be
+`Set-Acl -AclObject $NewAcl -WhatIf`. This command lists the files that would be affected by the
+command. After reviewing the result, you can run the command again without the **WhatIf** parameter.
+
+### Example 4: Disable inheritance and preserve inherited access rules
+
+```powershell
+$NewAcl = Get-Acl -Path &quot;C:\Pets\Dog.txt&quot;
+$isProtected = $true
+$preserveInheritance = $true
+$NewAcl.SetAccessRuleProtection($isProtected, $preserveInheritance)
+Set-Acl -Path &quot;C:\Pets\Dog.txt&quot; -AclObject $NewAcl
+```
+
+These commands disable access inheritance from parent folders, while still preserving the existing
+inherited access rules.
+
+The first command uses the `Get-Acl` cmdlet to get the security descriptor of the `Dog.txt` file.
+
+Next, variables are created to convert the inherited access rules to explicit access rules. To
+protect the access rules associated with this from inheritance, set the `$isProtected` variable to
+`$true`. To allow inheritance, set `$isProtected` to `$false`. For more information, see
+[set access rule protection](xref:System.Security.AccessControl.ObjectSecurity.SetAccessRuleProtection%2A).
+
+Set the `$preserveInheritance` variable to `$true` to preserve inherited access rules or `$false` to
+remove inherited access rules. Then the access rule protection is updated using the
+**SetAccessRuleProtection()** method.
+
+The last command uses `Set-Acl` to apply the security descriptor to `Dog.txt`. When the command
+
+completes, the ACLs of the `Dog.txt` that were inherited from the Pets folder will be applied directly
+to `Dog.txt`, and new access policies added to Pets will not change the access to `Dog.txt`.
+
+### Example 5: Grant Administrators Full Control of the file
+
+```powershell
+$NewAcl = Get-Acl -Path &quot;C:\Pets\Dog.txt&quot;
+
+# Set properties
+$identity = &quot;BUILTIN\Administrators&quot;
+$fileSystemRights = &quot;FullControl&quot;
+$type = &quot;Allow&quot;
+
+# Create new rule
+$fileSystemAccessRuleArgumentList = $identity, $fileSystemRights, $type
+$newParams = @{
+  TypeName     = &#x27;System.Security.AccessControl.FileSystemAccessRule&#x27;
+    ArgumentList = $fileSystemAccessRuleArgumentList
+}
+$fileSystemAccessRule = New-Object @newParams
+
+# Apply new rule
+$NewAcl.SetAccessRule($fileSystemAccessRule)
+Set-Acl -Path &quot;C:\Pets\Dog.txt&quot; -AclObject $NewAcl
+```
+
+This command will grant the **BUILTIN\Administrators** group Full control of the `Dog.txt` file.
+
+The first command uses the `Get-Acl` cmdlet to get the security descriptor of the `Dog.txt` file.
+
+Next variables are created to grant the **BUILTIN\Administrators** group full control of the
+`Dog.txt` file. The `$identity` variable set to the name of a
+[user account](xref:System.Security.AccessControl.FileSystemAccessRule.%23ctor%2A). The
+`$fileSystemRights` variable set to FullControl, and can be any one of the
+[FileSystemRights](xref:System.Security.AccessControl.FileSystemRights) values that specifies the
+type of operation associated with the access rule. The `$type` variable set to &quot;Allow&quot; to specifies
+whether to allow or deny the operation. The `$fileSystemAccessRuleArgumentList` variable is an
+argument list is to be passed when making the new **FileSystemAccessRule** object. Then a new
+**FileSystemAccessRule** object is created, and the **FileSystemAccessRule** object is passed to the
+**SetAccessRule()** method, adds the new access rule.
+
+The last command uses `Set-Acl` to apply the security descriptor of to `Dog.txt`. When the command
+completes, the **BUILTIN\Administrators** group will have full control of the `Dog.txt`.
+
+## PARAMETERS
+
+### -AclObject
+
+Specifies an ACL with the desired property values. `Set-Acl` changes the ACL of item specified by
+the **Path** or **InputObject** parameter to match the values in the specified security object.
+
+You can save the output of a `Get-Acl` command in a variable and then use the **AclObject**
+parameter to pass the variable, or type a `Get-Acl` command.
+
+```yaml
+Type: System.Object
+Parameter Sets: (All)
+Aliases:
+
+Required: True
+Position: 1
+Default value: None
+Accept pipeline input: True (ByValue)
+Accept wildcard characters: False
+```
+
+### -CentralAccessPolicy
+
+Establishes or changes the central access policy of the item.
+Enter the CAP ID or friendly name of a central access policy on the computer.
+
+Beginning in Windows Server 2012, administrators can use Active Directory and Group Policy to set
+central access policies for users and groups. For more information, see
+[Dynamic Access Control: Scenario Overview](/windows-server/identity/solution-guides/dynamic-access-control--scenario-overview).
+
+This parameter was introduced in Windows PowerShell 3.0.
+
+```yaml
+Type: System.String
+Parameter Sets: ByPath, ByLiteralPath
+Aliases:
+
+Required: False
+Position: 2
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -ClearCentralAccessPolicy
+
+Removes the central access policy from the specified item.
+
+Beginning in Windows Server 2012, administrators can use Active Directory and Group Policy to set
+central access policies for users and groups. For more information, see
+[Dynamic Access Control: Scenario Overview](/windows-server/identity/solution-guides/dynamic-access-control--scenario-overview).
+
+This parameter was introduced in Windows PowerShell 3.0.
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: ByPath, ByLiteralPath
+Aliases:
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Exclude
+
+Omits the specified items. The value of this parameter qualifies the **Path** parameter. Enter a
+path element or pattern, such as `*.txt`. Wildcards are permitted.
+
+```yaml
+Type: System.String[]
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: True
+```
+
+### -Filter
+
+Specifies a filter in the provider&#x27;s format or language. The value of this parameter qualifies the
+**Path** parameter. The syntax of the filter, including the use of wildcards, depends on the
+provider. Filters are more efficient than other parameters, because the provider applies them when
+retrieving the objects, rather than having PowerShell filter the objects after they are retrieved.
+
+```yaml
+Type: System.String
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: True
+```
+
+### -Include
+
+Changes only the specified items. The value of this parameter qualifies the **Path** parameter.
+Enter a path element or pattern, such as `*.txt`. Wildcards are permitted.
+
+```yaml
+Type: System.String[]
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: True
+```
+
+### -InputObject
+
+Changes the security descriptor of the specified object. Enter a variable that contains the object
+or a command that gets the object.
+
+You cannot pipe the object to be changed to `Set-Acl`. Instead, use the **InputObject** parameter
+explicitly in the command.
+
+This parameter was introduced in Windows PowerShell 3.0.
+
+```yaml
+Type: System.Management.Automation.PSObject
+Parameter Sets: ByInputObject
+Aliases:
+
+Required: True
+Position: 0
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -LiteralPath
+
+Changes the security descriptor of the specified item. Unlike **Path**, the value of the
+**LiteralPath** parameter is used exactly as it is typed. No characters are interpreted as
+wildcards. If the path includes escape characters, enclose it in single quotation marks (`&#x27;`).
+Single quotation marks tell PowerShell not to interpret any characters as escape sequences.
+
+This parameter was introduced in Windows PowerShell 3.0.
+
+```yaml
+Type: System.String[]
+Parameter Sets: ByLiteralPath
+Aliases: PSPath
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -PassThru
+
+Returns an object that represents the security descriptor that was changed. By default, this cmdlet
+does not generate any output.
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Path
+
+Changes the security descriptor of the specified item. Enter the path to an item, such as a path to
+a file or registry key. Wildcards are permitted.
+
+If you pass a security object to `Set-Acl` (either by using the **AclObject** or
+**SecurityDescriptor** parameters or by passing a security object from `Get-Acl` to `Set-Acl`), and
+you omit the **Path** parameter (name and value), `Set-Acl` uses the path that is included in the
+security object.
+
+```yaml
+Type: System.String[]
+Parameter Sets: ByPath
+Aliases:
+
+Required: True
+Position: 0
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: True
+```
+
+### -UseTransaction
+
+Includes the command in the active transaction.
+This parameter is valid only when a transaction is in progress.
+For more information, see [about_Transactions](../Microsoft.PowerShell.Core/About/about_Transactions.md).
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases: usetx
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+# Set-Acl
+
+### -Confirm
+
+Prompts you for confirmation before running the cmdlet.
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases: cf
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -WhatIf
+
+Shows what would happen if the cmdlet runs. The cmdlet is not run.
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases: wi
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### CommonParameters
+
+This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable,
+-InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose,
+-WarningAction, and -WarningVariable. For more information, see
+[about_CommonParameters](https://go.microsoft.com/fwlink/?LinkID=113216).
+
+## INPUTS
+
+### System.Security.AccessControl.ObjectSecurity
+
+You can pipe an ACL object to this cmdlet.
+
+### System.Security.AccessControl.CommonSecurityDescriptor
+
+You can pipe a security descriptor to this cmdlet.
+
+## OUTPUTS
+
+### None
+
+By default, this cmdlet returns no output.
+
+### System.Security.AccessControl.FileSecurity
+
+When you use the **PassThru** parameter, this cmdlet returns a security object. The type of the
+security object depends on the type of the item.
+
+## NOTES
+
+The `Set-Acl` cmdlet is supported by the PowerShell FileSystem and Registry providers. As such, you
+can use it to change the security descriptors of files, directories, and registry keys.
+
+## RELATED LINKS
+
+[Get-Acl](Get-Acl.md)
+
+[FileSystemAccessRule](xref:System.Security.AccessControl.FileSystemAccessRule.%23ctor%2A)
+
+[ObjectSecurity.SetAccessRuleProtection](xref:System.Security.AccessControl.ObjectSecurity.SetAccessRuleProtection%2A)
+
+[FileSystemRights](xref:System.Security.AccessControl.FileSystemRights)
+###Microsoft Learn URL###
+https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.security/set-acl/?view=powershell-5.1
+</pre></html>
